@@ -30,19 +30,21 @@ export function useAutoLogin() {
   )?.value || "";
 
   // Toggle auto-login
-  const toggleAutoLogin = async () => {
+  const toggleAutoLogin = async (checked?: boolean) => {
+    const newValue = checked !== undefined ? checked : !autoLoginEnabled;
+    
     try {
       await apiRequest("PATCH", `/api/settings/DEV_AUTO_LOGIN_ENABLED`, {
-        value: (!autoLoginEnabled).toString(),
+        value: newValue.toString(),
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       
       toast({
-        title: autoLoginEnabled ? "Auto-login disabled" : "Auto-login enabled",
-        description: autoLoginEnabled 
-          ? "You will need to log in manually during development." 
-          : "You will be automatically logged in during development.",
+        title: newValue ? "Auto-login enabled" : "Auto-login disabled",
+        description: newValue 
+          ? "You will be automatically logged in during development."
+          : "You will need to log in manually during development.",
       });
     } catch (error) {
       toast({

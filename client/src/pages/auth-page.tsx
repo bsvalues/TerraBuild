@@ -178,7 +178,7 @@ export default function AuthPage() {
                       <Checkbox 
                         id="auto-login" 
                         checked={autoLoginEnabled} 
-                        onCheckedChange={(checked) => toggleAutoLogin(checked as boolean)}
+                        onCheckedChange={(checked) => toggleAutoLogin(checked === true)}
                       />
                       <span>Enable Development Auto-Login</span>
                     </Label>

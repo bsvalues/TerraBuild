@@ -322,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate the total cost if not provided
       if (!buildingCost.totalCost) {
         const costPerSqft = buildingCost.costPerSqft;
-        const squareFootage = buildingCost.squareFootage;
+        const squareFootage = Number(buildingCost.squareFootage);
         buildingCost.totalCost = parseFloat((costPerSqft * squareFootage).toFixed(2));
       }
       
@@ -391,12 +391,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate the cost
       const baseCost = costFactor.baseCost;
       const regionFactor = costFactor.regionFactor;
-      const complexityFactorValue = costFactor.complexityFactor;
-      const complexityMultiplierValue = parseFloat(complexityMultiplier.toString());
+      const complexityFactorValue = Number(costFactor.complexityFactor);
+      const complexityMultiplierValue = Number(complexityMultiplier);
       const calculatedComplexityFactor = complexityFactorValue * complexityMultiplierValue;
       
-      const squareFootageValue = parseFloat(squareFootage.toString());
-      const costPerSqft = parseFloat((baseCost * regionFactor * calculatedComplexityFactor).toFixed(2));
+      const squareFootageValue = Number(squareFootage);
+      const costPerSqft = parseFloat((Number(baseCost) * Number(regionFactor) * calculatedComplexityFactor).toFixed(2));
       const totalCost = parseFloat((costPerSqft * squareFootageValue).toFixed(2));
       
       res.json({
