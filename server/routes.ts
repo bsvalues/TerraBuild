@@ -5,7 +5,8 @@ import {
   insertApiEndpointSchema, 
   insertActivitySchema,
   insertBuildingCostSchema,
-  insertCostFactorSchema
+  insertCostFactorSchema,
+  insertUserSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -412,6 +413,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Error calculating building cost" });
+    }
+  });
+
+  // User Management API
+
+  // Get all users
+  app.get("/api/users", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to access this endpoint
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching users" });
+    }
+  });
+
+  // Get user by ID
+  app.get("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admins or the user themselves to access this endpoint
+      const id = parseInt(req.params.id);
+      if (req.user?.role !== "admin" && req.user?.id !== id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching user" });
+    }
+  });
+
+  // Create new user
+  app.post("/api/users", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to create users
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if the username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Hash password if not already hashed
+      if (!userData.password.includes('.')) {
+        const { hashPassword } = await import('./auth');
+        userData.password = await hashPassword(userData.password);
+      }
+      
+      const createdUser = await storage.createUser(userData);
+      
+      // Log activity
+      await storage.createActivity({
+        action: `Created new user: ${userData.username}`,
+        icon: "ri-user-add-line",
+        iconColor: "success"
+      });
+      
+      res.status(201).json(createdUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Error creating user" });
+      }
+    }
+  });
+
+  // Update user
+  app.patch("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Only allow admins or the user themselves to update their profile
+      if (req.user?.role !== "admin" && req.user?.id !== id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Regular users can only update their own name and password
+      if (req.user?.role !== "admin" && req.user?.id === id) {
+        const { role, isActive, ...allowedUpdates } = req.body;
+        
+        if (role || isActive !== undefined) {
+          return res.status(403).json({ message: "You can only update your name and password" });
+        }
+        
+        // If password is being updated, hash it
+        if (allowedUpdates.password && !allowedUpdates.password.includes('.')) {
+          const { hashPassword } = await import('./auth');
+          allowedUpdates.password = await hashPassword(allowedUpdates.password);
+        }
+        
+        const updatedUser = await storage.updateUser(id, allowedUpdates);
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.json(updatedUser);
+      } else {
+        // Admins can update any field
+        const updates = req.body;
+        
+        // If password is being updated, hash it
+        if (updates.password && !updates.password.includes('.')) {
+          const { hashPassword } = await import('./auth');
+          updates.password = await hashPassword(updates.password);
+        }
+        
+        const updatedUser = await storage.updateUser(id, updates);
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Log activity for role or status changes
+        if (updates.role || updates.isActive !== undefined) {
+          await storage.createActivity({
+            action: `Updated user ${updatedUser.username}: ${
+              updates.role ? `role to ${updates.role}` : ''
+            } ${
+              updates.isActive !== undefined ? `status to ${updates.isActive ? 'active' : 'inactive'}` : ''
+            }`,
+            icon: "ri-user-settings-line",
+            iconColor: "warning"
+          });
+        }
+        
+        res.json(updatedUser);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Error updating user" });
+    }
+  });
+
+  // Delete user
+  app.delete("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to delete users
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const id = parseInt(req.params.id);
+      
+      // Prevent deleting the only admin user
+      if (id === 1) {
+        return res.status(403).json({ message: "Cannot delete the primary admin user" });
+      }
+      
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      await storage.deleteUser(id);
+      
+      // Log activity
+      await storage.createActivity({
+        action: `Deleted user: ${user.username}`,
+        icon: "ri-user-unfollow-line",
+        iconColor: "danger"
+      });
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting user" });
     }
   });
 

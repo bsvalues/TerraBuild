@@ -15,6 +15,9 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<void>;
   
   // Environments
   getAllEnvironments(): Promise<Environment[]>;
@@ -203,6 +206,23 @@ export class MemStorage implements IStorage {
     return user;
   }
   
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...userData };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<void> {
+    this.users.delete(id);
+  }
+  
   // Environments
   async getAllEnvironments(): Promise<Environment[]> {
     return Array.from(this.environments.values());
@@ -308,6 +328,48 @@ export class MemStorage implements IStorage {
     const updatedRepoStatus = { ...repoStatus, status, steps };
     this.repositoryStatuses.set(id, updatedRepoStatus);
     return updatedRepoStatus;
+  }
+  
+  // Building Costs
+  async getAllBuildingCosts(): Promise<BuildingCost[]> {
+    return [];
+  }
+  
+  async getBuildingCost(id: number): Promise<BuildingCost | undefined> {
+    return undefined;
+  }
+  
+  async createBuildingCost(cost: InsertBuildingCost): Promise<BuildingCost> {
+    throw new Error('Building costs not implemented in MemStorage');
+  }
+  
+  async updateBuildingCost(id: number, cost: Partial<InsertBuildingCost>): Promise<BuildingCost | undefined> {
+    return undefined;
+  }
+  
+  async deleteBuildingCost(id: number): Promise<void> {
+    // No-op
+  }
+  
+  // Cost Factors
+  async getAllCostFactors(): Promise<CostFactor[]> {
+    return [];
+  }
+  
+  async getCostFactorsByRegionAndType(region: string, buildingType: string): Promise<CostFactor | undefined> {
+    return undefined;
+  }
+  
+  async createCostFactor(factor: InsertCostFactor): Promise<CostFactor> {
+    throw new Error('Cost factors not implemented in MemStorage');
+  }
+  
+  async updateCostFactor(id: number, factor: Partial<InsertCostFactor>): Promise<CostFactor | undefined> {
+    return undefined;
+  }
+  
+  async deleteCostFactor(id: number): Promise<void> {
+    // No-op
   }
 }
 
