@@ -1,13 +1,7 @@
 export const APP_NAME = "BCBS Building Cost";
 export const APP_VERSION = "1.2.0";
 
-export const API_METHODS = {
-  GET: "GET",
-  POST: "POST",
-  PUT: "PUT",
-  DELETE: "DELETE",
-  PATCH: "PATCH"
-};
+export const API_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
 export const STATUS_TYPES = {
   ONLINE: "online",
