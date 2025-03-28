@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -88,6 +88,47 @@ export const insertRepositoryStatusSchema = createInsertSchema(repositoryStatus)
   steps: true,
 });
 
+// Building Costs
+export const buildingCosts = pgTable("building_costs", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  region: text("region").notNull(),
+  buildingType: text("building_type").notNull(),
+  squareFootage: integer("square_footage").notNull(),
+  costPerSqft: decimal("cost_per_sqft", { precision: 10, scale: 2 }).notNull(),
+  totalCost: decimal("total_cost", { precision: 14, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertBuildingCostSchema = createInsertSchema(buildingCosts).pick({
+  name: true,
+  region: true,
+  buildingType: true,
+  squareFootage: true,
+  costPerSqft: true,
+  totalCost: true,
+});
+
+// Cost Factors
+export const costFactors = pgTable("cost_factors", {
+  id: serial("id").primaryKey(),
+  region: text("region").notNull(),
+  buildingType: text("building_type").notNull(),
+  baseCost: decimal("base_cost", { precision: 10, scale: 2 }).notNull(),
+  complexityFactor: decimal("complexity_factor", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  regionFactor: decimal("region_factor", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCostFactorSchema = createInsertSchema(costFactors).pick({
+  region: true,
+  buildingType: true,
+  baseCost: true,
+  complexityFactor: true,
+  regionFactor: true,
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -106,3 +147,9 @@ export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 export type RepositoryStatus = typeof repositoryStatus.$inferSelect;
 export type InsertRepositoryStatus = z.infer<typeof insertRepositoryStatusSchema>;
+
+export type BuildingCost = typeof buildingCosts.$inferSelect;
+export type InsertBuildingCost = z.infer<typeof insertBuildingCostSchema>;
+
+export type CostFactor = typeof costFactors.$inferSelect;
+export type InsertCostFactor = z.infer<typeof insertCostFactorSchema>;

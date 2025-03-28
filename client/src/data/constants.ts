@@ -60,3 +60,24 @@ export const EXPIRATION_OPTIONS = [
   { value: "24h", label: "24 hours" },
   { value: "never", label: "Never (Development Only)" }
 ];
+
+// Building Cost Calculator Constants
+export const REGIONS = [
+  { value: "Northeast", label: "Northeast" },
+  { value: "Midwest", label: "Midwest" },
+  { value: "South", label: "South" },
+  { value: "West", label: "West" }
+];
+
+export const BUILDING_TYPES = [
+  { value: "Commercial", label: "Commercial" },
+  { value: "Residential", label: "Residential" },
+  { value: "Industrial", label: "Industrial" }
+];
+
+export const COMPLEXITY_OPTIONS = [
+  { value: "0.8", label: "Simple (0.8×)" },
+  { value: "1", label: "Standard (1.0×)" },
+  { value: "1.2", label: "Complex (1.2×)" },
+  { value: "1.5", label: "Custom (1.5×)" }
+];

@@ -4,7 +4,9 @@ import {
   apiEndpoints, type ApiEndpoint, type InsertApiEndpoint,
   settings, type Setting, type InsertSetting,
   activities, type Activity, type InsertActivity,
-  repositoryStatus, type RepositoryStatus, type InsertRepositoryStatus
+  repositoryStatus, type RepositoryStatus, type InsertRepositoryStatus,
+  buildingCosts, type BuildingCost, type InsertBuildingCost,
+  costFactors, type CostFactor, type InsertCostFactor
 } from "@shared/schema";
 
 // Storage interface
@@ -40,6 +42,20 @@ export interface IStorage {
   getRepositoryStatus(): Promise<RepositoryStatus | undefined>;
   createRepositoryStatus(repoStatus: InsertRepositoryStatus): Promise<RepositoryStatus>;
   updateRepositoryStatus(id: number, status: string, steps: any[]): Promise<RepositoryStatus | undefined>;
+  
+  // Building Costs
+  getAllBuildingCosts(): Promise<BuildingCost[]>;
+  getBuildingCost(id: number): Promise<BuildingCost | undefined>;
+  createBuildingCost(cost: InsertBuildingCost): Promise<BuildingCost>;
+  updateBuildingCost(id: number, cost: Partial<InsertBuildingCost>): Promise<BuildingCost | undefined>;
+  deleteBuildingCost(id: number): Promise<void>;
+  
+  // Cost Factors
+  getAllCostFactors(): Promise<CostFactor[]>;
+  getCostFactorsByRegionAndType(region: string, buildingType: string): Promise<CostFactor | undefined>;
+  createCostFactor(factor: InsertCostFactor): Promise<CostFactor>;
+  updateCostFactor(id: number, factor: Partial<InsertCostFactor>): Promise<CostFactor | undefined>;
+  deleteCostFactor(id: number): Promise<void>;
 }
 
 // Memory Storage implementation
@@ -295,4 +311,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// The storage implementation is provided in storage-implementation.ts
+export { storage } from './storage-implementation';

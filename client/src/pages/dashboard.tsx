@@ -9,6 +9,7 @@ import ApiManager from "@/components/dashboard/ApiManager";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import ApplicationDetails from "@/components/dashboard/ApplicationDetails";
+import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>("configuration");
@@ -65,8 +66,9 @@ export default function Dashboard() {
             {activeTab === "api" && <ApiManager />}
             {activeTab === "monitoring" && (
               <div>
-                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Monitoring</h2>
-                <p className="text-neutral-600">Monitoring tools will be available here.</p>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Monitoring & Tools</h2>
+                <p className="text-neutral-600 mb-6">Monitoring tools and utilities for the BCBS Building Cost application.</p>
+                <BuildingCostCalculator />
               </div>
             )}
           </div>
