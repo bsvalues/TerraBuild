@@ -12,7 +12,7 @@ import ApplicationDetails from "@/components/dashboard/ApplicationDetails";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<string>("configuration");
+  const [activeTab, setActiveTab] = useState<string>("calculator");
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -33,6 +33,12 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden mb-6">
           <div className="border-b border-neutral-200">
             <nav className="flex">
+              <button 
+                className={`px-4 py-3 font-medium text-sm ${activeTab === "calculator" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
+                onClick={() => setActiveTab("calculator")}
+              >
+                Cost Calculator
+              </button>
               <button 
                 className={`px-4 py-3 font-medium text-sm ${activeTab === "configuration" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
                 onClick={() => setActiveTab("configuration")}
@@ -61,6 +67,13 @@ export default function Dashboard() {
           </div>
           
           <div className="p-6">
+            {activeTab === "calculator" && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Calculator</h2>
+                <p className="text-neutral-600 mb-6">Calculate building costs based on region, building type, square footage, and complexity.</p>
+                <BuildingCostCalculator />
+              </div>
+            )}
             {activeTab === "configuration" && <ConfigurationTab />}
             {activeTab === "devtools" && <DevelopmentTools />}
             {activeTab === "api" && <ApiManager />}
@@ -68,7 +81,6 @@ export default function Dashboard() {
               <div>
                 <h2 className="text-lg font-semibold text-neutral-600 mb-4">Monitoring & Tools</h2>
                 <p className="text-neutral-600 mb-6">Monitoring tools and utilities for the BCBS Building Cost application.</p>
-                <BuildingCostCalculator />
               </div>
             )}
           </div>

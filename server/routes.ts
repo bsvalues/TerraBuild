@@ -321,9 +321,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate the total cost if not provided
       if (!buildingCost.totalCost) {
-        const costPerSqft = buildingCost.costPerSqft;
+        const costPerSqft = Number(buildingCost.costPerSqft);
         const squareFootage = Number(buildingCost.squareFootage);
-        buildingCost.totalCost = parseFloat((costPerSqft * squareFootage).toFixed(2));
+        // Convert to string to match expected decimal type
+        buildingCost.totalCost = (costPerSqft * squareFootage).toFixed(2) as any;
       }
       
       const createdCost = await storage.createBuildingCost(buildingCost);

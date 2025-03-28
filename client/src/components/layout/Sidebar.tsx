@@ -13,9 +13,9 @@ interface SidebarItemProps {
 
 const SidebarItem = ({ to, icon, children, active }: SidebarItemProps) => (
   <Link href={to}>
-    <a
+    <div
       className={cn(
-        "sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md mb-1",
+        "sidebar-item flex items-center px-3 py-2 text-sm font-medium rounded-md mb-1 cursor-pointer",
         active
           ? "text-primary bg-primary bg-opacity-5 border-l-3 border-primary"
           : "text-neutral-500 hover:text-primary hover:bg-primary hover:bg-opacity-5"
@@ -23,7 +23,7 @@ const SidebarItem = ({ to, icon, children, active }: SidebarItemProps) => (
     >
       <i className={cn(`${icon} mr-2`)}></i>
       {children}
-    </a>
+    </div>
   </Link>
 );
 
@@ -82,6 +82,12 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-2">
+        <SidebarSection title="Building Cost">
+          <SidebarItem to="/calculator" icon="ri-calculator-line" active={location === "/calculator"}>
+            Cost Calculator
+          </SidebarItem>
+        </SidebarSection>
+        
         <SidebarSection title="Mission Control">
           <SidebarItem to="/" icon="ri-dashboard-line" active={location === "/"}>
             Dashboard
