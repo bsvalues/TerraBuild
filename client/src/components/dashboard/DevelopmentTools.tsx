@@ -1,51 +1,32 @@
 import React, { useState } from "react";
-import { useAutoLogin } from "@/hooks/use-autologin";
 import { TEST_USERS, EXPIRATION_OPTIONS } from "@/data/constants";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AutoLogin from "./AutoLogin";
 
 export default function DevelopmentTools() {
-  const { autoLoginEnabled, authToken, toggleAutoLogin } = useAutoLogin();
   const [selectedUser, setSelectedUser] = useState("Admin User");
   const [expiration, setExpiration] = useState("4h");
-  
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(authToken);
-  };
 
   return (
     <div>
       <h2 className="text-lg font-semibold text-neutral-600 mb-4">Development Tools</h2>
       
-      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 flex items-center justify-between border-b border-neutral-200">
-          <h3 className="text-sm font-medium text-neutral-600">Autologin Configuration</h3>
-          <button className="text-xs bg-primary text-white rounded-md px-3 py-1.5 hover:bg-primary-dark">
-            Save Configuration
-          </button>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AutoLogin />
         
-        <div className="p-6">
-          <div className="mb-6">
-            <div className="flex items-center mb-4">
-              <Checkbox 
-                id="enable_autologin" 
-                checked={autoLoginEnabled} 
-                onCheckedChange={(checked) => toggleAutoLogin(checked as boolean)} 
-              />
-              <Label htmlFor="enable_autologin" className="ml-2 text-sm font-medium text-neutral-600">
-                Enable Development Autologin
-              </Label>
-            </div>
-            <p className="text-xs text-neutral-500 ml-7">
-              When enabled, the application will automatically authenticate developers in the development environment.
-            </p>
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-4 flex items-center justify-between border-b border-neutral-200">
+            <h3 className="text-sm font-medium text-neutral-600">Test User Configuration</h3>
+            <button className="text-xs bg-primary text-white rounded-md px-3 py-1.5 hover:bg-primary-dark">
+              Save Configuration
+            </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+          <div className="p-6">
+            <div className="mb-6">
               <Label className="block text-xs font-medium text-neutral-600 mb-1">
                 Default Test User
               </Label>
@@ -68,7 +49,7 @@ export default function DevelopmentTools() {
             
             <div>
               <Label className="block text-xs font-medium text-neutral-600 mb-1">
-                Autologin Expiration
+                Session Expiration
               </Label>
               <Select value={expiration} onValueChange={setExpiration}>
                 <SelectTrigger className="w-full bg-neutral-100 border border-neutral-200 rounded px-3 py-2 text-sm text-neutral-600">
@@ -86,29 +67,6 @@ export default function DevelopmentTools() {
                 Time before automatic session expiration
               </p>
             </div>
-          </div>
-          
-          <div className="mt-6">
-            <Label className="block text-xs font-medium text-neutral-600 mb-1">
-              Development Auth Token
-            </Label>
-            <div className="relative">
-              <input
-                type="text"
-                value={authToken}
-                className="w-full bg-neutral-100 border border-neutral-200 rounded px-3 py-2 text-sm font-mono text-neutral-600 pr-8"
-                readOnly
-              />
-              <button 
-                className="absolute inset-y-0 right-0 px-3 text-neutral-400 hover:text-neutral-600"
-                onClick={copyToClipboard}
-              >
-                <i className="ri-clipboard-line"></i>
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-neutral-400">
-              This token can be used for API testing in development
-            </p>
           </div>
         </div>
       </div>

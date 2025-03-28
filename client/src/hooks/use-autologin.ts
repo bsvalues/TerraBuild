@@ -1,30 +1,87 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertSettingSchema, Setting } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+interface AutoLoginData {
+  autoLoginEnabled: boolean;
+  authToken: string;
+}
+
+const updateSettingSchema = insertSettingSchema;
+type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
 
 export function useAutoLogin() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["/api/auth/autologin"],
+  const { toast } = useToast();
+
+  // Fetch all settings
+  const { data: settings, isLoading } = useQuery<Setting[]>({
+    queryKey: ["/api/settings"],
   });
 
-  const updateSetting = useMutation({
-    mutationFn: ({ key, value }: { key: string, value: string }) => 
-      apiRequest("PATCH", `/api/settings/${key}`, { value }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/autologin"] });
+  // Extract auto-login settings
+  const autoLoginEnabled = settings?.find(
+    (s) => s.key === "DEV_AUTO_LOGIN_ENABLED"
+  )?.value === "true";
+  
+  const authToken = settings?.find(
+    (s) => s.key === "DEV_AUTH_TOKEN"
+  )?.value || "";
+
+  // Toggle auto-login
+  const toggleAutoLogin = async () => {
+    try {
+      await apiRequest("PATCH", `/api/settings/DEV_AUTO_LOGIN_ENABLED`, {
+        value: (!autoLoginEnabled).toString(),
+      });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      
+      toast({
+        title: autoLoginEnabled ? "Auto-login disabled" : "Auto-login enabled",
+        description: autoLoginEnabled 
+          ? "You will need to log in manually during development." 
+          : "You will be automatically logged in during development.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to toggle auto-login setting.",
+        variant: "destructive",
+      });
     }
-  });
-
-  const toggleAutoLogin = (enabled: boolean) => {
-    updateSetting.mutate({ key: "DEV_AUTOLOGIN", value: enabled.toString() });
   };
 
+  // Update a setting
+  const updateSetting = useMutation({
+    mutationFn: async (input: UpdateSettingInput) => {
+      const res = await apiRequest("PATCH", `/api/settings/${input.key}`, {
+        value: input.value,
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Setting updated",
+        description: "The setting has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update setting.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
-    autoLoginEnabled: data?.enabled || false,
-    authToken: data?.token || "",
-    isLoading,
+    autoLoginEnabled,
+    authToken,
     toggleAutoLogin,
-    updateSetting
+    updateSetting,
+    isLoading,
   };
 }

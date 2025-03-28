@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -8,8 +8,23 @@ import {
   insertCostFactorSchema
 } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication and authorization
+  setupAuth(app);
+  
+  // Middleware to check if user is authenticated
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    next();
+  };
+  
+  // Add requireAuth middleware to routes that should be protected
+  // Keeping it commented out for now as we're implementing autologin
+  // const protectedRoute = requireAuth;
   // API endpoints for the Mission Control Panel
   
   // Get all environments
@@ -142,13 +157,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Check autologin status
   app.get("/api/auth/autologin", async (req: Request, res: Response) => {
-    const autologinSetting = await storage.getSetting("DEV_AUTOLOGIN");
+    const autologinSetting = await storage.getSetting("DEV_AUTO_LOGIN_ENABLED");
     const tokenSetting = await storage.getSetting("DEV_AUTH_TOKEN");
     
     res.json({
       enabled: autologinSetting?.value === "true",
       token: tokenSetting?.value || null,
     });
+  });
+  
+  // Handle automatic login
+  app.post("/api/auth/autologin", async (req: Request, res: Response) => {
+    try {
+      // Check if the feature is enabled
+      const autologinSetting = await storage.getSetting("DEV_AUTO_LOGIN_ENABLED");
+      if (autologinSetting?.value !== "true") {
+        return res.status(403).json({ message: "Auto-login is disabled" });
+      }
+      
+      // Verify token
+      const validToken = await storage.getSetting("DEV_AUTH_TOKEN");
+      const providedToken = req.body.token;
+      
+      if (!validToken?.value || validToken.value !== providedToken) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+      
+      // Find an admin user to login with
+      const adminUser = await storage.getUserByUsername("admin");
+      
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+      
+      // Login the user
+      req.login(adminUser, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        // Log the activity
+        storage.createActivity({
+          action: "Auto-login as admin user",
+          icon: "ri-shield-keyhole-line",
+          iconColor: "warning"
+        });
+        
+        return res.status(200).json(adminUser);
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error processing auto-login" });
+    }
   });
 
   // Building Cost Calculator API
@@ -346,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         squareFootage: parseFloat(squareFootage.toString()),
         baseCost,
         regionFactor,
-        complexityFactor,
+        complexityFactor: calculatedComplexityFactor,
         costPerSqft,
         totalCost
       });

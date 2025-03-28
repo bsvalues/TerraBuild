@@ -1,9 +1,10 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import * as schema from '@shared/schema';
 
 // Create a PostgreSQL connection pool
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
@@ -148,7 +149,7 @@ async function addDefaultData() {
         INSERT INTO settings (key, value, type)
         VALUES 
           ('SAAS_MODE', 'true', 'boolean'),
-          ('DEV_AUTOLOGIN', 'true', 'boolean'),
+          ('DEV_AUTO_LOGIN_ENABLED', 'true', 'boolean'),
           ('DEBUG_MODE', 'false', 'boolean'),
           ('API_RATE_LIMITING', 'true', 'boolean'),
           ('DEV_AUTH_TOKEN', 'dev_tk_7f9a8b3c2d1e0f4a5b6c7d8e9f0a1b2c3d4e5f6', 'string')
@@ -182,22 +183,29 @@ async function addDefaultData() {
     const factorsExist = await pool.query("SELECT * FROM cost_factors LIMIT 1");
     
     if (factorsExist.rows.length === 0) {
-      // Add cost factors
+      // Add cost factors based on BCBS Building Cost Matrix 2025
       await pool.query(`
         INSERT INTO cost_factors (region, building_type, base_cost, complexity_factor, region_factor)
         VALUES 
-          ('Northeast', 'Commercial', 250.00, 1.2, 1.3),
-          ('Midwest', 'Commercial', 200.00, 1.1, 1.0),
-          ('South', 'Commercial', 180.00, 1.0, 0.9),
-          ('West', 'Commercial', 275.00, 1.2, 1.5),
-          ('Northeast', 'Residential', 200.00, 1.1, 1.2),
-          ('Midwest', 'Residential', 175.00, 1.0, 0.9),
-          ('South', 'Residential', 150.00, 0.9, 0.8),
-          ('West', 'Residential', 225.00, 1.1, 1.4),
-          ('Northeast', 'Industrial', 180.00, 1.0, 1.2),
-          ('Midwest', 'Industrial', 150.00, 0.9, 1.0),
-          ('South', 'Industrial', 130.00, 0.8, 0.9),
-          ('West', 'Industrial', 190.00, 1.0, 1.3)
+          -- Northeast region factors 
+          ('Northeast', 'Commercial', 225.50, 1.0, 1.25),
+          ('Northeast', 'Residential', 185.75, 1.0, 1.20),
+          ('Northeast', 'Industrial', 165.25, 1.0, 1.15),
+          
+          -- Midwest region factors (baseline)
+          ('Midwest', 'Commercial', 195.50, 1.0, 1.0),
+          ('Midwest', 'Residential', 160.75, 1.0, 1.0),
+          ('Midwest', 'Industrial', 145.25, 1.0, 0.95),
+          
+          -- South region factors
+          ('South', 'Commercial', 185.25, 1.0, 0.90),
+          ('South', 'Residential', 155.50, 1.0, 0.85),
+          ('South', 'Industrial', 135.75, 1.0, 0.85),
+          
+          -- West region factors
+          ('West', 'Commercial', 245.75, 1.0, 1.35),
+          ('West', 'Residential', 205.50, 1.0, 1.30),
+          ('West', 'Industrial', 175.25, 1.0, 1.25)
       `);
     }
     

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { APP_NAME } from "@/data/constants";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SidebarItemProps {
   to: string;
@@ -43,6 +44,11 @@ const SidebarSection = ({ title, children }: SidebarSectionProps) => (
 export default function Sidebar() {
   const [location] = useLocation();
   const [selectedEnvironment, setSelectedEnvironment] = useState("Development");
+  const { user, logoutMutation } = useAuth();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   return (
     <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col overflow-y-auto">
@@ -119,14 +125,22 @@ export default function Sidebar() {
       <div className="border-t border-neutral-200 p-4">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-medium text-sm">
-            AD
+            {user ? user.name?.substring(0, 2).toUpperCase() || user.username.substring(0, 2).toUpperCase() : 'AD'}
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-neutral-600">Admin User</p>
-            <p className="text-xs text-neutral-400">Administrator</p>
+            <p className="text-sm font-medium text-neutral-600">{user?.name || user?.username || 'Admin User'}</p>
+            <p className="text-xs text-neutral-400">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Administrator'}</p>
           </div>
-          <button className="ml-auto text-neutral-400 hover:text-neutral-600">
-            <i className="ri-logout-box-r-line"></i>
+          <button 
+            className="ml-auto text-neutral-400 hover:text-neutral-600"
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+          >
+            {logoutMutation.isPending ? (
+              <i className="ri-loader-2-line animate-spin"></i>
+            ) : (
+              <i className="ri-logout-box-r-line"></i>
+            )}
           </button>
         </div>
       </div>
