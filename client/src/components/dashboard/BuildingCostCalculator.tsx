@@ -139,33 +139,51 @@ export default function BuildingCostCalculator() {
   };
 
   return (
-    <div className="mt-6">
-      <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Calculator</h2>
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-neutral-600">Building Cost Calculator</h2>
+        {result && (
+          <button
+            type="button"
+            className="text-xs text-neutral-500 flex items-center gap-1 hover:text-neutral-700"
+            onClick={() => {
+              setResult(null);
+              setMaterialsBreakdown(null);
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset Calculator
+          </button>
+        )}
+      </div>
 
-      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 flex items-center justify-between border-b border-neutral-200">
-          <h3 className="text-sm font-medium text-neutral-600">Cost Estimator</h3>
-        </div>
-
-        {isLoadingFactors ? (
-          <div className="p-6">
-            <div className="animate-pulse">
-              <div className="h-10 bg-neutral-200 rounded mb-4"></div>
-              <div className="h-10 bg-neutral-200 rounded mb-4"></div>
-              <div className="h-10 bg-neutral-200 rounded mb-4"></div>
-              <div className="h-10 bg-neutral-200 rounded"></div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Input Panel */}
+        <div className="bg-white border border-neutral-200 rounded-lg md:col-span-1">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-neutral-200">
+            <h3 className="text-sm font-medium text-neutral-600">Input Parameters</h3>
           </div>
-        ) : (
-          <div className="p-6">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+
+          {isLoadingFactors ? (
+            <div className="p-4">
+              <div className="animate-pulse space-y-3">
+                <div className="h-9 bg-neutral-200 rounded"></div>
+                <div className="h-9 bg-neutral-200 rounded"></div>
+                <div className="h-9 bg-neutral-200 rounded"></div>
+                <div className="h-9 bg-neutral-200 rounded"></div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1">
+                  <label className="block text-xs font-medium text-neutral-600 mb-1">
                     Region
                   </label>
                   <select
-                    className="w-full bg-neutral-100 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-600"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
                     {...form.register("region")}
                   >
                     {REGIONS.map(region => (
@@ -173,16 +191,16 @@ export default function BuildingCostCalculator() {
                     ))}
                   </select>
                   {form.formState.errors.region && (
-                    <p className="text-xs text-danger mt-1">{form.formState.errors.region.message}</p>
+                    <p className="text-xs text-red-500 mt-1">{form.formState.errors.region.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1">
+                  <label className="block text-xs font-medium text-neutral-600 mb-1">
                     Building Type
                   </label>
                   <select
-                    className="w-full bg-neutral-100 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-600"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
                     {...form.register("buildingType")}
                   >
                     {BUILDING_TYPES.map(type => (
@@ -190,31 +208,31 @@ export default function BuildingCostCalculator() {
                     ))}
                   </select>
                   {form.formState.errors.buildingType && (
-                    <p className="text-xs text-danger mt-1">{form.formState.errors.buildingType.message}</p>
+                    <p className="text-xs text-red-500 mt-1">{form.formState.errors.buildingType.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1">
+                  <label className="block text-xs font-medium text-neutral-600 mb-1">
                     Square Footage
                   </label>
                   <input
                     type="number"
-                    className="w-full bg-neutral-100 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-600"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
                     placeholder="Enter square footage"
                     {...form.register("squareFootage")}
                   />
                   {form.formState.errors.squareFootage && (
-                    <p className="text-xs text-danger mt-1">{form.formState.errors.squareFootage.message}</p>
+                    <p className="text-xs text-red-500 mt-1">{form.formState.errors.squareFootage.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-600 mb-1">
+                  <label className="block text-xs font-medium text-neutral-600 mb-1">
                     Complexity
                   </label>
                   <select
-                    className="w-full bg-neutral-100 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-600"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
                     {...form.register("complexityMultiplier")}
                   >
                     {COMPLEXITY_OPTIONS.map(option => (
@@ -225,264 +243,286 @@ export default function BuildingCostCalculator() {
 
                 <button
                   type="submit"
-                  className="mt-4 w-full bg-primary text-white rounded-md py-2 text-sm font-medium hover:bg-primary-dark disabled:opacity-70"
+                  className="mt-4 w-full bg-primary hover:bg-primary/90 text-white rounded-md py-2 text-sm font-medium flex items-center justify-center gap-1.5 disabled:opacity-70"
                   disabled={loading}
                 >
-                  {loading ? 'Calculating...' : 'Calculate Estimated Cost'}
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Calculating...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      Calculate Cost
+                    </>
+                  )}
                 </button>
-              </div>
+              </form>
+            </div>
+          )}
+        </div>
 
-              <div className={`bg-neutral-50 p-5 rounded-lg border border-neutral-200 ${!result ? 'flex items-center justify-center' : ''}`}>
-                {!result ? (
-                  <div className="text-center text-neutral-500 text-sm">
-                    <i className="ri-calculator-line text-3xl mb-2 block"></i>
-                    Enter your building details and click calculate to see cost estimates
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <h4 className="text-base font-semibold text-neutral-700">Cost Estimate Results</h4>
+        {/* Results Panel */}
+        <div className="bg-white border border-neutral-200 rounded-lg md:col-span-2">
+          <div className="px-4 py-3 border-b border-neutral-200">
+            <h3 className="text-sm font-medium text-neutral-600">Cost Estimate Results</h3>
+          </div>
+
+          <div className="p-0">
+            {!result ? (
+              <div className="flex items-center justify-center h-[400px] text-center text-neutral-500 p-4">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-neutral-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-sm">Enter your building details and click calculate to see cost estimates</p>
+                  <p className="text-xs mt-2 text-neutral-400">Results will appear here with detailed breakdowns</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col h-[400px]">
+                <div className="text-center bg-neutral-50 py-4 border-b border-neutral-200">
+                  <div className="text-2xl font-bold text-primary">{formatCurrency(result.totalCost)}</div>
+                  <div className="text-sm text-neutral-500">Total Estimated Cost</div>
+                </div>
+                
+                <div className="flex-1 overflow-hidden">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger 
+                        value="summary" 
+                        className="text-xs py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary"
+                      >
+                        Summary
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="materials" 
+                        className="text-xs py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary"
+                      >
+                        Materials
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="visualization" 
+                        className="text-xs py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary"
+                      >
+                        Visualization
+                      </TabsTrigger>
+                    </TabsList>
                     
-                    <div className="text-center py-4">
-                      <div className="text-2xl font-bold text-primary">{formatCurrency(result.totalCost)}</div>
-                      <div className="text-sm text-neutral-500">Total Estimated Cost</div>
-                    </div>
+                    <TabsContent value="summary" className="mt-0 p-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Region:</span>
+                          <span className="text-xs font-medium text-neutral-700">{result.region}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Building Type:</span>
+                          <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Square Footage:</span>
+                          <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Base Cost:</span>
+                          <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Region Factor:</span>
+                          <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Complexity Factor:</span>
+                          <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
+                          <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
+                        </div>
+                      </div>
+                    </TabsContent>
                     
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-4">
-                        <TabsTrigger 
-                          value="summary" 
-                          className="text-xs"
-                        >
-                          Summary
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="materials" 
-                          className="text-xs"
-                        >
-                          Materials
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="visualization" 
-                          className="text-xs"
-                        >
-                          Visualization
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="summary" className="mt-0">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Region:</span>
-                            <span className="text-xs font-medium text-neutral-700">{result.region}</span>
+                    <TabsContent value="materials" className="mt-0 p-4">
+                      {materialsBreakdown && materialsBreakdown.materials ? (
+                        <div className="space-y-3">
+                          <div className="max-h-[280px] overflow-y-auto pr-1">
+                            <table className="w-full text-xs">
+                              <thead className="bg-neutral-50 sticky top-0">
+                                <tr>
+                                  <th className="text-left p-1.5 font-medium text-neutral-600">Material</th>
+                                  <th className="text-right p-1.5 font-medium text-neutral-600">%</th>
+                                  <th className="text-right p-1.5 font-medium text-neutral-600">Cost</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {materialsBreakdown.materials.map((material) => (
+                                  <tr key={material.id} className="border-b border-neutral-100">
+                                    <td className="p-1.5 text-neutral-700">
+                                      {material.materialName}
+                                      <span className="text-neutral-400 text-[10px] block">
+                                        {material.materialCode}
+                                      </span>
+                                    </td>
+                                    <td className="p-1.5 text-right text-neutral-700">
+                                      {material.percentage.toFixed(1)}%
+                                    </td>
+                                    <td className="p-1.5 text-right font-medium text-neutral-700">
+                                      {formatCurrency(material.totalCost)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Building Type:</span>
-                            <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Square Footage:</span>
-                            <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Base Cost:</span>
-                            <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Region Factor:</span>
-                            <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Complexity Factor:</span>
-                            <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
-                            <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
+                          
+                          <div className="flex justify-between items-center pt-2 border-t border-neutral-200">
+                            <span className="text-xs font-medium text-neutral-600">Total Material Cost:</span>
+                            <span className="text-xs font-bold text-primary">
+                              {formatCurrency(
+                                materialsBreakdown.materials.reduce((sum, m) => sum + m.totalCost, 0)
+                              )}
+                            </span>
                           </div>
                         </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="materials" className="mt-0">
-                        {materialsBreakdown && materialsBreakdown.materials ? (
-                          <div className="space-y-3">
-                            <div className="max-h-[180px] overflow-y-auto pr-1">
-                              <table className="w-full text-xs">
-                                <thead className="bg-neutral-100 sticky top-0">
-                                  <tr>
-                                    <th className="text-left p-1.5 font-medium text-neutral-600">Material</th>
-                                    <th className="text-right p-1.5 font-medium text-neutral-600">%</th>
-                                    <th className="text-right p-1.5 font-medium text-neutral-600">Cost</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {materialsBreakdown.materials.map((material) => (
-                                    <tr key={material.id} className="border-b border-neutral-100">
-                                      <td className="p-1.5 text-neutral-700">
-                                        {material.materialName}
-                                        <span className="text-neutral-400 text-[10px] block">
-                                          {material.materialCode}
-                                        </span>
-                                      </td>
-                                      <td className="p-1.5 text-right text-neutral-700">
-                                        {material.percentage.toFixed(1)}%
-                                      </td>
-                                      <td className="p-1.5 text-right font-medium text-neutral-700">
-                                        {formatCurrency(material.totalCost)}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                            
-                            <div className="flex justify-between items-center pt-1 border-t border-neutral-200">
-                              <span className="text-xs font-medium text-neutral-600">Total Material Cost:</span>
-                              <span className="text-xs font-bold text-primary">
-                                {formatCurrency(
-                                  materialsBreakdown.materials.reduce((sum, m) => sum + m.totalCost, 0)
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="py-6 text-center text-xs text-neutral-500">
-                            <i className="ri-loader-4-line animate-spin text-xl block mb-2"></i>
-                            Loading materials breakdown...
-                          </div>
-                        )}
-                      </TabsContent>
-                      
-                      <TabsContent value="visualization" className="mt-0">
-                        {materialsBreakdown && materialsBreakdown.materials ? (
-                          <div className="space-y-4">
-                            <div className="mb-2">
-                              <div className="text-xs text-center text-neutral-600 font-medium mb-2">
-                                Interactive Material Cost Distribution
-                              </div>
-                              <div className="w-full h-[180px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart>
-                                    <Pie
-                                      activeIndex={activePieIndex}
-                                      activeShape={renderActiveShape}
-                                      data={materialsBreakdown.materials.map(m => ({
-                                        name: m.materialName,
-                                        value: m.totalCost,
-                                        percentage: m.percentage
-                                      }))}
-                                      cx="50%"
-                                      cy="50%"
-                                      innerRadius={35}
-                                      outerRadius={60}
-                                      dataKey="value"
-                                      onMouseEnter={(_, index) => setActivePieIndex(index)}
-                                    >
-                                      {materialsBreakdown.materials.map((entry, index) => (
-                                        <Cell 
-                                          key={`cell-${index}`} 
-                                          fill={`hsl(${index * 25 % 360}, 70%, 60%)`}
-                                        />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip />
-                                  </PieChart>
-                                </ResponsiveContainer>
-                              </div>
-                              <div className="text-xs text-center text-neutral-500 mt-1">
-                                Hover over segments to see details
-                              </div>
-                            </div>
-                            
-                            <div className="mt-4">
-                              <div className="text-xs text-center text-neutral-600 font-medium mb-2">
-                                Material Cost Breakdown
-                              </div>
-                              <div className="w-full h-[150px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart
-                                    data={materialsBreakdown.materials
-                                      .sort((a, b) => b.totalCost - a.totalCost)
-                                      .slice(0, 8)
-                                      .map(m => ({
-                                        name: m.materialName,
-                                        cost: m.totalCost,
-                                        percentage: m.percentage
-                                      }))}
-                                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
-                                  >
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
-                                      height={50}
-                                      tick={{ fontSize: 9 }}
-                                    />
-                                    <YAxis 
-                                      tickFormatter={(value) => `$${value/1000}k`}
-                                      tick={{ fontSize: 9 }}
-                                    />
-                                    <Tooltip content={<CustomBarTooltip />} />
-                                    <Legend wrapperStyle={{ fontSize: '10px' }} />
-                                    <Bar 
-                                      dataKey="cost" 
-                                      name="Cost"
-                                      fill="#7C3AED"
-                                      radius={[2, 2, 0, 0]}
-                                    />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                              <div className="text-xs text-center text-neutral-500 mt-1">
-                                Top 8 material costs by value
-                              </div>
-                            </div>
-                            
-                            {/* PDF Export Component */}
-                            <div className="mt-6 pt-4 border-t border-neutral-200">
-                              <CostBreakdownPdfExport 
-                                data={result && materialsBreakdown ? {
-                                  region: result.region,
-                                  buildingType: result.buildingType,
-                                  squareFootage: result.squareFootage,
-                                  costPerSqft: result.costPerSqft,
-                                  totalCost: result.totalCost,
-                                  baseCost: result.baseCost,
-                                  regionFactor: result.regionFactor,
-                                  complexityFactor: result.complexityFactor,
-                                  materials: materialsBreakdown.materials
-                                } : null}
-                                onExport={() => {
-                                  console.log("PDF exported successfully");
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="py-6 text-center text-xs text-neutral-500">
-                            <i className="ri-loader-4-line animate-spin text-xl block mb-2"></i>
-                            Loading visualizations...
-                          </div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
+                      ) : (
+                        <div className="py-6 text-center text-xs text-neutral-500">
+                          <svg className="animate-spin h-4 w-4 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading materials breakdown...
+                        </div>
+                      )}
+                    </TabsContent>
                     
-                    <button
-                      type="button"
-                      className="w-full mt-4 border border-neutral-300 text-neutral-700 rounded-md py-1.5 text-xs font-medium"
-                      onClick={() => {
-                        setResult(null);
-                        setMaterialsBreakdown(null);
-                      }}
-                    >
-                      Reset
-                    </button>
-                  </div>
-                )}
+                    <TabsContent value="visualization" className="mt-0 p-4">
+                      {materialsBreakdown && materialsBreakdown.materials ? (
+                        <div className="space-y-6">
+                          <div>
+                            <div className="text-xs text-center text-neutral-600 font-medium mb-2">
+                              Interactive Material Cost Distribution
+                            </div>
+                            <div className="w-full h-[180px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie
+                                    activeIndex={activePieIndex}
+                                    activeShape={renderActiveShape}
+                                    data={materialsBreakdown.materials.map(m => ({
+                                      name: m.materialName,
+                                      value: m.totalCost,
+                                      percentage: m.percentage
+                                    }))}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={35}
+                                    outerRadius={60}
+                                    dataKey="value"
+                                    onMouseEnter={(_, index) => setActivePieIndex(index)}
+                                  >
+                                    {materialsBreakdown.materials.map((entry, index) => (
+                                      <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={`hsl(${index * 25 % 360}, 70%, 60%)`}
+                                      />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <div className="text-xs text-center text-neutral-500 mt-1">
+                              Hover over segments to see details
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="text-xs text-center text-neutral-600 font-medium mb-2">
+                              Material Cost Breakdown
+                            </div>
+                            <div className="w-full h-[130px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={materialsBreakdown.materials
+                                    .sort((a, b) => b.totalCost - a.totalCost)
+                                    .slice(0, 8)
+                                    .map(m => ({
+                                      name: m.materialName,
+                                      cost: m.totalCost,
+                                      percentage: m.percentage
+                                    }))}
+                                  margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                  <XAxis 
+                                    dataKey="name" 
+                                    angle={-45} 
+                                    textAnchor="end" 
+                                    height={50}
+                                    tick={{ fontSize: 9 }}
+                                  />
+                                  <YAxis 
+                                    tickFormatter={(value) => `$${value/1000}k`}
+                                    tick={{ fontSize: 9 }}
+                                  />
+                                  <Tooltip content={<CustomBarTooltip />} />
+                                  <Legend wrapperStyle={{ fontSize: '10px' }} />
+                                  <Bar 
+                                    dataKey="cost" 
+                                    name="Cost"
+                                    fill="#7C3AED"
+                                    radius={[2, 2, 0, 0]}
+                                  />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <div className="text-xs text-center text-neutral-500 mt-1">
+                              Top 8 material costs by value
+                            </div>
+                          </div>
+                          
+                          {/* PDF Export Component */}
+                          <div className="pt-3 border-t border-neutral-200">
+                            <CostBreakdownPdfExport 
+                              data={result && materialsBreakdown ? {
+                                region: result.region,
+                                buildingType: result.buildingType,
+                                squareFootage: result.squareFootage,
+                                costPerSqft: result.costPerSqft,
+                                totalCost: result.totalCost,
+                                baseCost: result.baseCost,
+                                regionFactor: result.regionFactor,
+                                complexityFactor: result.complexityFactor,
+                                materials: materialsBreakdown.materials
+                              } : null}
+                              onExport={() => {
+                                console.log("PDF exported successfully");
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-6 text-center text-xs text-neutral-500">
+                          <svg className="animate-spin h-4 w-4 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading visualization data...
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
               </div>
-            </form>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
