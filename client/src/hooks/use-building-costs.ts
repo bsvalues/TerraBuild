@@ -23,6 +23,31 @@ export interface CalculationResponse {
   totalCost: number;
 }
 
+// Material in a breakdown
+export interface Material {
+  id: number;
+  materialTypeId: number;
+  materialName: string;
+  materialCode: string;
+  percentage: number;
+  costPerUnit: number;
+  quantity: number;
+  totalCost: number;
+}
+
+// Type for the materials breakdown response
+export interface MaterialsBreakdownResponse {
+  region: string;
+  buildingType: string;
+  squareFootage: number;
+  baseCost: number;
+  regionFactor: number;
+  complexityFactor: number;
+  costPerSqft: number;
+  totalCost: number;
+  materials: Material[];
+}
+
 export function useBuildingCosts() {
   // Get all building costs
   const { data: buildingCosts, isLoading: isLoadingCosts, error: costsError } = useQuery({
@@ -71,6 +96,20 @@ export function useBuildingCosts() {
       apiRequest("POST", "/api/costs/calculate", params),
   });
 
+  // Calculate materials breakdown for a building cost
+  const calculateMaterialsBreakdown = useMutation({
+    mutationFn: (params: CalculationRequest) => 
+      apiRequest("POST", "/api/costs/calculate-materials", params),
+  });
+
+  // Get materials for a specific building cost
+  const getBuildingCostMaterials = (id: number) => {
+    return useQuery({
+      queryKey: ["/api/costs", id, "materials"],
+      enabled: !!id,
+    });
+  };
+
   return {
     buildingCosts: buildingCosts as BuildingCost[] | undefined,
     isLoadingCosts,
@@ -79,6 +118,8 @@ export function useBuildingCosts() {
     createBuildingCost,
     updateBuildingCost,
     deleteBuildingCost,
-    calculateCost
+    calculateCost,
+    calculateMaterialsBreakdown,
+    getBuildingCostMaterials
   };
 }

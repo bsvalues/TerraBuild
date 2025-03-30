@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, decimal, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -151,5 +151,80 @@ export type InsertRepositoryStatus = z.infer<typeof insertRepositoryStatusSchema
 export type BuildingCost = typeof buildingCosts.$inferSelect;
 export type InsertBuildingCost = z.infer<typeof insertBuildingCostSchema>;
 
+// Material Types
+export const materialTypes = pgTable("material_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  description: text("description"),
+  unit: text("unit").notNull().default("sqft"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertMaterialTypeSchema = createInsertSchema(materialTypes).pick({
+  name: true,
+  code: true,
+  description: true,
+  unit: true,
+});
+
+// Material Costs by Building Type
+export const materialCosts = pgTable("material_costs", {
+  id: serial("id").primaryKey(),
+  materialTypeId: integer("material_type_id").notNull(),
+  buildingType: text("building_type").notNull(),
+  region: text("region").notNull(),
+  costPerUnit: decimal("cost_per_unit", { precision: 10, scale: 2 }).notNull(),
+  defaultPercentage: decimal("default_percentage", { precision: 5, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    uniqueMaterialBuilding: uniqueIndex("material_building_region_idx").on(
+      table.materialTypeId, 
+      table.buildingType,
+      table.region
+    ),
+  };
+});
+
+export const insertMaterialCostSchema = createInsertSchema(materialCosts).pick({
+  materialTypeId: true,
+  buildingType: true,
+  region: true,
+  costPerUnit: true,
+  defaultPercentage: true,
+});
+
+// Building Cost Materials (for saved estimates)
+export const buildingCostMaterials = pgTable("building_cost_materials", {
+  id: serial("id").primaryKey(),
+  buildingCostId: integer("building_cost_id").notNull(),
+  materialTypeId: integer("material_type_id").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  costPerUnit: decimal("cost_per_unit", { precision: 10, scale: 2 }).notNull(),
+  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(),
+  totalCost: decimal("total_cost", { precision: 14, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBuildingCostMaterialSchema = createInsertSchema(buildingCostMaterials).pick({
+  buildingCostId: true,
+  materialTypeId: true,
+  quantity: true,
+  costPerUnit: true,
+  percentage: true,
+  totalCost: true,
+});
+
 export type CostFactor = typeof costFactors.$inferSelect;
 export type InsertCostFactor = z.infer<typeof insertCostFactorSchema>;
+
+export type MaterialType = typeof materialTypes.$inferSelect;
+export type InsertMaterialType = z.infer<typeof insertMaterialTypeSchema>;
+
+export type MaterialCost = typeof materialCosts.$inferSelect;
+export type InsertMaterialCost = z.infer<typeof insertMaterialCostSchema>;
+
+export type BuildingCostMaterial = typeof buildingCostMaterials.$inferSelect;
+export type InsertBuildingCostMaterial = z.infer<typeof insertBuildingCostMaterialSchema>;

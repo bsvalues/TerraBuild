@@ -6,7 +6,10 @@ import {
   insertActivitySchema,
   insertBuildingCostSchema,
   insertCostFactorSchema,
-  insertUserSchema
+  insertUserSchema,
+  insertMaterialTypeSchema,
+  insertMaterialCostSchema,
+  insertBuildingCostMaterialSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -591,6 +594,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting user" });
+    }
+  });
+
+  // Material Types API
+  app.get("/api/materials/types", async (req: Request, res: Response) => {
+    try {
+      const materialTypes = await storage.getAllMaterialTypes();
+      res.json(materialTypes);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching material types" });
+    }
+  });
+
+  app.get("/api/materials/types/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const materialType = await storage.getMaterialType(id);
+      
+      if (!materialType) {
+        return res.status(404).json({ message: "Material type not found" });
+      }
+      
+      res.json(materialType);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching material type" });
+    }
+  });
+
+  app.get("/api/materials/types/code/:code", async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+      const materialType = await storage.getMaterialTypeByCode(code);
+      
+      if (!materialType) {
+        return res.status(404).json({ message: "Material type not found" });
+      }
+      
+      res.json(materialType);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching material type by code" });
+    }
+  });
+
+  // Material Costs API
+  app.get("/api/materials/costs", async (req: Request, res: Response) => {
+    try {
+      const { buildingType, region } = req.query;
+      let materialCosts;
+      
+      if (buildingType && region) {
+        materialCosts = await storage.getMaterialCostsByBuildingTypeAndRegion(
+          buildingType as string, 
+          region as string
+        );
+      } else if (buildingType) {
+        materialCosts = await storage.getMaterialCostsByBuildingType(buildingType as string);
+      } else if (region) {
+        materialCosts = await storage.getMaterialCostsByRegion(region as string);
+      } else {
+        materialCosts = await storage.getAllMaterialCosts();
+      }
+      
+      res.json(materialCosts);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching material costs" });
+    }
+  });
+
+  app.get("/api/materials/costs/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const materialCost = await storage.getMaterialCost(id);
+      
+      if (!materialCost) {
+        return res.status(404).json({ message: "Material cost not found" });
+      }
+      
+      res.json(materialCost);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching material cost" });
+    }
+  });
+
+  // Building Cost Materials Breakdown API
+  app.get("/api/costs/:id/materials", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const materials = await storage.getBuildingCostMaterials(id);
+      
+      if (!materials || materials.length === 0) {
+        return res.status(404).json({ message: "No materials found for this building cost" });
+      }
+      
+      // Enhance the materials with type information
+      const enhancedMaterials = await Promise.all(materials.map(async (material) => {
+        const materialType = await storage.getMaterialType(material.materialTypeId);
+        return {
+          ...material,
+          materialName: materialType?.name,
+          materialCode: materialType?.code,
+          materialUnit: materialType?.unit
+        };
+      }));
+      
+      res.json(enhancedMaterials);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching building cost materials" });
+    }
+  });
+
+  // Calculate Materials Breakdown
+  app.post("/api/costs/calculate-materials", async (req: Request, res: Response) => {
+    try {
+      const { region, buildingType, squareFootage, complexityMultiplier = 1 } = req.body;
+      
+      if (!region || !buildingType || !squareFootage) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: region, buildingType, squareFootage" 
+        });
+      }
+      
+      try {
+        const materialsBreakdown = await storage.calculateMaterialsBreakdown(
+          region, 
+          buildingType, 
+          Number(squareFootage), 
+          Number(complexityMultiplier)
+        );
+        
+        // Log activity
+        await storage.createActivity({
+          action: `Calculated materials breakdown for ${buildingType} in ${region}`,
+          icon: "ri-stack-line",
+          iconColor: "primary"
+        });
+        
+        res.json(materialsBreakdown);
+      } catch (error: any) {
+        res.status(404).json({ message: error.message || "Error calculating materials breakdown" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Error processing request" });
     }
   });
 

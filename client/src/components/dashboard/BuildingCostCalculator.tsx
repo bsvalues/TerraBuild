@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { useBuildingCosts, CalculationResponse } from "@/hooks/use-building-costs";
+import { useBuildingCosts, CalculationResponse, MaterialsBreakdownResponse } from "@/hooks/use-building-costs";
 import { useCostFactors } from "@/hooks/use-cost-factors";
 import { REGIONS, BUILDING_TYPES, COMPLEXITY_OPTIONS } from "@/data/constants";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { 
+  Tabs, TabsContent, TabsList, TabsTrigger 
+} from "@/components/ui/tabs";
 
 // Form schema
 const calculatorSchema = z.object({
@@ -17,10 +20,15 @@ const calculatorSchema = z.object({
 type CalculatorForm = z.infer<typeof calculatorSchema>;
 
 export default function BuildingCostCalculator() {
-  const { calculateCost } = useBuildingCosts();
-  const { costFactors, isLoadingFactors } = useCostFactors();
+  // All useState hooks declarations should be in the same order between renders
   const [result, setResult] = useState<CalculationResponse | null>(null);
+  const [materialsBreakdown, setMaterialsBreakdown] = useState<MaterialsBreakdownResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("summary");
+  
+  // Hooks
+  const { calculateCost, calculateMaterialsBreakdown } = useBuildingCosts();
+  const { costFactors, isLoadingFactors } = useCostFactors();
 
   const form = useForm<CalculatorForm>({
     resolver: zodResolver(calculatorSchema),
@@ -35,10 +43,18 @@ export default function BuildingCostCalculator() {
   const onSubmit = async (data: CalculatorForm) => {
     setLoading(true);
     try {
+      // Calculate regular cost estimate
       const response = await calculateCost.mutateAsync(data);
       if (response instanceof Response) {
         const jsonData = await response.json();
         setResult(jsonData as CalculationResponse);
+      }
+      
+      // Calculate materials breakdown
+      const materialsResponse = await calculateMaterialsBreakdown.mutateAsync(data);
+      if (materialsResponse instanceof Response) {
+        const materialsData = await materialsResponse.json();
+        setMaterialsBreakdown(materialsData as MaterialsBreakdownResponse);
       }
     } catch (error) {
       console.error("Calculation error:", error);
@@ -164,41 +180,115 @@ export default function BuildingCostCalculator() {
                       <div className="text-sm text-neutral-500">Total Estimated Cost</div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Region:</span>
-                        <span className="text-xs font-medium text-neutral-700">{result.region}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Building Type:</span>
-                        <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Square Footage:</span>
-                        <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Base Cost:</span>
-                        <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Region Factor:</span>
-                        <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Complexity Factor:</span>
-                        <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
-                        <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
-                      </div>
-                    </div>
+                    <Tabs defaultValue="summary" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger 
+                          value="summary" 
+                          onClick={() => setActiveTab("summary")}
+                          className="text-xs"
+                        >
+                          Summary
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="materials" 
+                          onClick={() => setActiveTab("materials")}
+                          className="text-xs"
+                        >
+                          Materials
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="summary" className="mt-0">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Region:</span>
+                            <span className="text-xs font-medium text-neutral-700">{result.region}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Building Type:</span>
+                            <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Square Footage:</span>
+                            <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Base Cost:</span>
+                            <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Region Factor:</span>
+                            <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Complexity Factor:</span>
+                            <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
+                            <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
+                          </div>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="materials" className="mt-0">
+                        {materialsBreakdown && materialsBreakdown.materials ? (
+                          <div className="space-y-3">
+                            <div className="max-h-[180px] overflow-y-auto pr-1">
+                              <table className="w-full text-xs">
+                                <thead className="bg-neutral-100 sticky top-0">
+                                  <tr>
+                                    <th className="text-left p-1.5 font-medium text-neutral-600">Material</th>
+                                    <th className="text-right p-1.5 font-medium text-neutral-600">%</th>
+                                    <th className="text-right p-1.5 font-medium text-neutral-600">Cost</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {materialsBreakdown.materials.map((material) => (
+                                    <tr key={material.id} className="border-b border-neutral-100">
+                                      <td className="p-1.5 text-neutral-700">
+                                        {material.materialName}
+                                        <span className="text-neutral-400 text-[10px] block">
+                                          {material.materialCode}
+                                        </span>
+                                      </td>
+                                      <td className="p-1.5 text-right text-neutral-700">
+                                        {material.percentage.toFixed(1)}%
+                                      </td>
+                                      <td className="p-1.5 text-right font-medium text-neutral-700">
+                                        {formatCurrency(material.totalCost)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            
+                            <div className="flex justify-between items-center pt-1 border-t border-neutral-200">
+                              <span className="text-xs font-medium text-neutral-600">Total Material Cost:</span>
+                              <span className="text-xs font-bold text-primary">
+                                {formatCurrency(
+                                  materialsBreakdown.materials.reduce((sum, m) => sum + m.totalCost, 0)
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="py-6 text-center text-xs text-neutral-500">
+                            <i className="ri-loader-4-line animate-spin text-xl block mb-2"></i>
+                            Loading materials breakdown...
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
                     
                     <button
                       type="button"
                       className="w-full mt-4 border border-neutral-300 text-neutral-700 rounded-md py-1.5 text-xs font-medium"
-                      onClick={() => setResult(null)}
+                      onClick={() => {
+                        setResult(null);
+                        setMaterialsBreakdown(null);
+                      }}
                     >
                       Reset
                     </button>

@@ -10,8 +10,11 @@ import {
   RepositoryStatus, InsertRepositoryStatus,
   BuildingCost, InsertBuildingCost,
   CostFactor, InsertCostFactor,
+  MaterialType, InsertMaterialType,
+  MaterialCost, InsertMaterialCost,
+  BuildingCostMaterial, InsertBuildingCostMaterial,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
-  buildingCosts, costFactors
+  buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -212,5 +215,165 @@ export class PostgresStorage implements IStorage {
 
   async deleteCostFactor(id: number): Promise<void> {
     await db.delete(costFactors).where(eq(costFactors.id, id));
+  }
+
+  // Material Types
+  async getAllMaterialTypes(): Promise<MaterialType[]> {
+    return await db.select().from(materialTypes);
+  }
+
+  async getMaterialType(id: number): Promise<MaterialType | undefined> {
+    const result = await db.select().from(materialTypes).where(eq(materialTypes.id, id));
+    return result[0];
+  }
+
+  async getMaterialTypeByCode(code: string): Promise<MaterialType | undefined> {
+    const result = await db.select().from(materialTypes).where(eq(materialTypes.code, code));
+    return result[0];
+  }
+
+  async createMaterialType(materialType: InsertMaterialType): Promise<MaterialType> {
+    const result = await db.insert(materialTypes).values(materialType).returning();
+    return result[0];
+  }
+
+  async updateMaterialType(id: number, materialType: Partial<InsertMaterialType>): Promise<MaterialType | undefined> {
+    const result = await db.update(materialTypes)
+      .set(materialType)
+      .where(eq(materialTypes.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteMaterialType(id: number): Promise<void> {
+    await db.delete(materialTypes).where(eq(materialTypes.id, id));
+  }
+
+  // Material Costs
+  async getAllMaterialCosts(): Promise<MaterialCost[]> {
+    return await db.select().from(materialCosts);
+  }
+
+  async getMaterialCostsByBuildingType(buildingType: string): Promise<MaterialCost[]> {
+    return await db.select().from(materialCosts)
+      .where(eq(materialCosts.buildingType, buildingType));
+  }
+
+  async getMaterialCostsByRegion(region: string): Promise<MaterialCost[]> {
+    return await db.select().from(materialCosts)
+      .where(eq(materialCosts.region, region));
+  }
+
+  async getMaterialCostsByBuildingTypeAndRegion(buildingType: string, region: string): Promise<MaterialCost[]> {
+    return await db.select().from(materialCosts)
+      .where(and(
+        eq(materialCosts.buildingType, buildingType),
+        eq(materialCosts.region, region)
+      ));
+  }
+
+  async getMaterialCost(id: number): Promise<MaterialCost | undefined> {
+    const result = await db.select().from(materialCosts).where(eq(materialCosts.id, id));
+    return result[0];
+  }
+
+  async createMaterialCost(materialCost: InsertMaterialCost): Promise<MaterialCost> {
+    const result = await db.insert(materialCosts).values({
+      ...materialCost,
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async updateMaterialCost(id: number, materialCost: Partial<InsertMaterialCost>): Promise<MaterialCost | undefined> {
+    const result = await db.update(materialCosts)
+      .set({
+        ...materialCost,
+        updatedAt: new Date()
+      })
+      .where(eq(materialCosts.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteMaterialCost(id: number): Promise<void> {
+    await db.delete(materialCosts).where(eq(materialCosts.id, id));
+  }
+
+  // Building Cost Materials
+  async getBuildingCostMaterials(buildingCostId: number): Promise<BuildingCostMaterial[]> {
+    return await db.select().from(buildingCostMaterials)
+      .where(eq(buildingCostMaterials.buildingCostId, buildingCostId));
+  }
+
+  async createBuildingCostMaterial(material: InsertBuildingCostMaterial): Promise<BuildingCostMaterial> {
+    const result = await db.insert(buildingCostMaterials).values(material).returning();
+    return result[0];
+  }
+
+  async deleteAllBuildingCostMaterials(buildingCostId: number): Promise<void> {
+    await db.delete(buildingCostMaterials)
+      .where(eq(buildingCostMaterials.buildingCostId, buildingCostId));
+  }
+
+  // Calculate Materials Breakdown
+  async calculateMaterialsBreakdown(
+    region: string, 
+    buildingType: string, 
+    squareFootage: number, 
+    complexityMultiplier: number = 1
+  ): Promise<any> {
+    // Get all the material costs for this region and building type
+    const materialCosts = await this.getMaterialCostsByBuildingTypeAndRegion(buildingType, region);
+    
+    if (materialCosts.length === 0) {
+      throw new Error(`No material costs found for ${buildingType} in ${region}`);
+    }
+    
+    // Get the cost factor for this region and building type
+    const costFactor = await this.getCostFactorsByRegionAndType(region, buildingType);
+    if (!costFactor) {
+      throw new Error(`No cost factors found for ${buildingType} in ${region}`);
+    }
+    
+    const baseCost = Number(costFactor.baseCost);
+    const regionFactor = Number(costFactor.regionFactor);
+    const complexityFactorValue = Number(costFactor.complexityFactor) * complexityMultiplier;
+    
+    const costPerSqft = baseCost * regionFactor * complexityFactorValue;
+    const totalCost = costPerSqft * squareFootage;
+    
+    // Calculate material breakdown
+    const materials = await Promise.all(materialCosts.map(async (materialCost) => {
+      const materialType = await this.getMaterialType(materialCost.materialTypeId);
+      if (!materialType) return null;
+      
+      const percentage = Number(materialCost.defaultPercentage);
+      const materialTotalCost = (totalCost * percentage) / 100;
+      const quantity = (squareFootage * percentage) / 100;
+      
+      return {
+        id: materialCost.id,
+        materialTypeId: materialCost.materialTypeId,
+        materialName: materialType.name,
+        materialCode: materialType.code,
+        percentage,
+        costPerUnit: Number(materialCost.costPerUnit),
+        quantity,
+        totalCost: materialTotalCost
+      };
+    }));
+    
+    return {
+      region,
+      buildingType,
+      squareFootage,
+      costPerSqft,
+      totalCost,
+      baseCost,
+      regionFactor,
+      complexityFactor: complexityFactorValue,
+      materials: materials.filter(Boolean)
+    };
   }
 }
