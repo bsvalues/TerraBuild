@@ -85,6 +85,38 @@ export async function initDatabase() {
         region_factor DECIMAL(5,2) NOT NULL DEFAULT 1.0,
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
+      
+      CREATE TABLE IF NOT EXISTS material_types (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        code TEXT UNIQUE NOT NULL,
+        description TEXT,
+        unit TEXT NOT NULL DEFAULT 'sqft',
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS material_costs (
+        id SERIAL PRIMARY KEY,
+        material_type_id INTEGER NOT NULL,
+        building_type TEXT NOT NULL,
+        region TEXT NOT NULL,
+        cost_per_unit DECIMAL(10,2) NOT NULL,
+        default_percentage DECIMAL(5,2) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        UNIQUE(material_type_id, building_type, region)
+      );
+      
+      CREATE TABLE IF NOT EXISTS building_cost_materials (
+        id SERIAL PRIMARY KEY,
+        building_cost_id INTEGER NOT NULL,
+        material_type_id INTEGER NOT NULL,
+        quantity DECIMAL(10,2) NOT NULL,
+        cost_per_unit DECIMAL(10,2) NOT NULL,
+        percentage DECIMAL(5,2) NOT NULL,
+        total_cost DECIMAL(14,2) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
     `);
 
     // Add default data if not already exists
@@ -209,6 +241,98 @@ async function addDefaultData() {
       `);
     }
     
+    // Check if material types exist
+    const materialTypesExist = await pool.query("SELECT * FROM material_types LIMIT 1");
+    
+    if (materialTypesExist.rows.length === 0) {
+      // Add material types
+      await pool.query(`
+        INSERT INTO material_types (name, code, description, unit)
+        VALUES 
+          ('Concrete', 'CON', 'Foundation and structural concrete', 'cubic yard'),
+          ('Structural Steel', 'STL', 'Beams, columns, and structural framing', 'ton'),
+          ('Lumber', 'LUM', 'Wood framing and carpentry', 'board feet'),
+          ('Drywall', 'DRY', 'Gypsum wall board and finishing', 'sqft'),
+          ('Roofing', 'ROOF', 'Roofing materials and installation', 'sqft'),
+          ('HVAC', 'HVAC', 'Heating, ventilation, and air conditioning systems', 'unit'),
+          ('Electrical', 'ELEC', 'Electrical systems and wiring', 'linear feet'),
+          ('Plumbing', 'PLMB', 'Plumbing fixtures and piping', 'fixture'),
+          ('Flooring', 'FLR', 'Floor coverings including tile, carpet, and wood', 'sqft'),
+          ('Windows', 'WIN', 'Windows and glazing', 'unit'),
+          ('Doors', 'DOOR', 'Interior and exterior doors', 'unit'),
+          ('Insulation', 'INS', 'Thermal and acoustic insulation', 'sqft'),
+          ('Paint', 'PAINT', 'Interior and exterior painting', 'gallon'),
+          ('Site Work', 'SITE', 'Excavation, grading, and site preparation', 'cubic yard'),
+          ('Finishes', 'FIN', 'Interior and exterior finishes', 'sqft')
+      `);
+    }
+    
+    // Check if material costs exist
+    const materialCostsExist = await pool.query("SELECT * FROM material_costs LIMIT 1");
+    
+    if (materialCostsExist.rows.length === 0) {
+      // Add material costs for Commercial buildings in Northeast region
+      await pool.query(`
+        INSERT INTO material_costs (material_type_id, building_type, region, cost_per_unit, default_percentage)
+        VALUES 
+          -- Commercial building in Northeast
+          (1, 'Commercial', 'Northeast', 185.00, 15.00),  -- Concrete
+          (2, 'Commercial', 'Northeast', 3250.00, 18.00), -- Structural Steel
+          (3, 'Commercial', 'Northeast', 2.75, 5.00),     -- Lumber
+          (4, 'Commercial', 'Northeast', 2.25, 4.00),     -- Drywall
+          (5, 'Commercial', 'Northeast', 8.50, 7.00),     -- Roofing
+          (6, 'Commercial', 'Northeast', 12000.00, 10.00),-- HVAC
+          (7, 'Commercial', 'Northeast', 12.00, 8.00),    -- Electrical
+          (8, 'Commercial', 'Northeast', 950.00, 7.00),   -- Plumbing
+          (9, 'Commercial', 'Northeast', 7.50, 6.00),     -- Flooring
+          (10, 'Commercial', 'Northeast', 850.00, 4.00),  -- Windows
+          (11, 'Commercial', 'Northeast', 450.00, 3.00),  -- Doors
+          (12, 'Commercial', 'Northeast', 1.75, 3.00),    -- Insulation
+          (13, 'Commercial', 'Northeast', 45.00, 2.00),   -- Paint
+          (14, 'Commercial', 'Northeast', 65.00, 4.00),   -- Site Work
+          (15, 'Commercial', 'Northeast', 12.00, 4.00),   -- Finishes
+          
+          -- Residential building in Northeast
+          (1, 'Residential', 'Northeast', 165.00, 12.00),  -- Concrete
+          (2, 'Residential', 'Northeast', 2950.00, 10.00), -- Structural Steel
+          (3, 'Residential', 'Northeast', 2.50, 15.00),    -- Lumber
+          (4, 'Residential', 'Northeast', 2.00, 8.00),     -- Drywall
+          (5, 'Residential', 'Northeast', 7.75, 7.00),     -- Roofing
+          (6, 'Residential', 'Northeast', 8500.00, 8.00),  -- HVAC
+          (7, 'Residential', 'Northeast', 10.00, 8.00),    -- Electrical
+          (8, 'Residential', 'Northeast', 750.00, 8.00),   -- Plumbing
+          (9, 'Residential', 'Northeast', 6.00, 7.00),     -- Flooring
+          (10, 'Residential', 'Northeast', 650.00, 5.00),  -- Windows
+          (11, 'Residential', 'Northeast', 350.00, 4.00),  -- Doors
+          (12, 'Residential', 'Northeast', 1.50, 3.00),    -- Insulation
+          (13, 'Residential', 'Northeast', 40.00, 2.00),   -- Paint
+          (14, 'Residential', 'Northeast', 55.00, 1.00),   -- Site Work
+          (15, 'Residential', 'Northeast', 10.00, 2.00)    -- Finishes
+      `);
+      
+      // Add more material costs for regions and building types
+      await pool.query(`
+        INSERT INTO material_costs (material_type_id, building_type, region, cost_per_unit, default_percentage)
+        VALUES
+          -- Commercial building in Midwest (baseline)
+          (1, 'Commercial', 'Midwest', 160.00, 15.00),  -- Concrete
+          (2, 'Commercial', 'Midwest', 2950.00, 18.00), -- Structural Steel
+          (3, 'Commercial', 'Midwest', 2.45, 5.00),     -- Lumber
+          (4, 'Commercial', 'Midwest', 1.95, 4.00),     -- Drywall
+          (5, 'Commercial', 'Midwest', 7.50, 7.00),     -- Roofing
+          (6, 'Commercial', 'Midwest', 10500.00, 10.00),-- HVAC
+          (7, 'Commercial', 'Midwest', 10.50, 8.00),    -- Electrical
+          (8, 'Commercial', 'Midwest', 850.00, 7.00),   -- Plumbing
+          (9, 'Commercial', 'Midwest', 6.25, 6.00),     -- Flooring
+          (10, 'Commercial', 'Midwest', 750.00, 4.00),  -- Windows
+          (11, 'Commercial', 'Midwest', 400.00, 3.00),  -- Doors
+          (12, 'Commercial', 'Midwest', 1.55, 3.00),    -- Insulation
+          (13, 'Commercial', 'Midwest', 40.00, 2.00),   -- Paint
+          (14, 'Commercial', 'Midwest', 55.00, 4.00),   -- Site Work
+          (15, 'Commercial', 'Midwest', 10.00, 4.00)    -- Finishes
+      `);
+    }
+
     // Add activity
     await pool.query(`
       INSERT INTO activities (action, icon, icon_color)
