@@ -12,6 +12,7 @@ import {
   PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, Sector 
 } from "recharts";
+import CostBreakdownPdfExport from "./CostBreakdownPdfExport";
 
 // Form schema
 const calculatorSchema = z.object({
@@ -435,6 +436,26 @@ export default function BuildingCostCalculator() {
                               <div className="text-xs text-center text-neutral-500 mt-1">
                                 Top 8 material costs by value
                               </div>
+                            </div>
+                            
+                            {/* PDF Export Component */}
+                            <div className="mt-6 pt-4 border-t border-neutral-200">
+                              <CostBreakdownPdfExport 
+                                data={result && materialsBreakdown ? {
+                                  region: result.region,
+                                  buildingType: result.buildingType,
+                                  squareFootage: result.squareFootage,
+                                  costPerSqft: result.costPerSqft,
+                                  totalCost: result.totalCost,
+                                  baseCost: result.baseCost,
+                                  regionFactor: result.regionFactor,
+                                  complexityFactor: result.complexityFactor,
+                                  materials: materialsBreakdown.materials
+                                } : null}
+                                onExport={() => {
+                                  console.log("PDF exported successfully");
+                                }}
+                              />
                             </div>
                           </div>
                         ) : (
