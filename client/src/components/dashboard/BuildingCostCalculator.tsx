@@ -43,17 +43,24 @@ export default function BuildingCostCalculator() {
   const onSubmit = async (data: CalculatorForm) => {
     setLoading(true);
     try {
+      console.log("Submitting form data:", data);
+      
       // Calculate regular cost estimate
       const response = await calculateCost.mutateAsync(data);
+      console.log("Cost calculation response:", response);
       if (response instanceof Response) {
         const jsonData = await response.json();
+        console.log("Cost calculation JSON data:", jsonData);
         setResult(jsonData as CalculationResponse);
       }
       
       // Calculate materials breakdown
+      console.log("Calculating materials breakdown with:", data);
       const materialsResponse = await calculateMaterialsBreakdown.mutateAsync(data);
+      console.log("Materials breakdown response:", materialsResponse);
       if (materialsResponse instanceof Response) {
         const materialsData = await materialsResponse.json();
+        console.log("Materials breakdown JSON data:", materialsData);
         setMaterialsBreakdown(materialsData as MaterialsBreakdownResponse);
       }
     } catch (error) {
@@ -180,18 +187,16 @@ export default function BuildingCostCalculator() {
                       <div className="text-sm text-neutral-500">Total Estimated Cost</div>
                     </div>
                     
-                    <Tabs defaultValue="summary" className="w-full">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                       <TabsList className="grid w-full grid-cols-2 mb-4">
                         <TabsTrigger 
                           value="summary" 
-                          onClick={() => setActiveTab("summary")}
                           className="text-xs"
                         >
                           Summary
                         </TabsTrigger>
                         <TabsTrigger 
                           value="materials" 
-                          onClick={() => setActiveTab("materials")}
                           className="text-xs"
                         >
                           Materials

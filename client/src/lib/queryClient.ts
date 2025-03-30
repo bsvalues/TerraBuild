@@ -12,6 +12,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log(`API Request: ${method} ${url}`, data);
+  
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -19,8 +21,15 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  console.log(`API Response: ${method} ${url}`, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: Object.fromEntries(res.headers.entries()),
+    // Don't clone the response yet as it would consume the body
+  });
+
   await throwIfResNotOk(res);
-  return res;
+  return res.clone(); // Clone so the body can be read multiple times
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
