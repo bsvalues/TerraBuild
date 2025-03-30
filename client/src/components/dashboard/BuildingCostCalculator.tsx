@@ -8,6 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   Tabs, TabsContent, TabsList, TabsTrigger 
 } from "@/components/ui/tabs";
+import { 
+  PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer, Sector 
+} from "recharts";
 
 // Form schema
 const calculatorSchema = z.object({
@@ -19,12 +23,67 @@ const calculatorSchema = z.object({
 
 type CalculatorForm = z.infer<typeof calculatorSchema>;
 
+// For custom active shape in pie chart
+const renderActiveShape = (props: any) => {
+  const { 
+    cx, cy, innerRadius, outerRadius, startAngle, endAngle,
+    fill, payload, percent, value, name
+  } = props;
+
+  return (
+    <g>
+      <text x={cx} y={cy} dy={-20} textAnchor="middle" fill="#333" className="text-xs">
+        {name}
+      </text>
+      <text x={cx} y={cy} textAnchor="middle" fill="#333" className="text-xs font-semibold">
+        ${Number(value).toLocaleString()}
+      </text>
+      <text x={cx} y={cy} dy={20} textAnchor="middle" fill="#999" className="text-xs">
+        {`${(percent * 100).toFixed(1)}%`}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 5}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 8}
+        fill={fill}
+      />
+    </g>
+  );
+};
+
+// Custom tooltip for bar chart
+const CustomBarTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border border-neutral-200 rounded-md shadow-sm text-xs">
+        <p className="font-medium">{payload[0].payload.name}</p>
+        <p className="text-neutral-500">Cost: ${Number(payload[0].value).toLocaleString()}</p>
+        <p className="text-neutral-500">Percentage: {payload[0].payload.percentage.toFixed(1)}%</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function BuildingCostCalculator() {
   // All useState hooks declarations should be in the same order between renders
   const [result, setResult] = useState<CalculationResponse | null>(null);
   const [materialsBreakdown, setMaterialsBreakdown] = useState<MaterialsBreakdownResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("summary");
+  const [activePieIndex, setActivePieIndex] = useState<number>(0);
   
   // Hooks
   const { calculateCost, calculateMaterialsBreakdown } = useBuildingCosts();
@@ -188,7 +247,7 @@ export default function BuildingCostCalculator() {
                     </div>
                     
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsList className="grid w-full grid-cols-3 mb-4">
                         <TabsTrigger 
                           value="summary" 
                           className="text-xs"
@@ -200,6 +259,12 @@ export default function BuildingCostCalculator() {
                           className="text-xs"
                         >
                           Materials
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="visualization" 
+                          className="text-xs"
+                        >
+                          Visualization
                         </TabsTrigger>
                       </TabsList>
                       
@@ -282,6 +347,100 @@ export default function BuildingCostCalculator() {
                           <div className="py-6 text-center text-xs text-neutral-500">
                             <i className="ri-loader-4-line animate-spin text-xl block mb-2"></i>
                             Loading materials breakdown...
+                          </div>
+                        )}
+                      </TabsContent>
+                      
+                      <TabsContent value="visualization" className="mt-0">
+                        {materialsBreakdown && materialsBreakdown.materials ? (
+                          <div className="space-y-4">
+                            <div className="mb-2">
+                              <div className="text-xs text-center text-neutral-600 font-medium mb-2">
+                                Interactive Material Cost Distribution
+                              </div>
+                              <div className="w-full h-[180px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <PieChart>
+                                    <Pie
+                                      activeIndex={activePieIndex}
+                                      activeShape={renderActiveShape}
+                                      data={materialsBreakdown.materials.map(m => ({
+                                        name: m.materialName,
+                                        value: m.totalCost,
+                                        percentage: m.percentage
+                                      }))}
+                                      cx="50%"
+                                      cy="50%"
+                                      innerRadius={35}
+                                      outerRadius={60}
+                                      dataKey="value"
+                                      onMouseEnter={(_, index) => setActivePieIndex(index)}
+                                    >
+                                      {materialsBreakdown.materials.map((entry, index) => (
+                                        <Cell 
+                                          key={`cell-${index}`} 
+                                          fill={`hsl(${index * 25 % 360}, 70%, 60%)`}
+                                        />
+                                      ))}
+                                    </Pie>
+                                    <Tooltip />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+                              <div className="text-xs text-center text-neutral-500 mt-1">
+                                Hover over segments to see details
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <div className="text-xs text-center text-neutral-600 font-medium mb-2">
+                                Material Cost Breakdown
+                              </div>
+                              <div className="w-full h-[150px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart
+                                    data={materialsBreakdown.materials
+                                      .sort((a, b) => b.totalCost - a.totalCost)
+                                      .slice(0, 8)
+                                      .map(m => ({
+                                        name: m.materialName,
+                                        cost: m.totalCost,
+                                        percentage: m.percentage
+                                      }))}
+                                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis 
+                                      dataKey="name" 
+                                      angle={-45} 
+                                      textAnchor="end" 
+                                      height={50}
+                                      tick={{ fontSize: 9 }}
+                                    />
+                                    <YAxis 
+                                      tickFormatter={(value) => `$${value/1000}k`}
+                                      tick={{ fontSize: 9 }}
+                                    />
+                                    <Tooltip content={<CustomBarTooltip />} />
+                                    <Legend wrapperStyle={{ fontSize: '10px' }} />
+                                    <Bar 
+                                      dataKey="cost" 
+                                      name="Cost"
+                                      fill="#7C3AED"
+                                      radius={[2, 2, 0, 0]}
+                                    />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                              <div className="text-xs text-center text-neutral-500 mt-1">
+                                Top 8 material costs by value
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="py-6 text-center text-xs text-neutral-500">
+                            <i className="ri-loader-4-line animate-spin text-xl block mb-2"></i>
+                            Loading visualizations...
                           </div>
                         )}
                       </TabsContent>
