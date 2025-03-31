@@ -19,21 +19,34 @@ const functionRegistry = {
   ...buildingCostFunctions
 };
 
-// Schema for cost prediction request
-export const costPredictionRequestSchema = z.object({
-  buildingType: z.string(),
-  squareFootage: z.number().positive(),
-  region: z.string(),
-  yearBuilt: z.number().int().positive().optional(),
-  condition: z.enum(['EXCELLENT', 'GOOD', 'AVERAGE', 'FAIR', 'POOR']).optional(),
-  features: z.array(z.string()).optional()
-});
+// Import our validation module
+import validation, { 
+  costPredictionSchema, 
+  validateCostPredictionData,
+  normalizeInputData
+} from '@shared/mcp-validation';
+
+// Schema for cost prediction request - using our enhanced validation schema
+export const costPredictionRequestSchema = costPredictionSchema;
 
 // Cost prediction agent that uses OpenAI to generate building cost predictions
 export async function costPredictionAgent(data: z.infer<typeof costPredictionRequestSchema>) {
   try {
-    // Validate request data
-    const validatedData = costPredictionRequestSchema.parse(data);
+    // Validate and normalize request data with enhanced validation
+    const validationResult = validateCostPredictionData(data);
+    
+    // If data is invalid, throw an error with validation messages
+    if (!validationResult.isValid) {
+      throw new Error(`Validation failed: ${validationResult.validationErrors.join(', ')}`);
+    }
+    
+    // Get the normalized data
+    const validatedData = validationResult.normalizedData;
+    
+    // Check for data quality warnings
+    if (validationResult.dataQualityWarnings.length > 0) {
+      console.warn('Data quality warnings:', validationResult.dataQualityWarnings);
+    }
     
     // Context information to provide to the AI
     const contextInfo = {
@@ -120,13 +133,53 @@ export async function costPredictionAgent(data: z.infer<typeof costPredictionReq
       ? parseFloat(confidenceMatch[1]) 
       : 0.7; // Default confidence if not provided
     
-    // Return structured prediction result
+    // Process data quality information
+    const anomalies = [];
+    let dataQualityScore = 0.85; // Default high quality score
+    
+    // Check for anomalies based on normalizedData
+    if (validatedData.yearBuilt && validatedData.yearBuilt < 1900) {
+      anomalies.push("The building age is unusually old, which may affect prediction accuracy.");
+      dataQualityScore -= 0.1;
+    }
+    
+    if (validatedData.squareFootage > 500000) {
+      anomalies.push("Very large square footage may lead to less accurate cost estimates.");
+      dataQualityScore -= 0.15;
+    }
+    
+    if (validatedData.complexity && validatedData.complexity > 1.8) {
+      anomalies.push("High complexity buildings have more variable costs and less predictable estimates.");
+      dataQualityScore -= 0.1;
+    }
+    
+    // Calculate breakdown of costs
+    const baseCost = totalCost / (validatedData.squareFootage || 1);
+    const regionFactor = validatedData.region === "central" ? 1.0 : 
+                       validatedData.region === "north" ? 1.05 :
+                       validatedData.region === "south" ? 0.95 :
+                       validatedData.region === "east" ? 0.98 :
+                       validatedData.region === "west" ? 1.1 : 1.0;
+    
+    const complexityFactor = validatedData.complexity || 1.0;
+    
+    // Return structured prediction result with enhanced data quality information
     return {
       totalCost,
       costPerSquareFoot,
       confidenceScore,
       explanation,
-      rawResponse: aiResponse
+      rawResponse: aiResponse,
+      
+      // Data quality information
+      dataQualityScore,
+      anomalies: anomalies.length > 0 ? anomalies : undefined,
+      
+      // Cost breakdown fields
+      baseCost: baseCost * validatedData.squareFootage,
+      regionFactor,
+      complexityFactor,
+      costPerSqft: costPerSquareFoot
     };
   } catch (error) {
     console.error('Error in cost prediction agent:', error);

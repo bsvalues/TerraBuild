@@ -21,12 +21,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useMCP } from '@/hooks/use-mcp';
+import { 
+  useMCP, 
+  VALID_BUILDING_TYPES, 
+  VALID_REGIONS, 
+  VALID_CONDITIONS,
+  CostPredictionResponse
+} from '@/hooks/use-mcp';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Building2, Database, Calculator } from 'lucide-react';
+import { Loader2, Building2, Database, Calculator, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from "@/components/ui/badge";
 
 // Validation schema for the cost prediction form
 const costPredictionSchema = z.object({
@@ -70,7 +77,8 @@ const conditionOptions = [
 export default function AICostPredictor() {
   const { toast } = useToast();
   const { predictCost, isPredicting, isError, error, mcpStatus } = useMCP();
-  const [predictionResult, setPredictionResult] = useState<any>(null);
+  const [predictionResult, setPredictionResult] = useState<CostPredictionResponse | null>(null);
+  const [dataQualityWarnings, setDataQualityWarnings] = useState<string[]>([]);
   
   // Initialize the form
   const form = useForm<CostPredictionFormValues>({
@@ -87,13 +95,34 @@ export default function AICostPredictor() {
   
   // Handle form submission
   const onSubmit = (data: CostPredictionFormValues) => {
+    // Reset previous results
+    setPredictionResult(null);
+    setDataQualityWarnings([]);
+    
     // Call the MCP service to predict the cost
     predictCost(data, {
       onSuccess: (result) => {
         setPredictionResult(result);
+        
+        // Extract any data quality warnings or anomalies
+        const warnings: string[] = [];
+        
+        if (result.anomalies && result.anomalies.length > 0) {
+          warnings.push(...result.anomalies);
+        }
+        
+        if (result.dataQualityScore !== undefined && result.dataQualityScore < 0.7) {
+          warnings.push(`Low data quality score (${(result.dataQualityScore * 100).toFixed(0)}%). Prediction may be less reliable.`);
+        }
+        
+        setDataQualityWarnings(warnings);
+        
         toast({
           title: "Cost Prediction Complete",
-          description: "AI has successfully analyzed your building parameters",
+          description: warnings.length > 0 
+            ? "Analysis complete with data quality warnings" 
+            : "AI has successfully analyzed your building parameters",
+          variant: warnings.length > 0 ? "default" : "default",
         });
       },
       onError: (error) => {
@@ -349,6 +378,43 @@ export default function AICostPredictor() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+            
+            {/* Data Quality Warnings */}
+            {dataQualityWarnings.length > 0 && (
+              <Alert className="bg-amber-50 border-amber-200">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <AlertTitle className="text-amber-700">Data Quality Warnings</AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
+                    {dataQualityWarnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Confidence Score Indicator */}
+            {predictionResult && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">Prediction Confidence:</span>
+                <div className="flex items-center gap-1">
+                  {predictionResult.confidenceScore >= 0.8 ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : predictionResult.confidenceScore >= 0.6 ? (
+                    <CheckCircle className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                  )}
+                  <Badge 
+                         className={`${predictionResult.confidenceScore >= 0.8 ? 'bg-green-100 text-green-700 hover:bg-green-100' : 
+                                        predictionResult.confidenceScore >= 0.6 ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100' : 
+                                        'bg-red-100 text-red-700 border-red-200 hover:bg-red-100'}`}>
+                    {(predictionResult.confidenceScore * 100).toFixed(0)}% Confidence
+                  </Badge>
+                </div>
+              </div>
             )}
             
             {isError && (

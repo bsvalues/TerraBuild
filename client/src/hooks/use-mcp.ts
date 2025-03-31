@@ -2,6 +2,39 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 /**
+ * Valid building types
+ */
+export const VALID_BUILDING_TYPES = [
+  'residential',
+  'commercial',
+  'industrial',
+  'agricultural',
+  'institutional'
+];
+
+/**
+ * Valid regions
+ */
+export const VALID_REGIONS = [
+  'north',
+  'south',
+  'east',
+  'west',
+  'central'
+];
+
+/**
+ * Valid building conditions
+ */
+export const VALID_CONDITIONS = [
+  'excellent',
+  'good',
+  'average',
+  'fair',
+  'poor'
+];
+
+/**
  * Cost prediction request parameters
  */
 interface CostPredictionParams {
@@ -11,6 +44,26 @@ interface CostPredictionParams {
   yearBuilt?: number;
   condition?: string;
   complexity?: number;
+  features?: string[];
+}
+
+/**
+ * Cost prediction response
+ */
+export interface CostPredictionResponse {
+  totalCost: number;
+  costPerSquareFoot: number;
+  confidenceScore: number;
+  explanation: string;
+  dataQualityScore?: number;
+  anomalies?: string[];
+  rawResponse?: string;
+  
+  // Additional fields to match the display
+  baseCost?: number;
+  regionFactor?: number | string;
+  complexityFactor?: number | string;
+  costPerSqft?: number;
 }
 
 /**
