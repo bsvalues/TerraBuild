@@ -12,17 +12,32 @@ import ARVisualizationPage from "@/pages/ARVisualizationPage";
 import DataImportPage from "@/pages/DataImportPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
-import { useAutoLoginClient } from "./hooks/use-auto-login-client";
+import { useEffect } from "react";
 
 // Add link to Remix Icon for icons
 const RemixIconLink = () => (
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
 );
 
-// Wrapper component to handle auto-login
-const AutoLoginHandler = ({ children }: { children: React.ReactNode }) => {
-  useAutoLoginClient();
-  return <>{children}</>;
+// Component for auto-login
+const DevAutoLogin = () => {
+  useEffect(() => {
+    console.log("DEVELOPMENT MODE: Setting mock admin user");
+    // Use the same mock admin user as on the server
+    const adminUser = {
+      id: 1,
+      username: "admin",
+      password: "password", // Not actual password, just for display
+      role: "admin",
+      name: "Admin User",
+      isActive: true
+    };
+    
+    // Set the user data directly in the query cache
+    queryClient.setQueryData(["/api/user"], adminUser);
+  }, []);
+  
+  return null;
 };
 
 function Router() {
@@ -44,11 +59,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AutoLoginHandler>
-          <RemixIconLink />
-          <Router />
-          <Toaster />
-        </AutoLoginHandler>
+        <DevAutoLogin />
+        <RemixIconLink />
+        <Router />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
