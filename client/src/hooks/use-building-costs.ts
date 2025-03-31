@@ -10,6 +10,7 @@ export interface CalculationRequest {
   propertyClass?: string;
   squareFootage: number;
   complexityMultiplier?: number;
+  complexityFactor?: string;
   // Benton County, Washington specific fields
   taxLotId?: string;
   propertyId?: string;
@@ -137,6 +138,17 @@ export function useBuildingCosts() {
     });
   };
 
+  // Helper function to calculate and return building cost directly
+  const calculateBuildingCost = async (params: CalculationRequest): Promise<any> => {
+    try {
+      const result = await calculateCost.mutateAsync(params);
+      return result;
+    } catch (error) {
+      console.error("Error calculating building cost:", error);
+      throw error;
+    }
+  };
+
   return {
     buildingCosts: buildingCosts as BuildingCost[] | undefined,
     isLoadingCosts,
@@ -146,6 +158,7 @@ export function useBuildingCosts() {
     updateBuildingCost,
     deleteBuildingCost,
     calculateCost,
+    calculateBuildingCost,
     calculateMaterialsBreakdown,
     getBuildingCostMaterials
   };

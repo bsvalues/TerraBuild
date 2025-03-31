@@ -104,6 +104,13 @@ export const COMPLEXITY_OPTIONS = [
   { value: "1.5", label: "Custom (1.5×)" }
 ];
 
+export const complexityLevels = [
+  { value: "Low", label: "Low Complexity (0.9×)" },
+  { value: "Medium", label: "Medium Complexity (1.0×)" },
+  { value: "High", label: "High Complexity (1.1×)" },
+  { value: "Custom", label: "Custom Complexity" }
+];
+
 export const ASSESSMENT_YEARS = [
   { value: "2025", label: "2025" },
   { value: "2024", label: "2024" },

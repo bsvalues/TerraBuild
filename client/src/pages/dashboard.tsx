@@ -11,6 +11,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import ApplicationDetails from "@/components/dashboard/ApplicationDetails";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 import { CostMatrixManager } from "@/components/dashboard/CostMatrixManager";
+import { CostComparisonWizard } from "@/components/dashboard/CostComparisonWizard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>("calculator");
@@ -39,6 +40,12 @@ export default function Dashboard() {
                 onClick={() => setActiveTab("calculator")}
               >
                 Cost Calculator
+              </button>
+              <button 
+                className={`px-4 py-3 font-medium text-sm ${activeTab === "comparison" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
+                onClick={() => setActiveTab("comparison")}
+              >
+                Cost Comparison
               </button>
               <button 
                 className={`px-4 py-3 font-medium text-sm ${activeTab === "costmatrix" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
@@ -79,6 +86,13 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Calculator</h2>
                 <p className="text-neutral-600 mb-6">Calculate building costs based on region, building type, square footage, and complexity.</p>
                 <BuildingCostCalculator />
+              </div>
+            )}
+            {activeTab === "comparison" && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Comparison Wizard</h2>
+                <p className="text-neutral-600 mb-6">Compare multiple cost calculation scenarios side-by-side for better decision making.</p>
+                <CostComparisonWizard />
               </div>
             )}
             {activeTab === "costmatrix" && (
