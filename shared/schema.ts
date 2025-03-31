@@ -476,3 +476,34 @@ export const insertCostFactorPresetSchema = createInsertSchema(costFactorPresets
 
 export type CostFactorPreset = typeof costFactorPresets.$inferSelect;
 export type InsertCostFactorPreset = z.infer<typeof insertCostFactorPresetSchema>;
+
+// File Uploads
+export const fileUploads = pgTable("file_uploads", {
+  id: serial("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  uploadedBy: integer("uploaded_by").notNull(),
+  status: text("status").notNull().default("pending"),
+  processedItems: integer("processed_items").notNull().default(0),
+  totalItems: integer("total_items"),
+  errorCount: integer("error_count").notNull().default(0),
+  errors: json("errors").default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertFileUploadSchema = createInsertSchema(fileUploads).pick({
+  fileName: true,
+  fileType: true,
+  fileSize: true,
+  uploadedBy: true,
+  status: true,
+  processedItems: true,
+  totalItems: true,
+  errorCount: true,
+  errors: true,
+});
+
+export type FileUpload = typeof fileUploads.$inferSelect;
+export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;

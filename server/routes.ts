@@ -11,7 +11,8 @@ import {
   insertMaterialCostSchema,
   insertBuildingCostMaterialSchema,
   insertCalculationHistorySchema,
-  insertCostFactorPresetSchema
+  insertCostFactorPresetSchema,
+  insertFileUploadSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -1085,6 +1086,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting cost matrix entry" });
+    }
+  });
+  
+  // File Upload API
+  
+  // Get all file uploads
+  app.get("/api/file-uploads", requireAuth, async (req: Request, res: Response) => {
+    try {
+      let fileUploads;
+      
+      // If admin, get all files. Otherwise, only user's own files
+      if (req.user?.role === "admin") {
+        fileUploads = await storage.getAllFileUploads();
+      } else {
+        fileUploads = await storage.getUserFileUploads(req.user!.id);
+      }
+      
+      res.json(fileUploads);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching file uploads" });
+    }
+  });
+  
+  // Get file upload by ID
+  app.get("/api/file-uploads/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const fileUpload = await storage.getFileUpload(id);
+      
+      if (!fileUpload) {
+        return res.status(404).json({ message: "File upload not found" });
+      }
+      
+      // Allow access only to admin or the user who uploaded
+      if (req.user?.role !== "admin" && fileUpload.uploadedBy !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(fileUpload);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching file upload" });
+    }
+  });
+  
+  // Create file upload record
+  app.post("/api/file-uploads", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const fileUploadData = insertFileUploadSchema.parse({
+        ...req.body,
+        uploadedBy: req.user!.id
+      });
+      
+      const fileUpload = await storage.createFileUpload(fileUploadData);
+      
+      await storage.createActivity({
+        action: `Uploaded file: ${fileUpload.fileName}`,
+        icon: "ri-file-upload-line",
+        iconColor: "primary"
+      });
+      
+      res.status(201).json(fileUpload);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Error creating file upload record" });
+      }
+    }
+  });
+  
+  // Update file upload status
+  app.patch("/api/file-uploads/:id/status", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, processedItems, totalItems, errors } = req.body;
+      
+      if (!status || typeof status !== 'string') {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const fileUpload = await storage.getFileUpload(id);
+      if (!fileUpload) {
+        return res.status(404).json({ message: "File upload not found" });
+      }
+      
+      // Only allow the uploader or admin to update status
+      if (req.user?.role !== "admin" && fileUpload.uploadedBy !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedFileUpload = await storage.updateFileUploadStatus(
+        id, 
+        status, 
+        processedItems, 
+        totalItems, 
+        errors
+      );
+      
+      res.json(updatedFileUpload);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating file upload status" });
+    }
+  });
+  
+  // Delete file upload
+  app.delete("/api/file-uploads/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const fileUpload = await storage.getFileUpload(id);
+      if (!fileUpload) {
+        return res.status(404).json({ message: "File upload not found" });
+      }
+      
+      // Only allow the uploader or admin to delete
+      if (req.user?.role !== "admin" && fileUpload.uploadedBy !== req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteFileUpload(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting file upload" });
+    }
+  });
+  
+  // Import cost matrix from Excel file
+  app.post("/api/cost-matrix/import-excel/:fileId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to import data
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const fileId = parseInt(req.params.fileId);
+      const userId = req.user!.id;
+      
+      const fileUpload = await storage.getFileUpload(fileId);
+      if (!fileUpload) {
+        return res.status(404).json({ message: "File upload not found" });
+      }
+      
+      // Verify file type
+      if (!fileUpload.fileType.includes('spreadsheet') && !fileUpload.fileType.includes('excel')) {
+        return res.status(400).json({ message: "Invalid file type. Excel file required." });
+      }
+      
+      const result = await storage.importCostMatrixFromExcel(fileId, userId);
+      
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({ message: error.message || "Error importing cost matrix from Excel" });
     }
   });
 

@@ -107,12 +107,37 @@ export function useCostMatrix() {
     },
   });
 
+  // Create a new cost matrix entry
+  const create = useMutation({
+    mutationFn: async (data: Omit<CostMatrix, "id" | "createdAt" | "updatedAt">) => {
+      return apiRequest("/api/cost-matrix", {
+        method: "POST",
+        data,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
+      toast({
+        title: "Cost matrix created",
+        description: "A new cost matrix entry has been successfully created.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Creation failed",
+        description: error.message || "Failed to create cost matrix entry.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     getAll,
     getByRegion,
     getByBuildingType,
     getByRegionAndBuildingType,
     importFromJson,
+    create,
     update,
     remove,
   };

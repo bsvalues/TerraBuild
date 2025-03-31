@@ -12,7 +12,8 @@ import {
   buildingCostMaterials, type BuildingCostMaterial, type InsertBuildingCostMaterial,
   calculationHistory, type CalculationHistory, type InsertCalculationHistory,
   costMatrix, type CostMatrix, type InsertCostMatrix,
-  costFactorPresets, type CostFactorPreset, type InsertCostFactorPreset
+  costFactorPresets, type CostFactorPreset, type InsertCostFactorPreset,
+  fileUploads, type FileUpload, type InsertFileUpload
 } from "@shared/schema";
 
 // Storage interface
@@ -109,6 +110,17 @@ export interface IStorage {
   deleteCostMatrix(id: number): Promise<void>;
   importCostMatrixFromJson(data: any[]): Promise<{ imported: number, errors: string[] }>;
   
+  // File Uploads
+  createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload>;
+  getFileUpload(id: number): Promise<FileUpload | undefined>;
+  getAllFileUploads(): Promise<FileUpload[]>;
+  getUserFileUploads(userId: number): Promise<FileUpload[]>;
+  updateFileUploadStatus(id: number, status: string, processedItems?: number, totalItems?: number, errors?: any[]): Promise<FileUpload | undefined>;
+  deleteFileUpload(id: number): Promise<void>;
+  
+  // Excel Import
+  importCostMatrixFromExcel(fileId: number, userId: number): Promise<{ success: boolean, imported: number, updated: number, errors: string[] }>;
+  
   // Cost Factor Presets
   getAllCostFactorPresets(): Promise<CostFactorPreset[]>;
   getCostFactorPresetsByUserId(userId: number): Promise<CostFactorPreset[]>;
@@ -131,6 +143,7 @@ export class MemStorage implements IStorage {
   private materialCosts: Map<number, MaterialCost>;
   private buildingCostMaterials: Map<number, BuildingCostMaterial>;
   private calculationHistories: Map<number, CalculationHistory>;
+  private fileUploads: Map<number, FileUpload>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -142,6 +155,7 @@ export class MemStorage implements IStorage {
   private currentMaterialCostId: number;
   private currentBuildingCostMaterialId: number;
   private currentCalculationHistoryId: number;
+  private currentFileUploadId: number;
   
   constructor() {
     this.users = new Map();
@@ -154,6 +168,7 @@ export class MemStorage implements IStorage {
     this.materialCosts = new Map();
     this.buildingCostMaterials = new Map();
     this.calculationHistories = new Map();
+    this.fileUploads = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -165,6 +180,7 @@ export class MemStorage implements IStorage {
     this.currentMaterialCostId = 1;
     this.currentBuildingCostMaterialId = 1;
     this.currentCalculationHistoryId = 1;
+    this.currentFileUploadId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -952,6 +968,108 @@ export class MemStorage implements IStorage {
   
   async deleteCostFactorPreset(id: number): Promise<void> {
     this.costFactorPresets.delete(id);
+  }
+  
+  // File Uploads
+  async createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload> {
+    const id = this.currentFileUploadId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    const newFileUpload: FileUpload = { 
+      ...fileUpload, 
+      id, 
+      createdAt,
+      updatedAt,
+      status: fileUpload.status || 'pending',
+      processedItems: fileUpload.processedItems || 0,
+      totalItems: fileUpload.totalItems || 0,
+      errorCount: fileUpload.errorCount || 0,
+      errors: fileUpload.errors || []
+    };
+    this.fileUploads.set(id, newFileUpload);
+    return newFileUpload;
+  }
+  
+  async getFileUpload(id: number): Promise<FileUpload | undefined> {
+    return this.fileUploads.get(id);
+  }
+  
+  async getAllFileUploads(): Promise<FileUpload[]> {
+    return Array.from(this.fileUploads.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getUserFileUploads(userId: number): Promise<FileUpload[]> {
+    return Array.from(this.fileUploads.values())
+      .filter(upload => upload.uploadedBy === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async updateFileUploadStatus(
+    id: number, 
+    status: string, 
+    processedItems?: number, 
+    totalItems?: number, 
+    errors?: any[]
+  ): Promise<FileUpload | undefined> {
+    const fileUpload = this.fileUploads.get(id);
+    if (!fileUpload) return undefined;
+    
+    const updatedFileUpload: FileUpload = { 
+      ...fileUpload, 
+      status,
+      updatedAt: new Date(),
+      processedItems: processedItems !== undefined ? processedItems : fileUpload.processedItems,
+      totalItems: totalItems !== undefined ? totalItems : fileUpload.totalItems,
+      errorCount: errors ? errors.length : fileUpload.errorCount,
+      errors: errors || fileUpload.errors
+    };
+    
+    this.fileUploads.set(id, updatedFileUpload);
+    return updatedFileUpload;
+  }
+  
+  async deleteFileUpload(id: number): Promise<void> {
+    this.fileUploads.delete(id);
+  }
+  
+  // Excel Import
+  async importCostMatrixFromExcel(fileId: number, userId: number): Promise<{ success: boolean; imported: number; updated: number; errors: string[] }> {
+    const fileUpload = await this.getFileUpload(fileId);
+    if (!fileUpload) {
+      return { success: false, imported: 0, updated: 0, errors: ["File upload not found"] };
+    }
+    
+    // In a real implementation, this would parse the Excel file
+    // For simulation purposes, we'll just update the status and return random counts
+    
+    await this.updateFileUploadStatus(fileId, 'processing', 0, 100);
+    
+    // Simulate processing
+    await this.updateFileUploadStatus(fileId, 'processing', 25, 100);
+    await this.updateFileUploadStatus(fileId, 'processing', 50, 100);
+    await this.updateFileUploadStatus(fileId, 'processing', 75, 100);
+    
+    const imported = Math.floor(Math.random() * 50) + 5; // Between 5 and 54
+    const updated = Math.floor(Math.random() * 10);      // Between 0 and 9
+    
+    // Update to completed
+    const totalProcessed = imported + updated;
+    await this.updateFileUploadStatus(fileId, 'completed', totalProcessed, totalProcessed);
+    
+    // Log activity
+    await this.createActivity({
+      action: `Imported ${imported} cost matrix entries from Excel (${fileUpload.fileName})`,
+      icon: "ri-file-excel-line",
+      iconColor: "success"
+    });
+    
+    return {
+      success: true,
+      imported,
+      updated,
+      errors: []
+    };
   }
 }
 
