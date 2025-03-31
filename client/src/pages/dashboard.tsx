@@ -12,6 +12,7 @@ import ApplicationDetails from "@/components/dashboard/ApplicationDetails";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 import { CostMatrixManager } from "@/components/dashboard/CostMatrixManager";
 import { CostComparisonWizard } from "@/components/dashboard/CostComparisonWizard";
+import { CostFactorWeightSlider } from "@/components/dashboard/CostFactorWeightSlider";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>("calculator");
@@ -46,6 +47,12 @@ export default function Dashboard() {
                 onClick={() => setActiveTab("comparison")}
               >
                 Cost Comparison
+              </button>
+              <button 
+                className={`px-4 py-3 font-medium text-sm ${activeTab === "costfactors" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
+                onClick={() => setActiveTab("costfactors")}
+              >
+                Cost Factors
               </button>
               <button 
                 className={`px-4 py-3 font-medium text-sm ${activeTab === "costmatrix" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
@@ -93,6 +100,13 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Comparison Wizard</h2>
                 <p className="text-neutral-600 mb-6">Compare multiple cost calculation scenarios side-by-side for better decision making.</p>
                 <CostComparisonWizard />
+              </div>
+            )}
+            {activeTab === "costfactors" && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Cost Factor Weighting</h2>
+                <p className="text-neutral-600 mb-6">Customize how different cost factors influence building assessments for Benton County.</p>
+                <CostFactorWeightSlider />
               </div>
             )}
             {activeTab === "costmatrix" && (
