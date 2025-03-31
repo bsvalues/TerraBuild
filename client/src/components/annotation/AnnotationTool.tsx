@@ -102,7 +102,7 @@ export default function AnnotationTool({
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const textPositionRef = useRef<Point | null>(null);
 
-  // More modern, Tailwind-compatible color options
+  // Color options using blue as primary color theme
   const colorOptions = [
     { name: 'Blue', value: '#3B82F6' },
     { name: 'Red', value: '#EF4444' },
@@ -334,7 +334,6 @@ export default function AnnotationTool({
     const pdf = new jsPDF({
       orientation,
       unit: 'px',
-      // Use a custom format that matches the image aspect ratio
       format: [imgWidth, imgHeight]
     });
     
@@ -357,12 +356,11 @@ export default function AnnotationTool({
   // Custom trigger or default button
   const trigger = triggerButton || (
     <Button 
-      variant="outline" 
-      className="flex items-center gap-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
       onClick={() => handleOpenChange(true)}
     >
       <ImageIcon />
-      Take Screenshot &amp; Annotate
+      Screenshot &amp; Annotate
     </Button>
   );
 
@@ -371,21 +369,21 @@ export default function AnnotationTool({
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[90vw]" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 -mx-6 -mt-6 rounded-t-lg">
-          <DialogTitle className="text-white flex items-center gap-2">
+      <DialogContent className="max-w-4xl w-[90vw] p-0 overflow-hidden" onInteractOutside={(e) => e.preventDefault()}>
+        <div className="bg-gradient-to-r from-blue-700 to-blue-900 p-4 text-white">
+          <h2 className="text-xl font-bold flex items-center gap-2">
             <ImageIcon />
             Screenshot and Annotation Tool
-          </DialogTitle>
-        </DialogHeader>
+          </h2>
+        </div>
         
         {isCapturing ? (
-          <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center justify-center h-[60vh] p-6">
             <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
             <p className="text-sm text-gray-600">Capturing screenshot...</p>
           </div>
         ) : !capturedImage ? (
-          <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center justify-center h-[60vh] p-6">
             <p className="text-sm text-gray-600">Failed to capture screenshot.</p>
             <Button 
               onClick={captureTargetElement} 
@@ -396,51 +394,39 @@ export default function AnnotationTool({
           </div>
         ) : (
           <>
-            <div className="flex flex-col space-y-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex bg-blue-50 rounded-md overflow-hidden p-1">
-                    <button
-                      type="button"
-                      className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
-                        activeTab === 'draw' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'text-blue-700 hover:bg-blue-100'
-                      }`}
-                      onClick={() => setActiveTab('draw')}
-                    >
-                      <PencilIcon />
-                      <span>Draw</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
-                        activeTab === 'text' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'text-blue-700 hover:bg-blue-100'
-                      }`}
-                      onClick={() => setActiveTab('text')}
-                    >
-                      <TextIcon />
-                      <span>Text</span>
-                    </button>
-                  </div>
-                  
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={handleClearAll}
-                    className="h-8 text-xs bg-red-500 hover:bg-red-600 flex items-center gap-1"
-                  >
-                    <TrashIcon />
-                    <span>Clear All</span>
-                  </Button>
-                </div>
-                
-                {activeTab === 'draw' && (
-                  <div className="flex items-center gap-4 py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="p-6 space-y-4">
+              <div className="flex bg-blue-700 rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  className={`flex items-center justify-center gap-1 px-4 py-2 text-sm flex-1 ${
+                    activeTab === 'draw' 
+                      ? 'bg-blue-800 text-white' 
+                      : 'text-white hover:bg-blue-600'
+                  }`}
+                  onClick={() => setActiveTab('draw')}
+                >
+                  <PencilIcon />
+                  <span>Draw</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center justify-center gap-1 px-4 py-2 text-sm flex-1 ${
+                    activeTab === 'text' 
+                      ? 'bg-blue-800 text-white' 
+                      : 'text-white hover:bg-blue-600'
+                  }`}
+                  onClick={() => setActiveTab('text')}
+                >
+                  <TextIcon />
+                  <span>Text</span>
+                </button>
+              </div>
+              
+              {activeTab === 'draw' && (
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                      <Label className="text-sm text-gray-700">Color:</Label>
+                      <Label className="text-sm font-medium text-blue-900">Color:</Label>
                       <div className="flex gap-1">
                         {colorOptions.map(color => (
                           <button
@@ -458,7 +444,7 @@ export default function AnnotationTool({
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Label className="text-sm text-gray-700">Width:</Label>
+                      <Label className="text-sm font-medium text-blue-900">Width:</Label>
                       <Input
                         type="range"
                         min="1"
@@ -467,26 +453,38 @@ export default function AnnotationTool({
                         onChange={(e) => setLineWidth(Number(e.target.value))}
                         className="w-32 h-8"
                       />
-                      <span className="text-sm text-gray-700 w-6 text-center">{lineWidth}</span>
+                      <span className="text-sm text-blue-900 w-6 text-center">{lineWidth}</span>
                     </div>
+                    
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={handleClearAll}
+                      className="h-8 text-xs bg-red-500 hover:bg-red-600 flex items-center gap-1"
+                    >
+                      <TrashIcon />
+                      <span>Clear</span>
+                    </Button>
                   </div>
-                )}
-                
-                {activeTab === 'text' && (
-                  <div className="flex items-center gap-4 py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-2 flex-grow">
-                      <Label className="text-sm text-gray-700">Text:</Label>
+                </div>
+              )}
+              
+              {activeTab === 'text' && (
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-blue-900">Text:</Label>
                       <Input
                         type="text"
                         value={textInput}
                         onChange={(e) => setTextInput(e.target.value)}
-                        placeholder="Click on the image to place text"
-                        className="h-8 flex-grow"
+                        placeholder="Click to place text"
+                        className="h-8 flex-grow bg-white"
                       />
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Label className="text-sm text-gray-700">Color:</Label>
+                      <Label className="text-sm font-medium text-blue-900">Color:</Label>
                       <div className="flex gap-1">
                         {colorOptions.map(color => (
                           <button
@@ -503,25 +501,37 @@ export default function AnnotationTool({
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm text-gray-700">Size:</Label>
-                      <Input
-                        type="range"
-                        min="10"
-                        max="32"
-                        value={fontSize}
-                        onChange={(e) => setFontSize(Number(e.target.value))}
-                        className="w-28 h-8"
-                      />
-                      <span className="text-sm text-gray-700 w-6 text-center">{fontSize}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-blue-900">Size:</Label>
+                        <Input
+                          type="range"
+                          min="10"
+                          max="32"
+                          value={fontSize}
+                          onChange={(e) => setFontSize(Number(e.target.value))}
+                          className="w-24 h-8"
+                        />
+                        <span className="text-sm text-blue-900 w-6 text-center">{fontSize}</span>
+                      </div>
+                      
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleClearAll}
+                        className="h-8 text-xs bg-red-500 hover:bg-red-600 flex items-center gap-1"
+                      >
+                        <TrashIcon />
+                        <span>Clear</span>
+                      </Button>
                     </div>
                   </div>
-                )}
-              </Tabs>
+                </div>
+              )}
               
               <div 
                 ref={canvasContainerRef} 
-                className="overflow-auto bg-gray-100 border border-gray-200 rounded-lg h-[60vh] flex items-center justify-center"
+                className="overflow-auto bg-gray-100 border border-gray-200 rounded-lg h-[50vh] flex items-center justify-center"
               >
                 <canvas
                   ref={canvasRef}
@@ -533,14 +543,14 @@ export default function AnnotationTool({
                 />
               </div>
               
-              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm text-gray-700">Filename:</Label>
+                  <Label className="text-sm font-medium text-blue-900">Filename:</Label>
                   <Input
                     type="text"
                     value={filename}
                     onChange={(e) => setFilename(e.target.value)}
-                    className="h-9 w-64"
+                    className="h-9 w-64 bg-white"
                   />
                 </div>
                 
@@ -548,7 +558,7 @@ export default function AnnotationTool({
                   <Button
                     variant="outline"
                     onClick={exportAsPng}
-                    className="h-9 bg-white text-sm flex items-center gap-1.5 border-gray-300 hover:bg-gray-50"
+                    className="h-9 bg-white text-sm flex items-center gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
                   >
                     <ImageIcon />
                     Save as PNG

@@ -180,7 +180,6 @@ export async function exportElementAsPdf(
  */
 function addModernHeader(doc: jsPDF): void {
   // Create blue gradient header bar
-  const grd = doc.setGState(doc.addGState({ opacity: 1 }));
   doc.saveGraphicsState();
   
   // Draw gradient rectangle
@@ -190,12 +189,12 @@ function addModernHeader(doc: jsPDF): void {
   // Add company name in white
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text(ensureString(COMPANY_NAME), 20, 15);
   
   // Add report title
   doc.setFontSize(12);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(220, 220, 220);
   doc.text(ensureString(REPORT_TITLE), 20, 22);
   
@@ -223,7 +222,7 @@ function addModernFooter(doc: jsPDF): void {
     doc.text(ensureString(footerText), 20, 287);
     
     // Add page numbers
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
     doc.text(`Page ${i} of ${pageCount}`, 180, 287, { align: 'right' });
   }
@@ -247,7 +246,7 @@ function addBuildingDetailsSection(
   // Section title with blue styling
   doc.setFontSize(14);
   doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Building Details', 20, yPosition);
   
   // Draw a card with light blue gradient for the details
@@ -284,11 +283,11 @@ function addBuildingDetailsSection(
   // Add the entries with improved styling
   let entryY = yPosition + boxMargin * 2 + 7;
   entries.forEach(([label, value]) => {
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(80, 80, 80);
     doc.text(ensureString(label) + ':', 25, entryY);
     
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
     doc.text(ensureString(value), 70, entryY);
     
@@ -307,7 +306,7 @@ function addCostPredictionSection(
   // Section title with blue styling
   doc.setFontSize(14);
   doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Cost Analysis Results', 20, yPosition);
   
   // Create a highlighted card for the total cost with modern gradient style
@@ -319,7 +318,7 @@ function addCostPredictionSection(
   // Add total cost with improved styling
   doc.setFontSize(12);
   doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Total Estimated Cost:', 25, yPosition + 17);
   
   // Format the total cost with currency
@@ -370,11 +369,11 @@ function addCostPredictionSection(
   // Add the entries with improved styling
   let entryY = yPosition + boxMargin * 2 + 33;
   entries.forEach(([label, value]) => {
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(100, 100, 100);
     doc.text(ensureString(label) + ':', 25, entryY);
     
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     doc.text(ensureString(value), 120, entryY);
     
@@ -397,10 +396,10 @@ function addCostPredictionSection(
     // Add title and text
     doc.setFontSize(11);
     doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Analysis:', 25, yStart + 7);
     
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(80, 80, 80);
     doc.text(textLines, 25, yStart + 14);
@@ -418,7 +417,7 @@ function addQualitySection(
   // Section title
   doc.setFontSize(12);
   doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Prediction Quality Metrics', 20, yPosition);
   
   // Add confidence score with modern gauge
@@ -436,7 +435,7 @@ function addQualitySection(
     
     // Add label for confidence score
     doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(80, 80, 80);
     doc.text('Confidence Score:', 25, yPosition + 10);
     
@@ -452,7 +451,7 @@ function addQualitySection(
     doc.roundedRect(100, yPosition + 6, fillWidth, 6, 3, 3, 'FD');
     
     // Add percentage text
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text(`${confidencePercentage}%`, 170, yPosition + 10, { align: 'right' });
   }
@@ -472,7 +471,7 @@ function addQualitySection(
     
     // Add label for data quality
     doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(80, 80, 80);
     doc.text('Data Quality Score:', 25, yPosition + 22);
     
@@ -488,7 +487,7 @@ function addQualitySection(
     doc.roundedRect(100, yPosition + 18, fillWidth, 6, 3, 3, 'FD');
     
     // Add percentage text
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text(`${qualityPercentage}%`, 170, yPosition + 22, { align: 'right' });
   }
@@ -507,12 +506,12 @@ function addQualitySection(
     
     // Add warning title
     doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(180, 83, 9); // Dark amber/orange for title
     doc.text('Data Quality Warnings:', 25, yStart + 7);
     
     // List anomalies as bullet points with improved styling
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(120, 53, 15); // Darker text for better readability
     
