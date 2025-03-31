@@ -453,3 +453,26 @@ export const insertCostMatrixSchema = createInsertSchema(costMatrix).pick({
 
 export type CostMatrix = typeof costMatrix.$inferSelect;
 export type InsertCostMatrix = z.infer<typeof insertCostMatrixSchema>;
+
+// Cost Factor Presets
+export const costFactorPresets = pgTable("cost_factor_presets", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  userId: integer("user_id").notNull(),
+  weights: json("weights").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCostFactorPresetSchema = createInsertSchema(costFactorPresets).pick({
+  name: true,
+  description: true,
+  userId: true,
+  weights: true,
+  isDefault: true,
+});
+
+export type CostFactorPreset = typeof costFactorPresets.$inferSelect;
+export type InsertCostFactorPreset = z.infer<typeof insertCostFactorPresetSchema>;

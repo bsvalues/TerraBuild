@@ -11,7 +11,8 @@ import {
   materialCosts, type MaterialCost, type InsertMaterialCost,
   buildingCostMaterials, type BuildingCostMaterial, type InsertBuildingCostMaterial,
   calculationHistory, type CalculationHistory, type InsertCalculationHistory,
-  costMatrix, type CostMatrix, type InsertCostMatrix
+  costMatrix, type CostMatrix, type InsertCostMatrix,
+  costFactorPresets, type CostFactorPreset, type InsertCostFactorPreset
 } from "@shared/schema";
 
 // Storage interface
@@ -107,6 +108,15 @@ export interface IStorage {
   updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined>;
   deleteCostMatrix(id: number): Promise<void>;
   importCostMatrixFromJson(data: any[]): Promise<{ imported: number, errors: string[] }>;
+  
+  // Cost Factor Presets
+  getAllCostFactorPresets(): Promise<CostFactorPreset[]>;
+  getCostFactorPresetsByUserId(userId: number): Promise<CostFactorPreset[]>;
+  getDefaultCostFactorPresets(): Promise<CostFactorPreset[]>;
+  getCostFactorPreset(id: number): Promise<CostFactorPreset | undefined>;
+  createCostFactorPreset(preset: InsertCostFactorPreset): Promise<CostFactorPreset>;
+  updateCostFactorPreset(id: number, preset: Partial<InsertCostFactorPreset>): Promise<CostFactorPreset | undefined>;
+  deleteCostFactorPreset(id: number): Promise<void>;
 }
 
 // Memory Storage implementation
@@ -887,6 +897,61 @@ export class MemStorage implements IStorage {
     }
     
     return { imported, errors };
+  }
+  
+  // Cost Factor Presets Methods
+  private costFactorPresets: Map<number, CostFactorPreset> = new Map();
+  private currentCostFactorPresetId: number = 1;
+  
+  async getAllCostFactorPresets(): Promise<CostFactorPreset[]> {
+    return Array.from(this.costFactorPresets.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getCostFactorPresetsByUserId(userId: number): Promise<CostFactorPreset[]> {
+    return Array.from(this.costFactorPresets.values())
+      .filter(preset => preset.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getDefaultCostFactorPresets(): Promise<CostFactorPreset[]> {
+    return Array.from(this.costFactorPresets.values())
+      .filter(preset => preset.isDefault === true)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getCostFactorPreset(id: number): Promise<CostFactorPreset | undefined> {
+    return this.costFactorPresets.get(id);
+  }
+  
+  async createCostFactorPreset(preset: InsertCostFactorPreset): Promise<CostFactorPreset> {
+    const id = this.currentCostFactorPresetId++;
+    const now = new Date();
+    const costFactorPreset: CostFactorPreset = {
+      ...preset,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.costFactorPresets.set(id, costFactorPreset);
+    return costFactorPreset;
+  }
+  
+  async updateCostFactorPreset(id: number, preset: Partial<InsertCostFactorPreset>): Promise<CostFactorPreset | undefined> {
+    const costFactorPreset = this.costFactorPresets.get(id);
+    if (!costFactorPreset) return undefined;
+    
+    const updatedPreset = {
+      ...costFactorPreset,
+      ...preset,
+      updatedAt: new Date()
+    };
+    this.costFactorPresets.set(id, updatedPreset);
+    return updatedPreset;
+  }
+  
+  async deleteCostFactorPreset(id: number): Promise<void> {
+    this.costFactorPresets.delete(id);
   }
 }
 

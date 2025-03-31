@@ -10,7 +10,8 @@ import {
   insertMaterialTypeSchema,
   insertMaterialCostSchema,
   insertBuildingCostMaterialSchema,
-  insertCalculationHistorySchema
+  insertCalculationHistorySchema,
+  insertCostFactorPresetSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -829,6 +830,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting calculation history" });
+    }
+  });
+
+  // Cost Factor Presets API
+  
+  // Get all cost factor presets
+  app.get("/api/cost-factor-presets", async (req: Request, res: Response) => {
+    try {
+      const presets = await storage.getAllCostFactorPresets();
+      res.json(presets);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost factor presets" });
+    }
+  });
+  
+  // Get default cost factor presets
+  app.get("/api/cost-factor-presets/defaults", async (req: Request, res: Response) => {
+    try {
+      const presets = await storage.getDefaultCostFactorPresets();
+      res.json(presets);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching default cost factor presets" });
+    }
+  });
+  
+  // Get cost factor presets by user ID
+  app.get("/api/cost-factor-presets/user/:userId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Only allow admins or the user themselves to access this endpoint
+      if (req.user?.role !== "admin" && req.user?.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const presets = await storage.getCostFactorPresetsByUserId(userId);
+      res.json(presets);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching user's cost factor presets" });
+    }
+  });
+  
+  // Get cost factor preset by ID
+  app.get("/api/cost-factor-presets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const preset = await storage.getCostFactorPreset(id);
+      
+      if (!preset) {
+        return res.status(404).json({ message: "Cost factor preset not found" });
+      }
+      
+      res.json(preset);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost factor preset" });
+    }
+  });
+  
+  // Create cost factor preset
+  app.post("/api/cost-factor-presets", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const presetData = insertCostFactorPresetSchema.parse(req.body);
+      
+      // Only allow creating presets for themselves unless admin
+      if (req.user?.role !== "admin" && req.user?.id !== presetData.userId) {
+        return res.status(403).json({ message: "You can only create presets for yourself" });
+      }
+      
+      const createdPreset = await storage.createCostFactorPreset(presetData);
+      
+      await storage.createActivity({
+        action: `Created cost factor preset: ${presetData.name}`,
+        icon: "ri-settings-3-line",
+        iconColor: "primary"
+      });
+      
+      res.status(201).json(createdPreset);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Error creating cost factor preset" });
+      }
+    }
+  });
+  
+  // Update cost factor preset
+  app.patch("/api/cost-factor-presets/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const preset = await storage.getCostFactorPreset(id);
+      
+      if (!preset) {
+        return res.status(404).json({ message: "Cost factor preset not found" });
+      }
+      
+      // Only allow updating own presets unless admin
+      if (req.user?.role !== "admin" && req.user?.id !== preset.userId) {
+        return res.status(403).json({ message: "You can only update your own presets" });
+      }
+      
+      // Don't allow regular users to update default presets
+      if (preset.isDefault && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Default presets can only be updated by administrators" });
+      }
+      
+      const updatedPreset = await storage.updateCostFactorPreset(id, req.body);
+      res.json(updatedPreset);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating cost factor preset" });
+    }
+  });
+  
+  // Delete cost factor preset
+  app.delete("/api/cost-factor-presets/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const preset = await storage.getCostFactorPreset(id);
+      
+      if (!preset) {
+        return res.status(404).json({ message: "Cost factor preset not found" });
+      }
+      
+      // Only allow deleting own presets unless admin
+      if (req.user?.role !== "admin" && req.user?.id !== preset.userId) {
+        return res.status(403).json({ message: "You can only delete your own presets" });
+      }
+      
+      // Don't allow regular users to delete default presets
+      if (preset.isDefault && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Default presets can only be deleted by administrators" });
+      }
+      
+      await storage.deleteCostFactorPreset(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting cost factor preset" });
     }
   });
 

@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCostFactors } from "@/hooks/use-cost-factors";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Save, RefreshCw, Sliders } from "lucide-react";
+import { ArrowRight, Save, RefreshCw, Sliders, Loader2 } from "lucide-react";
 import { regions, buildingTypes } from "@/data/constants";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useCostFactorPresets } from "@/hooks/use-cost-factor-presets";
+import { useAuth } from "@/hooks/use-auth";
 
 // Define the cost factor types that can be weighted
 export type CostFactorType = 
@@ -195,9 +197,24 @@ export function CostFactorWeightSlider() {
   
   const { toast } = useToast();
   const { createCostFactor, updateCostFactor } = useCostFactors();
+  const { user } = useAuth();
+  
+  // Cost factor presets hooks
+  const {
+    getAllPresets,
+    getDefaultPresets,
+    getUserPresets: getUserPresetsQuery,
+    createPreset,
+    updatePreset,
+    deletePreset: deleteServerPreset
+  } = useCostFactorPresets();
+  
+  // Load server presets for the current user
+  const userServerPresets = user?.id ? getUserPresetsQuery(user.id) : null;
+  const defaultServerPresets = getDefaultPresets;
   
   useEffect(() => {
-    // Load saved presets from localStorage
+    // Load saved presets from localStorage (legacy method - will be removed once server presets are fully implemented)
     const savedPresets = localStorage.getItem("costFactorPresets");
     if (savedPresets) {
       try {
@@ -232,31 +249,78 @@ export function CostFactorWeightSlider() {
     });
   };
 
-  // Apply a predefined preset
-  const applyPreset = (presetId: string) => {
-    const allPresets = [...predefinedPresets, ...userPresets];
-    const preset = allPresets.find(p => p.id === presetId);
+  // Apply a preset (either predefined, user-local, or server preset)
+  const applyPreset = async (presetId: string) => {
+    // First check if it's a local preset (predefined or user-saved)
+    const allLocalPresets = [...predefinedPresets, ...userPresets];
+    const localPreset = allLocalPresets.find(p => p.id === presetId);
     
-    if (!preset) return;
+    if (localPreset) {
+      // It's a local preset
+      setSelectedPreset(presetId);
+      
+      // Update weights based on the preset
+      setWeights(
+        weights.map((weight) => ({
+          ...weight,
+          currentWeight: localPreset.weights[weight.id] || weight.defaultWeight
+        }))
+      );
+      
+      toast({
+        title: `Applied "${localPreset.name}" Preset`,
+        description: localPreset.description,
+      });
+      return;
+    }
     
-    setSelectedPreset(presetId);
-    
-    // Update weights based on the preset
-    setWeights(
-      weights.map((weight) => ({
-        ...weight,
-        currentWeight: preset.weights[weight.id] || weight.defaultWeight
-      }))
-    );
-    
-    toast({
-      title: `Applied "${preset.name}" Preset`,
-      description: preset.description,
-    });
+    // If not a local preset, check if it's a server preset
+    // Convert the string ID to number for server presets
+    const presetIdNumber = parseInt(presetId, 10);
+    if (!isNaN(presetIdNumber)) {
+      try {
+        // First check if it's in the default presets
+        let serverPreset = defaultServerPresets.data?.find(p => p.id === presetIdNumber);
+        
+        // If not in default presets, check user presets
+        if (!serverPreset && userServerPresets?.data) {
+          serverPreset = userServerPresets.data.find(p => p.id === presetIdNumber);
+        }
+        
+        if (serverPreset) {
+          setSelectedPreset(presetId);
+          
+          // Cast the weights to the expected format
+          const presetWeights = serverPreset.weights as Record<string, number>;
+          
+          // Update weights based on the preset
+          setWeights(
+            weights.map((weight) => ({
+              ...weight,
+              currentWeight: presetWeights[weight.id] || weight.defaultWeight
+            }))
+          );
+          
+          toast({
+            title: `Applied "${serverPreset.name}" Preset`,
+            description: serverPreset.description || "Weight preset from server",
+          });
+        } else {
+          throw new Error("Preset not found");
+        }
+      } catch (error) {
+        console.error("Error applying server preset:", error);
+        toast({
+          title: "Error",
+          description: "Failed to apply preset. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   // Save the current weights as a new preset
-  const saveAsPreset = () => {
+  const saveAsPreset = async () => {
     if (!presetName.trim()) {
       toast({
         title: "Error Saving Preset",
@@ -265,50 +329,110 @@ export function CostFactorWeightSlider() {
       });
       return;
     }
+
+    // Get the current weights
+    const presetWeights = weights.reduce((acc, weight) => {
+      acc[weight.id] = weight.currentWeight;
+      return acc;
+    }, {} as Record<string, number>);
     
-    // Create the preset object
-    const newPreset: PresetItem = {
-      id: `user-${Date.now()}`,
-      name: presetName,
-      description: presetDescription || "Custom weight configuration",
-      weights: weights.reduce((acc, weight) => {
-        acc[weight.id] = weight.currentWeight;
-        return acc;
-      }, {} as Record<string, number>)
-    };
-    
-    // Add to user presets
-    const updatedPresets = [...userPresets, newPreset];
-    setUserPresets(updatedPresets);
-    
-    // Save to localStorage
-    localStorage.setItem("costFactorPresets", JSON.stringify(updatedPresets));
-    
-    // Reset form
-    setPresetName("");
-    setPresetDescription("");
-    
-    // Show success toast
-    toast({
-      title: "Preset Saved",
-      description: `Your preset "${newPreset.name}" has been saved successfully`,
-    });
+    if (user?.id) {
+      try {
+        // Save to server database
+        await createPreset({
+          name: presetName,
+          description: presetDescription || "Custom weight configuration",
+          userId: user.id,
+          weights: presetWeights,
+          isDefault: false
+        });
+        
+        // Reset form
+        setPresetName("");
+        setPresetDescription("");
+        
+        // Show success toast
+        toast({
+          title: "Preset Saved",
+          description: `Your preset "${presetName}" has been saved to the server successfully`,
+        });
+      } catch (error) {
+        console.error("Error saving preset to server:", error);
+        toast({
+          title: "Error Saving Preset",
+          description: "There was an error saving your preset to the server. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Fallback to local storage if user isn't logged in
+      // Create the preset object
+      const newPreset: PresetItem = {
+        id: `user-${Date.now()}`,
+        name: presetName,
+        description: presetDescription || "Custom weight configuration",
+        weights: presetWeights
+      };
+      
+      // Add to user presets
+      const updatedPresets = [...userPresets, newPreset];
+      setUserPresets(updatedPresets);
+      
+      // Save to localStorage
+      localStorage.setItem("costFactorPresets", JSON.stringify(updatedPresets));
+      
+      // Reset form
+      setPresetName("");
+      setPresetDescription("");
+      
+      // Show success toast
+      toast({
+        title: "Preset Saved Locally",
+        description: `Your preset "${newPreset.name}" has been saved locally. Login to save presets to your account.`,
+      });
+    }
   };
 
-  // Delete a user preset
-  const deletePreset = (presetId: string) => {
-    const updatedPresets = userPresets.filter(p => p.id !== presetId);
-    setUserPresets(updatedPresets);
-    localStorage.setItem("costFactorPresets", JSON.stringify(updatedPresets));
-    
-    if (selectedPreset === presetId) {
-      setSelectedPreset("");
+  // Delete a preset
+  const deletePreset = async (presetId: string) => {
+    // Check if it's a server preset (numeric ID) or local preset (starts with "user-")
+    if (typeof presetId === 'string' && presetId.startsWith('user-')) {
+      // Local preset deletion
+      const updatedPresets = userPresets.filter(p => p.id !== presetId);
+      setUserPresets(updatedPresets);
+      localStorage.setItem("costFactorPresets", JSON.stringify(updatedPresets));
+      
+      if (selectedPreset === presetId) {
+        setSelectedPreset("");
+      }
+      
+      toast({
+        title: "Local Preset Deleted",
+        description: "Your custom preset has been deleted from local storage",
+      });
+    } else {
+      // Server preset deletion
+      try {
+        // Convert string ID to number for server presets
+        await deleteServerPreset(Number(presetId));
+        
+        if (selectedPreset === presetId) {
+          setSelectedPreset("");
+        }
+        
+        toast({
+          title: "Preset Deleted",
+          description: "Your preset has been deleted from the server",
+        });
+      } catch (error) {
+        console.error("Error deleting preset from server:", error);
+        toast({
+          title: "Error Deleting Preset",
+          description: "There was an error deleting your preset. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
-    
-    toast({
-      title: "Preset Deleted",
-      description: "Your custom preset has been deleted",
-    });
   };
 
   // Generate a preview of how the weights would affect a cost calculation
@@ -571,15 +695,152 @@ export function CostFactorWeightSlider() {
           </CardContent>
         </Card>
         
+        {/* Server-side system default presets */}
         <Card className="mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Your Custom Presets</CardTitle>
+            <CardTitle className="text-base">System Default Presets</CardTitle>
+            <CardDescription>
+              Official Benton County assessment presets for different building types
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {defaultServerPresets.isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : defaultServerPresets.isError ? (
+              <div className="text-center py-8 text-destructive">
+                <p>Error loading system presets.</p>
+                <p className="text-sm">Please try refreshing the page.</p>
+              </div>
+            ) : defaultServerPresets.data && defaultServerPresets.data.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {defaultServerPresets.data.map((preset) => (
+                  <div 
+                    key={preset.id} 
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      selectedPreset === String(preset.id) 
+                        ? "border-primary bg-primary/10" 
+                        : "hover:border-neutral-300"
+                    }`}
+                    onClick={() => {
+                      // Format weights from server format to client format
+                      const presetWeights = preset.weights as Record<string, number>;
+                      const formattedPreset = {
+                        id: String(preset.id),
+                        name: preset.name,
+                        description: preset.description || "Official preset",
+                        weights: presetWeights
+                      };
+                      applyPreset(String(preset.id));
+                    }}
+                  >
+                    <div className="font-medium">{preset.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {preset.description || "Official assessment preset"}
+                    </div>
+                    <div className="mt-2">
+                      <Badge variant="outline">Default</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No system presets available.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* User's server-side presets */}
+        <Card className="mb-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Your Saved Presets</CardTitle>
             <CardDescription>
               Saved weight configurations for your specific assessment needs
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {userPresets.length > 0 ? (
+            {user ? (
+              userServerPresets?.isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : userServerPresets?.isError ? (
+                <div className="text-center py-8 text-destructive">
+                  <p>Error loading your presets.</p>
+                  <p className="text-sm">Please try refreshing the page.</p>
+                </div>
+              ) : userServerPresets?.data && userServerPresets.data.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {userServerPresets.data.map((preset) => (
+                    <div 
+                      key={preset.id} 
+                      className={`p-4 border rounded-lg relative ${
+                        selectedPreset === String(preset.id) 
+                          ? "border-primary bg-primary/10" 
+                          : "hover:border-neutral-300"
+                      }`}
+                    >
+                      <div className="font-medium">{preset.name}</div>
+                      <div className="text-sm text-muted-foreground mb-6">{preset.description || "Custom preset"}</div>
+                      <div className="absolute bottom-2 right-2 flex">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deletePreset(String(preset.id));
+                          }}
+                        >
+                          Delete
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            // Format weights from server format to client format
+                            const presetWeights = preset.weights as Record<string, number>;
+                            const formattedPreset = {
+                              id: String(preset.id),
+                              name: preset.name,
+                              description: preset.description || "Custom preset",
+                              weights: presetWeights
+                            };
+                            applyPreset(String(preset.id));
+                          }}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>You haven't saved any presets yet.</p>
+                  <p className="text-sm">Use the form below to save your current weights as a preset.</p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Please log in to save and access your presets.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Legacy local storage presets - for backwards compatibility */}
+        {userPresets.length > 0 && (
+          <Card className="mb-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Local Presets (Legacy)</CardTitle>
+              <CardDescription>
+                Previously saved presets stored in your browser
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {userPresets.map((preset) => (
                   <div 
@@ -614,14 +875,9 @@ export function CostFactorWeightSlider() {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>You haven't saved any custom presets yet.</p>
-                <p className="text-sm">Use the form below to save your current weights as a preset.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
         
         <Card>
           <CardHeader className="pb-2">

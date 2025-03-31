@@ -15,9 +15,10 @@ import {
   BuildingCostMaterial, InsertBuildingCostMaterial,
   CalculationHistory, InsertCalculationHistory,
   CostMatrix, InsertCostMatrix,
+  CostFactorPreset, InsertCostFactorPreset,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
-  calculationHistory, costMatrix
+  calculationHistory, costMatrix, costFactorPresets
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -514,5 +515,50 @@ export class PostgresStorage implements IStorage {
     }
     
     return { imported, errors };
+  }
+
+  // Cost Factor Presets Methods
+  async getAllCostFactorPresets(): Promise<CostFactorPreset[]> {
+    return await db.select().from(costFactorPresets).orderBy(desc(costFactorPresets.createdAt));
+  }
+  
+  async getCostFactorPresetsByUserId(userId: number): Promise<CostFactorPreset[]> {
+    return await db.select().from(costFactorPresets)
+      .where(eq(costFactorPresets.userId, userId))
+      .orderBy(desc(costFactorPresets.createdAt));
+  }
+  
+  async getDefaultCostFactorPresets(): Promise<CostFactorPreset[]> {
+    return await db.select().from(costFactorPresets)
+      .where(eq(costFactorPresets.isDefault, true))
+      .orderBy(desc(costFactorPresets.createdAt));
+  }
+  
+  async getCostFactorPreset(id: number): Promise<CostFactorPreset | undefined> {
+    const result = await db.select().from(costFactorPresets).where(eq(costFactorPresets.id, id));
+    return result[0];
+  }
+  
+  async createCostFactorPreset(preset: InsertCostFactorPreset): Promise<CostFactorPreset> {
+    const result = await db.insert(costFactorPresets).values({
+      ...preset,
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+  
+  async updateCostFactorPreset(id: number, preset: Partial<InsertCostFactorPreset>): Promise<CostFactorPreset | undefined> {
+    const result = await db.update(costFactorPresets)
+      .set({
+        ...preset,
+        updatedAt: new Date()
+      })
+      .where(eq(costFactorPresets.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteCostFactorPreset(id: number): Promise<void> {
+    await db.delete(costFactorPresets).where(eq(costFactorPresets.id, id));
   }
 }
