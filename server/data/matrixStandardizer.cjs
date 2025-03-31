@@ -251,7 +251,7 @@ function calculateMedian(values) {
   }
 }
 
-export {
+module.exports = {
   standardizeMatrixData,
   standardizeCurrencyValue,
   standardizeBuildingType,
