@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useBuildingCosts, CalculationResponse, MaterialsBreakdownResponse } from "@/hooks/use-building-costs";
 import { useCostFactors } from "@/hooks/use-cost-factors";
-import { REGIONS, BUILDING_TYPES, COMPLEXITY_OPTIONS } from "@/data/constants";
+import { 
+  REGIONS, BUILDING_TYPES, COMPLEXITY_OPTIONS, 
+  PROPERTY_CLASSES, ASSESSMENT_YEARS, CONDITION_TYPES 
+} from "@/data/constants";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,12 +17,18 @@ import {
 } from "recharts";
 import CostBreakdownPdfExport from "./CostBreakdownPdfExport";
 
-// Form schema
+// Form schema - Enhanced for Benton County
 const calculatorSchema = z.object({
   region: z.string().min(1, "Region is required"),
   buildingType: z.string().min(1, "Building type is required"),
+  propertyClass: z.string().optional(),
   squareFootage: z.coerce.number().min(1, "Square footage must be at least 1"),
-  complexityMultiplier: z.coerce.number().optional()
+  complexityMultiplier: z.coerce.number().optional(),
+  taxLotId: z.string().optional(),
+  propertyId: z.string().optional(),
+  assessmentYear: z.coerce.number().default(2025),
+  yearBuilt: z.coerce.number().optional(),
+  condition: z.string().optional()
 });
 
 type CalculatorForm = z.infer<typeof calculatorSchema>;
@@ -95,8 +104,12 @@ export default function BuildingCostCalculator() {
     defaultValues: {
       region: REGIONS[0].value,
       buildingType: BUILDING_TYPES[0].value,
+      propertyClass: PROPERTY_CLASSES[0].value,
       squareFootage: 1000,
-      complexityMultiplier: 1
+      complexityMultiplier: 1,
+      assessmentYear: Number(ASSESSMENT_YEARS[0].value),
+      condition: CONDITION_TYPES[2].value, // Average condition by default
+      yearBuilt: new Date().getFullYear() - 10 // Default to 10 years old
     }
   });
 
@@ -229,6 +242,20 @@ export default function BuildingCostCalculator() {
 
                 <div>
                   <label className="block text-xs font-medium text-neutral-600 mb-1">
+                    Property Class
+                  </label>
+                  <select
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                    {...form.register("propertyClass")}
+                  >
+                    {PROPERTY_CLASSES.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-600 mb-1">
                     Complexity
                   </label>
                   <select
@@ -239,6 +266,83 @@ export default function BuildingCostCalculator() {
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Benton County specific fields */}
+                <div className="pt-3 border-t border-neutral-200">
+                  <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County Assessment Details</h4>
+                  
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">
+                          Tax Lot ID
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                          placeholder="e.g. 12345"
+                          {...form.register("taxLotId")}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">
+                          Property ID
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                          placeholder="e.g. BN-1234"
+                          {...form.register("propertyId")}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">
+                          Assessment Year
+                        </label>
+                        <select
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                          {...form.register("assessmentYear", {
+                            setValueAs: (value) => Number(value),
+                          })}
+                        >
+                          {ASSESSMENT_YEARS.map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">
+                          Year Built
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                          placeholder="e.g. 1990"
+                          min="1800"
+                          max={new Date().getFullYear()}
+                          {...form.register("yearBuilt")}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-600 mb-1">
+                        Building Condition
+                      </label>
+                      <select
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-md px-3 py-2 text-sm text-neutral-700"
+                        {...form.register("condition")}
+                      >
+                        {CONDITION_TYPES.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -294,7 +398,7 @@ export default function BuildingCostCalculator() {
                 
                 <div className="flex-1 overflow-hidden">
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger 
                         value="summary" 
                         className="text-xs py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary"
@@ -313,38 +417,120 @@ export default function BuildingCostCalculator() {
                       >
                         Visualization
                       </TabsTrigger>
+                      <TabsTrigger 
+                        value="assessment" 
+                        className="text-xs py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary"
+                      >
+                        Assessment
+                      </TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="summary" className="mt-0 p-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Region:</span>
-                          <span className="text-xs font-medium text-neutral-700">{result.region}</span>
+                      <div className="space-y-4">
+                        {/* Basic Information */}
+                        <div>
+                          <h4 className="text-xs font-medium text-neutral-600 mb-2">Building Information</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Region:</span>
+                              <span className="text-xs font-medium text-neutral-700">{result.region}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Building Type:</span>
+                              <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
+                            </div>
+                            {result.propertyClass && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-neutral-500">Property Class:</span>
+                                <span className="text-xs font-medium text-neutral-700">{result.propertyClass}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Square Footage:</span>
+                              <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Building Type:</span>
-                          <span className="text-xs font-medium text-neutral-700">{result.buildingType}</span>
+                        
+                        {/* Cost Calculation Factors */}
+                        <div>
+                          <h4 className="text-xs font-medium text-neutral-600 mb-2">Cost Factors</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Base Cost:</span>
+                              <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Region Factor:</span>
+                              <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Complexity Factor:</span>
+                              <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
+                            </div>
+                            {result.conditionFactor && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-neutral-500">Condition Factor:</span>
+                                <span className="text-xs font-medium text-neutral-700">{result.conditionFactor.toFixed(2)}×</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
+                              <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Square Footage:</span>
-                          <span className="text-xs font-medium text-neutral-700">{result.squareFootage.toLocaleString()} sq ft</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Base Cost:</span>
-                          <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.baseCost)} per sq ft</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Region Factor:</span>
-                          <span className="text-xs font-medium text-neutral-700">{result.regionFactor.toFixed(2)}×</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Complexity Factor:</span>
-                          <span className="text-xs font-medium text-neutral-700">{result.complexityFactor.toFixed(2)}×</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-neutral-500">Cost per Sq Ft:</span>
-                          <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.costPerSqft)}</span>
-                        </div>
+                        
+                        {/* Benton County Assessment Information */}
+                        {(result.taxLotId || result.propertyId || result.assessmentYear || result.yearBuilt || result.condition || result.depreciationAmount || result.assessedValue) && (
+                          <div>
+                            <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County Assessment Details</h4>
+                            <div className="space-y-2">
+                              {result.taxLotId && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Tax Lot ID:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.taxLotId}</span>
+                                </div>
+                              )}
+                              {result.propertyId && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Property ID:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.propertyId}</span>
+                                </div>
+                              )}
+                              {result.assessmentYear && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Assessment Year:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.assessmentYear}</span>
+                                </div>
+                              )}
+                              {result.yearBuilt && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Year Built:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.yearBuilt}</span>
+                                </div>
+                              )}
+                              {result.condition && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Building Condition:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.condition}</span>
+                                </div>
+                              )}
+                              {result.depreciationAmount && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Depreciation Amount:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.depreciationAmount)}</span>
+                                </div>
+                              )}
+                              {result.assessedValue && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Assessed Value:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.assessedValue)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                     
@@ -401,6 +587,134 @@ export default function BuildingCostCalculator() {
                       )}
                     </TabsContent>
                     
+                    <TabsContent value="assessment" className="mt-0 p-4">
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-xs font-medium text-neutral-600">Benton County Property Assessment</h4>
+                            <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded">
+                              Tax Assessment Year: {result.assessmentYear || new Date().getFullYear()}
+                            </span>
+                          </div>
+                          
+                          <div className="p-3 border border-neutral-200 rounded-md space-y-4">
+                            {/* Property Info Card */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <span className="text-[10px] text-neutral-500 block">Tax Lot ID</span>
+                                <span className="text-sm font-medium">{result.taxLotId || 'Not Specified'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-neutral-500 block">Property ID</span>
+                                <span className="text-sm font-medium">{result.propertyId || 'Not Specified'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-neutral-500 block">Property Class</span>
+                                <span className="text-sm font-medium">{result.propertyClass || 'Not Specified'}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-neutral-500 block">Year Built</span>
+                                <span className="text-sm font-medium">{result.yearBuilt || 'Unknown'}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Calculation Card */}
+                            <div className="border-t border-neutral-200 pt-3">
+                              <span className="text-xs font-medium text-neutral-600 block mb-2">Assessment Calculation</span>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Building Replacement Cost:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{formatCurrency(result.totalCost)}</span>
+                                </div>
+                                
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Building Condition:</span>
+                                  <span className="text-xs font-medium text-neutral-700">{result.condition || 'Average'}</span>
+                                </div>
+                                
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-neutral-500">Building Age:</span>
+                                  <span className="text-xs font-medium text-neutral-700">
+                                    {result.yearBuilt ? `${(Number(result.assessmentYear) || new Date().getFullYear()) - Number(result.yearBuilt)} years` : 'Unknown'}
+                                  </span>
+                                </div>
+                                
+                                {result.conditionFactor && (
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs text-neutral-500">Condition Factor:</span>
+                                    <span className="text-xs font-medium text-neutral-700">{result.conditionFactor.toFixed(2)}×</span>
+                                  </div>
+                                )}
+                                
+                                {result.depreciationAmount ? (
+                                  <div className="flex justify-between items-center text-red-500">
+                                    <span className="text-xs">Depreciation Amount:</span>
+                                    <span className="text-xs font-medium">-{formatCurrency(result.depreciationAmount)}</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between items-center text-red-500">
+                                    <span className="text-xs">Estimated Depreciation:</span>
+                                    <span className="text-xs font-medium">
+                                      {result.yearBuilt ? 
+                                        `-${formatCurrency(result.totalCost * (
+                                          Math.min(0.75, ((Number(result.assessmentYear) || new Date().getFullYear()) - Number(result.yearBuilt)) * 0.015)
+                                        ))}` 
+                                        : 'Unknown'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Assessment Result */}
+                            <div className="border-t border-neutral-200 pt-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-semibold text-neutral-700">Assessed Building Value:</span>
+                                <span className="text-sm font-bold text-primary">
+                                  {result.assessedValue ? 
+                                    formatCurrency(result.assessedValue) :
+                                    result.depreciationAmount ?
+                                      formatCurrency(result.totalCost - result.depreciationAmount) :
+                                      result.yearBuilt ?
+                                        formatCurrency(result.totalCost * (
+                                          1 - Math.min(0.75, ((Number(result.assessmentYear) || new Date().getFullYear()) - Number(result.yearBuilt)) * 0.015)
+                                        )) :
+                                        formatCurrency(result.totalCost)
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                          <span className="text-xs text-yellow-700 flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="12"></line>
+                              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            This is an estimated assessment based on Benton County's matrix calculations. Official assessments may vary.
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-center">
+                          <button 
+                            type="button" 
+                            className="text-xs flex items-center gap-1.5 text-primary hover:text-primary/80"
+                            onClick={() => console.log('Save to history clicked')}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                              <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save to Assessment History
+                          </button>
+                        </div>
+                      </div>
+                    </TabsContent>
+
                     <TabsContent value="visualization" className="mt-0 p-4">
                       {materialsBreakdown && materialsBreakdown.materials ? (
                         <div className="space-y-6">

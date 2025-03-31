@@ -236,13 +236,22 @@ export const calculationHistory = pgTable("calculation_history", {
   name: text("name"),
   region: text("region").notNull(),
   buildingType: text("building_type").notNull(),
+  propertyClass: text("property_class"),
   squareFootage: integer("square_footage").notNull(),
   baseCost: decimal("base_cost", { precision: 10, scale: 2 }).notNull(),
   regionFactor: decimal("region_factor", { precision: 5, scale: 2 }).notNull(),
   complexityFactor: decimal("complexity_factor", { precision: 5, scale: 2 }).notNull(),
+  conditionFactor: decimal("condition_factor", { precision: 5, scale: 2 }),
   costPerSqft: decimal("cost_per_sqft", { precision: 10, scale: 2 }).notNull(),
   totalCost: decimal("total_cost", { precision: 14, scale: 2 }).notNull(),
   materialsBreakdown: json("materials_breakdown"),
+  taxLotId: text("tax_lot_id"),
+  propertyId: text("property_id"),
+  assessmentYear: integer("assessment_year"),
+  yearBuilt: integer("year_built"),
+  condition: text("condition"),
+  depreciationAmount: decimal("depreciation_amount", { precision: 14, scale: 2 }),
+  assessedValue: decimal("assessed_value", { precision: 14, scale: 2 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -251,14 +260,147 @@ export const insertCalculationHistorySchema = createInsertSchema(calculationHist
   name: true,
   region: true,
   buildingType: true,
+  propertyClass: true,
   squareFootage: true,
   baseCost: true,
   regionFactor: true,
   complexityFactor: true,
+  conditionFactor: true,
   costPerSqft: true,
   totalCost: true,
   materialsBreakdown: true,
+  taxLotId: true,
+  propertyId: true,
+  assessmentYear: true,
+  yearBuilt: true,
+  condition: true,
+  depreciationAmount: true,
+  assessedValue: true,
 });
 
 export type CalculationHistory = typeof calculationHistory.$inferSelect;
 export type InsertCalculationHistory = z.infer<typeof insertCalculationHistorySchema>;
+
+// Benton County Assessment Matrix Tables
+export const bentonMatrixAxis = pgTable("benton_matrix_axis", {
+  id: serial("id").primaryKey(),
+  matrixYear: integer("matrix_year").notNull(),
+  axisCd: text("axis_cd").notNull(),
+  dataType: text("data_type").notNull(),
+  lookupQuery: text("lookup_query"),
+  matrixType: text("matrix_type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBentonMatrixAxisSchema = createInsertSchema(bentonMatrixAxis).pick({
+  matrixYear: true,
+  axisCd: true,
+  dataType: true,
+  lookupQuery: true,
+  matrixType: true,
+});
+
+export const bentonMatrix = pgTable("benton_matrix", {
+  id: serial("id").primaryKey(),
+  matrixId: integer("matrix_id").notNull(),
+  matrixYear: integer("matrix_year").notNull(),
+  label: text("label").notNull(),
+  axis1: text("axis_1").notNull(),
+  axis2: text("axis_2").notNull(),
+  matrixDescription: text("matrix_description").notNull(),
+  operator: text("operator").notNull(),
+  defaultCellValue: decimal("default_cell_value", { precision: 10, scale: 2 }).notNull(),
+  bInterpolate: boolean("b_interpolate").notNull().default(false),
+  matrixType: text("matrix_type").notNull(),
+  matrixSubTypeCd: text("matrix_sub_type_cd"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBentonMatrixSchema = createInsertSchema(bentonMatrix).pick({
+  matrixId: true,
+  matrixYear: true,
+  label: true,
+  axis1: true,
+  axis2: true,
+  matrixDescription: true,
+  operator: true,
+  defaultCellValue: true,
+  bInterpolate: true,
+  matrixType: true,
+  matrixSubTypeCd: true,
+});
+
+export const bentonMatrixDetail = pgTable("benton_matrix_detail", {
+  id: serial("id").primaryKey(),
+  matrixId: integer("matrix_id").notNull(),
+  matrixYear: integer("matrix_year").notNull(),
+  axis1Value: text("axis_1_value").notNull(),
+  axis2Value: text("axis_2_value").notNull(),
+  cellValue: decimal("cell_value", { precision: 14, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBentonMatrixDetailSchema = createInsertSchema(bentonMatrixDetail).pick({
+  matrixId: true,
+  matrixYear: true,
+  axis1Value: true,
+  axis2Value: true,
+  cellValue: true,
+});
+
+export const bentonImprvSchedMatrixAssoc = pgTable("benton_imprv_sched_matrix_assoc", {
+  id: serial("id").primaryKey(),
+  imprvDetMethCd: text("imprv_det_meth_cd").notNull(),
+  imprvDetTypeCd: text("imprv_det_type_cd").notNull(),
+  imprvDetClassCd: text("imprv_det_class_cd").notNull(),
+  imprvYr: integer("imprv_yr").notNull(),
+  matrixId: integer("matrix_id").notNull(),
+  matrixOrder: integer("matrix_order").notNull(),
+  adjFactor: integer("adj_factor").notNull(),
+  imprvDetSubClassCd: text("imprv_det_sub_class_cd").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBentonImprvSchedMatrixAssocSchema = createInsertSchema(bentonImprvSchedMatrixAssoc).pick({
+  imprvDetMethCd: true,
+  imprvDetTypeCd: true,
+  imprvDetClassCd: true,
+  imprvYr: true,
+  matrixId: true,
+  matrixOrder: true,
+  adjFactor: true,
+  imprvDetSubClassCd: true,
+});
+
+export const bentonDepreciationMatrix = pgTable("benton_depreciation_matrix", {
+  id: serial("id").primaryKey(),
+  valSubElement: text("val_sub_element").notNull(),
+  matrixId: integer("matrix_id").notNull(),
+  age: integer("age").notNull(),
+  factor: integer("factor").notNull(),
+  conditionMapped: text("condition_mapped").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBentonDepreciationMatrixSchema = createInsertSchema(bentonDepreciationMatrix).pick({
+  valSubElement: true,
+  matrixId: true,
+  age: true,
+  factor: true,
+  conditionMapped: true,
+});
+
+export type BentonMatrixAxis = typeof bentonMatrixAxis.$inferSelect;
+export type InsertBentonMatrixAxis = z.infer<typeof insertBentonMatrixAxisSchema>;
+
+export type BentonMatrix = typeof bentonMatrix.$inferSelect;
+export type InsertBentonMatrix = z.infer<typeof insertBentonMatrixSchema>;
+
+export type BentonMatrixDetail = typeof bentonMatrixDetail.$inferSelect;
+export type InsertBentonMatrixDetail = z.infer<typeof insertBentonMatrixDetailSchema>;
+
+export type BentonImprvSchedMatrixAssoc = typeof bentonImprvSchedMatrixAssoc.$inferSelect;
+export type InsertBentonImprvSchedMatrixAssoc = z.infer<typeof insertBentonImprvSchedMatrixAssocSchema>;
+
+export type BentonDepreciationMatrix = typeof bentonDepreciationMatrix.$inferSelect;
+export type InsertBentonDepreciationMatrix = z.infer<typeof insertBentonDepreciationMatrixSchema>;

@@ -7,20 +7,37 @@ import { BuildingCost, InsertBuildingCost } from "@shared/schema";
 export interface CalculationRequest {
   region: string;
   buildingType: string;
+  propertyClass?: string;
   squareFootage: number;
   complexityMultiplier?: number;
+  // Benton County specific fields
+  taxLotId?: string;
+  propertyId?: string;
+  assessmentYear?: number;
+  yearBuilt?: number;
+  condition?: string;
 }
 
 // Type for the calculation response
 export interface CalculationResponse {
   region: string;
   buildingType: string;
+  propertyClass?: string;
   squareFootage: number;
   baseCost: number;
   regionFactor: number;
   complexityFactor: number;
   costPerSqft: number;
   totalCost: number;
+  // Benton County specific fields
+  taxLotId?: string;
+  propertyId?: string;
+  assessmentYear?: number;
+  yearBuilt?: number;
+  condition?: string;
+  conditionFactor?: number;
+  depreciationAmount?: number;
+  assessedValue?: number;
 }
 
 // Material in a breakdown
@@ -39,6 +56,7 @@ export interface Material {
 export interface MaterialsBreakdownResponse {
   region: string;
   buildingType: string;
+  propertyClass?: string;
   squareFootage: number;
   baseCost: number;
   regionFactor: number;
@@ -46,6 +64,15 @@ export interface MaterialsBreakdownResponse {
   costPerSqft: number;
   totalCost: number;
   materials: Material[];
+  // Benton County specific fields
+  taxLotId?: string;
+  propertyId?: string;
+  assessmentYear?: number;
+  yearBuilt?: number;
+  condition?: string;
+  conditionFactor?: number;
+  depreciationAmount?: number;
+  assessedValue?: number;
 }
 
 export function useBuildingCosts() {
