@@ -18,6 +18,8 @@ import { z } from "zod";
 import { setupAuth } from "./auth";
 import { validateExcelFile, validateBatchExcelFiles } from "./validators/excelValidator";
 import { processBatchImport } from "./import/batchImporter";
+import { initializeMCP } from "./mcp";
+import { setupMCPRoutes } from "./mcp/routes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -933,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/matrix/:region/:buildingType", async (req: Request, res: Response) => {
     try {
       const { region, buildingType } = req.params;
-      const matrix = await storage.getCostMatrixByRegionAndType(region, buildingType);
+      const matrix = await storage.getCostMatrixByRegionAndBuildingType(region, buildingType);
       
       if (!matrix) {
         return res.status(404).json({ message: "Cost matrix not found" });
@@ -948,7 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all cost matrices
   app.get("/api/matrix", async (req: Request, res: Response) => {
     try {
-      const matrices = await storage.getAllCostMatrices();
+      const matrices = await storage.getAllCostMatrix();
       res.json(matrices);
     } catch (error: any) {
       res.status(500).json({ message: `Error fetching cost matrices: ${error.message}` });
@@ -1432,13 +1434,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           buildingType,
           squareFootage: Number(squareFootage),
           baseCost: calculationResult.baseCost.toString(),
-          adjustedCost: calculationResult.adjustedCost?.toString(),
           totalCost: calculationResult.totalCost.toString(),
           complexityFactor: complexityFactor.toString(),
           conditionFactor: conditionFactor.toString(),
           yearBuilt: Number(yearBuilt),
-          depreciationRate: calculationResult.depreciationRate,
-          calculatedAt: new Date()
+          depreciationAmount: calculationResult.depreciationAmount?.toString(),
+          costPerSqft: calculationResult.costPerSqft?.toString(),
+          regionFactor: calculationResult.regionFactor?.toString()
         });
       }
       
@@ -1537,6 +1539,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Initialize and set up MCP framework
+  try {
+    console.log('Initializing Model Content Protocol (MCP) framework...');
+    initializeMCP();
+    setupMCPRoutes(app);
+    console.log('MCP framework initialized successfully');
+    
+    // Log activity
+    await storage.createActivity({
+      action: `Initialized Model Content Protocol (MCP) framework`,
+      icon: "ri-ai-generate",
+      iconColor: "secondary"
+    });
+  } catch (error: any) {
+    console.error('Failed to initialize MCP framework:', error);
+    // Log error but don't block server startup
+    await storage.createActivity({
+      action: `Error initializing MCP framework: ${error.message || 'Unknown error'}`,
+      icon: "ri-error-warning-line",
+      iconColor: "error"
+    });
+  }
 
   const httpServer = createServer(app);
   return httpServer;
