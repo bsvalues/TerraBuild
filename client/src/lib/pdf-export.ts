@@ -15,71 +15,13 @@ function ensureString(value: string | undefined | null): string {
 
 // Logo and branding
 const COMPANY_NAME = "Benton County Building Cost System";
-const REPORT_TITLE = "Building Cost Prediction Report";
+const REPORT_TITLE = "Building Cost Report";
 
-/**
- * Generate a PDF from a cost prediction result
- * 
- * @param prediction The cost prediction data
- * @param buildingDetails Additional building details
- * @returns Promise resolving to the PDF document
- */
-export async function generateCostPredictionPdf(
-  prediction: CostPredictionResponse, 
-  buildingDetails: {
-    buildingType: string;
-    squareFootage: number;
-    region: string;
-    yearBuilt?: number;
-    condition?: string;
-    complexity?: number;
-  }
-): Promise<jsPDF> {
-  // Create a new PDF document
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-  
-  // Set up document properties
-  doc.setProperties({
-    title: `${REPORT_TITLE} - ${new Date().toLocaleDateString()}`,
-    subject: 'Building Cost Prediction',
-    author: COMPANY_NAME,
-    keywords: 'building cost, prediction, estimate',
-    creator: COMPANY_NAME
-  });
-  
-  // Add header
-  addHeader(doc);
-  
-  // Add report date
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Report Generated: ${currentDate}`, 20, 35);
-  
-  // Add building details section
-  addBuildingDetailsSection(doc, buildingDetails, 45);
-  
-  // Add cost prediction results section
-  addCostPredictionSection(doc, prediction, 100);
-  
-  // Add confidence and data quality section
-  if (prediction.confidenceScore !== undefined || prediction.dataQualityScore !== undefined) {
-    addQualitySection(doc, prediction, 160);
-  }
-  
-  // Add footer
-  addFooter(doc);
-  
-  return doc;
-}
+// Blue theme colors for PDF
+const BLUE_PRIMARY = [59, 130, 246]; // #3B82F6
+const BLUE_DARK = [30, 64, 175]; // #1E40AF
+const BLUE_LIGHT = [219, 234, 254]; // #DBEAFE
+const BLUE_LIGHTER = [239, 246, 255]; // #EFF6FF
 
 /**
  * Export a cost prediction as a PDF
@@ -101,87 +43,54 @@ export async function exportCostPredictionAsPdf(
   filename = 'cost-prediction-report.pdf'
 ): Promise<void> {
   try {
-    const doc = await generateCostPredictionPdf(prediction, buildingDetails);
+    // Create a new PDF document
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    // Set up document properties
+    doc.setProperties({
+      title: `${REPORT_TITLE} - ${new Date().toLocaleDateString()}`,
+      subject: 'Building Cost Prediction',
+      author: COMPANY_NAME,
+      keywords: 'building cost, prediction, estimate',
+      creator: COMPANY_NAME
+    });
+    
+    // Add modern blue gradient header
+    addModernHeader(doc);
+    
+    // Add report date
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Report Generated: ${currentDate}`, 20, 35);
+    
+    // Add building details section with modern styling
+    addBuildingDetailsSection(doc, buildingDetails, 45);
+    
+    // Add cost prediction results section with card styling
+    addCostPredictionSection(doc, prediction, 100);
+    
+    // Add confidence and data quality section
+    if (prediction.confidenceScore !== undefined || prediction.dataQualityScore !== undefined) {
+      addQualitySection(doc, prediction, 160);
+    }
+    
+    // Add footer
+    addModernFooter(doc);
+    
     doc.save(filename);
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
   }
-}
-
-/**
- * Generate a PDF from an HTML element
- * 
- * @param element The HTML element to convert to PDF
- * @param options Options for PDF generation
- * @returns Promise resolving to the PDF document
- */
-export async function generatePdfFromElement(
-  element: HTMLElement,
-  options: {
-    title?: string;
-    filename?: string;
-    addHeader?: boolean;
-    addFooter?: boolean;
-  } = {}
-): Promise<jsPDF> {
-  // Default options
-  const opts = {
-    title: REPORT_TITLE,
-    addHeader: true,
-    addFooter: true,
-    ...options
-  };
-  
-  // Create canvas from the element
-  const canvas = await html2canvas(element, {
-    scale: 2, // Higher scale for better quality
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff'
-  });
-  
-  // Calculate dimensions to fit the page
-  const imgData = canvas.toDataURL('image/png');
-  const pageWidth = 210; // A4 width in mm
-  const pageHeight = 297; // A4 height in mm
-  const marginX = 10; // X margin in mm
-  const contentWidth = pageWidth - (marginX * 2);
-  
-  // Calculate image dimensions to maintain aspect ratio
-  const imgWidth = contentWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
-  // Create a new PDF document
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-  
-  // Set document properties
-  doc.setProperties({
-    title: `${opts.title} - ${new Date().toLocaleDateString()}`,
-    subject: 'Building Cost Prediction',
-    author: COMPANY_NAME,
-    keywords: 'building cost, prediction, estimate',
-    creator: COMPANY_NAME
-  });
-  
-  // Add header if requested
-  if (opts.addHeader) {
-    addHeader(doc);
-    doc.addImage(imgData, 'PNG', marginX, 40, imgWidth, imgHeight);
-  } else {
-    doc.addImage(imgData, 'PNG', marginX, marginX, imgWidth, imgHeight);
-  }
-  
-  // Add footer if requested
-  if (opts.addFooter) {
-    addFooter(doc);
-  }
-  
-  return doc;
 }
 
 /**
@@ -201,7 +110,62 @@ export async function exportElementAsPdf(
   } = {}
 ): Promise<void> {
   try {
-    const doc = await generatePdfFromElement(element, options);
+    // Default options
+    const opts = {
+      title: REPORT_TITLE,
+      addHeader: true,
+      addFooter: true,
+      ...options
+    };
+    
+    // Create canvas from the element
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    
+    // Calculate dimensions to fit the page
+    const imgData = canvas.toDataURL('image/png');
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const marginX = 10; // X margin in mm
+    const contentWidth = pageWidth - (marginX * 2);
+    
+    // Calculate image dimensions to maintain aspect ratio
+    const imgWidth = contentWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    // Create a new PDF document
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    // Set document properties
+    doc.setProperties({
+      title: `${opts.title} - ${new Date().toLocaleDateString()}`,
+      subject: 'Building Cost Report',
+      author: COMPANY_NAME,
+      keywords: 'building cost, estimate',
+      creator: COMPANY_NAME
+    });
+    
+    // Add header if requested
+    if (opts.addHeader) {
+      addModernHeader(doc);
+      doc.addImage(imgData, 'PNG', marginX, 40, imgWidth, imgHeight);
+    } else {
+      doc.addImage(imgData, 'PNG', marginX, marginX, imgWidth, imgHeight);
+    }
+    
+    // Add footer if requested
+    if (opts.addFooter) {
+      addModernFooter(doc);
+    }
+    
     doc.save(options.filename || 'export.pdf');
   } catch (error) {
     console.error('Error exporting element as PDF:', error);
@@ -209,46 +173,64 @@ export async function exportElementAsPdf(
   }
 }
 
-// Helper functions for PDF generation
+// Helper functions for PDF generation with modern styling
 
 /**
- * Add a header to the PDF document
+ * Add a modern header with blue gradient to the PDF document
  */
-function addHeader(doc: jsPDF): void {
-  // Add company name
-  doc.setFontSize(20);
-  doc.setTextColor(40, 40, 40);
-  doc.text(ensureString(COMPANY_NAME), 20, 20);
+function addModernHeader(doc: jsPDF): void {
+  // Create blue gradient header bar
+  const grd = doc.setGState(doc.addGState({ opacity: 1 }));
+  doc.saveGraphicsState();
+  
+  // Draw gradient rectangle
+  doc.setFillColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
+  doc.rect(0, 0, 210, 25, 'F');
+  
+  // Add company name in white
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.text(ensureString(COMPANY_NAME), 20, 15);
   
   // Add report title
-  doc.setFontSize(16);
-  doc.setTextColor(70, 70, 70);
-  doc.text(ensureString(REPORT_TITLE), 20, 30);
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(220, 220, 220);
+  doc.text(ensureString(REPORT_TITLE), 20, 22);
   
-  // Add a horizontal line
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.5);
-  doc.line(20, 32, 190, 32);
+  doc.restoreGraphicsState();
 }
 
 /**
- * Add a footer to the PDF document
+ * Add a modern footer to the PDF document
  */
-function addFooter(doc: jsPDF): void {
+function addModernFooter(doc: jsPDF): void {
   const pageCount = doc.getNumberOfPages();
-  const footerText = `${ensureString(COMPANY_NAME)} • Generated ${new Date().toLocaleDateString()}`;
   
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    
+    // Add blue line
+    doc.setDrawColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
+    doc.setLineWidth(0.5);
+    doc.line(20, 282, 190, 282);
+    
+    // Add footer text
     doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
+    doc.setTextColor(100, 100, 100);
+    const footerText = `${ensureString(COMPANY_NAME)} • Generated ${new Date().toLocaleDateString()}`;
     doc.text(ensureString(footerText), 20, 287);
+    
+    // Add page numbers
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
     doc.text(`Page ${i} of ${pageCount}`, 180, 287, { align: 'right' });
   }
 }
 
 /**
- * Add building details section to the PDF
+ * Add building details section to the PDF with card styling
  */
 function addBuildingDetailsSection(
   doc: jsPDF, 
@@ -262,15 +244,17 @@ function addBuildingDetailsSection(
   },
   yPosition: number
 ): void {
-  // Section title
+  // Section title with blue styling
   doc.setFontSize(14);
-  doc.setTextColor(40, 40, 40);
+  doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
+  doc.setFont(undefined, 'bold');
   doc.text('Building Details', 20, yPosition);
   
-  // Section content
-  doc.setFontSize(10);
-  doc.setTextColor(60, 60, 60);
+  // Draw a card with light blue gradient for the details
+  const boxMargin = 5;
+  const lineHeight = 7;
   
+  // Prepare data entries
   const entries = [
     ['Building Type', formatBuildingType(details.buildingType)],
     ['Square Footage', `${details.squareFootage.toLocaleString()} sq ft`],
@@ -289,51 +273,54 @@ function addBuildingDetailsSection(
     entries.push(['Complexity Factor', details.complexity.toString()]);
   }
   
-  // Draw a light box around the details
-  const boxMargin = 5;
-  const lineHeight = 7;
-  const boxHeight = entries.length * lineHeight + (boxMargin * 2);
+  const boxHeight = entries.length * lineHeight + (boxMargin * 4);
   
-  doc.setFillColor(248, 250, 252); // Light gray background
-  doc.setDrawColor(230, 230, 230);
+  // Draw card with rounded corners and blue border
+  doc.setFillColor(BLUE_LIGHTER[0], BLUE_LIGHTER[1], BLUE_LIGHTER[2]); 
+  doc.setDrawColor(BLUE_LIGHT[0], BLUE_LIGHT[1], BLUE_LIGHT[2]);
   doc.setLineWidth(0.5);
   doc.roundedRect(20, yPosition + 5, 170, boxHeight, 3, 3, 'FD');
   
-  // Add the entries
-  let entryY = yPosition + boxMargin + 10;
+  // Add the entries with improved styling
+  let entryY = yPosition + boxMargin * 2 + 7;
   entries.forEach(([label, value]) => {
     doc.setFont(undefined, 'bold');
+    doc.setTextColor(80, 80, 80);
     doc.text(ensureString(label) + ':', 25, entryY);
+    
     doc.setFont(undefined, 'normal');
+    doc.setTextColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
     doc.text(ensureString(value), 70, entryY);
+    
     entryY += lineHeight;
   });
 }
 
 /**
- * Add cost prediction section to the PDF
+ * Add cost prediction section to the PDF with modern card styling
  */
 function addCostPredictionSection(
   doc: jsPDF, 
   prediction: CostPredictionResponse,
   yPosition: number
 ): void {
-  // Section title
+  // Section title with blue styling
   doc.setFontSize(14);
-  doc.setTextColor(40, 40, 40);
-  doc.text('Cost Prediction Results', 20, yPosition);
+  doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
+  doc.setFont(undefined, 'bold');
+  doc.text('Cost Analysis Results', 20, yPosition);
   
-  // Draw a highlighted box for the total cost
-  doc.setFillColor(235, 245, 255); // Light blue background
-  doc.setDrawColor(200, 220, 240);
+  // Create a highlighted card for the total cost with modern gradient style
+  doc.setFillColor(BLUE_LIGHT[0], BLUE_LIGHT[1], BLUE_LIGHT[2]); 
+  doc.setDrawColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
   doc.setLineWidth(0.5);
   doc.roundedRect(20, yPosition + 5, 170, 20, 3, 3, 'FD');
   
-  // Add total cost
+  // Add total cost with improved styling
   doc.setFontSize(12);
-  doc.setTextColor(40, 40, 40);
+  doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
   doc.setFont(undefined, 'bold');
-  doc.text('Total Estimated Cost:', 25, yPosition + 15);
+  doc.text('Total Estimated Cost:', 25, yPosition + 17);
   
   // Format the total cost with currency
   const formattedCost = `$${prediction.totalCost.toLocaleString('en-US', { 
@@ -342,13 +329,10 @@ function addCostPredictionSection(
   })}`;
   
   doc.setFontSize(14);
-  doc.setTextColor(0, 90, 180); // Blue text for emphasis
-  doc.text(formattedCost, 170, yPosition + 15, { align: 'right' });
+  doc.setTextColor(BLUE_PRIMARY[0], BLUE_PRIMARY[1], BLUE_PRIMARY[2]);
+  doc.text(formattedCost, 170, yPosition + 17, { align: 'right' });
   
-  // Add cost breakdown
-  doc.setFontSize(10);
-  doc.setTextColor(60, 60, 60);
-  
+  // Add cost breakdown in modern card style
   const entries = [
     ['Cost Per Square Foot', `$${prediction.costPerSquareFoot.toFixed(2)}`],
   ];
@@ -362,56 +346,69 @@ function addCostPredictionSection(
   
   if (prediction.regionFactor !== undefined) {
     entries.push(['Region Factor', typeof prediction.regionFactor === 'number' 
-      ? prediction.regionFactor.toFixed(2) 
+      ? prediction.regionFactor.toFixed(2) + 'x' 
       : ensureString(prediction.regionFactor)
     ]);
   }
   
   if (prediction.complexityFactor !== undefined) {
     entries.push(['Complexity Factor', typeof prediction.complexityFactor === 'number' 
-      ? prediction.complexityFactor.toFixed(2) 
+      ? prediction.complexityFactor.toFixed(2) + 'x'
       : ensureString(prediction.complexityFactor)
     ]);
   }
   
-  // Draw a light box around the details
+  // Draw a light box around the details with modern style
   const boxMargin = 5;
-  const lineHeight = 7;
-  const boxHeight = entries.length * lineHeight + (boxMargin * 2);
+  const lineHeight = 8;
+  const boxHeight = entries.length * lineHeight + (boxMargin * 4);
   
-  doc.setFillColor(250, 250, 250); // Very light gray background
+  doc.setFillColor(250, 250, 250); 
   doc.setDrawColor(230, 230, 230);
   doc.roundedRect(20, yPosition + 30, 170, boxHeight, 3, 3, 'FD');
   
-  // Add the entries
-  let entryY = yPosition + boxMargin + 35;
+  // Add the entries with improved styling
+  let entryY = yPosition + boxMargin * 2 + 33;
   entries.forEach(([label, value]) => {
     doc.setFont(undefined, 'bold');
+    doc.setTextColor(100, 100, 100);
     doc.text(ensureString(label) + ':', 25, entryY);
+    
     doc.setFont(undefined, 'normal');
+    doc.setTextColor(60, 60, 60);
     doc.text(ensureString(value), 120, entryY);
+    
     entryY += lineHeight;
   });
   
   // Add explanation if available
   if (prediction.explanation) {
     const yStart = yPosition + 30 + boxHeight + 10;
-    doc.setFontSize(11);
-    doc.setTextColor(40, 40, 40);
-    doc.setFont(undefined, 'bold');
-    doc.text('Analysis:', 20, yStart);
-    doc.setFont(undefined, 'normal');
+    doc.setFillColor(245, 247, 250);
+    doc.setDrawColor(220, 225, 230);
     
-    // Wrap the explanation text to fit the page
+    // First measure the text to determine box height
     const textLines = doc.splitTextToSize(ensureString(prediction.explanation), 160);
+    const textHeight = textLines.length * 5 + 14; // Estimated text height plus padding
+    
+    // Draw explanation box
+    doc.roundedRect(20, yStart, 170, textHeight, 3, 3, 'FD');
+    
+    // Add title and text
+    doc.setFontSize(11);
+    doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text('Analysis:', 25, yStart + 7);
+    
+    doc.setFont(undefined, 'normal');
     doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text(textLines, 20, yStart + 7);
+    doc.setTextColor(80, 80, 80);
+    doc.text(textLines, 25, yStart + 14);
   }
 }
 
 /**
- * Add quality metrics section to the PDF
+ * Add quality metrics section to the PDF with modern styling
  */
 function addQualitySection(
   doc: jsPDF, 
@@ -420,98 +417,111 @@ function addQualitySection(
 ): void {
   // Section title
   doc.setFontSize(12);
-  doc.setTextColor(40, 40, 40);
+  doc.setTextColor(BLUE_DARK[0], BLUE_DARK[1], BLUE_DARK[2]);
+  doc.setFont(undefined, 'bold');
   doc.text('Prediction Quality Metrics', 20, yPosition);
   
-  // Add confidence score
+  // Add confidence score with modern gauge
   if (prediction.confidenceScore !== undefined) {
     const confidencePercentage = Math.round(prediction.confidenceScore * 100);
     let confidenceColor = [150, 150, 150]; // Default gray
     
     if (confidencePercentage >= 80) {
-      confidenceColor = [39, 174, 96]; // Green
+      confidenceColor = [34, 197, 94]; // Green
     } else if (confidencePercentage >= 60) {
-      confidenceColor = [241, 196, 15]; // Yellow/Amber
+      confidenceColor = [234, 179, 8]; // Yellow/Amber
     } else {
-      confidenceColor = [231, 76, 60]; // Red
+      confidenceColor = [239, 68, 68]; // Red
     }
     
-    // Confidence score with color-based gauge
+    // Add label for confidence score
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(60, 60, 60);
+    doc.setTextColor(80, 80, 80);
     doc.text('Confidence Score:', 25, yPosition + 10);
     
-    // Draw confidence gauge background
+    // Draw modern rounded gauge background
     doc.setFillColor(240, 240, 240);
     doc.setDrawColor(220, 220, 220);
-    doc.roundedRect(100, yPosition + 6, 60, 6, 2, 2, 'FD');
+    doc.roundedRect(100, yPosition + 6, 60, 6, 3, 3, 'FD');
     
-    // Draw confidence gauge fill
+    // Draw confidence gauge fill with rounded corners
     doc.setFillColor(confidenceColor[0], confidenceColor[1], confidenceColor[2]);
     doc.setDrawColor(confidenceColor[0], confidenceColor[1], confidenceColor[2]);
     const fillWidth = Math.min(60 * (prediction.confidenceScore), 60);
-    doc.roundedRect(100, yPosition + 6, fillWidth, 6, 2, 2, 'FD');
+    doc.roundedRect(100, yPosition + 6, fillWidth, 6, 3, 3, 'FD');
     
     // Add percentage text
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(40, 40, 40);
+    doc.setTextColor(80, 80, 80);
     doc.text(`${confidencePercentage}%`, 170, yPosition + 10, { align: 'right' });
   }
   
-  // Add data quality score if available
+  // Add data quality score with modern styling
   if (prediction.dataQualityScore !== undefined) {
     const qualityPercentage = Math.round(prediction.dataQualityScore * 100);
     let qualityColor = [150, 150, 150]; // Default gray
     
     if (qualityPercentage >= 80) {
-      qualityColor = [39, 174, 96]; // Green
+      qualityColor = [34, 197, 94]; // Green
     } else if (qualityPercentage >= 60) {
-      qualityColor = [241, 196, 15]; // Yellow/Amber
+      qualityColor = [234, 179, 8]; // Yellow/Amber
     } else {
-      qualityColor = [231, 76, 60]; // Red
+      qualityColor = [239, 68, 68]; // Red
     }
     
-    // Data quality score with color-based gauge
+    // Add label for data quality
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(60, 60, 60);
-    doc.text('Data Quality Score:', 25, yPosition + 20);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Data Quality Score:', 25, yPosition + 22);
     
-    // Draw data quality gauge background
+    // Draw modern rounded gauge background
     doc.setFillColor(240, 240, 240);
     doc.setDrawColor(220, 220, 220);
-    doc.roundedRect(100, yPosition + 16, 60, 6, 2, 2, 'FD');
+    doc.roundedRect(100, yPosition + 18, 60, 6, 3, 3, 'FD');
     
-    // Draw data quality gauge fill
+    // Draw data quality gauge fill with rounded corners
     doc.setFillColor(qualityColor[0], qualityColor[1], qualityColor[2]);
     doc.setDrawColor(qualityColor[0], qualityColor[1], qualityColor[2]);
     const fillWidth = Math.min(60 * (prediction.dataQualityScore), 60);
-    doc.roundedRect(100, yPosition + 16, fillWidth, 6, 2, 2, 'FD');
+    doc.roundedRect(100, yPosition + 18, fillWidth, 6, 3, 3, 'FD');
     
     // Add percentage text
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(40, 40, 40);
-    doc.text(`${qualityPercentage}%`, 170, yPosition + 20, { align: 'right' });
+    doc.setTextColor(80, 80, 80);
+    doc.text(`${qualityPercentage}%`, 170, yPosition + 22, { align: 'right' });
   }
   
-  // Add anomalies if available
+  // Add anomalies with modern warning card if available
   if (prediction.anomalies && prediction.anomalies.length > 0) {
+    const yStart = yPosition + 35;
+    
+    // Draw warning card
+    doc.setFillColor(255, 247, 237); // Light orange/amber background
+    doc.setDrawColor(251, 191, 36); // Amber border
+    
+    // First measure the text to determine box height
+    const textHeight = (prediction.anomalies.length * 6) + 15; // Estimated text height plus padding
+    doc.roundedRect(20, yStart, 170, textHeight, 3, 3, 'FD');
+    
+    // Add warning title
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(180, 120, 0); // Amber/Orange color for warnings
-    doc.text('Data Quality Warnings:', 25, yPosition + 35);
+    doc.setTextColor(180, 83, 9); // Dark amber/orange for title
+    doc.text('Data Quality Warnings:', 25, yStart + 7);
     
-    // List anomalies as bullet points
+    // List anomalies as bullet points with improved styling
     doc.setFont(undefined, 'normal');
     doc.setFontSize(9);
+    doc.setTextColor(120, 53, 15); // Darker text for better readability
     
     prediction.anomalies.forEach((anomaly, index) => {
-      const bulletY = yPosition + 40 + (index * 5);
+      const bulletY = yStart + 15 + (index * 6);
       doc.text('•', 30, bulletY);
       
       // Wrap the anomaly text to fit
-      const textLines = doc.splitTextToSize(ensureString(anomaly), 140);
+      const textLines = doc.splitTextToSize(ensureString(anomaly), 135);
       doc.text(textLines, 35, bulletY);
     });
   }

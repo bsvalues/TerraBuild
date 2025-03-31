@@ -1,0 +1,516 @@
+import React, { useState } from 'react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+// Custom Icon Components
+const BuildingIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+    <line x1="9" y1="22" x2="9" y2="2"></line>
+    <line x1="15" y1="22" x2="15" y2="2"></line>
+  </svg>
+);
+
+const BarChartIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="20" x2="12" y2="10"></line>
+    <line x1="18" y1="20" x2="18" y2="4"></line>
+    <line x1="6" y1="20" x2="6" y2="16"></line>
+  </svg>
+);
+
+const CalculatorIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+    <line x1="8" y1="6" x2="16" y2="6"></line>
+    <line x1="16" y1="14" x2="16" y2="18"></line>
+    <circle cx="12" cy="10" r="2"></circle>
+  </svg>
+);
+
+const DollarSignIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="1" x2="12" y2="23"></line>
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+    <polyline points="12 5 19 12 12 19"></polyline>
+  </svg>
+);
+
+const ModernBuildingCostSystem = () => {
+  const [selectedRegion, setSelectedRegion] = useState('northwest');
+  const [selectedBuildingType, setSelectedBuildingType] = useState('commercial');
+  const [selectedCondition, setSelectedCondition] = useState('good');
+  const [squareFootage, setSquareFootage] = useState(2000);
+  const [yearBuilt, setYearBuilt] = useState(2020);
+  const [complexityFactor, setComplexityFactor] = useState(2.1);
+  const [conditionFactor, setConditionFactor] = useState(1);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeTab, setActiveTab] = useState('summary');
+
+  // Sample data for visualizations
+  const costBreakdownData = [
+    { name: 'Materials', value: 45, color: '#0088FE' },
+    { name: 'Labor', value: 35, color: '#00C49F' },
+    { name: 'Permits', value: 10, color: '#FFBB28' },
+    { name: 'Overhead', value: 10, color: '#FF8042' }
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  const regionalCostData = [
+    { region: 'Northwest', cost: 225 },
+    { region: 'Southwest', cost: 185 },
+    { region: 'Central', cost: 195 },
+    { region: 'East', cost: 175 },
+    { region: 'Southeast', cost: 190 }
+  ];
+
+  const historicalCostData = [
+    { year: 2018, cost: 175 },
+    { year: 2019, cost: 185 },
+    { year: 2020, cost: 200 },
+    { year: 2021, cost: 215 },
+    { year: 2022, cost: 230 },
+    { year: 2023, cost: 245 },
+    { year: 2024, cost: 255 }
+  ];
+
+  // Calculate estimated cost
+  const calculateEstimatedCost = () => {
+    const baseCost = 225; // Base cost per sq ft for commercial in Northwest
+    const complexityMultiplier = complexityFactor;
+    const conditionMultiplier = conditionFactor;
+    const ageReduction = (2025 - yearBuilt) * 0.005; // 0.5% reduction per year of age
+    
+    const adjustedCost = baseCost * complexityMultiplier * conditionMultiplier * (1 - ageReduction);
+    const totalCost = adjustedCost * squareFootage;
+    
+    return {
+      perSquareFoot: adjustedCost.toFixed(2),
+      total: totalCost.toFixed(0)
+    };
+  };
+
+  const costEstimate = calculateEstimatedCost();
+
+  return (
+    <div className="bg-gray-100 min-h-screen">
+      <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-4 shadow-md">
+        <div className="container mx-auto">
+          <div className="flex items-center gap-2">
+            <span className="text-white"><BuildingIcon /></span>
+            <div>
+              <h1 className="text-2xl font-bold">Benton County</h1>
+              <p className="text-blue-200">Building Cost Assessment System</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+          {/* Input Panel */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
+              <div className="p-4 bg-blue-600 text-white">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <span className="text-white"><CalculatorIcon /></span>
+                  Building Parameters
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <select
+                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                  >
+                    <option value="northwest">Northwest</option>
+                    <option value="southwest">Southwest</option>
+                    <option value="central">Central</option>
+                    <option value="east">East</option>
+                    <option value="southeast">Southeast</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Building Type</label>
+                  <select
+                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                    value={selectedBuildingType}
+                    onChange={(e) => setSelectedBuildingType(e.target.value)}
+                  >
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="industrial">Industrial</option>
+                    <option value="institutional">Institutional</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Square Footage</label>
+                  <input
+                    type="number"
+                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                    value={squareFootage}
+                    onChange={(e) => setSquareFootage(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year Built</label>
+                  <input
+                    type="number"
+                    className="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                    value={yearBuilt}
+                    onChange={(e) => setYearBuilt(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Complexity: {complexityFactor}</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Simple</span>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="3.0"
+                      step="0.1"
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      value={complexityFactor}
+                      onChange={(e) => setComplexityFactor(Number(e.target.value))}
+                    />
+                    <span className="text-xs text-gray-500">Complex</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Condition: {conditionFactor}</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Poor</span>
+                    <input
+                      type="range"
+                      min="0.6"
+                      max="1.1"
+                      step="0.1"
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      value={conditionFactor}
+                      onChange={(e) => setConditionFactor(Number(e.target.value))}
+                    />
+                    <span className="text-xs text-gray-500">Excellent</span>
+                  </div>
+                </div>
+                
+                <button 
+                  className="flex items-center justify-center w-full py-2 text-blue-600 text-sm font-medium bg-blue-50 rounded-md border border-blue-200 hover:bg-blue-100"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                  {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+                  <span className="ml-1 w-4 h-4"><ArrowRightIcon /></span>
+                </button>
+                
+                {showAdvanced && (
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                    <h5 className="font-medium text-sm text-gray-700">Advanced Options</h5>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Material Quality</label>
+                      <select className="block w-full rounded-md border border-gray-300 py-1.5 px-3 text-sm">
+                        <option>Standard</option>
+                        <option>Premium</option>
+                        <option>Luxury</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Labor Market</label>
+                      <select className="block w-full rounded-md border border-gray-300 py-1.5 px-3 text-sm">
+                        <option>Standard</option>
+                        <option>High-Cost</option>
+                        <option>Low-Cost</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                
+                <button className="w-full py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 shadow-md flex items-center justify-center gap-2 transition-colors">
+                  <span className="w-5 h-5 text-white"><DollarSignIcon /></span>
+                  Calculate Cost
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Results Panel */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
+              <div className="p-4 bg-blue-600 text-white flex justify-between items-center">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <span className="text-white"><BarChartIcon /></span>
+                  Cost Analysis
+                </h2>
+                
+                <div className="flex bg-blue-700 rounded-md overflow-hidden">
+                  <button
+                    className={`px-4 py-1 text-sm ${activeTab === 'summary' ? 'bg-blue-800' : ''}`}
+                    onClick={() => setActiveTab('summary')}
+                  >
+                    Summary
+                  </button>
+                  <button
+                    className={`px-4 py-1 text-sm ${activeTab === 'breakdown' ? 'bg-blue-800' : ''}`}
+                    onClick={() => setActiveTab('breakdown')}
+                  >
+                    Breakdown
+                  </button>
+                  <button
+                    className={`px-4 py-1 text-sm ${activeTab === 'comparisons' ? 'bg-blue-800' : ''}`}
+                    onClick={() => setActiveTab('comparisons')}
+                  >
+                    Comparisons
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {/* Cost Cards */}
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 shadow-sm">
+                    <h3 className="text-blue-800 font-medium mb-2">Cost Per Square Foot</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-blue-700">${costEstimate.perSquareFoot}</span>
+                      <span className="text-blue-600 text-lg">/sq ft</span>
+                    </div>
+                    <p className="mt-2 text-sm text-blue-600">
+                      For {selectedBuildingType} building in {selectedRegion} region
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-sm">
+                    <h3 className="text-green-800 font-medium mb-2">Total Project Cost</h3>
+                    <div className="text-4xl font-bold text-green-700">
+                      ${parseInt(costEstimate.total).toLocaleString()}
+                    </div>
+                    <p className="mt-2 text-sm text-green-600">
+                      Based on {squareFootage.toLocaleString()} square feet
+                    </p>
+                  </div>
+                </div>
+
+                {activeTab === 'summary' && (
+                  <>
+                    {/* Cost Breakdown Chart */}
+                    <div className="mb-8">
+                      <h3 className="text-lg font-medium text-gray-800 mb-4">Cost Breakdown</h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={costBreakdownData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={true}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            >
+                              {costBreakdownData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    
+                    {/* Historical Trend Chart */}
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-800 mb-4">Historical Cost Trends</h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={historicalCostData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis dataKey="year" />
+                            <YAxis />
+                            <Tooltip formatter={(value) => [`$${value}`, 'Cost per sq ft']} />
+                            <Line 
+                              type="monotone" 
+                              dataKey="cost" 
+                              stroke="#3B82F6" 
+                              strokeWidth={3}
+                              dot={{ r: 6 }}
+                              activeDot={{ r: 8, stroke: '#2563EB', strokeWidth: 2 }} 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'breakdown' && (
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-800 mb-4">Cost Component Analysis</h3>
+                      <div className="space-y-6">
+                        {costBreakdownData.map((item, index) => (
+                          <div key={index}>
+                            <div className="flex justify-between mb-2">
+                              <span className="font-medium">{item.name}</span>
+                              <span>${(parseInt(costEstimate.total) * (item.value / 100)).toLocaleString()} ({item.value}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div 
+                                className="h-2.5 rounded-full" 
+                                style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        <h3 className="text-md font-medium text-gray-800 mb-3">Material Costs</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Foundation</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.45 * 0.15).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Structure</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.45 * 0.25).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Electrical</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.45 * 0.15).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Plumbing</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.45 * 0.12).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Finishes</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.45 * 0.33).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        <h3 className="text-md font-medium text-gray-800 mb-3">Labor Costs</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Site Preparation</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.35 * 0.10).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Construction</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.35 * 0.40).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Electrical</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.35 * 0.15).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Plumbing</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.35 * 0.15).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Finishing</span>
+                            <span className="font-medium">${Math.round(parseInt(costEstimate.total) * 0.35 * 0.20).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'comparisons' && (
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-800 mb-4">Regional Cost Comparison</h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={regionalCostData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis dataKey="region" />
+                            <YAxis />
+                            <Tooltip formatter={(value) => [`$${value}`, 'Cost per sq ft']} />
+                            <Bar dataKey="cost" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-800 mb-3">Key Cost Factors</h3>
+                      <p className="text-gray-600 mb-4">Analysis of factors impacting your building cost:</p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Region Impact</span>
+                            <span className="text-blue-600">+12% above national average</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="h-2 bg-blue-600 rounded-full" style={{ width: '62%' }}></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Building Type Premium</span>
+                            <span className="text-green-600">+8% for {selectedBuildingType}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="h-2 bg-green-600 rounded-full" style={{ width: '58%' }}></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Complexity Factor</span>
+                            <span className="text-purple-600">+{((complexityFactor - 1) * 100).toFixed(0)}% adjustment</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="h-2 bg-purple-600 rounded-full" style={{ width: `${((complexityFactor / 3) * 100).toFixed(0)}%` }}></div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Age Reduction</span>
+                            <span className="text-red-600">-{((2025 - yearBuilt) * 0.5).toFixed(1)}% due to age</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="h-2 bg-red-600 rounded-full" style={{ width: `${Math.min(((2025 - yearBuilt) / 100) * 100, 100).toFixed(0)}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default ModernBuildingCostSystem;
