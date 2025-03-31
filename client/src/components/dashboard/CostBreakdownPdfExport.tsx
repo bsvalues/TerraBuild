@@ -1,12 +1,35 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { exportToPdf, preparePdfElement } from '@/lib/pdf-export';
+import { exportCostPredictionAsPdf, exportElementAsPdf } from '@/lib/pdf-export';
 import { Material } from '@/hooks/use-building-costs';
 import { 
   PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import AnnotationTool from '@/components/annotation/AnnotationTool';
+
+// Custom icons for the Cost Breakdown component
+const PdfIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+
+const ChartIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v18h18"/>
+    <path d="M18 17V9"/>
+    <path d="M13 17V5"/>
+    <path d="M8 17v-3"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6 9 17l-5-5"/>
+  </svg>
+);
 
 interface CostBreakdownPdfExportProps {
   data: {
@@ -47,27 +70,18 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
     setExportError(null);
 
     try {
-      // Apply temporary styles for PDF export
-      const cleanup = preparePdfElement(reportRef.current);
-      
       // Generate PDF filename with project details
       const filename = `${data.buildingType.toLowerCase().replace(/\s+/g, '-')}-${
         data.region.toLowerCase().replace(/\s+/g, '-')
       }-${data.squareFootage}sqft-cost-breakdown.pdf`;
 
-      // Generate export options
-      const options = {
+      // Export to PDF
+      await exportElementAsPdf(reportRef.current, {
         title: `Building Cost Breakdown: ${data.buildingType}`,
         filename,
-        pageSize: 'a4' as const,
-        orientation: 'portrait' as const,
-      };
-
-      // Export to PDF
-      await exportToPdf(reportRef.current, options);
-      
-      // Restore original styles
-      cleanup();
+        addHeader: true,
+        addFooter: true
+      });
       
       // Call onExport callback if provided
       if (onExport) onExport();
@@ -89,18 +103,18 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-neutral-200 overflow-hidden">
-        <div className="py-2.5 px-4 flex items-center justify-between border-b border-neutral-200/70 bg-white/50">
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden shadow-sm">
+        <div className="py-3 px-4 flex items-center justify-between border-b border-blue-200/70 bg-white/50">
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="text-sm font-medium text-neutral-700">Report Export</h3>
+            <PdfIcon />
+            <h3 className="text-sm font-medium text-blue-900">Cost Report Export</h3>
           </div>
           
-          <div className="text-xs text-neutral-500 flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="text-xs text-blue-600 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4"/>
+              <path d="M12 8h.01"/>
             </svg>
             Export as PDF or annotate with notes
           </div>
@@ -108,35 +122,27 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
         
         <div className="p-4 flex flex-col md:flex-row gap-4 items-center">
           <div className="grow">
-            <h4 className="text-sm font-medium text-neutral-800">Export Cost Breakdown Report</h4>
-            <p className="text-xs text-neutral-500 mt-1">
+            <h4 className="text-sm font-medium text-blue-900">Building Cost Report</h4>
+            <p className="text-xs text-blue-700 mt-1">
               Generate a professional report with detailed cost information, materials breakdown, and visualizations for your records or presentations.
             </p>
             
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <div className="px-2 py-1 bg-white rounded border border-neutral-200 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Summary
+              <div className="px-2 py-1 bg-white rounded border border-blue-200 flex items-center gap-1 text-blue-700">
+                <CheckIcon />
+                <span>Summary Data</span>
               </div>
-              <div className="px-2 py-1 bg-white rounded border border-neutral-200 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Materials
+              <div className="px-2 py-1 bg-white rounded border border-blue-200 flex items-center gap-1 text-blue-700">
+                <CheckIcon />
+                <span>Material Breakdown</span>
               </div>
-              <div className="px-2 py-1 bg-white rounded border border-neutral-200 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Charts
+              <div className="px-2 py-1 bg-white rounded border border-blue-200 flex items-center gap-1 text-blue-700">
+                <CheckIcon />
+                <span>Visualizations</span>
               </div>
-              <div className="px-2 py-1 bg-white rounded border border-neutral-200 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Annotations
+              <div className="px-2 py-1 bg-white rounded border border-blue-200 flex items-center gap-1 text-blue-700">
+                <CheckIcon />
+                <span>Custom Annotations</span>
               </div>
             </div>
           </div>
@@ -144,23 +150,12 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
           <div className="flex gap-2">
             <AnnotationTool 
               targetSelector="#visibleReport"
-              triggerButton={
-                <Button 
-                  variant="outline"
-                  className="h-10 text-xs px-4 flex items-center gap-1.5"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  Screenshot & Annotate
-                </Button>
-              }
               onSave={handleSaveAnnotation}
             />
             <Button 
               onClick={handleExport}
               disabled={isExporting}
-              className="bg-primary/90 hover:bg-primary text-white text-xs h-10 px-4 shadow-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-10 px-4 shadow-sm flex items-center gap-1.5"
             >
               {isExporting ? (
                 <span className="flex items-center gap-2">
@@ -168,14 +163,12 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Generating PDF...
+                  <span>Generating PDF...</span>
                 </span>
               ) : (
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download PDF Report
+                <span className="flex items-center gap-1.5">
+                  <PdfIcon />
+                  <span>Download PDF Report</span>
                 </span>
               )}
             </Button>
@@ -199,45 +192,70 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
       <div 
         id="visibleReport"
         ref={visibleReportRef}
-        className="p-6 bg-white rounded-lg border border-neutral-200 shadow-sm mt-4"
+        className="p-6 bg-white rounded-lg border border-gray-200 shadow-md mt-4"
       >
         <div className="text-center mb-5">
-          <h2 className="text-xl font-bold text-neutral-800 mb-1">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">
             Building Cost Breakdown
           </h2>
-          <h3 className="text-sm font-medium text-neutral-600 mb-0.5">
+          <h3 className="text-sm font-medium text-gray-600 mb-0.5">
             {data.buildingType} in {data.region}
           </h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-gray-500">
             {data.squareFootage.toLocaleString()} sq ft
           </p>
         </div>
 
-        <div className="bg-neutral-50 p-4 rounded-md border border-neutral-200 mb-5">
-          <div className="text-xl font-bold text-center text-primary mb-2">
-            {formatCurrency(data.totalCost)}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 shadow-sm">
+            <h3 className="text-blue-800 font-medium mb-2">Cost Per Square Foot</h3>
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl font-bold text-blue-700">${data.costPerSqft.toFixed(2)}</span>
+              <span className="text-blue-600 text-lg">/sq ft</span>
+            </div>
+            <p className="mt-2 text-sm text-blue-600">
+              For {data.buildingType} building in {data.region} region
+            </p>
           </div>
-          <div className="text-xs text-center text-neutral-500 mb-3">
-            Total Estimated Cost
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="text-neutral-600">Base Cost:</div>
-            <div className="text-right font-medium">{formatCurrency(data.baseCost)}</div>
-            
-            <div className="text-neutral-600">Region Factor:</div>
-            <div className="text-right font-medium">{data.regionFactor.toFixed(2)}×</div>
-            
-            <div className="text-neutral-600">Complexity Factor:</div>
-            <div className="text-right font-medium">{data.complexityFactor.toFixed(2)}×</div>
-            
-            <div className="text-neutral-600">Cost per Sq Ft:</div>
-            <div className="text-right font-medium">{formatCurrency(data.costPerSqft)}</div>
+                  
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-sm">
+            <h3 className="text-green-800 font-medium mb-2">Total Project Cost</h3>
+            <div className="text-4xl font-bold text-green-700">
+              {formatCurrency(data.totalCost)}
+            </div>
+            <p className="mt-2 text-sm text-green-600">
+              Based on {data.squareFootage.toLocaleString()} square feet
+            </p>
           </div>
         </div>
 
-        <div className="mb-5">
-          <h3 className="text-sm font-medium text-neutral-700 mb-3">
+        <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-6">
+          <h3 className="text-lg font-medium text-gray-800 mb-4">Cost Component Factors</h3>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="font-medium">Region Impact</span>
+                <span className="text-blue-600">{data.regionFactor.toFixed(2)}× multiplier</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 bg-blue-600 rounded-full" style={{ width: `${data.regionFactor * 50}%` }}></div>
+              </div>
+            </div>
+                        
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="font-medium">Complexity Factor</span>
+                <span className="text-purple-600">{data.complexityFactor.toFixed(2)}× adjustment</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 bg-purple-600 rounded-full" style={{ width: `${(data.complexityFactor / 3) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-800 mb-4">
             Material Cost Distribution
           </h3>
           
@@ -253,7 +271,7 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
                     }))}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
+                    labelLine={true}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
@@ -294,7 +312,7 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
                     tick={{ fontSize: 10 }}
                   />
                   <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                  <Bar dataKey="cost" fill="#7C3AED" />
+                  <Bar dataKey="cost" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -302,43 +320,43 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-neutral-700 mb-3">
+          <h3 className="text-lg font-medium text-gray-800 mb-3">
             Material Cost Breakdown
           </h3>
           
-          <div className="relative overflow-x-auto">
+          <div className="relative overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
             <table className="w-full text-sm text-left">
-              <thead className="text-xs bg-neutral-50">
+              <thead className="text-xs bg-gray-50 text-gray-700">
                 <tr>
-                  <th className="px-4 py-2 font-medium">Material</th>
-                  <th className="px-4 py-2 font-medium text-right">Percentage</th>
-                  <th className="px-4 py-2 font-medium text-right">Cost</th>
+                  <th className="px-4 py-3 font-medium">Material</th>
+                  <th className="px-4 py-3 font-medium text-right">Percentage</th>
+                  <th className="px-4 py-3 font-medium text-right">Cost</th>
                 </tr>
               </thead>
               <tbody>
                 {data.materials.map((material, index) => (
-                  <tr key={material.id} className={index % 2 === 0 ? 'bg-white' : 'bg-neutral-50/50'}>
-                    <td className="px-4 py-2">
+                  <tr key={material.id} className="border-b border-gray-200">
+                    <td className="px-4 py-2.5">
                       {material.materialName}
-                      <span className="block text-xs text-neutral-500">
+                      <span className="block text-xs text-gray-500">
                         {material.materialCode}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2.5 text-right">
                       {material.percentage.toFixed(1)}%
                     </td>
-                    <td className="px-4 py-2 text-right font-medium">
+                    <td className="px-4 py-2.5 text-right font-medium">
                       {formatCurrency(material.totalCost)}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-neutral-100/70">
-                  <td colSpan={2} className="px-4 py-2 text-right font-medium">
+                <tr className="bg-blue-50">
+                  <td colSpan={2} className="px-4 py-3 text-right font-medium text-blue-900">
                     Total Material Cost:
                   </td>
-                  <td className="px-4 py-2 text-right font-bold text-primary">
+                  <td className="px-4 py-3 text-right font-bold text-blue-700">
                     {formatCurrency(data.materials.reduce((sum, m) => sum + m.totalCost, 0))}
                   </td>
                 </tr>
@@ -382,7 +400,7 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
             fontSize: '20px', 
             fontWeight: 'bold', 
             textAlign: 'center', 
-            color: '#7C3AED', 
+            color: '#3B82F6', 
             marginBottom: '10px' 
           }}>
             {formatCurrency(data.totalCost)}
@@ -466,7 +484,7 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
                     tick={{ fontSize: 10 }}
                   />
                   <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                  <Bar dataKey="cost" fill="#7C3AED" />
+                  <Bar dataKey="cost" fill="#3B82F6" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -508,7 +526,7 @@ const CostBreakdownPdfExport: React.FC<CostBreakdownPdfExportProps> = ({
                 <td colSpan={2} style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>
                   Total Material Cost:
                 </td>
-                <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', color: '#7C3AED' }}>
+                <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', color: '#3B82F6' }}>
                   {formatCurrency(data.materials.reduce((sum, m) => sum + m.totalCost, 0))}
                 </td>
               </tr>

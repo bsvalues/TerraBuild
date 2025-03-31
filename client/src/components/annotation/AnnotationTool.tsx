@@ -14,6 +14,45 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { jsPDF } from 'jspdf';
 
+// Custom icons for the annotation tool
+const PencilIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+    <path d="m15 5 4 4"/>
+  </svg>
+);
+
+const TextIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 7 4 4 20 4 20 7"/>
+    <line x1="9" x2="15" y1="20" y2="20"/>
+    <line x1="12" x2="12" y1="4" y2="20"/>
+  </svg>
+);
+
+const ImageIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
+
+const PdfIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18"/>
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+  </svg>
+);
+
 interface Point {
   x: number;
   y: number;
@@ -52,10 +91,10 @@ export default function AnnotationTool({
   const [currentPath, setCurrentPath] = useState<DrawingPath | null>(null);
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
-  const [selectedColor, setSelectedColor] = useState<string>('#FF5555');
+  const [selectedColor, setSelectedColor] = useState<string>('#3B82F6');
   const [lineWidth, setLineWidth] = useState<number>(3);
   const [textInput, setTextInput] = useState<string>('');
-  const [textColor, setTextColor] = useState<string>('#FF5555');
+  const [textColor, setTextColor] = useState<string>('#3B82F6');
   const [fontSize, setFontSize] = useState<number>(16);
   const [filename, setFilename] = useState<string>('annotated-cost-report');
 
@@ -63,12 +102,13 @@ export default function AnnotationTool({
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const textPositionRef = useRef<Point | null>(null);
 
+  // More modern, Tailwind-compatible color options
   const colorOptions = [
-    { name: 'Red', value: '#FF5555' },
-    { name: 'Blue', value: '#5555FF' },
-    { name: 'Green', value: '#55AA55' },
-    { name: 'Yellow', value: '#FFAA33' },
-    { name: 'Purple', value: '#AA55DD' },
+    { name: 'Blue', value: '#3B82F6' },
+    { name: 'Red', value: '#EF4444' },
+    { name: 'Green', value: '#10B981' },
+    { name: 'Yellow', value: '#F59E0B' },
+    { name: 'Purple', value: '#8B5CF6' },
     { name: 'Black', value: '#000000' },
   ];
 
@@ -318,12 +358,10 @@ export default function AnnotationTool({
   const trigger = triggerButton || (
     <Button 
       variant="outline" 
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
       onClick={() => handleOpenChange(true)}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
+      <ImageIcon />
       Take Screenshot &amp; Annotate
     </Button>
   );
@@ -334,133 +372,156 @@ export default function AnnotationTool({
         {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-4xl w-[90vw]" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Screenshot and Annotation Tool</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 -mx-6 -mt-6 rounded-t-lg">
+          <DialogTitle className="text-white flex items-center gap-2">
+            <ImageIcon />
+            Screenshot and Annotation Tool
+          </DialogTitle>
         </DialogHeader>
         
         {isCapturing ? (
           <div className="flex flex-col items-center justify-center h-[60vh]">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-            <p className="text-sm text-muted-foreground">Capturing screenshot...</p>
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p className="text-sm text-gray-600">Capturing screenshot...</p>
           </div>
         ) : !capturedImage ? (
           <div className="flex flex-col items-center justify-center h-[60vh]">
-            <p className="text-sm text-muted-foreground">Failed to capture screenshot.</p>
-            <Button onClick={captureTargetElement} className="mt-4">Try Again</Button>
+            <p className="text-sm text-gray-600">Failed to capture screenshot.</p>
+            <Button 
+              onClick={captureTargetElement} 
+              className="mt-4 bg-blue-600 hover:bg-blue-700"
+            >
+              Try Again
+            </Button>
           </div>
         ) : (
           <>
             <div className="flex flex-col space-y-4">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex justify-between items-center mb-2">
-                  <TabsList>
-                    <TabsTrigger value="draw" className="flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                      Draw
-                    </TabsTrigger>
-                    <TabsTrigger value="text" className="flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                      </svg>
-                      Text
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={handleClearAll}
-                      className="h-8 text-xs"
+                  <div className="flex bg-blue-50 rounded-md overflow-hidden p-1">
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
+                        activeTab === 'draw' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'text-blue-700 hover:bg-blue-100'
+                      }`}
+                      onClick={() => setActiveTab('draw')}
                     >
-                      Clear All
-                    </Button>
+                      <PencilIcon />
+                      <span>Draw</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md ${
+                        activeTab === 'text' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'text-blue-700 hover:bg-blue-100'
+                      }`}
+                      onClick={() => setActiveTab('text')}
+                    >
+                      <TextIcon />
+                      <span>Text</span>
+                    </button>
                   </div>
+                  
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={handleClearAll}
+                    className="h-8 text-xs bg-red-500 hover:bg-red-600 flex items-center gap-1"
+                  >
+                    <TrashIcon />
+                    <span>Clear All</span>
+                  </Button>
                 </div>
                 
-                <TabsContent value="draw" className="flex items-center gap-3 py-1">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Color:</Label>
-                    <div className="flex gap-1">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          title={color.name}
-                          className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
-                            selectedColor === color.value ? 'ring-2 ring-offset-1 ring-primary' : ''
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          onClick={() => setSelectedColor(color.value)}
-                        />
-                      ))}
+                {activeTab === 'draw' && (
+                  <div className="flex items-center gap-4 py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-gray-700">Color:</Label>
+                      <div className="flex gap-1">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            title={color.name}
+                            className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
+                              selectedColor === color.value ? 'ring-2 ring-offset-1 ring-blue-500' : ''
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            onClick={() => setSelectedColor(color.value)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-gray-700">Width:</Label>
+                      <Input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={lineWidth}
+                        onChange={(e) => setLineWidth(Number(e.target.value))}
+                        className="w-32 h-8"
+                      />
+                      <span className="text-sm text-gray-700 w-6 text-center">{lineWidth}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Width:</Label>
-                    <Input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={lineWidth}
-                      onChange={(e) => setLineWidth(Number(e.target.value))}
-                      className="w-24 h-8"
-                    />
-                    <span className="text-xs w-4">{lineWidth}</span>
-                  </div>
-                </TabsContent>
+                )}
                 
-                <TabsContent value="text" className="flex gap-3 py-1">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Text:</Label>
-                    <Input
-                      type="text"
-                      value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                      placeholder="Click on the image to place text"
-                      className="h-8 w-52"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Color:</Label>
-                    <div className="flex gap-1">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          title={color.name}
-                          className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
-                            textColor === color.value ? 'ring-2 ring-offset-1 ring-primary' : ''
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          onClick={() => setTextColor(color.value)}
-                        />
-                      ))}
+                {activeTab === 'text' && (
+                  <div className="flex items-center gap-4 py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-2 flex-grow">
+                      <Label className="text-sm text-gray-700">Text:</Label>
+                      <Input
+                        type="text"
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="Click on the image to place text"
+                        className="h-8 flex-grow"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-gray-700">Color:</Label>
+                      <div className="flex gap-1">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            title={color.name}
+                            className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
+                              textColor === color.value ? 'ring-2 ring-offset-1 ring-blue-500' : ''
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            onClick={() => setTextColor(color.value)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-gray-700">Size:</Label>
+                      <Input
+                        type="range"
+                        min="10"
+                        max="32"
+                        value={fontSize}
+                        onChange={(e) => setFontSize(Number(e.target.value))}
+                        className="w-28 h-8"
+                      />
+                      <span className="text-sm text-gray-700 w-6 text-center">{fontSize}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs">Size:</Label>
-                    <Input
-                      type="range"
-                      min="10"
-                      max="32"
-                      value={fontSize}
-                      onChange={(e) => setFontSize(Number(e.target.value))}
-                      className="w-24 h-8"
-                    />
-                    <span className="text-xs w-4">{fontSize}</span>
-                  </div>
-                </TabsContent>
+                )}
               </Tabs>
               
               <div 
                 ref={canvasContainerRef} 
-                className="overflow-auto bg-gray-100 border border-gray-200 rounded-md h-[60vh] flex items-center justify-center"
+                className="overflow-auto bg-gray-100 border border-gray-200 rounded-lg h-[60vh] flex items-center justify-center"
               >
                 <canvas
                   ref={canvasRef}
@@ -468,39 +529,35 @@ export default function AnnotationTool({
                   onMouseMove={draw}
                   onMouseUp={stopDrawing}
                   onMouseLeave={stopDrawing}
-                  className="max-w-full cursor-crosshair"
+                  className="max-w-full cursor-crosshair shadow-lg"
                 />
               </div>
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs">Filename:</Label>
+                  <Label className="text-sm text-gray-700">Filename:</Label>
                   <Input
                     type="text"
                     value={filename}
                     onChange={(e) => setFilename(e.target.value)}
-                    className="h-8 w-64"
+                    className="h-9 w-64"
                   />
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={exportAsPng}
-                    className="h-8 text-xs flex items-center gap-1"
+                    className="h-9 bg-white text-sm flex items-center gap-1.5 border-gray-300 hover:bg-gray-50"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <ImageIcon />
                     Save as PNG
                   </Button>
                   <Button
                     onClick={exportAsPdf}
-                    className="h-8 text-xs flex items-center gap-1"
+                    className="h-9 bg-blue-600 text-white hover:bg-blue-700 text-sm flex items-center gap-1.5"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <PdfIcon />
                     Save as PDF
                   </Button>
                 </div>
