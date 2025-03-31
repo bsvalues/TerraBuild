@@ -31,9 +31,10 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Building2, Database, Calculator, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, Building2, Database, Calculator, AlertTriangle, CheckCircle, FileDown, Share2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from "@/components/ui/badge";
+import { exportCostPredictionAsPdf } from '@/lib/pdf-export';
 
 // Validation schema for the cost prediction form
 const costPredictionSchema = z.object({
@@ -79,6 +80,7 @@ export default function AICostPredictor() {
   const { predictCost, isPredicting, isError, error, mcpStatus } = useMCP();
   const [predictionResult, setPredictionResult] = useState<CostPredictionResponse | null>(null);
   const [dataQualityWarnings, setDataQualityWarnings] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
   
   // Initialize the form
   const form = useForm<CostPredictionFormValues>({
@@ -133,6 +135,51 @@ export default function AICostPredictor() {
         });
       },
     });
+  };
+  
+  // Handle exporting the prediction as PDF
+  const handleExportPdf = async () => {
+    if (!predictionResult) return;
+    
+    try {
+      setIsExporting(true);
+      
+      // Use the form values for building details
+      const formValues = form.getValues();
+      
+      // Generate a filename with date
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `cost-prediction-${formValues.buildingType}-${date}.pdf`;
+      
+      // Export the prediction
+      await exportCostPredictionAsPdf(
+        predictionResult,
+        {
+          buildingType: formValues.buildingType,
+          squareFootage: formValues.squareFootage,
+          region: formValues.region,
+          yearBuilt: formValues.yearBuilt,
+          condition: formValues.condition,
+          complexity: formValues.complexity
+        },
+        filename
+      );
+      
+      toast({
+        title: "PDF Exported Successfully",
+        description: `Your cost prediction report has been exported as ${filename}`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to export the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
   
   // Display API key missing warning if needed
@@ -426,7 +473,27 @@ export default function AICostPredictor() {
               </Alert>
             )}
             
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {predictionResult && (
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={handleExportPdf}
+                  disabled={isExporting || !predictionResult}
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Export as PDF
+                    </>
+                  )}
+                </Button>
+              )}
               <Button type="submit" disabled={isPredicting}>
                 {isPredicting ? (
                   <>
