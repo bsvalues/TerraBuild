@@ -879,7 +879,7 @@ export class MemStorage implements IStorage {
           baseCost: item.baseCost.toString(),
           matrixYear: item.matrixYear,
           sourceMatrixId: item.matrixId,
-          sourceMatrixDescription: item.matrixDescription || "",
+          matrixDescription: item.matrixDescription || "",
           dataPoints: item.dataPoints || 0,
           minCost: item.minCost?.toString(),
           maxCost: item.maxCost?.toString(),

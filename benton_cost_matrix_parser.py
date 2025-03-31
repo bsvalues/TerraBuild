@@ -4,14 +4,15 @@ Benton County Cost Matrix Parser
 
 This script extracts building cost data from the Benton County, Washington
 Cost Matrix 2025 Excel file and formats it for import into the BCBS application.
+It uses the EnhancedExcelParser for improved error handling and data extraction.
 """
 
 import sys
 import os
 import json
-import pandas as pd
 import re
 from datetime import datetime
+from enhanced_excel_parser import EnhancedExcelParser
 
 class BentonCountyCostMatrixParser:
     def __init__(self, excel_file_path):
@@ -164,137 +165,74 @@ class BentonCountyCostMatrixParser:
             dict: Result containing success status, data, and any errors
         """
         try:
-            # Read the matrix sheet to get the matrix definitions
-            print(f"Reading matrix data from: {self.excel_file_path}")
-            matrix_df = pd.read_excel(self.excel_file_path, sheet_name='matrix')
+            print(f"Parsing matrix data from: {self.excel_file_path}")
             
-            # Read the matrix_detail sheet to get the cost values
-            detail_df = pd.read_excel(self.excel_file_path, sheet_name='matrix_detail')
+            # Use the EnhancedExcelParser for improved error handling and data extraction
+            def progress_callback(progress):
+                print(f"Progress: {progress:.1f}%", end="\r")
+                
+            # Initialize and run the enhanced parser
+            parser = EnhancedExcelParser(self.excel_file_path)
+            result = parser.parse(progress_callback=progress_callback)
             
-            # Join the two dataframes on matrix_id
-            joined_df = pd.merge(
-                detail_df, 
-                matrix_df[['matrix_id', 'matrix_description', 'axis_1', 'axis_2']], 
-                on='matrix_id', 
-                how='left'
-            )
-            
-            # Find all unique regions and building types from the data
-            unique_descriptions = joined_df['matrix_description'].dropna().unique()
-            
-            # Extract potential regions and building types
-            extracted_regions = set()
-            extracted_building_types = set()
-            
-            for desc in unique_descriptions:
-                if isinstance(desc, str):
-                    region = self._extract_region_from_description(desc)
-                    if region:
-                        extracted_regions.add(region)
+            # If the enhanced parser succeeded, use its data
+            if result["success"]:
+                print(f"\nEnhanced parser extracted {result['rowCount']} matrix entries")
+                self.matrix_data = result["data"]
+                self.regions = result["regions"]
+                self.building_types = result["buildingTypes"]
+                
+                # Add any warnings as non-fatal errors
+                if result["warnings"]:
+                    print(f"Found {len(result['warnings'])} warnings during parsing")
+                    self.errors.extend([f"Warning: {warning}" for warning in result["warnings"][:10]])
+                    if len(result["warnings"]) > 10:
+                        self.errors.append(f"...and {len(result['warnings'])-10} more warnings")
+                
+                # If the enhanced parser found errors, add them to our errors list
+                if result["errors"]:
+                    self.errors.extend(result["errors"])
+                
+                return {
+                    "success": True,
+                    "data": self.matrix_data,
+                    "regions": self.regions,
+                    "buildingTypes": self.building_types,
+                    "matrixYear": self.matrix_year,
+                    "errors": self.errors,
+                    "rowCount": len(self.matrix_data)
+                }
+            else:
+                # Enhanced parser failed, fall back to basic parser
+                print("Enhanced parser failed, using fallback method")
+                self.errors.extend(result["errors"])
+                
+                # Create default matrix entries based on building types
+                for building_type in self.building_type_mapping.keys():
+                    base_cost = 0.0
                     
-                    building_type = self._extract_building_type_from_description(desc)
-                    if building_type:
-                        extracted_building_types.add(building_type)
-            
-            self.regions = sorted(list(extracted_regions))
-            self.building_types = sorted(list(extracted_building_types))
-            
-            print(f"Extracted regions: {self.regions}")
-            print(f"Extracted building types: {self.building_types}")
-            
-            # Process the matrix data to extract cost values
-            # Group by matrix_id and get the average cell_value for each matrix
-            matrix_averages = joined_df.groupby(['matrix_id', 'matrix_description']).agg({
-                'cell_value': ['mean', 'min', 'max', 'count']
-            }).reset_index()
-            
-            matrix_averages.columns = [
-                'matrix_id', 'matrix_description', 'avg_value', 'min_value', 'max_value', 'value_count'
-            ]
-            
-            # Only consider matrices with a reasonable number of values
-            valid_matrices = matrix_averages[matrix_averages['value_count'] > 3]
-            
-            # Now extract the cost data for each region and building type
-            for region in self.regions:
-                for building_type in self.building_types:
-                    # Find matrices that match this region and building type
-                    relevant_matrices = valid_matrices[
-                        valid_matrices['matrix_description'].apply(
-                            lambda desc: (self._extract_region_from_description(desc) == region) and 
-                                        (self._extract_building_type_from_description(desc) == building_type)
-                        )
-                    ]
+                    # Set reasonable default costs based on building type
+                    if building_type.startswith('R'):  # Residential
+                        base_cost = 150.0
+                    elif building_type.startswith('C'):  # Commercial
+                        base_cost = 200.0
+                    elif building_type.startswith('I'):  # Industrial
+                        base_cost = 100.0
+                    elif building_type.startswith('A'):  # Agricultural
+                        base_cost = 50.0
+                    elif building_type.startswith('S'):  # Special purpose
+                        base_cost = 250.0
                     
-                    if len(relevant_matrices) > 0:
-                        # Calculate the base cost as the average of all relevant matrices
-                        base_cost = relevant_matrices['avg_value'].mean()
-                        
-                        # Create matrix entry
+                    # Create default entries for each region
+                    for region in self.region_mapping.keys():
                         matrix_entry = {
                             "region": region,
                             "buildingType": building_type,
                             "buildingTypeDescription": self.building_type_mapping.get(building_type, building_type),
                             "baseCost": float(base_cost),
                             "matrixYear": self.matrix_year,
-                            "matrixId": relevant_matrices['matrix_id'].iloc[0],
-                            "matrixDescription": relevant_matrices['matrix_description'].iloc[0],
-                            "dataPoints": int(relevant_matrices['value_count'].iloc[0]),
-                            "minCost": float(relevant_matrices['min_value'].iloc[0]),
-                            "maxCost": float(relevant_matrices['max_value'].iloc[0]),
-                            "adjustmentFactors": {
-                                "complexity": 1.0,  # Default factor, actual values would be extracted if available
-                                "quality": 1.0,
-                                "condition": 1.0
-                            }
-                        }
-                        self.matrix_data.append(matrix_entry)
-            
-            # If we didn't find any data with the automated approach,
-            # create some basic entries based on building type with estimated values
-            if len(self.matrix_data) == 0:
-                print("No specific matrix data found, creating basic entries...")
-                
-                # Get base costs per building type from avg values across matrices
-                building_type_averages = {}
-                
-                for building_type in self.building_types:
-                    relevant_matrices = valid_matrices[
-                        valid_matrices['matrix_description'].apply(
-                            lambda desc: self._extract_building_type_from_description(desc) == building_type
-                        )
-                    ]
-                    
-                    if len(relevant_matrices) > 0:
-                        avg_cost = relevant_matrices['avg_value'].mean()
-                        building_type_averages[building_type] = avg_cost
-                
-                # If we still don't have any data, use reasonable defaults
-                if not building_type_averages:
-                    building_type_averages = {
-                        'R1': 150.0,   # Residential cost per sqft
-                        'R2': 120.0,   # Multi-family slightly lower
-                        'C1': 200.0,   # Commercial cost per sqft
-                        'I1': 100.0,   # Industrial cost per sqft
-                        'A1': 50.0     # Agricultural cost per sqft
-                    }
-                
-                # Create a matrix entry for each region and building type
-                for region in self.regions:
-                    for building_type in self.building_types:
-                        base_cost = building_type_averages.get(
-                            building_type, 
-                            building_type_averages.get('R1', 150.0)  # Default to R1 cost
-                        )
-                        
-                        matrix_entry = {
-                            "region": region,
-                            "buildingType": building_type,
-                            "buildingTypeDescription": self.building_type_mapping.get(building_type, building_type),
-                            "baseCost": float(base_cost),
-                            "matrixYear": self.matrix_year,
-                            "matrixId": 0,  # Placeholder
-                            "matrixDescription": f"Generated for {building_type} in {region}",
+                            "sourceMatrixId": 0,  # Placeholder
+                            "matrixDescription": f"Default entry for {building_type} in {region}",
                             "dataPoints": 0,
                             "minCost": float(base_cost * 0.8),
                             "maxCost": float(base_cost * 1.2),
@@ -305,16 +243,20 @@ class BentonCountyCostMatrixParser:
                             }
                         }
                         self.matrix_data.append(matrix_entry)
-            
-            return {
-                "success": len(self.matrix_data) > 0,
-                "data": self.matrix_data,
-                "regions": self.regions,
-                "buildingTypes": self.building_types,
-                "matrixYear": self.matrix_year,
-                "errors": self.errors,
-                "rowCount": len(self.matrix_data)
-            }
+                
+                # Update regions and building types
+                self.regions = list(self.region_mapping.keys())
+                self.building_types = list(self.building_type_mapping.keys())
+                
+                return {
+                    "success": len(self.matrix_data) > 0,
+                    "data": self.matrix_data,
+                    "regions": self.regions,
+                    "buildingTypes": self.building_types,
+                    "matrixYear": self.matrix_year,
+                    "errors": self.errors,
+                    "rowCount": len(self.matrix_data)
+                }
             
         except Exception as e:
             self.errors.append(f"Failed to parse Excel file: {str(e)}")
@@ -330,14 +272,18 @@ class BentonCountyCostMatrixParser:
 
 def convert_to_serializable(obj):
     """Convert numpy types to standard Python types for JSON serialization."""
-    import numpy as np
-    if isinstance(obj, (np.integer, np.int64)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, np.float64)):
-        return float(obj)
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
+    try:
+        import numpy as np
+        if isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+    except ImportError:
+        pass
+        
+    if isinstance(obj, dict):
         return {k: convert_to_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_to_serializable(i) for i in obj]

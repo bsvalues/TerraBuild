@@ -414,7 +414,7 @@ export const costMatrix = pgTable("cost_matrix", {
   baseCost: decimal("base_cost", { precision: 14, scale: 2 }).notNull(),
   matrixYear: integer("matrix_year").notNull(),
   sourceMatrixId: integer("source_matrix_id").notNull(),
-  sourceMatrixDescription: text("source_matrix_description").notNull(),
+  matrixDescription: text("matrix_description").notNull(),   // Renamed from sourceMatrixDescription
   dataPoints: integer("data_points").notNull().default(0),
   minCost: decimal("min_cost", { precision: 14, scale: 2 }),
   maxCost: decimal("max_cost", { precision: 14, scale: 2 }),
@@ -441,7 +441,7 @@ export const insertCostMatrixSchema = createInsertSchema(costMatrix).pick({
   baseCost: true,
   matrixYear: true,
   sourceMatrixId: true,
-  sourceMatrixDescription: true,
+  matrixDescription: true,     // Updated to match the renamed field
   dataPoints: true,
   minCost: true,
   maxCost: true,

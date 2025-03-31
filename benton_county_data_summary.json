@@ -1,928 +1,144 @@
 {
-  "imprv_sched_matrix_assoc": [
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Avg       ",
-      "imprv_yr": 2016,
-      "matrix_id": 369,
-      "matrix_order": 2,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Avg       ",
-      "imprv_yr": 2016,
-      "matrix_id": 392,
-      "matrix_order": 1,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Chp       ",
-      "imprv_yr": 2016,
-      "matrix_id": 369,
-      "matrix_order": 2,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Chp       ",
-      "imprv_yr": 2016,
-      "matrix_id": 393,
-      "matrix_order": 1,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Exc       ",
-      "imprv_yr": 2016,
-      "matrix_id": 369,
-      "matrix_order": 2,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Exc       ",
-      "imprv_yr": 2016,
-      "matrix_id": 394,
-      "matrix_order": 1,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Fair      ",
-      "imprv_yr": 2016,
-      "matrix_id": 369,
-      "matrix_order": 2,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Fair      ",
-      "imprv_yr": 2016,
-      "matrix_id": 395,
-      "matrix_order": 1,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Good      ",
-      "imprv_yr": 2016,
-      "matrix_id": 369,
-      "matrix_order": 2,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    },
-    {
-      "imprv_det_meth_cd": "EXT-B",
-      "imprv_det_type_cd": "*         ",
-      "imprv_det_class_cd": "Good      ",
-      "imprv_yr": 2016,
-      "matrix_id": 396,
-      "matrix_order": 1,
-      "adj_factor": 100,
-      "imprv_det_sub_class_cd": "*"
-    }
+  "regions": [
+    "Central Benton"
   ],
-  "matrix": [
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - C01-Bing - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 2,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - C02-Rainie - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 4,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - C04-Chelan - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 10,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - I03-Buried - * - IRR",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 11,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - I04-Coolin - * - IRR",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 22,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - O02-Cherri - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 26,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - O03-Pears - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 27,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - O04-Peache - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 30,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - O05-Nectar - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    },
-    {
-      "matrix_id": 31,
-      "matrix_yr": 2025,
-      "label": "UC",
-      "axis_1": "SINGLE AXIS",
-      "axis_2": "YEAR",
-      "matrix_description": "PC - O06-Aprico - * - T1",
-      "operator": "multiplicative",
-      "default_cell_value": 1,
-      "bInterpolate": false,
-      "matrix_type": "I",
-      "matrix_sub_type_cd": NaN
-    }
+  "buildingTypes": [
+    "S2",
+    "C2",
+    "C4",
+    "C3",
+    "R1",
+    "C1",
+    "A1",
+    "I1",
+    "A2",
+    "R2",
+    "S1"
   ],
-  "land_sched_matrix_assoc": [
-    {
-      "ls_id": 951,
-      "ls_year": 2024,
-      "matrix_id": 448,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 952,
-      "ls_year": 2024,
-      "matrix_id": 449,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 953,
-      "ls_year": 2024,
-      "matrix_id": 450,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 954,
-      "ls_year": 2024,
-      "matrix_id": 451,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 955,
-      "ls_year": 2024,
-      "matrix_id": 452,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 956,
-      "ls_year": 2024,
-      "matrix_id": 453,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 957,
-      "ls_year": 2024,
-      "matrix_id": 454,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 958,
-      "ls_year": 2024,
-      "matrix_id": 455,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 959,
-      "ls_year": 2024,
-      "matrix_id": 456,
-      "matrix_order": 1,
-      "adj_factor": 100
-    },
-    {
-      "ls_id": 960,
-      "ls_year": 2024,
-      "matrix_id": 458,
-      "matrix_order": 1,
-      "adj_factor": 100
+  "totalEntries": 983,
+  "averageCost": 16190.342141400823,
+  "medianCost": 4500.0,
+  "minCost": -13.86,
+  "maxCost": 3260000.0,
+  "regionAnalysis": {
+    "Central Benton": {
+      "count": 983,
+      "avg_base_cost": 16190.342141400823,
+      "median_base_cost": 4500.0,
+      "min_cost": -13.86,
+      "max_cost": 3260000.0,
+      "std_dev": 37271.585060982645
     }
-  ],
-  "matrix_axis": [
-    {
-      "matrix_yr": 0,
-      "axis_cd": "ABS SUBDV",
-      "data_type": "alphanumeric",
-      "lookup_query": "select abs_subdv_cd, abs_subdv_desc from abs_subdv where abs_subdv_yr = 2006 order by 1",
-      "matrix_type": "L"
+  },
+  "buildingTypeAnalysis": {
+    "S2": {
+      "count": 6,
+      "avg_base_cost": 149.32074074074075,
+      "median_base_cost": 148.94142857142856,
+      "min_cost": 58.73,
+      "max_cost": 336.49,
+      "std_dev": 16.985766891209416,
+      "description": "Special Purpose - School"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "AG LAND TYPE",
-      "data_type": "alphanumeric",
-      "lookup_query": "select land_type_cd as code, land_type_desc as code_desc from land_type",
-      "matrix_type": "L"
+    "C2": {
+      "count": 14,
+      "avg_base_cost": 1211.8501729024945,
+      "median_base_cost": 1020.8333333333334,
+      "min_cost": 37.25,
+      "max_cost": 9100.0,
+      "std_dev": 1370.4877512644414,
+      "description": "Commercial - Office"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-ALLOW",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 11 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "C4": {
+      "count": 8,
+      "avg_base_cost": 54.281488095238096,
+      "median_base_cost": 56.37696428571428,
+      "min_cost": 19.56,
+      "max_cost": 144.02,
+      "std_dev": 10.888064054759422,
+      "description": "Commercial - Warehouse"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-BA H/F",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 35 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "C3": {
+      "count": 3,
+      "avg_base_cost": 158.8329232804233,
+      "median_base_cost": 150.00972222222222,
+      "min_cost": 71.71,
+      "max_cost": 402.0,
+      "std_dev": 19.850540391389977,
+      "description": "Commercial - Restaurant"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-DISH",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 33 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "R1": {
+      "count": 3,
+      "avg_base_cost": 169.0288095238095,
+      "median_base_cost": 103.81428571428572,
+      "min_cost": 32.15,
+      "max_cost": 750.0,
+      "std_dev": 158.7499791745661,
+      "description": "Residential - Single Family"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-GARB DISP",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 34 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "C1": {
+      "count": 933,
+      "avg_base_cost": 17026.281346591666,
+      "median_base_cost": 5111.111111111111,
+      "min_cost": -13.86,
+      "max_cost": 3260000.0,
+      "std_dev": 38077.21740969831,
+      "description": "Commercial - Retail"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-R/O",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 31 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "A1": {
+      "count": 2,
+      "avg_base_cost": 4132.5,
+      "median_base_cost": 4132.5,
+      "min_cost": 750.0,
+      "max_cost": 9100.0,
+      "std_dev": 1662.8794470903642,
+      "description": "Agricultural - Farm"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-REFRIG",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 36 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "I1": {
+      "count": 6,
+      "avg_base_cost": 105.02596031746032,
+      "median_base_cost": 101.07645238095239,
+      "min_cost": 0.0,
+      "max_cost": 320.0,
+      "std_dev": 72.28903837159352,
+      "description": "Industrial - Manufacturing"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-RH/FAN",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 32 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "A2": {
+      "count": 1,
+      "avg_base_cost": 229.13285714285715,
+      "median_base_cost": 229.13285714285715,
+      "min_cost": 122.0,
+      "max_cost": 354.51,
+      "std_dev": 0,
+      "description": "Agricultural - Ranch"
     },
-    {
-      "matrix_yr": 0,
-      "axis_cd": "APP-TRASH COMPACTOR",
-      "data_type": "alphanumeric",
-      "lookup_query": "select imprv_attr_val_cd, ' '  from attribute_val where imprv_attr_id = 18 order by imprv_attr_val_cd",
-      "matrix_type": "I"
+    "R2": {
+      "count": 3,
+      "avg_base_cost": 132.01225396825396,
+      "median_base_cost": 134.18,
+      "min_cost": 66.86,
+      "max_cost": 251.61,
+      "std_dev": 6.0372090571970745,
+      "description": "Residential - Multi-Family"
+    },
+    "S1": {
+      "count": 4,
+      "avg_base_cost": 196.45981944444446,
+      "median_base_cost": 197.66049603174602,
+      "min_cost": 86.1,
+      "max_cost": 425.15,
+      "std_dev": 49.73498678405443,
+      "description": "Special Purpose - Hospital"
     }
-  ],
-  "matrix_axis_detail": [
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "*",
-      "axis_number": 1,
-      "axis_order": 1
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "1",
-      "axis_number": 2,
-      "axis_order": 1
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "10",
-      "axis_number": 2,
-      "axis_order": 10
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "15",
-      "axis_number": 2,
-      "axis_order": 11
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "2",
-      "axis_number": 2,
-      "axis_order": 2
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "20",
-      "axis_number": 2,
-      "axis_order": 12
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "25",
-      "axis_number": 2,
-      "axis_order": 13
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "3",
-      "axis_number": 2,
-      "axis_order": 3
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "30",
-      "axis_number": 2,
-      "axis_order": 14
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_value": "31",
-      "axis_number": 2,
-      "axis_order": 15
-    }
-  ],
-  "matrix_axis_feature": [
-    {
-      "lYear": 2016,
-      "szAxisCd": "COMM HVAC",
-      "lAttributeID": 31
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Dummy",
-      "lAttributeID": 9
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Exterior Wall",
-      "lAttributeID": 3
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Fireplace",
-      "lAttributeID": 10
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Foundation",
-      "lAttributeID": 2
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Framing Class",
-      "lAttributeID": 39
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Number of Bedrooms",
-      "lAttributeID": 15
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Roof Covering",
-      "lAttributeID": 6
-    },
-    {
-      "lYear": 2016,
-      "szAxisCd": "Sprinkler System",
-      "lAttributeID": 12
-    },
-    {
-      "lYear": 2017,
-      "szAxisCd": "COMM Elevators",
-      "lAttributeID": 56
-    }
-  ],
-  "matrix_axis_land_characteristic": [],
-  "matrix_detail": [
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "1",
-      "cell_value": 2000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "10",
-      "cell_value": 9000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "15",
-      "cell_value": 9000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "2",
-      "cell_value": 2500.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "20",
-      "cell_value": 9000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "25",
-      "cell_value": 9000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "3",
-      "cell_value": 3000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "30",
-      "cell_value": 9000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "31",
-      "cell_value": 6000.0
-    },
-    {
-      "matrix_id": 1,
-      "matrix_yr": 2025,
-      "axis_1_value": "*",
-      "axis_2_value": "32",
-      "cell_value": 5000.0
-    }
-  ],
-  "matrix_label": [
-    {
-      "matrix_yr": 2000,
-      "label_cd": "BR",
-      "label_desc": "Base Rate",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2000,
-      "label_cd": "MOD",
-      "label_desc": "Modifier",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2001,
-      "label_cd": "BR",
-      "label_desc": "Base Rate",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2001,
-      "label_cd": "MOD",
-      "label_desc": "Modifier",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2002,
-      "label_cd": "BR",
-      "label_desc": "Base Rate",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2002,
-      "label_cd": "MOD",
-      "label_desc": "Modifier",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2003,
-      "label_cd": "BR",
-      "label_desc": "Base Rate",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2003,
-      "label_cd": "MOD",
-      "label_desc": "Modifier",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2004,
-      "label_cd": "BR",
-      "label_desc": "Base Rate",
-      "matrix_type": "IID"
-    },
-    {
-      "matrix_yr": 2004,
-      "label_cd": "MOD",
-      "label_desc": "Modifier",
-      "matrix_type": "IID"
-    }
-  ],
-  "matrix_operator": [
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "addition",
-      "operator_desc": "Addition"
-    },
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "end",
-      "operator_desc": "End"
-    },
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "goto",
-      "operator_desc": "Matrix Goto"
-    },
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "max",
-      "operator_desc": "Maximum"
-    },
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "multiplicative",
-      "operator_desc": "Multiplication"
-    },
-    {
-      "matrix_yr": 2008,
-      "operator_cd": "special",
-      "operator_desc": "Special"
-    },
-    {
-      "matrix_yr": 2009,
-      "operator_cd": "addition",
-      "operator_desc": "Addition"
-    },
-    {
-      "matrix_yr": 2009,
-      "operator_cd": "end",
-      "operator_desc": "End"
-    },
-    {
-      "matrix_yr": 2009,
-      "operator_cd": "goto",
-      "operator_desc": "Matrix Goto"
-    },
-    {
-      "matrix_yr": 2009,
-      "operator_cd": "max",
-      "operator_desc": "Maximum"
-    }
-  ],
-  "matrix_sub_type": [
-    {
-      "matrix_sub_type_cd": "CL",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Collection Loss"
-    },
-    {
-      "matrix_sub_type_cd": "CR",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Cap Rate"
-    },
-    {
-      "matrix_sub_type_cd": "EO",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Expense - Overall"
-    },
-    {
-      "matrix_sub_type_cd": "ER",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Expense - Ratio"
-    },
-    {
-      "matrix_sub_type_cd": "ES",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Expense - $/SF"
-    },
-    {
-      "matrix_sub_type_cd": "OP",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Occupancy Percentage"
-    },
-    {
-      "matrix_sub_type_cd": "RE",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Reimbursed Expenses"
-    },
-    {
-      "matrix_sub_type_cd": "RR-DAY",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Daily Rent Rate"
-    },
-    {
-      "matrix_sub_type_cd": "RR-MO",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Monthly Rent Rate"
-    },
-    {
-      "matrix_sub_type_cd": "RR-YR",
-      "matrix_type": "IID",
-      "matrix_sub_type_desc": "Yearly Rent Rate"
-    }
-  ],
-  "RES_base_feature_matrix_mapped": [
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Avg",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Avg",
-      "feature": 2,
-      "rate": 161,
-      "matrix_name": "MH Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Chp",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Exc",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "MH Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Exc",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Fair",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Fair",
-      "feature": 2,
-      "rate": 157,
-      "matrix_name": "MH Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Good",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "MH Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Good",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    },
-    {
-      "tbl_element": "101         ",
-      "tbl_element_desc": "Comp sh to 235#               ",
-      "num_1": 2,
-      "code_status": "A",
-      "class": "Low",
-      "feature": 2,
-      "rate": 0,
-      "matrix_name": "Roof Covering",
-      "matrix_id": NaN
-    }
-  ],
-  "RES_depre_matrix": [
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 0,
-      "factor": 0,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 5,
-      "factor": 0,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 10,
-      "factor": 1,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 12,
-      "factor": 2,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 15,
-      "factor": 4,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 18,
-      "factor": 5,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 20,
-      "factor": 7,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 24,
-      "factor": 8,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 27,
-      "factor": 10,
-      "condition_mapped": "G"
-    },
-    {
-      "val_sub_element": "ABN         ",
-      "matrix_id": 221,
-      "age": 30,
-      "factor": 12,
-      "condition_mapped": "G"
-    }
-  ],
-  "Sheet1": []
+  },
+  "costRanges": {
+    "< 1000": 34.89,
+    "1000-2500": 2.75,
+    "2500-5000": 14.04,
+    "5000-7500": 4.37,
+    "7500-10000": 1.32,
+    "> 10000": 42.62
+  },
+  "dataPoints": 24944,
+  "year": 2025
 }
