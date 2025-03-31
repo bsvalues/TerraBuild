@@ -10,7 +10,7 @@ export interface CalculationRequest {
   propertyClass?: string;
   squareFootage: number;
   complexityMultiplier?: number;
-  // Benton County specific fields
+  // Benton County, Washington specific fields
   taxLotId?: string;
   propertyId?: string;
   assessmentYear?: number;
@@ -29,7 +29,7 @@ export interface CalculationResponse {
   complexityFactor: number;
   costPerSqft: number;
   totalCost: number;
-  // Benton County specific fields
+  // Benton County, Washington specific fields
   taxLotId?: string;
   propertyId?: string;
   assessmentYear?: number;
@@ -64,7 +64,7 @@ export interface MaterialsBreakdownResponse {
   costPerSqft: number;
   totalCost: number;
   materials: Material[];
-  // Benton County specific fields
+  // Benton County, Washington specific fields
   taxLotId?: string;
   propertyId?: string;
   assessmentYear?: number;

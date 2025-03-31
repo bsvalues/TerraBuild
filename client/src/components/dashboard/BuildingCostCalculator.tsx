@@ -17,7 +17,7 @@ import {
 } from "recharts";
 import CostBreakdownPdfExport from "./CostBreakdownPdfExport";
 
-// Form schema - Enhanced for Benton County
+// Form schema - Enhanced for Benton County, Washington
 const calculatorSchema = z.object({
   region: z.string().min(1, "Region is required"),
   buildingType: z.string().min(1, "Building type is required"),
@@ -104,7 +104,7 @@ export default function BuildingCostCalculator() {
     defaultValues: {
       region: REGIONS[0].value,
       buildingType: BUILDING_TYPES[0].value,
-      propertyClass: PROPERTY_CLASSES[0].value,
+      propertyClass: PROPERTY_CLASSES[0].value, // R1 - Single Family Residential
       squareFootage: 1000,
       complexityMultiplier: 1,
       assessmentYear: Number(ASSESSMENT_YEARS[0].value),
@@ -268,9 +268,9 @@ export default function BuildingCostCalculator() {
                   </select>
                 </div>
 
-                {/* Benton County specific fields */}
+                {/* Benton County, Washington specific fields */}
                 <div className="pt-3 border-t border-neutral-200">
-                  <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County Assessment Details</h4>
+                  <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County, Washington Assessment Details</h4>
                   
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
@@ -481,10 +481,10 @@ export default function BuildingCostCalculator() {
                           </div>
                         </div>
                         
-                        {/* Benton County Assessment Information */}
+                        {/* Benton County, Washington Assessment Information */}
                         {(result.taxLotId || result.propertyId || result.assessmentYear || result.yearBuilt || result.condition || result.depreciationAmount || result.assessedValue) && (
                           <div>
-                            <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County Assessment Details</h4>
+                            <h4 className="text-xs font-medium text-neutral-600 mb-2">Benton County, Washington Assessment Details</h4>
                             <div className="space-y-2">
                               {result.taxLotId && (
                                 <div className="flex justify-between items-center">
@@ -591,7 +591,7 @@ export default function BuildingCostCalculator() {
                       <div className="space-y-4">
                         <div>
                           <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-xs font-medium text-neutral-600">Benton County Property Assessment</h4>
+                            <h4 className="text-xs font-medium text-neutral-600">Benton County, Washington Property Assessment</h4>
                             <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded">
                               Tax Assessment Year: {result.assessmentYear || new Date().getFullYear()}
                             </span>
@@ -694,7 +694,7 @@ export default function BuildingCostCalculator() {
                               <line x1="12" y1="8" x2="12" y2="12"></line>
                               <line x1="12" y1="16" x2="12.01" y2="16"></line>
                             </svg>
-                            This is an estimated assessment based on Benton County's matrix calculations. Official assessments may vary.
+                            This is an estimated assessment based on Benton County, Washington's matrix calculations. Official assessments may vary.
                           </span>
                         </div>
                         

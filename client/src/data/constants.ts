@@ -1,4 +1,4 @@
-export const APP_NAME = "Benton County Building Cost Assessment System";
+export const APP_NAME = "Benton County Washington Building Cost Assessment System";
 export const APP_VERSION = "2.0.0";
 
 export const API_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
@@ -55,14 +55,14 @@ export const EXPIRATION_OPTIONS = [
   { value: "never", label: "Never (Development Only)" }
 ];
 
-// Building Cost Calculator Constants - Benton County Specific
+// Building Cost Calculator Constants - Benton County Washington Specific
 export const REGIONS = [
-  { value: "Corvallis", label: "Corvallis" },
-  { value: "Albany", label: "Albany" },
-  { value: "Philomath", label: "Philomath" },
-  { value: "Monroe", label: "Monroe" },
-  { value: "North_County", label: "North County" },
-  { value: "South_County", label: "South County" }
+  { value: "Kennewick", label: "Kennewick" },
+  { value: "Richland", label: "Richland" },
+  { value: "Prosser", label: "Prosser" },
+  { value: "Benton_City", label: "Benton City" },
+  { value: "West_Richland", label: "West Richland" },
+  { value: "Rural_County", label: "Rural County" }
 ];
 
 export const BUILDING_TYPES = [
@@ -74,16 +74,16 @@ export const BUILDING_TYPES = [
 ];
 
 export const PROPERTY_CLASSES = [
-  { value: "100", label: "100 - Residential" },
-  { value: "101", label: "101 - Single Family Residence" },
-  { value: "103", label: "103 - Residential Condo" },
-  { value: "200", label: "200 - Commercial" },
-  { value: "201", label: "201 - Commercial Store" },
-  { value: "300", label: "300 - Industrial" },
-  { value: "400", label: "400 - Tract" },
-  { value: "500", label: "500 - Farm" },
-  { value: "600", label: "600 - Multi-Family" },
-  { value: "700", label: "700 - Recreational" }
+  { value: "R1", label: "R1 - Single Family Residential" },
+  { value: "R2", label: "R2 - Multi-Family Residential" },
+  { value: "R3", label: "R3 - Residential Manufactured Home" },
+  { value: "C1", label: "C1 - Central Commercial" },
+  { value: "C2", label: "C2 - General Commercial" },
+  { value: "I1", label: "I1 - Light Industrial" },
+  { value: "I2", label: "I2 - Heavy Industrial" },
+  { value: "A1", label: "A1 - Agricultural" },
+  { value: "OS", label: "OS - Open Space" },
+  { value: "PF", label: "PF - Public Facility" }
 ];
 
 export const COMPLEXITY_OPTIONS = [
