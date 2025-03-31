@@ -13,7 +13,8 @@ import {
   Settings,
   Layers,
   BrainCircuit,
-  Glasses
+  Glasses,
+  Database
 } from "lucide-react";
 
 interface SidebarProps {
@@ -87,6 +88,11 @@ export default function Sidebar({ className }: SidebarProps) {
               href="/ar-visualization"
               title="AR Visualization"
               icon={<Glasses />}
+            />
+            <SidebarItem
+              href="/data-import"
+              title="Data Import"
+              icon={<Database size={16} />}
             />
             {isAdmin && (
               <SidebarItem

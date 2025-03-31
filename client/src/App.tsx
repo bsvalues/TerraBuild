@@ -9,6 +9,7 @@ import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
 import AIToolsPage from "@/pages/AIToolsPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
+import DataImportPage from "@/pages/DataImportPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useAutoLoginClient } from "./hooks/use-auto-login-client";
@@ -32,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/users" component={UsersPage} />
       <ProtectedRoute path="/ai-tools" component={AIToolsPage} />
       <ProtectedRoute path="/ar-visualization" component={ARVisualizationPage} />
+      <ProtectedRoute path="/data-import" component={DataImportPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

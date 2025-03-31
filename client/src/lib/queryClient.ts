@@ -11,13 +11,16 @@ export async function apiRequest(
   urlOrOptions: string | {
     url: string,
     method: string,
-    body?: any
+    body?: any,
+    headers?: Record<string, string>
   },
   data?: unknown | undefined,
 ): Promise<Response> {
   let url: string;
   let method: string = 'GET';
   let body: any = undefined;
+  
+  let headers: Record<string, string> = {};
   
   if (typeof urlOrOptions === 'string') {
     url = urlOrOptions;
@@ -27,15 +30,20 @@ export async function apiRequest(
     url = urlOrOptions.url;
     method = urlOrOptions.method;
     body = urlOrOptions.body;
+    headers = urlOrOptions.headers || {};
   }
   
   console.log(`API Request: ${method} ${url}`, body);
   
   const isFormData = body instanceof FormData;
   
+  // Merge default headers with custom headers
+  const defaultHeaders = body && !isFormData ? { "Content-Type": "application/json" } : {};
+  const mergedHeaders = { ...defaultHeaders, ...headers };
+  
   const res = await fetch(url, {
     method,
-    headers: body && !isFormData ? { "Content-Type": "application/json" } : {},
+    headers: mergedHeaders,
     body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     credentials: "include",
   });
