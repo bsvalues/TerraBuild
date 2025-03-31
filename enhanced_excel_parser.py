@@ -455,6 +455,11 @@ class EnhancedExcelParser:
         Returns:
             Dict: Result dictionary with all data
         """
+        # Detect building types and regions before returning result
+        descriptions = [item.get('description', '') for item in self.matrix_data if isinstance(item, dict)]
+        detected_types = self.detect_building_types(descriptions)
+        detected_regions = self.detect_regions(descriptions)
+        
         return {
             "success": success,
             "data": self.matrix_data,
@@ -464,8 +469,93 @@ class EnhancedExcelParser:
             "errors": self.errors,
             "warnings": self.warnings,
             "progress": self.progress,
-            "rowCount": len(self.matrix_data)
+            "rowCount": len(self.matrix_data),
+            "detectedTypes": detected_types,
+            "detectedRegions": detected_regions
         }
+        
+    def detect_building_types(self, descriptions: List[str]) -> List[str]:
+        """
+        Detect building types from matrix descriptions.
+        
+        Args:
+            descriptions: List of matrix description strings
+            
+        Returns:
+            List[str]: Detected building types
+        """
+        detected_types = set()
+        
+        # Try to extract from descriptions
+        for description in descriptions:
+            if description:
+                building_type = self._extract_building_type_from_description(description)
+                if building_type:
+                    # Map to standard building type names for the application
+                    type_map = {
+                        'R1': 'RESIDENTIAL',
+                        'R2': 'RESIDENTIAL',
+                        'R3': 'RESIDENTIAL',
+                        'C1': 'COMMERCIAL',
+                        'C2': 'COMMERCIAL',
+                        'C3': 'COMMERCIAL',
+                        'C4': 'COMMERCIAL',
+                        'I1': 'INDUSTRIAL',
+                        'I2': 'INDUSTRIAL',
+                        'A1': 'AGRICULTURAL',
+                        'A2': 'AGRICULTURAL',
+                        'S1': 'HEALTHCARE',
+                        'S2': 'EDUCATIONAL'
+                    }
+                    standardized_type = type_map.get(building_type, 'COMMERCIAL')
+                    detected_types.add(standardized_type)
+                
+        # If no types detected, use common defaults
+        if not detected_types:
+            detected_types = {'RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL'}
+            
+        return sorted(list(detected_types))
+        
+    def detect_regions(self, descriptions: List[str]) -> List[str]:
+        """
+        Detect regions from matrix descriptions.
+        
+        Args:
+            descriptions: List of matrix description strings
+            
+        Returns:
+            List[str]: Detected regions
+        """
+        detected_regions = set()
+        
+        # Try to extract from descriptions
+        for description in descriptions:
+            if description:
+                region = self._extract_region_from_description(description)
+                if region:
+                    # Map to standard region names
+                    region_map = {
+                        'North Benton': 'Benton',
+                        'Central Benton': 'Benton',
+                        'South Benton': 'Benton',
+                        'West Benton': 'Benton',
+                        'East Benton': 'Benton',
+                        'Richland': 'Richland',
+                        'Kennewick': 'Kennewick',
+                        'Prosser': 'Prosser',
+                        'Benton City': 'Benton City'
+                    }
+                    standardized_region = region_map.get(region, 'Benton')
+                    detected_regions.add(standardized_region)
+                
+        # If no regions detected, use Benton County defaults
+        if not detected_regions:
+            detected_regions = {
+                'Benton', 'Richland', 'Kennewick', 
+                'Pasco', 'West Richland', 'Prosser', 'Benton City'
+            }
+            
+        return sorted(list(detected_regions))
 
 
 def main():
@@ -491,8 +581,10 @@ def main():
     # Print summary
     print("\nProcessing complete:")
     print(f"  Success: {result['success']}")
-    print(f"  Regions found: {len(result['regions'])}")
-    print(f"  Building types found: {len(result['buildingTypes'])}")
+    print(f"  Regions found: {len(result['regions'])}: {', '.join(result['regions'])}")
+    print(f"  Building types found: {len(result['buildingTypes'])}: {', '.join(result['buildingTypes'])}")
+    print(f"  Auto-detected regions: {', '.join(result['detectedRegions'])}")
+    print(f"  Auto-detected building types: {', '.join(result['detectedTypes'])}")
     print(f"  Matrix entries: {result['rowCount']}")
     
     if result['errors']:

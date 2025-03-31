@@ -13,6 +13,7 @@ import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculato
 import { CostMatrixManager } from "@/components/dashboard/CostMatrixManager";
 import { CostComparisonWizard } from "@/components/dashboard/CostComparisonWizard";
 import { CostFactorWeightSlider } from "@/components/dashboard/CostFactorWeightSlider";
+import CostMatrixCompare from "@/components/dashboard/CostMatrixCompare";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>("calculator");
@@ -59,6 +60,12 @@ export default function Dashboard() {
                 onClick={() => setActiveTab("costmatrix")}
               >
                 Cost Matrix
+              </button>
+              <button 
+                className={`px-4 py-3 font-medium text-sm ${activeTab === "matrixcompare" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
+                onClick={() => setActiveTab("matrixcompare")}
+              >
+                Matrix Compare
               </button>
               <button 
                 className={`px-4 py-3 font-medium text-sm ${activeTab === "configuration" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
@@ -114,6 +121,13 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-neutral-600 mb-4">Cost Matrix Manager</h2>
                 <p className="text-neutral-600 mb-6">Manage cost matrix entries for Benton County, Washington building assessment.</p>
                 <CostMatrixManager />
+              </div>
+            )}
+            {activeTab === "matrixcompare" && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Cost Matrix Comparison</h2>
+                <p className="text-neutral-600 mb-6">Compare cost matrices across different years to analyze trends and variations.</p>
+                <CostMatrixCompare />
               </div>
             )}
             {activeTab === "configuration" && <ConfigurationTab />}
