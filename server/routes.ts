@@ -28,10 +28,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication and authorization
   setupAuth(app);
   
-  // Middleware to check if user is authenticated
+  // TEMPORARY: Authentication disabled for development
+  // This middleware bypasses authentication checks entirely
   const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
+    // Create a mock admin user for all requests
+    if (!req.user) {
+      // Using User type from schema for type safety
+      req.user = {
+        id: 1,
+        username: "admin",
+        password: "disabled", // Using a placeholder value
+        role: "admin",
+        name: "Admin User",
+        isActive: true
+      };
     }
     next();
   };

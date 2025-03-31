@@ -9,6 +9,11 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
+  // TEMPORARY: Authentication disabled for development
+  // Bypass all authentication checks and directly render the component
+  
+  // We'll keep this commented in case we need to revert later
+  /*
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -28,6 +33,7 @@ export function ProtectedRoute({
       </Route>
     );
   }
+  */
 
   return <Route path={path} component={Component} />;
 }

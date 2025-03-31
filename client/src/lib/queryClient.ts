@@ -37,8 +37,15 @@ export async function apiRequest(
   
   const isFormData = body instanceof FormData;
   
-  // Merge default headers with custom headers
-  const defaultHeaders = body && !isFormData ? { "Content-Type": "application/json" } : {};
+  // Set up headers based on content type
+  const defaultHeaders: Record<string, string> = {};
+  
+  // Add Content-Type header only for JSON requests
+  if (body && !isFormData) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
+  
+  // Merge with custom headers
   const mergedHeaders = { ...defaultHeaders, ...headers };
   
   const res = await fetch(url, {
