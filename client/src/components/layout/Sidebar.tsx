@@ -12,7 +12,8 @@ import {
   Users,
   Settings,
   Layers,
-  BrainCircuit
+  BrainCircuit,
+  Glasses
 } from "lucide-react";
 
 interface SidebarProps {
@@ -81,6 +82,11 @@ export default function Sidebar({ className }: SidebarProps) {
               href="/ai-tools"
               title="AI Tools"
               icon={<BrainCircuit />}
+            />
+            <SidebarItem
+              href="/ar-visualization"
+              title="AR Visualization"
+              icon={<Glasses />}
             />
             {isAdmin && (
               <SidebarItem
