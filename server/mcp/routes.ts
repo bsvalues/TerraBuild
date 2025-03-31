@@ -1,149 +1,128 @@
 /**
- * MCP API Routes
+ * Model Content Protocol (MCP) Routes
  * 
- * This file defines the API routes for accessing MCP functionality in the BCBS application.
+ * This module sets up the API routes for the Model Content Protocol integration,
+ * which provides AI-powered building cost predictions, analytics, and explanations.
  */
 
-import { Express, Request, Response } from 'express';
-import { costAnalysisAgent } from './agents/costAnalysisAgent';
-import { functionRegistry } from './functions/functionRegistry';
-import { CostPredictionRequestSchema } from './schemas/types';
+import type { Express, Request, Response } from "express";
+import { costPredictionAgent, matrixAnalysisAgent, calculationExplanationAgent } from "./index";
+import { costPredictionRequestSchema } from "./index";
+import { z } from "zod";
+
+// Schema for matrix analysis request
+const matrixAnalysisRequestSchema = z.object({
+  matrixData: z.any()
+});
+
+// Schema for calculation explanation request
+const calculationExplanationRequestSchema = z.object({
+  calculationData: z.any()
+});
 
 /**
- * Set up MCP API routes
+ * Setup MCP routes
  * 
- * @param app Express application instance
+ * @param app Express application
  */
 export function setupMCPRoutes(app: Express) {
-  // Get available MCP functions
-  app.get('/api/mcp/functions', (req: Request, res: Response) => {
-    const functions = functionRegistry.getAllFunctions().map(func => ({
-      id: func.name,
-      description: func.description,
-      parameters: func.parameters
-    }));
-    
-    res.json({
-      success: true,
-      functions
-    });
-  });
-  
-  // Get agent information
-  app.get('/api/mcp/agents', (req: Request, res: Response) => {
-    const agent = costAnalysisAgent.getDefinition();
-    
-    res.json({
-      success: true,
-      agents: [agent]
-    });
-  });
-  
-  // Predict building cost
-  app.post('/api/mcp/predict-cost', async (req: Request, res: Response) => {
+  // Prediction route
+  app.post("/api/mcp/predict-cost", async (req: Request, res: Response) => {
     try {
-      // Validate request body against schema
-      const validationResult = CostPredictionRequestSchema.safeParse(req.body);
+      // Validate the request body
+      const data = costPredictionRequestSchema.parse(req.body);
       
-      if (!validationResult.success) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid request data',
-          details: validationResult.error.errors
-        });
-      }
-      
-      // Predict building cost using agent
-      const result = await costAnalysisAgent.predictBuildingCost(validationResult.data);
+      // Call the cost prediction agent
+      const result = await costPredictionAgent(data);
       
       res.json(result);
-    } catch (error: any) {
-      console.error('Error predicting building cost:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to predict building cost'
-      });
+    } catch (error) {
+      console.error("Error in cost prediction:", error);
+      
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ 
+          error: "Invalid request data", 
+          details: error.errors 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Error processing request",
+          message: (error as Error).message
+        });
+      }
     }
   });
   
-  // Analyze cost matrix
-  app.post('/api/mcp/analyze-matrix', async (req: Request, res: Response) => {
+  // Analysis route
+  app.post("/api/mcp/analyze-matrix", async (req: Request, res: Response) => {
     try {
-      const { matrixData } = req.body;
+      // Validate the request body
+      const { matrixData } = matrixAnalysisRequestSchema.parse(req.body);
       
-      if (!matrixData) {
-        return res.status(400).json({
-          success: false,
-          error: 'Matrix data is required'
-        });
-      }
-      
-      // Analyze cost matrix using agent
-      const result = await costAnalysisAgent.analyzeCostMatrix(matrixData);
+      // Call the matrix analysis agent
+      const result = await matrixAnalysisAgent(matrixData);
       
       res.json(result);
-    } catch (error: any) {
-      console.error('Error analyzing cost matrix:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to analyze cost matrix'
-      });
+    } catch (error) {
+      console.error("Error in matrix analysis:", error);
+      
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ 
+          error: "Invalid request data", 
+          details: error.errors 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Error processing request",
+          message: (error as Error).message
+        });
+      }
     }
   });
   
-  // Explain calculation
-  app.post('/api/mcp/explain-calculation', async (req: Request, res: Response) => {
+  // Explanation route
+  app.post("/api/mcp/explain-calculation", async (req: Request, res: Response) => {
     try {
-      const { calculationData } = req.body;
+      // Validate the request body
+      const { calculationData } = calculationExplanationRequestSchema.parse(req.body);
       
-      if (!calculationData) {
-        return res.status(400).json({
-          success: false,
-          error: 'Calculation data is required'
-        });
-      }
-      
-      // Generate explanation using agent
-      const result = await costAnalysisAgent.explainCalculation(calculationData);
+      // Call the calculation explanation agent
+      const result = await calculationExplanationAgent(calculationData);
       
       res.json(result);
-    } catch (error: any) {
-      console.error('Error explaining calculation:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to explain calculation'
-      });
+    } catch (error) {
+      console.error("Error in calculation explanation:", error);
+      
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ 
+          error: "Invalid request data", 
+          details: error.errors 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Error processing request",
+          message: (error as Error).message
+        });
+      }
     }
   });
   
-  // Invoke any MCP function directly (for advanced usage)
-  app.post('/api/mcp/invoke', async (req: Request, res: Response) => {
+  // MCP status route - useful for checking if MCP is working
+  app.get("/api/mcp/status", async (req: Request, res: Response) => {
     try {
-      const { functionId, parameters } = req.body;
+      // Check if OpenAI API key is configured
+      const hasApiKey = !!process.env.OPENAI_API_KEY;
       
-      if (!functionId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Function ID is required'
-        });
-      }
-      
-      // Invoke the function through registry
-      const result = await functionRegistry.invokeFunction({
-        functionId,
-        parameters,
-        contextId: req.sessionID,
-        callerInfo: {
-          sessionId: req.sessionID
-        }
+      res.json({
+        status: hasApiKey ? "ready" : "api_key_missing",
+        message: hasApiKey 
+          ? "MCP is ready to use" 
+          : "OpenAI API key not configured. Set OPENAI_API_KEY in environment variables."
       });
-      
-      res.json(result);
-    } catch (error: any) {
-      console.error(`Error invoking function:`, error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to invoke function'
+    } catch (error) {
+      res.status(500).json({ 
+        status: "error",
+        message: (error as Error).message
       });
     }
   });

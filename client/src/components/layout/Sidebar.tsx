@@ -11,7 +11,8 @@ import {
   Calculator,
   Users,
   Settings,
-  Layers
+  Layers,
+  BrainCircuit
 } from "lucide-react";
 
 interface SidebarProps {
@@ -75,6 +76,11 @@ export default function Sidebar({ className }: SidebarProps) {
               href="/analytics"
               title="Analytics"
               icon={<BarChart3 />}
+            />
+            <SidebarItem
+              href="/ai-tools"
+              title="AI Tools"
+              icon={<BrainCircuit />}
             />
             {isAdmin && (
               <SidebarItem
