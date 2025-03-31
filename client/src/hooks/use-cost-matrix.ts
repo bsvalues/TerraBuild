@@ -39,10 +39,7 @@ export function useCostMatrix() {
   // Import cost matrix entries from JSON
   const importFromJson = useMutation({
     mutationFn: async (data: any[]) => {
-      return apiRequest("/api/cost-matrix/import", {
-        method: "POST",
-        data: { data },
-      });
+      return apiRequest("POST", "/api/cost-matrix/import", { data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -63,10 +60,7 @@ export function useCostMatrix() {
   // Update cost matrix entry
   const update = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<CostMatrix> }) => {
-      return apiRequest(`/api/cost-matrix/${id}`, {
-        method: "PATCH",
-        data,
-      });
+      return apiRequest("PATCH", `/api/cost-matrix/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -87,9 +81,7 @@ export function useCostMatrix() {
   // Delete cost matrix entry
   const remove = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/cost-matrix/${id}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/cost-matrix/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -110,10 +102,7 @@ export function useCostMatrix() {
   // Create a new cost matrix entry
   const create = useMutation({
     mutationFn: async (data: Omit<CostMatrix, "id" | "createdAt" | "updatedAt">) => {
-      return apiRequest("/api/cost-matrix", {
-        method: "POST",
-        data,
-      });
+      return apiRequest("POST", "/api/cost-matrix", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });

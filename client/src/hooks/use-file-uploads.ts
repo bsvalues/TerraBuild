@@ -99,7 +99,8 @@ export function useFileUploads() {
   // Import excel cost matrix
   const importExcelMatrix = useMutation({
     mutationFn: async (fileId: number) => {
-      return apiRequest("POST", `/api/cost-matrix/import-excel/${fileId}`);
+      const response = await apiRequest("POST", `/api/cost-matrix/import-excel/${fileId}`);
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
