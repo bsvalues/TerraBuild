@@ -10,7 +10,8 @@ import {
   materialTypes, type MaterialType, type InsertMaterialType,
   materialCosts, type MaterialCost, type InsertMaterialCost,
   buildingCostMaterials, type BuildingCostMaterial, type InsertBuildingCostMaterial,
-  calculationHistory, type CalculationHistory, type InsertCalculationHistory
+  calculationHistory, type CalculationHistory, type InsertCalculationHistory,
+  costMatrix, type CostMatrix, type InsertCostMatrix
 } from "@shared/schema";
 
 // Storage interface
@@ -96,6 +97,16 @@ export interface IStorage {
   getCalculationHistory(id: number): Promise<CalculationHistory | undefined>;
   createCalculationHistory(calculation: InsertCalculationHistory): Promise<CalculationHistory>;
   deleteCalculationHistory(id: number): Promise<void>;
+  
+  // Cost Matrix
+  getAllCostMatrix(): Promise<CostMatrix[]>;
+  getCostMatrixByRegion(region: string): Promise<CostMatrix[]>;
+  getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]>;
+  getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined>;
+  createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix>;
+  updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined>;
+  deleteCostMatrix(id: number): Promise<void>;
+  importCostMatrixFromJson(data: any[]): Promise<{ imported: number, errors: string[] }>;
 }
 
 // Memory Storage implementation
@@ -769,6 +780,113 @@ export class MemStorage implements IStorage {
   
   async deleteCalculationHistory(id: number): Promise<void> {
     this.calculationHistories.delete(id);
+  }
+  
+  // Cost Matrix
+  private costMatrixEntries: Map<number, CostMatrix> = new Map();
+  private currentCostMatrixId: number = 1;
+  
+  async getAllCostMatrix(): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values());
+  }
+  
+  async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.region === region);
+  }
+  
+  async getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.buildingType === buildingType);
+  }
+  
+  async getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined> {
+    return Array.from(this.costMatrixEntries.values())
+      .find(matrix => matrix.region === region && matrix.buildingType === buildingType);
+  }
+  
+  async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
+    const id = this.currentCostMatrixId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    
+    const newMatrix: CostMatrix = {
+      ...matrix,
+      id,
+      createdAt,
+      updatedAt
+    };
+    
+    this.costMatrixEntries.set(id, newMatrix);
+    return newMatrix;
+  }
+  
+  async updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined> {
+    const existingMatrix = this.costMatrixEntries.get(id);
+    if (!existingMatrix) return undefined;
+    
+    const updatedMatrix: CostMatrix = {
+      ...existingMatrix,
+      ...matrix,
+      updatedAt: new Date()
+    };
+    
+    this.costMatrixEntries.set(id, updatedMatrix);
+    return updatedMatrix;
+  }
+  
+  async deleteCostMatrix(id: number): Promise<void> {
+    this.costMatrixEntries.delete(id);
+  }
+  
+  async importCostMatrixFromJson(data: any[]): Promise<{ imported: number; errors: string[] }> {
+    const errors: string[] = [];
+    let imported = 0;
+    
+    if (!Array.isArray(data)) {
+      errors.push("Invalid data format: expected an array of cost matrix entries");
+      return { imported, errors };
+    }
+    
+    for (const item of data) {
+      try {
+        if (!item.region || !item.buildingType || !item.buildingTypeDescription || 
+            !item.baseCost || !item.matrixYear || !item.sourceMatrixId || 
+            !item.sourceMatrixDescription) {
+          errors.push(`Missing required fields for item: ${JSON.stringify(item)}`);
+          continue;
+        }
+        
+        // Convert adjustmentFactors to individual factor fields if present
+        const complexityFactorBase = item.adjustmentFactors?.complexity || 1.0;
+        const qualityFactorBase = item.adjustmentFactors?.quality || 1.0;
+        const conditionFactorBase = item.adjustmentFactors?.condition || 1.0;
+        
+        const matrixEntry: InsertCostMatrix = {
+          region: item.region,
+          buildingType: item.buildingType,
+          buildingTypeDescription: item.buildingTypeDescription,
+          baseCost: item.baseCost.toString(),
+          matrixYear: item.matrixYear,
+          sourceMatrixId: item.matrixId,
+          sourceMatrixDescription: item.matrixDescription || "",
+          dataPoints: item.dataPoints || 0,
+          minCost: item.minCost?.toString(),
+          maxCost: item.maxCost?.toString(),
+          complexityFactorBase: complexityFactorBase.toString(),
+          qualityFactorBase: qualityFactorBase.toString(),
+          conditionFactorBase: conditionFactorBase.toString(),
+          isActive: true
+        };
+        
+        await this.createCostMatrix(matrixEntry);
+        imported++;
+      } catch (error) {
+        errors.push(`Error importing item: ${JSON.stringify(item)}, Error: ${error}`);
+      }
+    }
+    
+    return { imported, errors };
   }
 }
 

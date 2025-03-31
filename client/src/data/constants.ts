@@ -56,21 +56,32 @@ export const EXPIRATION_OPTIONS = [
 ];
 
 // Building Cost Calculator Constants - Benton County Washington Specific
-export const REGIONS = [
-  { value: "Kennewick", label: "Kennewick" },
-  { value: "Richland", label: "Richland" },
-  { value: "Prosser", label: "Prosser" },
-  { value: "Benton_City", label: "Benton City" },
-  { value: "West_Richland", label: "West Richland" },
-  { value: "Rural_County", label: "Rural County" }
+export const regions = [
+  { value: "Central Benton", label: "Central Benton" },
+  { value: "East Benton", label: "East Benton" },
+  { value: "West Benton", label: "West Benton" }
 ];
 
+// For backwards compatibility
+export const REGIONS = regions;
+
+export const buildingTypes = [
+  { value: "A1", label: "A1 - Agricultural" },
+  { value: "C1", label: "C1 - Central Commercial" },
+  { value: "C4", label: "C4 - Office Building" },
+  { value: "I1", label: "I1 - Light Industrial" },
+  { value: "R1", label: "R1 - Single Family Residential" },
+  { value: "R2", label: "R2 - Multi-Family Residential" },
+  { value: "S1", label: "S1 - Storage" }
+];
+
+// For backwards compatibility
 export const BUILDING_TYPES = [
   { value: "Residential", label: "Residential" },
   { value: "Commercial", label: "Commercial" },
   { value: "Industrial", label: "Industrial" },
-  { value: "Farm", label: "Farm" },
-  { value: "Mixed_Use", label: "Mixed Use" }
+  { value: "Agricultural", label: "Agricultural" },
+  { value: "Storage", label: "Storage" }
 ];
 
 export const PROPERTY_CLASSES = [

@@ -1,0 +1,141 @@
+{
+  "success": true,
+  "data": [
+    {
+      "region": "Central Benton",
+      "buildingType": "A1",
+      "buildingTypeDescription": "Agricultural - Farm",
+      "baseCost": 1740.424219916557,
+      "matrixYear": 2025,
+      "matrixId": 3342,
+      "matrixDescription": "AG-Outbuilding-Hay Wall Height",
+      "dataPoints": 27,
+      "minCost": 0.0,
+      "maxCost": 2.17,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "C1",
+      "buildingTypeDescription": "Commercial - Retail",
+      "baseCost": 16359.998737381924,
+      "matrixYear": 2025,
+      "matrixId": 3444,
+      "matrixDescription": "COM - Depreciation 20c",
+      "dataPoints": 24,
+      "minCost": 20.0,
+      "maxCost": 100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "C4",
+      "buildingTypeDescription": "Commercial - Warehouse",
+      "baseCost": 45427.36155483406,
+      "matrixYear": 2025,
+      "matrixId": 3615,
+      "matrixDescription": "COM - 447 Cold Storage",
+      "dataPoints": 42,
+      "minCost": 43.25,
+      "maxCost": 153.86,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "I1",
+      "buildingTypeDescription": "Industrial - Manufacturing",
+      "baseCost": 69.9485873015873,
+      "matrixYear": 2025,
+      "matrixId": 3578,
+      "matrixDescription": "COM - Canopies-Industrial",
+      "dataPoints": 7,
+      "minCost": 5.2,
+      "maxCost": 10.7,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "R1",
+      "buildingTypeDescription": "Residential - Single Family",
+      "baseCost": 184.73907470046345,
+      "matrixYear": 2025,
+      "matrixId": 1598,
+      "matrixDescription": "RES - Heat/AC",
+      "dataPoints": 56,
+      "minCost": -2.65,
+      "maxCost": 3.3,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "R2",
+      "buildingTypeDescription": "Residential - Multi-Family",
+      "baseCost": 109.75240249139136,
+      "matrixYear": 2025,
+      "matrixId": 3473,
+      "matrixDescription": "COM - Section 11 Height Multiplier",
+      "dataPoints": 18,
+      "minCost": 92.2,
+      "maxCost": 145.8,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    },
+    {
+      "region": "Central Benton",
+      "buildingType": "S1",
+      "buildingTypeDescription": "Special Purpose - Hospital",
+      "baseCost": 138420.0,
+      "matrixYear": 2025,
+      "matrixId": 3762,
+      "matrixDescription": "Site",
+      "dataPoints": 50,
+      "minCost": 1000.0,
+      "maxCost": 300000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      }
+    }
+  ],
+  "regions": [
+    "Central Benton",
+    "East Benton",
+    "West Benton"
+  ],
+  "buildingTypes": [
+    "A1",
+    "C1",
+    "C4",
+    "I1",
+    "R1",
+    "R2",
+    "S1"
+  ],
+  "matrixYear": 2025,
+  "errors": [],
+  "rowCount": 7
+}

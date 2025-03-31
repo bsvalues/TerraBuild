@@ -10,6 +10,7 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import ApplicationDetails from "@/components/dashboard/ApplicationDetails";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
+import { CostMatrixManager } from "@/components/dashboard/CostMatrixManager";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>("calculator");
@@ -38,6 +39,12 @@ export default function Dashboard() {
                 onClick={() => setActiveTab("calculator")}
               >
                 Cost Calculator
+              </button>
+              <button 
+                className={`px-4 py-3 font-medium text-sm ${activeTab === "costmatrix" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
+                onClick={() => setActiveTab("costmatrix")}
+              >
+                Cost Matrix
               </button>
               <button 
                 className={`px-4 py-3 font-medium text-sm ${activeTab === "configuration" ? "border-b-2 border-primary text-primary" : "text-neutral-500 hover:text-neutral-700"}`}
@@ -72,6 +79,13 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-neutral-600 mb-4">Building Cost Calculator</h2>
                 <p className="text-neutral-600 mb-6">Calculate building costs based on region, building type, square footage, and complexity.</p>
                 <BuildingCostCalculator />
+              </div>
+            )}
+            {activeTab === "costmatrix" && (
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-600 mb-4">Cost Matrix Manager</h2>
+                <p className="text-neutral-600 mb-6">Manage cost matrix entries for Benton County, Washington building assessment.</p>
+                <CostMatrixManager />
               </div>
             )}
             {activeTab === "configuration" && <ConfigurationTab />}

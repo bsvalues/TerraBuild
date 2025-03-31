@@ -404,3 +404,52 @@ export type InsertBentonImprvSchedMatrixAssoc = z.infer<typeof insertBentonImprv
 
 export type BentonDepreciationMatrix = typeof bentonDepreciationMatrix.$inferSelect;
 export type InsertBentonDepreciationMatrix = z.infer<typeof insertBentonDepreciationMatrixSchema>;
+
+// Cost Matrix (simplified representation from Excel data)
+export const costMatrix = pgTable("cost_matrix", {
+  id: serial("id").primaryKey(),
+  region: text("region").notNull(),
+  buildingType: text("building_type").notNull(),
+  buildingTypeDescription: text("building_type_description").notNull(),
+  baseCost: decimal("base_cost", { precision: 14, scale: 2 }).notNull(),
+  matrixYear: integer("matrix_year").notNull(),
+  sourceMatrixId: integer("source_matrix_id").notNull(),
+  sourceMatrixDescription: text("source_matrix_description").notNull(),
+  dataPoints: integer("data_points").notNull().default(0),
+  minCost: decimal("min_cost", { precision: 14, scale: 2 }),
+  maxCost: decimal("max_cost", { precision: 14, scale: 2 }),
+  complexityFactorBase: decimal("complexity_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  qualityFactorBase: decimal("quality_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  conditionFactorBase: decimal("condition_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    regionBuildingTypeIdx: uniqueIndex("region_building_type_year_idx").on(
+      table.region, 
+      table.buildingType,
+      table.matrixYear
+    ),
+  };
+});
+
+export const insertCostMatrixSchema = createInsertSchema(costMatrix).pick({
+  region: true,
+  buildingType: true,
+  buildingTypeDescription: true,
+  baseCost: true,
+  matrixYear: true,
+  sourceMatrixId: true,
+  sourceMatrixDescription: true,
+  dataPoints: true,
+  minCost: true,
+  maxCost: true,
+  complexityFactorBase: true,
+  qualityFactorBase: true,
+  conditionFactorBase: true,
+  isActive: true,
+});
+
+export type CostMatrix = typeof costMatrix.$inferSelect;
+export type InsertCostMatrix = z.infer<typeof insertCostMatrixSchema>;

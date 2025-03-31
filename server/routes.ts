@@ -832,6 +832,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cost Matrix API
+  
+  // Get all cost matrix entries
+  app.get("/api/cost-matrix", async (req: Request, res: Response) => {
+    try {
+      const costMatrix = await storage.getAllCostMatrix();
+      res.json(costMatrix);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost matrix entries" });
+    }
+  });
+  
+  // Get cost matrix entries by region
+  app.get("/api/cost-matrix/region/:region", async (req: Request, res: Response) => {
+    try {
+      const { region } = req.params;
+      const costMatrix = await storage.getCostMatrixByRegion(region);
+      res.json(costMatrix);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost matrix entries by region" });
+    }
+  });
+  
+  // Get cost matrix entries by building type
+  app.get("/api/cost-matrix/building-type/:buildingType", async (req: Request, res: Response) => {
+    try {
+      const { buildingType } = req.params;
+      const costMatrix = await storage.getCostMatrixByBuildingType(buildingType);
+      res.json(costMatrix);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost matrix entries by building type" });
+    }
+  });
+  
+  // Get cost matrix entry by region and building type
+  app.get("/api/cost-matrix/region/:region/building-type/:buildingType", async (req: Request, res: Response) => {
+    try {
+      const { region, buildingType } = req.params;
+      const costMatrix = await storage.getCostMatrixByRegionAndBuildingType(region, buildingType);
+      
+      if (!costMatrix) {
+        return res.status(404).json({ message: "Cost matrix entry not found" });
+      }
+      
+      res.json(costMatrix);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost matrix entry" });
+    }
+  });
+  
+  // Import cost matrix entries from JSON file
+  app.post("/api/cost-matrix/import", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to import data
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { data } = req.body;
+      
+      if (!data || !Array.isArray(data)) {
+        return res.status(400).json({ message: "Invalid data format. Expected array of cost matrix entries." });
+      }
+      
+      const result = await storage.importCostMatrixFromJson(data);
+      
+      await storage.createActivity({
+        action: `Imported ${result.imported} cost matrix entries`,
+        icon: "ri-database-2-line",
+        iconColor: "success"
+      });
+      
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error importing cost matrix data" });
+    }
+  });
+  
+  // Update cost matrix entry
+  app.patch("/api/cost-matrix/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to update entries
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const updatedEntry = await storage.updateCostMatrix(id, updateData);
+      
+      if (!updatedEntry) {
+        return res.status(404).json({ message: "Cost matrix entry not found" });
+      }
+      
+      res.json(updatedEntry);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating cost matrix entry" });
+    }
+  });
+  
+  // Delete cost matrix entry
+  app.delete("/api/cost-matrix/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to delete entries
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const id = parseInt(req.params.id);
+      await storage.deleteCostMatrix(id);
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting cost matrix entry" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

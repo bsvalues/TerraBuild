@@ -14,9 +14,10 @@ import {
   MaterialCost, InsertMaterialCost,
   BuildingCostMaterial, InsertBuildingCostMaterial,
   CalculationHistory, InsertCalculationHistory,
+  CostMatrix, InsertCostMatrix,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
-  calculationHistory
+  calculationHistory, costMatrix
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -402,5 +403,116 @@ export class PostgresStorage implements IStorage {
   
   async deleteCalculationHistory(id: number): Promise<void> {
     await db.delete(calculationHistory).where(eq(calculationHistory.id, id));
+  }
+  
+  // Cost Matrix
+  async getAllCostMatrix(): Promise<CostMatrix[]> {
+    return await db.select().from(costMatrix).orderBy(costMatrix.region, costMatrix.buildingType);
+  }
+  
+  async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {
+    return await db.select().from(costMatrix)
+      .where(eq(costMatrix.region, region))
+      .orderBy(costMatrix.buildingType);
+  }
+  
+  async getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]> {
+    return await db.select().from(costMatrix)
+      .where(eq(costMatrix.buildingType, buildingType))
+      .orderBy(costMatrix.region);
+  }
+  
+  async getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined> {
+    const results = await db.select().from(costMatrix)
+      .where(and(
+        eq(costMatrix.region, region),
+        eq(costMatrix.buildingType, buildingType)
+      ));
+    
+    return results[0];
+  }
+  
+  async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
+    const result = await db.insert(costMatrix).values(matrix).returning();
+    return result[0];
+  }
+  
+  async updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined> {
+    const updateData = { ...matrix, updatedAt: new Date() };
+    const result = await db.update(costMatrix)
+      .set(updateData)
+      .where(eq(costMatrix.id, id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async deleteCostMatrix(id: number): Promise<void> {
+    await db.delete(costMatrix).where(eq(costMatrix.id, id));
+  }
+  
+  async importCostMatrixFromJson(data: any[]): Promise<{ imported: number; errors: string[] }> {
+    const errors: string[] = [];
+    let imported = 0;
+    
+    try {
+      if (!Array.isArray(data)) {
+        errors.push("Invalid data format: expected an array of cost matrix entries");
+        return { imported, errors };
+      }
+      
+      for (const item of data) {
+        try {
+          if (!item.region || !item.buildingType || !item.buildingTypeDescription || 
+              !item.baseCost || !item.matrixYear || !item.matrixId || 
+              !item.matrixDescription) {
+            errors.push(`Missing required fields for item: ${JSON.stringify(item)}`);
+            continue;
+          }
+          
+          // Check if entry already exists
+          const existing = await this.getCostMatrixByRegionAndBuildingType(
+            item.region, 
+            item.buildingType
+          );
+          
+          // Convert adjustmentFactors to individual factor fields if present
+          const complexityFactorBase = item.adjustmentFactors?.complexity || 1.0;
+          const qualityFactorBase = item.adjustmentFactors?.quality || 1.0;
+          const conditionFactorBase = item.adjustmentFactors?.condition || 1.0;
+          
+          const matrixEntry: InsertCostMatrix = {
+            region: item.region,
+            buildingType: item.buildingType,
+            buildingTypeDescription: item.buildingTypeDescription,
+            baseCost: item.baseCost.toString(),
+            matrixYear: item.matrixYear,
+            sourceMatrixId: item.matrixId,
+            sourceMatrixDescription: item.matrixDescription || "",
+            dataPoints: item.dataPoints || 0,
+            minCost: item.minCost?.toString(),
+            maxCost: item.maxCost?.toString(),
+            complexityFactorBase: complexityFactorBase.toString(),
+            qualityFactorBase: qualityFactorBase.toString(),
+            conditionFactorBase: conditionFactorBase.toString(),
+            isActive: true
+          };
+          
+          if (existing) {
+            await this.updateCostMatrix(existing.id, matrixEntry);
+          } else {
+            await this.createCostMatrix(matrixEntry);
+          }
+          
+          imported++;
+        } catch (error: any) {
+          errors.push(`Error importing item: ${JSON.stringify(item)}, Error: ${error.message}`);
+        }
+      }
+    } catch (error: any) {
+      errors.push(`General import error: ${error.message}`);
+    }
+    
+    return { imported, errors };
   }
 }
