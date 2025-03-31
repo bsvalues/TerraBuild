@@ -16,6 +16,11 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
+import { validateExcelFile, validateBatchExcelFiles } from "./validators/excelValidator";
+import { processBatchImport } from "./import/batchImporter";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication and authorization
@@ -834,6 +839,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cost Matrix Import API
+  
+  // Set up multer for file uploads
+  const upload = multer({
+    dest: 'uploads/',
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB file size limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Accept only Excel files
+      if (
+        file.mimetype === 'application/vnd.ms-excel' ||
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ) {
+        cb(null, true);
+      } else {
+        cb(null, false);
+        cb(new Error('Only Excel files are allowed'));
+      }
+    }
+  });
+  
+  // Validate Excel file
+  app.post("/api/matrix/validate", upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const filePath = req.file.path;
+      
+      // Validate Excel file
+      const validationResult = await validateExcelFile(filePath, {
+        strictMode: req.body.strictMode === 'true',
+        checkDataTypes: true
+      });
+      
+      // Clean up the uploaded file
+      fs.unlinkSync(filePath);
+      
+      // Return validation result
+      res.json(validationResult);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error validating Excel file: ${error.message}` });
+    }
+  });
+  
+  // Process batch import of Excel files
+  app.post("/api/matrix/batch-import", upload.array('files', 10), async (req: Request, res: Response) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      const filePaths = files.map(file => file.path);
+      
+      const options = {
+        detectDuplicates: req.body.detectDuplicates === 'true',
+        standardizeData: req.body.standardizeData === 'true',
+        useTransaction: req.body.useTransaction === 'true'
+      };
+      
+      // Process batch import
+      const importResult = await processBatchImport(filePaths, options);
+      
+      // Clean up uploaded files
+      filePaths.forEach(filePath => {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error(`Error deleting file ${filePath}:`, e);
+        }
+      });
+      
+      // Log activity
+      await storage.createActivity({
+        action: `Batch imported ${importResult.processed} cost matrices`,
+        icon: "ri-file-excel-line",
+        iconColor: "success"
+      });
+      
+      // Return import result
+      res.json(importResult);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error processing batch import: ${error.message}` });
+    }
+  });
+  
+  // Get cost matrix by region and building type
+  app.get("/api/matrix/:region/:buildingType", async (req: Request, res: Response) => {
+    try {
+      const { region, buildingType } = req.params;
+      const matrix = await storage.getCostMatrixByRegionAndType(region, buildingType);
+      
+      if (!matrix) {
+        return res.status(404).json({ message: "Cost matrix not found" });
+      }
+      
+      res.json(matrix);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching cost matrix: ${error.message}` });
+    }
+  });
+  
+  // Get all cost matrices
+  app.get("/api/matrix", async (req: Request, res: Response) => {
+    try {
+      const matrices = await storage.getAllCostMatrices();
+      res.json(matrices);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching cost matrices: ${error.message}` });
+    }
+  });
+  
   // Cost Factor Presets API
   
   // Get all cost factor presets

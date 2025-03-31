@@ -8,16 +8,35 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
-  url: string,
+  urlOrOptions: string | {
+    url: string,
+    method: string,
+    body?: any
+  },
   data?: unknown | undefined,
 ): Promise<Response> {
-  console.log(`API Request: ${method} ${url}`, data);
+  let url: string;
+  let method: string = 'GET';
+  let body: any = undefined;
+  
+  if (typeof urlOrOptions === 'string') {
+    url = urlOrOptions;
+    method = data ? 'POST' : 'GET';
+    body = data;
+  } else {
+    url = urlOrOptions.url;
+    method = urlOrOptions.method;
+    body = urlOrOptions.body;
+  }
+  
+  console.log(`API Request: ${method} ${url}`, body);
+  
+  const isFormData = body instanceof FormData;
   
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: body && !isFormData ? { "Content-Type": "application/json" } : {},
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     credentials: "include",
   });
 
@@ -29,7 +48,11 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res.clone(); // Clone so the body can be read multiple times
+  const clonedRes = res.clone(); // Clone so the body can be read multiple times
+  if (clonedRes.headers.get('content-type')?.includes('application/json')) {
+    return await clonedRes.json();
+  }
+  return clonedRes;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

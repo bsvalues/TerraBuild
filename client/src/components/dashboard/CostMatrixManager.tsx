@@ -12,8 +12,9 @@ import { useCostMatrix } from "@/hooks/use-cost-matrix";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { toast } from "@/hooks/use-toast";
 import { FileUpload } from "@shared/schema";
-import { DownloadIcon, FileUpIcon, RefreshCwIcon, FileIcon, DatabaseIcon, XIcon, AlertCircleIcon, CheckIcon } from "lucide-react";
+import { DownloadIcon, FileUpIcon, RefreshCwIcon, FileIcon, DatabaseIcon, XIcon, AlertCircleIcon, CheckIcon, ServerIcon } from "lucide-react";
 import { format } from "date-fns";
+import BatchImportHandler from "./BatchImportHandler";
 
 export const CostMatrixManager: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,8 +119,9 @@ export const CostMatrixManager: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="upload">Upload Matrix</TabsTrigger>
+            <TabsTrigger value="batch">Batch Import</TabsTrigger>
             <TabsTrigger value="history">Upload History</TabsTrigger>
             <TabsTrigger value="matrices">Cost Matrices</TabsTrigger>
           </TabsList>
@@ -187,6 +189,10 @@ export const CostMatrixManager: React.FC = () => {
                 </Button>
               </CardFooter>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="batch" className="pt-4">
+            <BatchImportHandler />
           </TabsContent>
           
           <TabsContent value="history" className="pt-4">

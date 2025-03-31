@@ -558,77 +558,230 @@ class EnhancedExcelParser:
         return sorted(list(detected_regions))
 
 
+def validate_only(excel_file, detailed_errors=False, check_data_types=False, strict=False):
+    """
+    Validate the Excel file without parsing all data
+    
+    Args:
+        excel_file: Path to the Excel file
+        detailed_errors: Whether to include detailed error information
+        check_data_types: Whether to check data types in the Excel file
+        strict: Whether to be strict in validation
+        
+    Returns:
+        Dict: Validation result with success flag and errors
+    """
+    parser = EnhancedExcelParser(excel_file)
+    
+    result = {
+        'success': True,
+        'errors': [],
+        'warnings': [],
+        'sheets': [],
+        'rowCount': 0,
+        'year': parser.matrix_year,
+        'detectedTypes': [],
+        'detectedRegions': []
+    }
+    
+    # Check if file exists
+    if not os.path.exists(excel_file):
+        result['success'] = False
+        result['errors'].append(f"File not found: {excel_file}")
+        return result
+    
+    # Detect sheets
+    sheets = parser._detect_sheets()
+    if not sheets:
+        result['success'] = False
+        result['errors'].append("No sheets found in the Excel file")
+        return result
+    
+    result['sheets'] = sheets
+    
+    # Look for the main matrix sheets
+    matrix_sheet = next((s for s in sheets if s.lower() == 'matrix'), None)
+    matrix_detail_sheet = next((s for s in sheets if s.lower() == 'matrix_detail'), None)
+    
+    # If we can't find the expected sheets, try to detect them
+    if not matrix_sheet or not matrix_detail_sheet:
+        for sheet in sheets:
+            if any(keyword in sheet.lower() for keyword in ['matrix', 'cost', 'rate']):
+                if not matrix_sheet:
+                    matrix_sheet = sheet
+                elif not matrix_detail_sheet:
+                    matrix_detail_sheet = sheet
+    
+    # Validate that we have the required sheets
+    if not matrix_sheet:
+        result['success'] = False
+        result['errors'].append("Required sheet 'matrix' not found")
+        return result
+    
+    if not matrix_detail_sheet:
+        result['success'] = False
+        result['errors'].append("Required sheet 'matrix_detail' not found")
+        return result
+    
+    # Validate sheet data
+    matrix_validation = parser._validate_sheet_data(matrix_sheet, parser.REQUIRED_COLUMNS['matrix'])
+    if not matrix_validation['valid']:
+        result['success'] = False
+        for error in matrix_validation['errors']:
+            result['errors'].append(error)
+            
+    matrix_detail_validation = parser._validate_sheet_data(matrix_detail_sheet, parser.REQUIRED_COLUMNS['matrix_detail'])
+    if not matrix_detail_validation['valid']:
+        result['success'] = False
+        for error in matrix_detail_validation['errors']:
+            result['errors'].append(error)
+    
+    # If successful so far and we want to check data types
+    if result['success'] and check_data_types:
+        try:
+            # Read the data to check for data type issues
+            matrix_df = pd.read_excel(excel_file, sheet_name=matrix_sheet)
+            detail_df = pd.read_excel(excel_file, sheet_name=matrix_detail_sheet)
+            
+            # Count rows for info
+            result['rowCount'] = len(matrix_df) + len(detail_df)
+            
+            # Check cell_value is numeric
+            if 'cell_value' in detail_df.columns:
+                non_numeric = detail_df[~pd.to_numeric(detail_df['cell_value'], errors='coerce').notna()]
+                if len(non_numeric) > 0:
+                    if strict:
+                        result['success'] = False
+                        result['errors'].append(f"Invalid data type in 'cell_value' column: expected numeric value")
+                    else:
+                        result['warnings'].append(f"Found {len(non_numeric)} non-numeric values in 'cell_value' column")
+            
+            # Extract potential regions and building types
+            if 'matrix_description' in matrix_df.columns:
+                unique_descriptions = matrix_df['matrix_description'].dropna().unique()
+                
+                extracted_regions = set()
+                extracted_building_types = set()
+                
+                for desc in unique_descriptions:
+                    if isinstance(desc, str):
+                        region = parser._extract_region_from_description(desc)
+                        if region:
+                            extracted_regions.add(region)
+                        
+                        building_type = parser._extract_building_type_from_description(desc)
+                        if building_type:
+                            extracted_building_types.add(building_type)
+                
+                result['detectedRegions'] = list(extracted_regions)
+                result['detectedTypes'] = list(extracted_building_types)
+        
+        except Exception as e:
+            if strict:
+                result['success'] = False
+                result['errors'].append(f"Data type validation failed: {str(e)}")
+            else:
+                result['warnings'].append(f"Data type validation warning: {str(e)}")
+    
+    return result
+
 def main():
     """Main function for command-line usage"""
     import sys
+    import argparse
     
-    # Check arguments
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <excel_file> [output_file]")
-        sys.exit(1)
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Enhanced Excel Parser for Cost Matrix data')
+    parser.add_argument('excel_file', help='Path to the Excel file to parse')
+    parser.add_argument('output_file', nargs='?', help='Path to the output JSON file (optional)')
+    parser.add_argument('--validate-only', action='store_true', help='Only validate the file without parsing all data')
+    parser.add_argument('--detailed-errors', action='store_true', help='Include detailed error information')
+    parser.add_argument('--check-data-types', action='store_true', help='Check data types in the Excel file')
+    parser.add_argument('--strict', action='store_true', help='Be strict in validation')
+    parser.add_argument('--standardize', action='store_true', help='Standardize data during parsing')
+    parser.add_argument('--output-json-only', action='store_true', help='Output JSON data only (for piping)')
     
-    excel_file = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
+    args = parser.parse_args()
     
-    # Progress callback
+    # Validate only mode
+    if args.validate_only:
+        result = validate_only(
+            args.excel_file, 
+            detailed_errors=args.detailed_errors,
+            check_data_types=args.check_data_types,
+            strict=args.strict
+        )
+        print(json.dumps(result))
+        sys.exit(0 if result['success'] else 1)
+    
+    # Progress callback (only if not in JSON-only mode)
     def progress_callback(progress):
-        print(f"Progress: {progress:.1f}%", end="\r")
+        if not args.output_json_only:
+            print(f"Progress: {progress:.1f}%", end="\r")
     
     # Parse the Excel file
-    parser = EnhancedExcelParser(excel_file)
+    parser = EnhancedExcelParser(args.excel_file)
     result = parser.parse(progress_callback=progress_callback)
     
-    # Print summary
-    print("\nProcessing complete:")
-    print(f"  Success: {result['success']}")
-    print(f"  Regions found: {len(result['regions'])}: {', '.join(result['regions'])}")
-    print(f"  Building types found: {len(result['buildingTypes'])}: {', '.join(result['buildingTypes'])}")
-    print(f"  Auto-detected regions: {', '.join(result['detectedRegions'])}")
-    print(f"  Auto-detected building types: {', '.join(result['detectedTypes'])}")
-    print(f"  Matrix entries: {result['rowCount']}")
+    # Convert non-serializable types
+    def convert_to_serializable(obj):
+        if isinstance(obj, (np.int64, np.int32, np.int16, np.int8)):
+            return int(obj)
+        elif isinstance(obj, (np.float64, np.float32, np.float16)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, (np.bool_)):
+            return bool(obj)
+        else:
+            return obj
     
-    if result['errors']:
-        print(f"  Errors: {len(result['errors'])}")
-        for error in result['errors'][:5]:  # Show first 5 errors
-            print(f"    - {error}")
-        if len(result['errors']) > 5:
-            print(f"    ... and {len(result['errors']) - 5} more errors")
-            
-    if result['warnings']:
-        print(f"  Warnings: {len(result['warnings'])}")
-        for warning in result['warnings'][:5]:  # Show first 5 warnings
-            print(f"    - {warning}")
-        if len(result['warnings']) > 5:
-            print(f"    ... and {len(result['warnings']) - 5} more warnings")
+    # Custom JSON encoder for numpy types
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            return convert_to_serializable(obj)
     
-    # Output the result
-    if output_file:
-        with open(output_file, 'w') as f:
-            # Convert numpy and other non-serializable types
-            def convert_to_serializable(obj):
-                if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
-                    return int(obj)
-                elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                else:
-                    return obj
-            
-            # Use custom serializer for numpy types
-            class NumpyEncoder(json.JSONEncoder):
-                def default(self, obj):
-                    return convert_to_serializable(obj)
-            
-            json.dump(result, f, indent=2, cls=NumpyEncoder)
-        print(f"  Output written to: {output_file}")
+    # If output_json_only, just print the JSON
+    if args.output_json_only:
+        print(json.dumps(result, cls=NumpyEncoder))
     else:
-        # Print the data to stdout if no output file specified
-        print("\nExtracted data:")
-        for i, entry in enumerate(result['data'][:3]):  # Show first 3 entries
-            print(f"  [{i+1}] {entry['region']} / {entry['buildingType']}: ${entry['baseCost']:.2f}")
-        if len(result['data']) > 3:
-            print(f"  ... and {len(result['data']) - 3} more entries")
+        # Print summary
+        print("\nProcessing complete:")
+        print(f"  Success: {result['success']}")
+        print(f"  Regions found: {len(result['regions'])}: {', '.join(result['regions'])}")
+        print(f"  Building types found: {len(result['buildingTypes'])}: {', '.join(result['buildingTypes'])}")
+        print(f"  Auto-detected regions: {', '.join(result.get('detectedRegions', []))}")
+        print(f"  Auto-detected building types: {', '.join(result.get('detectedTypes', []))}")
+        print(f"  Matrix entries: {result.get('rowCount', 0)}")
+        
+        if 'errors' in result and result['errors']:
+            print(f"  Errors: {len(result['errors'])}")
+            for error in result['errors'][:5]:  # Show first 5 errors
+                print(f"    - {error}")
+            if len(result['errors']) > 5:
+                print(f"    ... and {len(result['errors']) - 5} more errors")
+                
+        if 'warnings' in result and result['warnings']:
+            print(f"  Warnings: {len(result['warnings'])}")
+            for warning in result['warnings'][:5]:  # Show first 5 warnings
+                print(f"    - {warning}")
+            if len(result['warnings']) > 5:
+                print(f"    ... and {len(result['warnings']) - 5} more warnings")
+        
+        # Write output file if specified
+        if args.output_file:
+            with open(args.output_file, 'w') as f:
+                json.dump(result, f, cls=NumpyEncoder, indent=2)
+            print(f"  Output written to: {args.output_file}")
+            
+        # Print some data preview if available
+        if 'data' in result and result['data']:
+            print("\nExtracted data preview:")
+            for i, entry in enumerate(result['data'][:3]):  # Show first 3 entries
+                if 'region' in entry and 'buildingType' in entry and 'baseCost' in entry:
+                    print(f"  [{i+1}] {entry['region']} / {entry['buildingType']}: ${entry['baseCost']:.2f}")
+            if len(result['data']) > 3:
+                print(f"  ... and {len(result['data']) - 3} more entries")
 
 
 if __name__ == "__main__":
