@@ -13,18 +13,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-blue-100">
+        <div className="p-6 bg-white rounded-lg shadow-lg flex flex-col items-center">
+          <div className="w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          </div>
+          <p className="text-blue-800 font-medium">Loading application...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-gradient-to-r from-blue-50 to-blue-100">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <TopNav />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );
