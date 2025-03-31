@@ -1,0 +1,51 @@
+Iterative Full Application Development
+
+>   &#x1F4DD;   **Define the Complete Application Specifications:**
+>   * Thoroughly review all available documentation, user stories, design mockups, and any other materials that define the requirements and functionality of the application to be built.
+>   * Based on this review, create a comprehensive list of features, functionalities, data models, user interfaces, and any other relevant aspects of the complete application.
+>   * Identify any missing or unclear specifications and formulate clarifying questions.
+>   ✅   **Iterative Development Loop:** Repeat the following steps until the application is fully built to specifications:
+>   1.  &#x1F4C8;   **Prioritize Development Tasks:**
+>   * Analyze the remaining features and functionalities and determine the most logical and efficient order for implementation.
+>   * Consider dependencies between different parts of the application.
+>   * Select the next set of tasks to be implemented in the current iteration.
+>   2.  &#x1F50E;   **Detailed Iteration Planning:**
+>   * **Critically analyze the existing codebase** for bugs, errors, inefficiencies, and potential improvements. Provide specific file and line numbers where possible.
+>   * Temporarily and completely **disable all sign-in/authentication mechanisms**. Modify the code to bypass auth checks and grant full access for development purposes. Clearly document the files and lines changed to achieve this. This change MUST be easily reversible.
+>   * Based on the prioritized tasks, **define the scope and objectives of the current development phase.** Outline the specific features, functionalities, or improvements to be implemented in this iteration.
+>   * **Develop a detailed, step-by-step development plan** for the current phase. This plan should include:
+>   * A breakdown of tasks and subtasks.
+>   * Dependencies between tasks.
+>   * Estimated time for each task.
+>   * Identification of potential challenges or risks.
+>   * Proposed solutions or mitigation strategies for those challenges.
+>   * **Critically review the generated development plan**, identifying potential issues, suggesting alternative approaches, and optimizing the plan for efficiency and effectiveness.
+>   3.  &#x1F9EA;   **Test-Driven Development Setup:**
+>   * **Before writing any code**, design a comprehensive suite of unit and integration tests to verify the correctness and validity of the code changes for this iteration.
+>   * Specify the test cases, input values, expected outputs, and testing methodologies.
+>   * Consider edge cases, boundary conditions, and potential failure scenarios.
+>   4.  &#x1F469;‍&#x1F680;   **Code Implementation:**
+>   * Implement the development plan, writing clean, well-documented, and modular code.
+>   * Adhere to coding best practices and style guides.
+>   * **Enforce a strict test-driven development (TDD) process:**
+>   * Ensure that all tests pass before committing any code changes.
+>   * Refactor code as needed to improve testability and maintainability.
+>   * Provide clear and concise explanations for all code modifications.
+>   * Prioritize code quality, maintainability, and scalability.
+>   5.  &#x1F4CA;   **Review and Feedback:**
+>   * Once the implementation is complete, review the implemented features and functionalities against the original specifications.
+>   * Identify any discrepancies, missing requirements, or areas for improvement.
+>   * Gather feedback from stakeholders or users, if possible.
+>   6.  &#x1F501;   **Refinement and Iteration:**
+>   * Based on the review and feedback, refine the application and the development plan for the next iteration.
+>   * Address any bugs, errors, or inefficiencies identified during the review.
+>   * Adjust the development plan as needed to accommodate new insights or changing requirements.
+>   &#x1F3C1;   **Completion Check:**
+>   * After each iteration, check if the application is fully built to specifications.
+>   * If not, go back to step 1 (Prioritize Development Tasks) to begin the next iteration.
+>   * If the application is complete, proceed to the finalization steps.
+>   &#x1F4A1;   **Finalization Steps (When Application is Complete):**
+>   * Thoroughly review the entire application for any remaining issues.
+>   * Re-enable authentication.
+>   * Write comprehensive documentation.
+>   * Prepare the application for deployment.
