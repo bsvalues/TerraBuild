@@ -9,7 +9,8 @@ import {
   insertUserSchema,
   insertMaterialTypeSchema,
   insertMaterialCostSchema,
-  insertBuildingCostMaterialSchema
+  insertBuildingCostMaterialSchema,
+  insertCalculationHistorySchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -730,12 +731,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
           iconColor: "primary"
         });
         
+        // If user is authenticated, save to calculation history
+        if (req.isAuthenticated() && req.user?.id) {
+          const userId = req.user.id;
+          await storage.createCalculationHistory({
+            userId,
+            name: `${buildingType} Building in ${region}`,
+            region,
+            buildingType,
+            squareFootage: Number(squareFootage),
+            costPerSqft: materialsBreakdown.costPerSqft.toString(),
+            totalCost: materialsBreakdown.totalCost.toString(),
+
+            baseCost: materialsBreakdown.baseCost.toString(),
+            regionFactor: materialsBreakdown.regionFactor.toString(),
+            complexityFactor: materialsBreakdown.complexityFactor.toString(),
+            materialsBreakdown: materialsBreakdown
+          });
+        }
+        
         res.json(materialsBreakdown);
       } catch (error: any) {
         res.status(404).json({ message: error.message || "Error calculating materials breakdown" });
       }
     } catch (error) {
       res.status(500).json({ message: "Error processing request" });
+    }
+  });
+  
+  // Calculation History API
+  
+  // Get all calculation history entries
+  app.get("/api/calculation-history", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // If user is admin, return all entries, otherwise filter by user id
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === "admin";
+      
+      let history;
+      if (isAdmin) {
+        history = await storage.getAllCalculationHistory();
+      } else if (userId) {
+        history = await storage.getCalculationHistoryByUserId(userId);
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching calculation history" });
+    }
+  });
+  
+  // Get calculation history by ID
+  app.get("/api/calculation-history/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const calculation = await storage.getCalculationHistory(id);
+      
+      if (!calculation) {
+        return res.status(404).json({ message: "Calculation history not found" });
+      }
+      
+      // Check if user has access to this calculation
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === "admin";
+      
+      if (!isAdmin && calculation.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(calculation);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching calculation history" });
+    }
+  });
+  
+  // Delete calculation history
+  app.delete("/api/calculation-history/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const calculation = await storage.getCalculationHistory(id);
+      
+      if (!calculation) {
+        return res.status(404).json({ message: "Calculation history not found" });
+      }
+      
+      // Check if user has access to delete this calculation
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === "admin";
+      
+      if (!isAdmin && calculation.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteCalculationHistory(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting calculation history" });
     }
   });
 

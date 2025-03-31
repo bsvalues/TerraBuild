@@ -9,7 +9,8 @@ import {
   costFactors, type CostFactor, type InsertCostFactor,
   materialTypes, type MaterialType, type InsertMaterialType,
   materialCosts, type MaterialCost, type InsertMaterialCost,
-  buildingCostMaterials, type BuildingCostMaterial, type InsertBuildingCostMaterial
+  buildingCostMaterials, type BuildingCostMaterial, type InsertBuildingCostMaterial,
+  calculationHistory, type CalculationHistory, type InsertCalculationHistory
 } from "@shared/schema";
 
 // Storage interface
@@ -88,6 +89,13 @@ export interface IStorage {
   
   // Calculate Materials Breakdown
   calculateMaterialsBreakdown(region: string, buildingType: string, squareFootage: number, complexityMultiplier?: number): Promise<any>;
+  
+  // Calculation History
+  getAllCalculationHistory(): Promise<CalculationHistory[]>;
+  getCalculationHistoryByUserId(userId: number): Promise<CalculationHistory[]>;
+  getCalculationHistory(id: number): Promise<CalculationHistory | undefined>;
+  createCalculationHistory(calculation: InsertCalculationHistory): Promise<CalculationHistory>;
+  deleteCalculationHistory(id: number): Promise<void>;
 }
 
 // Memory Storage implementation
@@ -101,6 +109,7 @@ export class MemStorage implements IStorage {
   private materialTypes: Map<number, MaterialType>;
   private materialCosts: Map<number, MaterialCost>;
   private buildingCostMaterials: Map<number, BuildingCostMaterial>;
+  private calculationHistories: Map<number, CalculationHistory>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -111,6 +120,7 @@ export class MemStorage implements IStorage {
   private currentMaterialTypeId: number;
   private currentMaterialCostId: number;
   private currentBuildingCostMaterialId: number;
+  private currentCalculationHistoryId: number;
   
   constructor() {
     this.users = new Map();
@@ -122,6 +132,7 @@ export class MemStorage implements IStorage {
     this.materialTypes = new Map();
     this.materialCosts = new Map();
     this.buildingCostMaterials = new Map();
+    this.calculationHistories = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -132,6 +143,7 @@ export class MemStorage implements IStorage {
     this.currentMaterialTypeId = 1;
     this.currentMaterialCostId = 1;
     this.currentBuildingCostMaterialId = 1;
+    this.currentCalculationHistoryId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -729,6 +741,34 @@ export class MemStorage implements IStorage {
       complexityFactor: complexityFactorValue,
       materials: materials.filter(Boolean)
     };
+  }
+  
+  // Calculation History Methods
+  async getAllCalculationHistory(): Promise<CalculationHistory[]> {
+    return Array.from(this.calculationHistories.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getCalculationHistoryByUserId(userId: number): Promise<CalculationHistory[]> {
+    return Array.from(this.calculationHistories.values())
+      .filter(calc => calc.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getCalculationHistory(id: number): Promise<CalculationHistory | undefined> {
+    return this.calculationHistories.get(id);
+  }
+  
+  async createCalculationHistory(calculation: InsertCalculationHistory): Promise<CalculationHistory> {
+    const id = this.currentCalculationHistoryId++;
+    const createdAt = new Date();
+    const newCalculation: CalculationHistory = { ...calculation, id, createdAt };
+    this.calculationHistories.set(id, newCalculation);
+    return newCalculation;
+  }
+  
+  async deleteCalculationHistory(id: number): Promise<void> {
+    this.calculationHistories.delete(id);
   }
 }
 

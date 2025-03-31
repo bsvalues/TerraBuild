@@ -1,7 +1,8 @@
 import React from "react";
 
-interface MainContentProps {
+export interface MainContentProps {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   actionButton?: {
     label: string;
@@ -10,12 +11,17 @@ interface MainContentProps {
   };
 }
 
-export default function MainContent({ title, children, actionButton }: MainContentProps) {
+export default function MainContent({ title, subtitle, children, actionButton }: MainContentProps) {
   return (
     <main className="flex-1 overflow-y-auto bg-neutral-100">
       <header className="bg-white border-b border-neutral-200 py-4 px-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-neutral-600">{title}</h1>
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-600">{title}</h1>
+            {subtitle && (
+              <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
             <button 
               className="flex items-center text-sm text-neutral-500 hover:text-primary"

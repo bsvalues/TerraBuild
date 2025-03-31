@@ -228,3 +228,37 @@ export type InsertMaterialCost = z.infer<typeof insertMaterialCostSchema>;
 
 export type BuildingCostMaterial = typeof buildingCostMaterials.$inferSelect;
 export type InsertBuildingCostMaterial = z.infer<typeof insertBuildingCostMaterialSchema>;
+
+// Calculation History
+export const calculationHistory = pgTable("calculation_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name"),
+  region: text("region").notNull(),
+  buildingType: text("building_type").notNull(),
+  squareFootage: integer("square_footage").notNull(),
+  baseCost: decimal("base_cost", { precision: 10, scale: 2 }).notNull(),
+  regionFactor: decimal("region_factor", { precision: 5, scale: 2 }).notNull(),
+  complexityFactor: decimal("complexity_factor", { precision: 5, scale: 2 }).notNull(),
+  costPerSqft: decimal("cost_per_sqft", { precision: 10, scale: 2 }).notNull(),
+  totalCost: decimal("total_cost", { precision: 14, scale: 2 }).notNull(),
+  materialsBreakdown: json("materials_breakdown"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCalculationHistorySchema = createInsertSchema(calculationHistory).pick({
+  userId: true,
+  name: true,
+  region: true,
+  buildingType: true,
+  squareFootage: true,
+  baseCost: true,
+  regionFactor: true,
+  complexityFactor: true,
+  costPerSqft: true,
+  totalCost: true,
+  materialsBreakdown: true,
+});
+
+export type CalculationHistory = typeof calculationHistory.$inferSelect;
+export type InsertCalculationHistory = z.infer<typeof insertCalculationHistorySchema>;

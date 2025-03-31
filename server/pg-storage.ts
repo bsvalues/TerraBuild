@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import { db } from './db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { 
   User, InsertUser,
   Environment, InsertEnvironment,
@@ -13,8 +13,10 @@ import {
   MaterialType, InsertMaterialType,
   MaterialCost, InsertMaterialCost,
   BuildingCostMaterial, InsertBuildingCostMaterial,
+  CalculationHistory, InsertCalculationHistory,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
-  buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials
+  buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
+  calculationHistory
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -375,5 +377,30 @@ export class PostgresStorage implements IStorage {
       complexityFactor: complexityFactorValue,
       materials: materials.filter(Boolean)
     };
+  }
+  
+  // Calculation History Methods
+  async getAllCalculationHistory(): Promise<CalculationHistory[]> {
+    return await db.select().from(calculationHistory).orderBy(desc(calculationHistory.createdAt));
+  }
+  
+  async getCalculationHistoryByUserId(userId: number): Promise<CalculationHistory[]> {
+    return await db.select().from(calculationHistory)
+      .where(eq(calculationHistory.userId, userId))
+      .orderBy(desc(calculationHistory.createdAt));
+  }
+  
+  async getCalculationHistory(id: number): Promise<CalculationHistory | undefined> {
+    const result = await db.select().from(calculationHistory).where(eq(calculationHistory.id, id));
+    return result[0];
+  }
+  
+  async createCalculationHistory(calculation: InsertCalculationHistory): Promise<CalculationHistory> {
+    const result = await db.insert(calculationHistory).values(calculation).returning();
+    return result[0];
+  }
+  
+  async deleteCalculationHistory(id: number): Promise<void> {
+    await db.delete(calculationHistory).where(eq(calculationHistory.id, id));
   }
 }
