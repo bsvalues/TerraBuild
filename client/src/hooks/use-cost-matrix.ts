@@ -12,6 +12,14 @@ export function useCostMatrix() {
     queryKey: ["/api/cost-matrix"],
   });
 
+  // Get cost matrix entry by ID
+  const getById = (id: number) => {
+    return useQuery({
+      queryKey: ["/api/cost-matrix", id],
+      enabled: !!id,
+    });
+  };
+
   // Get cost matrix entries by region
   const getByRegion = (region: string) => {
     return useQuery({
@@ -39,7 +47,11 @@ export function useCostMatrix() {
   // Import cost matrix entries from JSON
   const importFromJson = useMutation({
     mutationFn: async (data: any[]) => {
-      return apiRequest("POST", "/api/cost-matrix/import", { data });
+      return apiRequest({
+        method: "POST", 
+        url: "/api/cost-matrix/import", 
+        body: { data }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -60,7 +72,11 @@ export function useCostMatrix() {
   // Update cost matrix entry
   const update = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<CostMatrix> }) => {
-      return apiRequest("PATCH", `/api/cost-matrix/${id}`, data);
+      return apiRequest({
+        method: "PATCH", 
+        url: `/api/cost-matrix/${id}`, 
+        body: data
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -81,7 +97,10 @@ export function useCostMatrix() {
   // Delete cost matrix entry
   const remove = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/cost-matrix/${id}`);
+      return apiRequest({
+        method: "DELETE",
+        url: `/api/cost-matrix/${id}`
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -102,7 +121,11 @@ export function useCostMatrix() {
   // Create a new cost matrix entry
   const create = useMutation({
     mutationFn: async (data: Omit<CostMatrix, "id" | "createdAt" | "updatedAt">) => {
-      return apiRequest("POST", "/api/cost-matrix", data);
+      return apiRequest({
+        method: "POST",
+        url: "/api/cost-matrix",
+        body: data
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
@@ -122,6 +145,7 @@ export function useCostMatrix() {
 
   return {
     getAll,
+    getById,
     getByRegion,
     getByBuildingType,
     getByRegionAndBuildingType,

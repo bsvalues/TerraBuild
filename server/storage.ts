@@ -102,6 +102,7 @@ export interface IStorage {
   
   // Cost Matrix
   getAllCostMatrix(): Promise<CostMatrix[]>;
+  getCostMatrix(id: number): Promise<CostMatrix | undefined>;
   getCostMatrixByRegion(region: string): Promise<CostMatrix[]>;
   getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]>;
   getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined>;
@@ -814,6 +815,10 @@ export class MemStorage implements IStorage {
   
   async getAllCostMatrix(): Promise<CostMatrix[]> {
     return Array.from(this.costMatrixEntries.values());
+  }
+  
+  async getCostMatrix(id: number): Promise<CostMatrix | undefined> {
+    return this.costMatrixEntries.get(id);
   }
   
   async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {

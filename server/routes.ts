@@ -1116,6 +1116,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get cost matrix by ID
+  app.get("/api/cost-matrix/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const matrix = await storage.getCostMatrix(id);
+      
+      if (!matrix) {
+        return res.status(404).json({ message: "Cost matrix entry not found" });
+      }
+      
+      res.json(matrix);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching cost matrix entry" });
+    }
+  });
+  
+  // Compare cost matrices
+  app.get("/api/cost-matrix/compare", async (req: Request, res: Response) => {
+    try {
+      const { matrix1Id, matrix2Id } = req.query;
+      
+      if (!matrix1Id || !matrix2Id) {
+        return res.status(400).json({ message: "Both matrix1Id and matrix2Id are required" });
+      }
+      
+      // Get the matrices to compare
+      const matrix1 = await storage.getCostMatrix(Number(matrix1Id));
+      const matrix2 = await storage.getCostMatrix(Number(matrix2Id));
+      
+      if (!matrix1 || !matrix2) {
+        return res.status(404).json({ 
+          message: !matrix1 ? "First matrix not found" : "Second matrix not found" 
+        });
+      }
+      
+      // Get all building types and regions to compare across
+      const allMatrices = await storage.getAllCostMatrix();
+      const buildingTypesSet = new Set(allMatrices.map(m => m.buildingType));
+      const regionsSet = new Set(allMatrices.map(m => m.region));
+      const buildingTypes = Array.from(buildingTypesSet);
+      const regions = Array.from(regionsSet);
+      
+      // Generate comparison data
+      const results = [];
+      let totalChange = 0;
+      let increases = 0;
+      let decreases = 0;
+      let noChange = 0;
+      let maxIncrease = { value: 0, type: '', region: '' };
+      let maxDecrease = { value: 0, type: '', region: '' };
+      
+      // Compare for the same region and building type
+      if (matrix1.region === matrix2.region && matrix1.buildingType === matrix2.buildingType) {
+        const baseCost1 = Number(matrix1.baseCost);
+        const baseCost2 = Number(matrix2.baseCost);
+        const difference = baseCost2 - baseCost1;
+        const percentageChange = (difference / baseCost1) * 100;
+        
+        // Update stats
+        if (percentageChange > 0) {
+          increases++;
+          maxIncrease = { 
+            value: percentageChange,
+            type: matrix1.buildingType,
+            region: matrix1.region
+          };
+        } else if (percentageChange < 0) {
+          decreases++;
+          maxDecrease = { 
+            value: percentageChange,
+            type: matrix1.buildingType,
+            region: matrix1.region
+          };
+        } else {
+          noChange++;
+        }
+        
+        totalChange += percentageChange;
+        
+        results.push({
+          buildingType: matrix1.buildingType,
+          region: matrix1.region,
+          year1: matrix1.matrixYear,
+          year2: matrix2.matrixYear,
+          baseCost1,
+          baseCost2,
+          difference,
+          percentageChange
+        });
+      } 
+      // For different regions or building types, compare each combination
+      else {
+        for (const type of buildingTypes) {
+          for (const region of regions) {
+            // Look for matrices with matching building type and region
+            const typeRegionMatrix1 = allMatrices.find(m => 
+              m.matrixYear === matrix1.matrixYear && 
+              m.buildingType === type && 
+              m.region === region
+            );
+            
+            const typeRegionMatrix2 = allMatrices.find(m => 
+              m.matrixYear === matrix2.matrixYear && 
+              m.buildingType === type && 
+              m.region === region
+            );
+            
+            // Skip if there's no matching matrix entry
+            if (!typeRegionMatrix1 || !typeRegionMatrix2) continue;
+            
+            const baseCost1 = Number(typeRegionMatrix1.baseCost);
+            const baseCost2 = Number(typeRegionMatrix2.baseCost);
+            const difference = baseCost2 - baseCost1;
+            const percentageChange = (difference / baseCost1) * 100;
+            
+            // Update stats
+            if (percentageChange > 0) {
+              increases++;
+              if (percentageChange > maxIncrease.value) {
+                maxIncrease = { value: percentageChange, type, region };
+              }
+            } else if (percentageChange < 0) {
+              decreases++;
+              if (percentageChange < maxDecrease.value) {
+                maxDecrease = { value: percentageChange, type, region };
+              }
+            } else {
+              noChange++;
+            }
+            
+            totalChange += percentageChange;
+            
+            results.push({
+              buildingType: type,
+              region,
+              year1: matrix1.matrixYear,
+              year2: matrix2.matrixYear,
+              baseCost1,
+              baseCost2,
+              difference,
+              percentageChange
+            });
+          }
+        }
+      }
+      
+      // Calculate average change
+      const averageChange = results.length > 0 ? totalChange / results.length : 0;
+      
+      // Return comparison data
+      res.json({
+        results,
+        summary: {
+          increases,
+          decreases,
+          noChange,
+          averageChange,
+          maxIncrease,
+          maxDecrease,
+          matrix1Year: matrix1.matrixYear,
+          matrix2Year: matrix2.matrixYear
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: `Error comparing matrices: ${error.message}` });
+    }
+  });
+  
   // Get cost matrix entries by region
   app.get("/api/cost-matrix/region/:region", async (req: Request, res: Response) => {
     try {

@@ -412,6 +412,11 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(costMatrix).orderBy(costMatrix.region, costMatrix.buildingType);
   }
   
+  async getCostMatrix(id: number): Promise<CostMatrix | undefined> {
+    const result = await db.select().from(costMatrix).where(eq(costMatrix.id, id)).limit(1);
+    return result[0];
+  }
+  
   async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {
     return await db.select().from(costMatrix)
       .where(eq(costMatrix.region, region))
