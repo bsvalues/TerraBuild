@@ -1241,6 +1241,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calculate building cost
+  app.post("/api/building-cost/calculate", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Validate input data
+      const { 
+        region, 
+        buildingType, 
+        squareFootage, 
+        complexityFactor, 
+        conditionFactor, 
+        yearBuilt,
+        condition,
+        stories,
+        qualityGrade,
+        occupancyType
+      } = req.body;
+      
+      if (!region || !buildingType || !squareFootage || squareFootage <= 0) {
+        return res.status(400).json({ 
+          message: "Invalid input. Region, building type, and square footage are required." 
+        });
+      }
+      
+      if (complexityFactor < 0.5 || complexityFactor > 3.0) {
+        return res.status(400).json({ 
+          message: "Complexity factor must be between 0.5 and 3.0" 
+        });
+      }
+      
+      if (conditionFactor < 0.6 || conditionFactor > 1.1) {
+        return res.status(400).json({ 
+          message: "Condition factor must be between 0.6 and 1.1" 
+        });
+      }
+      
+      // Import the calculationEngine 
+      const { calculateBuildingCost, calculateMaterialCosts } = require('./calculationEngine');
+      
+      // Calculate building cost
+      const calculationResult = await calculateBuildingCost({
+        region,
+        buildingType,
+        squareFootage: Number(squareFootage),
+        complexityFactor: Number(complexityFactor),
+        conditionFactor: Number(conditionFactor),
+        yearBuilt: Number(yearBuilt),
+        condition,
+        stories: stories ? Number(stories) : undefined,
+        qualityGrade,
+        occupancyType
+      });
+      
+      if (calculationResult.error) {
+        return res.status(400).json({ message: calculationResult.error });
+      }
+      
+      // Calculate material costs
+      const materialCosts = calculateMaterialCosts(calculationResult.baseCost, buildingType);
+      
+      // Add material costs to the result
+      calculationResult.materialCosts = materialCosts;
+      
+      // Add calculation to history if user is logged in
+      if (req.user) {
+        await storage.createCalculationHistory({
+          userId: req.user.id,
+          region,
+          buildingType,
+          squareFootage: Number(squareFootage),
+          baseCost: calculationResult.baseCost.toString(),
+          adjustedCost: calculationResult.adjustedCost?.toString(),
+          totalCost: calculationResult.totalCost.toString(),
+          complexityFactor: complexityFactor.toString(),
+          conditionFactor: conditionFactor.toString(),
+          yearBuilt: Number(yearBuilt),
+          depreciationRate: calculationResult.depreciationRate,
+          calculatedAt: new Date()
+        });
+      }
+      
+      res.status(200).json(calculationResult);
+    } catch (error: any) {
+      console.error("Building cost calculation error:", error);
+      res.status(500).json({ 
+        message: error.message || "Error calculating building cost" 
+      });
+    }
+  });
+  
+  // Save calculation to history
+  app.post("/api/calculation-history", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      
+      const calculation = {
+        ...req.body,
+        userId,
+        calculatedAt: new Date()
+      };
+      
+      const result = await storage.createCalculationHistory(calculation);
+      res.status(201).json(result);
+    } catch (error: any) {
+      console.error("Error saving calculation history:", error);
+      res.status(500).json({ 
+        message: error.message || "Error saving calculation to history" 
+      });
+    }
+  });
+  
+  // Get calculation history for user
+  app.get("/api/calculation-history", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      const history = await storage.getCalculationHistoryByUserId(userId);
+      res.status(200).json(history);
+    } catch (error: any) {
+      console.error("Error fetching calculation history:", error);
+      res.status(500).json({ 
+        message: error.message || "Error fetching calculation history" 
+      });
+    }
+  });
+  
+  // Get calculation history by building type
+  app.get("/api/calculation-history/building-type/:buildingType", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { buildingType } = req.params;
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      const history = await storage.getCalculationHistoryByUserId(userId);
+      const filteredHistory = history.filter(calc => calc.buildingType === buildingType);
+      
+      res.status(200).json(filteredHistory);
+    } catch (error: any) {
+      console.error("Error fetching calculation history by building type:", error);
+      res.status(500).json({ 
+        message: error.message || "Error fetching calculation history" 
+      });
+    }
+  });
+  
+  // Get calculation history by region
+  app.get("/api/calculation-history/region/:region", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { region } = req.params;
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      const history = await storage.getCalculationHistoryByUserId(userId);
+      const filteredHistory = history.filter(calc => calc.region === region);
+      
+      res.status(200).json(filteredHistory);
+    } catch (error: any) {
+      console.error("Error fetching calculation history by region:", error);
+      res.status(500).json({ 
+        message: error.message || "Error fetching calculation history" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,59 +1,115 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { CalculationHistory } from '@shared/schema';
+import { toast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
+import { CalculationHistory } from '@shared/schema';
 
 /**
- * Hook for managing calculation history operations
+ * Hook for interacting with calculation history API
  */
 export function useCalculationHistory() {
-  const queryClient = useQueryClient();
-
-  // Get all calculation history for the logged-in user
-  const getCalculationHistory = useQuery({
+  // Get all calculation history
+  const getAll = useQuery({
     queryKey: ['/api/calculation-history'],
-    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/calculation-history');
+      return response.json();
+    }
   });
 
-  // Get a specific calculation history entry by ID
-  const getCalculationHistoryById = (id: number) => {
+  // Create a new calculation history entry
+  const create = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest('POST', '/api/calculation-history', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/calculation-history'] });
+      toast({
+        title: 'Calculation saved',
+        description: 'Calculation has been saved to history.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Save failed',
+        description: error.message || 'Failed to save calculation to history.',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Delete a calculation history entry
+  const remove = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/calculation-history/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/calculation-history'] });
+      toast({
+        title: 'Calculation deleted',
+        description: 'Calculation has been removed from history.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Delete failed',
+        description: error.message || 'Failed to delete calculation from history.',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Get calculation history for a specific building type
+  const getByBuildingType = (buildingType: string) => {
     return useQuery({
-      queryKey: ['/api/calculation-history', id],
+      queryKey: ['/api/calculation-history', 'buildingType', buildingType],
       queryFn: async () => {
-        const result = await fetch(`/api/calculation-history/${id}`);
-        if (result.ok) {
-          return await result.json() as CalculationHistory;
-        }
-        throw new Error('Failed to fetch calculation history');
+        const response = await apiRequest('GET', `/api/calculation-history/building-type/${buildingType}`);
+        return response.json();
       },
-      enabled: !!id,
+      enabled: !!buildingType,
     });
   };
 
-  // Delete a calculation history entry
-  const deleteCalculationHistory = useMutation({
-    mutationFn: async (id: number) => {
-      const result = await fetch(`/api/calculation-history/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!result.ok) {
-        throw new Error('Failed to delete calculation history');
-      }
-      
-      return id;
-    },
-    onSuccess: () => {
-      // Invalidate the calculation history query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/calculation-history'] });
-    },
-  });
+  // Get calculation history for a specific region
+  const getByRegion = (region: string) => {
+    return useQuery({
+      queryKey: ['/api/calculation-history', 'region', region],
+      queryFn: async () => {
+        const response = await apiRequest('GET', `/api/calculation-history/region/${region}`);
+        return response.json();
+      },
+      enabled: !!region,
+    });
+  };
+
+  // Format calculation data for display
+  const formatCalculation = (calculation: CalculationHistory) => {
+    return {
+      ...calculation,
+      formattedBaseCost: formatCurrency(parseFloat(calculation.baseCost)),
+      formattedTotalCost: formatCurrency(parseFloat(calculation.totalCost)),
+      formattedDate: new Date(calculation.createdAt).toLocaleDateString(),
+    };
+  };
+
+  // Format currency for display
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(value);
+  };
 
   return {
-    calculationHistory: getCalculationHistory.data as CalculationHistory[] | undefined,
-    isLoadingCalculationHistory: getCalculationHistory.isLoading,
-    errorCalculationHistory: getCalculationHistory.error,
-    getCalculationHistoryById,
-    deleteCalculationHistory,
-    refetchCalculationHistory: () => queryClient.invalidateQueries({ queryKey: ['/api/calculation-history'] }),
+    getAll,
+    create,
+    remove,
+    getByBuildingType,
+    getByRegion,
+    formatCalculation,
+    formatCurrency,
   };
 }

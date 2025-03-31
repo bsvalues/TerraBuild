@@ -1,202 +1,254 @@
 /**
- * Tests for Building Cost Calculation Logic
+ * Tests for Building Cost Calculation Engine
+ * 
+ * This file contains tests for the core calculation functionality
+ * of the Benton County Building Cost Building System (BCBS).
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { MemStorage } from '../server/storage';
+const { db } = require('../server/db');
+const { calculateBuildingCost, applyComplexityFactor, applyConditionFactor, applyRegionalFactor } = require('../server/calculationEngine');
 
-describe('Building Cost Calculation Tests', () => {
-  let storage;
-  
-  // Setup fresh storage instance before each test
-  beforeEach(() => {
-    storage = new MemStorage();
-    
-    // Add sample cost matrix entries
-    const costMatrix = {
-      id: 1,
-      region: 'West Richland',
-      buildingType: 'SFR',
-      buildingTypeDescription: 'Single Family Residence',
-      baseCost: '150.00',
-      matrixYear: 2025,
-      sourceMatrixId: 1,
-      matrixDescription: 'SFR - West Richland - 2025',
-      dataPoints: 100,
-      minCost: '120.00',
-      maxCost: '180.00',
-      complexityFactorBase: '1.20',
-      qualityFactorBase: '1.10',
-      conditionFactorBase: '1.00',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+describe('Building Cost Calculation Engine', () => {
+  // Test basic cost calculation accuracy
+  test('should calculate correct base cost for standard building', async () => {
+    // Mock cost matrix data
+    const mockMatrix = {
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      baseCost: '100.00',  // $100 per sqft
+      matrixYear: 2025
     };
     
-    storage.costMatrixEntries.set(costMatrix.id, costMatrix);
-    
-    // Add sample material types
-    const materialTypes = [
-      {
-        id: 1,
-        code: 'FDN',
-        name: 'Foundation',
-        description: 'Building foundation',
-        unit: 'sqft',
-        createdAt: new Date()
-      },
-      {
-        id: 2,
-        code: 'FRM',
-        name: 'Framing',
-        description: 'Structural framing',
-        unit: 'sqft',
-        createdAt: new Date()
-      },
-      {
-        id: 3,
-        code: 'EXT',
-        name: 'Exterior',
-        description: 'Exterior finishes',
-        unit: 'sqft',
-        createdAt: new Date()
-      }
-    ];
-    
-    materialTypes.forEach(material => {
-      storage.materialTypes.set(material.id, material);
+    // Spy on db.query to return our mock data
+    jest.spyOn(db, 'query').mockResolvedValue({
+      rows: [mockMatrix]
     });
     
-    // Add sample material costs
-    const materialCosts = [
-      {
-        id: 1,
-        materialTypeId: 1, // Foundation
-        buildingType: 'SFR',
-        region: 'West Richland',
-        costPerUnit: '20.00',
-        percentage: '15.00',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 2,
-        materialTypeId: 2, // Framing
-        buildingType: 'SFR',
-        region: 'West Richland',
-        costPerUnit: '35.00',
-        percentage: '25.00',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 3,
-        materialTypeId: 3, // Exterior
-        buildingType: 'SFR',
-        region: 'West Richland',
-        costPerUnit: '30.00',
-        percentage: '20.00',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    
-    materialCosts.forEach(cost => {
-      storage.materialCosts.set(cost.id, cost);
+    const result = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 2000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
     });
+    
+    expect(result.baseCost).toBe(200000); // 2000 sqft * $100/sqft
+    expect(result.totalCost).toBe(200000); // No adjustment factors applied
   });
-  
-  // Test basic cost calculation
-  it('should calculate basic cost with minimum parameters', async () => {
-    const result = await storage.calculateMaterialsBreakdown(
-      'West Richland',
-      'SFR',
-      2000 // square footage
-    );
+
+  // Test complex factor adjustment
+  test('should apply complexity factor correctly', async () => {
+    const baseValue = 200000;
+    const complexityFactor = 1.5;
     
-    expect(result).toBeDefined();
-    expect(result.totalCost).toBeDefined();
-    expect(result.costPerSqft).toBe('150.00');
-    expect(result.totalCost).toBe('300000.00'); // 2000 sqft * $150/sqft
-    expect(result.materials).toBeInstanceOf(Array);
-    expect(result.materials.length).toBeGreaterThan(0);
+    const result = applyComplexityFactor(baseValue, complexityFactor);
+    
+    expect(result).toBe(300000); // 200000 * 1.5
   });
-  
-  // Test cost calculation with complexity factor
-  it('should calculate cost with complexity factor correctly', async () => {
-    const result = await storage.calculateMaterialsBreakdown(
-      'West Richland',
-      'SFR',
-      2000, // square footage
-      1.5 // complexity multiplier (1.5 * base factor 1.2 = 1.8 total)
-    );
+
+  // Test condition factor adjustment
+  test('should apply condition factor correctly', async () => {
+    const baseValue = 200000;
+    const conditionFactor = 0.8; // Poor condition
     
-    expect(result).toBeDefined();
-    expect(result.totalCost).toBeDefined();
-    // Base cost * complexity factor
-    // $150/sqft * 1.8 complexity factor = $270/sqft
-    expect(parseFloat(result.costPerSqft)).toBeCloseTo(270.00);
-    // 2000 sqft * $270/sqft = $540,000
-    expect(parseFloat(result.totalCost)).toBeCloseTo(540000.00);
+    const result = applyConditionFactor(baseValue, conditionFactor);
+    
+    expect(result).toBe(160000); // 200000 * 0.8
   });
-  
-  // Test material breakdown calculation
-  it('should calculate material breakdown correctly', async () => {
-    const result = await storage.calculateMaterialsBreakdown(
-      'West Richland',
-      'SFR',
-      2000 // square footage
-    );
+
+  // Test region adjustment
+  test('should apply regional cost variations correctly', async () => {
+    // Mock cost data
+    const urbanCost = {
+      region: 'Urban',
+      buildingType: 'COMMERCIAL',
+      baseCost: '180.00',  // $180 per sqft
+      matrixYear: 2025
+    };
     
-    expect(result).toBeDefined();
-    expect(result.materials).toBeInstanceOf(Array);
+    const ruralCost = {
+      region: 'Rural',
+      buildingType: 'COMMERCIAL',
+      baseCost: '150.00',  // $150 per sqft
+      matrixYear: 2025
+    };
     
-    // Check that percentages add up correctly
-    const totalPercentage = result.materials.reduce((sum, material) => {
-      return sum + parseFloat(material.percentage);
-    }, 0);
+    // Spy on db.query to return our mock data
+    const dbSpy = jest.spyOn(db, 'query');
+    dbSpy.mockResolvedValueOnce({ rows: [urbanCost] })
+         .mockResolvedValueOnce({ rows: [ruralCost] });
     
-    // The total percentage might not be exactly 100.00 due to rounding
-    // but should be close
-    expect(totalPercentage).toBeCloseTo(60.00); // Our sample data adds up to 60%
+    const urbanResult = await calculateBuildingCost({
+      region: 'Urban',
+      buildingType: 'COMMERCIAL',
+      squareFootage: 5000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
     
-    // Check individual materials
-    const foundation = result.materials.find(m => m.code === 'FDN');
-    expect(foundation).toBeDefined();
-    expect(foundation.percentage).toBe('15.00');
-    expect(parseFloat(foundation.cost)).toBeCloseTo(45000.00); // 15% of $300,000
+    const ruralResult = await calculateBuildingCost({
+      region: 'Rural',
+      buildingType: 'COMMERCIAL',
+      squareFootage: 5000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
     
-    const framing = result.materials.find(m => m.code === 'FRM');
-    expect(framing).toBeDefined();
-    expect(framing.percentage).toBe('25.00');
-    expect(parseFloat(framing.cost)).toBeCloseTo(75000.00); // 25% of $300,000
+    // Assuming urban costs more than rural
+    expect(urbanResult.totalCost).toBeGreaterThan(ruralResult.totalCost);
+    expect(urbanResult.baseCost).toBe(900000); // 5000 sqft * $180/sqft
+    expect(ruralResult.baseCost).toBe(750000); // 5000 sqft * $150/sqft
   });
-  
-  // Test edge case with large square footage
-  it('should handle large square footage values correctly', async () => {
-    const result = await storage.calculateMaterialsBreakdown(
-      'West Richland',
-      'SFR',
-      100000 // very large square footage
-    );
+
+  // Test regional factor function
+  test('should calculate regional factor correctly', () => {
+    const baseValue = 100000;
+    const result1 = applyRegionalFactor(baseValue, 'Urban');
+    const result2 = applyRegionalFactor(baseValue, 'Rural');
     
-    expect(result).toBeDefined();
-    expect(result.totalCost).toBeDefined();
-    expect(result.costPerSqft).toBe('150.00');
-    expect(result.totalCost).toBe('15000000.00'); // 100000 sqft * $150/sqft
+    // Urban typically has higher costs
+    expect(result1).toBeGreaterThan(baseValue);
+    // Rural typically has lower costs
+    expect(result2).toBeLessThan(baseValue);
   });
-  
-  // Test edge case with small square footage
-  it('should handle small square footage values correctly', async () => {
-    const result = await storage.calculateMaterialsBreakdown(
-      'West Richland',
-      'SFR',
-      10 // very small square footage
-    );
+
+  // Test depreciation by age
+  test('should apply depreciation based on building age', async () => {
+    // Mock cost matrix data
+    const mockMatrix = {
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      baseCost: '100.00',  // $100 per sqft
+      matrixYear: 2025
+    };
     
-    expect(result).toBeDefined();
-    expect(result.totalCost).toBeDefined();
-    expect(result.costPerSqft).toBe('150.00');
-    expect(result.totalCost).toBe('1500.00'); // 10 sqft * $150/sqft
+    // Spy on db.query to return our mock data
+    jest.spyOn(db, 'query').mockResolvedValue({
+      rows: [mockMatrix]
+    });
+    
+    const newBuildingResult = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 2000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    const olderBuildingResult = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 2000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2000
+    });
+    
+    // Older building should have lower value due to depreciation
+    expect(olderBuildingResult.totalCost).toBeLessThan(newBuildingResult.totalCost);
+    expect(olderBuildingResult.depreciationRate).toBeGreaterThan(0);
+  });
+
+  // Test edge cases
+  test('should handle zero square footage gracefully', async () => {
+    const result = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 0,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    expect(result.totalCost).toBe(0);
+    expect(result.error).toBeDefined();
+  });
+
+  test('should handle missing building type gracefully', async () => {
+    const result = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: '',
+      squareFootage: 2000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    expect(result.error).toBeDefined();
+  });
+
+  test('should handle missing region gracefully', async () => {
+    const result = await calculateBuildingCost({
+      region: '',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 2000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    expect(result.error).toBeDefined();
+  });
+
+  // Test negative complexity factor
+  test('should handle negative complexity factor gracefully', async () => {
+    const result = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 2000,
+      complexityFactor: -0.5,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    expect(result.error).toBeDefined();
+  });
+
+  // Test region-specific building type costs
+  test('should use the correct matrix for region and building type', async () => {
+    // Mock different costs for the same building type in different regions
+    const bentonResidential = {
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      baseCost: '100.00',
+      matrixYear: 2025
+    };
+    
+    const franklinResidential = {
+      region: 'Franklin',
+      buildingType: 'RESIDENTIAL',
+      baseCost: '110.00',
+      matrixYear: 2025
+    };
+    
+    // Spy on db.query to return our mock data
+    const dbSpy = jest.spyOn(db, 'query');
+    dbSpy.mockResolvedValueOnce({ rows: [bentonResidential] })
+         .mockResolvedValueOnce({ rows: [franklinResidential] });
+    
+    const bentonResult = await calculateBuildingCost({
+      region: 'Benton',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 1000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    const franklinResult = await calculateBuildingCost({
+      region: 'Franklin',
+      buildingType: 'RESIDENTIAL',
+      squareFootage: 1000,
+      complexityFactor: 1.0,
+      conditionFactor: 1.0,
+      yearBuilt: 2023
+    });
+    
+    expect(bentonResult.baseCost).toBe(100000); // 1000 sqft * $100/sqft
+    expect(franklinResult.baseCost).toBe(110000); // 1000 sqft * $110/sqft
   });
 });

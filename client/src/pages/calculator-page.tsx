@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
-import { CalculationHistoryTable } from "@/components/dashboard/CalculationHistory";
+import { CalculationHistory } from "@/components/dashboard/CalculationHistory";
 import Sidebar from "@/components/layout/Sidebar";
 import MainContent from "@/components/layout/MainContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,7 +46,7 @@ export default function CalculatorPage() {
           </TabsContent>
           
           <TabsContent value="history" className="mt-0">
-            <CalculationHistoryTable />
+            <CalculationHistory />
           </TabsContent>
         </Tabs>
       </MainContent>
