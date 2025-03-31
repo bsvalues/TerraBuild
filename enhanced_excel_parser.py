@@ -1,788 +1,422 @@
 #!/usr/bin/env python3
 """
-Enhanced Excel Parser for Benton County, Washington Cost Matrix
+Enhanced Excel Parser for Benton County Cost Matrix
 
-This module provides an enhanced parser for Excel files containing cost matrix data.
-Features include:
-- Better error handling and validation
-- Support for more complex Excel formats
-- Progress tracking during import
-- Detailed error reporting
+This script parses Excel files containing cost matrix data and outputs a standardized
+JSON structure that can be imported into the application database.
+
+Usage:
+    python enhanced_excel_parser.py <path_to_excel_file> [--output <output_file>]
+
+Example:
+    python enhanced_excel_parser.py uploads/cost_matrix_2025.xlsx --output parsed_matrix.json
 """
 
-import os
-import re
+import argparse
 import json
+import os
+import sys
+from datetime import datetime
 import pandas as pd
 import numpy as np
-from datetime import datetime
-from typing import Dict, List, Callable, Optional, Any, Union
+import logging
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("excel_parser.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("enhanced_excel_parser")
+
+# Constants
+MATRIX_SHEET = "matrix"
+MATRIX_DETAIL_SHEET = "matrix_detail"
+BUILDING_TYPES_SHEET = "building_types"
+REGION_CODES_SHEET = "region_codes"
 
 class EnhancedExcelParser:
-    """Enhanced parser for Excel files containing cost matrix data"""
+    """Parser for Cost Matrix Excel files"""
     
-    # Required columns for different sheets
-    REQUIRED_COLUMNS = {
-        'matrix': ['matrix_id', 'matrix_description'],
-        'matrix_detail': ['matrix_id', 'cell_value'],
-    }
-    
-    def __init__(self, excel_file_path: str):
-        """
-        Initialize the parser with the Excel file path
+    def __init__(self, file_path):
+        """Initialize parser with file path"""
+        self.file_path = file_path
+        self.workbook = None
+        self.matrix_year = None
+        self.building_types = {}
+        self.region_codes = {}
+        self.validation_errors = []
         
-        Args:
-            excel_file_path: Path to the Excel file to parse
-        """
-        self.excel_file_path = excel_file_path
-        self.matrix_year = self._extract_year_from_filename(excel_file_path)
-        self.regions = []
-        self.building_types = []
-        self.matrix_data = []
-        self.errors = []
-        self.warnings = []
-        self.progress = 0
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Excel file not found: {file_path}")
         
-        # Mapping of building type codes to descriptions
-        self.building_type_mapping = {
-            'R1': 'Residential - Single Family',
-            'R2': 'Residential - Multi-Family',
-            'R3': 'Residential - Manufactured Home',
-            'C1': 'Commercial - Retail',
-            'C2': 'Commercial - Office',
-            'C3': 'Commercial - Restaurant',
-            'C4': 'Commercial - Warehouse',
-            'I1': 'Industrial - Manufacturing',
-            'I2': 'Industrial - Processing',
-            'A1': 'Agricultural - Farm',
-            'A2': 'Agricultural - Ranch',
-            'S1': 'Special Purpose - Hospital',
-            'S2': 'Special Purpose - School'
-        }
+        # Extract year from filename if possible
+        filename = os.path.basename(file_path)
+        try:
+            year_str = ''.join(filter(str.isdigit, filename))
+            if len(year_str) >= 4:
+                self.matrix_year = int(year_str[:4])
+            else:
+                # Default to current year if can't extract from filename
+                self.matrix_year = datetime.now().year
+        except:
+            self.matrix_year = datetime.now().year
         
-        # Mapping of Benton County regions
-        self.region_mapping = {
-            'North Benton': 'North Benton',
-            'Central Benton': 'Central Benton',
-            'South Benton': 'South Benton',
-            'West Benton': 'West Benton',
-            'East Benton': 'East Benton'
-        }
+        logger.info(f"Processing file: {file_path}")
+        logger.info(f"Matrix year detected: {self.matrix_year}")
         
-        # Pattern to extract region and building type from descriptions
-        self.description_pattern = re.compile(r'([A-Z]+)\s*-\s*([A-Za-z0-9]+)-?([A-Za-z]+)?')
-        
-    def _extract_year_from_filename(self, filename: str) -> int:
-        """
-        Extract year from filename if present, otherwise use current year.
-        
-        Args:
-            filename: Path to the Excel file
+        # Load Excel file
+        try:
+            if file_path.endswith('.xlsx') or file_path.endswith('.xls'):
+                self.workbook = pd.ExcelFile(file_path)
+            else:
+                raise ValueError("File must be an Excel file (.xlsx or .xls)")
+        except Exception as e:
+            logger.error(f"Error opening Excel file: {str(e)}")
+            raise
             
-        Returns:
-            int: Year extracted from filename or current year
-        """
+        # Validate sheet structure
+        self._validate_workbook_structure()
+    
+    def _validate_workbook_structure(self):
+        """Validate that the workbook has the expected sheets"""
+        required_sheets = [MATRIX_SHEET]
+        for sheet in required_sheets:
+            if sheet not in self.workbook.sheet_names:
+                self.validation_errors.append(f"Required sheet '{sheet}' is missing")
+                logger.error(f"Required sheet '{sheet}' is missing")
+        
+        # Check for additional sheets
+        if MATRIX_DETAIL_SHEET in self.workbook.sheet_names:
+            logger.info(f"Found matrix_detail sheet")
+        
+        if BUILDING_TYPES_SHEET in self.workbook.sheet_names:
+            self._load_building_types()
+        
+        if REGION_CODES_SHEET in self.workbook.sheet_names:
+            self._load_region_codes()
+    
+    def _load_building_types(self):
+        """Load building type codes and descriptions"""
         try:
-            # Try to extract year from filename (e.g., "Cost Matrix 2025.xlsx")
-            basename = os.path.basename(filename)
-            # Find all numbers in the filename
-            numbers = [int(s) for s in re.findall(r'\d+', basename)]
-            if numbers and len(str(numbers[0])) == 4:  # Assume 4-digit number is a year
-                return numbers[0]
+            df = self.workbook.parse(BUILDING_TYPES_SHEET)
+            # Standardize column names
+            df.columns = [col.lower().strip() for col in df.columns]
+            
+            # Try to find code and description columns
+            code_col = next((col for col in df.columns if 'code' in col or 'type' in col), df.columns[0])
+            desc_col = next((col for col in df.columns if 'desc' in col or 'name' in col), df.columns[1] if len(df.columns) > 1 else None)
+            
+            if desc_col:
+                self.building_types = dict(zip(df[code_col], df[desc_col]))
+            else:
+                # If no description column, use the code as the description
+                self.building_types = dict(zip(df[code_col], df[code_col]))
+                
+            logger.info(f"Loaded {len(self.building_types)} building types")
         except Exception as e:
-            self.warnings.append(f"Could not extract year from filename: {str(e)}")
-        
-        # Default to current year if extraction fails
-        return datetime.now().year
-        
-    def _detect_sheets(self) -> List[str]:
-        """
-        Detect sheets in the Excel file
-        
-        Returns:
-            List[str]: List of sheet names
-        """
+            logger.error(f"Error loading building types: {str(e)}")
+    
+    def _load_region_codes(self):
+        """Load region codes and names"""
         try:
-            xl = pd.ExcelFile(self.excel_file_path)
-            return xl.sheet_names
+            df = self.workbook.parse(REGION_CODES_SHEET)
+            # Standardize column names
+            df.columns = [col.lower().strip() for col in df.columns]
+            
+            # Try to find code and name columns
+            code_col = next((col for col in df.columns if 'code' in col or 'id' in col), df.columns[0])
+            name_col = next((col for col in df.columns if 'name' in col or 'desc' in col or 'region' in col), df.columns[1] if len(df.columns) > 1 else None)
+            
+            if name_col:
+                self.region_codes = dict(zip(df[code_col], df[name_col]))
+            else:
+                # If no name column, use the code as the name
+                self.region_codes = dict(zip(df[code_col], df[code_col]))
+                
+            logger.info(f"Loaded {len(self.region_codes)} region codes")
         except Exception as e:
-            self.errors.append(f"Failed to detect sheets: {str(e)}")
+            logger.error(f"Error loading region codes: {str(e)}")
+    
+    def parse_matrix(self):
+        """Parse the main matrix sheet to extract cost matrix data"""
+        logger.info("Parsing matrix sheet...")
+        
+        try:
+            # Load the matrix sheet
+            df = self.workbook.parse(MATRIX_SHEET)
+            
+            # Basic data cleaning - remove NaN values and blank rows/columns
+            df = df.replace([np.inf, -np.inf], np.nan)
+            df = df.dropna(how='all')
+            
+            # Find header row - typically row that has "Building Type" or similar
+            header_row = 0
+            for i, row in df.iterrows():
+                if any(str(cell).lower().strip() in ["building type", "buildingtype", "building types", "type"] 
+                       for cell in row if cell is not None and str(cell).strip()):
+                    header_row = i
+                    break
+            
+            # Create a new DataFrame starting from the header row
+            header = df.iloc[header_row].values
+            data = df.iloc[header_row+1:].reset_index(drop=True)
+            data.columns = range(len(header))
+            
+            # Find the building type column
+            building_type_col = None
+            for i, h in enumerate(header):
+                if h is not None and isinstance(h, str) and any(x in h.lower() for x in ["building type", "buildingtype", "building", "type"]):
+                    building_type_col = i
+                    break
+            
+            if building_type_col is None:
+                logger.error("Could not find building type column")
+                self.validation_errors.append("Could not find building type column in matrix sheet")
+                return []
+            
+            # Process the data to extract cost matrix entries
+            matrix_entries = []
+            
+            for i, row in data.iterrows():
+                building_type = str(row[building_type_col]).strip()
+                if not building_type or building_type.lower() in ["nan", "none", ""]:
+                    continue
+                
+                # Try to find a better description from the building_types dictionary
+                building_type_description = self.building_types.get(building_type, building_type)
+                
+                # Process each region column (all columns except building type)
+                for j, cell_value in enumerate(row):
+                    if j == building_type_col or j >= len(header) or header[j] is None:
+                        continue
+                    
+                    # Skip non-numeric values
+                    if not isinstance(cell_value, (int, float)) or pd.isna(cell_value):
+                        continue
+                    
+                    region = str(header[j]).strip()
+                    
+                    # If we have a region code mapping, use it
+                    region_name = self.region_codes.get(region, region)
+                    
+                    # Create matrix entry
+                    matrix_entry = {
+                        "region": region_name,
+                        "buildingType": building_type,
+                        "buildingTypeDescription": building_type_description,
+                        "baseCost": str(cell_value),
+                        "matrixYear": self.matrix_year,
+                        "sourceMatrixId": 1,  # Default ID, will be replaced on import
+                        "isActive": True,
+                        "complexityFactorBase": "1.0",
+                        "stories": "1",
+                        "squareFeet": "1000",
+                        "qualityGrade": "Average",
+                        "occupancyType": "Standard",
+                        "conditionFactorBase": "1.0"
+                    }
+                    
+                    matrix_entries.append(matrix_entry)
+            
+            logger.info(f"Extracted {len(matrix_entries)} matrix entries")
+            return matrix_entries
+            
+        except Exception as e:
+            logger.error(f"Error parsing matrix sheet: {str(e)}")
+            self.validation_errors.append(f"Error parsing matrix sheet: {str(e)}")
+            return []
+    
+    def parse_matrix_detail(self):
+        """
+        Parse the matrix_detail sheet for more detailed cost information
+        Returns a list of detail entries
+        """
+        if MATRIX_DETAIL_SHEET not in self.workbook.sheet_names:
+            logger.info("No matrix_detail sheet found")
             return []
             
-    def _extract_region_from_description(self, description: str) -> Optional[str]:
-        """
-        Try to extract a region from the description.
-        
-        Args:
-            description: Matrix description string
-            
-        Returns:
-            Optional[str]: Extracted region or None
-        """
-        # For Benton County format: "PC - C01-Bing - * - T1"
-        # Assign default region if no specific region is found
-        if description.startswith('PC -'):
-            # For this example, we'll map all PC codes to the Central Benton region
-            # This is a simplification - real implementation would map PC codes to actual regions
-            return 'Central Benton'
-        
-        # Check for exact matches
-        for region in self.region_mapping.keys():
-            if region.lower() in description.lower():
-                return region
-        
-        # Check for regional keywords
-        region_keywords = {
-            'north': 'North Benton',
-            'central': 'Central Benton',
-            'south': 'South Benton',
-            'west': 'West Benton',
-            'east': 'East Benton',
-            'richland': 'North Benton',
-            'kennewick': 'Central Benton',
-            'prosser': 'South Benton',
-            'benton city': 'West Benton',
-            'finley': 'East Benton'
-        }
-        
-        for keyword, region in region_keywords.items():
-            if keyword.lower() in description.lower():
-                return region
-        
-        # If no region is found, use a default region
-        return 'Central Benton'  # Default region
-        
-    def _extract_building_type_from_description(self, description: str) -> Optional[str]:
-        """
-        Try to extract a building type code from the description.
-        
-        Args:
-            description: Matrix description string
-            
-        Returns:
-            Optional[str]: Extracted building type code or None
-        """
-        # For Benton County format: "PC - C01-Bing - * - T1"
-        if description.startswith('PC -'):
-            parts = description.split('-')
-            if len(parts) >= 2:
-                # Extract building type from the second part (e.g., "C01" from "PC - C01-Bing")
-                building_code = parts[1].strip().split('-')[0].strip()
-                if building_code.startswith('C'):
-                    return 'C1'  # Commercial
-                elif building_code.startswith('I'):
-                    return 'I1'  # Industrial
-                elif building_code.startswith('R'):
-                    return 'R1'  # Residential
-                elif building_code.startswith('A'):
-                    return 'A1'  # Agricultural
-                elif building_code.startswith('O'):
-                    return 'C2'  # Office (map to Commercial Office)
-                else:
-                    # Default to commercial if we can't determine
-                    return 'C1'
-        
-        # Check for building type codes in description
-        match = self.description_pattern.search(description)
-        if match:
-            type_code = match.group(1)
-            # Validate against known building type codes
-            for code in self.building_type_mapping.keys():
-                if code.startswith(type_code):
-                    return code
-        
-        # Check for keywords
-        type_keywords = {
-            'residential': 'R1',
-            'single family': 'R1',
-            'multi-family': 'R2',
-            'apartment': 'R2',
-            'commercial': 'C1',
-            'retail': 'C1',
-            'office': 'C2',
-            'restaurant': 'C3',
-            'warehouse': 'C4',
-            'industrial': 'I1',
-            'manufacturing': 'I1',
-            'processing': 'I2',
-            'agricultural': 'A1',
-            'farm': 'A1',
-            'ranch': 'A2',
-            'hospital': 'S1',
-            'school': 'S2'
-        }
-        
-        for keyword, code in type_keywords.items():
-            if keyword.lower() in description.lower():
-                return code
-        
-        # If we can't determine the building type, use a default
-        return 'C1'  # Default to Commercial Retail
-        
-    def _validate_sheet_data(self, sheet_name: str, required_columns: List[str]) -> Dict:
-        """
-        Validate that a sheet contains the required columns
-        
-        Args:
-            sheet_name: Name of the sheet to validate
-            required_columns: List of required column names
-            
-        Returns:
-            Dict: Validation result with 'valid' boolean and 'errors' list
-        """
-        result = {
-            'valid': True,
-            'errors': []
-        }
+        logger.info("Parsing matrix_detail sheet...")
         
         try:
-            # Read just the header row to get column names
-            df = pd.read_excel(self.excel_file_path, sheet_name=sheet_name, nrows=0)
+            # Load the matrix_detail sheet
+            df = self.workbook.parse(MATRIX_DETAIL_SHEET)
             
-            # Check for required columns
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                result['valid'] = False
-                result['errors'].append(f"Missing required columns in {sheet_name} sheet: {', '.join(missing_columns)}")
+            # Basic data cleaning
+            df = df.replace([np.inf, -np.inf], np.nan)
+            df = df.dropna(how='all')
+            
+            # Standardize column names if present
+            if not df.empty:
+                df.columns = [str(col).lower().strip() for col in df.columns]
                 
-        except Exception as e:
-            result['valid'] = False
-            result['errors'].append(f"Error validating {sheet_name} sheet: {str(e)}")
-            
-        return result
-        
-    def _update_progress(self, progress: float, callback: Optional[Callable] = None):
-        """
-        Update progress and call the progress callback if provided
-        
-        Args:
-            progress: Progress value between 0 and 100
-            callback: Optional callback function to call with progress
-        """
-        self.progress = min(100, max(0, progress))  # Clamp to 0-100
-        if callback:
-            callback(self.progress)
-            
-    def parse(self, progress_callback: Optional[Callable] = None) -> Dict:
-        """
-        Parse the Excel file and extract the cost matrix data
-        
-        Args:
-            progress_callback: Optional callback function to report progress
-            
-        Returns:
-            Dict: Result containing success status, data, and any errors
-        """
-        try:
-            # Start progress at 0
-            self._update_progress(0, progress_callback)
-            
-            # Check if file exists
-            if not os.path.exists(self.excel_file_path):
-                self.errors.append(f"File not found: {self.excel_file_path}")
-                return self._build_result(False)
+                # Map standard column names
+                column_mapping = {
+                    'matrix_id': ['matrix_id', 'matrix id', 'id', 'matrix'],
+                    'matrix_yr': ['matrix_yr', 'matrix year', 'year', 'yr'],
+                    'building_type': ['building_type', 'buildingtype', 'building', 'type'],
+                    'region': ['region', 'region_code', 'region code', 'location', 'area'],
+                    'quality_grade': ['quality_grade', 'quality', 'grade'],
+                    'stories': ['stories', 'story', 'floors'],
+                    'condition': ['condition', 'condition_factor', 'condition factor'],
+                    'base_cost': ['base_cost', 'basecost', 'cost', 'base'],
+                    'occupancy_type': ['occupancy_type', 'occupancy', 'use_type', 'use type']
+                }
                 
-            # Detect sheets
-            sheets = self._detect_sheets()
-            if not sheets:
-                self.errors.append("No sheets found in the Excel file")
-                return self._build_result(False)
+                # Create a mapping from actual column names to standardized names
+                actual_mapping = {}
+                for std_col, possible_names in column_mapping.items():
+                    for col in df.columns:
+                        if any(name in col for name in possible_names):
+                            actual_mapping[col] = std_col
+                            break
                 
-            self._update_progress(10, progress_callback)
+                # Rename columns based on the mapping
+                if actual_mapping:
+                    df = df.rename(columns=actual_mapping)
             
-            # Look for the main matrix sheets
-            matrix_sheet = next((s for s in sheets if s.lower() == 'matrix'), None)
-            matrix_detail_sheet = next((s for s in sheets if s.lower() == 'matrix_detail'), None)
+            detail_entries = []
             
-            # If we can't find the expected sheets, try to detect them
-            if not matrix_sheet or not matrix_detail_sheet:
-                for sheet in sheets:
-                    if any(keyword in sheet.lower() for keyword in ['matrix', 'cost', 'rate']):
-                        if not matrix_sheet:
-                            matrix_sheet = sheet
-                        elif not matrix_detail_sheet:
-                            matrix_detail_sheet = sheet
-                            
-            # Validate that we have the required sheets
-            if not matrix_sheet:
-                self.errors.append("Could not find matrix sheet in the Excel file")
-                return self._build_result(False)
-                
-            if not matrix_detail_sheet:
-                self.errors.append("Could not find matrix_detail sheet in the Excel file")
-                return self._build_result(False)
-                
-            self._update_progress(20, progress_callback)
-            
-            # Validate sheet data
-            matrix_validation = self._validate_sheet_data(matrix_sheet, self.REQUIRED_COLUMNS['matrix'])
-            if not matrix_validation['valid']:
-                self.errors.extend(matrix_validation['errors'])
-                return self._build_result(False)
-                
-            matrix_detail_validation = self._validate_sheet_data(matrix_detail_sheet, self.REQUIRED_COLUMNS['matrix_detail'])
-            if not matrix_detail_validation['valid']:
-                self.errors.extend(matrix_detail_validation['errors'])
-                return self._build_result(False)
-                
-            self._update_progress(30, progress_callback)
-            
-            # Read the matrix sheet to get the matrix definitions
-            matrix_df = pd.read_excel(self.excel_file_path, sheet_name=matrix_sheet)
-            
-            # Read the matrix_detail sheet to get the cost values
-            detail_df = pd.read_excel(self.excel_file_path, sheet_name=matrix_detail_sheet)
-            
-            self._update_progress(50, progress_callback)
-            
-            # Join the two dataframes on matrix_id
-            try:
-                joined_df = pd.merge(
-                    detail_df, 
-                    matrix_df[['matrix_id', 'matrix_description', 'axis_1', 'axis_2']], 
-                    on='matrix_id', 
-                    how='left'
-                )
-            except Exception as e:
-                self.errors.append(f"Failed to join matrix sheets: {str(e)}")
-                return self._build_result(False)
-                
-            self._update_progress(60, progress_callback)
-            
-            # Find all unique regions and building types from the data
-            unique_descriptions = joined_df['matrix_description'].dropna().unique()
-            
-            # Extract potential regions and building types
-            extracted_regions = set()
-            extracted_building_types = set()
-            
-            for desc in unique_descriptions:
-                if isinstance(desc, str):
-                    region = self._extract_region_from_description(desc)
-                    if region:
-                        extracted_regions.add(region)
-                    
-                    building_type = self._extract_building_type_from_description(desc)
-                    if building_type:
-                        extracted_building_types.add(building_type)
-            
-            # Update the regions and building types properties
-            self.regions = list(extracted_regions)
-            self.building_types = list(extracted_building_types)
-            
-            self._update_progress(70, progress_callback)
-            
-            # Process each matrix
-            total_matrices = len(unique_descriptions)
-            for i, matrix_desc in enumerate(unique_descriptions):
+            # Process each row into a detail entry
+            for _, row in df.iterrows():
                 try:
-                    if not isinstance(matrix_desc, str):
-                        continue
-                        
-                    region = self._extract_region_from_description(matrix_desc)
-                    building_type = self._extract_building_type_from_description(matrix_desc)
-                    
-                    if not region or not building_type:
-                        self.warnings.append(f"Could not extract region or building type from description: {matrix_desc}")
-                        continue
-                    
-                    # Get matrix data for this description
-                    matrix_rows = joined_df[joined_df['matrix_description'] == matrix_desc]
-                    
-                    if matrix_rows.empty:
-                        self.warnings.append(f"No data found for matrix: {matrix_desc}")
-                        continue
-                    
-                    # Get matrix ID
-                    matrix_id = matrix_rows['matrix_id'].iloc[0]
-                    
-                    # Extract min and max values for this matrix
-                    valid_values = matrix_rows['cell_value'].dropna()
-                    if not valid_values.empty:
-                        min_cost = float(valid_values.min())
-                        max_cost = float(valid_values.max())
-                        base_cost = float(valid_values.mean())
-                    else:
-                        min_cost = 0.0
-                        max_cost = 0.0
-                        base_cost = 0.0
-                    
-                    # Create the matrix entry
-                    matrix_entry = {
-                        "region": region,
-                        "buildingType": building_type,
-                        "buildingTypeDescription": self.building_type_mapping.get(building_type, building_type),
-                        "sourceMatrixId": int(matrix_id),
-                        "matrixDescription": matrix_desc,
+                    # Create a basic detail entry with defaults
+                    entry = {
+                        "matrixId": 1,  # Default ID, will be replaced on import
                         "matrixYear": self.matrix_year,
-                        "baseCost": base_cost,
-                        "minCost": min_cost,
-                        "maxCost": max_cost,
-                        "dataPoints": len(matrix_rows),
-                        "adjustmentFactors": {
-                            "complexity": 1.0,
-                            "quality": 1.0,
-                            "condition": 1.0
-                        }
+                        "buildingType": "",
+                        "region": "",
+                        "qualityGrade": "Average",
+                        "stories": "1",
+                        "condition": "Average",
+                        "baseCost": "0",
+                        "occupancyType": "Standard",
+                        "adjustmentFactor": "1.0"
                     }
-                    self.matrix_data.append(matrix_entry)
                     
-                    # Update progress for each matrix processed
-                    progress_pct = 70 + (i / total_matrices * 30)
-                    self._update_progress(progress_pct, progress_callback)
+                    # Update with available data
+                    for col in df.columns:
+                        std_col = actual_mapping.get(col, col)
+                        if pd.notna(row[col]):
+                            value = row[col]
+                            
+                            # Map column to entry field
+                            if std_col == 'matrix_id':
+                                entry["matrixId"] = int(value) if isinstance(value, (int, float)) else 1
+                            elif std_col == 'matrix_yr':
+                                entry["matrixYear"] = int(value) if isinstance(value, (int, float)) else self.matrix_year
+                            elif std_col == 'building_type':
+                                entry["buildingType"] = str(value).strip()
+                            elif std_col == 'region':
+                                region = str(value).strip()
+                                entry["region"] = self.region_codes.get(region, region)
+                            elif std_col == 'quality_grade':
+                                entry["qualityGrade"] = str(value).strip()
+                            elif std_col == 'stories':
+                                entry["stories"] = str(int(value)) if isinstance(value, (int, float)) else str(value).strip()
+                            elif std_col == 'condition':
+                                entry["condition"] = str(value).strip()
+                            elif std_col == 'base_cost':
+                                entry["baseCost"] = str(value)
+                            elif std_col == 'occupancy_type':
+                                entry["occupancyType"] = str(value).strip()
+                    
+                    # Only include rows that have at least building type and region
+                    if entry["buildingType"] and entry["region"]:
+                        detail_entries.append(entry)
                     
                 except Exception as e:
-                    self.errors.append(f"Error processing matrix {matrix_desc}: {str(e)}")
+                    logger.warning(f"Error processing detail row: {str(e)}")
+                    continue
             
-            # Final progress update
-            self._update_progress(100, progress_callback)
-            
-            # Return the result
-            return self._build_result(len(self.matrix_data) > 0)
-            
+            logger.info(f"Extracted {len(detail_entries)} detail entries")
+            return detail_entries
+                
         except Exception as e:
-            self.errors.append(f"Failed to parse Excel file: {str(e)}")
-            return self._build_result(False)
-            
-    def _build_result(self, success: bool) -> Dict:
-        """
-        Build the result dictionary
+            logger.error(f"Error parsing matrix_detail sheet: {str(e)}")
+            self.validation_errors.append(f"Error parsing matrix_detail sheet: {str(e)}")
+            return []
+    
+    def parse(self):
+        """Parse the Excel file and return a structured dataset"""
+        if self.validation_errors:
+            logger.warning(f"Validation errors found: {len(self.validation_errors)}")
         
-        Args:
-            success: Whether the parsing was successful
-            
-        Returns:
-            Dict: Result dictionary with all data
-        """
-        # Detect building types and regions before returning result
-        descriptions = [item.get('description', '') for item in self.matrix_data if isinstance(item, dict)]
-        detected_types = self.detect_building_types(descriptions)
-        detected_regions = self.detect_regions(descriptions)
+        # Parse main matrix for base cost data
+        matrix_entries = self.parse_matrix()
+        
+        # Parse detailed matrix if available
+        detail_entries = self.parse_matrix_detail()
+        
+        # Combine entries if both available
+        if matrix_entries and detail_entries:
+            # Use matrix entries as base and enhance with detail data where available
+            for entry in matrix_entries:
+                matching_details = [
+                    d for d in detail_entries 
+                    if d["buildingType"] == entry["buildingType"] and 
+                    d["region"] == entry["region"]
+                ]
+                
+                if matching_details:
+                    # Update with the first matching detail's additional fields
+                    detail = matching_details[0]
+                    for key, value in detail.items():
+                        if key not in ["buildingType", "region"] and value:
+                            entry[key] = value
+        
+        # Return matrix_entries if available, otherwise use detail_entries
+        result = matrix_entries if matrix_entries else detail_entries
+        
+        logger.info(f"Parsing complete. Extracted {len(result)} total entries")
         
         return {
-            "success": success,
-            "data": self.matrix_data,
-            "regions": self.regions,
-            "buildingTypes": self.building_types,
-            "matrixYear": self.matrix_year,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "progress": self.progress,
-            "rowCount": len(self.matrix_data),
-            "detectedTypes": detected_types,
-            "detectedRegions": detected_regions
-        }
-        
-    def detect_building_types(self, descriptions: List[str]) -> List[str]:
-        """
-        Detect building types from matrix descriptions.
-        
-        Args:
-            descriptions: List of matrix description strings
-            
-        Returns:
-            List[str]: Detected building types
-        """
-        detected_types = set()
-        
-        # Try to extract from descriptions
-        for description in descriptions:
-            if description:
-                building_type = self._extract_building_type_from_description(description)
-                if building_type:
-                    # Map to standard building type names for the application
-                    type_map = {
-                        'R1': 'RESIDENTIAL',
-                        'R2': 'RESIDENTIAL',
-                        'R3': 'RESIDENTIAL',
-                        'C1': 'COMMERCIAL',
-                        'C2': 'COMMERCIAL',
-                        'C3': 'COMMERCIAL',
-                        'C4': 'COMMERCIAL',
-                        'I1': 'INDUSTRIAL',
-                        'I2': 'INDUSTRIAL',
-                        'A1': 'AGRICULTURAL',
-                        'A2': 'AGRICULTURAL',
-                        'S1': 'HEALTHCARE',
-                        'S2': 'EDUCATIONAL'
-                    }
-                    standardized_type = type_map.get(building_type, 'COMMERCIAL')
-                    detected_types.add(standardized_type)
-                
-        # If no types detected, use common defaults
-        if not detected_types:
-            detected_types = {'RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL'}
-            
-        return sorted(list(detected_types))
-        
-    def detect_regions(self, descriptions: List[str]) -> List[str]:
-        """
-        Detect regions from matrix descriptions.
-        
-        Args:
-            descriptions: List of matrix description strings
-            
-        Returns:
-            List[str]: Detected regions
-        """
-        detected_regions = set()
-        
-        # Try to extract from descriptions
-        for description in descriptions:
-            if description:
-                region = self._extract_region_from_description(description)
-                if region:
-                    # Map to standard region names
-                    region_map = {
-                        'North Benton': 'Benton',
-                        'Central Benton': 'Benton',
-                        'South Benton': 'Benton',
-                        'West Benton': 'Benton',
-                        'East Benton': 'Benton',
-                        'Richland': 'Richland',
-                        'Kennewick': 'Kennewick',
-                        'Prosser': 'Prosser',
-                        'Benton City': 'Benton City'
-                    }
-                    standardized_region = region_map.get(region, 'Benton')
-                    detected_regions.add(standardized_region)
-                
-        # If no regions detected, use Benton County defaults
-        if not detected_regions:
-            detected_regions = {
-                'Benton', 'Richland', 'Kennewick', 
-                'Pasco', 'West Richland', 'Prosser', 'Benton City'
+            "data": result,
+            "metadata": {
+                "fileProcessed": os.path.basename(self.file_path),
+                "matrixYear": self.matrix_year,
+                "processedAt": datetime.now().isoformat(),
+                "buildingTypeCount": len(set(entry["buildingType"] for entry in result)),
+                "regionCount": len(set(entry["region"] for entry in result)),
+                "totalEntries": len(result),
+                "validationErrors": self.validation_errors
             }
-            
-        return sorted(list(detected_regions))
-
-
-def validate_only(excel_file, detailed_errors=False, check_data_types=False, strict=False):
-    """
-    Validate the Excel file without parsing all data
-    
-    Args:
-        excel_file: Path to the Excel file
-        detailed_errors: Whether to include detailed error information
-        check_data_types: Whether to check data types in the Excel file
-        strict: Whether to be strict in validation
-        
-    Returns:
-        Dict: Validation result with success flag and errors
-    """
-    parser = EnhancedExcelParser(excel_file)
-    
-    result = {
-        'success': True,
-        'errors': [],
-        'warnings': [],
-        'sheets': [],
-        'rowCount': 0,
-        'year': parser.matrix_year,
-        'detectedTypes': [],
-        'detectedRegions': []
-    }
-    
-    # Check if file exists
-    if not os.path.exists(excel_file):
-        result['success'] = False
-        result['errors'].append(f"File not found: {excel_file}")
-        return result
-    
-    # Detect sheets
-    sheets = parser._detect_sheets()
-    if not sheets:
-        result['success'] = False
-        result['errors'].append("No sheets found in the Excel file")
-        return result
-    
-    result['sheets'] = sheets
-    
-    # Look for the main matrix sheets
-    matrix_sheet = next((s for s in sheets if s.lower() == 'matrix'), None)
-    matrix_detail_sheet = next((s for s in sheets if s.lower() == 'matrix_detail'), None)
-    
-    # If we can't find the expected sheets, try to detect them
-    if not matrix_sheet or not matrix_detail_sheet:
-        for sheet in sheets:
-            if any(keyword in sheet.lower() for keyword in ['matrix', 'cost', 'rate']):
-                if not matrix_sheet:
-                    matrix_sheet = sheet
-                elif not matrix_detail_sheet:
-                    matrix_detail_sheet = sheet
-    
-    # Validate that we have the required sheets
-    if not matrix_sheet:
-        result['success'] = False
-        result['errors'].append("Required sheet 'matrix' not found")
-        return result
-    
-    if not matrix_detail_sheet:
-        result['success'] = False
-        result['errors'].append("Required sheet 'matrix_detail' not found")
-        return result
-    
-    # Validate sheet data
-    matrix_validation = parser._validate_sheet_data(matrix_sheet, parser.REQUIRED_COLUMNS['matrix'])
-    if not matrix_validation['valid']:
-        result['success'] = False
-        for error in matrix_validation['errors']:
-            result['errors'].append(error)
-            
-    matrix_detail_validation = parser._validate_sheet_data(matrix_detail_sheet, parser.REQUIRED_COLUMNS['matrix_detail'])
-    if not matrix_detail_validation['valid']:
-        result['success'] = False
-        for error in matrix_detail_validation['errors']:
-            result['errors'].append(error)
-    
-    # If successful so far and we want to check data types
-    if result['success'] and check_data_types:
-        try:
-            # Read the data to check for data type issues
-            matrix_df = pd.read_excel(excel_file, sheet_name=matrix_sheet)
-            detail_df = pd.read_excel(excel_file, sheet_name=matrix_detail_sheet)
-            
-            # Count rows for info
-            result['rowCount'] = len(matrix_df) + len(detail_df)
-            
-            # Check cell_value is numeric
-            if 'cell_value' in detail_df.columns:
-                non_numeric = detail_df[~pd.to_numeric(detail_df['cell_value'], errors='coerce').notna()]
-                if len(non_numeric) > 0:
-                    if strict:
-                        result['success'] = False
-                        result['errors'].append(f"Invalid data type in 'cell_value' column: expected numeric value")
-                    else:
-                        result['warnings'].append(f"Found {len(non_numeric)} non-numeric values in 'cell_value' column")
-            
-            # Extract potential regions and building types
-            if 'matrix_description' in matrix_df.columns:
-                unique_descriptions = matrix_df['matrix_description'].dropna().unique()
-                
-                extracted_regions = set()
-                extracted_building_types = set()
-                
-                for desc in unique_descriptions:
-                    if isinstance(desc, str):
-                        region = parser._extract_region_from_description(desc)
-                        if region:
-                            extracted_regions.add(region)
-                        
-                        building_type = parser._extract_building_type_from_description(desc)
-                        if building_type:
-                            extracted_building_types.add(building_type)
-                
-                result['detectedRegions'] = list(extracted_regions)
-                result['detectedTypes'] = list(extracted_building_types)
-        
-        except Exception as e:
-            if strict:
-                result['success'] = False
-                result['errors'].append(f"Data type validation failed: {str(e)}")
-            else:
-                result['warnings'].append(f"Data type validation warning: {str(e)}")
-    
-    return result
+        }
 
 def main():
-    """Main function for command-line usage"""
-    import sys
-    import argparse
-    
-    # Set up argument parser
-    parser = argparse.ArgumentParser(description='Enhanced Excel Parser for Cost Matrix data')
-    parser.add_argument('excel_file', help='Path to the Excel file to parse')
-    parser.add_argument('output_file', nargs='?', help='Path to the output JSON file (optional)')
-    parser.add_argument('--validate-only', action='store_true', help='Only validate the file without parsing all data')
-    parser.add_argument('--detailed-errors', action='store_true', help='Include detailed error information')
-    parser.add_argument('--check-data-types', action='store_true', help='Check data types in the Excel file')
-    parser.add_argument('--strict', action='store_true', help='Be strict in validation')
-    parser.add_argument('--standardize', action='store_true', help='Standardize data during parsing')
-    parser.add_argument('--output-json-only', action='store_true', help='Output JSON data only (for piping)')
+    parser = argparse.ArgumentParser(description="Parse Excel files containing cost matrix data")
+    parser.add_argument("file_path", help="Path to Excel file")
+    parser.add_argument("--output", help="Output file path (defaults to stdout)")
     
     args = parser.parse_args()
     
-    # Validate only mode
-    if args.validate_only:
-        result = validate_only(
-            args.excel_file, 
-            detailed_errors=args.detailed_errors,
-            check_data_types=args.check_data_types,
-            strict=args.strict
-        )
-        print(json.dumps(result))
-        sys.exit(0 if result['success'] else 1)
-    
-    # Progress callback (only if not in JSON-only mode)
-    def progress_callback(progress):
-        if not args.output_json_only:
-            print(f"Progress: {progress:.1f}%", end="\r")
-    
-    # Parse the Excel file
-    parser = EnhancedExcelParser(args.excel_file)
-    result = parser.parse(progress_callback=progress_callback)
-    
-    # Convert non-serializable types
-    def convert_to_serializable(obj):
-        if isinstance(obj, (np.int64, np.int32, np.int16, np.int8)):
-            return int(obj)
-        elif isinstance(obj, (np.float64, np.float32, np.float16)):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (np.bool_)):
-            return bool(obj)
+    try:
+        # Parse the Excel file
+        excel_parser = EnhancedExcelParser(args.file_path)
+        result = excel_parser.parse()
+        
+        # Output the result
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(result, f, indent=2)
+            logger.info(f"Output written to {args.output}")
         else:
-            return obj
-    
-    # Custom JSON encoder for numpy types
-    class NumpyEncoder(json.JSONEncoder):
-        def default(self, obj):
-            return convert_to_serializable(obj)
-    
-    # If output_json_only, just print the JSON
-    if args.output_json_only:
-        print(json.dumps(result, cls=NumpyEncoder))
-    else:
-        # Print summary
-        print("\nProcessing complete:")
-        print(f"  Success: {result['success']}")
-        print(f"  Regions found: {len(result['regions'])}: {', '.join(result['regions'])}")
-        print(f"  Building types found: {len(result['buildingTypes'])}: {', '.join(result['buildingTypes'])}")
-        print(f"  Auto-detected regions: {', '.join(result.get('detectedRegions', []))}")
-        print(f"  Auto-detected building types: {', '.join(result.get('detectedTypes', []))}")
-        print(f"  Matrix entries: {result.get('rowCount', 0)}")
-        
-        if 'errors' in result and result['errors']:
-            print(f"  Errors: {len(result['errors'])}")
-            for error in result['errors'][:5]:  # Show first 5 errors
-                print(f"    - {error}")
-            if len(result['errors']) > 5:
-                print(f"    ... and {len(result['errors']) - 5} more errors")
-                
-        if 'warnings' in result and result['warnings']:
-            print(f"  Warnings: {len(result['warnings'])}")
-            for warning in result['warnings'][:5]:  # Show first 5 warnings
-                print(f"    - {warning}")
-            if len(result['warnings']) > 5:
-                print(f"    ... and {len(result['warnings']) - 5} more warnings")
-        
-        # Write output file if specified
-        if args.output_file:
-            with open(args.output_file, 'w') as f:
-                json.dump(result, f, cls=NumpyEncoder, indent=2)
-            print(f"  Output written to: {args.output_file}")
+            print(json.dumps(result, indent=2))
             
-        # Print some data preview if available
-        if 'data' in result and result['data']:
-            print("\nExtracted data preview:")
-            for i, entry in enumerate(result['data'][:3]):  # Show first 3 entries
-                if 'region' in entry and 'buildingType' in entry and 'baseCost' in entry:
-                    print(f"  [{i+1}] {entry['region']} / {entry['buildingType']}: ${entry['baseCost']:.2f}")
-            if len(result['data']) > 3:
-                print(f"  ... and {len(result['data']) - 3} more entries")
-
+        if excel_parser.validation_errors:
+            logger.warning(f"Completed with {len(excel_parser.validation_errors)} validation errors")
+            sys.exit(1)
+        else:
+            logger.info("Parsing completed successfully")
+            sys.exit(0)
+            
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

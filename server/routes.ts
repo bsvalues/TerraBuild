@@ -1214,6 +1214,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // File Upload API
   
+  // Upload a file
+  app.post("/api/file-uploads/upload", requireAuth, upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // File is available at req.file
+      const fileId = Date.now(); // Generate a unique ID for the file
+      
+      // Create directories if they don't exist
+      const fs = require('fs');
+      const path = require('path');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Create file upload record
+      const fileUpload = await storage.createFileUpload({
+        fileName: req.file.originalname,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        uploadedBy: req.user!.id,
+        status: 'uploaded'
+      });
+      
+      await storage.createActivity({
+        action: `Uploaded file: ${req.file.originalname}`,
+        icon: "ri-file-upload-line",
+        iconColor: "primary"
+      });
+      
+      res.status(201).json({ 
+        fileId: fileUpload.id,
+        fileName: fileUpload.fileName,
+        message: "File uploaded successfully" 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error uploading file" });
+    }
+  });
+  
   // Get all file uploads
   app.get("/api/file-uploads", requireAuth, async (req: Request, res: Response) => {
     try {
@@ -1359,8 +1403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.importCostMatrixFromExcel(fileId, userId);
       
       res.status(200).json(result);
-    } catch (error) {
-      res.status(500).json({ message: error.message || "Error importing cost matrix from Excel" });
+    } catch (error: any) {
+      res.status(500).json({ message: error?.message || "Error importing cost matrix from Excel" });
     }
   });
 

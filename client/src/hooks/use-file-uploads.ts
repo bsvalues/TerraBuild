@@ -1,44 +1,53 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { toast } from "@/hooks/use-toast";
-import type { FileUpload } from "@shared/schema";
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { FileUpload, insertFileUploadSchema } from '@shared/schema';
+import { toast } from '@/hooks/use-toast';
+import { z } from 'zod';
 
-/**
- * Hook for interacting with the file uploads API
- */
+// Extended schema with validation
+const fileUploadSchema = insertFileUploadSchema.extend({
+  fileName: z.string().min(1, "File name is required"),
+  fileType: z.string().min(1, "File type is required"),
+  fileSize: z.number().min(1, "File size is required"),
+  status: z.string().min(1, "Status is required"),
+  processedItems: z.number().default(0),
+  totalItems: z.number().nullable().default(null),
+  errorCount: z.number().default(0),
+  errors: z.any().default([])
+});
+
+// UseFileUploads hook for file upload CRUD operations
 export function useFileUploads() {
   // Get all file uploads
-  const getAll = useQuery({
-    queryKey: ["/api/file-uploads"],
+  const getAll = useQuery<FileUpload[]>({ 
+    queryKey: ['/api/file-uploads']
   });
 
-  // Get file upload by ID
-  const getById = (id: number) => {
-    return useQuery({
-      queryKey: ["/api/file-uploads", id],
-      enabled: !!id,
-    });
-  };
+  // Get a single file upload by ID
+  const getById = (id: number) => useQuery<FileUpload>({ 
+    queryKey: ['/api/file-uploads', id],
+    enabled: !!id
+  });
 
-  // Create file upload record
+  // Create a new file upload
   const create = useMutation({
-    mutationFn: async (data: Omit<FileUpload, "id" | "createdAt" | "updatedAt" | "uploadedBy">) => {
-      return apiRequest("POST", "/api/file-uploads", data);
+    mutationFn: async (data: z.infer<typeof fileUploadSchema>) => {
+      const validatedData = fileUploadSchema.parse(data);
+      return apiRequest('/api/file-uploads', {
+        method: 'POST',
+        data: validatedData
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/file-uploads"] });
-      toast({
-        title: "File upload created",
-        description: "The file upload record has been successfully created.",
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/file-uploads'] });
     },
     onError: (error: any) => {
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to create file upload record.",
-        variant: "destructive",
+        title: 'Error creating file upload',
+        description: error.message || 'Failed to create file upload record',
+        variant: 'destructive'
       });
-    },
+    }
   });
 
   // Update file upload status
@@ -54,69 +63,80 @@ export function useFileUploads() {
       status: string; 
       processedItems?: number; 
       totalItems?: number; 
-      errors?: string[] 
+      errors?: any[] 
     }) => {
-      return apiRequest("PATCH", `/api/file-uploads/${id}/status`, { 
-        status, 
-        processedItems, 
-        totalItems, 
-        errors 
+      return apiRequest(`/api/file-uploads/${id}/status`, {
+        method: 'PATCH',
+        data: { status, processedItems, totalItems, errors }
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/file-uploads"] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/file-uploads'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/file-uploads', variables.id] });
+      
+      toast({
+        title: 'Status updated',
+        description: `File status updated to ${variables.status}`
+      });
     },
     onError: (error: any) => {
       toast({
-        title: "Status update failed",
-        description: error.message || "Failed to update file upload status.",
-        variant: "destructive",
+        title: 'Error updating status',
+        description: error.message || 'Failed to update file status',
+        variant: 'destructive'
       });
-    },
+    }
   });
 
-  // Delete file upload
+  // Delete a file upload
   const remove = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/file-uploads/${id}`);
+      return apiRequest(`/api/file-uploads/${id}`, {
+        method: 'DELETE'
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/file-uploads"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/file-uploads'] });
+      
       toast({
-        title: "File upload deleted",
-        description: "The file upload has been successfully deleted.",
+        title: 'File deleted',
+        description: 'File upload record has been deleted'
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Delete failed",
-        description: error.message || "Failed to delete file upload.",
-        variant: "destructive",
+        title: 'Error deleting file',
+        description: error.message || 'Failed to delete file upload record',
+        variant: 'destructive'
       });
-    },
+    }
   });
 
-  // Import excel cost matrix
-  const importExcelMatrix = useMutation({
+  // Import Excel file data to cost matrix
+  const importExcel = useMutation({
     mutationFn: async (fileId: number) => {
-      const response = await apiRequest("POST", `/api/cost-matrix/import-excel/${fileId}`);
-      return response.json();
+      return apiRequest(`/api/cost-matrix/import-excel/${fileId}`, {
+        method: 'POST'
+      });
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/file-uploads"] });
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-matrix'] });
+      
+      const imported = data?.imported || 0;
+      const updated = data?.updated || 0;
+      
       toast({
-        title: "Excel import successful",
-        description: `Imported ${data.imported} entries, updated ${data.updated} entries.`,
+        title: 'Import successful',
+        description: `Imported ${imported} entries, updated ${updated} entries`
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Excel import failed",
-        description: error.message || "Failed to import cost matrix from Excel.",
-        variant: "destructive",
+        title: 'Import failed',
+        description: error.message || 'Failed to import Excel data',
+        variant: 'destructive'
       });
-    },
+    }
   });
 
   return {
@@ -125,6 +145,6 @@ export function useFileUploads() {
     create,
     updateStatus,
     remove,
-    importExcelMatrix,
+    importExcel
   };
 }

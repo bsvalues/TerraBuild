@@ -1,278 +1,194 @@
-#!/usr/bin/env node
-
 /**
- * Benton County Cost Matrix Database Import Script
- * 
- * This script reads the JSON output from the Benton County Cost Matrix Parser
- * and imports it directly into the database using the pg client.
- * 
- * Usage:
- *   node import_to_database.js <json_file_path>
- * 
- * Example:
- *   node import_to_database.js benton_county_data.json
+ * Import Excel data to database
+ * This module handles calling the Python parser and importing the data into the database
  */
 
-import fs from 'fs';
-import pg from 'pg';
-import dotenv from 'dotenv';
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
+/**
+ * Process an Excel file using the Python parser and return structured data
+ * @param {string} filePath - Path to the Excel file
+ * @returns {Promise<object>} - Parsed data from the Excel file
+ */
+async function parseExcelFile(filePath) {
+  return new Promise((resolve, reject) => {
+    // Create temporary output file
+    const tmpOutputFile = path.join(
+      path.dirname(filePath),
+      `tmp_parsed_${Date.now()}.json`
+    );
+    
+    // Spawn python process to parse the Excel file
+    const pythonProcess = spawn('python', [
+      'enhanced_excel_parser.py',
+      filePath,
+      '--output',
+      tmpOutputFile
+    ]);
+    
+    let errorOutput = '';
+    
+    pythonProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+      console.error(`Python parser error: ${data}`);
+    });
+    
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        // If python process failed, reject with error
+        reject(new Error(`Python parser failed with code ${code}: ${errorOutput}`));
+        return;
+      }
+      
+      try {
+        // Read the parsed data from the temporary file
+        const parsedData = JSON.parse(fs.readFileSync(tmpOutputFile, 'utf8'));
+        
+        // Delete temporary file
+        fs.unlink(tmpOutputFile, (err) => {
+          if (err) console.warn(`Warning: Could not delete temporary file ${tmpOutputFile}`, err);
+        });
+        
+        resolve(parsedData);
+      } catch (error) {
+        reject(new Error(`Failed to read parsed data: ${error.message}`));
+      }
+    });
+  });
+}
 
-// Create a connection pool to the PostgreSQL database
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
-async function importData() {
-  // Get the JSON file path from command line arguments
-  const args = process.argv.slice(2);
-  
-  if (args.length < 1) {
-    console.error('Usage: node import_to_database.js <json_file_path>');
-    process.exit(1);
+/**
+ * Import cost matrix data from an Excel file into the database
+ * @param {object} storage - Storage interface for database operations
+ * @param {number} fileId - ID of the uploaded file
+ * @param {number} userId - ID of the user who initiated the import
+ * @returns {Promise<object>} - Import results
+ */
+async function importCostMatrixFromExcel(storage, fileId, userId) {
+  // Get file information
+  const fileUpload = await storage.getFileUpload(fileId);
+  if (!fileUpload) {
+    throw new Error('File not found');
   }
-  
-  const jsonFilePath = args[0];
-  
-  // Validate the file path
-  if (!fs.existsSync(jsonFilePath)) {
-    console.error(`Error: File not found: ${jsonFilePath}`);
-    process.exit(1);
-  }
-  
-  console.log(`Importing data from ${jsonFilePath}...`);
   
   try {
-    // Read the JSON file
-    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    // Update file status to "processing"
+    await storage.updateFileUploadStatus(fileId, 'processing', 0, null);
     
-    if (!jsonData.success) {
-      console.error('Error in input data: The success flag is false');
-      console.error('Error details:', jsonData.errors || 'No error details provided');
-      process.exit(1);
-    }
+    // File path is relative to the root directory
+    const filePath = path.join(process.cwd(), 'uploads', path.basename(fileUpload.fileName));
     
-    const matrixData = jsonData.data;
-    
-    if (!Array.isArray(matrixData) || matrixData.length === 0) {
-      console.error('Error: No valid data found in the input file');
-      process.exit(1);
-    }
-    
-    console.log(`Found ${matrixData.length} entries to import`);
-    
-    // Connect to the database
-    const client = await pool.connect();
-    
-    try {
-      // Begin transaction
-      await client.query('BEGIN');
+    // If file doesn't exist at expected path, check for just the filename
+    let actualFilePath = filePath;
+    if (!fs.existsSync(actualFilePath)) {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      const files = fs.readdirSync(uploadDir);
       
-      // Ensure cost_matrix table exists
-      const tableExists = await checkTableExists(client, 'cost_matrix');
+      // Find a file with a name or ID that matches
+      const matchingFile = files.find(file => {
+        return file.includes(fileUpload.id.toString()) || 
+               file.includes(path.basename(fileUpload.fileName, path.extname(fileUpload.fileName)));
+      });
       
-      if (!tableExists) {
-        console.log('Creating cost_matrix table...');
-        await createCostMatrixTable(client);
+      if (matchingFile) {
+        actualFilePath = path.join(uploadDir, matchingFile);
+      } else {
+        throw new Error(`File not found in uploads directory: ${fileUpload.fileName}`);
       }
-      
-      // Import data
-      const importResult = await importCostMatrixData(client, matrixData);
-      
-      // Commit the transaction
-      await client.query('COMMIT');
-      
-      console.log('Import completed successfully!');
-      console.log(`Imported: ${importResult.imported}`);
-      console.log(`Updated: ${importResult.updated}`);
-      console.log(`Errors: ${importResult.errors.length}`);
-      
-      if (importResult.errors.length > 0) {
-        console.log('\nError details:');
-        importResult.errors.forEach((error, i) => {
-          console.log(`${i + 1}. ${error}`);
-        });
-      }
-      
-    } catch (error) {
-      // Rollback transaction on error
-      await client.query('ROLLBACK');
-      console.error('Error during import:', error.message);
-      process.exit(1);
-    } finally {
-      // Release client
-      client.release();
     }
     
-  } catch (error) {
-    console.error('Error processing input file:', error.message);
-    process.exit(1);
-  } finally {
-    // Close pool
-    await pool.end();
-  }
-}
-
-async function checkTableExists(client, tableName) {
-  const result = await client.query(`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = $1
-    )
-  `, [tableName]);
-  
-  return result.rows[0].exists;
-}
-
-async function createCostMatrixTable(client) {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS cost_matrix (
-      id SERIAL PRIMARY KEY,
-      region TEXT NOT NULL,
-      building_type TEXT NOT NULL,
-      building_type_description TEXT NOT NULL,
-      base_cost NUMERIC NOT NULL,
-      matrix_year INTEGER NOT NULL,
-      source_matrix_id INTEGER,
-      matrix_description TEXT,
-      data_points INTEGER DEFAULT 0,
-      min_cost NUMERIC,
-      max_cost NUMERIC,
-      complexity_factor_base NUMERIC DEFAULT 1.0,
-      quality_factor_base NUMERIC DEFAULT 1.0,
-      condition_factor_base NUMERIC DEFAULT 1.0,
-      is_active BOOLEAN DEFAULT TRUE,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
-      UNIQUE(region, building_type, matrix_year)
-    )
-  `);
-  
-  // Create indexes for performance
-  await client.query(`
-    CREATE INDEX IF NOT EXISTS idx_cost_matrix_region ON cost_matrix(region)
-  `);
-  
-  await client.query(`
-    CREATE INDEX IF NOT EXISTS idx_cost_matrix_building_type ON cost_matrix(building_type)
-  `);
-  
-  await client.query(`
-    CREATE INDEX IF NOT EXISTS idx_cost_matrix_matrix_year ON cost_matrix(matrix_year)
-  `);
-  
-  console.log('Cost matrix table and indexes created successfully');
-}
-
-async function importCostMatrixData(client, matrixData) {
-  let imported = 0;
-  let updated = 0;
-  const errors = [];
-  
-  for (let i = 0; i < matrixData.length; i++) {
-    const entry = matrixData[i];
+    // Parse the Excel file
+    const parsedData = await parseExcelFile(actualFilePath);
     
-    try {
-      // Check if the entry already exists
-      const existingResult = await client.query(
-        'SELECT id FROM cost_matrix WHERE region = $1 AND building_type = $2 AND matrix_year = $3',
-        [entry.region, entry.buildingType, entry.matrixYear]
+    // Log activity
+    await storage.createActivity({
+      action: `Parsed Excel file: ${fileUpload.fileName}`,
+      icon: "ri-file-excel-line",
+      iconColor: "success",
+      userId: userId
+    });
+    
+    // Update status to indicate validation
+    await storage.updateFileUploadStatus(
+      fileId, 
+      'validating', 
+      parsedData.data.length, 
+      parsedData.data.length
+    );
+    
+    // Get validation errors if any
+    const validationErrors = parsedData.metadata.validationErrors || [];
+    
+    // If there are validation errors, update status and return
+    if (validationErrors.length > 0) {
+      await storage.updateFileUploadStatus(
+        fileId, 
+        'error', 
+        parsedData.data.length, 
+        parsedData.data.length, 
+        validationErrors
       );
       
-      if (existingResult.rows.length > 0) {
-        // Update existing entry
-        const id = existingResult.rows[0].id;
-        
-        await client.query(`
-          UPDATE cost_matrix SET
-            base_cost = $1,
-            building_type_description = $2,
-            matrix_description = $3,
-            source_matrix_id = $4,
-            data_points = $5,
-            min_cost = $6,
-            max_cost = $7,
-            complexity_factor_base = $8,
-            quality_factor_base = $9,
-            condition_factor_base = $10,
-            updated_at = NOW()
-          WHERE id = $11
-        `, [
-          entry.baseCost,
-          entry.buildingTypeDescription,
-          entry.matrixDescription,
-          entry.sourceMatrixId || 0,
-          entry.dataPoints || 0,
-          entry.minCost || null,
-          entry.maxCost || null,
-          entry.complexityFactorBase || 1.0,
-          entry.qualityFactorBase || 1.0,
-          entry.conditionFactorBase || 1.0,
-          id
-        ]);
-        
-        updated++;
-      } else {
-        // Insert new entry
-        await client.query(`
-          INSERT INTO cost_matrix (
-            region,
-            building_type,
-            building_type_description,
-            base_cost,
-            matrix_year,
-            source_matrix_id,
-            matrix_description,
-            data_points,
-            min_cost,
-            max_cost,
-            complexity_factor_base,
-            quality_factor_base,
-            condition_factor_base
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        `, [
-          entry.region,
-          entry.buildingType,
-          entry.buildingTypeDescription,
-          entry.baseCost,
-          entry.matrixYear,
-          entry.sourceMatrixId || 0,
-          entry.matrixDescription,
-          entry.dataPoints || 0,
-          entry.minCost || null,
-          entry.maxCost || null,
-          entry.complexityFactorBase || 1.0,
-          entry.qualityFactorBase || 1.0,
-          entry.conditionFactorBase || 1.0
-        ]);
-        
-        imported++;
-      }
-      
-      // Show progress in batches
-      if ((i + 1) % 100 === 0 || i === matrixData.length - 1) {
-        console.log(`Progress: ${i + 1}/${matrixData.length} entries processed`);
-      }
-    } catch (error) {
-      const errorMessage = `Error importing entry for ${entry.region}, ${entry.buildingType}: ${error.message}`;
-      console.error(errorMessage);
-      errors.push(errorMessage);
+      return {
+        success: false,
+        imported: 0,
+        updated: 0,
+        errors: validationErrors
+      };
     }
+    
+    // Import data to database
+    const result = await storage.importCostMatrixFromJson(parsedData.data);
+    
+    // Update file status
+    const status = result.errors.length > 0 ? 'completed_with_errors' : 'completed';
+    await storage.updateFileUploadStatus(
+      fileId, 
+      status, 
+      result.imported, 
+      parsedData.data.length, 
+      result.errors
+    );
+    
+    // Log activity
+    await storage.createActivity({
+      action: `Imported ${result.imported} cost matrix entries from ${fileUpload.fileName}`,
+      icon: "ri-database-2-line",
+      iconColor: "success",
+      userId: userId
+    });
+    
+    return {
+      success: true,
+      imported: result.imported,
+      updated: result.updated || 0,
+      errors: result.errors
+    };
+  } catch (error) {
+    // Update file status to "error"
+    await storage.updateFileUploadStatus(
+      fileId, 
+      'error', 
+      0, 
+      null, 
+      [{ message: error.message }]
+    );
+    
+    // Log activity
+    await storage.createActivity({
+      action: `Error importing cost matrix from ${fileUpload.fileName}: ${error.message}`,
+      icon: "ri-error-warning-line",
+      iconColor: "error",
+      userId: userId
+    });
+    
+    throw error;
   }
-  
-  return {
-    imported,
-    updated,
-    errors
-  };
 }
 
-// Run the import process
-importData().catch(error => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+module.exports = {
+  parseExcelFile,
+  importCostMatrixFromExcel
+};
