@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import { db } from './db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNull, isNotNull } from 'drizzle-orm';
 import { 
   User, InsertUser,
   Environment, InsertEnvironment,
@@ -456,6 +456,119 @@ export class PostgresStorage implements IStorage {
   
   async deleteCostMatrix(id: number): Promise<void> {
     await db.delete(costMatrix).where(eq(costMatrix.id, id));
+  }
+  
+  // Benchmarking methods
+  async getCostMatrixByCounty(county: string): Promise<CostMatrix[]> {
+    return db.select().from(costMatrix)
+      .where(and(
+        eq(costMatrix.county, county),
+        eq(costMatrix.isActive, true)
+      ));
+  }
+
+  async getCostMatrixByState(state: string): Promise<CostMatrix[]> {
+    return db.select().from(costMatrix)
+      .where(and(
+        eq(costMatrix.state, state),
+        eq(costMatrix.isActive, true)
+      ));
+  }
+
+  async getAllCounties(): Promise<string[]> {
+    const results = await db.select({ county: costMatrix.county })
+      .from(costMatrix)
+      .where(and(
+        isNotNull(costMatrix.county),
+        eq(costMatrix.isActive, true)
+      ))
+      .groupBy(costMatrix.county);
+    
+    return results.map(r => r.county).filter((county): county is string => county !== null);
+  }
+
+  async getAllStates(): Promise<string[]> {
+    const results = await db.select({ state: costMatrix.state })
+      .from(costMatrix)
+      .where(and(
+        isNotNull(costMatrix.state),
+        eq(costMatrix.isActive, true)
+      ))
+      .groupBy(costMatrix.state);
+    
+    return results.map(r => r.state).filter((state): state is string => state !== null);
+  }
+
+  async getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]> {
+    let query = db.select().from(costMatrix).where(eq(costMatrix.isActive, true));
+    
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && key in costMatrix) {
+        query = query.where(eq(costMatrix[key as keyof typeof costMatrix] as any, value));
+      }
+    }
+    
+    return query;
+  }
+
+  async getBuildingTypesByCounty(county: string): Promise<string[]> {
+    const results = await db.select({ buildingType: costMatrix.buildingType })
+      .from(costMatrix)
+      .where(and(
+        eq(costMatrix.county, county),
+        eq(costMatrix.isActive, true)
+      ))
+      .groupBy(costMatrix.buildingType);
+    
+    return results.map(r => r.buildingType);
+  }
+
+  async getBuildingTypesByState(state: string): Promise<string[]> {
+    const results = await db.select({ buildingType: costMatrix.buildingType })
+      .from(costMatrix)
+      .where(and(
+        eq(costMatrix.state, state),
+        eq(costMatrix.isActive, true)
+      ))
+      .groupBy(costMatrix.buildingType);
+    
+    return results.map(r => r.buildingType);
+  }
+
+  async getCountyStats(county: string): Promise<{
+    minCost: number,
+    maxCost: number,
+    avgCost: number,
+    buildingTypeCount: number
+  }> {
+    const countyData = await this.getCostMatrixByCounty(county);
+    
+    if (countyData.length === 0) {
+      return {
+        minCost: 0,
+        maxCost: 0,
+        avgCost: 0,
+        buildingTypeCount: 0
+      };
+    }
+    
+    const costs = countyData.map(m => Number(m.baseCost));
+    const minCost = Math.min(...costs);
+    const maxCost = Math.max(...costs);
+    const avgCost = costs.reduce((sum: number, cost: number) => sum + cost, 0) / costs.length;
+    
+    // Count unique building types
+    const buildingTypes = new Set<string>();
+    for (const matrix of countyData) {
+      buildingTypes.add(matrix.buildingType);
+    }
+    
+    return {
+      minCost,
+      maxCost,
+      avgCost,
+      buildingTypeCount: buildingTypes.size
+    };
   }
   
   async importCostMatrixFromJson(data: any[]): Promise<{ imported: number; errors: string[] }> {

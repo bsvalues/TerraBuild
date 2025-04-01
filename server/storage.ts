@@ -112,6 +112,21 @@ export interface IStorage {
   importCostMatrixFromJson(data: any[]): Promise<{ imported: number, updated: number, errors: string[] }>;
   importCostMatrixFromExcel(fileId: number, userId: number): Promise<{ success: boolean, imported: number, updated: number, errors: string[] }>;
   
+  // Benchmarking methods
+  getCostMatrixByCounty(county: string): Promise<CostMatrix[]>;
+  getCostMatrixByState(state: string): Promise<CostMatrix[]>;
+  getAllCounties(): Promise<string[]>;
+  getAllStates(): Promise<string[]>;
+  getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]>;
+  getBuildingTypesByCounty(county: string): Promise<string[]>;
+  getBuildingTypesByState(state: string): Promise<string[]>;
+  getCountyStats(county: string): Promise<{
+    minCost: number,
+    maxCost: number,
+    avgCost: number,
+    buildingTypeCount: number
+  }>;
+  
   // File Uploads
   createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload>;
   getFileUpload(id: number): Promise<FileUpload | undefined>;
@@ -919,6 +934,109 @@ export class MemStorage implements IStorage {
     }
     
     return { imported, updated, errors };
+  }
+  
+  // Benchmarking Methods
+  async getCostMatrixByCounty(county: string): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values()).filter(
+      matrix => matrix.county === county && matrix.isActive
+    );
+  }
+  
+  async getCostMatrixByState(state: string): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values()).filter(
+      matrix => matrix.state === state && matrix.isActive
+    );
+  }
+  
+  async getAllCounties(): Promise<string[]> {
+    const counties = new Set<string>();
+    
+    Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.isActive && matrix.county)
+      .forEach(matrix => counties.add(matrix.county!));
+    
+    return Array.from(counties);
+  }
+  
+  async getAllStates(): Promise<string[]> {
+    const states = new Set<string>();
+    
+    Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.isActive && matrix.state)
+      .forEach(matrix => states.add(matrix.state!));
+    
+    return Array.from(states);
+  }
+  
+  async getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]> {
+    return Array.from(this.costMatrixEntries.values()).filter(matrix => {
+      // Start with active check
+      if (!matrix.isActive) return false;
+      
+      // Check each filter
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined && (matrix as any)[key] !== value) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }
+  
+  async getBuildingTypesByCounty(county: string): Promise<string[]> {
+    const buildingTypes = new Set<string>();
+    
+    Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.county === county && matrix.isActive)
+      .forEach(matrix => buildingTypes.add(matrix.buildingType));
+    
+    return Array.from(buildingTypes);
+  }
+  
+  async getBuildingTypesByState(state: string): Promise<string[]> {
+    const buildingTypes = new Set<string>();
+    
+    Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.state === state && matrix.isActive)
+      .forEach(matrix => buildingTypes.add(matrix.buildingType));
+    
+    return Array.from(buildingTypes);
+  }
+  
+  async getCountyStats(county: string): Promise<{
+    minCost: number,
+    maxCost: number,
+    avgCost: number,
+    buildingTypeCount: number
+  }> {
+    const countyData = await this.getCostMatrixByCounty(county);
+    
+    if (countyData.length === 0) {
+      return {
+        minCost: 0,
+        maxCost: 0,
+        avgCost: 0,
+        buildingTypeCount: 0
+      };
+    }
+    
+    const costs = countyData.map(m => Number(m.baseCost));
+    const minCost = Math.min(...costs);
+    const maxCost = Math.max(...costs);
+    const avgCost = costs.reduce((sum, cost) => sum + cost, 0) / costs.length;
+    
+    // Count unique building types
+    const buildingTypes = new Set<string>();
+    countyData.forEach(matrix => buildingTypes.add(matrix.buildingType));
+    
+    return {
+      minCost,
+      maxCost,
+      avgCost,
+      buildingTypeCount: buildingTypes.size
+    };
   }
   
   // Cost Factor Presets Methods

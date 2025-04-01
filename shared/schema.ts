@@ -421,6 +421,8 @@ export const costMatrix = pgTable("cost_matrix", {
   complexityFactorBase: decimal("complexity_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
   qualityFactorBase: decimal("quality_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
   conditionFactorBase: decimal("condition_factor_base", { precision: 5, scale: 2 }).notNull().default("1.0"),
+  county: text("county"),  // County name for cross-county benchmarking
+  state: text("state"),    // State name for cross-state benchmarking
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -448,6 +450,8 @@ export const insertCostMatrixSchema = createInsertSchema(costMatrix).pick({
   complexityFactorBase: true,
   qualityFactorBase: true,
   conditionFactorBase: true,
+  county: true,
+  state: true,
   isActive: true,
 });
 
@@ -507,3 +511,148 @@ export const insertFileUploadSchema = createInsertSchema(fileUploads).pick({
 
 export type FileUpload = typeof fileUploads.$inferSelect;
 export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;
+
+// Collaboration Feature: Comments
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  targetType: text("target_type").notNull(), // "calculation", "cost_matrix", etc.
+  targetId: integer("target_id").notNull(),
+  content: text("content").notNull(),
+  parentCommentId: integer("parent_comment_id"), // For threaded comments
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  isResolved: boolean("is_resolved").notNull().default(false),
+  isEdited: boolean("is_edited").notNull().default(false),
+}, (table) => {
+  return {
+    targetIdx: uniqueIndex("target_type_id_idx").on(
+      table.targetType,
+      table.targetId
+    ),
+  };
+});
+
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  userId: true,
+  targetType: true,
+  targetId: true,
+  content: true,
+  parentCommentId: true,
+  isResolved: true,
+});
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+
+// Collaboration Feature: Shared Projects
+export const sharedProjects = pgTable("shared_projects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdById: integer("created_by_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  status: text("status").notNull().default("active"),
+  isPublic: boolean("is_public").notNull().default(false),
+});
+
+export const insertSharedProjectSchema = createInsertSchema(sharedProjects).pick({
+  name: true,
+  description: true,
+  createdById: true,
+  status: true,
+  isPublic: true,
+});
+
+export type SharedProject = typeof sharedProjects.$inferSelect;
+export type InsertSharedProject = z.infer<typeof insertSharedProjectSchema>;
+
+// Collaboration Feature: Project Members
+export const projectMembers = pgTable("project_members", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  userId: integer("user_id").notNull(),
+  role: text("role").notNull().default("viewer"), // viewer, editor, admin
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  invitedBy: integer("invited_by").notNull(),
+}, (table) => {
+  return {
+    memberUniqueIdx: uniqueIndex("project_user_idx").on(
+      table.projectId,
+      table.userId
+    ),
+  };
+});
+
+export const insertProjectMemberSchema = createInsertSchema(projectMembers).pick({
+  projectId: true,
+  userId: true,
+  role: true,
+  invitedBy: true,
+});
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
+
+// Collaboration Feature: Project Items
+export const projectItems = pgTable("project_items", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  itemType: text("item_type").notNull(), // calculation, cost_matrix, report
+  itemId: integer("item_id").notNull(),
+  addedBy: integer("added_by").notNull(),
+  addedAt: timestamp("added_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    itemUniqueIdx: uniqueIndex("project_item_idx").on(
+      table.projectId,
+      table.itemType,
+      table.itemId
+    ),
+  };
+});
+
+export const insertProjectItemSchema = createInsertSchema(projectItems).pick({
+  projectId: true,
+  itemType: true,
+  itemId: true,
+  addedBy: true,
+});
+
+export type ProjectItem = typeof projectItems.$inferSelect;
+export type InsertProjectItem = z.infer<typeof insertProjectItemSchema>;
+
+// External API Integration: Materials API Cache
+export const materialsPriceCache = pgTable("materials_price_cache", {
+  id: serial("id").primaryKey(),
+  materialCode: text("material_code").notNull(),
+  source: text("source").notNull(), // API source
+  region: text("region").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  unit: text("unit").notNull(),
+  fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+  validUntil: timestamp("valid_until").notNull(),
+  metadata: json("metadata"), // Additional data from the API
+}, (table) => {
+  return {
+    materialCodeIdx: uniqueIndex("material_code_source_region_idx").on(
+      table.materialCode,
+      table.source,
+      table.region
+    ),
+  };
+});
+
+export const insertMaterialsPriceCacheSchema = createInsertSchema(materialsPriceCache).pick({
+  materialCode: true,
+  source: true,
+  region: true,
+  price: true,
+  unit: true,
+  validUntil: true,
+  metadata: true,
+});
+
+export type MaterialsPriceCache = typeof materialsPriceCache.$inferSelect;
+export type InsertMaterialsPriceCache = z.infer<typeof insertMaterialsPriceCacheSchema>;
