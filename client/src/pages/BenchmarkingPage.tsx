@@ -75,7 +75,7 @@ const CHART_COLORS = [
   '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
 ];
 
-const BenchmarkingPage = () => {
+function BenchmarkingPage(): React.JSX.Element {
   const { toast } = useToast();
   
   // State for form selections
