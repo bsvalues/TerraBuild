@@ -278,14 +278,14 @@ export function BuildingTypeCostBreakdown({
           {showControls && (
             <div className="flex items-center gap-2 mt-4 md:mt-0">
               <Select
-                value={selectedRegion || ""}
-                onValueChange={(value) => setSelectedRegion(value || null)}
+                value={selectedRegion || "all"}
+                onValueChange={(value) => setSelectedRegion(value === "all" ? null : value)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Regions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Regions</SelectItem>
+                  <SelectItem value="all">All Regions</SelectItem>
                   {regions.map((region) => (
                     <SelectItem key={region} value={region}>
                       {region}

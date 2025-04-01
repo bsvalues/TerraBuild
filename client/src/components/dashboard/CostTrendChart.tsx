@@ -237,14 +237,14 @@ export function CostTrendChart({
           {showControls && (
             <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
               <Select
-                value={selectedRegion || ""}
-                onValueChange={(value) => setSelectedRegion(value || null)}
+                value={selectedRegion || "all"}
+                onValueChange={(value) => setSelectedRegion(value === "all" ? null : value)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Regions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Regions</SelectItem>
+                  <SelectItem value="all">All Regions</SelectItem>
                   {getUniqueRegions(data).map((region) => (
                     <SelectItem key={region} value={region}>
                       {region}
@@ -254,14 +254,14 @@ export function CostTrendChart({
               </Select>
               
               <Select
-                value={selectedBuildingType || ""}
-                onValueChange={(value) => setSelectedBuildingType(value || null)}
+                value={selectedBuildingType || "all"}
+                onValueChange={(value) => setSelectedBuildingType(value === "all" ? null : value)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Building Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Building Types</SelectItem>
+                  <SelectItem value="all">All Building Types</SelectItem>
                   {getUniqueBuildingTypes(data).map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}

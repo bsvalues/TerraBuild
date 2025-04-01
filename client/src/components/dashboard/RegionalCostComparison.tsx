@@ -268,14 +268,14 @@ export function RegionalCostComparison({
               </Select>
               
               <Select
-                value={selectedBuildingType || ""}
-                onValueChange={(value) => setSelectedBuildingType(value || null)}
+                value={selectedBuildingType || "all"}
+                onValueChange={(value) => setSelectedBuildingType(value === "all" ? null : value)}
               >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="All Building Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Building Types</SelectItem>
+                  <SelectItem value="all">All Building Types</SelectItem>
                   {availableBuildingTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
