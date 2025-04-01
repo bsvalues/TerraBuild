@@ -36,15 +36,13 @@ interface CostPredictionInsightsProps {
   description?: string;
   className?: string;
   showControls?: boolean;
-  openAIApiKey?: string;
 }
 
 export function CostPredictionInsights({
   title = "Cost Prediction Insights",
   description = "AI-powered trend analysis and cost predictions",
   className,
-  showControls = true,
-  openAIApiKey
+  showControls = true
 }: CostPredictionInsightsProps) {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedBuildingType, setSelectedBuildingType] = useState<string | null>(null);
@@ -184,14 +182,8 @@ export function CostPredictionInsights({
     };
   };
 
-  // Get AI-generated insights from the enhanced AI prediction API
+  // Get AI-generated insights from the new AI prediction API
   const generateAIInsights = async () => {
-    if (!openAIApiKey) {
-      setInsightText("API key required for AI insights. Please configure your OpenAI API key.");
-      setShowInsight(true);
-      return;
-    }
-    
     setAnalysisLoading(true);
     
     try {
@@ -209,18 +201,28 @@ export function CostPredictionInsights({
       // Get the future year for prediction
       const futureYear = currentYear + predictionYears;
       
+      // First check if OpenAI is configured
+      const statusResponse = await fetch('/api/ai/openai-status');
+      const statusData = await statusResponse.json();
+      
+      if (!statusData.configured) {
+        setInsightText(`AI insights require OpenAI API key configuration. Status: ${statusData.message}`);
+        setShowInsight(true);
+        setAnalysisLoading(false);
+        return;
+      }
+      
       // Prepare API request
       const requestData = {
         buildingType: selectedBuildingType || "RESIDENTIAL",
         region: selectedRegion || "Benton County",
-        year: futureYear,
+        targetYear: futureYear,
         squareFootage: 2000, // Default square footage
-        complexity: 5, // Mid-level complexity
-        features: []
+        selectedFactors: ["inflation", "materials", "labor"]
       };
       
-      // Call the enhanced prediction API
-      const response = await fetch('/api/mcp/enhanced-predict-cost', {
+      // Call the AI prediction API
+      const response = await fetch('/api/ai/predict-cost', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,7 +238,7 @@ export function CostPredictionInsights({
       
       // Handle error from the prediction engine
       if (result.error) {
-        throw new Error(result.error.message);
+        throw new Error(result.error);
       }
       
       // Format the AI insight text
@@ -246,13 +248,13 @@ export function CostPredictionInsights({
         are predicted to reach $${result.predictedCost.toFixed(2)}/sq.ft by ${futureYear}.
         
         ${result.confidenceInterval ? 
-          `This prediction has a confidence interval of $${result.confidenceInterval[0].toFixed(2)} to $${result.confidenceInterval[1].toFixed(2)}/sq.ft.` : 
+          `This prediction has a confidence interval of $${result.confidenceInterval.lower.toFixed(2)} to $${result.confidenceInterval.upper.toFixed(2)}/sq.ft.` : 
           ''}
         
         Key factors affecting this prediction:
-        ${result.factors ? result.factors.map(factor => `- ${factor}`).join('\n') : '- No specific factors provided'}
+        ${result.factors ? result.factors.map(factor => `- ${factor.name} (${factor.impact} impact): ${factor.description}`).join('\n') : '- No specific factors provided'}
         
-        ${result.explanation ? `\nDetailed explanation:\n${result.explanation}` : ''}
+        ${result.summary ? `\nSummary:\n${result.summary}` : ''}
       `;
       
       setInsightText(insightText);

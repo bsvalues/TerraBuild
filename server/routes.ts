@@ -20,6 +20,7 @@ import { validateExcelFile, validateBatchExcelFiles } from "./validators/excelVa
 import { processBatchImport } from "./import/batchImporter";
 import { initializeMCP } from "./mcp";
 import { setupMCPRoutes } from "./mcp/routes";
+import aiRoutes from "./routes/aiRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1767,6 +1768,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Initializing Model Content Protocol (MCP) framework...');
     initializeMCP();
     setupMCPRoutes(app);
+    
+    // Setup AI routes
+    app.use('/api/ai', aiRoutes);
+    
     console.log('MCP framework initialized successfully');
     
     // Log activity
