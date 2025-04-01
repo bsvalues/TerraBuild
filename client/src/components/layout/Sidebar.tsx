@@ -147,6 +147,13 @@ export default function Sidebar({ className }: SidebarProps) {
               badge="New"
               badgeColor="bg-blue-100 text-blue-700"
             />
+            <SidebarItem
+              href="/data-exploration"
+              title="Data Explorer"
+              icon={<LineChart />}
+              badge="New"
+              badgeColor="bg-violet-100 text-violet-700"
+            />
           </SidebarSection>
           
           <SidebarSection title="Data & Management" icon={<Building2 />}>
