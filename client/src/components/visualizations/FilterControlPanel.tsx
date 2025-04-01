@@ -127,32 +127,32 @@ export function FilterControlPanel({
   
   return (
     <Card className={`shadow-md ${className}`}>
-      <CardHeader className="pb-3">
-        <CollapsibleTrigger 
-          asChild
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div className="flex justify-between items-center cursor-pointer">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-base">Filters</CardTitle>
-              {activeFilterCount > 0 && (
-                <Badge className="ml-2 bg-gray-100 text-gray-800">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </div>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <ChevronsUpDown className="h-4 w-4" />
-            </Button>
-          </div>
-        </CollapsibleTrigger>
-        <CardDescription>
-          Filter visualizations by region, building type, and more
-        </CardDescription>
-      </CardHeader>
-      
       <Collapsible open={isOpen}>
+        <CardHeader className="pb-3">
+          <CollapsibleTrigger 
+            asChild
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <div className="flex justify-between items-center cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-base">Filters</CardTitle>
+                {activeFilterCount > 0 && (
+                  <Badge className="ml-2 bg-gray-100 text-gray-800">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <ChevronsUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </CollapsibleTrigger>
+          <CardDescription>
+            Filter visualizations by region, building type, and more
+          </CardDescription>
+        </CardHeader>
+        
         <CollapsibleContent>
           <CardContent className="pb-3">
             {allowedFilters.includes('regions') && (
