@@ -238,7 +238,13 @@ export function CostPredictionInsights({
       
       // Handle error from the prediction engine
       if (result.error) {
-        throw new Error(result.error);
+        // Check specifically for quota exceeded error
+        if (result.error.includes("exceeded your current quota") || 
+            result.error.includes("insufficient_quota")) {
+          throw new Error("OpenAI API quota exceeded. Please update your subscription or contact your administrator.");
+        } else {
+          throw new Error(result.error);
+        }
       }
       
       // Format the AI insight text

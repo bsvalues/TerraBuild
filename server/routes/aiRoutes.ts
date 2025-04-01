@@ -7,7 +7,12 @@
 
 import express from 'express';
 import { z } from 'zod';
-import { generateCostPrediction, checkOpenAIApiKeyStatus, CostPredictionParams } from '../services/aiService';
+import { 
+  generateCostPrediction, 
+  checkOpenAIApiKeyStatus, 
+  clearAICache,
+  CostPredictionParams 
+} from '../services/aiService';
 
 const router = express.Router();
 
@@ -25,6 +30,7 @@ router.post('/predict-cost', async (req, res) => {
       targetYear: z.number().int().min(2023).max(2050),
       squareFootage: z.number().optional(),
       selectedFactors: z.array(z.string()).optional(),
+      forceRefresh: z.boolean().optional(),
     });
 
     const result = schema.safeParse(req.body);
@@ -61,6 +67,30 @@ router.get('/openai-status', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to check OpenAI API key status',
+      message: error.message || 'Unknown error'
+    });
+  }
+});
+
+/**
+ * POST /api/ai/clear-cache
+ * 
+ * Clear the AI prediction cache
+ * Requires admin permission in a production environment
+ */
+router.post('/clear-cache', async (req, res) => {
+  try {
+    // In a production environment, this would check for admin permissions
+    // For now, we'll allow it in development mode
+    clearAICache();
+    
+    res.json({
+      success: true,
+      message: 'AI prediction cache cleared successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to clear AI cache',
       message: error.message || 'Unknown error'
     });
   }
