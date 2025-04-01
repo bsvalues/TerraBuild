@@ -9,6 +9,10 @@ import type { Express, Request, Response } from "express";
 import { costPredictionAgent, matrixAnalysisAgent, calculationExplanationAgent } from "./index";
 import { costPredictionRequestSchema } from "./index";
 import { z } from "zod";
+import predictionEngine, { costPredictionInputSchema } from "../ai/predictionEngine";
+
+// Schema for enhanced AI cost prediction request
+export const enhancedCostPredictionRequestSchema = costPredictionInputSchema;
 
 // Schema for matrix analysis request
 const matrixAnalysisRequestSchema = z.object({
@@ -107,6 +111,57 @@ export function setupMCPRoutes(app: Express) {
     }
   });
   
+  // Enhanced AI Cost Prediction route
+  app.post("/api/mcp/enhanced-predict-cost", async (req: Request, res: Response) => {
+    try {
+      // Validate the request body
+      const data = enhancedCostPredictionRequestSchema.parse(req.body);
+      
+      // Call the enhanced prediction engine
+      const result = await predictionEngine.generateCostPrediction(
+        data.buildingType,
+        data.region,
+        data.year,
+        {
+          squareFootage: data.squareFootage,
+          complexity: data.complexity,
+          condition: data.condition,
+          features: data.features
+        }
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error in enhanced cost prediction:", error);
+      
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ 
+          error: "Invalid request data", 
+          details: error.errors 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Error processing request",
+          message: (error as Error).message
+        });
+      }
+    }
+  });
+  
+  // AI engine connection test route
+  app.get("/api/mcp/test-connection", async (req: Request, res: Response) => {
+    try {
+      const connectionStatus = await predictionEngine.testConnection();
+      res.json(connectionStatus);
+    } catch (error) {
+      console.error("Error in connection test:", error);
+      res.status(500).json({ 
+        status: "error",
+        message: (error as Error).message
+      });
+    }
+  });
+
   // MCP status route - useful for checking if MCP is working
   app.get("/api/mcp/status", async (req: Request, res: Response) => {
     try {

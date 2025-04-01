@@ -184,7 +184,7 @@ export function CostPredictionInsights({
     };
   };
 
-  // Get AI-generated insights if OpenAI API key is provided
+  // Get AI-generated insights from the enhanced AI prediction API
   const generateAIInsights = async () => {
     if (!openAIApiKey) {
       setInsightText("API key required for AI insights. Please configure your OpenAI API key.");
@@ -204,32 +204,65 @@ export function CostPredictionInsights({
         return;
       }
       
-      const analysisData = {
-        historical,
-        predicted,
-        region: selectedRegion || "All regions",
-        buildingType: selectedBuildingType || "All building types",
-        growthRate: calculateGrowthRate(historical)
+      // Get the latest historical data point year
+      const currentYear = historical[historical.length-1].year;
+      // Get the future year for prediction
+      const futureYear = currentYear + predictionYears;
+      
+      // Prepare API request
+      const requestData = {
+        buildingType: selectedBuildingType || "RESIDENTIAL",
+        region: selectedRegion || "Benton County",
+        year: futureYear,
+        squareFootage: 2000, // Default square footage
+        complexity: 5, // Mid-level complexity
+        features: []
       };
       
-      // Placeholder for actual OpenAI API call - this would be done on the server
-      // For now, we'll simulate a response
-      setTimeout(() => {
-        const simulatedInsight = `Based on historical cost data from ${historical[0].year} to ${historical[historical.length-1].year}, 
-          building costs for ${analysisData.buildingType} in ${analysisData.region} have shown an annual growth rate of 
-          ${analysisData.growthRate.rate}%. This trend suggests a continued increase in construction costs 
-          over the next ${predictionYears} years, with projected costs reaching $${predicted[predicted.length-1].cost}/sq.ft by ${predicted[predicted.length-1].year}.
-          
-          Key factors affecting this projection include regional economic conditions, material cost inflation, and labor market changes.`;
+      // Call the enhanced prediction API
+      const response = await fetch('/api/mcp/enhanced-predict-cost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error from API: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // Handle error from the prediction engine
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      
+      // Format the AI insight text
+      const insightText = `
+        Based on AI analysis of historical cost data from ${historical[0].year} to ${historical[historical.length-1].year}, 
+        building costs for ${selectedBuildingType || "all building types"} in ${selectedRegion || "all regions"} 
+        are predicted to reach $${result.predictedCost.toFixed(2)}/sq.ft by ${futureYear}.
         
-        setInsightText(simulatedInsight);
-        setShowInsight(true);
-        setAnalysisLoading(false);
-      }, 1500);
+        ${result.confidenceInterval ? 
+          `This prediction has a confidence interval of $${result.confidenceInterval[0].toFixed(2)} to $${result.confidenceInterval[1].toFixed(2)}/sq.ft.` : 
+          ''}
+        
+        Key factors affecting this prediction:
+        ${result.factors ? result.factors.map(factor => `- ${factor}`).join('\n') : '- No specific factors provided'}
+        
+        ${result.explanation ? `\nDetailed explanation:\n${result.explanation}` : ''}
+      `;
+      
+      setInsightText(insightText);
+      setShowInsight(true);
+      setAnalysisLoading(false);
       
     } catch (error) {
       console.error("Error generating AI insights:", error);
-      setInsightText("An error occurred while generating insights. Please try again later.");
+      setInsightText("An error occurred while generating insights: " + 
+        (error instanceof Error ? error.message : "Unknown error"));
       setShowInsight(true);
       setAnalysisLoading(false);
     }
