@@ -5,6 +5,7 @@
  * - Request caching
  * - Retry logic
  * - Prompt optimization
+ * - Cache management
  */
 
 const { expect } = require('chai');
@@ -13,7 +14,11 @@ const fetchMock = require('fetch-mock');
 const openai = require('openai');
 
 // Import the AI service for testing
-const { generateCostPrediction, checkOpenAIApiKeyStatus } = require('../../server/services/aiService');
+const { 
+  generateCostPrediction, 
+  checkOpenAIApiKeyStatus,
+  clearAICache 
+} = require('../../server/services/aiService');
 
 // Mock the OpenAI API response
 const mockOpenAIResponse = {
@@ -136,6 +141,70 @@ describe('AI Service Enhancements', () => {
     it('should use fewer tokens than previous implementation', async () => {
       // This test will need the actual implementation to be in place
       // It should compare token usage before and after optimization
+    });
+  });
+  
+  describe('Cache Management', () => {
+    it('should successfully clear all cache entries', async () => {
+      // Mock node-cache with a spy
+      const cacheSpy = {
+        get: sinon.spy(),
+        set: sinon.spy(),
+        flushAll: sinon.spy()
+      };
+      
+      // Replace the internal aiCache with our spy
+      global.aiCache = cacheSpy;
+      
+      // Call the clearAICache function
+      clearAICache();
+      
+      // Verify that flushAll was called
+      expect(cacheSpy.flushAll.calledOnce).to.be.true;
+    });
+    
+    it('should allow forced refresh through parameter', async () => {
+      // Set up mocks
+      const originalEnv = process.env.OPENAI_API_KEY;
+      process.env.OPENAI_API_KEY = 'sk-test-key';
+      
+      // Mock the create method to return our mock response
+      const createStub = sinon.stub().resolves(mockOpenAIResponse);
+      const openaiClientStub = {
+        chat: { completions: { create: createStub } }
+      };
+      
+      // Replace the real OpenAI client with our stub
+      sinon.stub(openai, 'OpenAI').returns(openaiClientStub);
+      
+      // Replace storage methods
+      const storageStub = {
+        getCostFactorsByRegionAndType: sinon.stub().resolves({}),
+        getAllBuildingCosts: sinon.stub().resolves([])
+      };
+      sinon.stub(global, 'storage').value(storageStub);
+      
+      // Create test prediction parameters
+      const predictionParams = {
+        buildingType: 'RESIDENTIAL',
+        region: 'Benton County',
+        targetYear: 2025
+      };
+      
+      // First call - should trigger API request
+      await generateCostPrediction(predictionParams);
+      
+      // Second call with same params - should use cache
+      await generateCostPrediction(predictionParams);
+      
+      // Third call with forceRefresh - should bypass cache and make API call again
+      await generateCostPrediction({...predictionParams, forceRefresh: true});
+      
+      // Verify OpenAI API was called twice (first call and forced refresh)
+      expect(createStub.callCount).to.equal(2);
+      
+      // Restore the original environment
+      process.env.OPENAI_API_KEY = originalEnv;
     });
   });
 });

@@ -183,7 +183,7 @@ export function CostPredictionInsights({
   };
 
   // Get AI-generated insights from the new AI prediction API
-  const generateAIInsights = async () => {
+  const generateAIInsights = async (forceRefresh = false) => {
     setAnalysisLoading(true);
     
     try {
@@ -218,7 +218,8 @@ export function CostPredictionInsights({
         region: selectedRegion || "Benton County",
         targetYear: futureYear,
         squareFootage: 2000, // Default square footage
-        selectedFactors: ["inflation", "materials", "labor"]
+        selectedFactors: ["inflation", "materials", "labor"],
+        forceRefresh: forceRefresh // Add force refresh option to bypass cache
       };
       
       // Call the AI prediction API
@@ -496,14 +497,25 @@ export function CostPredictionInsights({
               AI-Powered Insights
             </h3>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={generateAIInsights}
-              disabled={analysisLoading}
-            >
-              {analysisLoading ? 'Analyzing...' : 'Generate Insights'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => generateAIInsights(false)}
+                disabled={analysisLoading}
+              >
+                {analysisLoading ? 'Analyzing...' : 'Generate Insights'}
+              </Button>
+              <Button 
+                variant="secondary"
+                size="sm"
+                onClick={() => generateAIInsights(true)}
+                disabled={analysisLoading}
+                title="Bypass cache and get fresh insights"
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
           
           {showInsight && insightText && (
