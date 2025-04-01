@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { AlertCircle, ArrowRightIcon, BarChart2, LineChart as LineChartIcon, Map, TrendingUp } from 'lucide-react';
+import { AlertCircle, ArrowRightIcon, BarChart2, LineChart as LineChartIcon, Map, TrendingUp, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { queryClient } from '@/lib/queryClient';
+import { BenchmarkingVisualization } from '@/components/visualizations';
 
 // Interface for API data
 interface County {
@@ -344,7 +345,7 @@ function BenchmarkingPage(): React.JSX.Element {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-6">
+        <TabsList className="grid grid-cols-5 mb-6">
           <TabsTrigger value="county-comparison" className="flex items-center gap-2">
             <Map className="h-4 w-4" />
             <span>County Comparison</span>
@@ -360,6 +361,10 @@ function BenchmarkingPage(): React.JSX.Element {
           <TabsTrigger value="material-comparison" className="flex items-center gap-2">
             <BarChart2 className="h-4 w-4" />
             <span>Material Breakdown</span>
+          </TabsTrigger>
+          <TabsTrigger value="advanced-visualizations" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Advanced Analysis</span>
           </TabsTrigger>
         </TabsList>
         
@@ -1131,6 +1136,23 @@ function BenchmarkingPage(): React.JSX.Element {
                 </CardContent>
               </Card>
             ) : null}
+          </div>
+        </TabsContent>
+        
+        {/* Advanced Visualizations Tab */}
+        <TabsContent value="advanced-visualizations">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Cost Analysis Visualizations</CardTitle>
+                <CardDescription>
+                  Interactive visualizations for deeper cost analysis and insights
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <BenchmarkingVisualization />
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
