@@ -21,7 +21,8 @@ import {
   Zap,
   Activity,
   BarChart2,
-  LineChart
+  LineChart,
+  BookOpen
 } from "lucide-react";
 
 interface SidebarProps {
@@ -138,6 +139,13 @@ export default function Sidebar({ className }: SidebarProps) {
               icon={<Glasses />}
               badge="Beta"
               badgeColor="bg-purple-100 text-purple-700"
+            />
+            <SidebarItem
+              href="/mcp-overview"
+              title="MCP Overview"
+              icon={<BookOpen />}
+              badge="New"
+              badgeColor="bg-blue-100 text-blue-700"
             />
           </SidebarSection>
           

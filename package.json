@@ -49,6 +49,7 @@
     "a-frame": "^0.0.0",
     "aframe": "^1.7.0",
     "aframe-react": "^4.4.0",
+    "ajv": "^8.17.1",
     "ar.js": "^2.2.2",
     "chai": "^5.2.0",
     "class-variance-authority": "^0.7.0",
