@@ -19,7 +19,9 @@ import {
   FileBarChart,
   HelpCircle,
   Zap,
-  Activity
+  Activity,
+  BarChart2,
+  LineChart
 } from "lucide-react";
 
 interface SidebarProps {
@@ -114,6 +116,13 @@ export default function Sidebar({ className }: SidebarProps) {
               href="/analytics"
               title="Analytics"
               icon={<BarChart3 />}
+            />
+            <SidebarItem
+              href="/benchmarking"
+              title="Benchmarking"
+              icon={<BarChart2 />}
+              badge="New"
+              badgeColor="bg-green-100 text-green-700"
             />
           </SidebarSection>
           

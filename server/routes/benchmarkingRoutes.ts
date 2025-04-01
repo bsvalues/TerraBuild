@@ -117,4 +117,108 @@ export function registerBenchmarkingRoutes(app: any) {
       res.status(500).json({ error: "Failed to query cost matrix with filters" });
     }
   });
+
+  // ----- Enhanced Benchmarking API Routes -----
+
+  // Compare costs across multiple counties
+  app.post("/api/benchmarking/counties/compare", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { counties, buildingType } = req.body;
+
+      if (!counties || !Array.isArray(counties) || counties.length === 0) {
+        return res.status(400).json({ error: "Counties array is required" });
+      }
+
+      const comparisonData = await benchmarkingStorage.compareCounties(counties, buildingType);
+      res.json(comparisonData);
+    } catch (error) {
+      console.error("Error comparing counties:", error);
+      res.status(500).json({ error: "Failed to compare counties" });
+    }
+  });
+
+  // Compare costs across multiple states
+  app.post("/api/benchmarking/states/compare", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { states, buildingType } = req.body;
+
+      if (!states || !Array.isArray(states) || states.length === 0) {
+        return res.status(400).json({ error: "States array is required" });
+      }
+
+      const comparisonData = await benchmarkingStorage.compareStates(states, buildingType);
+      res.json(comparisonData);
+    } catch (error) {
+      console.error("Error comparing states:", error);
+      res.status(500).json({ error: "Failed to compare states" });
+    }
+  });
+
+  // Get cost trends over time for a region
+  app.post("/api/benchmarking/trends/region", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { region, buildingType, years } = req.body;
+
+      if (!region || !buildingType) {
+        return res.status(400).json({ error: "Region and buildingType are required" });
+      }
+
+      // Default to 5 years if not specified
+      const numYears = years ? parseInt(years) : 5;
+
+      const trendsData = await benchmarkingStorage.getRegionCostTrends(region, buildingType, numYears);
+      res.json(trendsData);
+    } catch (error) {
+      console.error("Error fetching region cost trends:", error);
+      res.status(500).json({ error: "Failed to fetch region cost trends" });
+    }
+  });
+
+  // Get cost trends over time across counties
+  app.post("/api/benchmarking/trends/counties", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { counties, buildingType, years } = req.body;
+
+      if (!counties || !Array.isArray(counties) || counties.length === 0 || !buildingType) {
+        return res.status(400).json({ error: "Counties array and buildingType are required" });
+      }
+
+      // Default to 5 years if not specified
+      const numYears = years ? parseInt(years) : 5;
+
+      const trendsData = await benchmarkingStorage.getCountyCostTrends(counties, buildingType, numYears);
+      res.json(trendsData);
+    } catch (error) {
+      console.error("Error fetching county cost trends:", error);
+      res.status(500).json({ error: "Failed to fetch county cost trends" });
+    }
+  });
+
+  // Get comprehensive regional stats report
+  app.get("/api/benchmarking/report/regional-stats", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const reportData = await benchmarkingStorage.getRegionalStatsReport();
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating regional stats report:", error);
+      res.status(500).json({ error: "Failed to generate regional stats report" });
+    }
+  });
+
+  // Compare material costs across regions
+  app.post("/api/benchmarking/materials/compare", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { regions, buildingType } = req.body;
+
+      if (!regions || !Array.isArray(regions) || regions.length === 0 || !buildingType) {
+        return res.status(400).json({ error: "Regions array and buildingType are required" });
+      }
+
+      const materialsComparisonData = await benchmarkingStorage.compareMaterialCostsAcrossRegions(regions, buildingType);
+      res.json(materialsComparisonData);
+    } catch (error) {
+      console.error("Error comparing material costs across regions:", error);
+      res.status(500).json({ error: "Failed to compare material costs across regions" });
+    }
+  });
 }

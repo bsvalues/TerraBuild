@@ -11,6 +11,7 @@ import AuthPage from "@/pages/auth-page";
 import AIToolsPage from "@/pages/AIToolsPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
 import DataImportPage from "@/pages/DataImportPage";
+import BenchmarkingPage from "@/pages/BenchmarkingPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useEffect } from "react";
@@ -51,6 +52,7 @@ function Router() {
       <ProtectedRoute path="/ai-tools" component={AIToolsPage} />
       <ProtectedRoute path="/ar-visualization" component={ARVisualizationPage} />
       <ProtectedRoute path="/data-import" component={DataImportPage} />
+      <ProtectedRoute path="/benchmarking" component={BenchmarkingPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
