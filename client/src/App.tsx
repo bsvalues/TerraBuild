@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import DashboardPage from "@/pages/DashboardPage";
-import CalculatorPage from "@/pages/calculator-page";
+import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
 import AIToolsPage from "@/pages/AIToolsPage";
