@@ -40,6 +40,12 @@ interface CostBreakdown {
   cost: number;
 }
 
+interface TimelineData {
+  month: string;
+  cost: number;
+  projectedCost: number;
+}
+
 const BCBSCostCalculator = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalCost, setTotalCost] = useState<number>(0);
@@ -47,6 +53,7 @@ const BCBSCostCalculator = () => {
   const [regionalMultiplier, setRegionalMultiplier] = useState<number>(1.0);
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [hoveredCostItem, setHoveredCostItem] = useState<string | null>(null);
+  const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
 
   // Default form values
   const defaultValues: Partial<CalculatorFormValues> = {
@@ -181,10 +188,54 @@ const BCBSCostCalculator = () => {
     setMaterials(updatedMaterials);
   };
 
+  // Generate timeline projection data
+  const generateTimelineData = (totalCost: number): TimelineData[] => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const baseCostPerMonth = totalCost / 12;
+    
+    // Create a realistic cost curve with variations
+    return months.map((month, index) => {
+      // Create a realistic project spending curve
+      // Projects typically start slow, ramp up in the middle, and taper off
+      let monthlyFactor = 0;
+      
+      if (index < 3) {
+        // Initial phase (first quarter) - slower start
+        monthlyFactor = 0.5 + (index * 0.2);
+      } else if (index < 9) {
+        // Middle phase (months 4-9) - peak construction period
+        monthlyFactor = 1.2 - (Math.abs(index - 6) * 0.05);
+      } else {
+        // Final phase (last quarter) - finishing work
+        monthlyFactor = 0.8 - ((index - 9) * 0.15);
+      }
+      
+      // Add some randomness for realism
+      const variability = 0.15; // 15% max variance
+      const randomFactor = 1 + ((Math.random() * variability * 2) - variability);
+      
+      // Calculate the cost for this month
+      const cost = baseCostPerMonth * monthlyFactor * randomFactor;
+      
+      // Calculate the projected cost (ideal curve without randomness)
+      const projectedCost = baseCostPerMonth * monthlyFactor;
+      
+      return {
+        month,
+        cost: Math.round(cost),
+        projectedCost: Math.round(projectedCost)
+      };
+    });
+  };
+
   // Submit form handler
   const onSubmit = (data: CalculatorFormValues) => {
     const cost = calculateTotalCost(data, materials);
     setTotalCost(cost);
+    
+    // Generate timeline data when form is submitted
+    const timeline = generateTimelineData(cost);
+    setTimelineData(timeline);
   };
 
   // Update cost when form values or materials change
@@ -193,6 +244,12 @@ const BCBSCostCalculator = () => {
       const data = form.getValues();
       const cost = calculateTotalCost(data, materials);
       setTotalCost(cost);
+      
+      // Generate timeline data when cost changes
+      if (cost > 0) {
+        const timeline = generateTimelineData(cost);
+        setTimelineData(timeline);
+      }
     }
   }, [form.formState.isValid, materials]);
 
@@ -881,6 +938,72 @@ const BCBSCostCalculator = () => {
                     </div>
                   </div>
                 </div>
+
+                {timelineData.length > 0 && (
+                  <div className="mt-8 bg-white p-6 border rounded-lg shadow-sm">
+                    <div className="flex items-center mb-4">
+                      <BarChart3 className="text-primary mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium">Cost Timeline Projection</h4>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg mb-4 flex items-center text-sm">
+                      <Info className="text-blue-500 mr-2 h-4 w-4" />
+                      <p>This chart shows how costs might be distributed over a 12-month project timeline. The blue line shows projected costs, while the orange bars show actual costs with typical project variations.</p>
+                    </div>
+                    
+                    <div className="w-full h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={timelineData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fill: '#666' }}
+                            tickLine={{ stroke: '#ccc' }}
+                          />
+                          <YAxis 
+                            tickFormatter={(value) => `$${value.toLocaleString()}`}
+                            tick={{ fill: '#666' }}
+                            tickLine={{ stroke: '#ccc' }}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [`$${Number(value).toLocaleString()}`, '']}
+                            labelFormatter={(label) => `Month: ${label}`}
+                            contentStyle={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              border: '1px solid #e0e0e0',
+                              padding: '12px'
+                            }}
+                          />
+                          <Legend verticalAlign="top" height={40} />
+                          <Bar 
+                            dataKey="cost" 
+                            name="Monthly Cost" 
+                            fill="#ff9f43" 
+                            radius={[4, 4, 0, 0]}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="projectedCost"
+                            name="Projected Cost"
+                            stroke="#2e86de"
+                            strokeWidth={3}
+                            dot={{ r: 4, fill: "#2e86de", strokeWidth: 2, stroke: "#fff" }}
+                            activeDot={{ r: 6, fill: "#2e86de", stroke: "#fff", strokeWidth: 2 }}
+                            animationDuration={2000}
+                            animationEasing="ease-out"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-between mt-6">
                   <Button
