@@ -23,6 +23,7 @@ import { setupMCPRoutes } from "./mcp/routes";
 import aiRoutes from "./routes/aiRoutes";
 import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
+import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1773,6 +1774,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Setup AI routes
     app.use('/api/ai', aiRoutes);
+    
+    // Setup Advanced Prediction routes
+    app.use('/api/ai', advancedPredictionRoutes);
     
     // Setup Benchmarking routes
     registerBenchmarkingRoutes(app);

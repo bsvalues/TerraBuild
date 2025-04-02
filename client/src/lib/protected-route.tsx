@@ -1,3 +1,4 @@
+import React from "react";
 import { Route } from "wouter";
 
 export function ProtectedRoute({
@@ -5,7 +6,7 @@ export function ProtectedRoute({
   component: Component,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component: React.ComponentType<any>;
 }) {
   /**
    * DEVELOPMENT MODE: Authentication completely disabled

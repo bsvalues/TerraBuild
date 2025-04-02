@@ -120,7 +120,7 @@ export interface IStorage {
   getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]>;
   
   // AI and NLP methods
-  getCostTrends(): Promise<any[]>;
+  getCostTrends(period?: string, buildingType?: string, region?: string): Promise<any[]>;
   getBuildingTypesByCounty(county: string): Promise<string[]>;
   getBuildingTypesByState(state: string): Promise<string[]>;
   getCountyStats(county: string): Promise<{
@@ -129,9 +129,6 @@ export interface IStorage {
     avgCost: number,
     buildingTypeCount: number
   }>;
-  
-  // AI and NLP methods
-  getCostTrends(): Promise<any[]>;
   
   // File Uploads
   createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload>;
