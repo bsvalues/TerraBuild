@@ -255,25 +255,43 @@ const BCBSCostCalculator = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl">Building Cost Calculator</CardTitle>
-          <CardDescription>
+      <Card className="w-full shadow-md border-[#29B7D3]/20">
+        <CardHeader className="bg-gradient-to-r from-[#e6eef2] to-[#e8f8fb]">
+          <div className="flex items-center">
+            <DollarSign className="text-[#243E4D] mr-2 h-6 w-6" />
+            <CardTitle className="text-2xl text-[#243E4D]">Building Cost Calculator</CardTitle>
+          </div>
+          <CardDescription className="text-[#243E4D]/70">
             Calculate accurate building costs based on project specifications
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="calculator" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="calculator">Calculator</TabsTrigger>
-              <TabsTrigger value="materials">Materials</TabsTrigger>
-              <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-[#e6eef2]">
+              <TabsTrigger 
+                value="calculator" 
+                className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
+              >
+                Calculator
+              </TabsTrigger>
+              <TabsTrigger 
+                value="materials" 
+                className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
+              >
+                Materials
+              </TabsTrigger>
+              <TabsTrigger 
+                value="results" 
+                className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
+              >
+                Results
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="calculator">
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 flex items-center text-sm">
-                <AlertCircle className="text-blue-500 mr-2 h-4 w-4" />
-                <p>Enter your building specifications to get an accurate cost estimate. All fields are required for calculation.</p>
+              <div className="bg-[#e6eef2] p-4 rounded-lg mb-6 flex items-center text-sm">
+                <AlertCircle className="text-[#243E4D] mr-2 h-4 w-4" />
+                <p className="text-[#243E4D]">Enter your building specifications to get an accurate cost estimate. All fields are required for calculation.</p>
               </div>
               
               <Form {...form}>
@@ -281,7 +299,7 @@ const BCBSCostCalculator = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-4 border rounded-lg shadow-sm">
                       <h3 className="text-md font-medium mb-3 flex items-center">
-                        <Home className="h-4 w-4 mr-2 text-primary" />
+                        <Home className="h-4 w-4 mr-2 text-[#243E4D]" />
                         Building Specifications
                       </h3>
                       <div className="space-y-4">
@@ -337,7 +355,7 @@ const BCBSCostCalculator = () => {
                     
                     <div className="bg-white p-4 border rounded-lg shadow-sm">
                       <h3 className="text-md font-medium mb-3 flex items-center">
-                        <Building className="h-4 w-4 mr-2 text-primary" />
+                        <Building className="h-4 w-4 mr-2 text-[#3CAB36]" />
                         Quality & Location
                       </h3>
                       <div className="space-y-4">
@@ -408,7 +426,7 @@ const BCBSCostCalculator = () => {
                   
                   <div className="bg-white p-4 border rounded-lg shadow-sm">
                     <h3 className="text-md font-medium mb-3 flex items-center">
-                      <BarChart3 className="h-4 w-4 mr-2 text-primary" />
+                      <BarChart3 className="h-4 w-4 mr-2 text-[#29B7D3]" />
                       Adjustment Factors
                     </h3>
                     
@@ -417,10 +435,10 @@ const BCBSCostCalculator = () => {
                         control={form.control}
                         name="complexityFactor"
                         render={({ field }) => (
-                          <FormItem className="bg-gray-50 p-3 rounded-md">
+                          <FormItem className="bg-[#e6eef2] p-3 rounded-md">
                             <div className="flex justify-between items-center">
                               <FormLabel>Complexity Factor</FormLabel>
-                              <Badge variant="outline">{field.value}</Badge>
+                              <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
                             </div>
                             <FormControl>
                               <Slider
@@ -449,10 +467,10 @@ const BCBSCostCalculator = () => {
                         control={form.control}
                         name="conditionFactor"
                         render={({ field }) => (
-                          <FormItem className="bg-gray-50 p-3 rounded-md">
+                          <FormItem className="bg-[#e8f8fb] p-3 rounded-md">
                             <div className="flex justify-between items-center">
                               <FormLabel>Condition Factor</FormLabel>
-                              <Badge variant="outline">{field.value}</Badge>
+                              <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
                             </div>
                             <FormControl>
                               <Slider
@@ -492,7 +510,7 @@ const BCBSCostCalculator = () => {
                     
                     <Button 
                       type="submit"
-                      className="gap-2"
+                      className="gap-2 bg-[#3CAB36] hover:bg-[#3CAB36]/90 text-white"
                     >
                       <DollarSign className="h-4 w-4" />
                       <span>Calculate Cost</span>
@@ -506,13 +524,13 @@ const BCBSCostCalculator = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center">
-                    <DollarSign className="mr-2 h-5 w-5 text-primary" />
+                    <DollarSign className="mr-2 h-5 w-5 text-[#3CAB36]" />
                     <h3 className="text-lg font-medium">Building Materials</h3>
                   </div>
                   <TooltipProvider>
                     <UITooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={addMaterial} size="sm" className="flex items-center gap-1">
+                        <Button onClick={addMaterial} size="sm" className="flex items-center gap-1 bg-[#29B7D3] hover:bg-[#29B7D3]/90 text-white">
                           <span>Add Material</span>
                           <span className="ml-1">+</span>
                         </Button>
@@ -524,9 +542,9 @@ const BCBSCostCalculator = () => {
                   </TooltipProvider>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg mb-4 flex items-center text-sm">
-                  <Info className="text-blue-500 mr-2 h-4 w-4" />
-                  <p>Adding specific materials will provide a more accurate cost estimate. All materials will be included in the final calculation.</p>
+                <div className="bg-[#e8f8fb] p-4 rounded-lg mb-4 flex items-center text-sm">
+                  <Info className="text-[#29B7D3] mr-2 h-4 w-4" />
+                  <p className="text-[#243E4D]">Adding specific materials will provide a more accurate cost estimate. All materials will be included in the final calculation.</p>
                 </div>
                 
                 {materials.length > 0 ? (
@@ -591,11 +609,11 @@ const BCBSCostCalculator = () => {
                     </Table>
                   </div>
                 ) : (
-                  <div className="text-center py-10 border rounded-md bg-gray-50">
+                  <div className="text-center py-10 border rounded-md bg-[#e6eef2]">
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      <Building className="h-10 w-10 text-gray-400" />
-                      <p className="text-gray-500">No materials added yet.</p>
-                      <Button onClick={addMaterial} variant="outline" size="sm" className="mt-2">
+                      <Building className="h-10 w-10 text-[#243E4D]" />
+                      <p className="text-[#243E4D]">No materials added yet.</p>
+                      <Button onClick={addMaterial} variant="outline" size="sm" className="mt-2 border-[#29B7D3]/30 hover:bg-[#e8f8fb] hover:text-[#29B7D3]">
                         Add Your First Material
                       </Button>
                     </div>
@@ -603,9 +621,9 @@ const BCBSCostCalculator = () => {
                 )}
                 
                 {materials.length > 0 && (
-                  <div className="bg-gray-50 p-3 rounded-md flex justify-between items-center mt-4">
-                    <span className="font-medium">Total Materials Cost:</span>
-                    <span className="font-bold text-primary">
+                  <div className="bg-[#e6eef2] p-3 rounded-md flex justify-between items-center mt-4">
+                    <span className="font-medium text-[#243E4D]">Total Materials Cost:</span>
+                    <span className="font-bold text-[#243E4D]">
                       ${materials.reduce((total, material) => total + (material.quantity * material.unitPrice), 0).toLocaleString()}
                     </span>
                   </div>
@@ -628,7 +646,7 @@ const BCBSCostCalculator = () => {
                       form.handleSubmit(onSubmit)();
                       setActiveTab("results");
                     }}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-[#3CAB36] hover:bg-[#3CAB36]/90 text-white"
                   >
                     <span>View Results</span>
                     <span>→</span>
@@ -639,17 +657,17 @@ const BCBSCostCalculator = () => {
             
             <TabsContent value="results">
               <div className="space-y-6">
-                <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                <div className="bg-gradient-to-r from-[#e6eef2] to-[#e8f8fb] p-6 rounded-lg border border-[#29B7D3]/20">
                   <div className="flex items-center justify-center mb-2">
-                    <DollarSign className="text-primary mr-2 h-6 w-6" />
-                    <h3 className="text-2xl font-bold text-center">
+                    <DollarSign className="text-[#243E4D] mr-2 h-6 w-6" />
+                    <h3 className="text-2xl font-bold text-center text-[#243E4D]">
                       Total Estimated Cost
                     </h3>
                   </div>
-                  <p className="text-5xl font-bold text-center text-primary mb-2">
+                  <p className="text-5xl font-bold text-center text-[#243E4D] mb-2">
                     ${totalCost.toLocaleString()}
                   </p>
-                  <p className="text-center text-sm text-gray-500">
+                  <p className="text-center text-sm text-[#243E4D]/70">
                     Based on {form.getValues().squareFootage.toLocaleString()} sq ft {regions.find(r => r.value === form.getValues().region)?.label} {form.getValues().buildingType.toLowerCase()} building
                   </p>
                 </div>
@@ -657,8 +675,8 @@ const BCBSCostCalculator = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center">
-                      <BarChart3 className="text-primary mr-2 h-5 w-5" />
-                      <h4 className="text-lg font-medium">Cost Breakdown</h4>
+                      <BarChart3 className="text-[#243E4D] mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium text-[#243E4D]">Cost Breakdown</h4>
                     </div>
                     <div className="border rounded-md overflow-hidden">
                       <Table>
@@ -688,8 +706,8 @@ const BCBSCostCalculator = () => {
                 
                   <div className="space-y-3">
                     <div className="flex items-center">
-                      <PieChartIcon className="text-primary mr-2 h-5 w-5" />
-                      <h4 className="text-lg font-medium">Cost Distribution</h4>
+                      <PieChartIcon className="text-[#243E4D] mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium text-[#243E4D]">Cost Distribution</h4>
                     </div>
                     <div className="h-80 border rounded-md p-4">
                       <ResponsiveContainer width="100%" height="100%">
@@ -803,8 +821,8 @@ const BCBSCostCalculator = () => {
                 
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center">
-                    <BarChart3 className="text-primary mr-2 h-5 w-5" />
-                    <h4 className="text-lg font-medium">Cost Comparison</h4>
+                    <BarChart3 className="text-[#243E4D] mr-2 h-5 w-5" />
+                    <h4 className="text-lg font-medium text-[#243E4D]">Cost Comparison</h4>
                   </div>
                   <div className="h-80 border rounded-md p-4">
                     <ResponsiveContainer width="100%" height="100%">
@@ -861,8 +879,8 @@ const BCBSCostCalculator = () => {
                 <div className="mt-6 space-y-6">
                   <div className="bg-white p-6 border rounded-lg shadow-sm">
                     <div className="flex items-center mb-4">
-                      <DollarSign className="text-primary mr-2 h-5 w-5" />
-                      <h4 className="text-lg font-medium">Interactive Cost Breakdown</h4>
+                      <DollarSign className="text-[#243E4D] mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium text-[#243E4D]">Interactive Cost Breakdown</h4>
                     </div>
                     
                     <div className="flex flex-col space-y-4">
@@ -942,13 +960,13 @@ const BCBSCostCalculator = () => {
                 {timelineData.length > 0 && (
                   <div className="mt-8 bg-white p-6 border rounded-lg shadow-sm">
                     <div className="flex items-center mb-4">
-                      <BarChart3 className="text-primary mr-2 h-5 w-5" />
-                      <h4 className="text-lg font-medium">Cost Timeline Projection</h4>
+                      <BarChart3 className="text-[#243E4D] mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium text-[#243E4D]">Cost Timeline Projection</h4>
                     </div>
                     
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4 flex items-center text-sm">
-                      <Info className="text-blue-500 mr-2 h-4 w-4" />
-                      <p>This chart shows how costs might be distributed over a 12-month project timeline. The blue line shows projected costs, while the orange bars show actual costs with typical project variations.</p>
+                    <div className="bg-[#e8f8fb] p-4 rounded-lg mb-4 flex items-center text-sm">
+                      <Info className="text-[#29B7D3] mr-2 h-4 w-4" />
+                      <p className="text-[#243E4D]">This chart shows how costs might be distributed over a 12-month project timeline. The blue line shows projected costs, while the orange bars show actual costs with typical project variations.</p>
                     </div>
                     
                     <div className="w-full h-[400px]">
@@ -1029,12 +1047,12 @@ const BCBSCostCalculator = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-between border-t pt-4">
+        <CardFooter className="flex justify-between border-t pt-4 bg-[#e6eef2]/40">
           <div>
-            <p className="text-sm text-gray-500">Regional Multiplier: {regionalMultiplier.toFixed(2)}</p>
+            <p className="text-sm text-[#243E4D]/80">Regional Multiplier: <span className="font-medium">{regionalMultiplier.toFixed(2)}</span></p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium">Total Estimated Cost: ${totalCost.toLocaleString()}</p>
+            <p className="text-sm font-medium text-[#243E4D]">Total Estimated Cost: <span className="font-bold">${totalCost.toLocaleString()}</span></p>
           </div>
         </CardFooter>
       </Card>

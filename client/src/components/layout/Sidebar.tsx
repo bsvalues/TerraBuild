@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { APP_NAME } from "@/data/constants";
 import { useAuth } from "@/hooks/use-auth";
+import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 import {
   BarChart3,
   Home,
@@ -37,7 +38,7 @@ interface SidebarItemProps {
   badgeColor?: string;
 }
 
-function SidebarItem({ href, title, icon, badge, badgeColor = "bg-blue-100 text-blue-700" }: SidebarItemProps) {
+function SidebarItem({ href, title, icon, badge, badgeColor = "bg-[#e6eef2] text-[#243E4D]" }: SidebarItemProps) {
   const [location] = useLocation();
   const isActive = location === href;
 
@@ -48,12 +49,12 @@ function SidebarItem({ href, title, icon, badge, badgeColor = "bg-blue-100 text-
         className={cn(
           "w-full justify-start mb-1 border-l-2 border-transparent rounded-r-md rounded-l-none",
           isActive 
-            ? "bg-blue-50 text-blue-800 border-l-blue-600 font-medium" 
-            : "text-gray-600 hover:bg-blue-50/50 hover:text-blue-700"
+            ? "bg-[#e6eef2] text-[#243E4D] border-l-[#243E4D] font-medium" 
+            : "text-gray-600 hover:bg-[#f0f4f7] hover:text-[#243E4D]"
         )}
       >
         {React.cloneElement(icon as React.ReactElement, {
-          className: cn("mr-2 h-4 w-4", isActive ? "text-blue-600" : "text-gray-500"),
+          className: cn("mr-2 h-4 w-4", isActive ? "text-[#29B7D3]" : "text-gray-500"),
         })}
         {title}
         {badge && (
@@ -111,7 +112,7 @@ export default function Sidebar({ className }: SidebarProps) {
               title="Cost Calculator"
               icon={<Calculator />}
               badge="New"
-              badgeColor="bg-blue-100 text-blue-700"
+              badgeColor="bg-[#e6eef2] text-[#243E4D]"
             />
             <SidebarItem
               href="/analytics"
@@ -123,7 +124,7 @@ export default function Sidebar({ className }: SidebarProps) {
               title="Benchmarking"
               icon={<BarChart2 />}
               badge="New"
-              badgeColor="bg-green-100 text-green-700"
+              badgeColor="bg-[#dcf0db] text-[#3CAB36]"
             />
           </SidebarSection>
           
@@ -138,21 +139,21 @@ export default function Sidebar({ className }: SidebarProps) {
               title="AR Visualization"
               icon={<Glasses />}
               badge="Beta"
-              badgeColor="bg-purple-100 text-purple-700"
+              badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
             />
             <SidebarItem
               href="/mcp-overview"
               title="MCP Overview"
               icon={<BookOpen />}
               badge="New"
-              badgeColor="bg-blue-100 text-blue-700"
+              badgeColor="bg-[#e6eef2] text-[#243E4D]"
             />
             <SidebarItem
               href="/data-exploration"
               title="Data Explorer"
               icon={<LineChart />}
               badge="New"
-              badgeColor="bg-violet-100 text-violet-700"
+              badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
             />
           </SidebarSection>
           
@@ -167,7 +168,7 @@ export default function Sidebar({ className }: SidebarProps) {
               title="System Status"
               icon={<Activity />}
               badge="Healthy"
-              badgeColor="bg-green-100 text-green-700"
+              badgeColor="bg-[#dcf0db] text-[#3CAB36]"
             />
             {isAdmin && (
               <SidebarItem
@@ -193,18 +194,18 @@ export default function Sidebar({ className }: SidebarProps) {
               Resources
             </span>
           </div>
-          <div className="bg-blue-50 rounded-md p-3 mb-3">
-            <p className="text-xs text-blue-700 mb-2">Need help with cost calculations?</p>
-            <Button size="sm" variant="outline" className="w-full text-xs h-7 bg-white border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
+          <div className="bg-[#e6eef2] rounded-md p-3 mb-3">
+            <p className="text-xs text-[#243E4D] mb-2">Need help with cost calculations?</p>
+            <Button size="sm" variant="outline" className="w-full text-xs h-7 bg-white border-[#29B7D3]/30 text-[#243E4D] hover:bg-[#e8f8fb] hover:text-[#29B7D3]">
               View Documentation
             </Button>
           </div>
           
-          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-md p-3 text-white">
+          <div className="bg-gradient-to-br from-[#243E4D] to-[#132731] rounded-md p-3 text-white">
             <p className="text-xs font-medium mb-1">Benton County</p>
             <p className="text-[10px] mb-2 opacity-80">Building Cost Assessment System v2.0</p>
             <div className="flex justify-between items-center">
-              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">March 2025</span>
+              <span className="text-[10px] bg-[#3CAB36]/20 px-1.5 py-0.5 rounded">March 2025</span>
               <span className="text-[10px]">Pro License</span>
             </div>
           </div>

@@ -17,9 +17,10 @@ import {
   Search, 
   LayoutDashboard, 
   Shield, 
-  Workflow
+  Building2
 } from "lucide-react";
 import { APP_NAME } from "@/data/constants";
+import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 
 export default function TopNav() {
   const { user, logoutMutation } = useAuth();
@@ -30,28 +31,27 @@ export default function TopNav() {
 
   return (
     <div className="shadow-md">
-      {/* Top gradient header */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white">
+      {/* Top gradient header with Benton County branding colors */}
+      <div className="bg-gradient-to-r from-[#243E4D] to-[#496980] text-white">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-600 rounded-md">
-              <Workflow className="h-5 w-5 text-white" />
+            <div className="p-1.5 bg-[#3CAB36] rounded-md">
+              <Building2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">{APP_NAME}</h1>
-              <p className="text-xs text-blue-200">Building Cost Assessment System</p>
+              <BentonBranding variant="horizontal" size="sm" showTagline={true} />
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="px-2.5 py-1.5 bg-blue-800/50 rounded-full text-xs flex items-center gap-1.5">
+            <div className="px-2.5 py-1.5 bg-[#243E4D]/70 rounded-full text-xs flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5" />
               <span>Mission Control Panel</span>
             </div>
             
             <Button 
               size="sm" 
-              className="bg-blue-600 hover:bg-blue-700 text-white border-none rounded-md shadow-sm"
+              className="bg-[#3CAB36] hover:bg-[#3CAB36]/90 text-white border-none rounded-md shadow-sm"
             >
               <LayoutDashboard className="mr-1 h-3.5 w-3.5" />
               Configure
@@ -66,14 +66,14 @@ export default function TopNav() {
           {/* Status indicators */}
           <div className="flex gap-4">
             <div className="flex items-center text-sm">
-              <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-              <span className="font-medium text-gray-700">API Status:</span>
+              <span className="h-2 w-2 rounded-full bg-[#3CAB36] mr-2"></span>
+              <span className="font-medium text-[#243E4D]">API Status:</span>
               <span className="ml-1 text-gray-600">Online</span>
             </div>
             
             <div className="flex items-center text-sm">
-              <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-              <span className="font-medium text-gray-700">System:</span>
+              <span className="h-2 w-2 rounded-full bg-[#3CAB36] mr-2"></span>
+              <span className="font-medium text-[#243E4D]">System:</span>
               <span className="ml-1 text-gray-600">Healthy</span>
             </div>
           </div>
@@ -85,19 +85,19 @@ export default function TopNav() {
               <input
                 type="search"
                 placeholder="Search..."
-                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 pl-8 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors h-9 w-[250px]"
+                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 pl-8 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-[#243E4D] focus:border-[#243E4D] transition-colors h-9 w-[250px]"
               />
             </div>
 
-            <Button variant="outline" size="icon" className="relative border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600">
+            <Button variant="outline" size="icon" className="relative border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-[#29B7D3]">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F09E1D]"></span>
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="border-gray-200 hover:bg-gray-50 rounded-full flex items-center gap-2 h-9 pr-2 pl-1">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#243E4D] to-[#29B7D3] text-white">
                     {user?.name ? (
                       user.name.charAt(0).toUpperCase()
                     ) : user?.username ? (
@@ -119,11 +119,11 @@ export default function TopNav() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-gray-700 hover:text-blue-600">
+                <DropdownMenuItem className="text-gray-700 hover:text-[#29B7D3]">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-700 hover:text-blue-600">
+                <DropdownMenuItem className="text-gray-700 hover:text-[#29B7D3]">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
