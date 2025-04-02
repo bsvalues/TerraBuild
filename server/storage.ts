@@ -13,7 +13,9 @@ import {
   calculationHistory, type CalculationHistory, type InsertCalculationHistory,
   costMatrix, type CostMatrix, type InsertCostMatrix,
   costFactorPresets, type CostFactorPreset, type InsertCostFactorPreset,
-  fileUploads, type FileUpload, type InsertFileUpload
+  fileUploads, type FileUpload, type InsertFileUpload,
+  whatIfScenarios, type WhatIfScenario, type InsertWhatIfScenario,
+  scenarioVariations, type ScenarioVariation, type InsertScenarioVariation
 } from "@shared/schema";
 
 // Storage interface
@@ -148,6 +150,21 @@ export interface IStorage {
   createCostFactorPreset(preset: InsertCostFactorPreset): Promise<CostFactorPreset>;
   updateCostFactorPreset(id: number, preset: Partial<InsertCostFactorPreset>): Promise<CostFactorPreset | undefined>;
   deleteCostFactorPreset(id: number): Promise<void>;
+  
+  // What-If Scenarios
+  getAllWhatIfScenarios(): Promise<WhatIfScenario[]>;
+  getWhatIfScenariosByUserId(userId: number): Promise<WhatIfScenario[]>;
+  getWhatIfScenario(id: number): Promise<WhatIfScenario | undefined>;
+  createWhatIfScenario(scenario: InsertWhatIfScenario): Promise<WhatIfScenario>;
+  updateWhatIfScenario(id: number, scenario: Partial<InsertWhatIfScenario>): Promise<WhatIfScenario | undefined>;
+  deleteWhatIfScenario(id: number): Promise<void>;
+  saveWhatIfScenario(id: number): Promise<WhatIfScenario | undefined>;
+  
+  // Scenario Variations
+  getScenarioVariations(scenarioId: number): Promise<ScenarioVariation[]>;
+  createScenarioVariation(variation: InsertScenarioVariation): Promise<ScenarioVariation>;
+  deleteScenarioVariation(id: number): Promise<void>;
+  calculateScenarioImpact(scenarioId: number): Promise<{ totalImpact: number, variations: ScenarioVariation[] }>;
 }
 
 // Memory Storage implementation
@@ -161,6 +178,8 @@ export class MemStorage implements IStorage {
   private materialTypes: Map<number, MaterialType>;
   private materialCosts: Map<number, MaterialCost>;
   private buildingCostMaterials: Map<number, BuildingCostMaterial>;
+  private whatIfScenarios: Map<number, WhatIfScenario>;
+  private scenarioVariations: Map<number, ScenarioVariation>;
   private calculationHistories: Map<number, CalculationHistory>;
   private fileUploads: Map<number, FileUpload>;
   
@@ -175,6 +194,8 @@ export class MemStorage implements IStorage {
   private currentBuildingCostMaterialId: number;
   private currentCalculationHistoryId: number;
   private currentFileUploadId: number;
+  private currentWhatIfScenarioId: number;
+  private currentScenarioVariationId: number;
   
   constructor() {
     this.users = new Map();
@@ -188,6 +209,8 @@ export class MemStorage implements IStorage {
     this.buildingCostMaterials = new Map();
     this.calculationHistories = new Map();
     this.fileUploads = new Map();
+    this.whatIfScenarios = new Map();
+    this.scenarioVariations = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -200,6 +223,8 @@ export class MemStorage implements IStorage {
     this.currentBuildingCostMaterialId = 1;
     this.currentCalculationHistoryId = 1;
     this.currentFileUploadId = 1;
+    this.currentWhatIfScenarioId = 1;
+    this.currentScenarioVariationId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -1401,6 +1426,107 @@ export class MemStorage implements IStorage {
         errors: [errorMessage]
       };
     }
+  }
+
+  // What-If Scenarios Methods
+  async getAllWhatIfScenarios(): Promise<WhatIfScenario[]> {
+    return Array.from(this.whatIfScenarios.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getWhatIfScenariosByUserId(userId: number): Promise<WhatIfScenario[]> {
+    return Array.from(this.whatIfScenarios.values())
+      .filter(scenario => scenario.userId === userId)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }
+
+  async getWhatIfScenario(id: number): Promise<WhatIfScenario | undefined> {
+    return this.whatIfScenarios.get(id);
+  }
+
+  async createWhatIfScenario(scenario: InsertWhatIfScenario): Promise<WhatIfScenario> {
+    const id = this.currentWhatIfScenarioId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    const newScenario: WhatIfScenario = { 
+      ...scenario, 
+      id, 
+      createdAt,
+      updatedAt,
+      isSaved: false
+    };
+    this.whatIfScenarios.set(id, newScenario);
+    return newScenario;
+  }
+
+  async updateWhatIfScenario(id: number, scenario: Partial<InsertWhatIfScenario>): Promise<WhatIfScenario | undefined> {
+    const existingScenario = this.whatIfScenarios.get(id);
+    if (!existingScenario) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedScenario = { 
+      ...existingScenario, 
+      ...scenario, 
+      updatedAt 
+    };
+    this.whatIfScenarios.set(id, updatedScenario);
+    return updatedScenario;
+  }
+
+  async deleteWhatIfScenario(id: number): Promise<void> {
+    // First delete all associated variations
+    const variationsToDelete = Array.from(this.scenarioVariations.values())
+      .filter(variation => variation.scenarioId === id);
+    
+    for (const variation of variationsToDelete) {
+      this.scenarioVariations.delete(variation.id);
+    }
+    
+    // Then delete the scenario
+    this.whatIfScenarios.delete(id);
+  }
+
+  async saveWhatIfScenario(id: number): Promise<WhatIfScenario | undefined> {
+    const scenario = this.whatIfScenarios.get(id);
+    if (!scenario) return undefined;
+    
+    const updatedScenario = { 
+      ...scenario, 
+      isSaved: true,
+      updatedAt: new Date()
+    };
+    this.whatIfScenarios.set(id, updatedScenario);
+    return updatedScenario;
+  }
+
+  // Scenario Variations Methods
+  async getScenarioVariations(scenarioId: number): Promise<ScenarioVariation[]> {
+    return Array.from(this.scenarioVariations.values())
+      .filter(variation => variation.scenarioId === scenarioId);
+  }
+
+  async createScenarioVariation(variation: InsertScenarioVariation): Promise<ScenarioVariation> {
+    const id = this.currentScenarioVariationId++;
+    const createdAt = new Date();
+    const newVariation: ScenarioVariation = { ...variation, id, createdAt };
+    this.scenarioVariations.set(id, newVariation);
+    return newVariation;
+  }
+
+  async deleteScenarioVariation(id: number): Promise<void> {
+    this.scenarioVariations.delete(id);
+  }
+
+  async calculateScenarioImpact(scenarioId: number): Promise<{ totalImpact: number, variations: ScenarioVariation[] }> {
+    const variations = await this.getScenarioVariations(scenarioId);
+    
+    // Sum up all impact values
+    let totalImpact = 0;
+    for (const variation of variations) {
+      totalImpact += parseFloat(variation.impactValue?.toString() || '0');
+    }
+    
+    return { totalImpact, variations };
   }
 }
 

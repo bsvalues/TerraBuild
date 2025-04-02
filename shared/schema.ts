@@ -656,3 +656,56 @@ export const insertMaterialsPriceCacheSchema = createInsertSchema(materialsPrice
 
 export type MaterialsPriceCache = typeof materialsPriceCache.$inferSelect;
 export type InsertMaterialsPriceCache = z.infer<typeof insertMaterialsPriceCacheSchema>;
+
+// What-If Scenarios
+export const whatIfScenarios = pgTable("what_if_scenarios", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  baseCalculationId: integer("base_calculation_id"),
+  parameters: json("parameters").notNull(),
+  results: json("results"),
+  isSaved: boolean("is_saved").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertWhatIfScenarioSchema = createInsertSchema(whatIfScenarios).pick({
+  userId: true,
+  name: true,
+  description: true,
+  baseCalculationId: true,
+  parameters: true,
+  results: true,
+  isSaved: true,
+});
+
+export type WhatIfScenario = typeof whatIfScenarios.$inferSelect;
+export type InsertWhatIfScenario = z.infer<typeof insertWhatIfScenarioSchema>;
+
+// Scenario Variations (for tracking changes between scenarios)
+export const scenarioVariations = pgTable("scenario_variations", {
+  id: serial("id").primaryKey(),
+  scenarioId: integer("scenario_id").notNull(),
+  name: text("name").notNull(),
+  parameterKey: text("parameter_key").notNull(),
+  originalValue: json("original_value").notNull(),
+  newValue: json("new_value").notNull(),
+  impactValue: decimal("impact_value", { precision: 14, scale: 2 }),
+  impactPercentage: decimal("impact_percentage", { precision: 5, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertScenarioVariationSchema = createInsertSchema(scenarioVariations).pick({
+  scenarioId: true,
+  name: true,
+  parameterKey: true,
+  originalValue: true,
+  newValue: true,
+  impactValue: true,
+  impactPercentage: true,
+});
+
+export type ScenarioVariation = typeof scenarioVariations.$inferSelect;
+export type InsertScenarioVariation = z.infer<typeof insertScenarioVariationSchema>;

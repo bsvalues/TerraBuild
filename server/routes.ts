@@ -12,7 +12,9 @@ import {
   insertBuildingCostMaterialSchema,
   insertCalculationHistorySchema,
   insertCostFactorPresetSchema,
-  insertFileUploadSchema
+  insertFileUploadSchema,
+  insertWhatIfScenarioSchema,
+  insertScenarioVariationSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -1817,6 +1819,299 @@ export async function registerRoutes(app: Express): Promise<Server> {
       iconColor: "error"
     });
   }
+
+  // What-If Scenarios API
+  
+  // Get all what-if scenarios
+  app.get("/api/what-if-scenarios", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const scenarios = await storage.getAllWhatIfScenarios();
+      res.json(scenarios);
+    } catch (error) {
+      console.error("Error fetching what-if scenarios:", error);
+      res.status(500).json({ message: "Error fetching what-if scenarios" });
+    }
+  });
+  
+  // Get what-if scenarios by user ID
+  app.get("/api/what-if-scenarios/user/:userId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Users can only access their own scenarios unless they're admins
+      if (req.user?.id !== userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const scenarios = await storage.getWhatIfScenariosByUserId(userId);
+      res.json(scenarios);
+    } catch (error) {
+      console.error("Error fetching user's what-if scenarios:", error);
+      res.status(500).json({ message: "Error fetching user's what-if scenarios" });
+    }
+  });
+  
+  // Get a specific what-if scenario
+  app.get("/api/what-if-scenarios/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scenario = await storage.getWhatIfScenario(id);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only access their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(scenario);
+    } catch (error) {
+      console.error("Error fetching what-if scenario:", error);
+      res.status(500).json({ message: "Error fetching what-if scenario" });
+    }
+  });
+  
+  // Create a new what-if scenario
+  app.post("/api/what-if-scenarios", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Ensure the user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const scenarioData = insertWhatIfScenarioSchema.parse(req.body);
+      
+      // Set the user ID from the authenticated user
+      scenarioData.userId = req.user.id;
+      
+      const scenario = await storage.createWhatIfScenario(scenarioData);
+      
+      // Log the activity
+      await storage.createActivity({
+        action: `Created new What-If scenario: ${scenario.name}`,
+        icon: "ri-line-chart-line",
+        iconColor: "primary"
+      });
+      
+      res.status(201).json(scenario);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      console.error("Error creating what-if scenario:", error);
+      res.status(500).json({ message: "Error creating what-if scenario" });
+    }
+  });
+  
+  // Update a what-if scenario
+  app.patch("/api/what-if-scenarios/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scenario = await storage.getWhatIfScenario(id);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only modify their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedScenario = await storage.updateWhatIfScenario(id, req.body);
+      res.json(updatedScenario);
+    } catch (error) {
+      console.error("Error updating what-if scenario:", error);
+      res.status(500).json({ message: "Error updating what-if scenario" });
+    }
+  });
+  
+  // Save a what-if scenario (mark as saved)
+  app.post("/api/what-if-scenarios/:id/save", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scenario = await storage.getWhatIfScenario(id);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only modify their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const savedScenario = await storage.saveWhatIfScenario(id);
+      
+      // Log the activity
+      await storage.createActivity({
+        action: `Saved What-If scenario: ${savedScenario?.name}`,
+        icon: "ri-save-line",
+        iconColor: "success"
+      });
+      
+      res.json(savedScenario);
+    } catch (error) {
+      console.error("Error saving what-if scenario:", error);
+      res.status(500).json({ message: "Error saving what-if scenario" });
+    }
+  });
+  
+  // Delete a what-if scenario
+  app.delete("/api/what-if-scenarios/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scenario = await storage.getWhatIfScenario(id);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only delete their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteWhatIfScenario(id);
+      
+      // Log the activity
+      await storage.createActivity({
+        action: `Deleted What-If scenario: ${scenario.name}`,
+        icon: "ri-delete-bin-line",
+        iconColor: "danger"
+      });
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting what-if scenario:", error);
+      res.status(500).json({ message: "Error deleting what-if scenario" });
+    }
+  });
+  
+  // Scenario Variations API
+  
+  // Get variations for a scenario
+  app.get("/api/what-if-scenarios/:scenarioId/variations", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const scenarioId = parseInt(req.params.scenarioId);
+      const scenario = await storage.getWhatIfScenario(scenarioId);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only access their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const variations = await storage.getScenarioVariations(scenarioId);
+      res.json(variations);
+    } catch (error) {
+      console.error("Error fetching scenario variations:", error);
+      res.status(500).json({ message: "Error fetching scenario variations" });
+    }
+  });
+  
+  // Add a variation to a scenario
+  app.post("/api/what-if-scenarios/:scenarioId/variations", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const scenarioId = parseInt(req.params.scenarioId);
+      const scenario = await storage.getWhatIfScenario(scenarioId);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only modify their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const variationData = insertScenarioVariationSchema.parse(req.body);
+      
+      // Override the scenarioId from the URL parameter
+      variationData.scenarioId = scenarioId;
+      
+      const variation = await storage.createScenarioVariation(variationData);
+      
+      // Update the scenario to mark it as updated
+      await storage.updateWhatIfScenario(scenarioId, { updatedAt: new Date() });
+      
+      res.status(201).json(variation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      console.error("Error creating scenario variation:", error);
+      res.status(500).json({ message: "Error creating scenario variation" });
+    }
+  });
+  
+  // Delete a variation
+  app.delete("/api/what-if-scenarios/variations/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Get the variation to check ownership
+      const variations = Array.from((await storage.getAllWhatIfScenarios()).flatMap(scenario => 
+        storage.getScenarioVariations(scenario.id)
+      ));
+      
+      const variation = variations.find(v => v.id === id);
+      
+      if (!variation) {
+        return res.status(404).json({ message: "Variation not found" });
+      }
+      
+      // Check if the user owns the scenario
+      const scenario = await storage.getWhatIfScenario(variation.scenarioId);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "Associated scenario not found" });
+      }
+      
+      // Users can only modify their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      await storage.deleteScenarioVariation(id);
+      
+      // Update the scenario to mark it as updated
+      await storage.updateWhatIfScenario(scenario.id, { updatedAt: new Date() });
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting scenario variation:", error);
+      res.status(500).json({ message: "Error deleting scenario variation" });
+    }
+  });
+  
+  // Calculate scenario impact
+  app.get("/api/what-if-scenarios/:scenarioId/impact", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const scenarioId = parseInt(req.params.scenarioId);
+      const scenario = await storage.getWhatIfScenario(scenarioId);
+      
+      if (!scenario) {
+        return res.status(404).json({ message: "What-if scenario not found" });
+      }
+      
+      // Users can only access their own scenarios unless they're admins
+      if (req.user?.id !== scenario.userId && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const impact = await storage.calculateScenarioImpact(scenarioId);
+      res.json(impact);
+    } catch (error) {
+      console.error("Error calculating scenario impact:", error);
+      res.status(500).json({ message: "Error calculating scenario impact" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

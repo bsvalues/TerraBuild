@@ -17,9 +17,12 @@ import {
   CostMatrix, InsertCostMatrix,
   CostFactorPreset, InsertCostFactorPreset,
   FileUpload, InsertFileUpload,
+  WhatIfScenario, InsertWhatIfScenario,
+  ScenarioVariation, InsertScenarioVariation,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
-  calculationHistory, costMatrix, costFactorPresets, fileUploads
+  calculationHistory, costMatrix, costFactorPresets, fileUploads, 
+  whatIfScenarios, scenarioVariations
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -822,5 +825,90 @@ export class PostgresStorage implements IStorage {
       errors.push(`Excel import error: ${error.message}`);
       return { success: false, imported, updated, errors };
     }
+  }
+
+  // What-If Scenarios Methods
+  async getAllWhatIfScenarios(): Promise<WhatIfScenario[]> {
+    return await db.select().from(whatIfScenarios)
+      .orderBy(desc(whatIfScenarios.createdAt));
+  }
+
+  async getWhatIfScenariosByUserId(userId: number): Promise<WhatIfScenario[]> {
+    return await db.select().from(whatIfScenarios)
+      .where(eq(whatIfScenarios.userId, userId))
+      .orderBy(desc(whatIfScenarios.updatedAt));
+  }
+
+  async getWhatIfScenario(id: number): Promise<WhatIfScenario | undefined> {
+    const result = await db.select().from(whatIfScenarios)
+      .where(eq(whatIfScenarios.id, id));
+    return result[0];
+  }
+
+  async createWhatIfScenario(scenario: InsertWhatIfScenario): Promise<WhatIfScenario> {
+    const result = await db.insert(whatIfScenarios).values({
+      ...scenario,
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async updateWhatIfScenario(id: number, scenario: Partial<InsertWhatIfScenario>): Promise<WhatIfScenario | undefined> {
+    const result = await db.update(whatIfScenarios)
+      .set({
+        ...scenario,
+        updatedAt: new Date()
+      })
+      .where(eq(whatIfScenarios.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWhatIfScenario(id: number): Promise<void> {
+    // First delete all associated variations
+    await db.delete(scenarioVariations)
+      .where(eq(scenarioVariations.scenarioId, id));
+    
+    // Then delete the scenario
+    await db.delete(whatIfScenarios)
+      .where(eq(whatIfScenarios.id, id));
+  }
+
+  async saveWhatIfScenario(id: number): Promise<WhatIfScenario | undefined> {
+    const result = await db.update(whatIfScenarios)
+      .set({ 
+        isSaved: true,
+        updatedAt: new Date()
+      })
+      .where(eq(whatIfScenarios.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Scenario Variations Methods
+  async getScenarioVariations(scenarioId: number): Promise<ScenarioVariation[]> {
+    return await db.select().from(scenarioVariations)
+      .where(eq(scenarioVariations.scenarioId, scenarioId));
+  }
+
+  async createScenarioVariation(variation: InsertScenarioVariation): Promise<ScenarioVariation> {
+    const result = await db.insert(scenarioVariations).values(variation).returning();
+    return result[0];
+  }
+
+  async deleteScenarioVariation(id: number): Promise<void> {
+    await db.delete(scenarioVariations).where(eq(scenarioVariations.id, id));
+  }
+
+  async calculateScenarioImpact(scenarioId: number): Promise<{ totalImpact: number, variations: ScenarioVariation[] }> {
+    const variations = await this.getScenarioVariations(scenarioId);
+    
+    // Sum up all impact values
+    let totalImpact = 0;
+    for (const variation of variations) {
+      totalImpact += parseFloat(variation.impactValue?.toString() || '0');
+    }
+    
+    return { totalImpact, variations };
   }
 }
