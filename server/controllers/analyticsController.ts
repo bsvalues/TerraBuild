@@ -14,6 +14,12 @@
 import { Request, Response } from 'express';
 import { storage } from '../storage';
 import { and, between, eq, sql } from 'drizzle-orm';
+import { 
+  calculatePercentileBenchmark, 
+  calculateCostStatistics, 
+  generateBenchmarkThresholds,
+  formatCurrency
+} from '../utils/benchmarkingUtils';
 
 /**
  * Generate time series data for cost trends
@@ -431,5 +437,189 @@ export async function getCostBreakdown(req: Request, res: Response) {
   } catch (error) {
     console.error('Error generating cost breakdown:', error);
     return res.status(500).json({ error: 'Error generating cost breakdown' });
+  }
+}
+
+/**
+ * Generate benchmarking data to compare a calculation against similar buildings
+ * 
+ * @param req - Express request object containing route or query parameters:
+ *   - id: (optional) The ID of the calculation to benchmark
+ *   - buildingType: (optional) The type of building to benchmark
+ *   - region: (optional) The region to benchmark against
+ *   - year: (optional) The year for the benchmark data
+ *   - squareFootage: (optional) The size of the building in square feet
+ * @param res - Express response object
+ * @returns JSON object with benchmarking statistics and comparisons
+ */
+export async function getBenchmarkData(req: Request, res: Response) {
+  try {
+    // Get parameters either from route params or query string
+    const { id } = req.params;
+    let { buildingType, region, year, squareFootage } = req.query;
+    let calculation = null;
+    
+    // If ID is provided, get the calculation
+    if (id) {
+      const calcId = parseInt(id);
+      if (isNaN(calcId)) {
+        return res.status(400).json({ error: 'Invalid calculation ID format' });
+      }
+      
+      calculation = await storage.getBuildingCost(calcId);
+      
+      if (!calculation) {
+        return res.status(404).json({ error: 'Calculation not found' });
+      }
+      
+      // Use calculation properties as defaults if not provided in query
+      buildingType = buildingType || calculation.buildingType;
+      region = region || calculation.region;
+      squareFootage = squareFootage || calculation.squareFootage.toString();
+      // For year, we'll use the current year if not specified
+      if (!year) {
+        const currentYear = new Date().getFullYear();
+        year = currentYear.toString();
+      }
+    } else {
+      // If no ID provided, validate that required parameters are sent
+      if (!buildingType || !region || !squareFootage) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters: either calculationId or (buildingType, region, squareFootage)' 
+        });
+      }
+    }
+    
+    // Validate numeric inputs
+    const yearInt = parseInt(year as string);
+    const sqftFloat = parseFloat(squareFootage as string);
+    
+    if (isNaN(yearInt) || isNaN(sqftFloat) || sqftFloat <= 0) {
+      return res.status(400).json({ 
+        error: 'Invalid numeric parameters: year must be a valid year, squareFootage must be a positive number' 
+      });
+    }
+    
+    // Get cost matrix data for benchmarking
+    const allMatrixData = await storage.getAllCostMatrix();
+    
+    // Filter for active matrix entries matching the building type
+    const matchingEntries = allMatrixData.filter((item: any) => {
+      return (
+        item.buildingType === buildingType &&
+        item.isActive === true
+      );
+    });
+    
+    // If no matching data, return empty result
+    if (matchingEntries.length === 0) {
+      return res.status(200).json({
+        buildingType,
+        region,
+        squareFootage: sqftFloat,
+        message: `No benchmark data available for building type: ${buildingType}`,
+        regionalComparison: null,
+        statewideComparison: null,
+        statistics: {
+          regional: null,
+          statewide: null
+        }
+      });
+    }
+    
+    // Get regional and statewide data
+    const regionalEntries = matchingEntries.filter((item: any) => item.region === region);
+    
+    // Get costs per square foot for comparison
+    const regionalCostsPerSqft = regionalEntries.map((item: any) => parseFloat(item.baseCost));
+    const allCostsPerSqft = matchingEntries.map((item: any) => parseFloat(item.baseCost));
+    
+    // Calculate statistics using imported utility functions
+    
+    const regionalStats = calculateCostStatistics(regionalCostsPerSqft);
+    const statewideStats = calculateCostStatistics(allCostsPerSqft);
+    
+    // Calculate total costs based on square footage
+    const totalCost = calculation 
+      ? parseFloat(calculation.totalCost)
+      : sqftFloat * (regionalStats.average || statewideStats.average);
+    
+    const costPerSqft = calculation
+      ? parseFloat(calculation.costPerSqft)
+      : regionalStats.average || statewideStats.average;
+    
+    // Compare our building's cost per square foot against the regional and statewide data
+    const regionalBenchmark = calculatePercentileBenchmark(
+      costPerSqft,
+      regionalCostsPerSqft,
+      'cost_per_sqft'
+    );
+    
+    const statewideBenchmark = calculatePercentileBenchmark(
+      costPerSqft,
+      allCostsPerSqft,
+      'cost_per_sqft'
+    );
+    
+    // Generate threshold values for visualization
+    const regionalThresholds = generateBenchmarkThresholds(regionalStats.median);
+    const statewideThresholds = generateBenchmarkThresholds(statewideStats.median);
+    
+    // Calculate regional and statewide total costs
+    const regionalTotalCosts = regionalCostsPerSqft.map(cost => cost * sqftFloat);
+    const statewideTotalCosts = allCostsPerSqft.map(cost => cost * sqftFloat);
+    
+    // Benchmark the total cost
+    const regionalTotalBenchmark = calculatePercentileBenchmark(
+      totalCost,
+      regionalTotalCosts,
+      'total_cost'
+    );
+    
+    const statewideTotalBenchmark = calculatePercentileBenchmark(
+      totalCost,
+      statewideTotalCosts,
+      'total_cost'
+    );
+    
+    // Build comprehensive benchmarking response
+    return res.status(200).json({
+      buildingType,
+      buildingTypeDescription: matchingEntries[0]?.buildingTypeDescription || buildingType,
+      region,
+      regionDescription: regionalEntries[0]?.regionDescription || region,
+      year: yearInt,
+      squareFootage: sqftFloat,
+      calculationId: calculation?.id || null,
+      totalCost,
+      costPerSqft,
+      
+      // Benchmarking by cost per square foot
+      costPerSqftBenchmarks: {
+        regional: regionalBenchmark,
+        statewide: statewideBenchmark,
+        thresholds: {
+          regional: regionalThresholds,
+          statewide: statewideThresholds
+        }
+      },
+      
+      // Benchmarking by total cost
+      totalCostBenchmarks: {
+        regional: regionalTotalBenchmark,
+        statewide: statewideTotalBenchmark
+      },
+      
+      // Statistics for building narratives
+      statistics: {
+        regional: regionalStats,
+        statewide: statewideStats,
+        regionalSampleSize: regionalCostsPerSqft.length,
+        statewideSampleSize: allCostsPerSqft.length
+      }
+    });
+  } catch (error) {
+    console.error('Error generating benchmark data:', error);
+    return res.status(500).json({ error: 'Error generating benchmark data' });
   }
 }

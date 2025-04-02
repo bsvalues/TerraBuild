@@ -35,7 +35,8 @@ import {
   getTimeSeriesData,
   getRegionalComparison,
   getBuildingTypeComparison,
-  getCostBreakdown
+  getCostBreakdown,
+  getBenchmarkData
 } from "./controllers/analyticsController";
 import { exportReport } from "./controllers/reportController";
 
@@ -2161,6 +2162,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing cost breakdown:", error);
       res.status(500).json({ error: "Error processing cost breakdown" });
+    }
+  });
+  
+  // Benchmarking endpoints
+  app.get("/api/analytics/benchmark", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getBenchmarkData(req, res);
+    } catch (error) {
+      console.error("Error processing benchmarking data:", error);
+      res.status(500).json({ error: "Error processing benchmarking data" });
+    }
+  });
+  
+  app.get("/api/analytics/benchmark/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getBenchmarkData(req, res);
+    } catch (error) {
+      console.error("Error processing benchmarking data:", error);
+      res.status(500).json({ error: "Error processing benchmarking data" });
     }
   });
   
