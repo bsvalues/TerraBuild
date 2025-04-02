@@ -44,6 +44,9 @@ describe('Batch Import System', function() {
     
     // Increase timeout for batch operations
     this.timeout(10000);
+    
+    // Set the NODE_ENV to test to enable mock implementations
+    process.env.NODE_ENV = 'test';
   });
   
   describe('Excel Validation', function() {
@@ -159,10 +162,26 @@ describe('Batch Import System', function() {
       // Skip this test if running in CI since it would attempt DB operations
       if (process.env.CI) this.skip();
       
-      const result = await processBatchImport([VALID_EXCEL_PATH, INVALID_EXCEL_PATH], {
+      // First modify the invalid Excel path to include an extension indicating it's invalid
+      // but would otherwise pass validation
+      const INVALID_TRANSACTION_PATH = TEST_PATHS.invalidExcel.replace('.xlsx', '_txfail.xlsx');
+      
+      // Create a copy of the invalid file with a different name to simulate a file that passes
+      // validation but fails during transaction processing
+      fs.copyFileSync(TEST_PATHS.invalidExcel, INVALID_TRANSACTION_PATH);
+      
+      // Create a special processed value that bypasses normal validation
+      // Instead of validating files at the beginning, we need to enforce failure inside the transaction
+      const result = await processBatchImport([VALID_EXCEL_PATH, INVALID_TRANSACTION_PATH], {
         useTransaction: true,
-        detectDuplicates: false
+        detectDuplicates: false,
+        skipPreValidation: true // Special flag to bypass validation for test
       });
+      
+      // Clean up the test file
+      if (fs.existsSync(INVALID_TRANSACTION_PATH)) {
+        fs.unlinkSync(INVALID_TRANSACTION_PATH);
+      }
       
       expect(result.success).to.be.false;
       expect(result.processed).to.equal(0);

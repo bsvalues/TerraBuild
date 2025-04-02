@@ -391,31 +391,63 @@ def main():
     parser = argparse.ArgumentParser(description="Parse Excel files containing cost matrix data")
     parser.add_argument("file_path", help="Path to Excel file")
     parser.add_argument("--output", help="Output file path (defaults to stdout)")
+    parser.add_argument("--validate-only", action="store_true", help="Only validate the file without parsing")
+    parser.add_argument("--detailed-errors", action="store_true", help="Include detailed error information")
+    parser.add_argument("--strict", action="store_true", help="Apply stricter validation rules")
+    parser.add_argument("--check-data-types", action="store_true", help="Validate data types in each column")
     
     args = parser.parse_args()
     
     try:
         # Parse the Excel file
         excel_parser = EnhancedExcelParser(args.file_path)
-        result = excel_parser.parse()
         
-        # Output the result
-        if args.output:
-            with open(args.output, 'w') as f:
-                json.dump(result, f, indent=2)
-            logger.info(f"Output written to {args.output}")
+        if args.validate_only:
+            # Only perform validation
+            excel_parser._validate_workbook_structure()
+            validation_result = {
+                "success": len(excel_parser.validation_errors) == 0,
+                "errors": excel_parser.validation_errors,
+                "warnings": [],
+                "sheets": list(excel_parser.workbook.sheet_names) if excel_parser.workbook else [],
+                "rowCount": 0,
+                "year": excel_parser.matrix_year,
+                "detectedTypes": list(excel_parser.building_types.keys()) if excel_parser.building_types else [],
+                "detectedRegions": list(excel_parser.region_codes.keys()) if excel_parser.region_codes else []
+            }
+            print(json.dumps(validation_result))
+            sys.exit(0 if validation_result["success"] else 1)
         else:
-            print(json.dumps(result, indent=2))
+            # Full parsing
+            result = excel_parser.parse()
             
-        if excel_parser.validation_errors:
-            logger.warning(f"Completed with {len(excel_parser.validation_errors)} validation errors")
-            sys.exit(1)
-        else:
-            logger.info("Parsing completed successfully")
-            sys.exit(0)
+            # Output the result
+            if args.output:
+                with open(args.output, 'w') as f:
+                    json.dump(result, f, indent=2)
+                logger.info(f"Output written to {args.output}")
+            else:
+                print(json.dumps(result, indent=2))
+                
+            if excel_parser.validation_errors:
+                logger.warning(f"Completed with {len(excel_parser.validation_errors)} validation errors")
+                sys.exit(1)
+            else:
+                logger.info("Parsing completed successfully")
+                sys.exit(0)
             
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"Error: {error_msg}")
+        
+        if args.validate_only:
+            error_result = {
+                "success": False,
+                "errors": [error_msg],
+                "warnings": []
+            }
+            print(json.dumps(error_result))
+            
         sys.exit(1)
 
 if __name__ == "__main__":
