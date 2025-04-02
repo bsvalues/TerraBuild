@@ -128,6 +128,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(settings);
   });
   
+  // Get all available regions
+  app.get("/api/regions", async (req: Request, res: Response) => {
+    try {
+      // Get unique regions from cost factors
+      const costFactors = await storage.getAllCostFactors();
+      // Convert Set to Array explicitly to avoid TypeScript errors
+      const uniqueRegions = new Set<string>();
+      costFactors.forEach(factor => uniqueRegions.add(factor.region));
+      const regions = Array.from(uniqueRegions);
+      res.json(regions);
+    } catch (error) {
+      console.error("Error fetching regions:", error);
+      res.status(500).json({ message: "Error fetching regions" });
+    }
+  });
+  
   // Update a setting
   app.patch("/api/settings/:key", async (req: Request, res: Response) => {
     try {
