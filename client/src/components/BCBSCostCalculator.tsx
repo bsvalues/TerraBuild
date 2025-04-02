@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
 import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,6 +46,7 @@ const BCBSCostCalculator = () => {
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown[]>([]);
   const [regionalMultiplier, setRegionalMultiplier] = useState<number>(1.0);
   const [activeTab, setActiveTab] = useState<string>("calculator");
+  const [hoveredCostItem, setHoveredCostItem] = useState<string | null>(null);
 
   // Default form values
   const defaultValues: Partial<CalculatorFormValues> = {
@@ -640,19 +641,103 @@ const BCBSCostCalculator = () => {
                             data={costBreakdown}
                             cx="50%"
                             cy="50%"
-                            labelLine={false}
+                            labelLine={true}
                             outerRadius={80}
+                            innerRadius={30}
                             fill="#8884d8"
                             dataKey="cost"
                             nameKey="category"
-                            label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
+                            label={({ category, percent }) => `${(percent * 100).toFixed(0)}%`}
+                            paddingAngle={5}
+                            animationBegin={0}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                            isAnimationActive={true}
+                            activeIndex={hoveredCostItem ? 
+                              costBreakdown.findIndex(item => item.category === hoveredCostItem) >= 0 ?
+                              [costBreakdown.findIndex(item => item.category === hoveredCostItem)] : [0] : 
+                              [0]}
+                            activeShape={(props: any) => {
+                              const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+                              const RADIAN = Math.PI / 180;
+                              const sin = Math.sin(-RADIAN * midAngle);
+                              const cos = Math.cos(-RADIAN * midAngle);
+                              const mx = cx + (outerRadius + 30) * cos;
+                              const my = cy + (outerRadius + 30) * sin;
+                              const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+                              const ey = my;
+                              const textAnchor = cos >= 0 ? 'start' : 'end';
+                              
+                              return (
+                                <g>
+                                  <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="text-lg font-semibold">
+                                    {payload.category}
+                                  </text>
+                                  <Sector
+                                    cx={cx}
+                                    cy={cy}
+                                    innerRadius={innerRadius}
+                                    outerRadius={outerRadius + 10}
+                                    startAngle={startAngle}
+                                    endAngle={endAngle}
+                                    fill={fill}
+                                    opacity={0.8}
+                                  />
+                                </g>
+                              );
+                            }}
+                            onMouseEnter={(data, index) => {
+                              if (data && data.category) {
+                                setHoveredCostItem(data.category);
+                              }
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredCostItem(null);
+                            }}
                           >
                             {costBreakdown.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={`hsl(${index * 45 + 200}, 70%, 50%)`} />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={`hsl(${index * 45 + 200}, 70%, 50%)`} 
+                                className="transition-all duration-300"
+                                style={{
+                                  opacity: hoveredCostItem === entry.category ? 1 : (hoveredCostItem ? 0.5 : 1),
+                                  filter: hoveredCostItem === entry.category ? 'brightness(1.1) drop-shadow(0px 0px 5px rgba(0,0,0,0.2))' : 'none',
+                                  transform: hoveredCostItem === entry.category ? 'scale(1.05)' : 'scale(1)'
+                                }}
+                                cursor="pointer"
+                                strokeWidth={hoveredCostItem === entry.category ? 3 : 2}
+                                stroke={hoveredCostItem === entry.category ? "#000" : "#fff"}
+                                onMouseEnter={() => setHoveredCostItem(entry.category)}
+                                onMouseLeave={() => setHoveredCostItem(null)}
+                              />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']} />
-                          <Legend />
+                          <Tooltip 
+                            formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']}
+                            contentStyle={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                              border: '1px solid #ddd'
+                            }}
+                            animationDuration={300}
+                            animationEasing="ease-out"
+                          />
+                          <Legend 
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            iconSize={10}
+                            onClick={(data) => {
+                              console.log('Legend clicked:', data);
+                            }}
+                            wrapperStyle={{
+                              paddingTop: '20px'
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -673,11 +758,42 @@ const BCBSCostCalculator = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
                         <YAxis />
-                        <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']} />
-                        <Legend />
-                        <Bar dataKey="cost" fill="hsl(220, 70%, 50%)">
+                        <Tooltip 
+                          cursor={{ stroke: '#ddd', strokeWidth: 2, fillOpacity: 0.3 }}
+                          contentStyle={{ 
+                            borderRadius: '8px', 
+                            border: '1px solid #ddd',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                            padding: '10px'
+                          }}
+                          formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']} 
+                          animationDuration={300}
+                          animationEasing="ease-out"
+                        />
+                        <Legend 
+                          wrapperStyle={{ paddingTop: '10px' }}
+                          onClick={(data) => console.log('Legend clicked:', data)}
+                        />
+                        <Bar 
+                          dataKey="cost" 
+                          fill="hsl(220, 70%, 50%)"
+                          animationDuration={1500}
+                          animationEasing="ease-in-out"
+                          activeBar={{ stroke: '#000', strokeWidth: 2 }}
+                        >
                           {costBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={`hsl(${index * 45 + 200}, 70%, 50%)`} />
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={`hsl(${index * 45 + 200}, 70%, 50%)`}
+                              className="transition-opacity duration-300"
+                              style={{
+                                opacity: hoveredCostItem === entry.category ? 1 : (hoveredCostItem ? 0.4 : 1),
+                                filter: hoveredCostItem === entry.category ? 'brightness(1.2) drop-shadow(0px 0px 4px rgba(0,0,0,0.2))' : 'none'
+                              }}
+                              cursor="pointer"
+                              onMouseEnter={() => setHoveredCostItem(entry.category)}
+                              onMouseLeave={() => setHoveredCostItem(null)}
+                            />
                           ))}
                         </Bar>
                       </BarChart>
@@ -685,6 +801,87 @@ const BCBSCostCalculator = () => {
                   </div>
                 </div>
                 
+                <div className="mt-6 space-y-6">
+                  <div className="bg-white p-6 border rounded-lg shadow-sm">
+                    <div className="flex items-center mb-4">
+                      <DollarSign className="text-primary mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium">Interactive Cost Breakdown</h4>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-4">
+                      {costBreakdown.map((item, index) => {
+                        const percentage = (item.cost / totalCost * 100).toFixed(1);
+                        const width = `${Math.max(5, parseFloat(percentage))}%`;
+                        const hueValue = index * 45 + 200;
+                        const barColor = `hsl(${hueValue}, 70%, 50%)`;
+                        const bgColor = `hsl(${hueValue}, 70%, 95%)`;
+                        
+                        return (
+                          <div key={item.category} className="group relative">
+                            <div className="flex justify-between mb-1">
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: barColor }}></div>
+                                <span className="font-medium text-sm">{item.category}</span>
+                              </div>
+                              <span className="text-sm font-semibold">${item.cost.toLocaleString()}</span>
+                            </div>
+                            
+                            <div 
+                              className="w-full h-10 bg-gray-100 rounded-md overflow-hidden flex items-center"
+                              onMouseEnter={() => {
+                                setHoveredCostItem(item.category);
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredCostItem(null);
+                              }}
+                            >
+                              <div 
+                                className="h-full transition-all duration-1000 ease-in-out flex items-center pl-2 text-white text-xs font-bold origin-left" 
+                                style={{ 
+                                  width: width, 
+                                  backgroundColor: barColor,
+                                  boxShadow: hoveredCostItem === item.category ? 
+                                    '0 6px 12px rgba(0,0,0,0.2)' : 
+                                    '0 4px 6px rgba(0,0,0,0.1)',
+                                  transform: hoveredCostItem === item.category ? 
+                                    'scaleY(1.1)' : 
+                                    'scaleY(1)',
+                                  zIndex: hoveredCostItem === item.category ? 10 : 1
+                                }}
+                              >
+                                {percentage}%
+                              </div>
+                              <div 
+                                className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100 bg-opacity-10 transition-opacity duration-300 pointer-events-none"
+                                style={{ backgroundColor: bgColor }}
+                              ></div>
+                            </div>
+                            
+                            <div 
+                              className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-20"
+                              style={{
+                                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                                borderBottom: `2px solid ${barColor}`,
+                                transform: `translate(-50%, ${hoveredCostItem === item.category ? '-2px' : '0px'})`,
+                                opacity: hoveredCostItem === item.category ? 1 : 0
+                              }}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-bold mb-1">{item.category}</span>
+                                <div className="flex justify-between gap-3">
+                                  <span>${item.cost.toLocaleString()}</span>
+                                  <span className="opacity-80">({percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-t-black border-l-transparent border-r-transparent"></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-between mt-6">
                   <Button
                     type="button"
