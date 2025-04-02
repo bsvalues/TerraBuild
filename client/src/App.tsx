@@ -15,6 +15,7 @@ import BenchmarkingPage from "@/pages/BenchmarkingPage";
 import MCPOverviewPage from "@/pages/MCPOverviewPage";
 import DataExplorationDemo from "@/pages/DataExplorationDemo";
 import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
+import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useEffect } from "react";
@@ -59,6 +60,7 @@ function Router() {
       <ProtectedRoute path="/mcp-overview" component={MCPOverviewPage} />
       <ProtectedRoute path="/data-exploration" component={DataExplorationDemo} />
       <ProtectedRoute path="/comparative-analysis" component={ComparativeAnalysisDemo} />
+      <ProtectedRoute path="/statistical-analysis" component={StatisticalAnalysisDemo} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
