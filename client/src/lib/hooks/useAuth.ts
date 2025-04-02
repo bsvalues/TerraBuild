@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
@@ -93,10 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  // Create element using React.createElement
+  return React.createElement(
+    AuthContext.Provider,
+    { value },
+    children
   );
 }
 

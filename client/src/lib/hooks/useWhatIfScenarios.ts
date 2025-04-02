@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import type { WhatIfScenario, ScenarioVariation } from "@shared/schema";
 
+// ScenarioParameters type for strong typing
+export interface ScenarioParameters {
+  baseCost: number;
+  squareFootage: number;
+  complexity: number;
+  region: string;
+  [key: string]: any; // Allow for additional parameters
+}
+
+// Extended WhatIfScenario with typed parameters
+export interface TypedWhatIfScenario extends Omit<WhatIfScenario, 'parameters'> {
+  parameters: ScenarioParameters;
+}
+
 // Helper function for API requests
 const apiRequest = async <T>(
   endpoint: string,
@@ -27,28 +41,39 @@ const apiRequest = async <T>(
   return response.json();
 };
 
+// Helper to convert WhatIfScenario to TypedWhatIfScenario
+export const asTypedScenario = (scenario: WhatIfScenario): TypedWhatIfScenario => {
+  return {
+    ...scenario,
+    parameters: scenario.parameters as ScenarioParameters
+  };
+};
+
 export function useWhatIfScenarios() {
   const queryClient = useQueryClient();
 
   // Get all scenarios (admin only)
   const getAllScenarios = () => 
-    useQuery<WhatIfScenario[]>({
+    useQuery<TypedWhatIfScenario[]>({
       queryKey: ["/api/what-if-scenarios"],
       refetchOnWindowFocus: false,
+      select: (data) => data.map(scenario => asTypedScenario(scenario)),
     });
 
   // Get user's scenarios
   const getUserScenarios = (userId: number) => 
-    useQuery<WhatIfScenario[]>({
+    useQuery<TypedWhatIfScenario[]>({
       queryKey: ["/api/what-if-scenarios/user", userId],
       refetchOnWindowFocus: false,
+      select: (data) => data.map(scenario => asTypedScenario(scenario)),
     });
 
   // Get a specific scenario by ID
   const getScenario = (scenarioId: number) => 
-    useQuery<WhatIfScenario>({
+    useQuery<TypedWhatIfScenario>({
       queryKey: ["/api/what-if-scenarios", scenarioId],
       refetchOnWindowFocus: false,
+      select: (data) => asTypedScenario(data),
     });
 
   // Get variations for a scenario
@@ -72,11 +97,12 @@ export function useWhatIfScenarios() {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         predicate: (query) => 
           query.queryKey[0] === "/api/what-if-scenarios"
       });
+      return asTypedScenario(data);
     },
   });
 
@@ -87,12 +113,13 @@ export function useWhatIfScenarios() {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         predicate: (query) => 
           query.queryKey[0] === "/api/what-if-scenarios" || 
           (query.queryKey[0] === "/api/what-if-scenarios" && query.queryKey[1] === variables.id)
       });
+      return asTypedScenario(data);
     },
   });
 
@@ -102,12 +129,13 @@ export function useWhatIfScenarios() {
       apiRequest<WhatIfScenario>(`/api/what-if-scenarios/${id}/save`, {
         method: "POST",
       }),
-    onSuccess: (_, id) => {
+    onSuccess: (data, id) => {
       queryClient.invalidateQueries({
         predicate: (query) => 
           query.queryKey[0] === "/api/what-if-scenarios" || 
           (query.queryKey[0] === "/api/what-if-scenarios" && query.queryKey[1] === id)
       });
+      return asTypedScenario(data);
     },
   });
 
@@ -178,6 +206,7 @@ export function useWhatIfScenarios() {
     saveScenario,
     deleteScenario,
     addVariation,
-    deleteVariation
+    deleteVariation,
+    asTypedScenario
   };
 }

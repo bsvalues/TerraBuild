@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useWhatIfScenarios } from "../lib/hooks/useWhatIfScenarios";
+import { useWhatIfScenarios, TypedWhatIfScenario, ScenarioParameters, asTypedScenario } from "../lib/hooks/useWhatIfScenarios";
 import { useAuth } from "../lib/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -41,7 +41,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 
-import type { WhatIfScenario, ScenarioVariation } from "@shared/schema";
+import type { ScenarioVariation } from "@shared/schema";
 
 export default function WhatIfScenariosPage() {
   const { user } = useAuth();
@@ -50,7 +50,7 @@ export default function WhatIfScenariosPage() {
   const [newScenarioOpen, setNewScenarioOpen] = useState(false);
   const [editScenarioOpen, setEditScenarioOpen] = useState(false);
   const [newVariationOpen, setNewVariationOpen] = useState(false);
-  const [selectedScenario, setSelectedScenario] = useState<WhatIfScenario | null>(null);
+  const [selectedScenario, setSelectedScenario] = useState<TypedWhatIfScenario | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -96,11 +96,17 @@ export default function WhatIfScenariosPage() {
   
   // Handle creating a new scenario
   const handleCreateScenario = () => {
-    createScenario.mutate(formData, {
+    createScenario.mutate({
+      ...formData,
+      results: {},
+      baseCalculationId: null,
+    }, {
       onSuccess: (data) => {
+        // Data is now properly typed by our hook's transformation
+        const typedScenario = asTypedScenario(data);
         toast({
           title: "Scenario Created",
-          description: `Successfully created "${data.name}" scenario`,
+          description: `Successfully created "${typedScenario.name}" scenario`,
         });
         setNewScenarioOpen(false);
         setFormData({
@@ -134,10 +140,12 @@ export default function WhatIfScenariosPage() {
         data: formData 
       }, 
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          // Data is now properly typed by our hook's transformation
+          const typedScenario = asTypedScenario(data);
           toast({
             title: "Scenario Updated",
-            description: `Successfully updated "${formData.name}" scenario`,
+            description: `Successfully updated "${typedScenario.name}" scenario`,
           });
           setEditScenarioOpen(false);
         },
@@ -153,12 +161,14 @@ export default function WhatIfScenariosPage() {
   };
   
   // Handle saving a scenario
-  const handleSaveScenario = (scenario: WhatIfScenario) => {
+  const handleSaveScenario = (scenario: TypedWhatIfScenario) => {
     saveScenario.mutate(scenario.id, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        // Data is now properly typed by our hook's transformation
+        const typedScenario = asTypedScenario(data);
         toast({
           title: "Scenario Saved",
-          description: `Successfully saved "${scenario.name}" scenario`,
+          description: `Successfully saved "${typedScenario.name}" scenario`,
         });
       },
       onError: () => {
@@ -172,7 +182,7 @@ export default function WhatIfScenariosPage() {
   };
   
   // Handle deleting a scenario
-  const handleDeleteScenario = (scenario: WhatIfScenario) => {
+  const handleDeleteScenario = (scenario: TypedWhatIfScenario) => {
     if (confirm(`Are you sure you want to delete the scenario "${scenario.name}"?`)) {
       deleteScenario.mutate(scenario.id, {
         onSuccess: () => {
@@ -292,13 +302,13 @@ export default function WhatIfScenariosPage() {
   };
   
   // Handle selecting a scenario for detailed view
-  const handleSelectScenario = (scenario: WhatIfScenario) => {
+  const handleSelectScenario = (scenario: TypedWhatIfScenario) => {
     setSelectedScenario(scenario);
     setActiveTab("detail");
   };
   
   // Handle opening the edit dialog
-  const handleEditClick = (scenario: WhatIfScenario) => {
+  const handleEditClick = (scenario: TypedWhatIfScenario) => {
     setSelectedScenario(scenario);
     setFormData({
       name: scenario.name,

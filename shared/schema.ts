@@ -665,7 +665,7 @@ export const whatIfScenarios = pgTable("what_if_scenarios", {
   description: text("description"),
   baseCalculationId: integer("base_calculation_id"),
   parameters: json("parameters").notNull(),
-  results: json("results"),
+  results: json("results").notNull().default({}),
   isSaved: boolean("is_saved").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -709,3 +709,21 @@ export const insertScenarioVariationSchema = createInsertSchema(scenarioVariatio
 
 export type ScenarioVariation = typeof scenarioVariations.$inferSelect;
 export type InsertScenarioVariation = z.infer<typeof insertScenarioVariationSchema>;
+
+// Scenario Impact Analysis
+export const scenarioImpacts = pgTable("scenario_impacts", {
+  id: serial("id").primaryKey(),
+  scenarioId: integer("scenario_id").notNull(),
+  analysisType: text("analysis_type").notNull(),
+  impactSummary: json("impact_summary").notNull(),
+  calculatedAt: timestamp("calculated_at").notNull().defaultNow(),
+});
+
+export const insertScenarioImpactSchema = createInsertSchema(scenarioImpacts).pick({
+  scenarioId: true,
+  analysisType: true,
+  impactSummary: true,
+});
+
+export type ScenarioImpact = typeof scenarioImpacts.$inferSelect;
+export type InsertScenarioImpact = z.infer<typeof insertScenarioImpactSchema>;
