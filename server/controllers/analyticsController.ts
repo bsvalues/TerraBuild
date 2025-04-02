@@ -6,6 +6,9 @@
  * - Regional cost comparisons
  * - Building type comparisons
  * - Cost breakdown analysis
+ * 
+ * These endpoints power the interactive data visualizations in the application,
+ * allowing users to explore building cost data through various perspectives.
  */
 
 import { Request, Response } from 'express';
@@ -14,6 +17,14 @@ import { and, between, eq, sql } from 'drizzle-orm';
 
 /**
  * Generate time series data for cost trends
+ * 
+ * @param req - Express request object containing query parameters:
+ *   - buildingType: The type of building (e.g., 'residential', 'commercial')
+ *   - startYear: The beginning year for the time series
+ *   - endYear: The ending year for the time series
+ *   - region: The geographical region to analyze
+ * @param res - Express response object
+ * @returns JSON array of data points with date and value properties
  */
 export async function getTimeSeriesData(req: Request, res: Response) {
   try {
@@ -51,13 +62,22 @@ export async function getTimeSeriesData(req: Request, res: Response) {
     })
     .sort((a, b) => a.matrixYear - b.matrixYear);
     
+    // If no data is found, generate sample years to ensure smooth visualization
+    if (data.length === 0) {
+      console.log(`No time series data found for ${buildingType} in ${region} from ${start} to ${end}`);
+      return res.status(200).json([]);
+    }
+    
     // Format the response
     const formattedData = data.map((item: any) => ({
       date: item.matrixYear.toString(),
       value: parseFloat(item.baseCost)
     }));
     
-    return res.status(200).json(formattedData);
+    // Ensure we have data for each year in the range by filling gaps
+    const filledData = fillTimeSeriesGaps(formattedData, start, end);
+    
+    return res.status(200).json(filledData);
   } catch (error) {
     console.error('Error generating time series data:', error);
     return res.status(500).json({ error: 'Error generating time series data' });
@@ -65,7 +85,84 @@ export async function getTimeSeriesData(req: Request, res: Response) {
 }
 
 /**
+ * Helper function to fill gaps in time series data
+ * Uses linear interpolation for missing years
+ * 
+ * @param data - Array of data points with date and value properties
+ * @param startYear - The beginning year for the time series
+ * @param endYear - The ending year for the time series
+ * @returns Complete array of data points with no gaps
+ */
+function fillTimeSeriesGaps(data: { date: string; value: number }[], startYear: number, endYear: number): { date: string; value: number }[] {
+  if (data.length === 0) return [];
+  
+  const result: { date: string; value: number }[] = [];
+  const dataMap = new Map<string, number>();
+  
+  // Create a map of existing data
+  data.forEach(item => {
+    dataMap.set(item.date, item.value);
+  });
+  
+  // Identify known years and values for interpolation
+  const knownYears = data.map(item => parseInt(item.date)).sort((a, b) => a - b);
+  
+  // Fill in each year in the range
+  for (let year = startYear; year <= endYear; year++) {
+    const yearStr = year.toString();
+    
+    if (dataMap.has(yearStr)) {
+      // We have actual data for this year
+      result.push({ date: yearStr, value: dataMap.get(yearStr)! });
+    } else if (knownYears.length >= 2) {
+      // Find surrounding known years for interpolation
+      let prevYear = null;
+      let nextYear = null;
+      
+      for (const known of knownYears) {
+        if (known < year) prevYear = known;
+        if (known > year && nextYear === null) nextYear = known;
+      }
+      
+      if (prevYear !== null && nextYear !== null) {
+        // We can interpolate
+        const prevValue = dataMap.get(prevYear.toString())!;
+        const nextValue = dataMap.get(nextYear.toString())!;
+        const ratio = (year - prevYear) / (nextYear - prevYear);
+        const interpolatedValue = prevValue + (nextValue - prevValue) * ratio;
+        
+        result.push({ 
+          date: yearStr, 
+          value: Math.round(interpolatedValue * 100) / 100 
+        });
+      } else {
+        // We're outside the range of known values - use nearest known value
+        const nearestYear = prevYear !== null ? prevYear : nextYear;
+        const nearestValue = dataMap.get(nearestYear!.toString())!;
+        
+        result.push({ date: yearStr, value: nearestValue });
+      }
+    } else if (knownYears.length === 1) {
+      // Only one data point - use that value for all years
+      result.push({ 
+        date: yearStr, 
+        value: dataMap.get(knownYears[0].toString())! 
+      });
+    }
+  }
+  
+  return result.sort((a, b) => parseInt(a.date) - parseInt(b.date));
+}
+
+/**
  * Generate regional comparison data
+ * 
+ * @param req - Express request object containing query parameters:
+ *   - buildingType: The type of building (e.g., 'residential', 'commercial')
+ *   - year: The year for the cost data
+ *   - squareFootage: The size of the building in square feet
+ * @param res - Express response object
+ * @returns JSON object with regions and values arrays
  */
 export async function getRegionalComparison(req: Request, res: Response) {
   try {
@@ -78,11 +175,20 @@ export async function getRegionalComparison(req: Request, res: Response) {
       });
     }
     
+    // Validate numeric inputs
+    const yearInt = parseInt(year as string);
+    const sqftFloat = parseFloat(squareFootage as string);
+    
+    if (isNaN(yearInt) || isNaN(sqftFloat) || sqftFloat <= 0) {
+      return res.status(400).json({ 
+        error: 'Invalid numeric parameters: year must be a valid year, squareFootage must be a positive number' 
+      });
+    }
+    
     // Get cost matrix data for regional comparison
     const allMatrixData = await storage.getAllCostMatrix();
     
     // Filter and process the data
-    const yearInt = parseInt(year as string);
     const data = allMatrixData.filter((item: any) => {
       return (
         item.buildingType === buildingType &&
@@ -92,14 +198,34 @@ export async function getRegionalComparison(req: Request, res: Response) {
     })
     .sort((a, b) => a.region.localeCompare(b.region));
     
+    // If no data is found, return empty result
+    if (data.length === 0) {
+      console.log(`No regional comparison data found for ${buildingType} in ${yearInt}`);
+      return res.status(200).json({ regions: [], values: [], regionDescriptions: [] });
+    }
+    
     // Calculate cost for each region based on square footage
     const regions = data.map((item: any) => item.region);
+    const regionDescriptions = data.map((item: any) => item.regionDescription || item.region);
+    const baseCosts = data.map((item: any) => parseFloat(item.baseCost));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseCost) * parseFloat(squareFootage as string);
+      const cost = parseFloat(item.baseCost) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
     
-    return res.status(200).json({ regions, values });
+    // Add region descriptions and base costs to provide more context
+    return res.status(200).json({ 
+      regions, 
+      values,
+      regionDescriptions,
+      baseCosts,
+      metadata: {
+        buildingType,
+        buildingTypeDescription: data[0]?.buildingTypeDescription || buildingType,
+        year: yearInt,
+        squareFootage: sqftFloat
+      }
+    });
   } catch (error) {
     console.error('Error generating regional comparison:', error);
     return res.status(500).json({ error: 'Error generating regional comparison' });
@@ -108,6 +234,13 @@ export async function getRegionalComparison(req: Request, res: Response) {
 
 /**
  * Generate building type comparison data
+ * 
+ * @param req - Express request object containing query parameters:
+ *   - region: The geographical region to analyze
+ *   - year: The year for the cost data
+ *   - squareFootage: The size of the building in square feet
+ * @param res - Express response object
+ * @returns JSON object with buildingTypes, buildingTypeLabels, values arrays
  */
 export async function getBuildingTypeComparison(req: Request, res: Response) {
   try {
@@ -120,11 +253,20 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
       });
     }
     
+    // Validate numeric inputs
+    const yearInt = parseInt(year as string);
+    const sqftFloat = parseFloat(squareFootage as string);
+    
+    if (isNaN(yearInt) || isNaN(sqftFloat) || sqftFloat <= 0) {
+      return res.status(400).json({ 
+        error: 'Invalid numeric parameters: year must be a valid year, squareFootage must be a positive number' 
+      });
+    }
+    
     // Get cost matrix data for building type comparison
     const allMatrixData = await storage.getAllCostMatrix();
     
     // Filter and process the data
-    const yearInt = parseInt(year as string);
     const data = allMatrixData.filter((item: any) => {
       return (
         item.region === region &&
@@ -134,18 +276,42 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     })
     .sort((a, b) => a.buildingType.localeCompare(b.buildingType));
     
+    // If no data is found, return empty result
+    if (data.length === 0) {
+      console.log(`No building type comparison data found for ${region} in ${yearInt}`);
+      return res.status(200).json({ 
+        buildingTypes: [], 
+        buildingTypeLabels: [], 
+        values: [] 
+      });
+    }
+    
     // Calculate cost for each building type based on square footage
     const buildingTypes = data.map((item: any) => item.buildingType);
-    const buildingTypeLabels = data.map((item: any) => item.buildingTypeDescription);
+    const buildingTypeLabels = data.map((item: any) => 
+      item.buildingTypeDescription || `Building Type ${item.buildingType}`
+    );
+    const baseCosts = data.map((item: any) => parseFloat(item.baseCost));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseCost) * parseFloat(squareFootage as string);
+      const cost = parseFloat(item.baseCost) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
+    
+    // Calculate cost per square foot for each building type
+    const costPerSqft = data.map((item: any) => parseFloat(item.baseCost));
     
     return res.status(200).json({ 
       buildingTypes, 
       buildingTypeLabels,
-      values 
+      values,
+      baseCosts,
+      costPerSqft,
+      metadata: {
+        region,
+        regionDescription: data[0]?.regionDescription || region,
+        year: yearInt,
+        squareFootage: sqftFloat
+      }
     });
   } catch (error) {
     console.error('Error generating building type comparison:', error);
@@ -155,6 +321,11 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
 
 /**
  * Get cost breakdown for a specific calculation
+ * 
+ * @param req - Express request object containing route parameters:
+ *   - id: The ID of the calculation to analyze
+ * @param res - Express response object
+ * @returns JSON object with cost breakdown details
  */
 export async function getCostBreakdown(req: Request, res: Response) {
   try {
@@ -164,22 +335,63 @@ export async function getCostBreakdown(req: Request, res: Response) {
       return res.status(400).json({ error: 'Missing calculation ID' });
     }
     
+    // Parse ID to ensure it's a valid number
+    const calcId = parseInt(id);
+    if (isNaN(calcId)) {
+      return res.status(400).json({ error: 'Invalid calculation ID format' });
+    }
+    
     // Get the calculation from storage
-    const calc = await storage.getBuildingCost(parseInt(id));
+    const calc = await storage.getBuildingCost(calcId);
     
     if (!calc) {
       return res.status(404).json({ error: 'Calculation not found' });
     }
+    
+    // Ensure totalCost is a valid number
     const totalCost = parseFloat(calc.totalCost);
+    if (isNaN(totalCost)) {
+      return res.status(500).json({ error: 'Invalid total cost value in calculation' });
+    }
     
-    // Calculate breakdown percentages based on industry standards
-    // In a real application, this would come from the database or calculation engine
-    const materials = totalCost * 0.65; // 65% materials
-    const labor = totalCost * 0.25;     // 25% labor
-    const permits = totalCost * 0.05;   // 5% permits
-    const other = totalCost * 0.05;     // 5% other costs
+    // Use an enhanced breakdown based on building type and complexity
+    // This would normally come from a more sophisticated calculation engine
+    let materialsPct = 0.65; // Default 65% materials
+    let laborPct = 0.25;     // Default 25% labor
+    let permitsPct = 0.05;   // Default 5% permits
+    let otherPct = 0.05;     // Default 5% other costs
     
-    // Format response data
+    // Adjust percentages based on building type (simple example adjustment)
+    if (calc.buildingType === 'commercial') {
+      materialsPct = 0.60;
+      laborPct = 0.25;
+      permitsPct = 0.08;
+      otherPct = 0.07;
+    } else if (calc.buildingType === 'industrial') {
+      materialsPct = 0.70;
+      laborPct = 0.20;
+      permitsPct = 0.05;
+      otherPct = 0.05;
+    }
+    
+    // Further adjust based on complexity factor
+    if (calc.complexityFactor === 'complex') {
+      // Complex buildings have higher labor costs
+      materialsPct -= 0.05;
+      laborPct += 0.05;
+    } else if (calc.complexityFactor === 'simple') {
+      // Simple buildings have lower labor costs
+      materialsPct += 0.05;
+      laborPct -= 0.05;
+    }
+    
+    // Calculate the actual cost values
+    const materials = totalCost * materialsPct;
+    const labor = totalCost * laborPct;
+    const permits = totalCost * permitsPct;
+    const other = totalCost * otherPct;
+    
+    // Format response data with more detail
     const categories = ['materials', 'labor', 'permits', 'other'];
     const values = [
       Math.round(materials * 100) / 100,
@@ -188,12 +400,33 @@ export async function getCostBreakdown(req: Request, res: Response) {
       Math.round(other * 100) / 100
     ];
     
+    // Format percentages for display (e.g., 65.0 instead of 0.65)
+    const percentages = [
+      Math.round(materialsPct * 100),
+      Math.round(laborPct * 100),
+      Math.round(permitsPct * 100),
+      Math.round(otherPct * 100)
+    ];
+    
+    // Add calculation details for reference
+    const calculationDetails = {
+      id: calc.id,
+      name: calc.name,
+      buildingType: calc.buildingType,
+      region: calc.region,
+      squareFootage: calc.squareFootage,
+      complexityFactor: calc.complexityFactor,
+      conditionFactor: calc.conditionFactor || 'average',
+      createdAt: calc.createdAt
+    };
+    
     return res.status(200).json({
       calculationId: calc.id,
       totalCost,
       categories,
       values,
-      percentages: [65, 25, 5, 5] // Hardcoded for now, would be dynamic in real app
+      percentages,
+      calculationDetails
     });
   } catch (error) {
     console.error('Error generating cost breakdown:', error);
