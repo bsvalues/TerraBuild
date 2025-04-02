@@ -14,6 +14,7 @@ import DataImportPage from "@/pages/DataImportPage";
 import BenchmarkingPage from "@/pages/BenchmarkingPage";
 import MCPOverviewPage from "@/pages/MCPOverviewPage";
 import WhatIfScenariosPage from "@/pages/WhatIfScenariosPage";
+import VisualizationsPage from "@/pages/VisualizationsPage";
 import DataExplorationDemo from "@/pages/DataExplorationDemo";
 import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
 import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
@@ -62,6 +63,7 @@ function Router() {
       <ProtectedRoute path="/benchmarking" component={BenchmarkingPage} />
       <ProtectedRoute path="/mcp-overview" component={MCPOverviewPage} />
       <ProtectedRoute path="/what-if-scenarios" component={WhatIfScenariosPage} />
+      <ProtectedRoute path="/visualizations" component={VisualizationsPage} />
       <ProtectedRoute path="/data-exploration" component={DataExplorationDemo} />
       <ProtectedRoute path="/comparative-analysis" component={ComparativeAnalysisDemo} />
       <ProtectedRoute path="/statistical-analysis" component={StatisticalAnalysisDemo} />
