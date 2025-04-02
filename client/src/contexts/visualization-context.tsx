@@ -1,92 +1,82 @@
 /**
  * Visualization Context
  * 
- * This context provides shared state and functionality for visualization components,
- * enabling them to communicate and coordinate with each other.
+ * This context provides a central store for visualization filters and selected data points.
+ * It allows for components to share visualization state, making it easier to
+ * create coordinated views and interactive dashboards.
  */
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-// Type for filters that can be applied to visualizations
+// Define filter types
 export interface VisualizationFilters {
   buildingTypes?: string[];
   regions?: string[];
   year?: number;
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
-  [key: string]: any; // Allow for additional filters
+  qualityLevels?: string[];
+  minSquareFeet?: number;
+  maxSquareFeet?: number;
+  costRange?: [number, number];
+  [key: string]: any; // Allow for additional filter types
 }
 
-// Interface for the context value
+// Define datapoint type (generic to accommodate different visualization data)
+export interface Datapoint {
+  id: number | string;
+  [key: string]: any;
+}
+
+// Define context type
 interface VisualizationContextType {
   filters: VisualizationFilters | null;
+  selectedDatapoint: Datapoint | null;
   setFilters: (filters: VisualizationFilters | null) => void;
   addFilter: (key: string, value: any) => void;
   removeFilter: (key: string) => void;
   clearFilters: () => void;
-  selectedDatapoint: any | null;
-  setSelectedDatapoint: (datapoint: any | null) => void;
+  setSelectedDatapoint: (datapoint: Datapoint | null) => void;
 }
 
 // Create context with default values
-const defaultContextValue: VisualizationContextType = {
-  filters: null,
-  setFilters: () => {},
-  addFilter: () => {},
-  removeFilter: () => {},
-  clearFilters: () => {},
-  selectedDatapoint: null,
-  setSelectedDatapoint: () => {}
-};
-
-const VisualizationContext = createContext<VisualizationContextType>(defaultContextValue);
-
-// Props for provider component
-interface VisualizationContextProviderProps {
-  children: ReactNode;
-}
+const VisualizationContext = createContext<VisualizationContextType | undefined>(undefined);
 
 // Provider component
-export const VisualizationContextProvider = ({ children }: VisualizationContextProviderProps) => {
+export function VisualizationContextProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<VisualizationFilters | null>(null);
-  const [selectedDatapoint, setSelectedDatapoint] = useState<any | null>(null);
+  const [selectedDatapoint, setSelectedDatapoint] = useState<Datapoint | null>(null);
 
-  // Add a filter
+  // Add a single filter
   const addFilter = (key: string, value: any) => {
-    setFilters(prev => ({
-      ...(prev || {}),
-      [key]: value,
-    }));
+    setFilters(prev => {
+      const newFilters = { ...(prev || {}) };
+      newFilters[key] = value;
+      return newFilters;
+    });
   };
-  
-  // Remove a filter
+
+  // Remove a single filter
   const removeFilter = (key: string) => {
-    if (!filters) return;
-    
-    const newFilters = { ...filters };
-    delete newFilters[key];
-    
-    if (Object.keys(newFilters).length === 0) {
-      setFilters(null);
-    } else {
-      setFilters(newFilters);
-    }
+    setFilters(prev => {
+      if (!prev) return null;
+      
+      const newFilters = { ...prev };
+      delete newFilters[key];
+      
+      // If no filters left, return null
+      return Object.keys(newFilters).length === 0 ? null : newFilters;
+    });
   };
-  
+
   // Clear all filters
-  const clearFilters = () => {
-    setFilters(null);
-  };
+  const clearFilters = () => setFilters(null);
 
   const value = {
     filters,
+    selectedDatapoint,
     setFilters,
     addFilter,
     removeFilter,
     clearFilters,
-    selectedDatapoint,
     setSelectedDatapoint
   };
 
@@ -95,7 +85,15 @@ export const VisualizationContextProvider = ({ children }: VisualizationContextP
       {children}
     </VisualizationContext.Provider>
   );
-};
+}
 
-// Hook to use the visualization context
-export const useVisualizationContext = () => useContext(VisualizationContext);
+// Custom hook to use the context
+export function useVisualizationContext() {
+  const context = useContext(VisualizationContext);
+  
+  if (context === undefined) {
+    throw new Error('useVisualizationContext must be used within a VisualizationContextProvider');
+  }
+  
+  return context;
+}

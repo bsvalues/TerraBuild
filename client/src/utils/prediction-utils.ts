@@ -488,11 +488,14 @@ export class CostPredictionModel {
     
     for (const feature of knownCategoricalFeatures) {
       // Get unique values
-      const uniqueValues = [...new Set(
-        this.historicalData
-          .map(d => d[feature])
-          .filter(v => v !== undefined && v !== null)
-      )];
+      const uniqueValuesSet = new Set();
+      this.historicalData.forEach(d => {
+        const value = d[feature];
+        if (value !== undefined && value !== null) {
+          uniqueValuesSet.add(value);
+        }
+      });
+      const uniqueValues = Array.from(uniqueValuesSet);
       
       if (uniqueValues.length > 0) {
         this.categoricalFeatures[feature] = uniqueValues as string[];

@@ -13,6 +13,8 @@ import {
   clearAICache,
   CostPredictionParams 
 } from '../services/aiService';
+import { processNaturalLanguageQuery } from '../services/nlp-service';
+import { storage } from '../storage';
 
 const router = express.Router();
 
@@ -91,6 +93,58 @@ router.post('/clear-cache', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to clear AI cache',
+      message: error.message || 'Unknown error'
+    });
+  }
+});
+
+/**
+ * POST /api/ai/nlp/query
+ * 
+ * Process a natural language query about building costs
+ */
+router.post('/nlp/query', async (req, res) => {
+  try {
+    // Validate request data
+    const schema = z.object({
+      query: z.string().min(1, "Query is required"),
+      filters: z.record(z.any()).nullable().optional(),
+    });
+
+    const result = schema.safeParse(req.body);
+    
+    if (!result.success) {
+      return res.status(400).json({
+        error: 'Invalid request data',
+        details: result.error.errors
+      });
+    }
+
+    const { query, filters } = result.data;
+    
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: 'OpenAI API key not configured',
+        message: 'The OpenAI API key is missing. Please configure it in the environment variables.'
+      });
+    }
+    
+    // Process the natural language query
+    const queryResult = await processNaturalLanguageQuery(query, filters || null, storage);
+    
+    // Log the activity
+    await storage.createActivity({
+      action: `Natural language query processed: "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`,
+      icon: "ri-chat-3-line",
+      iconColor: "primary",
+    });
+    
+    res.json(queryResult);
+  } catch (error: any) {
+    console.error('Error processing natural language query:', error);
+    res.status(500).json({
+      error: 'Failed to process query',
       message: error.message || 'Unknown error'
     });
   }

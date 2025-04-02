@@ -200,11 +200,25 @@ export function PredictiveCostAnalysis({ className = '' }: PredictiveCostAnalysi
     };
 
     // Extract unique values from data
-    const buildingTypes = [...new Set(costMatrixData.map(item => item.buildingType))];
-    const regions = [...new Set(costMatrixData.map(item => item.region))];
-    const qualities = [...new Set(costMatrixData.map(item => item.quality).filter(Boolean))];
-    const complexities = [...new Set(costMatrixData.map(item => item.complexity).filter(Boolean))];
-    const conditions = [...new Set(costMatrixData.map(item => item.condition).filter(Boolean))];
+    const buildingTypesSet = new Set();
+    const regionsSet = new Set();
+    const qualitiesSet = new Set();
+    const complexitiesSet = new Set();
+    const conditionsSet = new Set();
+    
+    costMatrixData.forEach(item => {
+      if (item.buildingType) buildingTypesSet.add(item.buildingType);
+      if (item.region) regionsSet.add(item.region);
+      if (item.quality) qualitiesSet.add(item.quality);
+      if (item.complexity) complexitiesSet.add(item.complexity);
+      if (item.condition) conditionsSet.add(item.condition);
+    });
+    
+    const buildingTypes = Array.from(buildingTypesSet) as string[];
+    const regions = Array.from(regionsSet) as string[];
+    const qualities = Array.from(qualitiesSet) as string[];
+    const complexities = Array.from(complexitiesSet) as string[];
+    const conditions = Array.from(conditionsSet) as string[];
 
     return {
       buildingTypes: buildingTypes.length > 0 ? buildingTypes : ['Residential', 'Commercial', 'Industrial'],

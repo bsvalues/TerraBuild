@@ -118,6 +118,9 @@ export interface IStorage {
   getAllCounties(): Promise<string[]>;
   getAllStates(): Promise<string[]>;
   getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]>;
+  
+  // AI and NLP methods
+  getCostTrends(): Promise<any[]>;
   getBuildingTypesByCounty(county: string): Promise<string[]>;
   getBuildingTypesByState(state: string): Promise<string[]>;
   getCountyStats(county: string): Promise<{
@@ -126,6 +129,9 @@ export interface IStorage {
     avgCost: number,
     buildingTypeCount: number
   }>;
+  
+  // AI and NLP methods
+  getCostTrends(): Promise<any[]>;
   
   // File Uploads
   createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload>;
@@ -1003,6 +1009,54 @@ export class MemStorage implements IStorage {
       .forEach(matrix => buildingTypes.add(matrix.buildingType));
     
     return Array.from(buildingTypes);
+  }
+  
+  async getCostTrends(): Promise<any[]> {
+    const matrixEntries = Array.from(this.costMatrixEntries.values())
+      .filter(matrix => matrix.isActive);
+    
+    if (matrixEntries.length === 0) {
+      return [];
+    }
+    
+    // Group by year and building type
+    const trendsByYearAndType: Record<string, Record<string, number[]>> = {};
+    
+    matrixEntries.forEach(entry => {
+      const year = entry.matrixYear.toString();
+      const type = entry.buildingType;
+      
+      if (!trendsByYearAndType[year]) {
+        trendsByYearAndType[year] = {};
+      }
+      
+      if (!trendsByYearAndType[year][type]) {
+        trendsByYearAndType[year][type] = [];
+      }
+      
+      trendsByYearAndType[year][type].push(parseFloat(entry.baseCost));
+    });
+    
+    // Convert to array of trend objects
+    const trends: any[] = [];
+    
+    Object.entries(trendsByYearAndType).forEach(([year, typeData]) => {
+      Object.entries(typeData).forEach(([buildingType, costs]) => {
+        const avgCost = costs.reduce((sum, cost) => sum + cost, 0) / costs.length;
+        
+        trends.push({
+          year: parseInt(year),
+          buildingType,
+          avgCost,
+          minCost: Math.min(...costs),
+          maxCost: Math.max(...costs),
+          dataPoints: costs.length
+        });
+      });
+    });
+    
+    // Sort by year ascending
+    return trends.sort((a, b) => a.year - b.year);
   }
   
   async getCountyStats(county: string): Promise<{
