@@ -7,7 +7,7 @@
  *   node run_auth_test.js
  */
 
-const { testLoginAPI, testAutoLoginAPI } = require('./tests/test_auth');
+import { testLoginAPI, testAutoLoginAPI } from './tests/test_auth.js';
 
 async function runAuthTests() {
   console.log('='.repeat(50));

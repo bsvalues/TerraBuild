@@ -5,16 +5,17 @@
  * Building Cost Building System (BCBS) application.
  */
 
-const { expect } = require('chai');
-const fs = require('fs');
-const path = require('path');
-const { validateExcelFile, validateBatchExcelFiles } = require('../server/validators/excelValidator.js');
-const { processBatchImport } = require('../server/import/batchImporter.js');
-const { standardizeMatrixData } = require('../server/data/matrixStandardizer.js');
+import { expect } from 'chai';
+import fs from 'fs';
+import path from 'path';
+import { validateExcelFile, validateBatchExcelFiles } from '../server/validators/excelValidator.cjs';
+import { processBatchImport } from '../server/import/batchImporter.cjs';
+import { standardizeMatrixData } from '../server/data/matrixStandardizer.cjs';
+import { TEST_PATHS } from '../test-config.js';
 
 // Test data paths
-const VALID_EXCEL_PATH = './attached_assets/Cost Matrix 2025.xlsx';
-const INVALID_EXCEL_PATH = './tests/fixtures/invalid_matrix.xlsx';
+const VALID_EXCEL_PATH = TEST_PATHS.validExcel;
+const INVALID_EXCEL_PATH = TEST_PATHS.invalidExcel;
 const TEST_OUTPUT_DIR = './tests/output';
 
 // Ensure test output directory exists
