@@ -30,6 +30,15 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Import analytics and report controllers
+import {
+  getTimeSeriesData,
+  getRegionalComparison,
+  getBuildingTypeComparison,
+  getCostBreakdown
+} from "./controllers/analyticsController";
+import { exportReport } from "./controllers/reportController";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication and authorization
   setupAuth(app);
@@ -2111,6 +2120,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error calculating scenario impact:", error);
       res.status(500).json({ message: "Error calculating scenario impact" });
     }
+  });
+
+  // Analytics & Reporting API Routes
+  
+  // Time series analysis for cost trends
+  app.get("/api/analytics/time-series", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getTimeSeriesData(req, res);
+    } catch (error) {
+      console.error("Error processing time series data:", error);
+      res.status(500).json({ error: "Error processing time series data" });
+    }
+  });
+  
+  // Regional cost comparison
+  app.get("/api/analytics/regional-comparison", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getRegionalComparison(req, res);
+    } catch (error) {
+      console.error("Error processing regional comparison:", error);
+      res.status(500).json({ error: "Error processing regional comparison" });
+    }
+  });
+  
+  // Building type comparison
+  app.get("/api/analytics/building-type-comparison", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getBuildingTypeComparison(req, res);
+    } catch (error) {
+      console.error("Error processing building type comparison:", error);
+      res.status(500).json({ error: "Error processing building type comparison" });
+    }
+  });
+  
+  // Cost breakdown analysis
+  app.get("/api/analytics/cost-breakdown/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await getCostBreakdown(req, res);
+    } catch (error) {
+      console.error("Error processing cost breakdown:", error);
+      res.status(500).json({ error: "Error processing cost breakdown" });
+    }
+  });
+  
+  // Report export
+  app.get("/api/reports/export/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      await exportReport(req, res);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ error: "Error exporting report" });
+    }
+  });
+
+  // Log the new endpoints
+  await storage.createActivity({
+    action: "Enhanced analytics and reporting APIs added",
+    icon: "ri-bar-chart-2-line",
+    iconColor: "success"
   });
 
   const httpServer = createServer(app);
