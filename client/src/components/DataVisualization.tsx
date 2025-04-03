@@ -16,7 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+// Benton County branding colors
+const COLORS = ['#243E4D', '#3CAB36', '#29B7D3', '#4a6b7a', '#6ac766', '#5acbdf'];
 
 interface TimeSeriesDataPoint {
   date: string;
@@ -313,7 +314,7 @@ const DataVisualization: React.FC = () => {
                         type="monotone" 
                         dataKey="value" 
                         name="Base Cost" 
-                        stroke="#8884d8" 
+                        stroke="#29B7D3" 
                         activeDot={{ r: 8 }}
                       />
                     </LineChart>
@@ -395,7 +396,7 @@ const DataVisualization: React.FC = () => {
                       <YAxis />
                       <Tooltip formatter={(value) => [`$${value}`, 'Total Cost']} />
                       <Legend />
-                      <Bar dataKey="value" name="Total Cost" fill="#82ca9d" />
+                      <Bar dataKey="value" name="Total Cost" fill="#3CAB36" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -476,7 +477,7 @@ const DataVisualization: React.FC = () => {
                       <YAxis />
                       <Tooltip formatter={(value) => [`$${value}`, 'Total Cost']} />
                       <Legend />
-                      <Bar dataKey="value" name="Total Cost" fill="#8884d8" />
+                      <Bar dataKey="value" name="Total Cost" fill="#243E4D" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -543,7 +544,7 @@ const DataVisualization: React.FC = () => {
                             labelLine={true}
                             label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                             outerRadius={80}
-                            fill="#8884d8"
+                            fill="#243E4D"
                             dataKey="value"
                           >
                             {costBreakdownPieData.map((entry, index) => (
