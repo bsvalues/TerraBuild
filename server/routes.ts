@@ -20,8 +20,7 @@ import { z } from "zod";
 import { setupAuth } from "./auth";
 import { validateExcelFile, validateBatchExcelFiles } from "./validators/excelValidator";
 import { processBatchImport } from "./import/batchImporter";
-import { initializeMCP } from "./mcp";
-import { setupMCPRoutes } from "./mcp/routes";
+import { initMCP } from "./mcp";
 import aiRoutes from "./routes/aiRoutes";
 import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
@@ -1794,13 +1793,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initialize and set up MCP framework
+  // Setup AI routes
   try {
-    console.log('Initializing Model Content Protocol (MCP) framework...');
-    initializeMCP();
-    setupMCPRoutes(app);
-    
-    // Setup AI routes
     app.use('/api/ai', aiRoutes);
     
     // Setup Advanced Prediction routes

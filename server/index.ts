@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
+import { initMCP } from "./mcp";
 
 const app = express();
 app.use(express.json());
@@ -44,6 +45,13 @@ app.use((req, res, next) => {
     log('Database initialized successfully');
   } catch (error) {
     log(`Database initialization error: ${error}`, 'error');
+  }
+  
+  // Initialize MCP framework for AI-powered features
+  try {
+    initMCP(app);
+  } catch (error) {
+    log(`MCP initialization error: ${error}`, 'error');
   }
   
   const server = await registerRoutes(app);

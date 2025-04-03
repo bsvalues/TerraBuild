@@ -1,186 +1,126 @@
-/**
- * Model Content Protocol (MCP) Routes
- * 
- * This module sets up the API routes for the Model Content Protocol integration,
- * which provides AI-powered building cost predictions, analytics, and explanations.
- */
+import { Router } from 'express';
+import { OpenAI } from 'openai';
+import { z } from 'zod';
 
-import type { Express, Request, Response } from "express";
-import { costPredictionAgent, matrixAnalysisAgent, calculationExplanationAgent } from "./index";
-import { costPredictionRequestSchema as mcpCostPredictionSchema } from "./index";
-import { z } from "zod";
-import predictionEngine, { costPredictionRequestSchema as aiCostPredictionSchema } from "../ai/predictionEngine";
-
-// Schema for enhanced AI cost prediction request
-export const enhancedCostPredictionRequestSchema = aiCostPredictionSchema;
-
-// Schema for matrix analysis request
-const matrixAnalysisRequestSchema = z.object({
-  matrixData: z.any()
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Schema for calculation explanation request
-const calculationExplanationRequestSchema = z.object({
-  calculationData: z.any()
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+const OPENAI_MODEL = "gpt-4o";
+
+// Create router
+const mcpRouter = Router();
+
+// Schema for the enhanced cost prediction request
+const enhancedPredictionRequestSchema = z.object({
+  buildingType: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL']),
+  region: z.string(),
+  squareFootage: z.number().positive(),
+  quality: z.enum(['ECONOMY', 'AVERAGE', 'GOOD', 'PREMIUM', 'LUXURY']),
+  buildingAge: z.number().nonnegative(),
+  yearBuilt: z.number(),
+  complexityFactor: z.number().min(0.5).max(1.5).default(1.0),
+  conditionFactor: z.number().min(0.5).max(1.5).default(1.0),
+  features: z.array(z.string()).default([]),
+  targetYear: z.number().optional(),
 });
 
-/**
- * Setup MCP routes
- * 
- * @param app Express application
- */
-export function setupMCPRoutes(app: Express) {
-  // Prediction route
-  app.post("/api/mcp/predict-cost", async (req: Request, res: Response) => {
-    try {
-      // Validate the request body
-      const data = mcpCostPredictionSchema.parse(req.body);
-      
-      // Call the cost prediction agent
-      const result = await costPredictionAgent(data);
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error in cost prediction:", error);
-      
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          error: "Invalid request data", 
-          details: error.errors 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Error processing request",
-          message: (error as Error).message
-        });
-      }
-    }
-  });
-  
-  // Analysis route
-  app.post("/api/mcp/analyze-matrix", async (req: Request, res: Response) => {
-    try {
-      // Validate the request body
-      const { matrixData } = matrixAnalysisRequestSchema.parse(req.body);
-      
-      // Call the matrix analysis agent
-      const result = await matrixAnalysisAgent(matrixData);
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error in matrix analysis:", error);
-      
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          error: "Invalid request data", 
-          details: error.errors 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Error processing request",
-          message: (error as Error).message
-        });
-      }
-    }
-  });
-  
-  // Explanation route
-  app.post("/api/mcp/explain-calculation", async (req: Request, res: Response) => {
-    try {
-      // Validate the request body
-      const { calculationData } = calculationExplanationRequestSchema.parse(req.body);
-      
-      // Call the calculation explanation agent
-      const result = await calculationExplanationAgent(calculationData);
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error in calculation explanation:", error);
-      
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          error: "Invalid request data", 
-          details: error.errors 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Error processing request",
-          message: (error as Error).message
-        });
-      }
-    }
-  });
-  
-  // Enhanced AI Cost Prediction route
-  app.post("/api/mcp/enhanced-predict-cost", async (req: Request, res: Response) => {
-    try {
-      // Validate the request body
-      const data = enhancedCostPredictionRequestSchema.parse(req.body);
-      
-      // Call the enhanced prediction engine
-      const result = await predictionEngine.generateCostPrediction(
-        data.buildingType,
-        data.region,
-        data.targetYear || new Date().getFullYear() + 1,
-        {
-          squareFootage: data.squareFootage,
-          quality: data.quality || 'AVERAGE',
-          buildingAge: data.buildingAge || 0,
-          complexityFactor: data.complexityFactor || 1.0,
-          conditionFactor: data.conditionFactor || 1.0,
-          features: data.features || []
-        }
-      );
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error in enhanced cost prediction:", error);
-      
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          error: "Invalid request data", 
-          details: error.errors 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Error processing request",
-          message: (error as Error).message
-        });
-      }
-    }
-  });
-  
-  // AI engine connection test route
-  app.get("/api/mcp/test-connection", async (req: Request, res: Response) => {
-    try {
-      const connectionStatus = await predictionEngine.testConnection();
-      res.json(connectionStatus);
-    } catch (error) {
-      console.error("Error in connection test:", error);
-      res.status(500).json({ 
-        status: "error",
-        message: (error as Error).message
+// Define the enhanced prediction endpoint
+mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
+  try {
+    // Validate the request body
+    const validationResult = enhancedPredictionRequestSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request data',
+        details: validationResult.error.format(),
       });
     }
-  });
+    
+    const predictionData = validationResult.data;
+    
+    // Create the prompt for OpenAI
+    const prompt = `
+    You are an expert building cost estimator for Benton County, Washington. Based on the following information, provide a detailed cost prediction with explanation:
+    
+    Building Details:
+    - Type: ${predictionData.buildingType}
+    - Region: ${predictionData.region}
+    - Square Footage: ${predictionData.squareFootage}
+    - Quality Level: ${predictionData.quality}
+    - Year Built: ${predictionData.yearBuilt} (Age: ${predictionData.buildingAge} years)
+    - Complexity Factor: ${predictionData.complexityFactor}
+    - Condition Factor: ${predictionData.conditionFactor}
+    - Special Features: ${predictionData.features.join(', ')}
+    ${predictionData.targetYear ? `- Target Year for Prediction: ${predictionData.targetYear}` : ''}
+    
+    Use the following general cost guidelines:
+    - RESIDENTIAL buildings in Washington state typically cost $150-300 per square foot depending on quality.
+    - COMMERCIAL buildings typically cost $180-450 per square foot.
+    - INDUSTRIAL buildings typically cost $120-350 per square foot.
+    
+    Your prediction should include:
+    1. The total estimated cost
+    2. Cost per square foot
+    3. A list of key prediction factors with their impact (positive, negative, neutral) and relative importance (as a decimal from 0 to 1)
+    4. Short explanations for each factor's impact
+    5. Recommendations for 2-3 potential material substitutions that could optimize cost while minimizing quality impact (include potential savings and quality impact rating)
+    
+    Return the data in JSON format only. No introduction or explanatory text.
+    `;
+    
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a building cost estimation AI specialized in Benton County, Washington construction projects. Provide detailed, accurate cost predictions based on building specifications and regional cost data."
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+    });
+    
+    // Parse the response text as JSON
+    const responseText = response.choices[0].message.content;
+    
+    if (!responseText) {
+      throw new Error('Failed to get a response from OpenAI');
+    }
+    
+    try {
+      const predictionResult = JSON.parse(responseText);
+      
+      // Return the prediction result
+      return res.json({
+        success: true,
+        ...predictionResult
+      });
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      console.log('Raw response:', responseText);
+      
+      // Attempt to extract useful information even if JSON parsing fails
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to parse prediction result',
+        rawResponse: responseText
+      });
+    }
+  } catch (error) {
+    console.error('Error in enhanced cost prediction:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    });
+  }
+});
 
-  // MCP status route - useful for checking if MCP is working
-  app.get("/api/mcp/status", async (req: Request, res: Response) => {
-    try {
-      // Check if OpenAI API key is configured
-      const hasApiKey = !!process.env.OPENAI_API_KEY;
-      
-      res.json({
-        status: hasApiKey ? "ready" : "api_key_missing",
-        message: hasApiKey 
-          ? "MCP is ready to use" 
-          : "OpenAI API key not configured. Set OPENAI_API_KEY in environment variables."
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        status: "error",
-        message: (error as Error).message
-      });
-    }
-  });
-}
+export default mcpRouter;

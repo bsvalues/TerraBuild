@@ -9,6 +9,7 @@ import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
 import AIToolsPage from "@/pages/AIToolsPage";
+import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
 import DataImportPage from "@/pages/DataImportPage";
 import BenchmarkingPage from "@/pages/BenchmarkingPage";
@@ -58,6 +59,7 @@ function Router() {
       <ProtectedRoute path="/calculator" component={CalculatorPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
       <ProtectedRoute path="/ai-tools" component={AIToolsPage} />
+      <ProtectedRoute path="/ai-cost-wizard" component={AICostWizardPage} />
       <ProtectedRoute path="/ar-visualization" component={ARVisualizationPage} />
       <ProtectedRoute path="/data-import" component={DataImportPage} />
       <ProtectedRoute path="/benchmarking" component={BenchmarkingPage} />
