@@ -25,7 +25,35 @@ const calculatorSchema = z.object({
   complexityFactor: z.coerce.number().min(0.5).max(2.0).default(1.0),
   conditionFactor: z.coerce.number().min(0.5).max(1.5).default(1.0),
   region: z.string().min(1, "Region is required"),
-  buildingAge: z.coerce.number().min(0, "Building age cannot be negative").default(0),
+  buildingAge: z.coerce.number()
+    .min(0, "Building age cannot be negative")
+    .superRefine((age, ctx) => {
+      const buildingType = ctx.parent?.buildingType;
+      
+      if (age === 0) return true; // Zero age (new building) is always valid
+      
+      // Set maximum reasonable ages for different building types
+      const maxAges = {
+        'RESIDENTIAL': 100,
+        'COMMERCIAL': 75,
+        'INDUSTRIAL': 60,
+      };
+      
+      const maxAge = buildingType && maxAges[buildingType as keyof typeof maxAges] 
+        ? maxAges[buildingType as keyof typeof maxAges] 
+        : 100;
+      
+      if (age > maxAge) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Age exceeds typical lifespan of ${maxAge} years for this building type. Consider entering a lower value or contact an assessor for specialized evaluation.`
+        });
+        return false;
+      }
+      
+      return true;
+    })
+    .default(0),
 });
 
 type CalculatorFormValues = z.infer<typeof calculatorSchema>;
@@ -1080,6 +1108,38 @@ const BCBSCostCalculator = () => {
                         </div>
                       </div>
                       
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-sm font-medium">Cost Comparison</div>
+                          <div className="text-xs text-gray-500">Impact of building age on total cost</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex flex-col bg-white p-2 rounded border">
+                            <div className="text-sm text-gray-500">If New Building</div>
+                            <div className="text-lg font-medium">
+                              ${(totalCost + (costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0)).toLocaleString()}
+                            </div>
+                            <div className="mt-1">
+                              <span className="text-xs px-1.5 py-0.5 bg-gray-100 rounded-full">No Depreciation</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col bg-white p-2 rounded border">
+                            <div className="text-sm text-gray-500">Current Estimate</div>
+                            <div className="text-lg font-medium" style={{ color: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)) }}>
+                              ${totalCost.toLocaleString()}
+                            </div>
+                            <div className="mt-1">
+                              <span className="text-xs px-1.5 py-0.5 rounded-full text-white" 
+                                style={{ backgroundColor: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)) }}>
+                                With {getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}% Depreciation
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div className="mt-3 w-full bg-gray-200 h-3 rounded-full overflow-hidden">
                         <div 
                           className="h-full transition-all duration-500" 
@@ -1092,6 +1152,22 @@ const BCBSCostCalculator = () => {
                       <div className="flex justify-between mt-1 text-xs text-gray-500">
                         <span>Depreciated: {getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%</span>
                         <span>Retained: {100 - getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 bg-[#e8f8fb] p-3 rounded border-l-4 border-[#29B7D3] text-sm">
+                      <div className="flex items-start">
+                        <Info className="text-[#29B7D3] h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
+                        <div>
+                          <p className="text-[#243E4D] mb-1">
+                            <span className="font-medium">Understanding Age Depreciation:</span> Building age impacts value due to wear and tear, 
+                            outdated systems, and reduced remaining useful life.
+                          </p>
+                          <p className="text-[#243E4D]">
+                            Different building types depreciate at different rates based on construction materials, typical usage patterns, 
+                            and industry standards. The calculator applies appropriate depreciation rates for {form.getValues().buildingType.toLowerCase()} buildings.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1541,20 +1617,51 @@ const BCBSCostCalculator = () => {
                       <p className="text-[#243E4D]">This interactive treemap visualization shows the hierarchical breakdown of costs. Larger blocks represent higher costs. Hover over blocks to see details.</p>
                     </div>
                     
-                    <div className="w-full h-[400px] border rounded-md p-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <Treemap
-                          data={treemapData}
-                          dataKey="size"
-                          nameKey="name"
-                          aspectRatio={4 / 3}
-                          stroke="#fff"
-                          fill="#8884d8"
-                          animationBegin={0}
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                        />
-                      </ResponsiveContainer>
+                    <div className="w-full border rounded-md p-4">
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-2">
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-sm bg-[#243E4D] mr-1"></div>
+                            <span className="text-xs">Building Costs</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-sm bg-[#3CAB36] mr-1"></div>
+                            <span className="text-xs">Materials</span>
+                          </div>
+                          {form.getValues().buildingAge > 0 && (
+                            <div className="flex items-center">
+                              <div 
+                                className="w-4 h-4 rounded-sm mr-1" 
+                                style={{ 
+                                  backgroundColor: getDepreciationColor(
+                                    getDepreciationPercentage(
+                                      form.getValues().buildingAge, 
+                                      form.getValues().buildingType
+                                    )
+                                  ) 
+                                }}
+                              ></div>
+                              <span className="text-xs">Age Depreciation</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <Treemap
+                            data={treemapData}
+                            dataKey="size"
+                            nameKey="name"
+                            aspectRatio={4 / 3}
+                            stroke="#fff"
+                            fill="#243E4D"
+                            animationBegin={0}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                          />
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 )}
