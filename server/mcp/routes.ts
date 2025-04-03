@@ -7,12 +7,12 @@
 
 import type { Express, Request, Response } from "express";
 import { costPredictionAgent, matrixAnalysisAgent, calculationExplanationAgent } from "./index";
-import { costPredictionRequestSchema } from "./index";
+import { costPredictionRequestSchema as mcpCostPredictionSchema } from "./index";
 import { z } from "zod";
-import predictionEngine, { costPredictionInputSchema } from "../ai/predictionEngine";
+import predictionEngine, { costPredictionRequestSchema as aiCostPredictionSchema } from "../ai/predictionEngine";
 
 // Schema for enhanced AI cost prediction request
-export const enhancedCostPredictionRequestSchema = costPredictionInputSchema;
+export const enhancedCostPredictionRequestSchema = aiCostPredictionSchema;
 
 // Schema for matrix analysis request
 const matrixAnalysisRequestSchema = z.object({
@@ -34,7 +34,7 @@ export function setupMCPRoutes(app: Express) {
   app.post("/api/mcp/predict-cost", async (req: Request, res: Response) => {
     try {
       // Validate the request body
-      const data = costPredictionRequestSchema.parse(req.body);
+      const data = mcpCostPredictionSchema.parse(req.body);
       
       // Call the cost prediction agent
       const result = await costPredictionAgent(data);
@@ -121,12 +121,14 @@ export function setupMCPRoutes(app: Express) {
       const result = await predictionEngine.generateCostPrediction(
         data.buildingType,
         data.region,
-        data.year,
+        data.targetYear || new Date().getFullYear() + 1,
         {
           squareFootage: data.squareFootage,
-          complexity: data.complexity,
-          condition: data.condition,
-          features: data.features
+          quality: data.quality || 'AVERAGE',
+          buildingAge: data.buildingAge || 0,
+          complexityFactor: data.complexityFactor || 1.0,
+          conditionFactor: data.conditionFactor || 1.0,
+          features: data.features || []
         }
       );
       

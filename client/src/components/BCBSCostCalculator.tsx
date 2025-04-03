@@ -12,11 +12,13 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle, BrainCircuit, Share2 } from 'lucide-react';
 import CostImpactAnimation from './CostImpactAnimation';
 import ExportPdfDialog from './ExportPdfDialog';
 import ExportExcelDialog from './ExportExcelDialog';
 import PrintDialog from './PrintDialog';
+import { PredictiveCostAnalysis } from './PredictiveCostAnalysis';
+import { MaterialSubstitutionEngine } from './MaterialSubstitutionEngine';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1835,6 +1837,41 @@ const BCBSCostCalculator = () => {
                     <span>Start New Calculation</span>
                     <span>↺</span>
                   </Button>
+                </div>
+                
+                {/* Advanced Cost Prediction Engine */}
+                <div className="mt-8 pt-8 border-t">
+                  <h3 className="text-xl font-medium text-[#243E4D] mb-4 flex items-center">
+                    <BrainCircuit className="mr-2 h-5 w-5 text-[#29B7D3]" />
+                    Advanced Cost Prediction
+                  </h3>
+                  <PredictiveCostAnalysis 
+                    buildingType={form.getValues().buildingType}
+                    squareFeet={form.getValues().squareFootage}
+                    quality={form.getValues().quality}
+                    buildingAge={form.getValues().buildingAge}
+                    region={form.getValues().region}
+                    complexityFactor={form.getValues().complexityFactor}
+                    conditionFactor={form.getValues().conditionFactor}
+                  />
+                </div>
+                
+                {/* Material Substitution Engine */}
+                <div className="mt-8 pt-8 border-t">
+                  <h3 className="text-xl font-medium text-[#243E4D] mb-4 flex items-center">
+                    <Share2 className="mr-2 h-5 w-5 text-[#3CAB36]" />
+                    Material Substitution Recommendations
+                  </h3>
+                  <MaterialSubstitutionEngine 
+                    buildingType={form.getValues().buildingType}
+                    region={form.getValues().region}
+                    quality={form.getValues().quality}
+                    currentMaterials={materials}
+                    onSubstitutionApplied={(materialId, newMaterial) => {
+                      updateMaterial(materialId, 'name', newMaterial.name);
+                      updateMaterial(materialId, 'unitPrice', newMaterial.unitPrice);
+                    }}
+                  />
                 </div>
               </div>
             </TabsContent>

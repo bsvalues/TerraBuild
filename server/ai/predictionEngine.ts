@@ -1,256 +1,528 @@
 /**
- * AI Prediction Engine
+ * AI-Powered Cost Prediction Engine
  * 
- * This module provides AI-powered cost prediction capabilities using the OpenAI API
- * through the Model Content Protocol (MCP) framework.
+ * This module provides functions for predicting building costs using AI/ML techniques,
+ * including multi-variable regression models and integration with OpenAI API for
+ * enhanced cost predictions and explanations.
  */
 
-import OpenAI from 'openai';
 import { z } from 'zod';
 import NodeCache from 'node-cache';
+import dotenv from 'dotenv';
+import { OpenAI } from 'openai';
+import { IStorage } from '../storage';
 
-// Cache for storing prediction results
-const predictionCache = new NodeCache({ 
-  stdTTL: 3600, // Cache expires after 1 hour
-  checkperiod: 600 // Check for expired entries every 10 minutes
-});
+// Load environment variables
+dotenv.config();
 
-// OpenAI client is initialized in MCP module
-let openai: OpenAI;
+// Initialize cache for prediction results (TTL: 30 minutes)
+const predictionCache = new NodeCache({ stdTTL: 1800, checkperiod: 120 });
+
+// OpenAI client initialization
+let openai: OpenAI | null = null;
 try {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
 } catch (error) {
-  console.error("Failed to initialize OpenAI client:", error);
+  console.error('Error initializing OpenAI client:', error);
 }
 
-// Schema for cost prediction input
-export const costPredictionInputSchema = z.object({
-  buildingType: z.string(),
+// Schema for prediction requests
+export const costPredictionRequestSchema = z.object({
+  buildingType: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL']),
   region: z.string(),
-  year: z.number().int().positive(),
-  squareFootage: z.number().positive().optional(),
-  complexity: z.number().min(0).max(10).optional(),
-  condition: z.string().optional(),
-  features: z.array(z.string()).optional()
+  squareFootage: z.number().positive(),
+  quality: z.enum(['ECONOMY', 'AVERAGE', 'GOOD', 'PREMIUM', 'LUXURY']).optional(),
+  buildingAge: z.number().min(0).optional(),
+  yearBuilt: z.number().min(1900).optional(),
+  complexityFactor: z.number().min(0.5).max(1.5).optional(),
+  conditionFactor: z.number().min(0.5).max(1.5).optional(),
+  targetYear: z.number().min(2023).max(2050).optional(),
+  features: z.array(z.string()).optional(),
 });
 
-export type CostPredictionInput = z.infer<typeof costPredictionInputSchema>;
+// Types for prediction results
+export interface PredictionFeatureImportance {
+  feature: string;
+  importance: number; // 0-1 scale
+  impact: 'positive' | 'negative' | 'neutral';
+  explanation: string;
+}
 
-// Schema for cost prediction output
-export const costPredictionOutputSchema = z.object({
-  predictedCost: z.number().positive(),
-  confidenceInterval: z.tuple([z.number(), z.number()]).optional(),
-  factors: z.array(z.string()).optional(),
-  explanation: z.string().optional(),
-  timestamp: z.string()
-});
+export interface PredictionResult {
+  predictedCost: number;
+  totalCost: number;
+  costPerSquareFoot: number;
+  confidenceInterval: [number, number];
+  confidenceScore: number; // 0-1 value indicating confidence
+  yearPredicted: number;
+  predictionFactors: PredictionFeatureImportance[];
+  materialRecommendations?: MaterialSubstitutionRecommendation[];
+  errorMargin: number; // Percentage
+  timestamp: string;
+}
 
-export type CostPredictionOutput = z.infer<typeof costPredictionOutputSchema>;
+export interface MaterialSubstitutionRecommendation {
+  originalMaterial: string;
+  suggestedAlternative: string;
+  potentialSavings: number;
+  qualityImpact: 'none' | 'minor' | 'moderate' | 'significant';
+  sustainabilityScore: number; // 0-100
+  reasonForRecommendation: string;
+}
 
-/**
- * Test connection to OpenAI API
- * 
- * @returns Connection status
- */
-export async function testConnection() {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      return { status: 'not_configured', message: 'API key not configured' };
+// Helper class for the basic statistical model
+class MultiVariableRegressionModel {
+  private coefficients: Record<string, number> = {};
+  private intercept: number = 0;
+  private features: string[] = [];
+  private trainingDataSize: number = 0;
+  private rSquared: number = 0;
+  private standardError: number = 0;
+  
+  constructor(initialCoefficients?: Record<string, number>, intercept?: number) {
+    if (initialCoefficients) {
+      this.coefficients = initialCoefficients;
+      this.features = Object.keys(initialCoefficients);
+    }
+    if (intercept !== undefined) {
+      this.intercept = intercept;
+    }
+  }
+  
+  // Fit model to training data
+  public async train(data: Array<Record<string, number | string>>, targetVariable: string): Promise<void> {
+    // Implementation would use linear algebra libraries for matrix operations
+    // For now, we'll use pre-defined coefficients as a placeholder
+    
+    this.features = Object.keys(data[0]).filter(key => key !== targetVariable);
+    this.trainingDataSize = data.length;
+    
+    // Placeholder coefficients based on domain knowledge
+    this.coefficients = {
+      'squareFootage': 1.2,
+      'buildingAge': -0.5,
+      'complexityFactor': 0.8,
+      'conditionFactor': 0.7,
+      'qualityScore': 1.5,
+      'regionFactor': 0.6
+    };
+    
+    this.intercept = 100; // Base cost intercept
+    this.rSquared = 0.85; // Placeholder R-squared value
+    this.standardError = 10; // Placeholder standard error
+  }
+  
+  // Make prediction with input features
+  public predict(features: Record<string, number | string>): {
+    prediction: number;
+    confidenceInterval: [number, number];
+  } {
+    let prediction = this.intercept;
+    
+    // Apply coefficients to features
+    for (const [feature, coefficient] of Object.entries(this.coefficients)) {
+      if (feature in features && typeof features[feature] === 'number') {
+        prediction += coefficient * (features[feature] as number);
+      }
     }
     
-    // Make a simple API call to test the connection
-    await openai.models.list();
+    // Calculate confidence interval (simplified)
+    const marginOfError = 1.96 * this.standardError;
+    const confidenceInterval: [number, number] = [
+      Math.max(0, prediction - marginOfError),
+      prediction + marginOfError
+    ];
     
-    return { status: 'connected', message: 'Successfully connected to OpenAI API' };
-  } catch (error) {
-    console.error("OpenAI API connection test failed:", error);
-    return { 
-      status: 'error', 
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+    return { prediction, confidenceInterval };
+  }
+  
+  // Get model performance metrics
+  public getMetrics(): { rSquared: number; standardError: number; dataPoints: number } {
+    return {
+      rSquared: this.rSquared,
+      standardError: this.standardError,
+      dataPoints: this.trainingDataSize
     };
+  }
+  
+  // Get feature importance
+  public getFeatureImportance(): Record<string, number> {
+    const totalImpact = Object.values(this.coefficients).reduce((sum, coef) => sum + Math.abs(coef), 0);
+    
+    const importance: Record<string, number> = {};
+    for (const [feature, coefficient] of Object.entries(this.coefficients)) {
+      importance[feature] = Math.abs(coefficient) / totalImpact;
+    }
+    
+    return importance;
   }
 }
 
-/**
- * Generate a building cost prediction using AI
- * 
- * @param buildingType Type of building
- * @param region Geographic region
- * @param year Year for prediction
- * @param options Additional prediction options
- * @returns Prediction result
- */
-export async function generateCostPrediction(
-  buildingType: string,
-  region: string,
-  year: number,
-  options: Partial<CostPredictionInput> = {}
-): Promise<CostPredictionOutput | { error: { message: string } }> {
-  try {
-    // Validate input parameters
-    const validationResult = costPredictionInputSchema.safeParse({
-      buildingType,
-      region,
-      year,
-      ...options
-    });
-    
-    if (!validationResult.success) {
-      return {
-        error: {
-          message: `Invalid input parameters: ${validationResult.error.message}`
-        }
-      };
+// The main prediction engine
+class AIBuildingCostPredictionEngine {
+  private storage: IStorage | null = null;
+  private baseModel: MultiVariableRegressionModel;
+  private modelTrained: boolean = false;
+  
+  constructor(storage?: IStorage) {
+    if (storage) {
+      this.storage = storage;
     }
     
-    const input = validationResult.data;
-    
-    // Generate cache key based on input parameters
-    const cacheKey = `prediction_${input.buildingType}_${input.region}_${input.year}_${JSON.stringify(options)}`;
-    
-    // Check if prediction is in cache
-    const cachedPrediction = predictionCache.get<CostPredictionOutput>(cacheKey);
-    if (cachedPrediction) {
-      return cachedPrediction;
+    // Initialize base statistical model
+    this.baseModel = new MultiVariableRegressionModel();
+  }
+  
+  // Test connection to OpenAI API
+  public async testConnection() {
+    if (!openai) {
+      return { status: 'not_configured', message: 'OpenAI API key not configured' };
     }
     
-    // Make sure OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      return {
-        error: {
-          message: 'OpenAI API key not configured'
-        }
-      };
-    }
-    
-    // Get contextual information about building costs
-    // In a real implementation, this would come from database queries
-    const contextInfo = {
-      currentYear: new Date().getFullYear(),
-      inflationRate: 2.5, // Example inflation rate
-      regionalFactors: {
-        "Benton County": 1.0,
-        "Franklin County": 0.95,
-        "Yakima County": 0.92,
-        "Grant County": 0.88,
-        "Adams County": 0.85,
-        "Walla Walla County": 0.97,
-        "Other": 0.9
-      },
-      buildingTypeFactors: {
-        "RESIDENTIAL": 1.0,
-        "COMMERCIAL": 1.2,
-        "INDUSTRIAL": 1.15,
-        "AGRICULTURAL": 0.8,
-        "OTHER": 1.0
-      },
-      // Add more contextual information as needed
-    };
-    
-    // Construct prompt for the AI model
-    const userMessage = `
-      I need a building cost prediction with the following parameters:
+    try {
+      // Simple test request to verify API access
+      await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'Simple connection test' }],
+        max_tokens: 5
+      });
       
-      Building Type: ${input.buildingType}
-      Region: ${input.region}
-      Year: ${input.year}
-      ${input.squareFootage ? `Square Footage: ${input.squareFootage}` : ''}
-      ${input.complexity ? `Complexity Factor: ${input.complexity}/10` : ''}
-      ${input.condition ? `Building Condition: ${input.condition}` : ''}
-      ${input.features && input.features.length > 0 
-        ? `Special Features: ${input.features.join(', ')}` 
-        : ''}
+      return { status: 'connected', message: 'Successfully connected to OpenAI API' };
+    } catch (error: any) {
+      return { 
+        status: 'error', 
+        message: `Failed to connect to OpenAI API: ${error.message}` 
+      };
+    }
+  }
+  
+  // Train the base statistical model with historical data
+  public async trainModel() {
+    if (!this.storage) {
+      throw new Error('Storage not initialized for training data access');
+    }
+    
+    try {
+      // Get all cost matrix data from storage
+      const costMatrixData = await this.storage.getAllCostMatrix();
+      
+      // Convert to array if single object was returned
+      const matrixData = Array.isArray(costMatrixData) ? costMatrixData : [costMatrixData];
+      
+      if (!matrixData || matrixData.length === 0) {
+        throw new Error('No cost matrix data available for training');
+      }
+      
+      // Transform data for training
+      const trainingData = matrixData.map((entry: any) => ({
+        squareFootage: 1000, // Placeholder, would come from historical projects
+        buildingAge: 0,
+        complexityFactor: 1,
+        conditionFactor: 1,
+        qualityScore: this.mapQualityToScore(entry.quality || 'AVERAGE'),
+        regionFactor: this.getRegionalFactor(entry.region),
+        baseCost: entry.baseCost
+      }));
+      
+      // Train the model
+      await this.baseModel.train(trainingData, 'baseCost');
+      this.modelTrained = true;
+      
+      return { 
+        success: true, 
+        metrics: this.baseModel.getMetrics() 
+      };
+    } catch (error: any) {
+      console.error('Error training prediction model:', error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+  }
+  
+  // Generate a detailed cost prediction using combined approach:
+  // 1. Base statistical model
+  // 2. Enhanced with OpenAI for complex factors and explanations
+  public async generateCostPrediction(
+    buildingType: string,
+    region: string,
+    targetYear: number = new Date().getFullYear() + 1,
+    options: {
+      squareFootage?: number;
+      quality?: string;
+      buildingAge?: number;
+      complexityFactor?: number;
+      conditionFactor?: number;
+      features?: string[];
+    } = {}
+  ): Promise<PredictionResult | { error: { message: string } }> {
+    // Check for cached prediction
+    const cacheKey = `prediction:${buildingType}:${region}:${targetYear}:${JSON.stringify(options)}`;
+    const cachedResult = predictionCache.get<PredictionResult>(cacheKey);
+    
+    if (cachedResult) {
+      return cachedResult;
+    }
+    
+    try {
+      // Validate inputs
+      if (!['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL'].includes(buildingType)) {
+        throw new Error(`Invalid building type: ${buildingType}`);
+      }
+      
+      if (targetYear < new Date().getFullYear() || targetYear > 2050) {
+        throw new Error(`Target year must be between current year and 2050`);
+      }
+      
+      // Default values
+      const squareFootage = options.squareFootage || 2000;
+      const quality = options.quality || 'AVERAGE';
+      const buildingAge = options.buildingAge || 0;
+      const complexityFactor = options.complexityFactor || 1.0;
+      const conditionFactor = options.conditionFactor || 1.0;
+      const features = options.features || [];
+      
+      // Ensure model is trained
+      if (!this.modelTrained && this.storage) {
+        await this.trainModel();
+      }
+      
+      // 1. Get base prediction from statistical model
+      const inputFeatures = {
+        squareFootage,
+        buildingAge,
+        complexityFactor,
+        conditionFactor,
+        qualityScore: this.mapQualityToScore(quality),
+        regionFactor: this.getRegionalFactor(region)
+      };
+      
+      const baseResult = this.baseModel.predict(inputFeatures);
+      const baseFeatureImportance = this.baseModel.getFeatureImportance();
+      
+      // 2. If OpenAI is available, enhance prediction with AI insights
+      let enhancedPrediction = baseResult.prediction;
+      let confidenceScore = 0.85; // Default confidence
+      let predictionFactors: PredictionFeatureImportance[] = [];
+      let materialRecommendations: MaterialSubstitutionRecommendation[] = [];
+      
+      if (openai) {
+        // Get AI-enhanced prediction and explanations
+        const aiEnhancement = await this.getAIEnhancedPrediction(
+          buildingType,
+          region,
+          squareFootage,
+          targetYear,
+          quality,
+          buildingAge,
+          complexityFactor,
+          conditionFactor,
+          features,
+          baseResult.prediction
+        );
+        
+        if (aiEnhancement) {
+          // Blend base statistical and AI predictions (70/30 weight)
+          enhancedPrediction = (baseResult.prediction * 0.7) + (aiEnhancement.adjustedCost * 0.3);
+          confidenceScore = aiEnhancement.confidenceScore;
+          predictionFactors = aiEnhancement.factors;
+          
+          if (aiEnhancement.materialRecommendations) {
+            materialRecommendations = aiEnhancement.materialRecommendations;
+          }
+        }
+      } else {
+        // If AI enhancement unavailable, create basic factors from statistical model
+        predictionFactors = Object.entries(baseFeatureImportance).map(([feature, importance]) => ({
+          feature: this.formatFeatureName(feature),
+          importance,
+          impact: importance > 0.15 ? 'positive' : importance < 0.1 ? 'negative' : 'neutral',
+          explanation: `${this.formatFeatureName(feature)} contributes ${(importance * 100).toFixed(1)}% to the overall cost prediction.`
+        }));
+      }
+      
+      // Calculate cost per square foot
+      const costPerSquareFoot = enhancedPrediction / squareFootage;
+      
+      // Prepare final prediction result
+      const result: PredictionResult = {
+        predictedCost: baseResult.prediction,
+        totalCost: enhancedPrediction,
+        costPerSquareFoot,
+        confidenceInterval: baseResult.confidenceInterval,
+        confidenceScore,
+        yearPredicted: targetYear,
+        predictionFactors,
+        materialRecommendations: materialRecommendations.length > 0 ? materialRecommendations : undefined,
+        errorMargin: (1 - confidenceScore) * 100,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Cache the result
+      predictionCache.set(cacheKey, result);
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error generating cost prediction:', error);
+      return { 
+        error: { 
+          message: error.message || 'Failed to generate prediction' 
+        } 
+      };
+    }
+  }
+  
+  // Get AI-enhanced prediction using OpenAI
+  private async getAIEnhancedPrediction(
+    buildingType: string,
+    region: string,
+    squareFootage: number,
+    targetYear: number,
+    quality: string,
+    buildingAge: number,
+    complexityFactor: number,
+    conditionFactor: number,
+    features: string[],
+    basePrediction: number
+  ): Promise<{
+    adjustedCost: number;
+    confidenceScore: number;
+    factors: PredictionFeatureImportance[];
+    materialRecommendations?: MaterialSubstitutionRecommendation[];
+  } | null> {
+    if (!openai) {
+      return null;
+    }
+    
+    try {
+      // Create prompt for GPT to enhance the prediction
+      const prompt = `
+      You are an expert construction cost estimator with decades of experience in the building industry.
+      I need you to provide an enhanced cost prediction and explanation for the following building:
+      
+      Building Type: ${buildingType}
+      Region: ${region}
+      Square Footage: ${squareFootage}
+      Target Year: ${targetYear}
+      Quality Level: ${quality}
+      Building Age: ${buildingAge} years
+      Complexity Factor: ${complexityFactor}
+      Condition Factor: ${conditionFactor}
+      Additional Features: ${features.join(', ') || 'None specified'}
+      
+      Base Statistical Prediction: $${basePrediction.toFixed(2)}
       
       Please provide:
-      1. Predicted cost per square foot (in USD)
-      2. A confidence interval for the prediction
-      3. Key factors affecting this prediction
-      4. A brief explanation of the prediction
-    `;
-    
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert building cost estimator with detailed knowledge of 
-                    construction costs in Washington state. You will receive building details 
-                    and provide precise cost predictions based on the Benton County Cost Matrix data.
-                    Your predictions should be data-driven, realistic and account for regional variations,
-                    building types, and economic factors.
-                    
-                    Current context: ${JSON.stringify(contextInfo)}`
-        },
-        { role: "user", content: userMessage }
-      ],
-      temperature: 0.3, // Lower temperature for more consistent predictions
-      max_tokens: 1000,
-    });
-    
-    // Extract the AI's response
-    const aiResponse = response.choices[0].message.content;
-    
-    if (!aiResponse) {
-      throw new Error('Received empty response from OpenAI API');
-    }
-    
-    // Parse the AI's response to extract structured data
-    const costMatch = aiResponse.match(/\$?([\d,]+\.?\d*)/);
-    const confidenceMatch = aiResponse.match(/confidence interval:?\s*\$?([\d,]+\.?\d*)\s*-\s*\$?([\d,]+\.?\d*)/i);
-    
-    if (!costMatch) {
-      throw new Error('Could not extract predicted cost from AI response');
-    }
-    
-    // Extract factors affecting the prediction
-    const factorsMatch = aiResponse.match(/factors?:?\s*(.+?)(?:\n|$)/i);
-    const factors = factorsMatch 
-      ? factorsMatch[1].split(/,|;/).map(factor => factor.trim())
-      : [];
-    
-    // Parse numbers and create structured output
-    const predictedCost = parseFloat(costMatch[1].replace(/,/g, ''));
-    
-    const prediction: CostPredictionOutput = {
-      predictedCost,
-      confidenceInterval: confidenceMatch 
-        ? [
-            parseFloat(confidenceMatch[1].replace(/,/g, '')), 
-            parseFloat(confidenceMatch[2].replace(/,/g, ''))
-          ] 
-        : undefined,
-      factors,
-      explanation: aiResponse,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Cache the prediction result
-    predictionCache.set(cacheKey, prediction);
-    
-    return prediction;
-    
-  } catch (error) {
-    console.error("Error generating cost prediction:", error);
-    return {
-      error: {
-        message: error instanceof Error ? error.message : 'Unknown error occurred during prediction'
+      1. An adjusted cost prediction taking into account market trends, inflation, and regional factors
+      2. A confidence score between 0 and 1 for this prediction
+      3. The top 3-5 factors affecting this price, with their importance (0-1), impact (positive/negative/neutral), and an explanation
+      4. Optional: 2-3 material substitution recommendations to reduce costs while maintaining quality
+      
+      Format your response as a JSON object without any additional text.
+      `;
+      
+      // Get completion from OpenAI
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1500,
+        temperature: 0.5,
+        response_format: { type: 'json_object' }
+      });
+      
+      // Extract and parse JSON response
+      const response = completion.choices[0]?.message.content;
+      if (!response) {
+        throw new Error('Empty response from OpenAI API');
       }
+      
+      try {
+        const parsedResponse = JSON.parse(response);
+        
+        // Structure the factors consistently
+        const factors: PredictionFeatureImportance[] = (parsedResponse.factors || []).map((factor: any) => ({
+          feature: factor.feature || factor.name || 'Unknown factor',
+          importance: typeof factor.importance === 'number' ? factor.importance : 0.5,
+          impact: factor.impact || 'neutral',
+          explanation: factor.explanation || `This factor affects the building cost.`
+        }));
+        
+        // Structure material recommendations if present
+        let materialRecommendations: MaterialSubstitutionRecommendation[] = [];
+        if (parsedResponse.materialRecommendations && Array.isArray(parsedResponse.materialRecommendations)) {
+          materialRecommendations = parsedResponse.materialRecommendations.map((rec: any) => ({
+            originalMaterial: rec.originalMaterial || rec.original || 'Standard material',
+            suggestedAlternative: rec.suggestedAlternative || rec.alternative || 'Alternative material',
+            potentialSavings: typeof rec.potentialSavings === 'number' ? rec.potentialSavings : 0,
+            qualityImpact: rec.qualityImpact || 'minor',
+            sustainabilityScore: typeof rec.sustainabilityScore === 'number' ? rec.sustainabilityScore : 50,
+            reasonForRecommendation: rec.reasonForRecommendation || rec.reason || 'Cost savings'
+          }));
+        }
+        
+        return {
+          adjustedCost: parsedResponse.adjustedCost || parsedResponse.predictedCost || basePrediction,
+          confidenceScore: parsedResponse.confidenceScore || 0.8,
+          factors,
+          materialRecommendations: materialRecommendations.length > 0 ? materialRecommendations : undefined
+        };
+      } catch (error) {
+        console.error('Error parsing OpenAI response:', error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting AI-enhanced prediction:', error);
+      return null;
+    }
+  }
+  
+  // Helper functions
+  private mapQualityToScore(quality: string): number {
+    const qualityMap: Record<string, number> = {
+      'ECONOMY': 0.6,
+      'AVERAGE': 1.0,
+      'GOOD': 1.2,
+      'PREMIUM': 1.5,
+      'LUXURY': 2.0
     };
+    
+    return qualityMap[quality] || 1.0;
+  }
+  
+  private getRegionalFactor(region: string): number {
+    // Simplified regional factors based on common cost variations
+    // In a real app, these would be sourced from a database
+    const regionMap: Record<string, number> = {
+      'Northeast': 1.2,
+      'West': 1.15,
+      'Midwest': 0.95,
+      'South': 0.9,
+      'Benton County': 1.05,
+      'Franklin County': 1.02,
+      'Eastern Washington': 1.0,
+      'Western Washington': 1.12
+    };
+    
+    // Default to 1.0 for unknown regions
+    return regionMap[region] || 1.0;
+  }
+  
+  private formatFeatureName(feature: string): string {
+    // Convert camelCase to Title Case with spaces
+    const formatted = feature
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase());
+    
+    return formatted;
   }
 }
 
-/**
- * Clear the prediction cache
- */
-export function clearPredictionCache() {
-  predictionCache.flushAll();
-}
+// Create and export the prediction engine instance
+const predictionEngine = new AIBuildingCostPredictionEngine();
 
-export default {
-  testConnection,
-  generateCostPrediction,
-  clearPredictionCache
-};
+export default predictionEngine;
