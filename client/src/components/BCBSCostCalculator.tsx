@@ -1113,6 +1113,45 @@ const BCBSCostCalculator = () => {
                         </div>
                       </div>
                       
+                      {/* Detailed depreciation calculation information */}
+                      <div className="mt-4 p-3 bg-[#f8f9fa] rounded-md border">
+                        <h5 className="text-sm font-medium text-[#243E4D] mb-2 flex items-center">
+                          <Info className="h-4 w-4 mr-1 text-[#29B7D3]" />
+                          Depreciation Formula Details
+                        </h5>
+                        <div className="text-sm space-y-2">
+                          <div className="flex justify-between items-center border-b border-gray-200 pb-1">
+                            <span className="text-gray-600">Building Type:</span>
+                            <span className="font-medium">{buildingTypes.find(t => t.value === form.getValues().buildingType)?.label}</span>
+                          </div>
+                          <div className="flex justify-between items-center border-b border-gray-200 pb-1">
+                            <span className="text-gray-600">Annual Depreciation Rate:</span>
+                            <span className="font-medium">
+                              {form.getValues().buildingType === 'RESIDENTIAL' ? '1.333' : 
+                               form.getValues().buildingType === 'COMMERCIAL' ? '1.000' : 
+                               form.getValues().buildingType === 'INDUSTRIAL' ? '0.889' : '1.000'}% per year
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center border-b border-gray-200 pb-1">
+                            <span className="text-gray-600">Minimum Retained Value:</span>
+                            <span className="font-medium">
+                              {form.getValues().buildingType === 'RESIDENTIAL' ? '30' : 
+                               form.getValues().buildingType === 'COMMERCIAL' ? '25' : 
+                               form.getValues().buildingType === 'INDUSTRIAL' ? '20' : '25'}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Formula Applied:</span>
+                            <span className="font-medium">Max(Minimum Value, 1.0 - (Age × Annual Rate))</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 p-3 bg-[#e6eef2] rounded-md text-xs text-[#243E4D] flex items-start">
+                        <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-[#243E4D]" />
+                        <p>Different building types depreciate at different rates based on Benton County Building Cost Assessment standards. Residential buildings depreciate faster (1.333% per year) than commercial (1.000% per year) and industrial buildings (0.889% per year).</p>
+                      </div>
+                      
                       <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
                         <div className="flex justify-between items-center mb-2">
                           <div className="text-sm font-medium">Cost Comparison</div>
