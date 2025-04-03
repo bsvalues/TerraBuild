@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -181,6 +181,21 @@ const BCBSCostCalculator = () => {
     // Return the larger of the calculated value or the minimum value
     return Math.max(calculatedDepreciation, minimumValue);
   };
+  
+  // Get the current depreciation percentage for display
+  const getDepreciationPercentage = (buildingAge: number, buildingType: string): number => {
+    if (buildingAge === 0) return 0;
+    
+    const depreciationFactor = calculateAgeDepreciation(buildingAge, buildingType);
+    return Math.round((1 - depreciationFactor) * 100);
+  };
+  
+  // Get a color representation of the depreciation severity
+  const getDepreciationColor = (percentage: number): string => {
+    if (percentage < 15) return "#3CAB36"; // Low depreciation (green)
+    if (percentage < 40) return "#F5A623"; // Medium depreciation (amber)
+    return "#E53935";                      // High depreciation (red)
+  };
 
   // Calculate total cost based on form values and materials
   const calculateTotalCost = (data: CalculatorFormValues, materials: Material[]): number => {
@@ -305,6 +320,17 @@ const BCBSCostCalculator = () => {
     const ageDepreciation = costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0;
     const materialsCost = costBreakdown.find(c => c.category === 'Materials')?.cost || 0;
     
+    // Calculate depreciation percentage for visual representation
+    const buildingAge = form.getValues().buildingAge;
+    const buildingType = form.getValues().buildingType;
+    const deprecationPercentage = getDepreciationPercentage(buildingAge, buildingType);
+    const depreciationColor = getDepreciationColor(deprecationPercentage);
+    
+    // Create enhanced label for Age Depreciation with visual indicators
+    const ageDepreciationName = buildingAge > 0 
+      ? `Age Depreciation (${deprecationPercentage}% Loss)` 
+      : 'Age Depreciation';
+    
     // Create the materials sub-items if any are available
     const materialsChildren = materials.length > 0 
       ? materials.map(m => ({
@@ -326,7 +352,16 @@ const BCBSCostCalculator = () => {
               { name: 'Complexity Adjustment', size: complexityAdjustment, color: '#243E4D' },
               { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
               { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
-              { name: 'Age Depreciation', size: ageDepreciation, color: '#29B7D3' },
+              { 
+                name: ageDepreciationName, 
+                size: ageDepreciation, 
+                color: depreciationColor,
+                // Add special properties for visual treatment
+                special: 'age-depreciation',
+                percentage: deprecationPercentage,
+                buildingAge: buildingAge,
+                pattern: buildingAge > 0 ? "diagonal-stripes" : undefined
+              },
             ]
           },
           {
@@ -709,42 +744,79 @@ const BCBSCostCalculator = () => {
                       <FormField
                         control={form.control}
                         name="buildingAge"
-                        render={({ field }) => (
-                          <FormItem className="bg-[#e6eef2] p-3 rounded-md">
-                            <div className="flex justify-between items-center">
-                              <FormLabel>Building Age (years)</FormLabel>
-                              <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
-                            </div>
-                            <FormControl>
-                              <div className="flex items-center space-x-2 mt-2">
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  min={0}
-                                  className="border-gray-200"
-                                />
-                                <TooltipProvider>
-                                  <UITooltip>
-                                    <TooltipTrigger asChild>
-                                      <Info className="h-4 w-4 text-[#29B7D3] cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="w-80 text-xs">
-                                        Building age affects depreciation. Residential buildings depreciate at 1.333% per year,
-                                        commercial at 1% per year, and industrial at 0.889% per year. All building types have
-                                        a minimum value they retain regardless of age.
-                                      </p>
-                                    </TooltipContent>
-                                  </UITooltip>
-                                </TooltipProvider>
+                        render={({ field }) => {
+                          // Calculate depreciation percentage for display
+                          const buildingType = form.getValues().buildingType;
+                          const deprecationPercentage = getDepreciationPercentage(field.value, buildingType);
+                          const depreciationColor = getDepreciationColor(deprecationPercentage);
+                          
+                          return (
+                            <FormItem className="bg-[#e6eef2] p-3 rounded-md">
+                              <div className="flex justify-between items-center">
+                                <FormLabel>Building Age (years)</FormLabel>
+                                <div className="flex items-center gap-2">
+                                  {field.value > 0 && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className="bg-white border-gray-200"
+                                      style={{ color: depreciationColor }}
+                                    >
+                                      Depreciation: {deprecationPercentage}%
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">
+                                    {field.value}
+                                  </Badge>
+                                </div>
                               </div>
-                            </FormControl>
-                            <FormDescription className="mt-2">
-                              Enter the age of the building in years (0 for new construction)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                              <FormControl>
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    min={0}
+                                    className="border-gray-200"
+                                  />
+                                  <TooltipProvider>
+                                    <UITooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info className="h-4 w-4 text-[#29B7D3] cursor-help" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="w-80 text-xs">
+                                          Building age affects depreciation. Residential buildings depreciate at 1.333% per year,
+                                          commercial at 1% per year, and industrial at 0.889% per year. All building types have
+                                          a minimum value they retain regardless of age.
+                                        </p>
+                                      </TooltipContent>
+                                    </UITooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </FormControl>
+                              {field.value > 0 ? (
+                                <div className="mt-2">
+                                  <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full rounded-full transition-all duration-500" 
+                                      style={{ 
+                                        width: `${Math.min(100, deprecationPercentage * 1.5)}%`,
+                                        backgroundColor: depreciationColor
+                                      }}
+                                    />
+                                  </div>
+                                  <FormDescription className="mt-1">
+                                    Building has lost {deprecationPercentage}% of its value due to age
+                                  </FormDescription>
+                                </div>
+                              ) : (
+                                <FormDescription className="mt-2">
+                                  Enter the age of the building in years (0 for new construction)
+                                </FormDescription>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     </div>
                   </div>
@@ -970,17 +1042,59 @@ const BCBSCostCalculator = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {costBreakdown.map((item) => (
-                            <TableRow key={item.category}>
-                              <TableCell>{item.category}</TableCell>
-                              <TableCell>${item.cost.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="font-normal">
-                                  {((item.cost / totalCost) * 100).toFixed(1)}%
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {costBreakdown.map((item) => {
+                            // Special styling for Age Depreciation
+                            const isDepreciation = item.category === 'Age Depreciation';
+                            const deprecationPercentage = getDepreciationPercentage(
+                              form.getValues().buildingAge, 
+                              form.getValues().buildingType
+                            );
+                            const depreciationColor = getDepreciationColor(deprecationPercentage);
+                            
+                            return (
+                              <TableRow 
+                                key={item.category} 
+                                className={isDepreciation ? "bg-gray-50" : ""}
+                              >
+                                <TableCell>
+                                  <div className="flex items-center">
+                                    {isDepreciation && (
+                                      <Building className="h-4 w-4 mr-1" style={{ color: depreciationColor }} />
+                                    )}
+                                    <span>{item.category}</span>
+                                    {isDepreciation && form.getValues().buildingAge > 0 && (
+                                      <Badge 
+                                        className="ml-2 text-white" 
+                                        style={{ backgroundColor: depreciationColor }}
+                                      >
+                                        {deprecationPercentage}% Loss
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <span 
+                                    className={isDepreciation ? "font-medium" : ""}
+                                    style={{ color: isDepreciation ? depreciationColor : "inherit" }}
+                                  >
+                                    ${item.cost.toLocaleString()}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="font-normal"
+                                    style={{ 
+                                      borderColor: isDepreciation ? depreciationColor : "inherit",
+                                      color: isDepreciation ? depreciationColor : "inherit" 
+                                    }}
+                                  >
+                                    {((item.cost / totalCost) * 100).toFixed(1)}%
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
