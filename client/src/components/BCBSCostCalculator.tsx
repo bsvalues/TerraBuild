@@ -215,12 +215,17 @@ const BCBSCostCalculator = () => {
   };
 
   // Calculate total cost based on form values and materials
-  const calculateTotalCost = (data: CalculatorFormValues, materials: Material[]): number => {
+  const calculateTotalCost = (data: CalculatorFormValues, materials: Material[]): {
+    totalCost: number;
+    breakdown: CostBreakdown[];
+    regionalMultiplier: number;
+  } => {
     const baseCostPerSqFt = getBaseCostPerSqFt(data.buildingType, data.quality);
     const baseCost = data.squareFootage * baseCostPerSqFt;
     
     const multiplier = getRegionalMultiplier(data.region);
-    setRegionalMultiplier(multiplier);
+    // Don't set state directly in this function to avoid infinite re-renders
+    // setRegionalMultiplier(multiplier);
     
     // Apply factors
     let adjustedCost = baseCost;
@@ -249,9 +254,14 @@ const BCBSCostCalculator = () => {
       { category: 'Materials', cost: materialCost }
     ];
     
-    setCostBreakdown(breakdown);
+    // Don't set state directly in this function to avoid infinite re-renders
+    // setCostBreakdown(breakdown);
     
-    return depreciatedCost + materialCost;
+    return {
+      totalCost: depreciatedCost + materialCost,
+      breakdown,
+      regionalMultiplier: multiplier
+    };
   };
 
   // Add a new material to the list
@@ -475,11 +485,13 @@ const BCBSCostCalculator = () => {
 
   // Submit form handler
   const onSubmit = (data: CalculatorFormValues) => {
-    const cost = calculateTotalCost(data, materials);
-    setTotalCost(cost);
+    const result = calculateTotalCost(data, materials);
+    setTotalCost(result.totalCost);
+    setCostBreakdown(result.breakdown);
+    setRegionalMultiplier(result.regionalMultiplier);
     
     // Generate timeline data when form is submitted
-    const timeline = generateTimelineData(cost);
+    const timeline = generateTimelineData(result.totalCost);
     setTimelineData(timeline);
     
     // Generate treemap data for cost breakdown visualization
@@ -494,12 +506,14 @@ const BCBSCostCalculator = () => {
   useEffect(() => {
     if (form.formState.isValid) {
       const data = form.getValues();
-      const cost = calculateTotalCost(data, materials);
-      setTotalCost(cost);
+      const result = calculateTotalCost(data, materials);
+      setTotalCost(result.totalCost);
+      setCostBreakdown(result.breakdown);
+      setRegionalMultiplier(result.regionalMultiplier);
       
       // Generate timeline data when cost changes
-      if (cost > 0) {
-        const timeline = generateTimelineData(cost);
+      if (result.totalCost > 0) {
+        const timeline = generateTimelineData(result.totalCost);
         setTimelineData(timeline);
         
         // Generate treemap data for cost breakdown visualization
@@ -507,7 +521,7 @@ const BCBSCostCalculator = () => {
         setTreemapData(treemap);
       }
     }
-  }, [form.formState.isValid, materials, costBreakdown]);
+  }, [form.formState.isValid, materials]);
 
   return (
     <div className="container mx-auto p-4">
@@ -1759,7 +1773,7 @@ const BCBSCostCalculator = () => {
                         baseCost: form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality),
                         regionalMultiplier: getRegionalMultiplier(form.getValues().region),
                         ageDepreciation: getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType),
-                        totalCost: calculateTotalCost(form.getValues(), materials),
+                        totalCost: calculateTotalCost(form.getValues(), materials).totalCost,
                         materialCosts: materials.map(material => ({
                           category: 'Materials',
                           description: material.name,
@@ -1782,7 +1796,7 @@ const BCBSCostCalculator = () => {
                         baseCost: form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality),
                         regionalMultiplier: getRegionalMultiplier(form.getValues().region),
                         ageDepreciation: getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType),
-                        totalCost: calculateTotalCost(form.getValues(), materials),
+                        totalCost: calculateTotalCost(form.getValues(), materials).totalCost,
                         materialCosts: materials.map(material => ({
                           category: 'Materials',
                           description: material.name,
@@ -1805,7 +1819,7 @@ const BCBSCostCalculator = () => {
                         baseCost: form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality),
                         regionalMultiplier: getRegionalMultiplier(form.getValues().region),
                         ageDepreciation: getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType),
-                        totalCost: calculateTotalCost(form.getValues(), materials),
+                        totalCost: calculateTotalCost(form.getValues(), materials).totalCost,
                         materialCosts: materials.map(material => ({
                           category: 'Materials',
                           description: material.name,
