@@ -1026,6 +1026,77 @@ const BCBSCostCalculator = () => {
                   </p>
                 </div>
                 
+                {/* Age Depreciation Section */}
+                {form.getValues().buildingAge > 0 && (
+                  <div className="mt-4">
+                    <div className="bg-white border border-dashed p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center">
+                          <Building className="h-5 w-5 mr-2" style={{ color: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)) }} />
+                          <h4 className="text-lg font-medium">Age Depreciation Impact</h4>
+                        </div>
+                        <Badge 
+                          variant="outline" 
+                          className="font-normal"
+                          style={{ 
+                            borderColor: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)),
+                            color: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)),
+                            backgroundColor: `${getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType))}10`
+                          }}
+                        >
+                          Age: {form.getValues().buildingAge} years
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                        <div className="bg-gray-50 p-3 rounded border">
+                          <div className="text-sm text-gray-600 mb-1">Depreciation Rate</div>
+                          <div className="text-xl font-medium" style={{ color: getDepreciationColor(getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)) }}>
+                            {getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {form.getValues().buildingType === 'RESIDENTIAL' ? '1.333% per year' : form.getValues().buildingType === 'COMMERCIAL' ? '1% per year' : '0.889% per year'}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded border">
+                          <div className="text-sm text-gray-600 mb-1">Cost Impact</div>
+                          <div className="text-xl font-medium">
+                            -${(costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {((costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0) / totalCost * 100).toFixed(1)}% of total cost
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded border">
+                          <div className="text-sm text-gray-600 mb-1">Retained Value</div>
+                          <div className="text-xl font-medium text-[#3CAB36]">
+                            {(100 - getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType))}%
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Minimum retained value: {form.getValues().buildingType === 'RESIDENTIAL' ? '30%' : form.getValues().buildingType === 'COMMERCIAL' ? '25%' : '20%'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 w-full bg-gray-200 h-3 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full transition-all duration-500" 
+                          style={{ 
+                            width: `${100 - getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%`,
+                            backgroundColor: "#3CAB36" 
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1 text-xs text-gray-500">
+                        <span>Depreciated: {getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%</span>
+                        <span>Retained: {100 - getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center">
@@ -1283,8 +1354,16 @@ const BCBSCostCalculator = () => {
                       {costBreakdown.map((item, index) => {
                         const percentage = (item.cost / totalCost * 100).toFixed(1);
                         const width = `${Math.max(5, parseFloat(percentage))}%`;
+                        const isDepreciation = item.category === 'Age Depreciation';
+                        
+                        // Special styling for Age Depreciation
+                        const buildingAge = form.getValues().buildingAge;
+                        const buildingType = form.getValues().buildingType;
+                        const deprecationPercentage = getDepreciationPercentage(buildingAge, buildingType);
+                        const depreciationColor = getDepreciationColor(deprecationPercentage);
+                        
                         const barColors = ['#243E4D', '#3CAB36', '#29B7D3'];
-                        const barColor = barColors[index % 3];
+                        const barColor = isDepreciation ? depreciationColor : barColors[index % 3];
                         const bgColor = index % 3 === 0 ? '#e6eef2' : (index % 3 === 1 ? '#e8f7e8' : '#e8f8fb');
                         
                         return (
@@ -1292,13 +1371,26 @@ const BCBSCostCalculator = () => {
                             <div className="flex justify-between mb-1">
                               <div className="flex items-center">
                                 <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: barColor }}></div>
-                                <span className="font-medium text-sm">{item.category}</span>
+                                <span className="font-medium text-sm">
+                                  {item.category}
+                                  {isDepreciation && buildingAge > 0 && (
+                                    <span className="ml-2 px-1.5 py-0.5 text-xs rounded text-white" style={{ backgroundColor: depreciationColor }}>
+                                      -{deprecationPercentage}%
+                                    </span>
+                                  )}
+                                </span>
                               </div>
-                              <span className="text-sm font-semibold">${item.cost.toLocaleString()}</span>
+                              <span 
+                                className={`text-sm font-semibold ${isDepreciation ? "flex items-center" : ""}`}
+                                style={{ color: isDepreciation ? depreciationColor : "inherit" }}
+                              >
+                                ${item.cost.toLocaleString()}
+                              </span>
                             </div>
                             
                             <div 
-                              className="w-full h-10 bg-gray-100 rounded-md overflow-hidden flex items-center"
+                              className={`w-full h-10 bg-gray-100 rounded-md overflow-hidden flex items-center ${isDepreciation ? "border" : ""}`}
+                              style={{ borderColor: isDepreciation ? `${depreciationColor}50` : "transparent" }}
                               onMouseEnter={() => {
                                 setHoveredCostItem(item.category);
                               }}
@@ -1306,11 +1398,23 @@ const BCBSCostCalculator = () => {
                                 setHoveredCostItem(null);
                               }}
                             >
+                              {isDepreciation && buildingAge > 0 && (
+                                <div 
+                                  className="absolute right-0 h-full bg-gray-200 bg-opacity-50 border-l border-dashed flex items-center px-2 text-xs pointer-events-none"
+                                  style={{ 
+                                    width: `${Math.min(100 - parseFloat(width), 100)}%`,
+                                    borderColor: depreciationColor
+                                  }}
+                                >
+                                  <div className="text-gray-600 font-medium">Lost Value</div>
+                                </div>
+                              )}
                               <div 
-                                className="h-full transition-all duration-1000 ease-in-out flex items-center pl-2 text-white text-xs font-bold origin-left" 
+                                className={`h-full transition-all duration-1000 ease-in-out flex items-center pl-2 text-white text-xs font-bold origin-left ${isDepreciation && buildingAge > 0 ? "bg-gradient-to-r" : ""}`}
                                 style={{ 
                                   width: width, 
-                                  backgroundColor: barColor,
+                                  backgroundColor: isDepreciation && buildingAge > 0 ? "transparent" : barColor,
+                                  backgroundImage: isDepreciation && buildingAge > 0 ? `linear-gradient(to right, ${barColor}, ${barColor}99)` : "none",
                                   boxShadow: hoveredCostItem === item.category ? 
                                     '0 6px 12px rgba(0,0,0,0.2)' : 
                                     '0 4px 6px rgba(0,0,0,0.1)',
@@ -1321,6 +1425,11 @@ const BCBSCostCalculator = () => {
                                 }}
                               >
                                 {percentage}%
+                                {isDepreciation && buildingAge > 0 && (
+                                  <span className="ml-2 text-xs px-1 rounded-sm bg-white text-gray-800">
+                                    Retained Value
+                                  </span>
+                                )}
                               </div>
                               <div 
                                 className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100 bg-opacity-10 transition-opacity duration-300 pointer-events-none"
@@ -1437,19 +1546,14 @@ const BCBSCostCalculator = () => {
                         <Treemap
                           data={treemapData}
                           dataKey="size"
+                          nameKey="name"
                           aspectRatio={4 / 3}
                           stroke="#fff"
                           fill="#8884d8"
                           animationBegin={0}
                           animationDuration={1500}
                           animationEasing="ease-out"
-                          isAnimationActive={true}
-                        >
-                          <Tooltip 
-                            formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']}
-                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
-                          />
-                        </Treemap>
+                        />
                       </ResponsiveContainer>
                     </div>
                   </div>
