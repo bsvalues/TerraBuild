@@ -12,8 +12,8 @@ const VisualizationsPage: React.FC = () => {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Data Visualizations</h1>
-        <p className="text-gray-500">
+        <h1 className="text-3xl font-bold mb-2 text-[#243E4D]">Data Visualizations</h1>
+        <p className="text-[#243E4D]/70">
           Explore interactive visualizations and analytics for building cost data
         </p>
       </div>

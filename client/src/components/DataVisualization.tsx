@@ -203,8 +203,8 @@ const DataVisualization: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-8">
-      <h1 className="text-3xl font-bold">Data Visualization</h1>
-      <p className="text-gray-500">
+      <h1 className="text-3xl font-bold text-[#243E4D]">Data Visualization</h1>
+      <p className="text-[#243E4D]/70">
         Interactive visualizations and analytics for building cost data
       </p>
 
@@ -213,26 +213,26 @@ const DataVisualization: React.FC = () => {
         onValueChange={setSelectedTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-4 mb-6">
-          <TabsTrigger value="timeSeries">Time Series</TabsTrigger>
-          <TabsTrigger value="regionalComparison">Regional Comparison</TabsTrigger>
-          <TabsTrigger value="buildingTypeComparison">Building Type Comparison</TabsTrigger>
-          <TabsTrigger value="costBreakdown">Cost Breakdown</TabsTrigger>
+        <TabsList className="grid grid-cols-4 mb-6 bg-[#243E4D]/10">
+          <TabsTrigger value="timeSeries" className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white">Time Series</TabsTrigger>
+          <TabsTrigger value="regionalComparison" className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white">Regional Comparison</TabsTrigger>
+          <TabsTrigger value="buildingTypeComparison" className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white">Building Type Comparison</TabsTrigger>
+          <TabsTrigger value="costBreakdown" className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white">Cost Breakdown</TabsTrigger>
         </TabsList>
 
         {/* Time Series Tab */}
         <TabsContent value="timeSeries">
           <Card>
             <CardHeader>
-              <CardTitle>Cost Trends Over Time</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-[#243E4D]">Cost Trends Over Time</CardTitle>
+              <CardDescription className="text-[#243E4D]/70">
                 View how base costs for building types have changed over time
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Building Type</label>
+                  <label className="block text-sm font-medium mb-1 text-[#243E4D]">Building Type</label>
                   <Select 
                     value={buildingType} 
                     onValueChange={setBuildingType}
@@ -249,7 +249,7 @@ const DataVisualization: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Region</label>
+                  <label className="block text-sm font-medium mb-1 text-[#243E4D]">Region</label>
                   <Select 
                     value={region} 
                     onValueChange={setRegion}
@@ -267,7 +267,7 @@ const DataVisualization: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Start Year</label>
+                  <label className="block text-sm font-medium mb-1 text-[#243E4D]">Start Year</label>
                   <Input 
                     type="number" 
                     value={startYear} 
@@ -277,7 +277,7 @@ const DataVisualization: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">End Year</label>
+                  <label className="block text-sm font-medium mb-1 text-[#243E4D]">End Year</label>
                   <Input 
                     type="number" 
                     value={endYear} 
@@ -293,7 +293,7 @@ const DataVisualization: React.FC = () => {
               ) : timeSeriesQuery.isError ? (
                 renderError(`Failed to load time series data: ${timeSeriesQuery.error instanceof Error ? timeSeriesQuery.error.message : 'Unknown error'}`)
               ) : (timeSeriesQuery.data?.length || 0) === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[#243E4D]/60">
                   No data available for the selected criteria
                 </div>
               ) : (
@@ -329,15 +329,15 @@ const DataVisualization: React.FC = () => {
         <TabsContent value="regionalComparison">
           <Card>
             <CardHeader>
-              <CardTitle>Regional Cost Comparison</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-[#243E4D]">Regional Cost Comparison</CardTitle>
+              <CardDescription className="text-[#243E4D]/70">
                 Compare construction costs across different regions
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Building Type</label>
+                  <label className="block text-sm font-medium mb-1 text-[#243E4D]">Building Type</label>
                   <Select 
                     value={comparisonBuildingType} 
                     onValueChange={setComparisonBuildingType}
@@ -379,7 +379,7 @@ const DataVisualization: React.FC = () => {
               ) : regionalComparisonQuery.isError ? (
                 renderError(`Failed to load regional comparison data: ${regionalComparisonQuery.error instanceof Error ? regionalComparisonQuery.error.message : 'Unknown error'}`)
               ) : (regionalComparisonData?.length || 0) === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[#243E4D]/60">
                   No data available for the selected criteria
                 </div>
               ) : (
@@ -409,8 +409,8 @@ const DataVisualization: React.FC = () => {
         <TabsContent value="buildingTypeComparison">
           <Card>
             <CardHeader>
-              <CardTitle>Building Type Cost Comparison</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-[#243E4D]">Building Type Cost Comparison</CardTitle>
+              <CardDescription className="text-[#243E4D]/70">
                 Compare construction costs across different building types
               </CardDescription>
             </CardHeader>
@@ -460,7 +460,7 @@ const DataVisualization: React.FC = () => {
               ) : buildingTypeComparisonQuery.isError ? (
                 renderError(`Failed to load building type comparison data: ${buildingTypeComparisonQuery.error instanceof Error ? buildingTypeComparisonQuery.error.message : 'Unknown error'}`)
               ) : (buildingTypeComparisonData?.length || 0) === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[#243E4D]/60">
                   No data available for the selected criteria
                 </div>
               ) : (
@@ -490,8 +490,8 @@ const DataVisualization: React.FC = () => {
         <TabsContent value="costBreakdown">
           <Card>
             <CardHeader>
-              <CardTitle>Cost Breakdown Analysis</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-[#243E4D]">Cost Breakdown Analysis</CardTitle>
+              <CardDescription className="text-[#243E4D]/70">
                 View detailed cost breakdown for a specific calculation
               </CardDescription>
             </CardHeader>
@@ -510,6 +510,7 @@ const DataVisualization: React.FC = () => {
                   <Button 
                     onClick={() => costBreakdownQuery.refetch()}
                     disabled={!calculationId || costBreakdownQuery.isLoading}
+                    className="bg-[#243E4D] hover:bg-[#243E4D]/90"
                   >
                     Load Breakdown
                   </Button>
@@ -521,17 +522,17 @@ const DataVisualization: React.FC = () => {
               ) : costBreakdownQuery.isError ? (
                 renderError(`${costBreakdownQuery.error instanceof Error ? costBreakdownQuery.error.message : 'Unknown error'}`)
               ) : !costBreakdownQuery.data && !calculationId ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[#243E4D]/60">
                   Enter a calculation ID to view cost breakdown
                 </div>
               ) : !costBreakdownQuery.data ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[#243E4D]/60">
                   No data available for the selected calculation
                 </div>
               ) : (
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-medium">Total Cost: ${costBreakdownQuery.data.totalCost.toLocaleString()}</h3>
+                    <h3 className="text-lg font-medium text-[#243E4D]">Total Cost: ${costBreakdownQuery.data.totalCost.toLocaleString()}</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="h-[300px]">
@@ -556,13 +557,13 @@ const DataVisualization: React.FC = () => {
                       </ResponsiveContainer>
                     </div>
                     <div>
-                      <h4 className="text-md font-medium mb-2">Cost Breakdown</h4>
+                      <h4 className="text-md font-medium mb-2 text-[#243E4D]">Cost Breakdown</h4>
                       <table className="w-full">
                         <thead>
                           <tr>
-                            <th className="text-left py-2">Category</th>
-                            <th className="text-right py-2">Amount</th>
-                            <th className="text-right py-2">Percentage</th>
+                            <th className="text-left py-2 text-[#243E4D]">Category</th>
+                            <th className="text-right py-2 text-[#243E4D]">Amount</th>
+                            <th className="text-right py-2 text-[#243E4D]">Percentage</th>
                           </tr>
                         </thead>
                         <tbody>
