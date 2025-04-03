@@ -14,6 +14,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
 import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle } from 'lucide-react';
 import CostImpactAnimation from './CostImpactAnimation';
+import ExportPdfDialog from './ExportPdfDialog';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1742,18 +1743,28 @@ const BCBSCostCalculator = () => {
                     Export Options
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex items-center gap-2 bg-white border-[#29B7D3]/30 hover:bg-[#e8f8fb] hover:text-[#29B7D3]"
-                      onClick={() => {
-                        // In a real app, this would generate a PDF
-                        alert("Feature coming soon: Export to PDF");
+                    <ExportPdfDialog 
+                      calculation={{
+                        buildingType: form.getValues().buildingType,
+                        squareFootage: form.getValues().squareFootage,
+                        quality: form.getValues().quality,
+                        buildingAge: form.getValues().buildingAge,
+                        region: form.getValues().region,
+                        complexityFactor: form.getValues().complexityFactor,
+                        conditionFactor: form.getValues().conditionFactor,
+                        baseCost: form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality),
+                        regionalMultiplier: getRegionalMultiplier(form.getValues().region),
+                        ageDepreciation: getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType),
+                        totalCost: calculateTotalCost(form.getValues(), materials),
+                        materialCosts: materials.map(material => ({
+                          category: 'Materials',
+                          description: material.name,
+                          quantity: material.quantity,
+                          unitCost: material.unitPrice,
+                          totalCost: material.quantity * material.unitPrice
+                        }))
                       }}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span>Export PDF Report</span>
-                    </Button>
+                    />
                     
                     <Button
                       type="button"
