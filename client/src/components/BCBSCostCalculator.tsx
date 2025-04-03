@@ -12,9 +12,10 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Form schema for calculator
 const calculatorSchema = z.object({
@@ -46,6 +47,16 @@ interface TimelineData {
   projectedCost: number;
 }
 
+interface Scenario {
+  id: string;
+  name: string;
+  description?: string;
+  formValues: CalculatorFormValues;
+  materials: Material[];
+  totalCost: number;
+  costBreakdown: CostBreakdown[];
+}
+
 const BCBSCostCalculator = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [totalCost, setTotalCost] = useState<number>(0);
@@ -54,6 +65,15 @@ const BCBSCostCalculator = () => {
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [hoveredCostItem, setHoveredCostItem] = useState<string | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
+  
+  // What-If Scenario States
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [showScenarioModal, setShowScenarioModal] = useState<boolean>(false);
+  const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
+  const [scenarioComparison, setScenarioComparison] = useState<{
+    baseline: Scenario | null;
+    comparison: Scenario | null;
+  }>({ baseline: null, comparison: null });
 
   // Default form values
   const defaultValues: Partial<CalculatorFormValues> = {
@@ -228,6 +248,89 @@ const BCBSCostCalculator = () => {
     });
   };
 
+  // Save the current calculation as a scenario
+  const saveAsScenario = (name: string, description?: string) => {
+    const formValues = form.getValues();
+    const newScenario: Scenario = {
+      id: `scenario-${Date.now()}`,
+      name,
+      description,
+      formValues,
+      materials: [...materials],
+      totalCost,
+      costBreakdown: [...costBreakdown]
+    };
+    
+    setScenarios([...scenarios, newScenario]);
+    setCurrentScenario(newScenario);
+    setShowScenarioModal(false);
+  };
+  
+  // Load a scenario
+  const loadScenario = (scenario: Scenario) => {
+    // Reset form with scenario values
+    form.reset(scenario.formValues);
+    
+    // Set materials
+    setMaterials([...scenario.materials]);
+    
+    // Set cost data
+    setTotalCost(scenario.totalCost);
+    setCostBreakdown([...scenario.costBreakdown]);
+    
+    // Generate new timeline
+    const timeline = generateTimelineData(scenario.totalCost);
+    setTimelineData(timeline);
+    
+    setCurrentScenario(scenario);
+  };
+  
+  // Delete a scenario
+  const deleteScenario = (scenarioId: string) => {
+    const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
+    setScenarios(updatedScenarios);
+    
+    // If the current scenario was deleted, set current to null
+    if (currentScenario && currentScenario.id === scenarioId) {
+      setCurrentScenario(null);
+    }
+    
+    // If the scenario was in comparison, remove it
+    if (scenarioComparison.baseline?.id === scenarioId) {
+      setScenarioComparison({...scenarioComparison, baseline: null});
+    }
+    if (scenarioComparison.comparison?.id === scenarioId) {
+      setScenarioComparison({...scenarioComparison, comparison: null});
+    }
+  };
+  
+  // Set scenarios for comparison
+  const setComparisonScenarios = (type: 'baseline' | 'comparison', scenario: Scenario | null) => {
+    setScenarioComparison({
+      ...scenarioComparison,
+      [type]: scenario
+    });
+  };
+  
+  // Calculate the difference between two scenarios
+  const calculateScenarioDifference = () => {
+    if (!scenarioComparison.baseline || !scenarioComparison.comparison) {
+      return null;
+    }
+    
+    const baseline = scenarioComparison.baseline;
+    const comparison = scenarioComparison.comparison;
+    
+    const costDifference = comparison.totalCost - baseline.totalCost;
+    const percentDifference = (costDifference / baseline.totalCost) * 100;
+    
+    return {
+      costDifference,
+      percentDifference,
+      isIncrease: costDifference > 0
+    };
+  };
+
   // Submit form handler
   const onSubmit = (data: CalculatorFormValues) => {
     const cost = calculateTotalCost(data, materials);
@@ -236,6 +339,9 @@ const BCBSCostCalculator = () => {
     // Generate timeline data when form is submitted
     const timeline = generateTimelineData(cost);
     setTimelineData(timeline);
+    
+    // Set active tab to results when form is submitted
+    setActiveTab("results");
   };
 
   // Update cost when form values or materials change
@@ -267,7 +373,7 @@ const BCBSCostCalculator = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="calculator" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 bg-[#e6eef2]">
+            <TabsList className="grid w-full grid-cols-4 bg-[#e6eef2]">
               <TabsTrigger 
                 value="calculator" 
                 className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
@@ -285,6 +391,13 @@ const BCBSCostCalculator = () => {
                 className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
               >
                 Results
+              </TabsTrigger>
+              <TabsTrigger 
+                value="scenarios" 
+                className="data-[state=active]:bg-[#243E4D] data-[state=active]:text-white"
+                disabled={scenarios.length === 0}
+              >
+                Scenarios {scenarios.length > 0 && `(${scenarios.length})`}
               </TabsTrigger>
             </TabsList>
             
@@ -657,6 +770,36 @@ const BCBSCostCalculator = () => {
             
             <TabsContent value="results">
               <div className="space-y-6">
+                {/* What-If Scenario Actions */}
+                <div className="bg-[#e6eef2] p-4 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center text-[#243E4D]">
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    <p className="text-sm">
+                      {currentScenario 
+                        ? `Current scenario: ${currentScenario.name}` 
+                        : "Save your calculation as a scenario to compare different options."}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="bg-white border-[#29B7D3]/30 text-[#243E4D] hover:bg-[#e8f8fb] hover:text-[#243E4D]"
+                      onClick={() => setShowScenarioModal(true)}
+                    >
+                      Save as Scenario
+                    </Button>
+                    {scenarios.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        className="bg-white border-[#3CAB36]/30 text-[#243E4D] hover:bg-[#edf7ed] hover:text-[#243E4D]"
+                        onClick={() => setActiveTab("scenarios")}
+                      >
+                        Compare Scenarios
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              
                 <div className="bg-gradient-to-r from-[#e6eef2] to-[#e8f8fb] p-6 rounded-lg border border-[#29B7D3]/20">
                   <div className="flex items-center justify-center mb-2">
                     <DollarSign className="text-[#243E4D] mr-2 h-6 w-6" />
@@ -1045,6 +1188,250 @@ const BCBSCostCalculator = () => {
                 </div>
               </div>
             </TabsContent>
+            
+            {/* What-If Scenarios Tab */}
+            <TabsContent value="scenarios">
+              <div className="space-y-6">
+                <div className="bg-[#e6eef2] p-4 rounded-lg mb-6 flex items-center text-sm">
+                  <Info className="text-[#243E4D] mr-2 h-4 w-4" />
+                  <p className="text-[#243E4D]">
+                    What-If Scenario Analysis allows you to create and compare different building scenarios to make better decisions.
+                  </p>
+                </div>
+                
+                {scenarios.length === 0 ? (
+                  <div className="text-center py-8 border rounded-lg">
+                    <p className="text-lg text-gray-500">No scenarios saved yet.</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Create a scenario from the Results tab to compare different building options.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-medium text-[#243E4D] flex items-center">
+                          <Save className="mr-2 h-5 w-5 text-[#3CAB36]" />
+                          Saved Scenarios
+                        </h3>
+                        <div className="border rounded-md overflow-hidden">
+                          <Table>
+                            <TableHeader className="bg-gray-100">
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Cost</TableHead>
+                                <TableHead>Region</TableHead>
+                                <TableHead className="w-[120px]">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {scenarios.map((scenario) => (
+                                <TableRow key={scenario.id} className={currentScenario?.id === scenario.id ? "bg-[#e8f8fb]/30" : ""}>
+                                  <TableCell className="font-medium">
+                                    {scenario.name}
+                                    {currentScenario?.id === scenario.id && (
+                                      <Badge className="ml-2 bg-[#29B7D3] text-white">Current</Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>${scenario.totalCost.toLocaleString()}</TableCell>
+                                  <TableCell>
+                                    {regions.find(r => r.value === scenario.formValues.region)?.label}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => loadScenario(scenario)}
+                                        className="h-8 w-8 text-[#3CAB36]"
+                                      >
+                                        <TooltipProvider>
+                                          <UITooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="sr-only">Load</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Load scenario</p>
+                                            </TooltipContent>
+                                          </UITooltip>
+                                        </TooltipProvider>
+                                        <Save className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => deleteScenario(scenario.id)}
+                                        className="h-8 w-8 text-red-500"
+                                      >
+                                        <TooltipProvider>
+                                          <UITooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="sr-only">Delete</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Delete scenario</p>
+                                            </TooltipContent>
+                                          </UITooltip>
+                                        </TooltipProvider>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-medium text-[#243E4D] flex items-center">
+                          <ArrowLeftRight className="mr-2 h-5 w-5 text-[#29B7D3]" />
+                          Scenario Comparison
+                        </h3>
+                        <div className="bg-white border rounded-md p-4">
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-700">Baseline Scenario</label>
+                              <Select
+                                onValueChange={(value) => {
+                                  const scenario = scenarios.find(s => s.id === value);
+                                  setComparisonScenarios('baseline', scenario || null);
+                                }}
+                                value={scenarioComparison.baseline?.id || ""}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select baseline" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {scenarios.map((scenario) => (
+                                    <SelectItem key={`baseline-${scenario.id}`} value={scenario.id}>
+                                      {scenario.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-700">Comparison Scenario</label>
+                              <Select
+                                onValueChange={(value) => {
+                                  const scenario = scenarios.find(s => s.id === value);
+                                  setComparisonScenarios('comparison', scenario || null);
+                                }}
+                                value={scenarioComparison.comparison?.id || ""}
+                              >
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Select comparison" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {scenarios.map((scenario) => (
+                                    <SelectItem key={`comparison-${scenario.id}`} value={scenario.id}>
+                                      {scenario.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          
+                          {scenarioComparison.baseline && scenarioComparison.comparison ? (
+                            <div>
+                              <div className="flex justify-between p-3 bg-[#e6eef2] rounded-md mb-3">
+                                <div>
+                                  <h4 className="font-medium">{scenarioComparison.baseline.name}</h4>
+                                  <p className="text-sm text-gray-600">${scenarioComparison.baseline.totalCost.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-right">{scenarioComparison.comparison.name}</h4>
+                                  <p className="text-sm text-gray-600 text-right">${scenarioComparison.comparison.totalCost.toLocaleString()}</p>
+                                </div>
+                              </div>
+                              
+                              {(() => {
+                                const diff = calculateScenarioDifference();
+                                if (!diff) return null;
+                                
+                                return (
+                                  <div className={`p-3 rounded-md ${diff.isIncrease ? 'bg-red-50' : 'bg-green-50'}`}>
+                                    <p className="font-medium flex items-center justify-center">
+                                      <ArrowRightLeft className={`mr-2 h-4 w-4 ${diff.isIncrease ? 'text-red-500' : 'text-green-500'}`} />
+                                      <span className={diff.isIncrease ? 'text-red-500' : 'text-green-500'}>
+                                        {diff.isIncrease ? 'Increase' : 'Saving'} of ${Math.abs(diff.costDifference).toLocaleString()} ({Math.abs(diff.percentDifference).toFixed(1)}%)
+                                      </span>
+                                    </p>
+                                  </div>
+                                );
+                              })()}
+                              
+                              <div className="mt-4">
+                                <h4 className="font-medium mb-2">Key Differences</h4>
+                                <div className="space-y-2 text-sm">
+                                  {scenarioComparison.baseline.formValues.buildingType !== scenarioComparison.comparison.formValues.buildingType && (
+                                    <div className="flex justify-between border-b pb-1">
+                                      <span>Building Type:</span>
+                                      <div className="flex items-center">
+                                        <span>{buildingTypes.find(t => t.value === scenarioComparison.baseline?.formValues.buildingType)?.label}</span>
+                                        <ArrowRightLeft className="mx-2 h-3 w-3" />
+                                        <span>{buildingTypes.find(t => t.value === scenarioComparison.comparison?.formValues.buildingType)?.label}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {scenarioComparison.baseline.formValues.quality !== scenarioComparison.comparison.formValues.quality && (
+                                    <div className="flex justify-between border-b pb-1">
+                                      <span>Quality:</span>
+                                      <div className="flex items-center">
+                                        <span>{qualityLevels.find(q => q.value === scenarioComparison.baseline?.formValues.quality)?.label}</span>
+                                        <ArrowRightLeft className="mx-2 h-3 w-3" />
+                                        <span>{qualityLevels.find(q => q.value === scenarioComparison.comparison?.formValues.quality)?.label}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {scenarioComparison.baseline.formValues.region !== scenarioComparison.comparison.formValues.region && (
+                                    <div className="flex justify-between border-b pb-1">
+                                      <span>Region:</span>
+                                      <div className="flex items-center">
+                                        <span>{regions.find(r => r.value === scenarioComparison.baseline?.formValues.region)?.label}</span>
+                                        <ArrowRightLeft className="mx-2 h-3 w-3" />
+                                        <span>{regions.find(r => r.value === scenarioComparison.comparison?.formValues.region)?.label}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {scenarioComparison.baseline.formValues.squareFootage !== scenarioComparison.comparison.formValues.squareFootage && (
+                                    <div className="flex justify-between border-b pb-1">
+                                      <span>Square Footage:</span>
+                                      <div className="flex items-center">
+                                        <span>{scenarioComparison.baseline.formValues.squareFootage.toLocaleString()}</span>
+                                        <ArrowRightLeft className="mx-2 h-3 w-3" />
+                                        <span>{scenarioComparison.comparison.formValues.squareFootage.toLocaleString()}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {scenarioComparison.baseline.materials.length !== scenarioComparison.comparison.materials.length && (
+                                    <div className="flex justify-between border-b pb-1">
+                                      <span>Materials:</span>
+                                      <div className="flex items-center">
+                                        <span>{scenarioComparison.baseline.materials.length} items</span>
+                                        <ArrowRightLeft className="mx-2 h-3 w-3" />
+                                        <span>{scenarioComparison.comparison.materials.length} items</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 border rounded-md">
+                              <p className="text-gray-500">Select two scenarios to compare</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between border-t pt-4 bg-[#e6eef2]/40">
@@ -1056,6 +1443,70 @@ const BCBSCostCalculator = () => {
           </div>
         </CardFooter>
       </Card>
+      
+      {/* Save Scenario Modal */}
+      <Dialog open={showScenarioModal} onOpenChange={setShowScenarioModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Save Scenario</DialogTitle>
+            <DialogDescription>
+              Save your current calculation as a scenario for future reference and comparison.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="scenario-name" className="text-sm font-medium">
+                Scenario Name
+              </label>
+              <Input 
+                id="scenario-name" 
+                placeholder="Enter a name for this scenario"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const input = e.target as HTMLInputElement;
+                    if (input.value.trim()) {
+                      saveAsScenario(input.value.trim());
+                    }
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="scenario-description" className="text-sm font-medium">
+                Description (Optional)
+              </label>
+              <Input id="scenario-description" placeholder="Brief description of this scenario" />
+            </div>
+            <div className="bg-gray-50 rounded-md p-3 text-sm">
+              <p className="font-medium">Scenario will include:</p>
+              <ul className="list-disc list-inside text-gray-600 mt-1 space-y-1">
+                <li>Building specifications (type, size, quality)</li>
+                <li>Materials and quantities</li>
+                <li>Location and adjustment factors</li>
+                <li>Total cost calculation</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScenarioModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                const nameInput = document.getElementById('scenario-name') as HTMLInputElement;
+                const descInput = document.getElementById('scenario-description') as HTMLInputElement;
+                if (nameInput.value.trim()) {
+                  saveAsScenario(nameInput.value.trim(), descInput.value.trim() || undefined);
+                }
+              }}
+              className="bg-[#3CAB36] hover:bg-[#3CAB36]/90 text-white"
+            >
+              Save Scenario
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
