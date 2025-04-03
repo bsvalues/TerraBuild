@@ -73,22 +73,98 @@ mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
     Return the data in JSON format only. No introduction or explanatory text.
     `;
     
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      messages: [
-        { 
-          role: "system", 
-          content: "You are a building cost estimation AI specialized in Benton County, Washington construction projects. Provide detailed, accurate cost predictions based on building specifications and regional cost data."
-        },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-    });
+    let responseText;
     
-    // Parse the response text as JSON
-    const responseText = response.choices[0].message.content;
+    try {
+      // Call OpenAI API
+      const response = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          { 
+            role: "system", 
+            content: "You are a building cost estimation AI specialized in Benton County, Washington construction projects. Provide detailed, accurate cost predictions based on building specifications and regional cost data."
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+      });
+      
+      // Parse the response text as JSON
+      responseText = response.choices[0].message.content;
+    } catch (apiError) {
+      console.error('OpenAI API error:', apiError);
+      
+      // Generate fallback prediction without using AI
+      // This ensures the application works even when API limits are reached
+      const baseRates = {
+        RESIDENTIAL: { ECONOMY: 150, AVERAGE: 200, GOOD: 250, PREMIUM: 300, LUXURY: 350 },
+        COMMERCIAL: { ECONOMY: 180, AVERAGE: 250, GOOD: 300, PREMIUM: 375, LUXURY: 450 },
+        INDUSTRIAL: { ECONOMY: 120, AVERAGE: 175, GOOD: 225, PREMIUM: 275, LUXURY: 350 }
+      };
+      
+      // Calculate base rate
+      const baseRate = baseRates[predictionData.buildingType][predictionData.quality];
+      
+      // Apply adjustments
+      const ageAdjustment = 1 - (Math.min(predictionData.buildingAge, 30) * 0.01);
+      const regionAdjustment = predictionData.region.toLowerCase().includes('western') ? 1.15 : 1.0;
+      const adjustedRate = baseRate * predictionData.complexityFactor * predictionData.conditionFactor * ageAdjustment * regionAdjustment;
+      const totalCost = adjustedRate * predictionData.squareFootage;
+      
+      // Create fallback prediction
+      const fallbackPrediction = {
+        totalCost: Math.round(totalCost).toLocaleString(),
+        costPerSquareFoot: Math.round(adjustedRate),
+        predictionFactors: [
+          {
+            factor: "Building Type",
+            impact: "neutral",
+            importance: 0.8,
+            explanation: `Standard ${predictionData.buildingType.toLowerCase()} building rates applied.`
+          },
+          {
+            factor: "Quality Level",
+            impact: "neutral",
+            importance: 0.9,
+            explanation: `${predictionData.quality} quality level construction.`
+          },
+          {
+            factor: "Region",
+            impact: predictionData.region.toLowerCase().includes('western') ? "negative" : "neutral",
+            importance: 0.7,
+            explanation: predictionData.region.toLowerCase().includes('western') ? "Western regions typically have higher costs." : "Standard regional rates applied."
+          },
+          {
+            factor: "Age",
+            impact: predictionData.buildingAge > 20 ? "negative" : "neutral",
+            importance: 0.6,
+            explanation: `Building age of ${predictionData.buildingAge} years factored into valuation.`
+          }
+        ],
+        materialSubstitutions: [
+          {
+            originalMaterial: "Premium Flooring",
+            substituteMaterial: "Standard Hardwood",
+            potentialSavings: "$8,000 - $12,000",
+            qualityImpact: "Low"
+          },
+          {
+            originalMaterial: "Custom Lighting",
+            substituteMaterial: "Standard LED Fixtures",
+            potentialSavings: "$3,000 - $5,000",
+            qualityImpact: "Low"
+          }
+        ],
+        note: "This is a fallback prediction as the AI service is temporarily unavailable. For more detailed analysis, please try again later."
+      };
+      
+      return res.json({
+        success: true,
+        fallback: true,
+        ...fallbackPrediction
+      });
+    }
     
     if (!responseText) {
       throw new Error('Failed to get a response from OpenAI');

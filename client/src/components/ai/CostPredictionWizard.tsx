@@ -475,6 +475,20 @@ export default function CostPredictionWizard() {
           
           {predictionResult ? (
             <div className="space-y-6">
+              {predictionResult.fallback && (
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-2">
+                      <HelpCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium">Using Fallback Prediction</h3>
+                        <p className="text-sm text-amber-700">{predictionResult.note || "AI prediction service is temporarily unavailable. We're using our standard calculation engine instead."}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
@@ -482,7 +496,9 @@ export default function CostPredictionWizard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-primary">
-                      ${predictionResult.totalCost.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      ${typeof predictionResult.totalCost === 'string' 
+                        ? predictionResult.totalCost 
+                        : predictionResult.totalCost.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     </div>
                     <p className="text-sm text-gray-500">Total estimated cost</p>
                   </CardContent>
@@ -494,7 +510,9 @@ export default function CostPredictionWizard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-primary">
-                      ${predictionResult.costPerSquareFoot.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      ${typeof predictionResult.costPerSquareFoot === 'string'
+                        ? predictionResult.costPerSquareFoot
+                        : predictionResult.costPerSquareFoot.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     </div>
                     <p className="text-sm text-gray-500">Per square foot</p>
                   </CardContent>
@@ -516,7 +534,7 @@ export default function CostPredictionWizard() {
                     {predictionResult.predictionFactors?.map((factor: any, index: number) => (
                       <div key={index} className="space-y-1">
                         <div className="flex justify-between">
-                          <div className="font-medium">{factor.feature}</div>
+                          <div className="font-medium">{factor.factor || factor.feature}</div>
                           <Badge variant={
                             factor.impact === 'positive' ? 'default' : 
                             factor.impact === 'negative' ? 'danger' : 'outline'
@@ -534,7 +552,7 @@ export default function CostPredictionWizard() {
                 </CardContent>
               </Card>
               
-              {predictionResult.materialRecommendations && predictionResult.materialRecommendations.length > 0 && (
+              {(predictionResult.materialRecommendations || predictionResult.materialSubstitutions) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -547,12 +565,14 @@ export default function CostPredictionWizard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {predictionResult.materialRecommendations.map((rec: any, index: number) => (
+                      {predictionResult.materialRecommendations && predictionResult.materialRecommendations.map((rec: any, index: number) => (
                         <div key={index} className="space-y-1">
                           <div className="flex justify-between">
                             <div className="font-medium">Replace: {rec.originalMaterial}</div>
                             <Badge variant="outline">
-                              Save ${rec.potentialSavings.toLocaleString('en-US')}
+                              Save ${typeof rec.potentialSavings === 'string' 
+                                ? rec.potentialSavings 
+                                : rec.potentialSavings.toLocaleString('en-US')}
                             </Badge>
                           </div>
                           <p className="text-sm">With: <span className="font-medium">{rec.suggestedAlternative}</span></p>
@@ -562,6 +582,22 @@ export default function CostPredictionWizard() {
                             rec.qualityImpact === 'minor' ? 'success' :
                             rec.qualityImpact === 'moderate' ? 'default' : 'danger'
                           } className="mt-1">
+                            Quality Impact: {rec.qualityImpact}
+                          </Badge>
+                          <Separator className="my-2" />
+                        </div>
+                      ))}
+                      
+                      {predictionResult.materialSubstitutions && predictionResult.materialSubstitutions.map((rec: any, index: number) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between">
+                            <div className="font-medium">Replace: {rec.originalMaterial}</div>
+                            <Badge variant="outline">
+                              Save {rec.potentialSavings}
+                            </Badge>
+                          </div>
+                          <p className="text-sm">With: <span className="font-medium">{rec.substituteMaterial}</span></p>
+                          <Badge variant="outline" className="mt-1">
                             Quality Impact: {rec.qualityImpact}
                           </Badge>
                           <Separator className="my-2" />
