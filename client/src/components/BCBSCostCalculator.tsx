@@ -12,7 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle } from 'lucide-react';
+import CostImpactAnimation from './CostImpactAnimation';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1711,6 +1712,28 @@ const BCBSCostCalculator = () => {
                 )}
 
                 <div className="mt-6 border-t pt-4">
+                  <h3 className="text-lg font-medium mb-2 flex items-center">
+                    <PlayCircle className="h-5 w-5 mr-2 text-[#29B7D3]" />
+                    Interactive Cost Explainer
+                  </h3>
+                  <div className="p-2 bg-white border rounded-lg mb-6">
+                    <div className="flex items-center mb-2">
+                      <p className="text-sm text-gray-600">Watch how different factors impact your building cost estimate:</p>
+                    </div>
+                    <CostImpactAnimation 
+                      buildingType={form.getValues().buildingType}
+                      baseCost={form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality)}
+                      complexityFactor={form.getValues().complexityFactor}
+                      conditionFactor={form.getValues().conditionFactor}
+                      regionalMultiplier={getRegionalMultiplier(form.getValues().region)}
+                      ageDepreciation={getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}
+                      size="md"
+                    />
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Click the play button to see how costs accumulate from base cost through each adjustment factor.
+                    </p>
+                  </div>
+                  
                   <h3 className="text-lg font-medium mb-2 flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-[#243E4D]" />
                     Export Options
