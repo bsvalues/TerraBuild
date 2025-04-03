@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight } from 'lucide-react';
+import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -65,6 +65,7 @@ const BCBSCostCalculator = () => {
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [hoveredCostItem, setHoveredCostItem] = useState<string | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
+  const [treemapData, setTreemapData] = useState<any[]>([]);
   
   // What-If Scenario States
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -247,6 +248,50 @@ const BCBSCostCalculator = () => {
       };
     });
   };
+  
+  // Prepare data for the interactive cost breakdown treemap visualization
+  const prepareTreemapData = () => {
+    // Skip if no cost breakdown data is available
+    if (!costBreakdown || costBreakdown.length === 0) return [];
+    
+    // Group cost components into a hierarchical structure for the treemap
+    const baseCost = costBreakdown.find(c => c.category === 'Base Cost')?.cost || 0;
+    const complexityAdjustment = costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0;
+    const conditionAdjustment = costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0;
+    const regionalAdjustment = costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0;
+    const materialsCost = costBreakdown.find(c => c.category === 'Materials')?.cost || 0;
+    
+    // Create the materials sub-items if any are available
+    const materialsChildren = materials.length > 0 
+      ? materials.map(m => ({
+          name: m.name || 'Unnamed Material',
+          size: m.quantity * m.unitPrice,
+          color: '#3CAB36'
+        }))
+      : [{ name: 'Materials Total', size: materialsCost, color: '#3CAB36' }];
+    
+    // Structure the data for the treemap
+    return [
+      {
+        name: 'Total Cost',
+        children: [
+          {
+            name: 'Building Costs',
+            children: [
+              { name: 'Base Cost', size: baseCost, color: '#243E4D' },
+              { name: 'Complexity Adjustment', size: complexityAdjustment, color: '#243E4D' },
+              { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
+              { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
+            ]
+          },
+          {
+            name: 'Materials',
+            children: materialsChildren
+          }
+        ]
+      }
+    ];
+  };
 
   // Save the current calculation as a scenario
   const saveAsScenario = (name: string, description?: string) => {
@@ -340,6 +385,10 @@ const BCBSCostCalculator = () => {
     const timeline = generateTimelineData(cost);
     setTimelineData(timeline);
     
+    // Generate treemap data for cost breakdown visualization
+    const treemap = prepareTreemapData();
+    setTreemapData(treemap);
+    
     // Set active tab to results when form is submitted
     setActiveTab("results");
   };
@@ -355,9 +404,13 @@ const BCBSCostCalculator = () => {
       if (cost > 0) {
         const timeline = generateTimelineData(cost);
         setTimelineData(timeline);
+        
+        // Generate treemap data for cost breakdown visualization
+        const treemap = prepareTreemapData();
+        setTreemapData(treemap);
       }
     }
-  }, [form.formState.isValid, materials]);
+  }, [form.formState.isValid, materials, costBreakdown]);
 
   return (
     <div className="container mx-auto p-4">
@@ -1161,6 +1214,42 @@ const BCBSCostCalculator = () => {
                             animationEasing="ease-out"
                           />
                         </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Cost Breakdown Treemap */}
+                {treemapData.length > 0 && (
+                  <div className="mt-8">
+                    <div className="flex items-center mb-4">
+                      <Blocks className="text-[#243E4D] mr-2 h-5 w-5" />
+                      <h4 className="text-lg font-medium text-[#243E4D]">Interactive Cost Breakdown</h4>
+                    </div>
+                    
+                    <div className="bg-[#e8f8fb] p-4 rounded-lg mb-4 flex items-center text-sm">
+                      <Info className="text-[#29B7D3] mr-2 h-4 w-4" />
+                      <p className="text-[#243E4D]">This interactive treemap visualization shows the hierarchical breakdown of costs. Larger blocks represent higher costs. Hover over blocks to see details.</p>
+                    </div>
+                    
+                    <div className="w-full h-[400px] border rounded-md p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <Treemap
+                          data={treemapData}
+                          dataKey="size"
+                          aspectRatio={4 / 3}
+                          stroke="#fff"
+                          fill="#8884d8"
+                          animationBegin={0}
+                          animationDuration={1500}
+                          animationEasing="ease-out"
+                          isAnimationActive={true}
+                        >
+                          <Tooltip 
+                            formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']}
+                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                          />
+                        </Treemap>
                       </ResponsiveContainer>
                     </div>
                   </div>
