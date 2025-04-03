@@ -1419,12 +1419,118 @@ const BCBSCostCalculator = () => {
                                   )}
                                 </div>
                               </div>
+                              
+                              {/* Visual Comparison Chart */}
+                              {scenarioComparison.baseline && scenarioComparison.comparison && (
+                                <div className="mt-6">
+                                  <h4 className="font-medium mb-2">Visual Comparison</h4>
+                                  <div className="h-64 border rounded-md overflow-hidden">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <BarChart
+                                        data={[
+                                          { name: 'Base Cost', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.costBreakdown.find(c => c.category === 'Base Cost')?.cost || 0,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.costBreakdown.find(c => c.category === 'Base Cost')?.cost || 0 
+                                          },
+                                          { name: 'Complexity', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0 
+                                          },
+                                          { name: 'Condition', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0 
+                                          },
+                                          { name: 'Regional', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0 
+                                          },
+                                          { name: 'Materials', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.costBreakdown.find(c => c.category === 'Materials')?.cost || 0,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.costBreakdown.find(c => c.category === 'Materials')?.cost || 0 
+                                          },
+                                          { name: 'Total', 
+                                            [scenarioComparison.baseline.name]: scenarioComparison.baseline.totalCost,
+                                            [scenarioComparison.comparison.name]: scenarioComparison.comparison.totalCost 
+                                          },
+                                        ]}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                      >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip 
+                                          formatter={(value) => [`$${Number(value).toLocaleString()}`, '']}
+                                          contentStyle={{
+                                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                            borderRadius: '8px',
+                                            padding: '10px',
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                            border: '1px solid #ddd'
+                                          }}
+                                        />
+                                        <Legend />
+                                        <Bar 
+                                          dataKey={scenarioComparison.baseline.name} 
+                                          fill="#243E4D" 
+                                          animationDuration={1500}
+                                          animationBegin={0}
+                                          name={`${scenarioComparison.baseline.name} (Baseline)`}
+                                        />
+                                        <Bar 
+                                          dataKey={scenarioComparison.comparison.name} 
+                                          fill="#29B7D3" 
+                                          animationDuration={1500}
+                                          animationBegin={300}
+                                          name={`${scenarioComparison.comparison.name} (Comparison)`}
+                                        />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="text-center py-4 border rounded-md">
                               <p className="text-gray-500">Select two scenarios to compare</p>
                             </div>
                           )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Summary Dashboard for Scenarios */}
+                    <div className="mt-8 p-4 border rounded-lg bg-white shadow-sm">
+                      <h3 className="text-lg font-medium text-[#243E4D] mb-4">Scenario Analytics Dashboard</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-[#e6eef2] p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-[#243E4D] mb-1">Total Scenarios</h4>
+                          <p className="text-2xl font-bold text-[#243E4D]">{scenarios.length}</p>
+                        </div>
+                        
+                        <div className="bg-[#e8f8fb] p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-[#243E4D] mb-1">Avg. Building Cost</h4>
+                          <p className="text-2xl font-bold text-[#29B7D3]">
+                            ${Math.round(scenarios.reduce((sum, scenario) => sum + scenario.totalCost, 0) / Math.max(1, scenarios.length)).toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-[#edf7ed] p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-[#243E4D] mb-1">Lowest Cost Option</h4>
+                          <p className="text-2xl font-bold text-[#3CAB36]">
+                            ${scenarios.length > 0 
+                              ? Math.min(...scenarios.map(s => s.totalCost)).toLocaleString()
+                              : "0"}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-[#f5f5f5] p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-[#243E4D] mb-1">Highest Cost Option</h4>
+                          <p className="text-2xl font-bold text-[#243E4D]">
+                            ${scenarios.length > 0
+                              ? Math.max(...scenarios.map(s => s.totalCost)).toLocaleString()
+                              : "0"}
+                          </p>
                         </div>
                       </div>
                     </div>
