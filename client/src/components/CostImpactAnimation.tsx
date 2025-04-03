@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HardHat, Home, Building, Construction, Hammer, DollarSign, Wrench, Ruler, Clock, PlayCircle } from 'lucide-react';
+import { 
+  HardHat, Home, Building, Construction, Hammer, DollarSign, 
+  Wrench, Ruler, Clock, PlayCircle, Dices, Briefcase, MapPin,
+  HeartPulse, AreaChart, BadgeDollarSign, Repeat
+} from 'lucide-react';
 
 // Define animation types
 export type ConstructionAnimationType = 
@@ -18,6 +22,9 @@ interface CostImpactAnimationProps {
   conditionFactor: number;
   regionalMultiplier: number;
   ageDepreciation: number;
+  region?: string;
+  buildingAge?: number;
+  squareFootage?: number; 
   onAnimationComplete?: () => void;
   size?: 'sm' | 'md' | 'lg';
 }
@@ -29,6 +36,9 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
   conditionFactor,
   regionalMultiplier,
   ageDepreciation,
+  region = 'MIDWEST',
+  buildingAge = 0,
+  squareFootage = 1000,
   onAnimationComplete,
   size = 'md'
 }) => {
@@ -119,21 +129,43 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
   const getStageIcon = () => {
     switch(currentStage) {
       case 'foundation':
-        return <HardHat className={sizeMap[size].iconSize} />;
+        return <DollarSign className={sizeMap[size].iconSize} />;
       case 'framing':
-        return <Hammer className={sizeMap[size].iconSize} />;
+        return <Dices className={sizeMap[size].iconSize} />;
       case 'plumbing':
-        return <Wrench className={sizeMap[size].iconSize} />;
+        return <HeartPulse className={sizeMap[size].iconSize} />;
       case 'electrical':
-        return <Construction className={sizeMap[size].iconSize} />;
+        return <MapPin className={sizeMap[size].iconSize} />;
       case 'finishes':
-        return <Ruler className={sizeMap[size].iconSize} />;
+        return <Clock className={sizeMap[size].iconSize} />;
       case 'complete':
         return buildingType === 'RESIDENTIAL' 
           ? <Home className={sizeMap[size].iconSize} /> 
-          : <Building className={sizeMap[size].iconSize} />;
+          : buildingType === 'COMMERCIAL'
+            ? <Briefcase className={sizeMap[size].iconSize} />
+            : <Building className={sizeMap[size].iconSize} />;
       default:
         return <HardHat className={sizeMap[size].iconSize} />;
+    }
+  };
+  
+  // Get the stage color
+  const getStageColor = () => {
+    switch(currentStage) {
+      case 'foundation':
+        return '#243E4D'; // Base cost - dark teal
+      case 'framing':
+        return '#3F51B5'; // Complexity - indigo
+      case 'plumbing':
+        return '#3CAB36'; // Condition - green
+      case 'electrical':
+        return '#29B7D3'; // Regional - light blue
+      case 'finishes':
+        return ageDepreciation > 0 ? '#F5A623' : '#3CAB36'; // Age - orange/amber (or green if new)
+      case 'complete':
+        return getBuildingColor(); // Final - building type color
+      default:
+        return '#243E4D';
     }
   };
   
@@ -157,12 +189,51 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
     }
   };
   
+  // Get explanatory text for each stage
+  const getStageExplanation = () => {
+    switch(currentStage) {
+      case 'foundation':
+        return `Base cost for ${buildingTypes[buildingType]} building at $${(baseCost / squareFootage).toFixed(0)}/sq ft`;
+      case 'framing':
+        return `${complexityFactor > 1 ? 'Complex' : 'Simple'} design increases cost by ${Math.abs((complexityFactor - 1) * 100).toFixed(0)}%`;
+      case 'plumbing':
+        return `${conditionFactor > 1 ? 'Excellent' : 'Standard'} condition adds ${Math.abs((conditionFactor - 1) * 100).toFixed(0)}% to value`;
+      case 'electrical':
+        return `Regional cost factor for ${region.replace('_', ' ').toLowerCase()} area`;
+      case 'finishes':
+        return ageDepreciation > 0 
+          ? `${buildingAge} years old reduces value by ${ageDepreciation}%` 
+          : 'New building - no depreciation applied';
+      case 'complete':
+        return `Final calculation complete for ${squareFootage} sq ft`;
+      default:
+        return '';
+    }
+  };
+  
+  // Get building type label
+  const buildingTypes: Record<string, string> = {
+    'RESIDENTIAL': 'residential',
+    'COMMERCIAL': 'commercial',
+    'INDUSTRIAL': 'industrial'
+  };
+  
   return (
     <div className={`relative ${sizeMap[size].container} bg-gray-50 rounded-lg border overflow-hidden`}>
       {/* Construction site background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-100 to-gray-200 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-100 to-gray-200 flex items-center justify-center overflow-hidden">
+        {/* Blueprint grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="w-full h-full bg-[#29B7D3]" 
+            style={{
+              backgroundImage: 'linear-gradient(white 2px, transparent 2px), linear-gradient(90deg, white 2px, transparent 2px)',
+              backgroundSize: '20px 20px',
+            }}
+          />
+        </div>
+        
         {/* Construction animation area */}
-        <div className="relative">
+        <div className="relative z-10">
           {/* Building animation */}
           <AnimatePresence>
             <motion.div
@@ -173,7 +244,13 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
               transition={{ duration: 0.5 }}
               className="flex flex-col items-center"
             >
-              <div className={`${sizeMap[size].building} mb-4 flex items-center justify-center`} style={{ color: getBuildingColor() }}>
+              <div 
+                className={`${sizeMap[size].building} mb-4 flex items-center justify-center rounded-full p-4`} 
+                style={{ 
+                  color: 'white',
+                  backgroundColor: getStageColor()
+                }}
+              >
                 {getStageIcon()}
               </div>
               
@@ -187,6 +264,9 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
                 <p className="text-2xl font-bold mt-1 flex items-center justify-center">
                   <DollarSign className="h-5 w-5" />
                   {Math.round(currentCost).toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-600 mt-2 max-w-[220px]">
+                  {getStageExplanation()}
                 </p>
               </motion.div>
             </motion.div>
@@ -210,27 +290,63 @@ const CostImpactAnimation: React.FC<CostImpactAnimationProps> = ({
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-2 left-2 right-12 bg-white bg-opacity-90 rounded p-2 text-xs"
+          className="absolute bottom-2 left-2 right-12 bg-white bg-opacity-95 rounded-md p-3 text-xs shadow-md"
         >
+          <h4 className="font-semibold text-gray-800 mb-2 border-b pb-1">Cost Breakdown</h4>
           <div className="flex justify-between items-center mb-1">
-            <span>Base:</span>
-            <span>${baseCost.toLocaleString()}</span>
+            <span className="flex items-center">
+              <DollarSign className="h-3 w-3 mr-1 text-[#243E4D]" />
+              Base Cost:
+            </span>
+            <span className="font-medium">${baseCost.toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-center mb-1">
-            <span>Complexity:</span>
-            <span>×{complexityFactor.toFixed(2)}</span>
+            <span className="flex items-center">
+              <Dices className="h-3 w-3 mr-1 text-[#3F51B5]" />
+              Complexity:
+            </span>
+            <span 
+              className={`font-medium ${complexityFactor > 1 ? 'text-[#3F51B5]' : 'text-gray-600'}`}
+            >
+              ×{complexityFactor.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between items-center mb-1">
-            <span>Condition:</span>
-            <span>×{conditionFactor.toFixed(2)}</span>
+            <span className="flex items-center">
+              <HeartPulse className="h-3 w-3 mr-1 text-[#3CAB36]" />
+              Condition:
+            </span>
+            <span 
+              className={`font-medium ${conditionFactor > 1 ? 'text-[#3CAB36]' : 'text-gray-600'}`}
+            >
+              ×{conditionFactor.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between items-center mb-1">
-            <span>Regional:</span>
-            <span>×{regionalMultiplier.toFixed(2)}</span>
+            <span className="flex items-center">
+              <MapPin className="h-3 w-3 mr-1 text-[#29B7D3]" />
+              Regional:
+            </span>
+            <span 
+              className={`font-medium ${regionalMultiplier > 1 ? 'text-[#29B7D3]' : 'text-gray-600'}`}
+            >
+              ×{regionalMultiplier.toFixed(2)}
+            </span>
           </div>
-          <div className="flex justify-between items-center">
-            <span>Age:</span>
-            <span>−{ageDepreciation}%</span>
+          <div className="flex justify-between items-center mb-1">
+            <span className="flex items-center">
+              <Clock className="h-3 w-3 mr-1 text-[#F5A623]" />
+              Age Depreciation:
+            </span>
+            <span 
+              className={`font-medium ${ageDepreciation > 0 ? 'text-[#F5A623]' : 'text-[#3CAB36]'}`}
+            >
+              {ageDepreciation > 0 ? `−${ageDepreciation}%` : 'None'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center mt-2 pt-1 border-t font-semibold">
+            <span>Final Cost:</span>
+            <span className="text-[#243E4D]">${Math.round(currentCost).toLocaleString()}</span>
           </div>
         </motion.div>
       )}

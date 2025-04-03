@@ -1727,6 +1727,9 @@ const BCBSCostCalculator = () => {
                       conditionFactor={form.getValues().conditionFactor}
                       regionalMultiplier={getRegionalMultiplier(form.getValues().region)}
                       ageDepreciation={getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType)}
+                      region={form.getValues().region}
+                      buildingAge={form.getValues().buildingAge}
+                      squareFootage={form.getValues().squareFootage}
                       size="md"
                     />
                     <p className="text-xs text-gray-500 mt-2 italic">
