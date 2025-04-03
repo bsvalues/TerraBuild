@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChart as PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -27,32 +27,15 @@ const calculatorSchema = z.object({
   region: z.string().min(1, "Region is required"),
   buildingAge: z.coerce.number()
     .min(0, "Building age cannot be negative")
-    .superRefine((age, ctx) => {
-      const buildingType = ctx.parent?.buildingType;
-      
-      if (age === 0) return true; // Zero age (new building) is always valid
-      
-      // Set maximum reasonable ages for different building types
-      const maxAges = {
-        'RESIDENTIAL': 100,
-        'COMMERCIAL': 75,
-        'INDUSTRIAL': 60,
-      };
-      
-      const maxAge = buildingType && maxAges[buildingType as keyof typeof maxAges] 
-        ? maxAges[buildingType as keyof typeof maxAges] 
-        : 100;
-      
-      if (age > maxAge) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Age exceeds typical lifespan of ${maxAge} years for this building type. Consider entering a lower value or contact an assessor for specialized evaluation.`
-        });
-        return false;
+    .refine(
+      (age) => {
+        // Zero age (new building) is always valid
+        return age >= 0;
+      },
+      {
+        message: "Building age cannot be negative"
       }
-      
-      return true;
-    })
+    )
     .default(0),
 });
 
@@ -1688,7 +1671,54 @@ const BCBSCostCalculator = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between mt-6">
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="text-lg font-medium mb-2 flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-[#243E4D]" />
+                    Export Options
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center gap-2 bg-white border-[#29B7D3]/30 hover:bg-[#e8f8fb] hover:text-[#29B7D3]"
+                      onClick={() => {
+                        // In a real app, this would generate a PDF
+                        alert("Feature coming soon: Export to PDF");
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Export PDF Report</span>
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center gap-2 bg-white border-[#3CAB36]/30 hover:bg-[#edf7ed] hover:text-[#3CAB36]"
+                      onClick={() => {
+                        // In a real app, this would generate a CSV
+                        alert("Feature coming soon: Export to Excel");
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Export to Excel</span>
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center gap-2 bg-white"
+                      onClick={() => {
+                        // In a real app, this would print the calculation
+                        window.print();
+                      }}
+                    >
+                      <Printer className="h-4 w-4" />
+                      <span>Print Calculation</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-4">
                   <Button
                     type="button"
                     variant="outline"
