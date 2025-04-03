@@ -25,6 +25,7 @@ const calculatorSchema = z.object({
   complexityFactor: z.coerce.number().min(0.5).max(2.0).default(1.0),
   conditionFactor: z.coerce.number().min(0.5).max(1.5).default(1.0),
   region: z.string().min(1, "Region is required"),
+  buildingAge: z.coerce.number().min(0, "Building age cannot be negative").default(0),
 });
 
 type CalculatorFormValues = z.infer<typeof calculatorSchema>;
@@ -84,6 +85,7 @@ const BCBSCostCalculator = () => {
     complexityFactor: 1.0,
     conditionFactor: 1.0,
     region: "MIDWEST",
+    buildingAge: 0,
   };
 
   const form = useForm<CalculatorFormValues>({
@@ -145,6 +147,40 @@ const BCBSCostCalculator = () => {
     
     return baseCosts[buildingType]?.[quality] || 150;
   };
+  
+  // Calculate depreciation factor based on building age and type
+  const calculateAgeDepreciation = (buildingAge: number, buildingType: string): number => {
+    // No depreciation for new buildings
+    if (buildingAge === 0) {
+      return 1.0;
+    }
+    
+    // Configure depreciation rates by building type
+    const annualDepreciationRates: Record<string, number> = {
+      'RESIDENTIAL': 0.01333, // 1.333% per year (80% over 15 years)
+      'COMMERCIAL': 0.01,     // 1% per year (80% over 20 years)
+      'INDUSTRIAL': 0.00889   // 0.889% per year (80% over 25 years)
+    };
+    
+    // Configure minimum depreciation values (maximum age effect)
+    const minimumDepreciationValues: Record<string, number> = {
+      'RESIDENTIAL': 0.3, // Residential buildings retain at least 30% of value
+      'COMMERCIAL': 0.25, // Commercial buildings retain at least 25% of value
+      'INDUSTRIAL': 0.2   // Industrial buildings retain at least 20% of value
+    };
+    
+    // Get depreciation rate for building type (default to residential if not found)
+    const annualRate = annualDepreciationRates[buildingType] || annualDepreciationRates['RESIDENTIAL'];
+    
+    // Calculate depreciation factor
+    const calculatedDepreciation = 1.0 - (buildingAge * annualRate);
+    
+    // Apply minimum value
+    const minimumValue = minimumDepreciationValues[buildingType] || minimumDepreciationValues['RESIDENTIAL'];
+    
+    // Return the larger of the calculated value or the minimum value
+    return Math.max(calculatedDepreciation, minimumValue);
+  };
 
   // Calculate total cost based on form values and materials
   const calculateTotalCost = (data: CalculatorFormValues, materials: Material[]): number => {
@@ -160,6 +196,12 @@ const BCBSCostCalculator = () => {
     adjustedCost *= data.conditionFactor;
     adjustedCost *= multiplier;
     
+    // Calculate age depreciation
+    const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
+    
+    // Apply age depreciation to adjusted cost
+    const depreciatedCost = adjustedCost * ageDepreciationFactor;
+    
     // Calculate material costs
     const materialCost = materials.reduce((total, material) => {
       return total + (material.quantity * material.unitPrice);
@@ -171,12 +213,13 @@ const BCBSCostCalculator = () => {
       { category: 'Complexity Adjustment', cost: baseCost * (data.complexityFactor - 1) },
       { category: 'Condition Adjustment', cost: baseCost * data.complexityFactor * (data.conditionFactor - 1) },
       { category: 'Regional Adjustment', cost: adjustedCost - (baseCost * data.complexityFactor * data.conditionFactor) },
+      { category: 'Age Depreciation', cost: adjustedCost - depreciatedCost },
       { category: 'Materials', cost: materialCost }
     ];
     
     setCostBreakdown(breakdown);
     
-    return adjustedCost + materialCost;
+    return depreciatedCost + materialCost;
   };
 
   // Add a new material to the list
@@ -259,6 +302,7 @@ const BCBSCostCalculator = () => {
     const complexityAdjustment = costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0;
     const conditionAdjustment = costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0;
     const regionalAdjustment = costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0;
+    const ageDepreciation = costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0;
     const materialsCost = costBreakdown.find(c => c.category === 'Materials')?.cost || 0;
     
     // Create the materials sub-items if any are available
@@ -282,6 +326,7 @@ const BCBSCostCalculator = () => {
               { name: 'Complexity Adjustment', size: complexityAdjustment, color: '#243E4D' },
               { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
               { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
+              { name: 'Age Depreciation', size: ageDepreciation, color: '#29B7D3' },
             ]
           },
           {
@@ -655,6 +700,47 @@ const BCBSCostCalculator = () => {
                             </div>
                             <FormDescription className="mt-2">
                               Adjust for building condition
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="buildingAge"
+                        render={({ field }) => (
+                          <FormItem className="bg-[#e6eef2] p-3 rounded-md">
+                            <div className="flex justify-between items-center">
+                              <FormLabel>Building Age (years)</FormLabel>
+                              <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
+                            </div>
+                            <FormControl>
+                              <div className="flex items-center space-x-2 mt-2">
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  min={0}
+                                  className="border-gray-200"
+                                />
+                                <TooltipProvider>
+                                  <UITooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="h-4 w-4 text-[#29B7D3] cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="w-80 text-xs">
+                                        Building age affects depreciation. Residential buildings depreciate at 1.333% per year,
+                                        commercial at 1% per year, and industrial at 0.889% per year. All building types have
+                                        a minimum value they retain regardless of age.
+                                      </p>
+                                    </TooltipContent>
+                                  </UITooltip>
+                                </TooltipProvider>
+                              </div>
+                            </FormControl>
+                            <FormDescription className="mt-2">
+                              Enter the age of the building in years (0 for new construction)
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

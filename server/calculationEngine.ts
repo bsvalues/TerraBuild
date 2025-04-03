@@ -2,7 +2,8 @@
  * Building Cost Calculation Engine for Benton County Building Cost System
  * 
  * This module provides functions for calculating building costs based on
- * various parameters such as building type, size, quality, and regional factors.
+ * various parameters such as building type, size, quality, regional factors,
+ * and building age depreciation.
  */
 
 export interface BuildingData {
@@ -13,6 +14,7 @@ export interface BuildingData {
   conditionFactor?: number;
   regionalFactor?: number;
   materials?: Material[];
+  buildingAge?: number;
 }
 
 export interface BuildingCostOptions {
@@ -334,4 +336,131 @@ export function calculateMaterialCosts(totalCost: number, buildingType: string):
   }
   
   return materialCosts;
+}
+
+/**
+ * Get the base cost per square foot for a specific building type and quality
+ * @param buildingType - Type of building (RESIDENTIAL, COMMERCIAL, INDUSTRIAL)
+ * @param quality - Quality level (STANDARD, PREMIUM, LUXURY)
+ */
+export function getBaseCostPerSqFt(buildingType: string, quality: string): number {
+  const baseCosts: Record<string, Record<string, number>> = {
+    'RESIDENTIAL': { 'STANDARD': 125, 'PREMIUM': 175, 'LUXURY': 250 },
+    'COMMERCIAL': { 'STANDARD': 150, 'PREMIUM': 200, 'LUXURY': 300 },
+    'INDUSTRIAL': { 'STANDARD': 100, 'PREMIUM': 150, 'LUXURY': 225 }
+  };
+  
+  // Get cost per square foot (default to 150 if not found)
+  return baseCosts[buildingType]?.[quality] || 150;
+}
+
+/**
+ * Calculate depreciation factor based on building age and type
+ * @param buildingAge - Age of the building in years
+ * @param buildingType - Type of building (RESIDENTIAL, COMMERCIAL, INDUSTRIAL)
+ * @returns Depreciation factor between 0 and 1
+ */
+export function calculateAgeDepreciation(buildingAge: number, buildingType: string): number {
+  // Validate building age
+  if (buildingAge < 0) {
+    throw new Error('Building age cannot be negative');
+  }
+  
+  // No depreciation for new buildings
+  if (buildingAge === 0) {
+    return 1.0;
+  }
+  
+  // Configure depreciation rates by building type
+  const annualDepreciationRates: Record<string, number> = {
+    'RESIDENTIAL': 0.01333, // 1.333% per year (80% over 15 years)
+    'COMMERCIAL': 0.01,     // 1% per year (80% over 20 years)
+    'INDUSTRIAL': 0.00889   // 0.889% per year (80% over 25 years)
+  };
+  
+  // Configure minimum depreciation values (maximum age effect)
+  const minimumDepreciationValues: Record<string, number> = {
+    'RESIDENTIAL': 0.3, // Residential buildings retain at least 30% of value
+    'COMMERCIAL': 0.25, // Commercial buildings retain at least 25% of value
+    'INDUSTRIAL': 0.2   // Industrial buildings retain at least 20% of value
+  };
+  
+  // Get depreciation rate for building type (default to residential if not found)
+  const annualRate = annualDepreciationRates[buildingType] || annualDepreciationRates['RESIDENTIAL'];
+  
+  // Calculate depreciation factor
+  const calculatedDepreciation = 1.0 - (buildingAge * annualRate);
+  
+  // Apply minimum value
+  const minimumValue = minimumDepreciationValues[buildingType] || minimumDepreciationValues['RESIDENTIAL'];
+  
+  // Return the larger of the calculated value or the minimum value
+  return Math.max(calculatedDepreciation, minimumValue);
+}
+
+/**
+ * Apply depreciation factor to a cost
+ * @param cost - Original cost
+ * @param buildingAge - Age of the building in years
+ * @param buildingType - Type of building
+ */
+export function applyAgeDepreciation(cost: number, buildingAge: number, buildingType: string): number {
+  const depreciationFactor = calculateAgeDepreciation(buildingAge, buildingType);
+  return cost * depreciationFactor;
+}
+
+/**
+ * Calculate total cost with age depreciation applied
+ * @param params - Building parameters including age
+ * @returns Object with cost calculations and depreciation information
+ */
+export function calculateCostWithAgeDepreciation(params: BuildingData): {
+  totalCost: number;
+  depreciationFactor: number;
+  depreciationAmount: number;
+  baseCost?: number;
+} {
+  const {
+    squareFootage,
+    buildingType,
+    quality,
+    complexityFactor = 1.0,
+    conditionFactor = 1.0,
+    regionalFactor = 1.0,
+    buildingAge = 0
+  } = params;
+  
+  // Calculate base cost without depreciation
+  let baseCost = calculateBaseCost(squareFootage, buildingType, quality);
+  
+  // Apply complexity and condition factors
+  let adjustedCost = baseCost;
+  
+  if (complexityFactor) {
+    adjustedCost = applyComplexityFactor(adjustedCost, complexityFactor);
+  }
+  
+  if (conditionFactor) {
+    adjustedCost = applyConditionFactor(adjustedCost, conditionFactor);
+  }
+  
+  if (regionalFactor) {
+    adjustedCost = applyRegionalFactor(adjustedCost, regionalFactor);
+  }
+  
+  // Calculate depreciation factor
+  const depreciationFactor = calculateAgeDepreciation(buildingAge, buildingType);
+  
+  // Apply depreciation
+  const totalCost = Math.round(adjustedCost * depreciationFactor);
+  
+  // Calculate depreciation amount
+  const depreciationAmount = adjustedCost - totalCost;
+  
+  return {
+    totalCost,
+    depreciationFactor,
+    depreciationAmount,
+    baseCost
+  };
 }
