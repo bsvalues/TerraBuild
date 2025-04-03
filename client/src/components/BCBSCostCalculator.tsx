@@ -773,7 +773,7 @@ const BCBSCostCalculator = () => {
                             {costBreakdown.map((entry, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
-                                fill={`hsl(${index * 45 + 200}, 70%, 50%)`} 
+                                fill={index % 3 === 0 ? '#243E4D' : (index % 3 === 1 ? '#3CAB36' : '#29B7D3')} 
                                 className="transition-all duration-300"
                                 style={{
                                   opacity: hoveredCostItem === entry.category ? 1 : (hoveredCostItem ? 0.5 : 1),
@@ -859,7 +859,7 @@ const BCBSCostCalculator = () => {
                           {costBreakdown.map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={`hsl(${index * 45 + 200}, 70%, 50%)`}
+                              fill={index % 3 === 0 ? '#243E4D' : (index % 3 === 1 ? '#3CAB36' : '#29B7D3')}
                               className="transition-opacity duration-300"
                               style={{
                                 opacity: hoveredCostItem === entry.category ? 1 : (hoveredCostItem ? 0.4 : 1),
@@ -887,9 +887,9 @@ const BCBSCostCalculator = () => {
                       {costBreakdown.map((item, index) => {
                         const percentage = (item.cost / totalCost * 100).toFixed(1);
                         const width = `${Math.max(5, parseFloat(percentage))}%`;
-                        const hueValue = index * 45 + 200;
-                        const barColor = `hsl(${hueValue}, 70%, 50%)`;
-                        const bgColor = `hsl(${hueValue}, 70%, 95%)`;
+                        const barColors = ['#243E4D', '#3CAB36', '#29B7D3'];
+                        const barColor = barColors[index % 3];
+                        const bgColor = index % 3 === 0 ? '#e6eef2' : (index % 3 === 1 ? '#e8f7e8' : '#e8f8fb');
                         
                         return (
                           <div key={item.category} className="group relative">
@@ -966,7 +966,7 @@ const BCBSCostCalculator = () => {
                     
                     <div className="bg-[#e8f8fb] p-4 rounded-lg mb-4 flex items-center text-sm">
                       <Info className="text-[#29B7D3] mr-2 h-4 w-4" />
-                      <p className="text-[#243E4D]">This chart shows how costs might be distributed over a 12-month project timeline. The blue line shows projected costs, while the orange bars show actual costs with typical project variations.</p>
+                      <p className="text-[#243E4D]">This chart shows how costs might be distributed over a 12-month project timeline. The teal line shows projected costs, while the green bars show actual costs with typical project variations.</p>
                     </div>
                     
                     <div className="w-full h-[400px]">
@@ -1001,7 +1001,7 @@ const BCBSCostCalculator = () => {
                           <Bar 
                             dataKey="cost" 
                             name="Monthly Cost" 
-                            fill="#ff9f43" 
+                            fill="#3CAB36" 
                             radius={[4, 4, 0, 0]}
                             animationDuration={1500}
                             animationEasing="ease-out"
@@ -1010,10 +1010,10 @@ const BCBSCostCalculator = () => {
                             type="monotone"
                             dataKey="projectedCost"
                             name="Projected Cost"
-                            stroke="#2e86de"
+                            stroke="#29B7D3"
                             strokeWidth={3}
-                            dot={{ r: 4, fill: "#2e86de", strokeWidth: 2, stroke: "#fff" }}
-                            activeDot={{ r: 6, fill: "#2e86de", stroke: "#fff", strokeWidth: 2 }}
+                            dot={{ r: 4, fill: "#29B7D3", strokeWidth: 2, stroke: "#fff" }}
+                            activeDot={{ r: 6, fill: "#29B7D3", stroke: "#fff", strokeWidth: 2 }}
                             animationDuration={2000}
                             animationEasing="ease-out"
                           />
