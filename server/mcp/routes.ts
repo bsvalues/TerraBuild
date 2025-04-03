@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { OpenAI } from 'openai';
 import { z } from 'zod';
+import anthropicService from './anthropic';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -9,6 +10,12 @@ const openai = new OpenAI({
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const OPENAI_MODEL = "gpt-4o";
+
+// Available AI providers
+const AI_PROVIDERS = {
+  OPENAI: 'openai',
+  ANTHROPIC: 'anthropic'
+};
 
 // Create router
 const mcpRouter = Router();
@@ -25,6 +32,7 @@ const enhancedPredictionRequestSchema = z.object({
   conditionFactor: z.number().min(0.5).max(1.5).default(1.0),
   features: z.array(z.string()).default([]),
   targetYear: z.number().optional(),
+  provider: z.enum([AI_PROVIDERS.OPENAI, AI_PROVIDERS.ANTHROPIC]).optional(),
 });
 
 // Define the enhanced prediction endpoint
@@ -76,6 +84,31 @@ mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
     let responseText;
     
     try {
+      // Determine which AI provider to use
+      const selectedProvider = predictionData.provider || AI_PROVIDERS.OPENAI;
+      
+      if (selectedProvider === AI_PROVIDERS.ANTHROPIC && process.env.ANTHROPIC_API_KEY) {
+        // Use Anthropic Claude for prediction
+        try {
+          const claudePrediction = await anthropicService.generateBuildingCostPrediction(predictionData);
+          return res.json(claudePrediction);
+        } catch (claudeError) {
+          console.error('Anthropic API error:', claudeError);
+          // If Claude fails, try OpenAI as backup if available
+          if (process.env.OPENAI_API_KEY) {
+            console.log('Falling back to OpenAI after Anthropic failure');
+          } else {
+            // Both providers failed, use fallback
+            throw new Error('All AI providers failed');
+          }
+        }
+      }
+      
+      // If we're here, either OpenAI was selected or Anthropic failed
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not available');
+      }
+      
       // Call OpenAI API
       const response = await openai.chat.completions.create({
         model: OPENAI_MODEL,
@@ -93,7 +126,7 @@ mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
       // Parse the response text as JSON
       responseText = response.choices[0].message.content;
     } catch (apiError) {
-      console.error('OpenAI API error:', apiError);
+      console.error('AI provider error:', apiError);
       
       // Generate fallback prediction without using AI
       // This ensures the application works even when API limits are reached
@@ -197,6 +230,32 @@ mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
       error: error instanceof Error ? error.message : 'An unknown error occurred'
     });
   }
+});
+
+// Endpoint to check available AI providers
+mcpRouter.get('/providers', (req, res) => {
+  const providers = [
+    {
+      id: AI_PROVIDERS.OPENAI,
+      name: 'OpenAI GPT-4o',
+      available: !!process.env.OPENAI_API_KEY,
+      capabilities: ['Cost Prediction', 'Material Substitution', 'What-If Analysis'],
+      default: true
+    },
+    {
+      id: AI_PROVIDERS.ANTHROPIC,
+      name: 'Anthropic Claude 3',
+      available: !!process.env.ANTHROPIC_API_KEY,
+      capabilities: ['Cost Prediction', 'Material Substitution'],
+      default: false
+    }
+  ];
+  
+  res.json({
+    success: true,
+    providers,
+    defaultProvider: AI_PROVIDERS.OPENAI
+  });
 });
 
 export default mcpRouter;

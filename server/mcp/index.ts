@@ -4,11 +4,17 @@ import mcpRouter from './routes';
 export function initMCP(app: Express) {
   console.log('Initializing Model Content Protocol (MCP) framework...');
   
-  // Check if OpenAI API key is available
+  // Check if API keys are available
   if (!process.env.OPENAI_API_KEY) {
-    console.warn('WARNING: OpenAI API key is not set. MCP features will not work properly.');
+    console.warn('WARNING: OpenAI API key is not set. OpenAI-based features will use fallback mechanisms.');
   } else {
     console.log('MCP initialized with OpenAI API key');
+  }
+  
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn('WARNING: Anthropic API key is not set. Claude-based features will not be available.');
+  } else {
+    console.log('MCP initialized with Anthropic API key');
   }
   
   // Register MCP routes under /api/mcp path

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,7 +47,10 @@ import {
   BrainCircuit,
   Lightbulb,
   Zap,
-  BarChart
+  BarChart,
+  Settings,
+  Cpu,
+  Info
 } from 'lucide-react';
 
 // Define the schemas for each step
@@ -102,6 +105,11 @@ const featuresSchema = z.object({
   customFeatures: z.string().optional(),
 });
 
+// Schema for AI provider selection
+const providerSchema = z.object({
+  provider: z.string().default('openai'),
+});
+
 // Combine all schemas
 const wizardSchema = buildingTypeSchema
   .merge(locationSchema)
@@ -109,7 +117,8 @@ const wizardSchema = buildingTypeSchema
   .merge(ageSchema)
   .merge(qualitySchema)
   .merge(complexitySchema)
-  .merge(featuresSchema);
+  .merge(featuresSchema)
+  .merge(providerSchema);
 
 // Type for our form values
 type WizardFormValues = z.infer<typeof wizardSchema>;
@@ -122,6 +131,12 @@ const REGIONS = [
   { id: 'northern', name: 'Northern Washington' },
   { id: 'southern', name: 'Southern Washington' },
   { id: 'benton', name: 'Benton County' },
+];
+
+// AI Provider options
+const AI_PROVIDERS = [
+  { id: 'openai', name: 'OpenAI GPT-4o' },
+  { id: 'anthropic', name: 'Anthropic Claude 3' },
 ];
 
 // Common features by building type
@@ -188,6 +203,11 @@ const STEP_EXPLANATIONS = {
     title: "Special Features",
     description: "Special features or amenities that add to the building's value and cost.",
     help: "Select all features that apply to your building. These will be factored into the cost prediction."
+  },
+  provider: {
+    title: "AI Provider",
+    description: "Select the AI provider to use for cost prediction calculations.",
+    help: "Different AI providers may have slightly different prediction methodologies and capabilities."
   }
 };
 
@@ -228,6 +248,11 @@ const AI_TIPS = {
     "Some premium features add disproportionately to cost but may not add equivalent resale value",
     "Security systems and smart building technology are becoming standard expectations in commercial buildings"
   ],
+  provider: [
+    "OpenAI GPT-4o provides detailed cost predictions with extensive reasoning about industry trends",
+    "Anthropic Claude 3 offers an alternative approach with focus on regional cost factors",
+    "Different AI providers may have slightly different specialties in construction cost analysis"
+  ],
 };
 
 export default function CostPredictionWizard() {
@@ -248,6 +273,7 @@ export default function CostPredictionWizard() {
     quality: 0,
     complexity: 0,
     features: 0,
+    provider: 0,
   });
   
   // State for wizard result
@@ -268,6 +294,7 @@ export default function CostPredictionWizard() {
       conditionFactor: 1.0,
       features: [],
       customFeatures: '',
+      provider: 'openai',
     },
     mode: "onChange",
   });
@@ -281,6 +308,7 @@ export default function CostPredictionWizard() {
     { name: 'quality', schema: qualitySchema, icon: Activity },
     { name: 'complexity', schema: complexitySchema, icon: SlidersHorizontal },
     { name: 'features', schema: featuresSchema, icon: ListChecks },
+    { name: 'provider', schema: providerSchema, icon: Cpu },
   ];
   
   // Add a completion step
@@ -399,6 +427,7 @@ export default function CostPredictionWizard() {
           conditionFactor: values.conditionFactor,
           features: values.features,
           targetYear: new Date().getFullYear() + 1, // Target next year for prediction
+          provider: values.provider, // Add the selected AI provider
         }),
       });
       
@@ -995,6 +1024,83 @@ export default function CostPredictionWizard() {
                 <p className="text-sm text-gray-600">{explanation.help}</p>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* AI Provider Selection Step */}
+        {currentStepName === 'provider' && (
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="provider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select AI Provider</FormLabel>
+                  <FormDescription>
+                    Choose which AI provider to use for your building cost prediction
+                  </FormDescription>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div
+                      className={`
+                        border rounded-lg p-4 cursor-pointer transition-all
+                        ${field.value === 'openai' 
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                          : 'hover:bg-slate-50'}
+                      `}
+                      onClick={() => form.setValue('provider', 'openai')}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-semibold text-lg">OpenAI</div>
+                        <div className={`w-4 h-4 rounded-full ${field.value === 'openai' ? 'bg-primary' : 'bg-gray-200'}`}></div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        Uses OpenAI's GPT-4o model for detailed cost analysis with industry expertise.
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Zap className="h-3 w-3 mr-1" /> Optimized for detailed reasoning
+                      </div>
+                    </div>
+                    
+                    <div
+                      className={`
+                        border rounded-lg p-4 cursor-pointer transition-all
+                        ${field.value === 'anthropic' 
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                          : 'hover:bg-slate-50'}
+                      `}
+                      onClick={() => form.setValue('provider', 'anthropic')}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-semibold text-lg">Anthropic Claude</div>
+                        <div className={`w-4 h-4 rounded-full ${field.value === 'anthropic' ? 'bg-primary' : 'bg-gray-200'}`}></div>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        Uses Anthropic's Claude 3 model for nuanced regional cost factors and contextual analysis.
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Settings className="h-3 w-3 mr-1" /> Specialty in regional variations
+                      </div>
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Card className="bg-blue-50 border-blue-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center">
+                  <Info className="h-4 w-4 mr-1 text-blue-500" />
+                  <span className="text-blue-700">About AI Providers</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-blue-800">
+                  Both providers offer similar accuracy but may have subtle differences in how they approach cost calculations.
+                  You can try both to see which gives results that better match your expectations.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </motion.div>
