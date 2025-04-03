@@ -811,11 +811,33 @@ const BCBSCostCalculator = () => {
                                         <Info className="h-4 w-4 text-[#29B7D3] cursor-help" />
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p className="w-80 text-xs">
-                                          Building age affects depreciation. Residential buildings depreciate at 1.333% per year,
-                                          commercial at 1% per year, and industrial at 0.889% per year. All building types have
-                                          a minimum value they retain regardless of age.
-                                        </p>
+                                        <div className="w-80">
+                                          <p className="text-xs mb-2">
+                                            <span className="font-medium">Building Age Impact:</span> Age affects depreciation due to 
+                                            wear and tear, outdated systems, and reduced remaining useful life.
+                                          </p>
+                                          <div className="bg-gray-100 p-2 rounded-md mb-2">
+                                            <h5 className="text-xs font-medium mb-1">Depreciation Rates by Building Type:</h5>
+                                            <ul className="text-xs space-y-1">
+                                              <li className="flex items-center">
+                                                <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
+                                                <span>Residential: 1.333% per year (min. value: 30%)</span>
+                                              </li>
+                                              <li className="flex items-center">
+                                                <div className="w-2 h-2 rounded-full bg-amber-500 mr-1"></div>
+                                                <span>Commercial: 1% per year (min. value: 25%)</span>
+                                              </li>
+                                              <li className="flex items-center">
+                                                <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+                                                <span>Industrial: 0.889% per year (min. value: 20%)</span>
+                                              </li>
+                                            </ul>
+                                          </div>
+                                          <p className="text-xs italic">
+                                            Higher depreciation means lower property value assessment and potentially 
+                                            lower taxes or insurance costs.
+                                          </p>
+                                        </div>
                                       </TooltipContent>
                                     </UITooltip>
                                   </TooltipProvider>
