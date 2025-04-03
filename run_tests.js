@@ -11,83 +11,82 @@
  *   node run_tests.js batch_import_tests # Run batch import tests only
  */
 
-import fs from 'fs';
-import path from 'path';
-import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
+import { readdirSync, existsSync } from 'fs';
+import { join } from 'path';
 
-// Get current file and directory paths in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configuration
+const CORE_TESTS_DIR = './tests/core';
+const UI_TESTS_DIR = './tests/ui';
+const RUN_CORE_SCRIPT = './run-core-tests.js';
+const RUN_UI_SCRIPT = './run-ui-tests.js';
 
-// Define test directory and available test suites
-const TEST_DIR = './tests';
-const DEFAULT_TEST_PATTERN = /^test_.*\.js$|^.*_tests\.js$/;
-
-// Skip specific test files that require special handling
-const SKIP_FILES = [];
-
-// Get specified test file from command line args, if any
-const specifiedTest = process.argv[2];
-
-// Config options for Mocha
-const MOCHA_OPTS = [
-  '--timeout', '10000',
-  '--colors',
-  '--reporter', 'spec'
-];
-
-// Helper to check if a file is a test file
+// Determine whether a file is a test file
 function isTestFile(filename) {
-  return DEFAULT_TEST_PATTERN.test(filename) && !SKIP_FILES.includes(filename);
+  return filename.endsWith('.test.js') || 
+         filename.endsWith('.test.ts') || 
+         filename.endsWith('.spec.js') ||
+         filename.endsWith('.spec.ts');
 }
 
-// Get all test files to run
+// Get all test files
 function getTestFiles() {
-  if (specifiedTest) {
-    // If filename doesn't include .js extension, add it
-    const testFile = specifiedTest.endsWith('.js') ? specifiedTest : `${specifiedTest}.js`;
-    const testPath = path.join(TEST_DIR, testFile);
-    
-    if (fs.existsSync(testPath)) {
-      return [testPath];
-    } else {
-      console.error(`Test file not found: ${testPath}`);
-      process.exit(1);
-    }
-  } else {
-    // Get all test files
-    return fs.readdirSync(TEST_DIR)
+  const files = [];
+  
+  if (existsSync(CORE_TESTS_DIR)) {
+    const coreFiles = readdirSync(CORE_TESTS_DIR)
       .filter(isTestFile)
-      .map(file => path.join(TEST_DIR, file));
+      .map(file => join(CORE_TESTS_DIR, file));
+    files.push(...coreFiles);
   }
+  
+  if (existsSync(UI_TESTS_DIR)) {
+    const uiFiles = readdirSync(UI_TESTS_DIR)
+      .filter(isTestFile)
+      .map(file => join(UI_TESTS_DIR, file));
+    files.push(...uiFiles);
+  }
+  
+  return files;
 }
 
-// Run tests using the Mocha CLI
-function runMochaTests(testFiles) {
-  return new Promise((resolve, reject) => {
-    // Create the command arguments
-    const args = [...MOCHA_OPTS, ...testFiles];
+// Run tests
+function runTests(testFiles) {
+  // Run both core and UI tests
+  console.log('Running all BCBS tests...\n');
+  
+  const commandCore = `node ${RUN_CORE_SCRIPT}`;
+  const commandUi = `node ${RUN_UI_SCRIPT}`;
+  
+  console.log(`Running core tests with command: ${commandCore}\n`);
+  
+  const childCore = exec(commandCore);
+  
+  childCore.stdout.pipe(process.stdout);
+  childCore.stderr.pipe(process.stderr);
+  
+  childCore.on('close', (codeCore) => {
+    console.log(`Core tests completed with exit code: ${codeCore}`);
+    console.log('\n-------------------------------------------\n');
     
-    console.log(`Running Mocha with ${testFiles.length} test files`);
-    console.log(`Mocha command: mocha ${args.join(' ')}\n`);
+    console.log(`Running UI tests with command: ${commandUi}\n`);
     
-    const mochaProcess = spawn('./node_modules/.bin/mocha', args, {
-      stdio: 'inherit',
-      shell: true
-    });
+    const childUi = exec(commandUi);
     
-    mochaProcess.on('close', code => {
-      if (code === 0) {
-        resolve(true);
+    childUi.stdout.pipe(process.stdout);
+    childUi.stderr.pipe(process.stderr);
+    
+    childUi.on('close', (codeUi) => {
+      console.log(`UI tests completed with exit code: ${codeUi}`);
+      
+      const success = codeCore === 0 && codeUi === 0;
+      if (success) {
+        console.log('\n✅ All tests passed!');
       } else {
-        resolve(false);
+        console.error('\n❌ Some tests failed!');
       }
-    });
-    
-    mochaProcess.on('error', err => {
-      console.error(`Error running Mocha: ${err.message}`);
-      reject(err);
+      
+      process.exit(success ? 0 : 1);
     });
   });
 }
@@ -95,29 +94,17 @@ function runMochaTests(testFiles) {
 // Run all tests
 async function runAllTests() {
   const testFiles = getTestFiles();
-  
   if (testFiles.length === 0) {
-    console.log('No test files found');
+    console.log('No test files found.');
     return;
   }
   
-  console.log(`Found ${testFiles.length} test files to run`);
-  console.log('='.repeat(50));
-  
-  try {
-    const success = await runMochaTests(testFiles);
-    
-    if (!success) {
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error('Test runner error:', error);
-    process.exit(1);
-  }
+  console.log(`Found ${testFiles.length} test files across test suites.\n`);
+  runTests(testFiles);
 }
 
-// Run the tests
-runAllTests().catch(err => {
-  console.error('Test runner error:', err);
+// Execute tests
+runAllTests().catch(error => {
+  console.error('Error running tests:', error);
   process.exit(1);
 });
