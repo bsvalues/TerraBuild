@@ -178,6 +178,8 @@ export interface IStorage {
   updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined>;
   deleteSharedProject(id: number): Promise<void>;
   getAccessibleSharedProjects(userId: number): Promise<SharedProject[]>;
+  getUserProjects(userId: number): Promise<SharedProject[]>;
+  getPublicProjects(): Promise<SharedProject[]>;
   
   // Project Members
   getProjectMembers(projectId: number): Promise<ProjectMember[]>;
@@ -1655,6 +1657,40 @@ export class MemStorage implements IStorage {
     
     this.sharedProjects.set(id, updatedProject);
     return updatedProject;
+  }
+  
+  async getUserProjects(userId: number): Promise<SharedProject[]> {
+    // Get projects created by the user
+    const ownedProjects = Array.from(this.sharedProjects.values()).filter(
+      project => project.createdById === userId
+    );
+    
+    // Get projects where the user is a member
+    const memberProjectIds = Array.from(this.projectMembers.values())
+      .filter(member => member.userId === userId)
+      .map(member => member.projectId);
+    
+    const memberProjects = Array.from(this.sharedProjects.values()).filter(
+      project => memberProjectIds.includes(project.id)
+    );
+    
+    // Combine and remove duplicates
+    const allProjects = [...ownedProjects];
+    
+    memberProjects.forEach(project => {
+      if (!allProjects.some(p => p.id === project.id)) {
+        allProjects.push(project);
+      }
+    });
+    
+    return allProjects;
+  }
+  
+  async getPublicProjects(): Promise<SharedProject[]> {
+    // Get all public projects
+    return Array.from(this.sharedProjects.values()).filter(
+      project => project.isPublic === true
+    );
   }
   
   async deleteSharedProject(id: number): Promise<void> {

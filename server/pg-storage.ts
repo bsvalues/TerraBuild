@@ -933,6 +933,38 @@ export class PostgresStorage implements IStorage {
       return true;
     });
   }
+  
+  async getUserProjects(userId: number): Promise<SharedProject[]> {
+    // This returns projects either created by the user or where the user is a member
+    const createdProjects = await db.select().from(sharedProjects)
+      .where(eq(sharedProjects.createdById, userId));
+    
+    // Find all projects where user is a member
+    const memberProjects = await db.select({
+      project: sharedProjects
+    })
+    .from(projectMembers)
+    .innerJoin(sharedProjects, eq(projectMembers.projectId, sharedProjects.id))
+    .where(eq(projectMembers.userId, userId));
+    
+    // Combine and deduplicate projects
+    const allProjects = [...createdProjects, ...memberProjects.map(m => m.project)];
+    const projectIds = new Set();
+    
+    return allProjects.filter(project => {
+      if (projectIds.has(project.id)) {
+        return false;
+      }
+      projectIds.add(project.id);
+      return true;
+    });
+  }
+  
+  async getPublicProjects(): Promise<SharedProject[]> {
+    // Get all public projects
+    return await db.select().from(sharedProjects)
+      .where(eq(sharedProjects.isPublic, true));
+  }
 
   async getSharedProject(id: number): Promise<SharedProject | undefined> {
     const result = await db.select().from(sharedProjects).where(eq(sharedProjects.id, id));

@@ -216,6 +216,36 @@ export function registerCollaborationRoutes(app: Express): void {
     }
   });
   
+  // Get projects created by or shared with the current user
+  app.get('/api/shared-projects/my', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const projects = await storage.getUserProjects(req.user.id);
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching user projects:", error);
+      res.status(500).json({ message: "Error fetching user projects" });
+    }
+  });
+  
+  // Get all public projects
+  app.get('/api/shared-projects/public', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const projects = await storage.getPublicProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching public projects:", error);
+      res.status(500).json({ message: "Error fetching public projects" });
+    }
+  });
+  
   // Get a specific shared project
   app.get('/api/shared-projects/:projectId', checkProjectAccess, async (req: Request, res: Response) => {
     try {
