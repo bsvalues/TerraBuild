@@ -69,7 +69,7 @@ export default function ProjectItemsTable({
   currentUserRole,
 }: ProjectItemsTableProps) {
   const {
-    removeItemFromProject,
+    removeProjectItem,
   } = useCollaboration();
   
   // Use the items prop instead of context projectItems
@@ -92,7 +92,7 @@ export default function ProjectItemsTable({
     
     setIsProcessing(true);
     try {
-      await removeItemFromProject(projectId, itemToRemove.type, itemToRemove.id);
+      await removeProjectItem(projectId, itemToRemove.type, itemToRemove.id);
       setShowRemoveConfirm(false);
       setItemToRemove(null);
       
@@ -136,6 +136,13 @@ export default function ProjectItemsTable({
           <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">
             <FileText className="h-3 w-3 mr-1" />
             Report
+          </Badge>
+        );
+      case 'what_if_scenario':
+        return (
+          <Badge variant="outline" className="bg-violet-50 text-violet-600 border-violet-200">
+            <FilePieChart className="h-3 w-3 mr-1" />
+            What-If Scenario
           </Badge>
         );
       case 'chart':
@@ -203,6 +210,9 @@ export default function ProjectItemsTable({
         break;
       case 'report':
         url = `/reports/${id}`;
+        break;
+      case 'what_if_scenario':
+        url = `/what-if-scenarios/${id}`;
         break;
       case 'chart':
       case 'visualization':
