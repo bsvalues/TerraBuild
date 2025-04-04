@@ -610,7 +610,6 @@ const ProjectDetailsPage: React.FC = () => {
             <CommentsSection 
               targetType="project" 
               targetId={projectId} 
-              title="Project Comments" 
             />
           )}
         </TabsContent>

@@ -3,132 +3,90 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Reply, Check, X, Edit2, Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import {
-  Check,
-  Clock,
-  Edit,
-  MessageCircle,
-  Reply,
-  Trash,
-  X,
-} from 'lucide-react';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Comment {
   id: number;
   content: string;
-  userId: number;
   createdAt: string | Date;
   updatedAt: string | Date;
+  userId: number;
+  username?: string;
+  targetType: string;
+  targetId: number;
+  parentCommentId: number | null;
   isResolved: boolean;
   isEdited: boolean;
-  parentCommentId: number | null;
-  user?: {
-    id: number;
-    username: string;
-    name: string | null;
-  };
   replies?: Comment[];
 }
 
 interface CommentsSectionProps {
   targetType: string;
   targetId: number;
-  title?: string;
 }
 
-const CommentsSection: React.FC<CommentsSectionProps> = ({
-  targetType,
-  targetId,
-  title = 'Comments',
-}) => {
+const CommentsSection: React.FC<CommentsSectionProps> = ({ targetType, targetId }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // State
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedContent, setEditedContent] = useState('');
+  const [editContent, setEditContent] = useState('');
   const [replyingToId, setReplyingToId] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Query keys
-  const commentsQueryKey = [`/api/comments/${targetType}/${targetId}`];
-  
   // Fetch comments
   const {
-    data: commentsData = [],
-    isLoading: isLoadingComments,
-    refetch: refetchComments,
+    data: comments = [],
+    isLoading,
+    refetch: refetchComments
   } = useQuery({
-    queryKey: commentsQueryKey,
+    queryKey: ['/api/comments', targetType, targetId],
     queryFn: async () => {
-      const response = await apiRequest(`/api/comments/${targetType}/${targetId}`);
-      return response.json();
+      const response = await apiRequest(`/api/comments?targetType=${targetType}&targetId=${targetId}`);
+      const data = await response.json();
+      return organizeComments(data);
     },
     meta: {
-      errorMessage: 'Failed to load comments',
-    },
+      errorMessage: 'Failed to load comments'
+    }
   });
   
-  // Organize comments into threads
-  const organizeComments = (flatComments: Comment[]): Comment[] => {
-    const topLevelComments: Comment[] = [];
-    const commentMap = new Map<number, Comment>();
-    
-    // First pass: create a map of all comments by id
-    flatComments.forEach(comment => {
-      // Clone comment to avoid mutating the original
-      const commentCopy = { ...comment, replies: [] };
-      commentMap.set(comment.id, commentCopy);
-    });
-    
-    // Second pass: organize into hierarchy
-    flatComments.forEach(comment => {
-      const commentWithReplies = commentMap.get(comment.id);
-      if (!commentWithReplies) return;
-      
-      if (comment.parentCommentId === null) {
-        topLevelComments.push(commentWithReplies);
-      } else {
-        const parent = commentMap.get(comment.parentCommentId);
-        if (parent) {
-          if (!parent.replies) {
-            parent.replies = [];
-          }
-          parent.replies.push(commentWithReplies);
-        }
-      }
-    });
-    
-    return topLevelComments;
-  };
-  
-  const threaded = organizeComments(commentsData);
-  
-  // Create comment mutation
-  const createCommentMutation = useMutation({
-    mutationFn: async ({ content, parentCommentId }: { content: string; parentCommentId?: number | null }) => {
-      const response = await apiRequest(`/api/comments/${targetType}/${targetId}`, {
+  // Add comment mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async (commentData: {
+      content: string;
+      targetType: string;
+      targetId: number;
+      parentCommentId?: number | null;
+    }) => {
+      const response = await apiRequest('/api/comments', {
         method: 'POST',
-        body: JSON.stringify({
-          content,
-          parentCommentId,
-        }),
-        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commentData),
+        headers: { 'Content-Type': 'application/json' }
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', targetType, targetId] });
       toast({
         title: 'Comment added',
         description: 'Your comment has been added successfully.',
@@ -136,176 +94,212 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     },
     onError: () => {
       toast({
-        title: 'Failed to add comment',
-        description: 'There was an error adding your comment.',
+        title: 'Error adding comment',
+        description: 'There was a problem adding your comment. Please try again.',
         variant: 'destructive',
       });
-    },
+    }
   });
   
   // Update comment mutation
   const updateCommentMutation = useMutation({
-    mutationFn: async ({ commentId, content, isResolved }: { commentId: number; content?: string; isResolved?: boolean }) => {
+    mutationFn: async ({ commentId, content }: { commentId: number; content: string }) => {
       const response = await apiRequest(`/api/comments/${commentId}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          content,
-          isResolved,
-        }),
-        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+        headers: { 'Content-Type': 'application/json' }
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', targetType, targetId] });
       toast({
         title: 'Comment updated',
-        description: 'The comment has been updated successfully.',
+        description: 'Your comment has been updated successfully.',
       });
     },
     onError: () => {
       toast({
-        title: 'Failed to update comment',
-        description: 'There was an error updating the comment.',
+        title: 'Error updating comment',
+        description: 'There was a problem updating your comment. Please try again.',
         variant: 'destructive',
       });
-    },
+    }
   });
   
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
       const response = await apiRequest(`/api/comments/${commentId}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', targetType, targetId] });
       toast({
         title: 'Comment deleted',
-        description: 'The comment has been deleted successfully.',
+        description: 'Your comment has been deleted successfully.',
       });
     },
     onError: () => {
       toast({
-        title: 'Failed to delete comment',
-        description: 'There was an error deleting the comment.',
+        title: 'Error deleting comment',
+        description: 'There was a problem deleting your comment. Please try again.',
         variant: 'destructive',
       });
-    },
+    }
   });
   
-  // Handle new comment submission
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newComment.trim()) {
+  // Toggle resolved status mutation
+  const toggleResolvedMutation = useMutation({
+    mutationFn: async ({ commentId, isResolved }: { commentId: number; isResolved: boolean }) => {
+      const response = await apiRequest(`/api/comments/${commentId}/resolve`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isResolved }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', targetType, targetId] });
       toast({
-        title: 'Empty comment',
-        description: 'Please enter a comment before submitting.',
+        title: 'Comment status updated',
+        description: 'The comment status has been updated successfully.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error updating status',
+        description: 'There was a problem updating the comment status. Please try again.',
         variant: 'destructive',
       });
-      return;
     }
+  });
+  
+  // Organize comments into a tree structure with parent and child comments (replies)
+  const organizeComments = (flatComments: Comment[]): Comment[] => {
+    const commentMap: Record<number, Comment> = {};
+    const rootComments: Comment[] = [];
+    
+    // First pass: Create a map of all comments by ID and initialize replies array
+    flatComments.forEach(comment => {
+      comment.replies = [];
+      commentMap[comment.id] = comment;
+    });
+    
+    // Second pass: Organize comments into a tree structure
+    flatComments.forEach(comment => {
+      if (comment.parentCommentId) {
+        // This is a reply, add it to its parent's replies array
+        if (commentMap[comment.parentCommentId]) {
+          commentMap[comment.parentCommentId].replies!.push(comment);
+        }
+      } else {
+        // This is a root comment
+        rootComments.push(comment);
+      }
+    });
+    
+    return rootComments;
+  };
+  
+  // Handle adding a new comment
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
     
     setIsSubmitting(true);
     try {
-      await createCommentMutation.mutateAsync({ content: newComment });
+      await addCommentMutation.mutateAsync({
+        content: newComment,
+        targetType,
+        targetId
+      });
       setNewComment('');
     } catch (error) {
-      console.error('Error submitting comment:', error);
+      console.error("Error adding comment:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Handle reply submission
-  const handleSubmitReply = async (parentId: number) => {
-    if (!replyContent.trim()) {
-      toast({
-        title: 'Empty reply',
-        description: 'Please enter a reply before submitting.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  // Handle adding a reply to a comment
+  const handleAddReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyContent.trim() || replyingToId === null) return;
     
     setIsSubmitting(true);
     try {
-      await createCommentMutation.mutateAsync({
+      await addCommentMutation.mutateAsync({
         content: replyContent,
-        parentCommentId: parentId,
+        targetType,
+        targetId,
+        parentCommentId: replyingToId
       });
       setReplyContent('');
       setReplyingToId(null);
     } catch (error) {
-      console.error('Error submitting reply:', error);
+      console.error("Error adding reply:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Handle comment update
-  const handleUpdateComment = async (commentId: number) => {
-    if (!editedContent.trim()) {
-      toast({
-        title: 'Empty comment',
-        description: 'Comment cannot be empty.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  // Handle updating a comment
+  const handleUpdateComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editContent.trim() || editingCommentId === null) return;
     
     setIsSubmitting(true);
     try {
       await updateCommentMutation.mutateAsync({
-        commentId,
-        content: editedContent,
+        commentId: editingCommentId,
+        content: editContent
       });
+      setEditContent('');
       setEditingCommentId(null);
-      setEditedContent('');
     } catch (error) {
-      console.error('Error updating comment:', error);
+      console.error("Error updating comment:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Handle toggling comment resolution
-  const handleToggleResolution = async (comment: Comment) => {
-    try {
-      await updateCommentMutation.mutateAsync({
-        commentId: comment.id,
-        isResolved: !comment.isResolved,
-      });
-    } catch (error) {
-      console.error('Error toggling resolution:', error);
-    }
-  };
-  
-  // Handle comment deletion
+  // Handle deleting a comment
   const handleDeleteComment = async (commentId: number) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this comment?');
-    if (!confirmDelete) return;
-    
+    setIsSubmitting(true);
     try {
       await deleteCommentMutation.mutateAsync(commentId);
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      console.error("Error deleting comment:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle toggling resolved status
+  const handleToggleResolved = async (commentId: number, currentStatus: boolean) => {
+    try {
+      await toggleResolvedMutation.mutateAsync({
+        commentId,
+        isResolved: !currentStatus
+      });
+    } catch (error) {
+      console.error("Error toggling resolved status:", error);
     }
   };
   
   // Start editing a comment
   const startEditing = (comment: Comment) => {
     setEditingCommentId(comment.id);
-    setEditedContent(comment.content);
+    setEditContent(comment.content);
   };
   
   // Cancel editing
   const cancelEditing = () => {
     setEditingCommentId(null);
-    setEditedContent('');
+    setEditContent('');
   };
   
   // Start replying to a comment
@@ -320,268 +314,245 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     setReplyContent('');
   };
   
-  // Check if the current user can modify a comment (edit, delete)
-  const canModifyComment = (comment: Comment) => {
-    return user && comment.userId === user.id;
+  // Get user's initials for avatar fallback
+  const getUserInitials = (username?: string): string => {
+    if (!username) return 'U';
+    return username
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
   
   // Render a single comment
   const renderComment = (comment: Comment, isReply = false) => {
     const isEditing = editingCommentId === comment.id;
     const isReplying = replyingToId === comment.id;
+    const canModify = user && user.id === comment.userId;
     
     return (
-      <Card key={comment.id} className={isReply ? 'ml-8 mt-2' : 'mb-4'}>
-        <CardHeader className="p-4 pb-0 flex flex-row justify-between items-start">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>
-                {comment.user?.username?.charAt(0).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">
-                {comment.user?.username || `User ${comment.userId}`}
-              </p>
-              <p className="text-xs text-muted-foreground flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                {comment.isEdited && <span className="mr-1">(edited)</span>}
-                {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
-              </p>
-            </div>
-          </div>
+      <div key={comment.id} className={`mb-4 ${isReply ? 'ml-10' : ''}`}>
+        <div className="flex gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback>{getUserInitials(comment.username)}</AvatarFallback>
+          </Avatar>
           
-          {comment.isResolved && (
-            <div className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs flex items-center">
-              <Check className="h-3 w-3 mr-1" />
-              Resolved
-            </div>
-          )}
-        </CardHeader>
-        
-        <CardContent className="p-4">
-          {isEditing ? (
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              placeholder="Edit your comment..."
-              className="min-h-[80px]"
-            />
-          ) : (
-            <p className="whitespace-pre-wrap">{comment.content}</p>
-          )}
-        </CardContent>
-        
-        <CardFooter className="p-4 pt-0 flex justify-between">
-          <div className="flex gap-2">
-            {!isReply && !isEditing && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => startReplying(comment.id)}
-                disabled={isSubmitting}
-                className="h-8 px-2 text-xs"
-              >
-                <Reply className="h-3 w-3 mr-1" />
-                Reply
-              </Button>
-            )}
-            
-            {canModifyComment(comment) && !isEditing && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => startEditing(comment)}
-                  disabled={isSubmitting}
-                  className="h-8 px-2 text-xs"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteComment(comment.id)}
-                  disabled={isSubmitting}
-                  className="h-8 px-2 text-xs text-destructive"
-                >
-                  <Trash className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
-              </>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            {isEditing && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={cancelEditing}
-                  disabled={isSubmitting}
-                  className="h-8 px-2 text-xs"
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Cancel
-                </Button>
-                
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleUpdateComment(comment.id)}
-                  disabled={isSubmitting}
-                  className="h-8 px-2 text-xs"
-                >
-                  <Check className="h-3 w-3 mr-1" />
-                  Save
-                </Button>
-              </>
-            )}
-            
-            {!isEditing && (
-              <Button
-                variant={comment.isResolved ? "outline" : "ghost"}
-                size="sm"
-                onClick={() => handleToggleResolution(comment)}
-                disabled={isSubmitting}
-                className={`h-8 px-2 text-xs ${comment.isResolved ? "text-green-600" : ""}`}
-              >
-                {comment.isResolved ? (
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">
+                  {comment.username || 'User'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                </span>
+                {comment.isEdited && (
+                  <span className="text-xs text-muted-foreground">(edited)</span>
+                )}
+                {comment.isResolved && (
+                  <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-800 hover:bg-green-100">
+                    <Check className="mr-1 h-3 w-3" />
+                    Resolved
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Comment actions */}
+              <div className="flex gap-1">
+                {canModify && !isEditing && (
                   <>
-                    <X className="h-3 w-3 mr-1" />
-                    Unresolve
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-3 w-3 mr-1" />
-                    Resolve
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => startEditing(comment)}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Comment</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this comment? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
-              </Button>
+                
+                {!isReply && !isEditing && !isReplying && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => startReplying(comment.id)}
+                  >
+                    <Reply className="h-3 w-3" />
+                  </Button>
+                )}
+                
+                {canModify && !isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleToggleResolved(comment.id, comment.isResolved)}
+                  >
+                    {comment.isResolved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            {isEditing ? (
+              <form onSubmit={handleUpdateComment} className="mt-2">
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="min-h-[100px]"
+                  placeholder="Edit your comment..."
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={cancelEditing}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    size="sm"
+                    disabled={isSubmitting || !editContent.trim()}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="mt-1 text-sm whitespace-pre-wrap">{comment.content}</div>
+            )}
+            
+            {/* Reply form */}
+            {isReplying && (
+              <form onSubmit={handleAddReply} className="mt-3">
+                <Textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  className="min-h-[100px]"
+                  placeholder="Write your reply..."
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={cancelReplying}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    size="sm"
+                    disabled={isSubmitting || !replyContent.trim()}
+                  >
+                    Reply
+                  </Button>
+                </div>
+              </form>
+            )}
+            
+            {/* Render replies */}
+            {comment.replies && comment.replies.length > 0 && (
+              <div className="mt-3">
+                {comment.replies.map(reply => renderComment(reply, true))}
+              </div>
             )}
           </div>
-        </CardFooter>
-        
-        {isReplying && (
-          <div className="p-4 border-t">
-            <Textarea
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Write a reply..."
-              className="min-h-[80px] mb-2"
-            />
-            
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={cancelReplying}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => handleSubmitReply(comment.id)}
-                disabled={isSubmitting || !replyContent.trim()}
-              >
-                {isSubmitting ? "Submitting..." : "Reply"}
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="px-4 pb-4">
-            {comment.replies.map((reply) => renderComment(reply, true))}
-          </div>
-        )}
-      </Card>
+        </div>
+      </div>
     );
   };
   
   return (
     <div className="space-y-4">
-      {isLoadingComments ? (
-        <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <MessageSquare className="h-5 w-5" />
+        <h3 className="text-lg font-medium">Comments</h3>
+        <span className="text-sm text-muted-foreground">
+          ({comments.length})
+        </span>
+      </div>
+      
+      <Separator />
+      
+      {/* Add new comment form */}
+      <form onSubmit={handleAddComment} className="space-y-3">
+        <Textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          className="min-h-[100px]"
+          placeholder="Add a comment..."
+        />
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !newComment.trim()}
+          >
+            Add Comment
+          </Button>
+        </div>
+      </form>
+      
+      <Separator />
+      
+      {/* Comment list */}
+      {isLoading ? (
+        <div className="flex flex-col gap-4 py-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-1" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4">
-                <Skeleton className="h-16 w-full" />
-              </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Skeleton className="h-8 w-24" />
-              </CardFooter>
-            </Card>
+            <div key={i} className="flex gap-3 animate-pulse">
+              <div className="h-8 w-8 bg-muted rounded-full"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-1/4"></div>
+                <div className="h-3 bg-muted rounded w-3/4"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </div>
+            </div>
           ))}
         </div>
+      ) : comments.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No comments yet. Be the first to add a comment!</p>
+        </div>
       ) : (
-        <>
-          {/* New comment form */}
-          <Card>
-            <CardHeader className="p-4 pb-2">
-              <h3 className="text-sm font-medium flex items-center">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Add a comment
-              </h3>
-            </CardHeader>
-            
-            <CardContent className="p-4">
-              <form onSubmit={handleSubmitComment}>
-                <Textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write your comment here..."
-                  className="min-h-[100px] mb-2"
-                />
-                
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !newComment.trim()}
-                  >
-                    {isSubmitting ? "Submitting..." : "Post Comment"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-          
-          <Separator />
-          
-          {/* Comments list */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">{threaded.length} Comments</h3>
-            
-            {threaded.length === 0 ? (
-              <div className="text-center py-8 border rounded-lg">
-                <MessageCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-1">No comments yet</h3>
-                <p className="text-muted-foreground">
-                  Be the first to comment on this {targetType}.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {threaded.map((comment) => renderComment(comment))}
-              </div>
-            )}
-          </div>
-        </>
+        <div className="space-y-4 py-4">
+          {comments.map(comment => renderComment(comment))}
+        </div>
       )}
     </div>
   );
