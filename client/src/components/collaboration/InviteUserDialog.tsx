@@ -34,13 +34,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { UserPlus } from 'lucide-react';
 
-const inviteFormSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+// Define the form input schema
+const formInputSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
   role: z.enum(['viewer', 'editor', 'admin'], {
     required_error: 'Please select a role for the user',
   }),
 });
 
+// Define the schema that will be used after submission (with transformation)
+const inviteFormSchema = formInputSchema.transform((data) => ({
+  userId: parseInt(data.userId, 10),
+  role: data.role
+}));
+
+// For the form itself, we need the input types
+type FormInputValues = z.infer<typeof formInputSchema>;
+// For the submission handler, we need the transformed types
 type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
 interface InviteUserDialogProps {
@@ -62,49 +72,73 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteFormSchema),
+  const form = useForm<FormInputValues>({
+    resolver: zodResolver(formInputSchema),
     defaultValues: {
-      email: '',
+      userId: '',
       role: 'viewer',
     },
   });
 
-  const onSubmit = async (data: InviteFormValues) => {
+  const onSubmit = (formData: FormInputValues) => {
     setIsLoading(true);
+
+    // Apply the transformation
+    const transformedData = {
+      userId: parseInt(formData.userId, 10),
+      role: formData.role
+    };
+    
+    // Check if the userId is valid after transformation
+    if (isNaN(transformedData.userId)) {
+      toast({
+        title: 'Invalid User ID',
+        description: 'Please enter a valid numeric user ID',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
     
     try {
-      const response = await apiRequest(`/api/projects/${projectId}/invitations`, {
+      // Send the invitation with the user ID
+      apiRequest(`/api/shared-projects/${projectId}/invitations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: data.email,
-          role: data.role,
-        }),
+        body: JSON.stringify(transformedData),
+      }).then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Failed to send invitation');
+          });
+        }
+        
+        toast({
+          title: 'Invitation sent',
+          description: `An invitation has been sent to user ID: ${transformedData.userId}`,
+        });
+        
+        form.reset();
+        setOpen(false);
+      }).catch(error => {
+        console.error('Error sending invitation:', error);
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to send invitation',
+          variant: 'destructive',
+        });
+      }).finally(() => {
+        setIsLoading(false);
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send invitation');
-      }
-      
-      toast({
-        title: 'Invitation sent',
-        description: `An invitation has been sent to ${data.email}`,
-      });
-      
-      form.reset();
-      setOpen(false);
     } catch (error) {
-      console.error('Error sending invitation:', error);
+      console.error('Error processing invitation:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send invitation',
+        description: error instanceof Error ? error.message : 'Failed to process invitation',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -127,22 +161,31 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            // Trigger form validation
+            form.trigger().then(isValid => {
+              if (isValid) {
+                const formData = form.getValues();
+                onSubmit(formData);
+              }
+            });
+          }} className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="userId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>User ID</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="user@example.com"
+                      placeholder="Enter user ID"
                       {...field}
                       disabled={isLoading}
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter the email address of the person you want to invite.
+                    Enter the ID of the user you want to invite.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

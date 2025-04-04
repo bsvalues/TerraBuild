@@ -491,6 +491,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Find a user by email
+  app.get("/api/users/by-email", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ message: "Email parameter is required" });
+      }
+      
+      const user = await storage.getUserByUsername(email); // Using username as email for simplicity
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found with that email" });
+      }
+      
+      res.json({ id: user.id, username: user.username, name: user.name });
+    } catch (error) {
+      console.error("Error finding user by email:", error);
+      res.status(500).json({ message: "Error finding user by email" });
+    }
+  });
+
   // Get user by ID
   app.get("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
     try {
