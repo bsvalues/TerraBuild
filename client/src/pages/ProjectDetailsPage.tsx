@@ -1,815 +1,782 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'wouter';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useParams, Link } from 'wouter';
 import { useCollaboration } from '@/contexts/CollaborationContext';
-import { useAuth } from '../hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
 import CommentsSection from '@/components/comments/CommentsSection';
-import { 
-  ArrowLeft, 
-  Building, 
-  Calculator, 
-  Calendar, 
-  Clock, 
-  FileText, 
-  Globe, 
-  Lock, 
-  MessageCircle,
-  Plus, 
-  Share2, 
-  Trash, 
-  UserPlus, 
-  Users
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  ArrowLeft,
+  Folder,
+  Settings,
+  Share2,
+  Edit,
+  Trash2,
+  MoreHorizontal,
+  ClockIcon,
+  User,
+  MessageSquare,
+  Plus,
+  Users,
+  GlobeIcon,
+  FileText,
+  Calculator,
+  BarChart,
+  Table,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+
+// Item type mapping for display purposes
+const itemTypeMap: Record<string, { label: string; icon: React.ReactNode }> = {
+  'calculation': {
+    label: 'Calculation',
+    icon: <Calculator className="h-4 w-4" />,
+  },
+  'cost_matrix': {
+    label: 'Cost Matrix',
+    icon: <Table className="h-4 w-4" />,
+  },
+  'what_if_scenario': {
+    label: 'What-If Scenario',
+    icon: <BarChart className="h-4 w-4" />,
+  },
+  'report': {
+    label: 'Report',
+    icon: <FileText className="h-4 w-4" />,
+  },
+};
 
 const ProjectDetailsPage: React.FC = () => {
-  const { id } = useParams();
-  const projectId = parseInt(id || '0');
+  const params = useParams<{ id: string }>();
+  const projectId = Number(params.id);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { 
-    myProjects, 
-    publicProjects, 
-    setCurrentProject, 
-    currentProject, 
-    projectMembers, 
+  
+  const {
+    currentProject,
+    setCurrentProject,
+    myProjects,
+    publicProjects,
+    projectMembers,
     projectItems,
+    deleteProject,
+    addProjectItem,
+    removeProjectItem,
     isLoadingProjects,
     isLoadingMembers,
     isLoadingItems,
-    addMember,
-    updateMemberRole,
-    removeMember,
-    addProjectItem,
-    removeProjectItem,
-    updateProject
   } = useCollaboration();
-
-  // Member management
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [newMemberId, setNewMemberId] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState('viewer');
-  const [isAddingMember, setIsAddingMember] = useState(false);
-
-  // Remove member confirmation
-  const [isRemoveMemberOpen, setIsRemoveMemberOpen] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<any>(null);
-  const [isRemovingMember, setIsRemovingMember] = useState(false);
-
-  // Item management
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [itemType, setItemType] = useState('calculation');
-  const [itemId, setItemId] = useState('');
-  const [isAddingItem, setIsAddingItem] = useState(false);
-
-  // Remove item confirmation
-  const [isRemoveItemOpen, setIsRemoveItemOpen] = useState(false);
-  const [itemToRemove, setItemToRemove] = useState<any>(null);
-  const [isRemovingItem, setIsRemovingItem] = useState(false);
-
-  // Setup project on mount
+  
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [addingItemType, setAddingItemType] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string>('');
+  const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [isLoadingAvailableItems, setIsLoadingAvailableItems] = useState(false);
+  
+  // When projectId changes, set the current project
   useEffect(() => {
-    if (projectId && !currentProject) {
-      // Find the project in our lists
-      const project = [...myProjects, ...publicProjects].find(p => p.id === projectId);
+    const findProject = () => {
+      // Try to find in my projects first
+      let project = myProjects.find(p => p.id === projectId);
+      
+      // If not found, try to find in public projects
+      if (!project) {
+        project = publicProjects.find(p => p.id === projectId);
+      }
+      
       if (project) {
         setCurrentProject(project);
+      } else if (!isLoadingProjects) {
+        // If project not found and we're not loading, redirect to projects list
+        toast({
+          title: 'Project not found',
+          description: 'The requested project could not be found or you do not have access to it.',
+          variant: 'destructive',
+        });
+        setLocation('/shared-projects');
       }
-    }
-  }, [projectId, currentProject, myProjects, publicProjects, setCurrentProject]);
+    };
+    
+    findProject();
+  }, [projectId, myProjects, publicProjects, isLoadingProjects, setCurrentProject, toast, setLocation]);
 
-  // Check if the current user is a project admin
-  const isProjectAdmin = () => {
-    // If the user is the creator of the project
-    if (currentProject && user && currentProject.createdById === user.id) {
-      return true;
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      setCurrentProject(null);
+    };
+  }, [setCurrentProject]);
+
+  // Check if current user is the project owner
+  const isOwner = currentProject && user?.id === currentProject.createdById;
+
+  // Format date for display
+  const formatDate = (date: string | Date) => {
+    if (date instanceof Date) {
+      return formatDistanceToNow(date, { addSuffix: true });
     }
-    
-    // If the user is a member with admin role
-    const userMember = projectMembers.find(member => member.userId === user?.id);
-    return userMember?.role === 'admin';
-  };
-  
-  // Check if the current user can edit (as admin or editor)
-  const canEdit = () => {
-    // If the user is a project admin
-    if (isProjectAdmin()) {
-      return true;
-    }
-    
-    // If the user is a member with editor role
-    const userMember = projectMembers.find(member => member.userId === user?.id);
-    return userMember?.role === 'editor';
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
-  // Handle adding a member
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle project deletion
+  const handleDeleteProject = async () => {
+    if (!currentProject) return;
     
-    if (!newMemberId || !newMemberRole || !projectId) {
+    setIsDeleting(true);
+    
+    try {
+      await deleteProject(currentProject.id);
+      
       toast({
-        title: "Missing information",
-        description: "Please provide a user ID and select a role.",
-        variant: "destructive",
+        title: 'Project deleted',
+        description: 'The project has been deleted successfully.',
       });
-      return;
-    }
-
-    setIsAddingMember(true);
-    try {
-      await addMember(projectId, parseInt(newMemberId), newMemberRole);
-      setIsAddMemberOpen(false);
-      setNewMemberId('');
-      setNewMemberRole('viewer');
+      
+      setLocation('/shared-projects');
     } catch (error) {
-      console.error("Error adding member:", error);
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
-
-  // Handle updating a member's role
-  const handleUpdateMemberRole = async (memberId: number, newRole: string) => {
-    try {
-      await updateMemberRole(projectId, memberId, newRole);
+      console.error('Error deleting project:', error);
       toast({
-        title: "Role updated",
-        description: "The member's role has been updated successfully.",
+        title: 'Error',
+        description: 'Failed to delete project.',
+        variant: 'destructive',
       });
-    } catch (error) {
-      console.error("Error updating member role:", error);
-    }
-  };
-
-  // Handle removing a member
-  const handleRemoveMember = async () => {
-    if (!memberToRemove || !projectId) return;
-
-    setIsRemovingMember(true);
-    try {
-      await removeMember(projectId, memberToRemove.userId);
-      setIsRemoveMemberOpen(false);
-      setMemberToRemove(null);
-    } catch (error) {
-      console.error("Error removing member:", error);
     } finally {
-      setIsRemovingMember(false);
+      setIsDeleting(false);
     }
   };
 
-  // Open the remove member dialog
-  const openRemoveMemberDialog = (member: any) => {
-    setMemberToRemove(member);
-    setIsRemoveMemberOpen(true);
-  };
-
-  // Handle adding an item
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!itemType || !itemId || !projectId) {
-      toast({
-        title: "Missing information",
-        description: "Please select an item type and provide an item ID.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsAddingItem(true);
-    try {
-      await addProjectItem(projectId, itemType, parseInt(itemId));
-      setIsAddItemOpen(false);
-      setItemType('calculation');
-      setItemId('');
-    } catch (error) {
-      console.error("Error adding item:", error);
-    } finally {
-      setIsAddingItem(false);
-    }
-  };
-
-  // Handle removing an item
-  const handleRemoveItem = async () => {
-    if (!itemToRemove || !projectId) return;
-
-    setIsRemovingItem(true);
-    try {
-      await removeProjectItem(projectId, itemToRemove.itemType, itemToRemove.itemId);
-      setIsRemoveItemOpen(false);
-      setItemToRemove(null);
-    } catch (error) {
-      console.error("Error removing item:", error);
-    } finally {
-      setIsRemovingItem(false);
-    }
-  };
-
-  // Open the remove item dialog
-  const openRemoveItemDialog = (item: any) => {
-    setItemToRemove(item);
-    setIsRemoveItemOpen(true);
-  };
-
-  // Toggle project visibility
-  const toggleProjectVisibility = async () => {
-    if (!currentProject || !projectId) return;
+  // Load available items based on selected type
+  const loadAvailableItems = async (itemType: string) => {
+    setIsLoadingAvailableItems(true);
+    setAvailableItems([]);
     
     try {
-      await updateProject(projectId, {
-        isPublic: !currentProject.isPublic
-      });
-      toast({
-        title: "Project updated",
-        description: `The project is now ${!currentProject.isPublic ? 'public' : 'private'}.`,
-      });
+      // Here we'd typically fetch from the API
+      let endpoint = '';
+      
+      switch (itemType) {
+        case 'calculation':
+          endpoint = '/api/calculations';
+          break;
+        case 'cost_matrix':
+          endpoint = '/api/cost-matrix';
+          break;
+        case 'what_if_scenario':
+          endpoint = '/api/what-if-scenarios';
+          break;
+        case 'report':
+          endpoint = '/api/reports';
+          break;
+      }
+      
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Failed to load available ${itemType} items`);
+      }
+      
+      const data = await response.json();
+      setAvailableItems(data);
     } catch (error) {
-      console.error("Error updating project visibility:", error);
+      console.error(`Error loading ${itemType} items:`, error);
+      toast({
+        title: 'Error',
+        description: `Failed to load available ${itemType} items.`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingAvailableItems(false);
     }
   };
 
-  // Render project not found
-  if (!isLoadingProjects && !currentProject) {
+  // Handle adding an item to the project
+  const handleAddItem = async () => {
+    if (!currentProject || !addingItemType || !selectedItemId) return;
+    
+    try {
+      await addProjectItem(currentProject.id, addingItemType, Number(selectedItemId));
+      
+      toast({
+        title: 'Item added',
+        description: `The ${itemTypeMap[addingItemType].label.toLowerCase()} has been added to the project.`,
+      });
+      
+      // Reset the state
+      setAddingItemType(null);
+      setSelectedItemId('');
+    } catch (error) {
+      console.error('Error adding item to project:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to project.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Handle removing an item from the project
+  const handleRemoveItem = async (itemId: number, itemType: string) => {
+    if (!currentProject) return;
+    
+    try {
+      await removeProjectItem(currentProject.id, itemType, itemId);
+      
+      toast({
+        title: 'Item removed',
+        description: `The ${itemTypeMap[itemType].label.toLowerCase()} has been removed from the project.`,
+      });
+    } catch (error) {
+      console.error('Error removing item from project:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove item from project.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Render loading skeleton
+  if (isLoadingProjects || !currentProject) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-3xl font-bold mb-4">Project Not Found</h1>
-        <p className="text-muted-foreground mb-8">
-          The project you're looking for might have been deleted or you don't have access to it.
-        </p>
-        <Link href="/shared-projects">
-          <Button>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
-          </Button>
-        </Link>
+      <div className="container mx-auto py-8 max-w-7xl">
+        <div className="mb-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64 mt-2" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-4 w-full mb-4" />
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Link href="/shared-projects">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" /> 
-              Back
-            </Button>
-          </Link>
+    <div className="container mx-auto py-8 max-w-7xl">
+      {/* Header with navigation */}
+      <div className="mb-6">
+        <div className="flex items-center space-x-2 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation('/shared-projects')}
+            className="p-0 h-auto"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Projects
+          </Button>
+        </div>
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          <div className="flex items-center space-x-3">
+            <Folder className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{currentProject.name}</h1>
+              <p className="text-muted-foreground">
+                {currentProject.description || 'No description provided'}
+              </p>
+            </div>
+          </div>
           
-          {currentProject && (
-            <Badge variant={currentProject.isPublic ? "default" : "outline"} className="ml-auto">
-              {currentProject.isPublic ? <Globe className="h-3 w-3 mr-1" /> : <Lock className="h-3 w-3 mr-1" />}
-              {currentProject.isPublic ? "Public" : "Private"}
-            </Badge>
-          )}
-          
-          {isProjectAdmin() && currentProject && (
-            <Button variant="outline" size="sm" onClick={toggleProjectVisibility}>
-              {currentProject.isPublic ? (
-                <>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Make Private
-                </>
-              ) : (
-                <>
-                  <Globe className="mr-2 h-4 w-4" />
-                  Make Public
-                </>
-              )}
-            </Button>
+          {isOwner && (
+            <div className="mt-4 md:mt-0 flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setLocation(`/shared-projects/${currentProject.id}/edit`)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={handleDeleteProject}
+                    className="text-destructive focus:text-destructive"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {isDeleting ? 'Deleting...' : 'Delete Project'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
-
-        {isLoadingProjects ? (
-          <div>
-            <Skeleton className="h-10 w-1/3 mb-2" />
-            <Skeleton className="h-4 w-1/2 mb-6" />
-          </div>
-        ) : currentProject ? (
-          <div>
-            <h1 className="text-3xl font-bold">{currentProject.name}</h1>
-            <div className="flex items-center gap-4 text-muted-foreground mt-2">
-              <span className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                Created {format(new Date(currentProject.createdAt), 'MMM d, yyyy')}
-              </span>
-              <span className="flex items-center">
-                <Clock className="h-4 w-4 mr-1" />
-                Updated {format(new Date(currentProject.updatedAt), 'MMM d, yyyy')}
-              </span>
-            </div>
-            {currentProject.description && (
-              <p className="mt-4 text-muted-foreground">{currentProject.description}</p>
+        
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={currentProject.isPublic ? 'outline' : 'secondary'} className="flex items-center gap-1">
+            {currentProject.isPublic ? (
+              <>
+                <GlobeIcon className="h-3 w-3" />
+                Public
+              </>
+            ) : (
+              <>
+                <Users className="h-3 w-3" />
+                Private
+              </>
             )}
-          </div>
-        ) : null}
+          </Badge>
+          
+          <Badge variant="outline" className="flex items-center gap-1">
+            <ClockIcon className="h-3 w-3" />
+            Updated {formatDate(currentProject.updatedAt)}
+          </Badge>
+          
+          {isOwner && (
+            <Badge variant="outline" className="bg-primary/10 text-primary">
+              Owner
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {/* Tabs for members, items, and comments */}
-      <Tabs defaultValue="members" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="members">
-            <Users className="mr-2 h-4 w-4" />
-            Members
+      {/* Tabs for project content */}
+      <Tabs defaultValue="overview" className="mb-8" onValueChange={setActiveTab}>
+        <TabsList className="w-full border-b mb-0 rounded-none bg-transparent justify-start gap-4 px-0">
+          <TabsTrigger value="overview" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none">
+            Overview
           </TabsTrigger>
-          <TabsTrigger value="items">
-            <FileText className="mr-2 h-4 w-4" />
+          <TabsTrigger value="items" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none">
             Project Items
           </TabsTrigger>
-          <TabsTrigger value="comments">
-            <MessageCircle className="mr-2 h-4 w-4" />
+          <TabsTrigger value="comments" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none">
             Comments
           </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="sharing" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none">
+              Sharing
+            </TabsTrigger>
+          )}
         </TabsList>
-
-        {/* Members Tab */}
-        <TabsContent value="members" className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Project Members</h2>
-            {isProjectAdmin() && (
-              <Button onClick={() => setIsAddMemberOpen(true)}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Member
-              </Button>
-            )}
-          </div>
-          
-          {isLoadingMembers ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1">
-                    <Skeleton className="h-4 w-1/4 mb-2" />
-                    <Skeleton className="h-3 w-1/5" />
+        
+        <TabsContent value="overview" className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium">Description</h3>
+                      <p className="text-muted-foreground">
+                        {currentProject.description || 'No description provided.'}
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Items in this project</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {Object.entries(itemTypeMap).map(([type, { label, icon }]) => {
+                          const count = projectItems.filter(item => item.itemType === type).length;
+                          return (
+                            <div key={type} className="flex items-center justify-between p-3 bg-muted rounded-md">
+                              <div className="flex items-center">
+                                {icon}
+                                <span className="ml-2">{label}s</span>
+                              </div>
+                              <Badge variant="secondary">{count}</Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Team Members</h3>
+                      {isLoadingMembers ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="flex items-center space-x-2">
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                              <Skeleton className="h-4 w-32" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : projectMembers.length > 0 ? (
+                        <div className="space-y-2">
+                          {projectMembers.map(member => (
+                            <div key={member.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+                              <div className="flex items-center space-x-2">
+                                <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                                  {member.user?.username?.[0]?.toUpperCase() || 'U'}
+                                </div>
+                                <div>
+                                  <div className="font-medium">{member.user?.name || member.user?.username || `User ${member.userId}`}</div>
+                                  <div className="text-xs text-muted-foreground capitalize">{member.role}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No team members yet.</p>
+                      )}
+                    </div>
                   </div>
-                  <Skeleton className="h-8 w-20" />
-                </div>
-              ))}
+                </CardContent>
+              </Card>
             </div>
-          ) : projectMembers.length === 0 ? (
-            <div className="text-center py-12 border rounded-lg">
-              <h3 className="text-lg font-medium mb-2">No project members</h3>
-              <p className="text-muted-foreground mb-6">
-                This project doesn't have any members yet apart from the creator.
-              </p>
-              {isProjectAdmin() && (
-                <Button onClick={() => setIsAddMemberOpen(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add First Member
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Joined</TableHead>
-                    {isProjectAdmin() && (
-                      <TableHead className="text-right">Actions</TableHead>
+            
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-2">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Project created</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(currentProject.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                        <Edit className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Last updated</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(currentProject.updatedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {projectItems.length > 0 && (
+                      <div className="flex items-start space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                          <Plus className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Items added</p>
+                          <p className="text-xs text-muted-foreground">
+                            {projectItems.length} item(s) in this project
+                          </p>
+                        </div>
+                      </div>
                     )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentProject && (
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback>
-                              {currentProject.createdById === user?.id ? user.username?.charAt(0).toUpperCase() : 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {currentProject.createdById === user?.id ? 'You' : 'Project Creator'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {currentProject.createdById === user?.id ? user.username : ''}
-                            </div>
-                          </div>
+                    
+                    {projectMembers.length > 1 && (
+                      <div className="flex items-start space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                          <Users className="h-4 w-4 text-primary" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="default">Owner</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(currentProject.createdAt), 'MMM d, yyyy')}
-                      </TableCell>
-                      {isProjectAdmin() && (
-                        <TableCell className="text-right">
-                          {/* Can't modify the owner */}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  )}
-                  
-                  {projectMembers.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback>
-                              {member.user ? member.user.username?.charAt(0).toUpperCase() : 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {member.userId === user?.id ? 'You' : member.user?.username || `User ${member.userId}`}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {member.user?.name || ''}
-                            </div>
-                          </div>
+                        <div>
+                          <p className="text-sm font-medium">Team members</p>
+                          <p className="text-xs text-muted-foreground">
+                            {projectMembers.length} member(s) in this project
+                          </p>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {isProjectAdmin() ? (
-                          <Select
-                            value={member.role}
-                            onValueChange={(value) => handleUpdateMemberRole(member.userId, value)}
-                          >
-                            <SelectTrigger className="w-28">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="viewer">Viewer</SelectItem>
-                              <SelectItem value="editor">Editor</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge variant="outline">{member.role.charAt(0).toUpperCase() + member.role.slice(1)}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(member.joinedAt), 'MMM d, yyyy')}
-                      </TableCell>
-                      {isProjectAdmin() && (
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openRemoveMemberDialog(member)}
-                            className="h-8 w-8 text-destructive"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
+          </div>
         </TabsContent>
-
-        {/* Items Tab */}
-        <TabsContent value="items" className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Project Items</h2>
-            {canEdit() && (
-              <Button onClick={() => setIsAddItemOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Item
-              </Button>
-            )}
-          </div>
-          
-          {isLoadingItems ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-4">
-                  <Skeleton className="h-6 w-1/3 mb-2" />
-                  <Skeleton className="h-4 w-full mb-4" />
-                  <div className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : projectItems.length === 0 ? (
-            <div className="text-center py-12 border rounded-lg">
-              <h3 className="text-lg font-medium mb-2">No items yet</h3>
-              <p className="text-muted-foreground mb-6">
-                This project doesn't have any items yet. Add calculations, matrices, or what-if scenarios.
-              </p>
-              {canEdit() && (
-                <Button onClick={() => setIsAddItemOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add First Item
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {projectItems.map((item) => (
-                <Card key={item.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center">
-                      {item.itemType === 'calculation' && (
-                        <Calculator className="h-4 w-4 mr-2" />
-                      )}
-                      {item.itemType === 'cost_matrix' && (
-                        <Building className="h-4 w-4 mr-2" />
-                      )}
-                      {item.itemType === 'what_if_scenario' && (
-                        <Share2 className="h-4 w-4 mr-2" />
-                      )}
-                      {item.itemData?.name || `${item.itemType.charAt(0).toUpperCase() + item.itemType.slice(1)} #${item.itemId}`}
-                    </CardTitle>
-                    <CardDescription>
-                      {item.itemType === 'calculation' && 'Cost Calculation'}
-                      {item.itemType === 'cost_matrix' && 'Cost Matrix'}
-                      {item.itemType === 'what_if_scenario' && 'What-If Scenario'}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    {item.itemType === 'calculation' && item.itemData && (
-                      <div className="text-sm">
-                        <p>Region: {item.itemData.region}</p>
-                        <p>Building Type: {item.itemData.buildingType}</p>
-                        <p>Total Cost: ${parseFloat(item.itemData.totalCost).toLocaleString()}</p>
-                      </div>
-                    )}
-                    
-                    {item.itemType === 'cost_matrix' && item.itemData && (
-                      <div className="text-sm">
-                        <p>Region: {item.itemData.region}</p>
-                        <p>Building Type: {item.itemData.buildingType}</p>
-                        <p>Year: {item.itemData.matrixYear}</p>
-                      </div>
-                    )}
-                    
-                    {item.itemType === 'what_if_scenario' && item.itemData && (
-                      <div className="text-sm">
-                        <p>{item.itemData.description || 'No description'}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between border-t pt-4">
-                    <Link href={
-                      item.itemType === 'calculation' ? `/calculator/${item.itemId}` :
-                      item.itemType === 'cost_matrix' ? `/cost-matrix/${item.itemId}` :
-                      item.itemType === 'what_if_scenario' ? `/what-if-scenarios/${item.itemId}` :
-                      '#'
-                    }>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                    
-                    {canEdit() && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openRemoveItemDialog(item)}
-                        className="h-8 w-8 text-destructive"
+        
+        <TabsContent value="items" className="pt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Project Items</CardTitle>
+                <CardDescription>
+                  Add calculations, cost matrices, and other items to this project
+                </CardDescription>
+              </div>
+              
+              {isOwner && addingItemType === null && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {Object.entries(itemTypeMap).map(([type, { label, icon }]) => (
+                      <DropdownMenuItem 
+                        key={type}
+                        onClick={() => {
+                          setAddingItemType(type);
+                          loadAvailableItems(type);
+                        }}
                       >
-                        <Trash className="h-4 w-4" />
+                        <div className="flex items-center">
+                          {icon}
+                          <span className="ml-2">Add {label}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </CardHeader>
+            
+            <CardContent>
+              {addingItemType !== null && (
+                <div className="mb-6 p-4 border rounded-lg bg-muted/50">
+                  <h3 className="font-medium mb-4">
+                    Add {itemTypeMap[addingItemType]?.label || 'Item'}
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">
+                        Select {itemTypeMap[addingItemType]?.label || 'Item'}:
+                      </label>
+                      
+                      {isLoadingAvailableItems ? (
+                        <Skeleton className="h-10 w-full mt-1" />
+                      ) : (
+                        <Select
+                          value={selectedItemId}
+                          onValueChange={setSelectedItemId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={`Select a ${itemTypeMap[addingItemType]?.label.toLowerCase() || 'item'}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableItems.length > 0 ? (
+                              availableItems.map(item => (
+                                <SelectItem key={item.id} value={item.id.toString()}>
+                                  {item.name || `${itemTypeMap[addingItemType]?.label} #${item.id}`}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <div className="p-2 text-center text-muted-foreground">
+                                No available items found
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAddingItemType(null);
+                          setSelectedItemId('');
+                        }}
+                      >
+                        Cancel
                       </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+                      <Button
+                        onClick={handleAddItem}
+                        disabled={!selectedItemId}
+                      >
+                        Add to Project
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {isLoadingItems ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Card key={i}>
+                      <CardHeader className="p-4 pb-2">
+                        <Skeleton className="h-5 w-32" />
+                      </CardHeader>
+                      <CardContent className="p-4 pt-2">
+                        <Skeleton className="h-4 w-full" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : projectItems.length > 0 ? (
+                <div className="space-y-4">
+                  {projectItems.map(item => (
+                    <Card key={item.id} className="border">
+                      <CardHeader className="p-4 pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            {itemTypeMap[item.itemType]?.icon || <FileText className="h-4 w-4" />}
+                            <CardTitle className="text-lg">
+                              {itemTypeMap[item.itemType]?.label || 'Item'} #{item.itemId}
+                            </CardTitle>
+                          </div>
+                          
+                          {isOwner && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveItem(item.itemId, item.itemType)}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-2">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <ClockIcon className="h-3.5 w-3.5 mr-1" />
+                          <span>Added {formatDate(item.addedAt)}</span>
+                        </div>
+                        
+                        <div className="mt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              // Navigate to the appropriate page based on item type
+                              let path = '';
+                              switch (item.itemType) {
+                                case 'calculation':
+                                  path = `/calculator/${item.itemId}`;
+                                  break;
+                                case 'cost_matrix':
+                                  path = `/data-import/matrix/${item.itemId}`;
+                                  break;
+                                case 'what_if_scenario':
+                                  path = `/what-if-scenarios/${item.itemId}`;
+                                  break;
+                                case 'report':
+                                  path = `/reports/${item.itemId}`;
+                                  break;
+                              }
+                              setLocation(path);
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <FileText className="h-12 w-12 mb-2 text-muted-foreground" />
+                  <CardDescription className="text-lg">No items in this project</CardDescription>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add calculations, cost matrices, or other items to collaborate on them.
+                  </p>
+                  
+                  {isOwner && (
+                    <Button
+                      onClick={() => {
+                        setAddingItemType('calculation');
+                        loadAvailableItems('calculation');
+                      }}
+                      className="mt-4"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
-
-        {/* Comments Tab */}
-        <TabsContent value="comments" className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Project Comments</h2>
-          </div>
-
-          {!currentProject ? (
-            <div className="space-y-2">
-              <Skeleton className="h-20 w-full mb-2" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ) : (
-            <CommentsSection 
-              targetType="project" 
-              targetId={projectId} 
-            />
-          )}
+        
+        <TabsContent value="comments" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Comments</CardTitle>
+              <CardDescription>
+                Discuss this project with your team
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CommentsSection targetType="project" targetId={projectId} />
+            </CardContent>
+          </Card>
         </TabsContent>
+        
+        {isOwner && (
+          <TabsContent value="sharing" className="pt-6">
+            <div className="grid grid-cols-1 gap-6">
+              <ProjectSharingControls
+                projectId={currentProject.id}
+                isPublic={currentProject.isPublic}
+                isOwner={isOwner}
+              />
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
-
-      {/* Add Member Dialog */}
-      <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Member to Project</DialogTitle>
-            <DialogDescription>
-              Add a team member to collaborate on this project.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleAddMember}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="userId">User ID</Label>
-                <Input
-                  id="userId"
-                  type="number"
-                  value={newMemberId}
-                  onChange={(e) => setNewMemberId(e.target.value)}
-                  placeholder="Enter user ID"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  The user must be registered on the platform.
-                </p>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Viewer:</span> Can only view project content.<br />
-                  <span className="font-medium">Editor:</span> Can view and add items to the project.<br />
-                  <span className="font-medium">Admin:</span> Can manage members and project settings.
-                </p>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsAddMemberOpen(false)}
-                disabled={isAddingMember}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isAddingMember}>
-                {isAddingMember ? "Adding..." : "Add Member"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove Member Dialog */}
-      <Dialog open={isRemoveMemberOpen} onOpenChange={setIsRemoveMemberOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Member</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this member from the project?
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            {memberToRemove && memberToRemove.user && (
-              <p className="font-medium">{memberToRemove.user.username || `User ID: ${memberToRemove.userId}`}</p>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsRemoveMemberOpen(false)}
-              disabled={isRemovingMember}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleRemoveMember}
-              disabled={isRemovingMember}
-            >
-              {isRemovingMember ? "Removing..." : "Remove Member"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Item Dialog */}
-      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Item to Project</DialogTitle>
-            <DialogDescription>
-              Add a calculation, cost matrix, or what-if scenario to this project.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleAddItem}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="item-type">Item Type</Label>
-                <Select value={itemType} onValueChange={setItemType}>
-                  <SelectTrigger id="item-type">
-                    <SelectValue placeholder="Select an item type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="calculation">Cost Calculation</SelectItem>
-                    <SelectItem value="cost_matrix">Cost Matrix</SelectItem>
-                    <SelectItem value="what_if_scenario">What-If Scenario</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="item-id">Item ID</Label>
-                <Input
-                  id="item-id"
-                  type="number"
-                  value={itemId}
-                  onChange={(e) => setItemId(e.target.value)}
-                  placeholder="Enter item ID"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  The ID of the item you want to add to this project.
-                </p>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsAddItemOpen(false)}
-                disabled={isAddingItem}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isAddingItem}>
-                {isAddingItem ? "Adding..." : "Add Item"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Remove Item Dialog */}
-      <Dialog open={isRemoveItemOpen} onOpenChange={setIsRemoveItemOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Item</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this item from the project? The item itself will not be deleted.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            {itemToRemove && (
-              <p className="font-medium">
-                {itemToRemove.itemData?.name || 
-                  `${itemToRemove.itemType.charAt(0).toUpperCase() + itemToRemove.itemType.slice(1)} #${itemToRemove.itemId}`}
-              </p>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsRemoveItemOpen(false)}
-              disabled={isRemovingItem}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleRemoveItem}
-              disabled={isRemovingItem}
-            >
-              {isRemovingItem ? "Removing..." : "Remove Item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

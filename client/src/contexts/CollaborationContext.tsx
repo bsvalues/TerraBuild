@@ -89,13 +89,14 @@ interface CollaborationContextType {
   isLoadingMembers: boolean;
   isLoadingItems: boolean;
   isLoadingInvitations: boolean;
+  isCreatingProject: boolean;
 }
 
 // Create the context
-const CollaborationContext = createContext<CollaborationContextType | undefined>(undefined);
+const CollaborationContext = createContext(undefined);
 
 // Provider component
-export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const CollaborationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -115,6 +116,7 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
   const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(false);
   const [isLoadingItems, setIsLoadingItems] = useState<boolean>(false);
   const [isLoadingInvitations, setIsLoadingInvitations] = useState<boolean>(false);
+  const [isCreatingProject, setIsCreatingProject] = useState<boolean>(false);
 
   // Fetch my projects
   const fetchMyProjects = async () => {
@@ -226,28 +228,34 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
       throw new Error('You must be logged in to create a project');
     }
     
-    const response = await apiRequest('/api/shared-projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(projectData),
-    });
+    setIsCreatingProject(true);
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create project');
+    try {
+      const response = await apiRequest('/api/shared-projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create project');
+      }
+      
+      const project = await response.json();
+      
+      // Update local state
+      setMyProjects(prev => [...prev, project]);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
+      
+      return project;
+    } finally {
+      setIsCreatingProject(false);
     }
-    
-    const project = await response.json();
-    
-    // Update local state
-    setMyProjects(prev => [...prev, project]);
-    
-    // Invalidate queries
-    queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
-    
-    return project;
   };
 
   // Update an existing project
@@ -500,7 +508,7 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
   }, [user]);
 
   // Context value
-  const value: CollaborationContextType = {
+  const value = {
     myProjects,
     publicProjects,
     currentProject,
@@ -522,6 +530,7 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
     isLoadingMembers,
     isLoadingItems,
     isLoadingInvitations,
+    isCreatingProject,
   };
 
   return (
@@ -532,7 +541,7 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
 };
 
 // Hook for using the collaboration context
-export const useCollaboration = (): CollaborationContextType => {
+export const useCollaboration = () => {
   const context = useContext(CollaborationContext);
   
   if (context === undefined) {

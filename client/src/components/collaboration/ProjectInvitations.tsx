@@ -29,11 +29,13 @@ import { formatDistanceToNow } from 'date-fns';
 interface ProjectInvitationsProps {
   title?: string;
   description?: string;
+  className?: string;
 }
 
 const ProjectInvitations: React.FC<ProjectInvitationsProps> = ({
   title = 'Project Invitations',
   description = 'Invitations to collaborate on projects',
+  className,
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -112,7 +114,7 @@ const ProjectInvitations: React.FC<ProjectInvitationsProps> = ({
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
