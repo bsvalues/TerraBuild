@@ -72,7 +72,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     queryKey: commentsQueryKey,
     queryFn: async () => {
       const response = await apiRequest(`/api/comments/${targetType}/${targetId}`);
-      return response as Comment[];
+      return response.json();
     },
     meta: {
       errorMessage: 'Failed to load comments',
@@ -125,7 +125,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }),
         headers: { 'Content-Type': 'application/json' },
       });
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentsQueryKey });
@@ -154,7 +154,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }),
         headers: { 'Content-Type': 'application/json' },
       });
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentsQueryKey });
@@ -175,9 +175,10 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      await apiRequest(`/api/comments/${commentId}`, {
+      const response = await apiRequest(`/api/comments/${commentId}`, {
         method: 'DELETE',
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentsQueryKey });

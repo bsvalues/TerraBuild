@@ -22,6 +22,7 @@ import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
 import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
+import CreateProjectPage from "@/pages/CreateProjectPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -75,6 +76,7 @@ function Router() {
       <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
+      <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

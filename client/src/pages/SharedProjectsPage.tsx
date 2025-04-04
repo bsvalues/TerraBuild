@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Link } from 'wouter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -152,10 +153,12 @@ const SharedProjectsPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Shared Projects</h1>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Project
-        </Button>
+        <Link href="/shared-projects/create">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Project
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="my-projects" className="w-full">
@@ -192,10 +195,12 @@ const SharedProjectsPage: React.FC = () => {
               <p className="text-muted-foreground mb-6">
                 You haven't created or been added to any projects yet.
               </p>
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Project
-              </Button>
+              <Link href="/shared-projects/create">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Project
+                </Button>
+              </Link>
             </div>
           ) : (
             // Projects grid
