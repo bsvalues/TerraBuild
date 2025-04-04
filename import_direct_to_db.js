@@ -100,52 +100,86 @@ async function importDirectToDB(jsonFilePath) {
               isActive: true
             };
             
-            // Insert or update with upsert operation
-            const result = await client.query(
-              `INSERT INTO cost_matrix (
-                region, building_type, building_type_description, base_cost, 
-                matrix_year, source_matrix_id, matrix_description, data_points,
-                min_cost, max_cost, complexity_factor_base, quality_factor_base,
-                condition_factor_base, county, state, is_active
-              ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-              ) 
-              ON CONFLICT ON CONSTRAINT region_building_type_year_idx 
-              DO UPDATE SET
-                building_type_description = EXCLUDED.building_type_description,
-                base_cost = EXCLUDED.base_cost,
-                source_matrix_id = EXCLUDED.source_matrix_id,
-                matrix_description = EXCLUDED.matrix_description,
-                data_points = EXCLUDED.data_points,
-                min_cost = EXCLUDED.min_cost,
-                max_cost = EXCLUDED.max_cost,
-                complexity_factor_base = EXCLUDED.complexity_factor_base,
-                quality_factor_base = EXCLUDED.quality_factor_base,
-                condition_factor_base = EXCLUDED.condition_factor_base,
-                county = EXCLUDED.county,
-                state = EXCLUDED.state,
-                is_active = EXCLUDED.is_active,
-                updated_at = CURRENT_TIMESTAMP
-              RETURNING id`,
-              [
-                matrixEntry.region,
-                matrixEntry.buildingType,
-                matrixEntry.buildingTypeDescription,
-                matrixEntry.baseCost,
-                matrixEntry.matrixYear,
-                matrixEntry.sourceMatrixId,
-                matrixEntry.matrixDescription,
-                matrixEntry.dataPoints,
-                matrixEntry.minCost,
-                matrixEntry.maxCost,
-                matrixEntry.complexityFactorBase,
-                matrixEntry.qualityFactorBase,
-                matrixEntry.conditionFactorBase,
-                matrixEntry.county,
-                matrixEntry.state,
-                matrixEntry.isActive
-              ]
+            // First check if a record with the same region, building_type and matrix_year exists
+            const checkExisting = await client.query(
+              `SELECT id FROM cost_matrix 
+              WHERE region = $1 AND building_type = $2 AND matrix_year = $3`,
+              [matrixEntry.region, matrixEntry.buildingType, matrixEntry.matrixYear]
             );
+
+            let result;
+            
+            if (checkExisting.rows.length > 0) {
+              // Update existing record
+              const id = checkExisting.rows[0].id;
+              result = await client.query(
+                `UPDATE cost_matrix SET
+                  building_type_description = $1,
+                  base_cost = $2,
+                  source_matrix_id = $3,
+                  matrix_description = $4,
+                  data_points = $5,
+                  min_cost = $6,
+                  max_cost = $7,
+                  complexity_factor_base = $8,
+                  quality_factor_base = $9,
+                  condition_factor_base = $10,
+                  county = $11,
+                  state = $12,
+                  is_active = $13,
+                  updated_at = CURRENT_TIMESTAMP
+                WHERE id = $14
+                RETURNING id`,
+                [
+                  matrixEntry.buildingTypeDescription,
+                  matrixEntry.baseCost,
+                  matrixEntry.sourceMatrixId,
+                  matrixEntry.matrixDescription,
+                  matrixEntry.dataPoints,
+                  matrixEntry.minCost,
+                  matrixEntry.maxCost,
+                  matrixEntry.complexityFactorBase,
+                  matrixEntry.qualityFactorBase,
+                  matrixEntry.conditionFactorBase,
+                  matrixEntry.county,
+                  matrixEntry.state,
+                  matrixEntry.isActive,
+                  id
+                ]
+              );
+              console.log(`Updated existing entry with ID ${id}`);
+            } else {
+              // Insert new record
+              result = await client.query(
+                `INSERT INTO cost_matrix (
+                  region, building_type, building_type_description, base_cost, 
+                  matrix_year, source_matrix_id, matrix_description, data_points,
+                  min_cost, max_cost, complexity_factor_base, quality_factor_base,
+                  condition_factor_base, county, state, is_active
+                ) VALUES (
+                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+                ) RETURNING id`,
+                [
+                  matrixEntry.region,
+                  matrixEntry.buildingType,
+                  matrixEntry.buildingTypeDescription,
+                  matrixEntry.baseCost,
+                  matrixEntry.matrixYear,
+                  matrixEntry.sourceMatrixId,
+                  matrixEntry.matrixDescription,
+                  matrixEntry.dataPoints,
+                  matrixEntry.minCost,
+                  matrixEntry.maxCost,
+                  matrixEntry.complexityFactorBase,
+                  matrixEntry.qualityFactorBase,
+                  matrixEntry.conditionFactorBase,
+                  matrixEntry.county,
+                  matrixEntry.state,
+                  matrixEntry.isActive
+                ]
+              );
+              console.log(`Inserted new entry with ID ${result.rows[0].id}`);
+            }
             
             successCount++;
           } catch (entryError) {
@@ -180,11 +214,12 @@ async function importDirectToDB(jsonFilePath) {
     // Log an activity record for the import
     if (successCount > 0) {
       try {
+        // We'll just use a simpler approach
         await client.query(
           `INSERT INTO activities (action, icon, icon_color) 
            VALUES ($1, $2, $3)`,
           [
-            `Imported ${successCount} cost matrix entries directly`,
+            `Processed ${successCount} cost matrix entries`,
             'ri-database-2-line',
             'success'
           ]
