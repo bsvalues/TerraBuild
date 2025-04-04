@@ -331,7 +331,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ targetType, targetId 
   // Set up editing state when a comment is selected for editing
   useEffect(() => {
     if (editingComment !== null) {
-      const commentToEdit = comments.find(c => c.id === editingComment);
+      const commentToEdit = comments.find((c: Comment) => c.id === editingComment);
       if (commentToEdit) {
         setEditContent(commentToEdit.content);
       }

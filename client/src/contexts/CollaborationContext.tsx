@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 
+// Project types
 interface Project {
   id: number;
   name: string;
@@ -15,6 +16,7 @@ interface Project {
   isPublic: boolean;
 }
 
+// Project member types
 interface ProjectMember {
   id: number;
   projectId: number;
@@ -29,6 +31,7 @@ interface ProjectMember {
   };
 }
 
+// Project item types (for associating calculations, cost matrices, etc. with projects)
 interface ProjectItem {
   id: number;
   projectId: number;
@@ -39,6 +42,7 @@ interface ProjectItem {
   itemData?: any; // The actual item data (calculation, etc.)
 }
 
+// Project invitation types
 interface ProjectInvitation {
   id: number;
   projectId: number;
@@ -51,6 +55,7 @@ interface ProjectInvitation {
   inviterName: string;
 }
 
+// Context type definition
 interface CollaborationContextType {
   // Projects
   myProjects: Project[];
@@ -86,427 +91,433 @@ interface CollaborationContextType {
   isLoadingInvitations: boolean;
 }
 
+// Create the context
 const CollaborationContext = createContext<CollaborationContextType | undefined>(undefined);
 
+// Provider component
 export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // States
+  
+  // State for projects
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [publicProjects, setPublicProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  
+  // State for members, items, invitations
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
+  const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [myInvitations, setMyInvitations] = useState<ProjectInvitation[]>([]);
+  
+  // Loading states
+  const [isLoadingProjects, setIsLoadingProjects] = useState<boolean>(false);
+  const [isLoadingMembers, setIsLoadingMembers] = useState<boolean>(false);
+  const [isLoadingItems, setIsLoadingItems] = useState<boolean>(false);
+  const [isLoadingInvitations, setIsLoadingInvitations] = useState<boolean>(false);
 
-  // Fetch user's projects (both owned and member of)
-  const {
-    data: myProjects = [],
-    isLoading: isLoadingMyProjects,
-    refetch: refetchMyProjects
-  } = useQuery({
-    queryKey: ['/api/shared-projects/my'],
-    queryFn: async () => {
+  // Fetch my projects
+  const fetchMyProjects = async () => {
+    if (!user) return;
+    
+    setIsLoadingProjects(true);
+    
+    try {
       const response = await apiRequest('/api/shared-projects/my');
-      return response.json();
-    },
-    enabled: !!user,
-    meta: {
-      errorMessage: 'Failed to load your projects'
+      const data = await response.json();
+      setMyProjects(data);
+    } catch (error) {
+      console.error('Error fetching my projects:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load your projects',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingProjects(false);
     }
-  });
+  };
 
   // Fetch public projects
-  const {
-    data: publicProjects = [],
-    isLoading: isLoadingPublicProjects,
-    refetch: refetchPublicProjects
-  } = useQuery({
-    queryKey: ['/api/shared-projects/public'],
-    queryFn: async () => {
+  const fetchPublicProjects = async () => {
+    setIsLoadingProjects(true);
+    
+    try {
       const response = await apiRequest('/api/shared-projects/public');
-      return response.json();
-    },
-    meta: {
-      errorMessage: 'Failed to load public projects'
+      const data = await response.json();
+      setPublicProjects(data);
+    } catch (error) {
+      console.error('Error fetching public projects:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load public projects',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingProjects(false);
     }
-  });
+  };
 
-  // Fetch project members if a project is selected
-  const {
-    data: projectMembers = [],
-    isLoading: isLoadingMembers,
-    refetch: refetchMembers
-  } = useQuery({
-    queryKey: ['/api/shared-projects', currentProject?.id, 'members'],
-    queryFn: async () => {
-      if (!currentProject?.id) return [];
-      const response = await apiRequest(`/api/shared-projects/${currentProject.id}/members`);
-      return response.json();
-    },
-    enabled: !!currentProject?.id,
-    meta: {
-      errorMessage: 'Failed to load project members'
+  // Fetch project members
+  const fetchProjectMembers = async (projectId: number) => {
+    if (!projectId) return;
+    
+    setIsLoadingMembers(true);
+    
+    try {
+      const response = await apiRequest(`/api/projects/${projectId}/members`);
+      const data = await response.json();
+      setProjectMembers(data);
+    } catch (error) {
+      console.error('Error fetching project members:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load project members',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingMembers(false);
     }
-  });
+  };
 
-  // Fetch project items if a project is selected
-  const {
-    data: projectItems = [],
-    isLoading: isLoadingItems,
-    refetch: refetchItems
-  } = useQuery({
-    queryKey: ['/api/shared-projects', currentProject?.id, 'items'],
-    queryFn: async () => {
-      if (!currentProject?.id) return [];
-      const response = await apiRequest(`/api/shared-projects/${currentProject.id}/items`);
-      return response.json();
-    },
-    enabled: !!currentProject?.id,
-    meta: {
-      errorMessage: 'Failed to load project items'
+  // Fetch project items
+  const fetchProjectItems = async (projectId: number) => {
+    if (!projectId) return;
+    
+    setIsLoadingItems(true);
+    
+    try {
+      const response = await apiRequest(`/api/projects/${projectId}/items`);
+      const data = await response.json();
+      setProjectItems(data);
+    } catch (error) {
+      console.error('Error fetching project items:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load project items',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingItems(false);
     }
-  });
+  };
 
-  // Fetch user's pending invitations
-  const {
-    data: myInvitations = [],
-    isLoading: isLoadingInvitations,
-    refetch: refetchInvitations
-  } = useQuery({
-    queryKey: ['/api/invitations/pending'],
-    queryFn: async () => {
+  // Fetch my invitations
+  const fetchMyInvitations = async () => {
+    if (!user) return;
+    
+    setIsLoadingInvitations(true);
+    
+    try {
       const response = await apiRequest('/api/invitations/pending');
-      return response.json();
-    },
-    enabled: !!user,
-    meta: {
-      errorMessage: 'Failed to load your invitations'
+      const data = await response.json();
+      setMyInvitations(data);
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+      // Don't show a toast for invitation errors, as they're not critical
+    } finally {
+      setIsLoadingInvitations(false);
     }
-  });
+  };
 
-  // Create project mutation
-  const createProjectMutation = useMutation({
-    mutationFn: async (projectData: Partial<Project>) => {
-      const response = await apiRequest('/api/shared-projects', {
-        method: 'POST',
-        body: JSON.stringify(projectData),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/my'] });
-      toast({
-        title: 'Project created',
-        description: 'Your new project has been created successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error creating project',
-        description: 'There was a problem creating your project. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Update project mutation
-  const updateProjectMutation = useMutation({
-    mutationFn: async ({ projectId, projectData }: { projectId: number; projectData: Partial<Project> }) => {
-      const response = await apiRequest(`/api/shared-projects/${projectId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(projectData),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/my'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/public'] });
-      if (currentProject?.id === data.id) {
-        setCurrentProject(data);
-      }
-      toast({
-        title: 'Project updated',
-        description: 'The project has been updated successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error updating project',
-        description: 'There was a problem updating the project. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Delete project mutation
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (projectId: number) => {
-      await apiRequest(`/api/shared-projects/${projectId}`, {
-        method: 'DELETE'
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/my'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/public'] });
-      if (currentProject) {
-        setCurrentProject(null);
-      }
-      toast({
-        title: 'Project deleted',
-        description: 'The project has been deleted successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error deleting project',
-        description: 'There was a problem deleting the project. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Add member mutation
-  const addMemberMutation = useMutation({
-    mutationFn: async ({ projectId, userId, role }: { projectId: number; userId: number; role: string }) => {
-      await apiRequest(`/api/shared-projects/${projectId}/members`, {
-        method: 'POST',
-        body: JSON.stringify({ userId, role }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', variables.projectId, 'members'] });
-      toast({
-        title: 'Member added',
-        description: 'The user has been added to the project successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error adding member',
-        description: 'There was a problem adding the member. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Update member role mutation
-  const updateMemberRoleMutation = useMutation({
-    mutationFn: async ({ projectId, userId, role }: { projectId: number; userId: number; role: string }) => {
-      await apiRequest(`/api/shared-projects/${projectId}/members/${userId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', variables.projectId, 'members'] });
-      toast({
-        title: 'Role updated',
-        description: 'The member\'s role has been updated successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error updating role',
-        description: 'There was a problem updating the member\'s role. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Remove member mutation
-  const removeMemberMutation = useMutation({
-    mutationFn: async ({ projectId, userId }: { projectId: number; userId: number }) => {
-      await apiRequest(`/api/shared-projects/${projectId}/members/${userId}`, {
-        method: 'DELETE'
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', variables.projectId, 'members'] });
-      toast({
-        title: 'Member removed',
-        description: 'The member has been removed from the project successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error removing member',
-        description: 'There was a problem removing the member. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Add project item mutation
-  const addProjectItemMutation = useMutation({
-    mutationFn: async ({ projectId, itemType, itemId }: { projectId: number; itemType: string; itemId: number }) => {
-      await apiRequest(`/api/shared-projects/${projectId}/items`, {
-        method: 'POST',
-        body: JSON.stringify({ itemType, itemId }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', variables.projectId, 'items'] });
-      toast({
-        title: 'Item added',
-        description: 'The item has been added to the project successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error adding item',
-        description: 'There was a problem adding the item. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Remove project item mutation
-  const removeProjectItemMutation = useMutation({
-    mutationFn: async ({ projectId, itemType, itemId }: { projectId: number; itemType: string; itemId: number }) => {
-      await apiRequest(`/api/shared-projects/${projectId}/items/${itemType}/${itemId}`, {
-        method: 'DELETE'
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', variables.projectId, 'items'] });
-      toast({
-        title: 'Item removed',
-        description: 'The item has been removed from the project successfully.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error removing item',
-        description: 'There was a problem removing the item. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Accept invitation mutation
-  const acceptInvitationMutation = useMutation({
-    mutationFn: async (invitationId: number) => {
-      await apiRequest(`/api/invitations/${invitationId}/accept`, {
-        method: 'POST'
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/invitations/pending'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/my'] });
-      toast({
-        title: 'Invitation accepted',
-        description: 'You have successfully joined the project.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error accepting invitation',
-        description: 'There was a problem accepting the invitation. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Decline invitation mutation
-  const declineInvitationMutation = useMutation({
-    mutationFn: async (invitationId: number) => {
-      await apiRequest(`/api/invitations/${invitationId}/decline`, {
-        method: 'POST'
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/invitations/pending'] });
-      toast({
-        title: 'Invitation declined',
-        description: 'You have declined the project invitation.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error declining invitation',
-        description: 'There was a problem declining the invitation. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Wrapper functions to handle mutations
+  // Create a new project
   const createProject = async (projectData: Partial<Project>): Promise<Project> => {
-    return createProjectMutation.mutateAsync(projectData);
+    if (!user) {
+      throw new Error('You must be logged in to create a project');
+    }
+    
+    const response = await apiRequest('/api/shared-projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(projectData),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create project');
+    }
+    
+    const project = await response.json();
+    
+    // Update local state
+    setMyProjects(prev => [...prev, project]);
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
+    
+    return project;
   };
 
+  // Update an existing project
   const updateProject = async (projectId: number, projectData: Partial<Project>): Promise<Project> => {
-    return updateProjectMutation.mutateAsync({ projectId, projectData });
+    const response = await apiRequest(`/api/shared-projects/${projectId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(projectData),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update project');
+    }
+    
+    const updatedProject = await response.json();
+    
+    // Update local state
+    setMyProjects(prev => prev.map(p => p.id === projectId ? updatedProject : p));
+    setPublicProjects(prev => prev.map(p => p.id === projectId ? updatedProject : p));
+    
+    if (currentProject && currentProject.id === projectId) {
+      setCurrentProject(updatedProject);
+    }
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
+    
+    return updatedProject;
   };
 
+  // Delete a project
   const deleteProject = async (projectId: number): Promise<void> => {
-    return deleteProjectMutation.mutateAsync(projectId);
+    const response = await apiRequest(`/api/shared-projects/${projectId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete project');
+    }
+    
+    // Update local state
+    setMyProjects(prev => prev.filter(p => p.id !== projectId));
+    setPublicProjects(prev => prev.filter(p => p.id !== projectId));
+    
+    if (currentProject && currentProject.id === projectId) {
+      setCurrentProject(null);
+    }
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
   };
 
+  // Add a member to a project
   const addMember = async (projectId: number, userId: number, role: string): Promise<void> => {
-    return addMemberMutation.mutateAsync({ projectId, userId, role });
+    const response = await apiRequest(`/api/projects/${projectId}/members`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, role }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to add member');
+    }
+    
+    // Refresh project members
+    await fetchProjectMembers(projectId);
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
   };
 
+  // Update a member's role in a project
   const updateMemberRole = async (projectId: number, userId: number, role: string): Promise<void> => {
-    return updateMemberRoleMutation.mutateAsync({ projectId, userId, role });
+    const response = await apiRequest(`/api/projects/${projectId}/members/${userId}/role`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update member role');
+    }
+    
+    // Update local state
+    setProjectMembers(prev => 
+      prev.map(member => 
+        member.projectId === projectId && member.userId === userId
+          ? { ...member, role: role as 'viewer' | 'editor' | 'admin' }
+          : member
+      )
+    );
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
   };
 
+  // Remove a member from a project
   const removeMember = async (projectId: number, userId: number): Promise<void> => {
-    return removeMemberMutation.mutateAsync({ projectId, userId });
+    const response = await apiRequest(`/api/projects/${projectId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to remove member');
+    }
+    
+    // Update local state
+    setProjectMembers(prev => 
+      prev.filter(member => !(member.projectId === projectId && member.userId === userId))
+    );
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
   };
 
+  // Add an item to a project
   const addProjectItem = async (projectId: number, itemType: string, itemId: number): Promise<void> => {
-    return addProjectItemMutation.mutateAsync({ projectId, itemType, itemId });
+    const response = await apiRequest(`/api/projects/${projectId}/items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ itemType, itemId }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to add item to project');
+    }
+    
+    // Refresh project items
+    await fetchProjectItems(projectId);
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['project-items', projectId] });
   };
 
+  // Remove an item from a project
   const removeProjectItem = async (projectId: number, itemType: string, itemId: number): Promise<void> => {
-    return removeProjectItemMutation.mutateAsync({ projectId, itemType, itemId });
+    const response = await apiRequest(`/api/projects/${projectId}/items/${itemType}/${itemId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to remove item from project');
+    }
+    
+    // Update local state
+    setProjectItems(prev => 
+      prev.filter(item => 
+        !(item.projectId === projectId && item.itemType === itemType && item.itemId === itemId)
+      )
+    );
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['project-items', projectId] });
   };
 
+  // Accept an invitation
   const acceptInvitation = async (invitationId: number): Promise<void> => {
-    return acceptInvitationMutation.mutateAsync(invitationId);
+    const response = await apiRequest(`/api/invitations/${invitationId}/accept`, {
+      method: 'POST',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to accept invitation');
+    }
+    
+    // Update local state
+    const invitation = myInvitations.find(inv => inv.id === invitationId);
+    if (invitation) {
+      setMyInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+      
+      // Refresh my projects as we now have a new one
+      fetchMyProjects();
+    }
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    queryClient.invalidateQueries({ queryKey: ['shared-projects'] });
   };
 
+  // Decline an invitation
   const declineInvitation = async (invitationId: number): Promise<void> => {
-    return declineInvitationMutation.mutateAsync(invitationId);
+    const response = await apiRequest(`/api/invitations/${invitationId}/decline`, {
+      method: 'POST',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to decline invitation');
+    }
+    
+    // Update local state
+    setMyInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['invitations'] });
   };
 
-  // Combined loading state
-  const isLoadingProjects = isLoadingMyProjects || isLoadingPublicProjects;
+  // Set up data fetching when user changes
+  useEffect(() => {
+    if (user) {
+      fetchMyProjects();
+      fetchMyInvitations();
+    } else {
+      setMyProjects([]);
+      setMyInvitations([]);
+    }
+    
+    fetchPublicProjects();
+  }, [user]);
+
+  // Fetch project details when current project changes
+  useEffect(() => {
+    if (currentProject) {
+      fetchProjectMembers(currentProject.id);
+      fetchProjectItems(currentProject.id);
+    } else {
+      setProjectMembers([]);
+      setProjectItems([]);
+    }
+  }, [currentProject]);
+
+  // Set up periodic refresh for invitations
+  useEffect(() => {
+    if (!user) return;
+    
+    const refreshInvitations = () => {
+      fetchMyInvitations();
+    };
+    
+    // Check for new invitations every minute
+    const interval = setInterval(refreshInvitations, 60000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Context value
-  const value = {
-    // Projects
+  const value: CollaborationContextType = {
     myProjects,
     publicProjects,
     currentProject,
     setCurrentProject,
-    
-    // Project CRUD
     createProject,
     updateProject,
     deleteProject,
-    
-    // Members
     projectMembers,
     addMember,
     updateMemberRole,
     removeMember,
-    
-    // Items
     projectItems,
     addProjectItem,
     removeProjectItem,
-    
-    // Invitations
     myInvitations,
     acceptInvitation,
     declineInvitation,
-    
-    // Loading states
     isLoadingProjects,
     isLoadingMembers,
     isLoadingItems,
@@ -520,10 +531,13 @@ export const CollaborationProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 };
 
+// Hook for using the collaboration context
 export const useCollaboration = (): CollaborationContextType => {
   const context = useContext(CollaborationContext);
+  
   if (context === undefined) {
     throw new Error('useCollaboration must be used within a CollaborationProvider');
   }
+  
   return context;
-};
+}
