@@ -19,7 +19,8 @@ import {
   sharedProjects, type SharedProject, type InsertSharedProject,
   projectMembers, type ProjectMember, type InsertProjectMember,
   projectItems, type ProjectItem, type InsertProjectItem,
-  comments, type Comment, type InsertComment
+  comments, type Comment, type InsertComment,
+  projectInvitations, type ProjectInvitation, type InsertProjectInvitation
 } from "@shared/schema";
 
 // Storage interface
@@ -194,6 +195,16 @@ export interface IStorage {
   deleteAllProjectMembers(projectId: number): Promise<void>;
   removeProjectMember(id: number): Promise<void>;
   
+  // Project Invitations
+  getProjectInvitations(projectId: number): Promise<ProjectInvitation[]>;
+  getProjectInvitation(id: number): Promise<ProjectInvitation | undefined>;
+  getProjectInvitationByUserAndProject(projectId: number, userId: number): Promise<ProjectInvitation | undefined>;
+  getPendingInvitationsForUser(userId: number): Promise<ProjectInvitation[]>;
+  createProjectInvitation(invitation: InsertProjectInvitation): Promise<ProjectInvitation>;
+  updateProjectInvitationStatus(id: number, status: string): Promise<ProjectInvitation | undefined>;
+  deleteProjectInvitation(id: number): Promise<void>;
+  getProjectInvitationsWithUserInfo(projectId: number): Promise<(ProjectInvitation & { user: { username: string, name: string | null } })[]>;
+  
   // Project Items
   getProjectItems(projectId: number): Promise<ProjectItem[]>;
   getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined>;
@@ -232,6 +243,7 @@ export class MemStorage implements IStorage {
   private fileUploads: Map<number, FileUpload>;
   private sharedProjects: Map<number, SharedProject>;
   private projectMembers: Map<number, ProjectMember>;
+  private projectInvitations: Map<number, ProjectInvitation>;
   private projectItems: Map<number, ProjectItem>;
   private comments: Map<number, Comment>;
   
@@ -250,6 +262,7 @@ export class MemStorage implements IStorage {
   private currentScenarioVariationId: number;
   private currentSharedProjectId: number;
   private currentProjectMemberId: number;
+  private currentProjectInvitationId: number;
   private currentProjectItemId: number;
   private currentCommentId: number;
   
@@ -269,6 +282,7 @@ export class MemStorage implements IStorage {
     this.scenarioVariations = new Map();
     this.sharedProjects = new Map();
     this.projectMembers = new Map();
+    this.projectInvitations = new Map();
     this.projectItems = new Map();
     this.comments = new Map();
     
@@ -287,6 +301,7 @@ export class MemStorage implements IStorage {
     this.currentScenarioVariationId = 1;
     this.currentSharedProjectId = 1;
     this.currentProjectMemberId = 1;
+    this.currentProjectInvitationId = 1;
     this.currentProjectItemId = 1;
     this.currentCommentId = 1;
     
@@ -1756,6 +1771,72 @@ export class MemStorage implements IStorage {
     if (member) {
       this.projectMembers.delete(member.id);
     }
+  }
+  
+  // Project Invitations
+  async getProjectInvitations(projectId: number): Promise<ProjectInvitation[]> {
+    return Array.from(this.projectInvitations.values()).filter(
+      invitation => invitation.projectId === projectId
+    );
+  }
+  
+  async getProjectInvitation(id: number): Promise<ProjectInvitation | undefined> {
+    return this.projectInvitations.get(id);
+  }
+  
+  async getProjectInvitationByUserAndProject(projectId: number, userId: number): Promise<ProjectInvitation | undefined> {
+    return Array.from(this.projectInvitations.values()).find(
+      invitation => invitation.projectId === projectId && invitation.userId === userId
+    );
+  }
+  
+  async getPendingInvitationsForUser(userId: number): Promise<ProjectInvitation[]> {
+    return Array.from(this.projectInvitations.values()).filter(
+      invitation => invitation.userId === userId && invitation.status === "pending"
+    );
+  }
+  
+  async createProjectInvitation(invitation: InsertProjectInvitation): Promise<ProjectInvitation> {
+    const id = this.currentProjectInvitationId++;
+    const invitedAt = new Date();
+    const newInvitation: ProjectInvitation = { 
+      ...invitation, 
+      id, 
+      invitedAt,
+      status: invitation.status || "pending"
+    };
+    this.projectInvitations.set(id, newInvitation);
+    return newInvitation;
+  }
+  
+  async updateProjectInvitationStatus(id: number, status: string): Promise<ProjectInvitation | undefined> {
+    const invitation = this.projectInvitations.get(id);
+    if (!invitation) return undefined;
+    
+    const updatedInvitation: ProjectInvitation = { ...invitation, status };
+    this.projectInvitations.set(id, updatedInvitation);
+    return updatedInvitation;
+  }
+  
+  async deleteProjectInvitation(id: number): Promise<void> {
+    this.projectInvitations.delete(id);
+  }
+  
+  async getProjectInvitationsWithUserInfo(projectId: number): Promise<(ProjectInvitation & { user: { username: string, name: string | null } })[]> {
+    const invitations = await this.getProjectInvitations(projectId);
+    const invitationsWithUserInfo = await Promise.all(
+      invitations.map(async invitation => {
+        const user = await this.getUser(invitation.userId);
+        return {
+          ...invitation,
+          user: {
+            username: user?.username || "",
+            name: user?.name
+          }
+        };
+      })
+    );
+    return invitationsWithUserInfo;
   }
   
   // Project Items

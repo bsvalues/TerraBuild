@@ -18,6 +18,8 @@ import {
   CostFactorPreset, InsertCostFactorPreset,
   FileUpload, InsertFileUpload,
   WhatIfScenario, InsertWhatIfScenario,
+  ProjectInvitation, InsertProjectInvitation,
+  projectInvitations,
   ScenarioVariation, InsertScenarioVariation,
   SharedProject, InsertSharedProject,
   ProjectMember, InsertProjectMember,
@@ -1273,6 +1275,78 @@ export class PostgresStorage implements IStorage {
     .where(eq(projectMembers.id, id));
     
     return result[0] as (ProjectMember & { user: { username: string, name: string | null } });
+  }
+
+  // Project Invitations
+  async getProjectInvitations(projectId: number): Promise<ProjectInvitation[]> {
+    return await db.select().from(projectInvitations)
+      .where(eq(projectInvitations.projectId, projectId));
+  }
+
+  async getProjectInvitation(id: number): Promise<ProjectInvitation | undefined> {
+    const result = await db.select().from(projectInvitations)
+      .where(eq(projectInvitations.id, id));
+    
+    return result[0];
+  }
+
+  async getProjectInvitationByUserAndProject(projectId: number, userId: number): Promise<ProjectInvitation | undefined> {
+    const result = await db.select().from(projectInvitations)
+      .where(and(
+        eq(projectInvitations.projectId, projectId),
+        eq(projectInvitations.userId, userId)
+      ));
+    
+    return result[0];
+  }
+
+  async getPendingInvitationsForUser(userId: number): Promise<ProjectInvitation[]> {
+    return await db.select().from(projectInvitations)
+      .where(and(
+        eq(projectInvitations.userId, userId),
+        eq(projectInvitations.status, "pending")
+      ));
+  }
+
+  async createProjectInvitation(invitation: InsertProjectInvitation): Promise<ProjectInvitation> {
+    const result = await db.insert(projectInvitations)
+      .values(invitation)
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateProjectInvitationStatus(id: number, status: string): Promise<ProjectInvitation | undefined> {
+    const result = await db.update(projectInvitations)
+      .set({ status })
+      .where(eq(projectInvitations.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteProjectInvitation(id: number): Promise<void> {
+    await db.delete(projectInvitations)
+      .where(eq(projectInvitations.id, id));
+  }
+
+  async getProjectInvitationsWithUserInfo(projectId: number): Promise<(ProjectInvitation & { user: { username: string, name: string | null } })[]> {
+    return await db.select({
+      id: projectInvitations.id,
+      projectId: projectInvitations.projectId,
+      userId: projectInvitations.userId,
+      invitedBy: projectInvitations.invitedBy,
+      role: projectInvitations.role,
+      status: projectInvitations.status,
+      invitedAt: projectInvitations.invitedAt,
+      user: {
+        username: users.username,
+        name: users.name
+      }
+    })
+    .from(projectInvitations)
+    .innerJoin(users, eq(projectInvitations.userId, users.id))
+    .where(eq(projectInvitations.projectId, projectId));
   }
 
   async getAccessibleSharedProjects(userId: number): Promise<SharedProject[]> {

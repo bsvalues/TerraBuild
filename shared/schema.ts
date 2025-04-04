@@ -595,6 +595,35 @@ export const insertProjectMemberSchema = createInsertSchema(projectMembers).pick
 export type ProjectMember = typeof projectMembers.$inferSelect;
 export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
 
+// Collaboration Feature: Project Invitations
+export const projectInvitations = pgTable("project_invitations", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => sharedProjects.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  invitedBy: integer("invited_by").notNull().references(() => users.id),
+  role: text("role").notNull().default("viewer"), // viewer, editor, admin
+  status: text("status").notNull().default("pending"), // pending, accepted, declined
+  invitedAt: timestamp("invited_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    invitationUniqueIdx: uniqueIndex("project_invitation_idx").on(
+      table.projectId,
+      table.userId
+    ),
+  };
+});
+
+export const insertProjectInvitationSchema = createInsertSchema(projectInvitations).pick({
+  projectId: true,
+  userId: true,
+  invitedBy: true,
+  role: true,
+  status: true,
+});
+
+export type ProjectInvitation = typeof projectInvitations.$inferSelect;
+export type InsertProjectInvitation = z.infer<typeof insertProjectInvitationSchema>;
+
 // Collaboration Feature: Project Items
 export const projectItems = pgTable("project_items", {
   id: serial("id").primaryKey(),

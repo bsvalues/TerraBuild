@@ -459,6 +459,208 @@ export function registerCollaborationRoutes(app: Express): void {
     }
   });
   
+  // Project Invitations API
+  
+  // Get pending invitations for the current user
+  app.get('/api/invitations/pending', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.id;
+      console.log(`Getting pending invitations for user: ${userId}`);
+      
+      // Get pending invitations for the user
+      let invitations;
+      try {
+        invitations = await storage.getPendingInvitationsForUser(userId);
+        console.log(`Found ${invitations.length} pending invitations`);
+      } catch (error) {
+        console.error("Error getting pending invitations:", error);
+        return res.status(500).json({ message: "Error fetching pending invitations" });
+      }
+      
+      // Get the project details for each invitation
+      const invitationsWithProjectInfo = await Promise.all(
+        invitations.map(async (invitation) => {
+          const project = await storage.getSharedProject(invitation.projectId);
+          const inviter = await storage.getUser(invitation.invitedBy);
+          
+          return {
+            ...invitation,
+            project: project ? {
+              id: project.id,
+              name: project.name,
+              description: project.description
+            } : null,
+            inviter: inviter ? {
+              id: inviter.id,
+              username: inviter.username,
+              name: inviter.name
+            } : null
+          };
+        })
+      );
+      
+      res.json(invitationsWithProjectInfo);
+    } catch (error) {
+      console.error("Error fetching pending invitations:", error);
+      res.status(500).json({ message: "Error fetching pending invitations" });
+    }
+  });
+  
+  // Get all invitations for a project (with user info)
+  app.get('/api/shared-projects/:projectId/invitations', checkProjectAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const invitations = await storage.getProjectInvitationsWithUserInfo(projectId);
+      
+      res.json(invitations);
+    } catch (error) {
+      console.error("Error fetching project invitations:", error);
+      res.status(500).json({ message: "Error fetching project invitations" });
+    }
+  });
+  
+  // Send an invitation to a user
+  app.post('/api/shared-projects/:projectId/invitations', checkProjectAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { userId, role } = req.body;
+      
+      // Check if the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if the user is already a member
+      const existingMember = await storage.getProjectMember(projectId, userId);
+      if (existingMember) {
+        return res.status(400).json({ message: "User is already a member of this project" });
+      }
+      
+      // Check if there's already a pending invitation
+      const existingInvitation = await storage.getProjectInvitationByUserAndProject(projectId, userId);
+      if (existingInvitation && existingInvitation.status === 'pending') {
+        return res.status(400).json({ message: "User already has a pending invitation to this project" });
+      }
+      
+      // Create the invitation
+      const invitation = await storage.createProjectInvitation({
+        projectId,
+        userId,
+        invitedBy: req.user!.id,
+        role: role || 'viewer',
+        status: 'pending'
+      });
+      
+      // Get user info for the response
+      const user_info = await storage.getUser(userId);
+      
+      res.status(201).json({
+        ...invitation,
+        user: {
+          username: user_info?.username || '',
+          name: user_info?.name
+        }
+      });
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      res.status(500).json({ message: "Error creating invitation" });
+    }
+  });
+  
+  // Accept an invitation
+  app.post('/api/invitations/:invitationId/accept', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const invitationId = parseInt(req.params.invitationId);
+      
+      // Get the invitation
+      const invitation = await storage.getProjectInvitation(invitationId);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation not found" });
+      }
+      
+      // Check if it belongs to the current user
+      if (invitation.userId !== req.user.id) {
+        return res.status(403).json({ message: "This invitation is not for you" });
+      }
+      
+      // Check if it's still pending
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ message: "This invitation has already been " + invitation.status });
+      }
+      
+      // Update it to 'accepted'
+      await storage.updateProjectInvitationStatus(invitationId, 'accepted');
+      
+      // Add the user as a project member
+      await storage.addProjectMember({
+        projectId: invitation.projectId,
+        userId: invitation.userId,
+        role: invitation.role,
+        invitedBy: invitation.invitedBy
+      });
+      
+      // Get the project details
+      const project = await storage.getSharedProject(invitation.projectId);
+      
+      res.status(200).json({ 
+        message: "Invitation accepted",
+        project: project ? {
+          id: project.id,
+          name: project.name,
+          description: project.description
+        } : null
+      });
+    } catch (error) {
+      console.error("Error accepting invitation:", error);
+      res.status(500).json({ message: "Error accepting invitation" });
+    }
+  });
+  
+  // Decline an invitation
+  app.post('/api/invitations/:invitationId/decline', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const invitationId = parseInt(req.params.invitationId);
+      
+      // Get the invitation
+      const invitation = await storage.getProjectInvitation(invitationId);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation not found" });
+      }
+      
+      // Check if it belongs to the current user
+      if (invitation.userId !== req.user.id) {
+        return res.status(403).json({ message: "This invitation is not for you" });
+      }
+      
+      // Check if it's still pending
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ message: "This invitation has already been " + invitation.status });
+      }
+      
+      // Update it to 'declined'
+      await storage.updateProjectInvitationStatus(invitationId, 'declined');
+      
+      res.status(200).json({ message: "Invitation declined" });
+    } catch (error) {
+      console.error("Error declining invitation:", error);
+      res.status(500).json({ message: "Error declining invitation" });
+    }
+  });
+  
   // Project Items API
   
   // Get all items in a project
