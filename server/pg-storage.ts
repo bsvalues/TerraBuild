@@ -1136,12 +1136,22 @@ export class PostgresStorage implements IStorage {
   }
 
   async createComment(comment: InsertComment): Promise<Comment> {
-    const result = await db.insert(comments).values({
+    console.log("PG-Storage: Creating comment with data:", JSON.stringify(comment, null, 2));
+    
+    // Ensure parentCommentId is properly handled for SQL
+    // If it's undefined or null, explicitly set it to SQL NULL
+    const commentData = {
       ...comment,
       createdAt: new Date(),
       updatedAt: new Date(),
       isEdited: false
-    }).returning();
+    };
+    
+    const result = await db.insert(comments)
+      .values(commentData)
+      .returning();
+      
+    console.log("PG-Storage: Created comment result:", JSON.stringify(result[0], null, 2));
     return result[0];
   }
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, decimal, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, decimal, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -526,7 +526,8 @@ export const comments = pgTable("comments", {
   isEdited: boolean("is_edited").notNull().default(false),
 }, (table) => {
   return {
-    targetIdx: uniqueIndex("target_type_id_idx").on(
+    // Create a regular index (not unique) for faster lookups
+    targetIdx: index("target_type_id_idx").on(
       table.targetType,
       table.targetId
     ),

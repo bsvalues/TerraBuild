@@ -29,6 +29,7 @@ import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
 import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
 import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
+import { registerCommentRoutes } from "./routes/commentRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1834,6 +1835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Register collaboration routes
     registerCollaborationRoutes(app);
+    registerCommentRoutes(app);
     
     console.log('MCP framework initialized successfully');
     

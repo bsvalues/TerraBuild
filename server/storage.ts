@@ -1845,6 +1845,7 @@ export class MemStorage implements IStorage {
       .filter(item => item.projectId === projectId);
   }
   
+  // Method to get project item by type and ID
   async getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
     return Array.from(this.projectItems.values())
       .find(item => 
@@ -1852,6 +1853,16 @@ export class MemStorage implements IStorage {
         item.itemType === itemType && 
         item.itemId === itemId
       );
+  }
+  
+  // Method to get a project item by just the item ID
+  async getProjectItemByTypeAndId(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
+    return this.getProjectItem(projectId, itemType, itemId);
+  }
+  
+  // Method to get a project item by just the item ID
+  async getProjectItem(id: number): Promise<ProjectItem | undefined> {
+    return this.projectItems.get(id);
   }
   
   async addProjectItem(item: InsertProjectItem): Promise<ProjectItem> {
@@ -1867,11 +1878,33 @@ export class MemStorage implements IStorage {
     return projectItem;
   }
   
+  // Method to update a project item by ID
+  async updateProjectItem(id: number, data: Partial<ProjectItem>): Promise<ProjectItem | undefined> {
+    const item = this.projectItems.get(id);
+    if (!item) {
+      return undefined;
+    }
+    
+    const updatedItem = {
+      ...item,
+      ...data
+    };
+    
+    this.projectItems.set(id, updatedItem);
+    return updatedItem;
+  }
+  
+  // Method to remove a project item by item type, project ID and item ID
   async removeProjectItem(projectId: number, itemType: string, itemId: number): Promise<void> {
     const item = await this.getProjectItem(projectId, itemType, itemId);
     if (item) {
       this.projectItems.delete(item.id);
     }
+  }
+  
+  // Method to remove a project item by just the item ID
+  async removeProjectItem(id: number): Promise<void> {
+    this.projectItems.delete(id);
   }
 
   // Comments

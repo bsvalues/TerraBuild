@@ -661,6 +661,33 @@ export function registerCollaborationRoutes(app: Express): void {
     }
   });
   
+  // Delete/Cancel an invitation (admin use)
+  app.delete('/api/shared-projects/:projectId/invitations/:invitationId', checkProjectAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const invitationId = parseInt(req.params.invitationId);
+      
+      // Get the invitation to verify it exists and belongs to this project
+      const invitation = await storage.getProjectInvitation(invitationId);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation not found" });
+      }
+      
+      // Verify the invitation belongs to this project
+      if (invitation.projectId !== projectId) {
+        return res.status(400).json({ message: "Invitation does not belong to this project" });
+      }
+      
+      // Delete the invitation
+      await storage.deleteProjectInvitation(invitationId);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting invitation:", error);
+      res.status(500).json({ message: "Error deleting invitation" });
+    }
+  });
+  
   // Project Items API
   
   // Get all items in a project
@@ -716,7 +743,6 @@ export function registerCollaborationRoutes(app: Express): void {
   app.patch('/api/shared-projects/:projectId/items/:itemId', checkProjectEditAccess, async (req: Request, res: Response) => {
     try {
       const itemId = parseInt(req.params.itemId);
-      const { notes } = req.body;
       
       // Get the item to verify it exists
       const item = await storage.getProjectItem(itemId);
@@ -724,11 +750,9 @@ export function registerCollaborationRoutes(app: Express): void {
         return res.status(404).json({ message: "Project item not found" });
       }
       
-      // Update the item
-      // Remove 'notes' as it's not part of the schema
-      const updatedItem = await storage.updateProjectItem(itemId, {});
-      
-      res.json(updatedItem);
+      // Since we don't have updatable fields in the project_items table yet,
+      // we're just returning the current item
+      res.json(item);
     } catch (error) {
       console.error("Error updating project item:", error);
       res.status(500).json({ message: "Error updating project item" });
