@@ -937,35 +937,63 @@ export class PostgresStorage implements IStorage {
   }
   
   async getUserProjects(userId: number): Promise<SharedProject[]> {
-    // This returns projects either created by the user or where the user is a member
-    const createdProjects = await db.select().from(sharedProjects)
-      .where(eq(sharedProjects.createdById, userId));
-    
-    // Find all projects where user is a member
-    const memberProjects = await db.select({
-      project: sharedProjects
-    })
-    .from(projectMembers)
-    .innerJoin(sharedProjects, eq(projectMembers.projectId, sharedProjects.id))
-    .where(eq(projectMembers.userId, userId));
-    
-    // Combine and deduplicate projects
-    const allProjects = [...createdProjects, ...memberProjects.map(m => m.project)];
-    const projectIds = new Set();
-    
-    return allProjects.filter(project => {
-      if (projectIds.has(project.id)) {
-        return false;
-      }
-      projectIds.add(project.id);
-      return true;
-    });
+    try {
+      console.log("PostgreSQL getUserProjects called with userId:", userId);
+      
+      // This returns projects either created by the user or where the user is a member
+      const createdProjects = await db.select().from(sharedProjects)
+        .where(eq(sharedProjects.createdById, userId));
+      
+      console.log("Created projects:", createdProjects);
+      
+      // Find all projects where user is a member
+      const memberProjects = await db.select({
+        id: sharedProjects.id,
+        name: sharedProjects.name,
+        description: sharedProjects.description,
+        createdById: sharedProjects.createdById,
+        createdAt: sharedProjects.createdAt,
+        updatedAt: sharedProjects.updatedAt,
+        status: sharedProjects.status,
+        isPublic: sharedProjects.isPublic
+      })
+      .from(projectMembers)
+      .innerJoin(sharedProjects, eq(projectMembers.projectId, sharedProjects.id))
+      .where(eq(projectMembers.userId, userId));
+      
+      console.log("Member projects:", memberProjects);
+      
+      // Combine and deduplicate projects
+      const allProjects = [...createdProjects, ...memberProjects];
+      const projectIds = new Set();
+      
+      return allProjects.filter(project => {
+        if (projectIds.has(project.id)) {
+          return false;
+        }
+        projectIds.add(project.id);
+        return true;
+      });
+    } catch (error) {
+      console.error("Error in getUserProjects:", error);
+      throw error;
+    }
   }
   
   async getPublicProjects(): Promise<SharedProject[]> {
-    // Get all public projects
-    return await db.select().from(sharedProjects)
-      .where(eq(sharedProjects.isPublic, true));
+    try {
+      console.log("PostgreSQL getPublicProjects called");
+      
+      // Get all public projects
+      const publicProjects = await db.select().from(sharedProjects)
+        .where(eq(sharedProjects.isPublic, true));
+      
+      console.log("Public projects:", publicProjects);
+      return publicProjects;
+    } catch (error) {
+      console.error("Error in getPublicProjects:", error);
+      throw error;
+    }
   }
 
   async getSharedProject(id: number): Promise<SharedProject | undefined> {

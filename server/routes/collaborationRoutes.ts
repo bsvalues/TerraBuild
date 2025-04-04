@@ -223,7 +223,9 @@ export function registerCollaborationRoutes(app: Express): void {
         return res.status(401).json({ message: "Authentication required" });
       }
       
+      console.log("Getting projects for user:", req.user.id);
       const projects = await storage.getUserProjects(req.user.id);
+      console.log("Retrieved projects:", projects);
       res.json(projects);
     } catch (error) {
       console.error("Error fetching user projects:", error);
