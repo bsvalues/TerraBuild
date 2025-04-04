@@ -63,11 +63,18 @@ interface ProjectInvitation {
   role: string;
   status: string;
   invitedAt: string;
-  projectName?: string;
-  invitedByUser?: {
-    name?: string;
+  // Project property from context type
+  project?: {
+    id: number;
+    name: string;
+  };
+  // User property from context type
+  inviter?: {
+    id: number;
+    name: string | null;
     username: string;
   };
+  // These will be computed locally
   isSentByMe?: boolean;
 }
 
@@ -294,22 +301,22 @@ export default function ProjectInvitations({ projectId, className }: ProjectInvi
               {invitations.map((invitation) => (
                 <TableRow key={invitation.id}>
                   <TableCell className="font-medium">
-                    {invitation.projectName || `Project ${invitation.projectId}`}
+                    {invitation.project?.name || `Project ${invitation.projectId}`}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarFallback>{getInitials(invitation.invitedByUser?.name)}</AvatarFallback>
-                        {invitation.invitedByUser?.name && (
+                        <AvatarFallback>{getInitials(invitation.inviter?.name)}</AvatarFallback>
+                        {invitation.inviter?.name && (
                           <AvatarImage
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                              invitation.invitedByUser.name
+                              invitation.inviter.name
                             )}&background=random`}
-                            alt={invitation.invitedByUser.name}
+                            alt={invitation.inviter.name}
                           />
                         )}
                       </Avatar>
-                      <span className="text-sm">{getDisplayName(invitation.invitedByUser)}</span>
+                      <span className="text-sm">{getDisplayName(invitation.inviter)}</span>
                     </div>
                   </TableCell>
                   <TableCell>{getRoleBadge(invitation.role)}</TableCell>

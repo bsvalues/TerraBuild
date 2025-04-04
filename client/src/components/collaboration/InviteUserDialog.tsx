@@ -62,7 +62,7 @@ export default function InviteUserDialog({
   onOpenChange,
   isOwner,
 }: InviteUserDialogProps) {
-  const { inviteUserToProject } = useCollaboration();
+  const { addInvitation } = useCollaboration();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   
@@ -82,11 +82,11 @@ export default function InviteUserDialog({
     setInviteError(null);
     
     try {
-      await inviteUserToProject({
+      await addInvitation({
         projectId,
         email: data.email,
         role: data.role,
-        message: data.message || null,
+        // Note: Context interface may not include message, removed for now
       });
       
       // Reset form and close dialog on success

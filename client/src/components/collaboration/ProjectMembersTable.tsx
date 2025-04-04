@@ -71,15 +71,9 @@ export default function ProjectMembersTable({
 }: ProjectMembersTableProps) {
   const {
     projectMembers,
-    changeMemberRole, // This will be used if available, otherwise we'll try updateMemberRole
-    updateMemberRole, // Fallback
-    removeMember, // This will be used if available, otherwise we'll try removeProjectMember
-    removeProjectMember, // Fallback
+    changeMemberRole,
+    removeMember,
   } = useCollaboration();
-  
-  // Resolve the correct functions
-  const updateRole = changeMemberRole || updateMemberRole;
-  const removeMemberFromProject = removeMember || removeProjectMember;
   
   const [memberToRemove, setMemberToRemove] = useState<{id: number, name: string} | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -99,7 +93,7 @@ export default function ProjectMembersTable({
     
     setIsProcessing(true);
     try {
-      await removeMemberFromProject(projectId, memberToRemove.id);
+      await removeMember(projectId, memberToRemove.id);
       setShowRemoveConfirm(false);
       setMemberToRemove(null);
       
@@ -125,7 +119,7 @@ export default function ProjectMembersTable({
   const handleRoleChange = async (memberId: number, newRole: string) => {
     setIsProcessing(true);
     try {
-      await updateRole(projectId, memberId, newRole);
+      await changeMemberRole(projectId, memberId, newRole);
       
       toast({
         title: 'Role updated',
@@ -151,7 +145,7 @@ export default function ProjectMembersTable({
   };
   
   // Get initials for avatar
-  const getInitials = (name?: string): string => {
+  const getInitials = (name: string | null | undefined): string => {
     if (!name) return '?';
     
     const words = name.trim().split(/\s+/);
@@ -242,7 +236,7 @@ export default function ProjectMembersTable({
                               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
                                 member.user.name
                               )}&background=random`}
-                              alt={member.user.name}
+                              alt={member.user.name || 'User avatar'}
                             />
                           )}
                         </Avatar>

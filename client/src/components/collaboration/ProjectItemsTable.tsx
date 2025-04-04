@@ -268,18 +268,18 @@ export default function ProjectItemsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback>{getInitials(item.addedByUser?.name)}</AvatarFallback>
-                          {item.addedByUser?.name && (
+                          <AvatarFallback>{getInitials(item.user?.name)}</AvatarFallback>
+                          {item.user?.name && (
                             <AvatarImage
                               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                item.addedByUser.name
+                                item.user.name
                               )}&background=random`}
-                              alt={item.addedByUser.name}
+                              alt={item.user.name}
                             />
                           )}
                         </Avatar>
                         <span className="text-sm">
-                          {getUserDisplayName(item.addedByUser)}
+                          {getUserDisplayName(item.user)}
                         </span>
                       </div>
                     </TableCell>
