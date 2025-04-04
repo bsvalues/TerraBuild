@@ -1,43 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
+import { 
+  CheckIcon as IconCheck, 
+  PencilIcon as IconEdit,
+  ShareIcon as IconShare,
+  UsersIcon as IconUsers,
+  CalculatorIcon as IconCalculator,
+  TrashIcon as IconTrash,
+  PlusIcon as IconPlus,
+  MessageSquareIcon as IconMessage,
+  LinkIcon as IconLink,
+  UploadIcon as IconFileUpload,
+  HomeIcon as IconHome 
+} from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ActivitySquare,
-  User,
-  Users,
-  UserPlus,
-  FileText,
-  Link,
-  Share,
-  Check,
-  XCircle,
-  MessageCircle,
-  Loader2,
-  RefreshCw,
-  Clock,
-  FileBarChart,
-  FileSpreadsheet,
-  Calculator,
-  Pencil,
-  Trash2,
-  Eye,
-  Settings,
-  GlobeIcon
-} from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Loader2 as Spinner } from 'lucide-react';
+
+export interface ProjectActivityProps {
+  projectId: number;
+  limit?: number;
+  showTitle?: boolean;
+  className?: string;
+}
+
+type ActivityIcon = {
+  icon: React.ReactNode;
+  color: string;
+}
 
 interface ProjectActivity {
   id: number;
@@ -46,287 +45,199 @@ interface ProjectActivity {
   activityType: string;
   activityData: any;
   createdAt: string;
-  user?: {
-    id: number;
-    name: string | null;
+  user: {
     username: string;
+    name: string | null;
   };
 }
 
-interface ActivityIconProps {
-  type: string;
-  className?: string;
-}
-
-interface ProjectActivitiesLogProps {
-  projectId: number;
-  maxHeight?: string;
-  limit?: number;
-}
-
-// Activity icon component
-const ActivityIcon: React.FC<ActivityIconProps> = ({ type, className = "h-4 w-4" }) => {
-  switch (type) {
-    case 'member_added':
-    case 'member_joined':
-      return <UserPlus className={className} />;
-    case 'member_removed':
-      return <Users className={className} />;
-    case 'member_role_changed':
-      return <Settings className={className} />;
-    case 'project_created':
-      return <FileText className={className} />;
-    case 'project_edited':
-      return <Pencil className={className} />;
-    case 'project_deleted':
-      return <Trash2 className={className} />;
-    case 'project_visibility_changed':
-      return <GlobeIcon className={className} />;
-    case 'link_created':
-      return <Link className={className} />;
-    case 'link_deleted':
-      return <XCircle className={className} />;
-    case 'comment_added':
-      return <MessageCircle className={className} />;
-    case 'item_added':
-      return <Share className={className} />;
-    case 'item_removed':
-      return <Trash2 className={className} />;
-    case 'calculation_created':
-      return <Calculator className={className} />;
-    case 'matrix_imported':
-      return <FileSpreadsheet className={className} />;
-    case 'report_generated':
-      return <FileBarChart className={className} />;
-    default:
-      return <ActivitySquare className={className} />;
-  }
+const activityIcons: Record<string, ActivityIcon> = {
+  'project_created': { icon: <IconHome className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
+  'project_updated': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
+  'project_deleted': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
+  'member_added': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-indigo-100 text-indigo-800' },
+  'member_removed': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-rose-100 text-rose-800' },
+  'member_role_changed': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
+  'item_added': { icon: <IconPlus className="h-4 w-4" />, color: 'bg-emerald-100 text-emerald-800' },
+  'item_removed': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-amber-100 text-amber-800' },
+  'calculation_created': { icon: <IconCalculator className="h-4 w-4" />, color: 'bg-cyan-100 text-cyan-800' },
+  'calculation_updated': { icon: <IconCalculator className="h-4 w-4" />, color: 'bg-teal-100 text-teal-800' },
+  'comment_added': { icon: <IconMessage className="h-4 w-4" />, color: 'bg-sky-100 text-sky-800' },
+  'project_shared': { icon: <IconShare className="h-4 w-4" />, color: 'bg-violet-100 text-violet-800' },
+  'link_created': { icon: <IconLink className="h-4 w-4" />, color: 'bg-fuchsia-100 text-fuchsia-800' },
+  'link_deleted': { icon: <IconLink className="h-4 w-4" />, color: 'bg-pink-100 text-pink-800' },
+  'file_uploaded': { icon: <IconFileUpload className="h-4 w-4" />, color: 'bg-lime-100 text-lime-800' },
+  'default': { icon: <IconCheck className="h-4 w-4" />, color: 'bg-gray-100 text-gray-800' }
 };
 
-// Format timestamp for display
-const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-  if (diffInHours < 24) {
-    return formatDistanceToNow(date, { addSuffix: true });
-  } else {
-    return format(date, "MMM d, yyyy 'at' h:mm a");
-  }
+const getActivityIcon = (type: string) => {
+  return activityIcons[type] || activityIcons.default;
 };
 
-// Get appropriate badge variant for activity type
-const getActivityBadgeVariant = (type: string): "default" | "outline" | "secondary" => {
-  if (type.includes('removed') || type.includes('deleted')) {
-    return "outline";
-  } else if (type.includes('edited') || type.includes('changed')) {
-    return "secondary";
-  }
-  return "default";
-};
-
-// Get initials for avatar
-const getInitials = (name: string | null | undefined): string => {
-  if (!name) return '?';
-  
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
-  
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-};
-
-// Helper to get activity description
 const getActivityDescription = (activity: ProjectActivity): string => {
   const { activityType, activityData, user } = activity;
-  const userName = user?.name || user?.username || 'A user';
+  const userName = user.name || user.username;
   
   switch (activityType) {
-    case 'member_added':
-      return `${userName} added ${activityData.targetUser} to the project`;
-    case 'member_joined':
-      return `${userName} joined the project`;
-    case 'member_removed':
-      return `${userName} removed ${activityData.targetUser} from the project`;
-    case 'member_role_changed':
-      return `${userName} changed ${activityData.targetUser}'s role to ${activityData.newRole}`;
     case 'project_created':
-      return `${userName} created the project`;
-    case 'project_edited':
+      return `${userName} created this project`;
+    case 'project_updated':
       return `${userName} updated project details`;
     case 'project_deleted':
-      return `${userName} deleted the project`;
-    case 'project_visibility_changed':
-      return `${userName} changed project visibility to ${activityData.isPublic ? 'public' : 'private'}`;
-    case 'link_created':
-      return `${userName} created a shared link with ${activityData.accessLevel} access`;
-    case 'link_deleted':
-      return `${userName} deleted a shared link`;
-    case 'comment_added':
-      return `${userName} added a comment: "${activityData.contentPreview || 'No preview'}"`;
+      return `${userName} marked the project for deletion`;
+    case 'member_added':
+      if (activityData?.memberName) {
+        return `${userName} added ${activityData.memberName} to the project`;
+      }
+      return `${userName} added a new member to the project`;
+    case 'member_removed':
+      if (activityData?.memberName) {
+        return `${userName} removed ${activityData.memberName} from the project`;
+      }
+      return `${userName} removed a member from the project`;
+    case 'member_role_changed':
+      if (activityData?.memberName && activityData?.role) {
+        return `${userName} changed ${activityData.memberName}'s role to ${activityData.role}`;
+      }
+      return `${userName} changed a member's role`;
     case 'item_added':
-      return `${userName} added ${activityData.itemType} "${activityData.itemName}" to the project`;
+      if (activityData?.itemType && activityData?.itemName) {
+        return `${userName} added ${activityData.itemType} "${activityData.itemName}"`;
+      }
+      return `${userName} added an item to the project`;
     case 'item_removed':
-      return `${userName} removed ${activityData.itemType} "${activityData.itemName}" from the project`;
+      if (activityData?.itemType) {
+        return `${userName} removed a ${activityData.itemType} from the project`;
+      }
+      return `${userName} removed an item from the project`;
     case 'calculation_created':
-      return `${userName} created a new calculation: "${activityData.name}"`;
-    case 'matrix_imported':
-      return `${userName} imported a cost matrix: "${activityData.name}"`;
-    case 'report_generated':
-      return `${userName} generated a report: "${activityData.name}"`;
+      if (activityData?.name) {
+        return `${userName} created calculation "${activityData.name}"`;
+      }
+      return `${userName} created a new calculation`;
+    case 'calculation_updated':
+      if (activityData?.name) {
+        return `${userName} updated calculation "${activityData.name}"`;
+      }
+      return `${userName} updated a calculation`;
+    case 'comment_added':
+      if (activityData?.targetType) {
+        return `${userName} commented on a ${activityData.targetType}`;
+      }
+      return `${userName} added a comment`;
+    case 'project_shared':
+      return `${userName} shared the project`;
+    case 'link_created':
+      if (activityData?.accessLevel) {
+        return `${userName} created a ${activityData.accessLevel} access link`;
+      }
+      return `${userName} created a sharing link`;
+    case 'link_deleted':
+      return `${userName} deleted a sharing link`;
+    case 'file_uploaded':
+      if (activityData?.fileName) {
+        return `${userName} uploaded file "${activityData.fileName}"`;
+      }
+      return `${userName} uploaded a file`;
     default:
-      return `${userName} performed an action on the project`;
+      return `${userName} performed an action`;
   }
 };
 
-const ProjectActivitiesLog: React.FC<ProjectActivitiesLogProps> = ({
-  projectId,
-  maxHeight = '400px',
-  limit = 20
+const ActivityItem = ({ activity }: { activity: ProjectActivity }) => {
+  const { activityType, createdAt } = activity;
+  const { icon, color } = getActivityIcon(activityType);
+  const description = getActivityDescription(activity);
+  const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  
+  return (
+    <div className="flex items-start space-x-4 py-3">
+      <div className={`p-2 rounded-full ${color}`}>
+        {icon}
+      </div>
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium">{description}</p>
+        <div className="flex items-center">
+          <Badge variant="outline" className="text-xs">{activityType.replace('_', ' ')}</Badge>
+          <span className="ml-2 text-xs text-muted-foreground">{timeAgo}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SkeletonActivityItem = () => (
+  <div className="flex items-start space-x-4 py-3">
+    <Skeleton className="h-8 w-8 rounded-full" />
+    <div className="flex-1 space-y-2">
+      <Skeleton className="h-4 w-full" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+    </div>
+  </div>
+);
+
+export const ProjectActivitiesLog: React.FC<ProjectActivityProps> = ({ 
+  projectId, 
+  limit = 10, 
+  showTitle = true,
+  className = ""
 }) => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  
-  // Fetch project activities
-  const {
-    data: activities = [],
-    isLoading,
-    refetch,
-    isRefetching
-  } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: [`/api/projects/${projectId}/activities`],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest(`/api/projects/${projectId}/activities?limit=${limit}`);
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching project activities:', error);
-        throw new Error('Failed to fetch activities');
-      }
-    },
-    enabled: !!projectId,
-    staleTime: 1000 * 60, // 1 minute
+    queryFn: () => apiRequest(`/api/projects/${projectId}/activities`),
+    enabled: !!projectId
   });
-  
-  // Refresh activities
-  const handleRefresh = () => {
-    refetch();
-  };
-  
-  // Loading skeleton
-  if (isLoading) {
+
+  const activities = Array.isArray(data) ? data as ProjectActivity[] : [];
+  const displayActivities = limit > 0 ? activities.slice(0, limit) : activities;
+
+  if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center">
-            <ActivitySquare className="h-5 w-5 mr-2" />
-            Project Activity
-          </CardTitle>
-          <CardDescription>
-            Recent activity in this project
-          </CardDescription>
-        </CardHeader>
+      <Card className={className}>
+        {showTitle && (
+          <CardHeader>
+            <CardTitle>Project Activity</CardTitle>
+            <CardDescription>Recent activity in this project</CardDescription>
+          </CardHeader>
+        )}
         <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-start gap-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
+          <div className="text-center p-4 text-red-500">
+            Failed to load project activities
           </div>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle className="text-lg flex items-center">
-            <ActivitySquare className="h-5 w-5 mr-2" />
-            Project Activity
-          </CardTitle>
-          <CardDescription>
-            {activities.length > 0 
-              ? `${activities.length} recent ${activities.length === 1 ? 'action' : 'actions'} in this project` 
-              : 'No recent activity in this project'}
-          </CardDescription>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleRefresh} 
-          disabled={isRefetching}
-          className="h-8 w-8 p-0"
-          title="Refresh activities"
-        >
-          {isRefetching ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          <span className="sr-only">Refresh</span>
-        </Button>
-      </CardHeader>
+    <Card className={className}>
+      {showTitle && (
+        <CardHeader>
+          <CardTitle>Project Activity</CardTitle>
+          <CardDescription>Recent activity in this project</CardDescription>
+        </CardHeader>
+      )}
       <CardContent>
-        <div 
-          className="space-y-4 overflow-auto pr-1" 
-          style={{ maxHeight }}
-        >
-          {activities.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
-              <p>No activity recorded yet.</p>
-              <p className="text-sm">Recent actions on this project will appear here.</p>
-            </div>
-          ) : (
-            activities.map((activity: ProjectActivity) => (
-              <div key={activity.id} className="flex items-start gap-3 group">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{getInitials(activity.user?.name)}</AvatarFallback>
-                  {activity.user?.name && (
-                    <AvatarImage
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        activity.user.name
-                      )}&background=random`}
-                      alt={activity.user.name}
-                    />
-                  )}
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-start">
-                    <p className="text-sm">
-                      {getActivityDescription(activity)}
-                    </p>
-                    <Badge 
-                      variant={getActivityBadgeVariant(activity.activityType)}
-                      className="ml-2 opacity-80 group-hover:opacity-100 flex items-center whitespace-nowrap"
-                    >
-                      <ActivityIcon type={activity.activityType} className="h-3 w-3 mr-1" />
-                      <span className="text-xs">
-                        {activity.activityType.replace('_', ' ')}
-                      </span>
-                    </Badge>
-                  </div>
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {formatTimestamp(activity.createdAt)}
-                    {activity.user?.id === user?.id && (
-                      <span className="ml-2">(by you)</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array(3).fill(0).map((_, i) => (
+              <SkeletonActivityItem key={i} />
+            ))}
+          </div>
+        ) : activities.length === 0 ? (
+          <div className="text-center p-4 text-muted-foreground">
+            No activities recorded yet
+          </div>
+        ) : (
+          <div className="space-y-1 divide-y">
+            {displayActivities.map((activity) => (
+              <ActivityItem key={activity.id} activity={activity} />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

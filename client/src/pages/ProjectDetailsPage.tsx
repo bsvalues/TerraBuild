@@ -9,6 +9,7 @@ import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable'
 import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
 import SharedLinksTable from '@/components/collaboration/SharedLinksTable';
+import ProjectActivitiesLog from '@/components/collaboration/ProjectActivitiesLog';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
   Card,
@@ -506,66 +507,10 @@ const ProjectDetailsPage: React.FC = () => {
             </div>
             
             <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Project created</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(currentProject.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                        <Edit className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Last updated</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(currentProject.updatedAt)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {projectItems.length > 0 && (
-                      <div className="flex items-start space-x-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <Plus className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Items added</p>
-                          <p className="text-xs text-muted-foreground">
-                            {projectItems.length} item(s) in this project
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {projectMembers.length > 1 && (
-                      <div className="flex items-start space-x-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Team members</p>
-                          <p className="text-xs text-muted-foreground">
-                            {projectMembers.length} member(s) in this project
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <ProjectActivitiesLog 
+                projectId={currentProject.id}
+                className="h-full"
+              />
             </div>
           </div>
         </TabsContent>

@@ -1,103 +1,91 @@
-import express from 'express';
-import { z } from 'zod';
-import { IStorage } from '../storage';
-import { insertProjectActivitySchema } from '@shared/schema';
+import { Express, Request, Response } from "express";
+import { z } from "zod";
+import { IStorage } from "../storage";
+import { insertProjectActivitySchema } from "@shared/schema";
 
 /**
  * Register project activities routes
+ * @param app Express app instance
+ * @param storage Storage implementation
  */
-export function registerProjectActivitiesRoutes(app: express.Express, storage: IStorage) {
-  // Middleware to add logging functionality
-  app.use((req: any, res, next) => {
-    req.logProjectActivity = async (
-      projectId: number, 
-      userId: number, 
-      activityType: string, 
-      activityData: any
-    ) => {
+export function registerProjectActivitiesRoutes(app: Express, storage: IStorage) {
+  // Get project activities
+  app.get(
+    "/api/projects/:id/activities",
+    async (req: Request, res: Response) => {
       try {
-        await storage.createProjectActivity({
+        if (!req.user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        
+        const projectId = parseInt(req.params.id, 10);
+        
+        // Get project activities with user info
+        const activities = await storage.getProjectActivitiesWithUserInfo(projectId);
+        
+        res.json(activities);
+      } catch (error: any) {
+        console.error("Error fetching project activities:", error);
+        res.status(500).json({ error: "Failed to fetch project activities" });
+      }
+    }
+  );
+
+  // Get single project activity
+  app.get(
+    "/api/projects/:projectId/activities/:activityId",
+    async (req: Request, res: Response) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        
+        const projectId = parseInt(req.params.projectId, 10);
+        const activityId = parseInt(req.params.activityId, 10);
+        
+        const activity = await storage.getProjectActivity(activityId);
+        
+        if (!activity || activity.projectId !== projectId) {
+          return res.status(404).json({ error: "Activity not found" });
+        }
+        
+        res.json(activity);
+      } catch (error: any) {
+        console.error("Error fetching project activity:", error);
+        res.status(500).json({ error: "Failed to fetch project activity" });
+      }
+    }
+  );
+
+  // Create project activity
+  app.post(
+    "/api/projects/:id/activities",
+    async (req: Request, res: Response) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        
+        const projectId = parseInt(req.params.id, 10);
+        const userId = req.user.id;
+        
+        const activityData = insertProjectActivitySchema.parse({
+          ...req.body,
           projectId,
-          userId,
-          activityType,
-          activityData
+          userId
         });
-      } catch (error) {
-        console.error('Failed to log project activity:', error);
+        
+        const createdActivity = await storage.createProjectActivity(activityData);
+        
+        res.status(201).json(createdActivity);
+      } catch (error: any) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ error: "Invalid activity data", details: error.format() });
+        }
+        
+        console.error("Error creating project activity:", error);
+        res.status(500).json({ error: "Failed to create project activity" });
       }
-    };
-    next();
-  });
-
-  // Get all activities for a project
-  app.get('/api/projects/:projectId/activities', async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.projectId, 10);
-      
-      if (isNaN(projectId)) {
-        return res.status(400).json({ error: 'Invalid project ID' });
-      }
-      
-      const activities = await storage.getProjectActivitiesWithUserInfo(projectId);
-      res.json(activities);
-    } catch (error) {
-      console.error('Error getting project activities:', error);
-      res.status(500).json({ error: 'Failed to retrieve project activities' });
     }
-  });
-
-  // Get a specific activity
-  app.get('/api/projects/activities/:id', async (req, res) => {
-    try {
-      const id = parseInt(req.params.id, 10);
-      
-      if (isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid activity ID' });
-      }
-      
-      const activity = await storage.getProjectActivity(id);
-      
-      if (!activity) {
-        return res.status(404).json({ error: 'Activity not found' });
-      }
-      
-      res.json(activity);
-    } catch (error) {
-      console.error('Error getting project activity:', error);
-      res.status(500).json({ error: 'Failed to retrieve project activity' });
-    }
-  });
-
-  // Create a new activity
-  app.post('/api/projects/:projectId/activities', async (req: any, res) => {
-    try {
-      const projectId = parseInt(req.params.projectId, 10);
-      
-      if (isNaN(projectId)) {
-        return res.status(400).json({ error: 'Invalid project ID' });
-      }
-      
-      // Validate the request body
-      const validationSchema = insertProjectActivitySchema.extend({
-        projectId: z.number(),
-        userId: z.number(),
-        activityType: z.string(),
-        activityData: z.any().optional().nullable()
-      });
-      
-      const activityData = validationSchema.parse({
-        ...req.body,
-        projectId
-      });
-      
-      const activity = await storage.createProjectActivity(activityData);
-      res.status(201).json(activity);
-    } catch (error) {
-      console.error('Error creating project activity:', error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create project activity' });
-    }
-  });
+  );
 }
