@@ -3,7 +3,10 @@ import { useLocation, useParams, Link } from 'wouter';
 import { useCollaboration } from '@/contexts/CollaborationContext';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
+import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable';
+import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
   Card,
@@ -85,20 +88,29 @@ const ProjectDetailsPage: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
+  // Use collaboration context for some functionality
   const {
     currentProject,
     setCurrentProject,
     myProjects,
     publicProjects,
-    projectMembers,
     projectItems,
     deleteProject,
     addProjectItem,
     removeProjectItem,
     isLoadingProjects,
-    isLoadingMembers,
     isLoadingItems,
   } = useCollaboration();
+  
+  // Use project context for project-specific functionality
+  const {
+    project,
+    members: projectMembers,
+    isMembersLoading: isLoadingMembers,
+    currentUserRole,
+    isOwner: isProjectOwner,
+    refreshMembers,
+  } = useProjectContext();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -141,8 +153,8 @@ const ProjectDetailsPage: React.FC = () => {
     };
   }, [setCurrentProject]);
 
-  // Check if current user is the project owner
-  const isOwner = currentProject && user?.id === currentProject.createdById;
+  // Use both owner checks to ensure consistency
+  const isOwner = (currentProject && user?.id === currentProject.createdById) || isProjectOwner;
 
   // Format date for display
   const formatDate = (date: string | Date) => {
@@ -773,6 +785,27 @@ const ProjectDetailsPage: React.FC = () => {
                 isPublic={currentProject.isPublic}
                 isOwner={isOwner}
               />
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Project Members</CardTitle>
+                    <CardDescription>
+                      People with access to this project
+                    </CardDescription>
+                  </div>
+                  <InviteUserDialog projectId={currentProject.id} />
+                </CardHeader>
+                <CardContent>
+                  <ProjectMembersTable 
+                    projectId={currentProject.id}
+                    members={projectMembers}
+                    isLoading={isLoadingMembers}
+                    currentUserRole={isOwner ? 'owner' : 'member'}
+                    currentUserId={user?.id || 0}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         )}
@@ -781,4 +814,17 @@ const ProjectDetailsPage: React.FC = () => {
   );
 };
 
-export default ProjectDetailsPage;
+// Wrapper component that provides project context
+const ProjectDetailsPageWithProvider: React.FC = () => {
+  const { user } = useAuth();
+  const params = useParams<{ id: string }>();
+  const projectId = Number(params.id);
+  
+  return (
+    <ProjectProvider currentUserId={user?.id || 0}>
+      <ProjectDetailsPage />
+    </ProjectProvider>
+  );
+};
+
+export default ProjectDetailsPageWithProvider;
