@@ -351,6 +351,9 @@ export function registerCollaborationRoutes(app: Express): void {
       // Delete all items
       await storage.deleteAllProjectItems(projectId);
       
+      // Delete all shared links
+      await storage.deleteAllSharedLinks(projectId);
+      
       // Delete the project
       await storage.deleteSharedProject(projectId);
       
@@ -956,6 +959,139 @@ export function registerCollaborationRoutes(app: Express): void {
     } catch (error) {
       console.error("Error deleting comment:", error);
       res.status(500).json({ message: "Error deleting comment" });
+    }
+  });
+
+  // Shared Links API
+  
+  // Get all shared links for a project
+  app.get('/api/shared-projects/:projectId/links', checkProjectAccess, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const links = await storage.getSharedLinks(projectId);
+      
+      res.json(links);
+    } catch (error) {
+      console.error("Error fetching shared links:", error);
+      res.status(500).json({ message: "Error fetching shared links" });
+    }
+  });
+  
+  // Create a new shared link
+  app.post('/api/shared-projects/:projectId/links', checkProjectEditAccess, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { accessLevel, expiresAt, description } = req.body;
+      
+      // Generate a unique token
+      const token = `sl_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Create the shared link
+      const link = await storage.createSharedLink({
+        projectId,
+        token,
+        accessLevel: accessLevel || 'view',
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        createdBy: req.user!.id,
+        description: description || null
+      });
+      
+      res.status(201).json(link);
+    } catch (error) {
+      console.error("Error creating shared link:", error);
+      res.status(500).json({ message: "Error creating shared link" });
+    }
+  });
+  
+  // Update a shared link
+  app.patch('/api/shared-projects/:projectId/links/:linkId', checkProjectEditAccess, async (req: Request, res: Response) => {
+    try {
+      const linkId = parseInt(req.params.linkId);
+      const { accessLevel, expiresAt, description } = req.body;
+      
+      // Get the link to verify it exists
+      const link = await storage.getSharedLink(linkId);
+      if (!link) {
+        return res.status(404).json({ message: "Shared link not found" });
+      }
+      
+      // Build the update object with only the fields that are provided
+      const updateData: any = {};
+      
+      if (accessLevel !== undefined) {
+        updateData.accessLevel = accessLevel;
+      }
+      
+      if (expiresAt !== undefined) {
+        updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
+      }
+      
+      if (description !== undefined) {
+        updateData.description = description;
+      }
+      
+      // Update the link
+      const updatedLink = await storage.updateSharedLink(linkId, updateData);
+      
+      res.json(updatedLink);
+    } catch (error) {
+      console.error("Error updating shared link:", error);
+      res.status(500).json({ message: "Error updating shared link" });
+    }
+  });
+  
+  // Delete a shared link
+  app.delete('/api/shared-projects/:projectId/links/:linkId', checkProjectEditAccess, async (req: Request, res: Response) => {
+    try {
+      const linkId = parseInt(req.params.linkId);
+      
+      // Get the link to verify it exists
+      const link = await storage.getSharedLink(linkId);
+      if (!link) {
+        return res.status(404).json({ message: "Shared link not found" });
+      }
+      
+      // Delete the link
+      await storage.deleteSharedLink(linkId);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting shared link:", error);
+      res.status(500).json({ message: "Error deleting shared link" });
+    }
+  });
+  
+  // Access a project via a shared link token
+  app.get('/api/shared-link/:token', async (req: Request, res: Response) => {
+    try {
+      const token = req.params.token;
+      
+      // Get the link by token
+      const link = await storage.getSharedLinkByToken(token);
+      if (!link) {
+        return res.status(404).json({ message: "Shared link not found or has expired" });
+      }
+      
+      // Check if the link has expired
+      if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+        return res.status(403).json({ message: "This shared link has expired" });
+      }
+      
+      // Get the project
+      const project = await storage.getSharedProject(link.projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Return the project and access level
+      res.json({
+        project,
+        accessLevel: link.accessLevel
+      });
+    } catch (error) {
+      console.error("Error accessing shared link:", error);
+      res.status(500).json({ message: "Error accessing shared link" });
     }
   });
 

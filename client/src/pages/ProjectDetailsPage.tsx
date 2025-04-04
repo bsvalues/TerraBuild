@@ -8,6 +8,7 @@ import ProjectSharingControls from '@/components/collaboration/ProjectSharingCon
 import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable';
 import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
+import SharedLinksTable from '@/components/collaboration/SharedLinksTable';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
   Card,
@@ -826,6 +827,11 @@ const ProjectDetailsPage: React.FC = () => {
                   />
                 </CardContent>
               </Card>
+              
+              <SharedLinksTable 
+                projectId={currentProject.id}
+                isAdmin={isOwner}
+              />
             </div>
           </TabsContent>
         )}

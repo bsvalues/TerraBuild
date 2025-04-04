@@ -25,11 +25,12 @@ import {
   ProjectMember, InsertProjectMember,
   ProjectItem, InsertProjectItem,
   Comment, InsertComment,
+  SharedLink, InsertSharedLink,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
-  comments
+  comments, sharedLinks
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -1419,5 +1420,56 @@ export class PostgresStorage implements IStorage {
   async removeProjectItem(id: number): Promise<void> {
     await db.delete(projectItems)
       .where(eq(projectItems.id, id));
+  }
+  
+  // Shared Links
+  async getSharedLinks(projectId: number): Promise<SharedLink[]> {
+    return db.select().from(sharedLinks)
+      .where(eq(sharedLinks.projectId, projectId))
+      .orderBy(sharedLinks.createdAt);
+  }
+  
+  async getSharedLink(id: number): Promise<SharedLink | undefined> {
+    const result = await db.select().from(sharedLinks)
+      .where(eq(sharedLinks.id, id));
+    return result[0];
+  }
+  
+  async getSharedLinkByToken(token: string): Promise<SharedLink | undefined> {
+    const result = await db.select().from(sharedLinks)
+      .where(eq(sharedLinks.token, token));
+    return result[0];
+  }
+  
+  async createSharedLink(link: InsertSharedLink): Promise<SharedLink> {
+    const result = await db.insert(sharedLinks)
+      .values({
+        projectId: link.projectId,
+        token: link.token,
+        accessLevel: link.accessLevel,
+        expiresAt: link.expiresAt,
+        createdBy: link.createdBy,
+        description: link.description
+      })
+      .returning();
+    return result[0];
+  }
+  
+  async updateSharedLink(id: number, data: Partial<SharedLink>): Promise<SharedLink | undefined> {
+    const result = await db.update(sharedLinks)
+      .set(data)
+      .where(eq(sharedLinks.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  async deleteSharedLink(id: number): Promise<void> {
+    await db.delete(sharedLinks)
+      .where(eq(sharedLinks.id, id));
+  }
+  
+  async deleteAllSharedLinks(projectId: number): Promise<void> {
+    await db.delete(sharedLinks)
+      .where(eq(sharedLinks.projectId, projectId));
   }
 }

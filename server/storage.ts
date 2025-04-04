@@ -20,7 +20,8 @@ import {
   projectMembers, type ProjectMember, type InsertProjectMember,
   projectItems, type ProjectItem, type InsertProjectItem,
   comments, type Comment, type InsertComment,
-  projectInvitations, type ProjectInvitation, type InsertProjectInvitation
+  projectInvitations, type ProjectInvitation, type InsertProjectInvitation,
+  sharedLinks, type SharedLink, type InsertSharedLink
 } from "@shared/schema";
 
 // Storage interface
@@ -224,6 +225,15 @@ export interface IStorage {
   deleteComment(id: number): Promise<void>;
   getCommentWithUserInfo(id: number): Promise<(Comment & { user: { username: string, name: string | null } }) | undefined>;
   getCommentsByTargetWithUserInfo(targetType: string, targetId: number): Promise<(Comment & { user: { username: string, name: string | null } })[]>;
+  
+  // Shared Links
+  getSharedLinks(projectId: number): Promise<SharedLink[]>;
+  getSharedLink(id: number): Promise<SharedLink | undefined>;
+  getSharedLinkByToken(token: string): Promise<SharedLink | undefined>;
+  createSharedLink(link: InsertSharedLink): Promise<SharedLink>;
+  updateSharedLink(id: number, data: Partial<SharedLink>): Promise<SharedLink | undefined>;
+  deleteSharedLink(id: number): Promise<void>;
+  deleteAllSharedLinks(projectId: number): Promise<void>;
 }
 
 // Memory Storage implementation
@@ -246,6 +256,7 @@ export class MemStorage implements IStorage {
   private projectInvitations: Map<number, ProjectInvitation>;
   private projectItems: Map<number, ProjectItem>;
   private comments: Map<number, Comment>;
+  private sharedLinks: Map<number, SharedLink>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -265,6 +276,7 @@ export class MemStorage implements IStorage {
   private currentProjectInvitationId: number;
   private currentProjectItemId: number;
   private currentCommentId: number;
+  private currentSharedLinkId: number;
   
   constructor() {
     this.users = new Map();
@@ -285,6 +297,7 @@ export class MemStorage implements IStorage {
     this.projectInvitations = new Map();
     this.projectItems = new Map();
     this.comments = new Map();
+    this.sharedLinks = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -304,6 +317,7 @@ export class MemStorage implements IStorage {
     this.currentProjectInvitationId = 1;
     this.currentProjectItemId = 1;
     this.currentCommentId = 1;
+    this.currentSharedLinkId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -1987,6 +2001,63 @@ export class MemStorage implements IStorage {
         }
       };
     });
+  }
+
+  // Shared Links
+  async getSharedLinks(projectId: number): Promise<SharedLink[]> {
+    return Array.from(this.sharedLinks.values())
+      .filter(link => link.projectId === projectId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+  
+  async getSharedLink(id: number): Promise<SharedLink | undefined> {
+    return this.sharedLinks.get(id);
+  }
+  
+  async getSharedLinkByToken(token: string): Promise<SharedLink | undefined> {
+    return Array.from(this.sharedLinks.values()).find(
+      (link) => link.token === token
+    );
+  }
+  
+  async createSharedLink(link: InsertSharedLink): Promise<SharedLink> {
+    const id = this.currentSharedLinkId++;
+    const createdAt = new Date();
+    
+    const newLink: SharedLink = {
+      ...link,
+      id,
+      createdAt
+    };
+    
+    this.sharedLinks.set(id, newLink);
+    return newLink;
+  }
+  
+  async updateSharedLink(id: number, data: Partial<SharedLink>): Promise<SharedLink | undefined> {
+    const link = this.sharedLinks.get(id);
+    if (!link) return undefined;
+    
+    const updatedLink: SharedLink = {
+      ...link,
+      ...data
+    };
+    
+    this.sharedLinks.set(id, updatedLink);
+    return updatedLink;
+  }
+  
+  async deleteSharedLink(id: number): Promise<void> {
+    this.sharedLinks.delete(id);
+  }
+  
+  async deleteAllSharedLinks(projectId: number): Promise<void> {
+    const linksToDelete = Array.from(this.sharedLinks.values())
+      .filter(link => link.projectId === projectId);
+    
+    for (const link of linksToDelete) {
+      this.sharedLinks.delete(link.id);
+    }
   }
 }
 

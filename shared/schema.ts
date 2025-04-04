@@ -643,6 +643,29 @@ export const projectItems = pgTable("project_items", {
   };
 });
 
+export const sharedLinks = pgTable("shared_links", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => sharedProjects.id),
+  token: text("token").notNull().unique(),
+  accessLevel: text("access_level").notNull().default("view"), // view, edit, admin
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  description: text("description"),
+});
+
+export const insertSharedLinkSchema = createInsertSchema(sharedLinks).pick({
+  projectId: true,
+  token: true,
+  accessLevel: true,
+  expiresAt: true,
+  createdBy: true,
+  description: true,
+});
+
+export type SharedLink = typeof sharedLinks.$inferSelect;
+export type InsertSharedLink = z.infer<typeof insertSharedLinkSchema>;
+
 export const insertProjectItemSchema = createInsertSchema(projectItems).pick({
   projectId: true,
   itemType: true,
