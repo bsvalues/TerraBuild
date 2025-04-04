@@ -269,11 +269,7 @@ const ProjectDetailsPage: React.FC = () => {
     if (!currentProject) return;
     
     try {
-      await removeProjectItem({
-        projectId: currentProject.id,
-        itemType: itemType,
-        itemId: itemId
-      });
+      await removeProjectItem(currentProject.id, itemType, itemId);
       
       toast({
         title: 'Item removed',

@@ -72,7 +72,6 @@ export default function ProjectMembersTable({
   currentUserRole,
 }: ProjectMembersTableProps) {
   const {
-    projectMembers,
     changeMemberRole,
     removeMember,
   } = useCollaboration();

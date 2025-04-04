@@ -46,7 +46,7 @@ interface ProjectInvitation {
 interface ProjectItem {
   id: number;
   projectId: number;
-  itemType: 'calculation' | 'cost_matrix' | 'report';
+  itemType: 'calculation' | 'cost_matrix' | 'report' | 'what_if_scenario';
   itemId: number;
   addedBy: number;
   addedAt: string | Date;
