@@ -11,6 +11,7 @@ import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
 import SharedLinksTable from '@/components/collaboration/SharedLinksTable';
 import ProjectActivitiesLog from '@/components/collaboration/ProjectActivitiesLog';
 import ProjectProgressTracker from '@/components/collaboration/ProjectProgressTracker';
+import ProjectProgressReport from '@/components/collaboration/ProjectProgressReport';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
   Card,
@@ -509,9 +510,12 @@ const ProjectDetailsPage: React.FC = () => {
             
             <div className="space-y-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Project Progress</CardTitle>
-                  <CardDescription>Track the completion status of this project</CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between">
+                  <div>
+                    <CardTitle>Project Progress</CardTitle>
+                    <CardDescription>Track the completion status of this project</CardDescription>
+                  </div>
+                  <ProjectProgressReport projectId={currentProject.id} />
                 </CardHeader>
                 <CardContent>
                   <ProjectProgressTracker 
