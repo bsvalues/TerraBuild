@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import CommentsSection from '@/components/comments/CommentsSection';
 import { 
   ArrowLeft, 
   Building, 
@@ -23,6 +24,7 @@ import {
   FileText, 
   Globe, 
   Lock, 
+  MessageCircle,
   Plus, 
   Share2, 
   Trash, 
@@ -315,9 +317,9 @@ const ProjectDetailsPage: React.FC = () => {
         ) : null}
       </div>
 
-      {/* Tabs for members and items */}
+      {/* Tabs for members, items, and comments */}
       <Tabs defaultValue="members" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="members">
             <Users className="mr-2 h-4 w-4" />
             Members
@@ -325,6 +327,10 @@ const ProjectDetailsPage: React.FC = () => {
           <TabsTrigger value="items">
             <FileText className="mr-2 h-4 w-4" />
             Project Items
+          </TabsTrigger>
+          <TabsTrigger value="comments">
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Comments
           </TabsTrigger>
         </TabsList>
 
@@ -586,6 +592,26 @@ const ProjectDetailsPage: React.FC = () => {
                 </Card>
               ))}
             </div>
+          )}
+        </TabsContent>
+
+        {/* Comments Tab */}
+        <TabsContent value="comments" className="mt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Project Comments</h2>
+          </div>
+
+          {!currentProject ? (
+            <div className="space-y-2">
+              <Skeleton className="h-20 w-full mb-2" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : (
+            <CommentsSection 
+              targetType="project" 
+              targetId={projectId} 
+              title="Project Comments" 
+            />
           )}
         </TabsContent>
       </Tabs>

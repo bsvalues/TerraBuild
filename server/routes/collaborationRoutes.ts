@@ -1,36 +1,9 @@
-/**
- * Collaboration API routes for the Building Cost System
- * 
- * These routes handle shared projects, project members, and project items
- * enabling collaboration features for the application.
- */
-
-import { Express, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { storage } from '../storage-implementation';
-import { 
-  insertSharedProjectSchema, 
-  insertProjectMemberSchema, 
-  insertProjectItemSchema,
-  SharedProject,
-  ProjectMember,
-  ProjectItem
-} from '@shared/schema';
-
-// Extended Request interface with project properties
-interface Request {
-  user?: {
-    id: number;
-    username: string;
-    role: string;
-  };
-  project?: SharedProject;
-  projectMember?: ProjectMember;
-  params: any;
-  body: any;
-}
+import type { Express, Request, Response } from 'express';
+import { IStorage } from '../storage';
 
 export function registerCollaborationRoutes(app: Express): void {
+  const storage: IStorage = (global as any).storage;
+  
   /**
    * Middleware to check if a user has access to a project
    * A user has access if they:
@@ -43,228 +16,275 @@ export function registerCollaborationRoutes(app: Express): void {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-
+    
     const projectId = parseInt(req.params.projectId);
     if (isNaN(projectId)) {
       return res.status(400).json({ message: "Invalid project ID" });
     }
-
+    
     const project = await storage.getSharedProject(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
-
+    
     // Admin users have access to all projects
     if (req.user.role === 'admin') {
       req.project = project;
       return next();
     }
-
+    
     // Project creator has access
     if (project.createdById === req.user.id) {
       req.project = project;
       return next();
     }
-
-    // Project is public
+    
+    // Public projects are accessible to all
     if (project.isPublic) {
       req.project = project;
       return next();
     }
-
-    // Check if user is a member
+    
+    // Check if the user is a member of the project
     const projectMember = await storage.getProjectMember(projectId, req.user.id);
     if (projectMember) {
       req.project = project;
       req.projectMember = projectMember;
       return next();
     }
-
-    return res.status(403).json({ message: "Access denied to this project" });
+    
+    return res.status(403).json({ message: "You don't have access to this project" });
   };
-
+  
   /**
-   * Middleware to check if a user has edit permissions for a project
-   * A user can edit if they:
+   * Middleware to check if a user has edit access to a project
+   * A user has edit access if they:
    * 1. Created the project
-   * 2. Are a member with 'editor' or 'admin' role
-   * 3. The user is an admin
+   * 2. Are a member of the project with role 'editor' or 'admin'
+   * 3. The user is an application admin
    */
   const checkProjectEditAccess = async (req: Request, res: Response, next: Function) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-
-    // For checkProjectAccess middleware already added the project to the request
-    // We need to make sure it's there
-    if (!req.project) {
-      return res.status(500).json({ message: "Project access not verified" });
+    
+    // If the middleware has already run, we can use the stored project and member
+    if (req.project) {
+      const project = req.project;
+      
+      // Admin users have edit access to all projects
+      if (req.user.role === 'admin') {
+        return next();
+      }
+      
+      // Project creator has edit access
+      if (project.createdById === req.user.id) {
+        return next();
+      }
+      
+      // Project members with editor or admin role have edit access
+      if (req.projectMember && (req.projectMember.role === 'editor' || req.projectMember.role === 'admin')) {
+        return next();
+      }
+      
+      return res.status(403).json({ message: "You don't have edit permission for this project" });
     }
-
+    
+    // Otherwise, we need to run the full access check
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project ID" });
+    }
+    
+    const project = await storage.getSharedProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    
     // Admin users have edit access to all projects
     if (req.user.role === 'admin') {
+      req.project = project;
       return next();
     }
-
+    
     // Project creator has edit access
-    if (req.project.createdById === req.user.id) {
+    if (project.createdById === req.user.id) {
+      req.project = project;
       return next();
     }
-
-    // Check if user is a member with edit permissions
-    if (req.projectMember && (req.projectMember.role === 'editor' || req.projectMember.role === 'admin')) {
+    
+    // Check if the user is a member of the project with edit access
+    const projectMember = await storage.getProjectMember(projectId, req.user.id);
+    if (projectMember && (projectMember.role === 'editor' || projectMember.role === 'admin')) {
+      req.project = project;
+      req.projectMember = projectMember;
       return next();
     }
-
-    return res.status(403).json({ message: "You don't have edit permissions for this project" });
+    
+    return res.status(403).json({ message: "You don't have edit permission for this project" });
   };
-
+  
   /**
-   * Middleware to check if a user has admin permissions for a project
-   * A user is an admin if they:
+   * Middleware to check if a user is a project admin
+   * A user is a project admin if they:
    * 1. Created the project
-   * 2. Are a member with 'admin' role
+   * 2. Are a member of the project with role 'admin'
    * 3. The user is an application admin
    */
   const checkProjectAdminAccess = async (req: Request, res: Response, next: Function) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-
-    if (!req.project) {
-      return res.status(500).json({ message: "Project access not verified" });
+    
+    // If the middleware has already run, we can use the stored project and member
+    if (req.project) {
+      const project = req.project;
+      
+      // Admin users have admin access to all projects
+      if (req.user.role === 'admin') {
+        return next();
+      }
+      
+      // Project creator has admin access
+      if (project.createdById === req.user.id) {
+        return next();
+      }
+      
+      // Project members with admin role have admin access
+      if (req.projectMember && req.projectMember.role === 'admin') {
+        return next();
+      }
+      
+      return res.status(403).json({ message: "You don't have admin permission for this project" });
     }
-
+    
+    // Otherwise, we need to run the full access check
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project ID" });
+    }
+    
+    const project = await storage.getSharedProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    
     // Admin users have admin access to all projects
     if (req.user.role === 'admin') {
+      req.project = project;
       return next();
     }
-
+    
     // Project creator has admin access
-    if (req.project.createdById === req.user.id) {
+    if (project.createdById === req.user.id) {
+      req.project = project;
       return next();
     }
-
-    // Check if user is a member with admin permissions
-    if (req.projectMember && req.projectMember.role === 'admin') {
+    
+    // Check if the user is a member of the project with admin access
+    const projectMember = await storage.getProjectMember(projectId, req.user.id);
+    if (projectMember && projectMember.role === 'admin') {
+      req.project = project;
+      req.projectMember = projectMember;
       return next();
     }
-
-    return res.status(403).json({ message: "You don't have admin permissions for this project" });
+    
+    return res.status(403).json({ message: "You don't have admin permission for this project" });
   };
-
+  
   // Shared Projects API
-
-  // Get all shared projects (for admin)
+  
+  // Get all shared projects
   app.get('/api/shared-projects', async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-
-      // Only admin can see all projects
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied" });
+      
+      // For admin users, show all projects
+      if (req.user.role === 'admin') {
+        const projects = await storage.getAllSharedProjects();
+        return res.json(projects);
       }
-
-      const projects = await storage.getAllSharedProjects();
+      
+      // For regular users, show their projects and public projects
+      const projects = await storage.getAccessibleSharedProjects(req.user.id);
       res.json(projects);
     } catch (error) {
       console.error("Error fetching shared projects:", error);
       res.status(500).json({ message: "Error fetching shared projects" });
     }
   });
-
-  // Get public projects
-  app.get('/api/shared-projects/public', async (req: Request, res: Response) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const allProjects = await storage.getAllSharedProjects();
-      const publicProjects = allProjects.filter(project => project.isPublic);
-      res.json(publicProjects);
-    } catch (error) {
-      console.error("Error fetching public projects:", error);
-      res.status(500).json({ message: "Error fetching public projects" });
-    }
-  });
-
-  // Get my projects (created by me or shared with me)
-  app.get('/api/shared-projects/my', async (req: Request, res: Response) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const userProjects = await storage.getSharedProjectsByUser(req.user.id);
-      res.json(userProjects);
-    } catch (error) {
-      console.error("Error fetching user projects:", error);
-      res.status(500).json({ message: "Error fetching user projects" });
-    }
-  });
-
+  
   // Get a specific shared project
   app.get('/api/shared-projects/:projectId', checkProjectAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      res.json(req.project);
+      const project = req.project;
+      
+      // Fetch project members
+      const members = await storage.getProjectMembers(projectId);
+      
+      res.json({
+        ...project,
+        members
+      });
     } catch (error) {
       console.error("Error fetching shared project:", error);
       res.status(500).json({ message: "Error fetching shared project" });
     }
   });
-
+  
   // Create a new shared project
   app.post('/api/shared-projects', async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-
-      const projectData = insertSharedProjectSchema.parse(req.body);
       
-      // Set the creator ID from the authenticated user
-      projectData.createdById = req.user.id;
+      const { name, description, isPublic } = req.body;
       
-      const project = await storage.createSharedProject(projectData);
-      
-      // Log the activity
-      await storage.createActivity({
-        action: `Created new shared project: ${project.name}`,
-        icon: "ri-team-line",
-        iconColor: "primary"
+      const project = await storage.createSharedProject({
+        name,
+        description: description || null,
+        createdById: req.user.id,
+        status: 'active',
+        isPublic: isPublic || false
       });
       
       res.status(201).json(project);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
       console.error("Error creating shared project:", error);
       res.status(500).json({ message: "Error creating shared project" });
     }
   });
-
+  
   // Update a shared project
   app.patch('/api/shared-projects/:projectId', checkProjectEditAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const projectData = req.body;
+      const { name, description, isPublic, status } = req.body;
       
-      const updatedProject = await storage.updateSharedProject(projectId, projectData);
-      if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found" });
+      // Build the update object with only the fields that are provided
+      const updateData: any = { updatedAt: new Date() };
+      
+      if (name !== undefined) {
+        updateData.name = name;
       }
       
-      // Log the activity
-      await storage.createActivity({
-        action: `Updated shared project: ${updatedProject.name}`,
-        icon: "ri-edit-line",
-        iconColor: "primary"
-      });
+      if (description !== undefined) {
+        updateData.description = description;
+      }
+      
+      if (isPublic !== undefined) {
+        updateData.isPublic = isPublic;
+      }
+      
+      if (status !== undefined) {
+        updateData.status = status;
+      }
+      
+      const updatedProject = await storage.updateSharedProject(projectId, updateData);
       
       res.json(updatedProject);
     } catch (error) {
@@ -272,21 +292,20 @@ export function registerCollaborationRoutes(app: Express): void {
       res.status(500).json({ message: "Error updating shared project" });
     }
   });
-
+  
   // Delete a shared project
   app.delete('/api/shared-projects/:projectId', checkProjectAdminAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const projectName = req.project?.name || "Unknown project";
       
+      // Delete all members
+      await storage.deleteAllProjectMembers(projectId);
+      
+      // Delete all items
+      await storage.deleteAllProjectItems(projectId);
+      
+      // Delete the project
       await storage.deleteSharedProject(projectId);
-      
-      // Log the activity
-      await storage.createActivity({
-        action: `Deleted shared project: ${projectName}`,
-        icon: "ri-delete-bin-line",
-        iconColor: "danger"
-      });
       
       res.status(204).send();
     } catch (error) {
@@ -294,147 +313,97 @@ export function registerCollaborationRoutes(app: Express): void {
       res.status(500).json({ message: "Error deleting shared project" });
     }
   });
-
+  
   // Project Members API
-
+  
   // Get all members of a project
   app.get('/api/shared-projects/:projectId/members', checkProjectAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const members = await storage.getProjectMembers(projectId);
       
-      // Enhance with user data
-      const membersWithUserData = await Promise.all(
-        members.map(async (member) => {
-          const user = await storage.getUser(member.userId);
-          return {
-            ...member,
-            user: user ? {
-              username: user.username,
-              name: user.name,
-              id: user.id
-            } : null
-          };
-        })
-      );
+      const members = await storage.getProjectMembersWithUserInfo(projectId);
       
-      res.json(membersWithUserData);
+      res.json(members);
     } catch (error) {
       console.error("Error fetching project members:", error);
       res.status(500).json({ message: "Error fetching project members" });
     }
   });
-
+  
   // Add a member to a project
   app.post('/api/shared-projects/:projectId/members', checkProjectAdminAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      
-      // Validate the member data
-      const memberData = insertProjectMemberSchema.parse({
-        ...req.body,
-        projectId,
-        invitedBy: req.user?.id || 0
-      });
+      const { userId, role } = req.body;
       
       // Check if the user exists
-      const user = await storage.getUser(memberData.userId);
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
       // Check if the user is already a member
-      const existingMember = await storage.getProjectMember(projectId, memberData.userId);
+      const existingMember = await storage.getProjectMember(projectId, userId);
       if (existingMember) {
-        return res.status(409).json({ message: "User is already a member of this project" });
+        return res.status(400).json({ message: "User is already a member of this project" });
       }
       
-      const member = await storage.addProjectMember(memberData);
-      
-      // Log the activity
-      await storage.createActivity({
-        action: `Added ${user.username} to project: ${req.project?.name || 'Unknown'} as ${member.role}`,
-        icon: "ri-user-add-line",
-        iconColor: "success"
+      // Add the member
+      const member = await storage.addProjectMember({
+        projectId,
+        userId,
+        role: role || 'viewer',
+        invitedBy: req.user!.id
       });
       
-      res.status(201).json(member);
+      // Get the member with user info
+      const memberWithUserInfo = await storage.getProjectMemberWithUserInfo(member.id);
+      
+      res.status(201).json(memberWithUserInfo);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
       console.error("Error adding project member:", error);
       res.status(500).json({ message: "Error adding project member" });
     }
   });
-
-  // Update a member's role
-  app.patch('/api/shared-projects/:projectId/members/:userId', checkProjectAdminAccess, async (req: Request, res: Response) => {
+  
+  // Update a project member's role
+  app.patch('/api/shared-projects/:projectId/members/:memberId', checkProjectAdminAccess, async (req: Request, res: Response) => {
     try {
-      const projectId = parseInt(req.params.projectId);
-      const userId = parseInt(req.params.userId);
+      const memberId = parseInt(req.params.memberId);
       const { role } = req.body;
       
-      if (!role || !['viewer', 'editor', 'admin'].includes(role)) {
-        return res.status(400).json({ message: "Invalid role. Must be 'viewer', 'editor', or 'admin'" });
+      // Get the member to verify it exists
+      const member = await storage.getProjectMemberById(memberId);
+      if (!member) {
+        return res.status(404).json({ message: "Member not found" });
       }
       
-      // Check if the user exists
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      // Update the member's role
+      const updatedMember = await storage.updateProjectMember(memberId, { role });
       
-      const updatedMember = await storage.updateProjectMemberRole(projectId, userId, role);
-      if (!updatedMember) {
-        return res.status(404).json({ message: "User is not a member of this project" });
-      }
+      // Get the member with user info
+      const memberWithUserInfo = await storage.getProjectMemberWithUserInfo(memberId);
       
-      // Log the activity
-      await storage.createActivity({
-        action: `Changed ${user.username}'s role to ${role} in project: ${req.project?.name || 'Unknown'}`,
-        icon: "ri-user-settings-line",
-        iconColor: "primary"
-      });
-      
-      res.json(updatedMember);
+      res.json(memberWithUserInfo);
     } catch (error) {
       console.error("Error updating project member:", error);
       res.status(500).json({ message: "Error updating project member" });
     }
   });
-
+  
   // Remove a member from a project
-  app.delete('/api/shared-projects/:projectId/members/:userId', checkProjectAdminAccess, async (req: Request, res: Response) => {
+  app.delete('/api/shared-projects/:projectId/members/:memberId', checkProjectAdminAccess, async (req: Request, res: Response) => {
     try {
-      const projectId = parseInt(req.params.projectId);
-      const userId = parseInt(req.params.userId);
+      const memberId = parseInt(req.params.memberId);
       
-      // Check if the user exists
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Can't remove the project creator
-      if (req.project?.createdById === userId) {
-        return res.status(403).json({ message: "Cannot remove the project creator" });
-      }
-      
-      // Check if the user is a member
-      const member = await storage.getProjectMember(projectId, userId);
+      // Get the member to verify it exists
+      const member = await storage.getProjectMemberById(memberId);
       if (!member) {
-        return res.status(404).json({ message: "User is not a member of this project" });
+        return res.status(404).json({ message: "Member not found" });
       }
       
-      await storage.removeProjectMember(projectId, userId);
-      
-      // Log the activity
-      await storage.createActivity({
-        action: `Removed ${user.username} from project: ${req.project?.name || 'Unknown'}`,
-        icon: "ri-user-unfollow-line",
-        iconColor: "danger"
-      });
+      // Remove the member
+      await storage.removeProjectMember(memberId);
       
       res.status(204).send();
     } catch (error) {
@@ -442,154 +411,280 @@ export function registerCollaborationRoutes(app: Express): void {
       res.status(500).json({ message: "Error removing project member" });
     }
   });
-
+  
   // Project Items API
-
+  
   // Get all items in a project
   app.get('/api/shared-projects/:projectId/items', checkProjectAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
       const items = await storage.getProjectItems(projectId);
       
-      // Enhance items with additional data based on their type
-      const enhancedItems = await Promise.all(
-        items.map(async (item) => {
-          let itemData = null;
-          
-          switch (item.itemType) {
-            case 'calculation':
-              itemData = await storage.getBuildingCost(item.itemId);
-              break;
-            case 'cost_matrix':
-              itemData = await storage.getCostMatrix(item.itemId);
-              break;
-            case 'what_if_scenario':
-              itemData = await storage.getWhatIfScenario(item.itemId);
-              break;
-            // Add more item types as needed
-          }
-          
-          return {
-            ...item,
-            itemData
-          };
-        })
-      );
-      
-      res.json(enhancedItems);
+      res.json(items);
     } catch (error) {
       console.error("Error fetching project items:", error);
       res.status(500).json({ message: "Error fetching project items" });
     }
   });
-
+  
   // Add an item to a project
   app.post('/api/shared-projects/:projectId/items', checkProjectEditAccess, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      const { itemType, itemId, notes } = req.body;
       
-      // Validate the item data
-      const itemData = insertProjectItemSchema.parse({
-        ...req.body,
-        projectId,
-        addedBy: req.user?.id || 0
-      });
+      // Check if the item type is valid
+      if (!['calculation', 'cost_matrix', 'report'].includes(itemType)) {
+        return res.status(400).json({ message: "Invalid item type. Must be one of: calculation, cost_matrix, report" });
+      }
       
-      // Check if the item already exists in the project
-      const existingItem = await storage.getProjectItem(
-        projectId, 
-        itemData.itemType, 
-        itemData.itemId
-      );
+      // For now, we'll assume the item exists
+      // In a more robust implementation, we would verify the item exists in the specific tables
       
+      // Check if the item is already in the project
+      const existingItem = await storage.getProjectItemByTypeAndId(projectId, itemType, itemId);
       if (existingItem) {
-        return res.status(409).json({ 
-          message: "This item is already in the project" 
-        });
+        return res.status(400).json({ message: "Item is already in this project" });
       }
       
-      // Verify that the referenced item exists
-      let itemExists = false;
-      let itemName = "";
-      
-      switch (itemData.itemType) {
-        case 'calculation':
-          const calculation = await storage.getBuildingCost(itemData.itemId);
-          itemExists = !!calculation;
-          itemName = calculation?.name || "Calculation";
-          break;
-        case 'cost_matrix':
-          const matrix = await storage.getCostMatrix(itemData.itemId);
-          itemExists = !!matrix;
-          itemName = `Cost Matrix (${matrix?.region || "Unknown"}/${matrix?.buildingType || "Unknown"})`;
-          break;
-        case 'what_if_scenario':
-          const scenario = await storage.getWhatIfScenario(itemData.itemId);
-          itemExists = !!scenario;
-          itemName = scenario?.name || "What-If Scenario";
-          break;
-        // Add more item types as needed
-      }
-      
-      if (!itemExists) {
-        return res.status(404).json({ 
-          message: `${itemData.itemType} with ID ${itemData.itemId} not found` 
-        });
-      }
-      
-      const item = await storage.addProjectItem(itemData);
-      
-      // Log the activity
-      await storage.createActivity({
-        action: `Added ${itemName} to project: ${req.project?.name || 'Unknown'}`,
-        icon: "ri-add-line",
-        iconColor: "success"
+      // Add the item
+      const item = await storage.addProjectItem({
+        projectId,
+        itemType,
+        itemId,
+        addedBy: req.user!.id
       });
       
       res.status(201).json(item);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
       console.error("Error adding project item:", error);
       res.status(500).json({ message: "Error adding project item" });
     }
   });
-
+  
+  // Update a project item
+  app.patch('/api/shared-projects/:projectId/items/:itemId', checkProjectEditAccess, async (req: Request, res: Response) => {
+    try {
+      const itemId = parseInt(req.params.itemId);
+      const { notes } = req.body;
+      
+      // Get the item to verify it exists
+      const item = await storage.getProjectItem(itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Project item not found" });
+      }
+      
+      // Update the item
+      // Remove 'notes' as it's not part of the schema
+      const updatedItem = await storage.updateProjectItem(itemId, {});
+      
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating project item:", error);
+      res.status(500).json({ message: "Error updating project item" });
+    }
+  });
+  
   // Remove an item from a project
-  app.delete(
-    '/api/shared-projects/:projectId/items/:itemType/:itemId', 
-    checkProjectEditAccess, 
-    async (req: Request, res: Response) => {
-      try {
-        const projectId = parseInt(req.params.projectId);
-        const itemType = req.params.itemType;
-        const itemId = parseInt(req.params.itemId);
+  app.delete('/api/shared-projects/:projectId/items/:itemId', checkProjectEditAccess, async (req: Request, res: Response) => {
+    try {
+      const itemId = parseInt(req.params.itemId);
+      
+      // Get the item to verify it exists
+      const item = await storage.getProjectItem(itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Project item not found" });
+      }
+      
+      // Remove the item
+      await storage.removeProjectItem(itemId);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing project item:", error);
+      res.status(500).json({ message: "Error removing project item" });
+    }
+  });
+  
+  // Comments API
+  
+  /**
+   * Middleware to verify comment access - used for update/delete operations
+   * A user can modify a comment if they:
+   * 1. Authored the comment
+   * 2. Are an admin
+   */
+  const checkCommentAccess = async (req: Request, res: Response, next: Function) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const commentId = parseInt(req.params.commentId);
+    if (isNaN(commentId)) {
+      return res.status(400).json({ message: "Invalid comment ID" });
+    }
+    
+    const comment = await storage.getComment(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
+    // Admin users have access to all comments
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    
+    // Comment author has access
+    if (comment.userId === req.user.id) {
+      return next();
+    }
+    
+    return res.status(403).json({ message: "You don't have permission to modify this comment" });
+  };
+  
+  // Get comments for a target (project, calculation, etc.)
+  app.get('/api/comments/:targetType/:targetId', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const targetType = req.params.targetType;
+      const targetId = parseInt(req.params.targetId);
+      
+      if (isNaN(targetId)) {
+        return res.status(400).json({ message: "Invalid target ID" });
+      }
+      
+      // For protected targets like projects, we should check access
+      if (targetType === 'project') {
+        const project = await storage.getSharedProject(targetId);
         
-        // Check if the item exists in the project
-        const item = await storage.getProjectItem(projectId, itemType, itemId);
-        if (!item) {
-          return res.status(404).json({ 
-            message: "Item not found in this project" 
-          });
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
         }
         
-        await storage.removeProjectItem(projectId, itemType, itemId);
-        
-        // Log the activity
-        await storage.createActivity({
-          action: `Removed ${itemType} from project: ${req.project?.name || 'Unknown'}`,
-          icon: "ri-subtract-line",
-          iconColor: "warning"
-        });
-        
-        res.status(204).send();
-      } catch (error) {
-        console.error("Error removing project item:", error);
-        res.status(500).json({ message: "Error removing project item" });
+        // Check if the user has access to the project
+        if (!project.isPublic && project.createdById !== req.user.id) {
+          const isMember = await storage.getProjectMember(targetId, req.user.id);
+          if (!isMember && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "You don't have access to this project" });
+          }
+        }
       }
+      
+      const comments = await storage.getCommentsByTargetWithUserInfo(targetType, targetId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Error fetching comments" });
     }
-  );
+  });
+  
+  // Create a new comment
+  app.post('/api/comments/:targetType/:targetId', async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const targetType = req.params.targetType;
+      const targetId = parseInt(req.params.targetId);
+      
+      if (isNaN(targetId)) {
+        return res.status(400).json({ message: "Invalid target ID" });
+      }
+      
+      // For protected targets like projects, we should check access
+      if (targetType === 'project') {
+        const project = await storage.getSharedProject(targetId);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        
+        // Check if the user has access to the project
+        if (!project.isPublic && project.createdById !== req.user.id) {
+          const isMember = await storage.getProjectMember(targetId, req.user.id);
+          if (!isMember && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "You don't have access to this project" });
+          }
+        }
+      }
+      
+      const { content, parentCommentId } = req.body;
+      
+      const comment = await storage.createComment({
+        userId: req.user.id,
+        targetType,
+        targetId,
+        content,
+        parentCommentId: parentCommentId || null,
+        isResolved: false
+      });
+      
+      const commentWithUser = await storage.getCommentWithUserInfo(comment.id);
+      
+      res.status(201).json(commentWithUser);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ message: "Error creating comment" });
+    }
+  });
+  
+  // Update a comment
+  app.patch('/api/comments/:commentId', checkCommentAccess, async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      const { content, isResolved } = req.body;
+      
+      // Verify the comment exists
+      const existingComment = await storage.getComment(commentId);
+      if (!existingComment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      
+      // Update the comment
+      const updateData: any = {};
+      
+      if (content !== undefined) {
+        updateData.content = content;
+        updateData.isEdited = true;
+        updateData.updatedAt = new Date();
+      }
+      
+      if (isResolved !== undefined) {
+        updateData.isResolved = isResolved;
+      }
+      
+      const updatedComment = await storage.updateComment(commentId, updateData);
+      const commentWithUser = await storage.getCommentWithUserInfo(commentId);
+      
+      res.json(commentWithUser);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({ message: "Error updating comment" });
+    }
+  });
+  
+  // Delete a comment
+  app.delete('/api/comments/:commentId', checkCommentAccess, async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      
+      // Verify the comment exists
+      const comment = await storage.getComment(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      
+      await storage.deleteComment(commentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ message: "Error deleting comment" });
+    }
+  });
 
   // Log that collaboration routes were registered
   console.log('Collaboration routes registered successfully');

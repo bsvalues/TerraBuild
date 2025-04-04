@@ -18,7 +18,8 @@ import {
   scenarioVariations, type ScenarioVariation, type InsertScenarioVariation,
   sharedProjects, type SharedProject, type InsertSharedProject,
   projectMembers, type ProjectMember, type InsertProjectMember,
-  projectItems, type ProjectItem, type InsertProjectItem
+  projectItems, type ProjectItem, type InsertProjectItem,
+  comments, type Comment, type InsertComment
 } from "@shared/schema";
 
 // Storage interface
@@ -176,6 +177,7 @@ export interface IStorage {
   createSharedProject(project: InsertSharedProject): Promise<SharedProject>;
   updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined>;
   deleteSharedProject(id: number): Promise<void>;
+  getAccessibleSharedProjects(userId: number): Promise<SharedProject[]>;
   
   // Project Members
   getProjectMembers(projectId: number): Promise<ProjectMember[]>;
@@ -183,12 +185,32 @@ export interface IStorage {
   addProjectMember(member: InsertProjectMember): Promise<ProjectMember>;
   updateProjectMemberRole(projectId: number, userId: number, role: string): Promise<ProjectMember | undefined>;
   removeProjectMember(projectId: number, userId: number): Promise<void>;
+  getProjectMemberById(id: number): Promise<ProjectMember | undefined>;
+  updateProjectMember(id: number, data: Partial<ProjectMember>): Promise<ProjectMember | undefined>;
+  getProjectMembersWithUserInfo(projectId: number): Promise<(ProjectMember & { user: { username: string, name: string | null } })[]>;
+  getProjectMemberWithUserInfo(id: number): Promise<(ProjectMember & { user: { username: string, name: string | null } }) | undefined>;
+  deleteAllProjectMembers(projectId: number): Promise<void>;
+  removeProjectMember(id: number): Promise<void>;
   
   // Project Items
   getProjectItems(projectId: number): Promise<ProjectItem[]>;
   getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined>;
   addProjectItem(item: InsertProjectItem): Promise<ProjectItem>;
   removeProjectItem(projectId: number, itemType: string, itemId: number): Promise<void>;
+  getProjectItemByTypeAndId(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined>;
+  getProjectItem(id: number): Promise<ProjectItem | undefined>;
+  updateProjectItem(id: number, data: Partial<ProjectItem>): Promise<ProjectItem | undefined>;
+  deleteAllProjectItems(projectId: number): Promise<void>;
+  removeProjectItem(id: number): Promise<void>;
+  
+  // Comments
+  getCommentsByTarget(targetType: string, targetId: number): Promise<Comment[]>;
+  getComment(id: number): Promise<Comment | undefined>;
+  createComment(comment: InsertComment): Promise<Comment>;
+  updateComment(id: number, data: Partial<Comment>): Promise<Comment | undefined>;
+  deleteComment(id: number): Promise<void>;
+  getCommentWithUserInfo(id: number): Promise<(Comment & { user: { username: string, name: string | null } }) | undefined>;
+  getCommentsByTargetWithUserInfo(targetType: string, targetId: number): Promise<(Comment & { user: { username: string, name: string | null } })[]>;
 }
 
 // Memory Storage implementation
@@ -209,6 +231,7 @@ export class MemStorage implements IStorage {
   private sharedProjects: Map<number, SharedProject>;
   private projectMembers: Map<number, ProjectMember>;
   private projectItems: Map<number, ProjectItem>;
+  private comments: Map<number, Comment>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -226,6 +249,7 @@ export class MemStorage implements IStorage {
   private currentSharedProjectId: number;
   private currentProjectMemberId: number;
   private currentProjectItemId: number;
+  private currentCommentId: number;
   
   constructor() {
     this.users = new Map();
@@ -244,6 +268,7 @@ export class MemStorage implements IStorage {
     this.sharedProjects = new Map();
     this.projectMembers = new Map();
     this.projectItems = new Map();
+    this.comments = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -261,6 +286,7 @@ export class MemStorage implements IStorage {
     this.currentSharedProjectId = 1;
     this.currentProjectMemberId = 1;
     this.currentProjectItemId = 1;
+    this.currentCommentId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -1729,6 +1755,88 @@ export class MemStorage implements IStorage {
     if (item) {
       this.projectItems.delete(item.id);
     }
+  }
+
+  // Comments
+  async getCommentsByTarget(targetType: string, targetId: number): Promise<Comment[]> {
+    return Array.from(this.comments.values())
+      .filter(comment => comment.targetType === targetType && comment.targetId === targetId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+  
+  async getComment(id: number): Promise<Comment | undefined> {
+    return this.comments.get(id);
+  }
+  
+  async createComment(comment: InsertComment): Promise<Comment> {
+    const id = this.currentCommentId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    const isResolved = comment.isResolved || false;
+    const isEdited = false;
+    
+    const newComment: Comment = {
+      ...comment,
+      id,
+      createdAt,
+      updatedAt,
+      isResolved,
+      isEdited
+    };
+    
+    this.comments.set(id, newComment);
+    return newComment;
+  }
+  
+  async updateComment(id: number, data: Partial<Comment>): Promise<Comment | undefined> {
+    const comment = this.comments.get(id);
+    if (!comment) return undefined;
+    
+    const updatedComment: Comment = {
+      ...comment,
+      ...data,
+      updatedAt: new Date(),
+      isEdited: true
+    };
+    
+    this.comments.set(id, updatedComment);
+    return updatedComment;
+  }
+  
+  async deleteComment(id: number): Promise<void> {
+    this.comments.delete(id);
+  }
+  
+  async getCommentWithUserInfo(id: number): Promise<(Comment & { user: { username: string, name: string | null } }) | undefined> {
+    const comment = this.comments.get(id);
+    if (!comment) return undefined;
+    
+    const user = this.users.get(comment.userId);
+    if (!user) return undefined;
+    
+    return {
+      ...comment,
+      user: {
+        username: user.username,
+        name: user.name
+      }
+    };
+  }
+  
+  async getCommentsByTargetWithUserInfo(targetType: string, targetId: number): Promise<(Comment & { user: { username: string, name: string | null } })[]> {
+    const comments = await this.getCommentsByTarget(targetType, targetId);
+    
+    return comments.map(comment => {
+      const user = this.users.get(comment.userId);
+      
+      return {
+        ...comment,
+        user: {
+          username: user ? user.username : 'Unknown',
+          name: user ? user.name : null
+        }
+      };
+    });
   }
 }
 

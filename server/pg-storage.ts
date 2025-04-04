@@ -1054,4 +1054,192 @@ export class PostgresStorage implements IStorage {
     
     return { totalImpact, variations };
   }
+
+  // Comments Methods
+  async getCommentsByTarget(targetType: string, targetId: number): Promise<Comment[]> {
+    return await db.select().from(comments)
+      .where(and(
+        eq(comments.targetType, targetType),
+        eq(comments.targetId, targetId)
+      ))
+      .orderBy(comments.createdAt);
+  }
+
+  async getComment(id: number): Promise<Comment | undefined> {
+    const result = await db.select().from(comments)
+      .where(eq(comments.id, id));
+    return result[0];
+  }
+
+  async createComment(comment: InsertComment): Promise<Comment> {
+    const result = await db.insert(comments).values({
+      ...comment,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isEdited: false
+    }).returning();
+    return result[0];
+  }
+
+  async updateComment(id: number, data: Partial<Comment>): Promise<Comment | undefined> {
+    const result = await db.update(comments)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(comments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteComment(id: number): Promise<void> {
+    await db.delete(comments)
+      .where(eq(comments.id, id));
+  }
+
+  async getCommentWithUserInfo(id: number): Promise<(Comment & { user: { username: string, name: string | null } }) | undefined> {
+    const result = await db.select({
+      ...comments,
+      user: {
+        username: users.username,
+        name: users.name
+      }
+    })
+    .from(comments)
+    .innerJoin(users, eq(comments.userId, users.id))
+    .where(eq(comments.id, id));
+    
+    return result[0];
+  }
+
+  async getCommentsByTargetWithUserInfo(targetType: string, targetId: number): Promise<(Comment & { user: { username: string, name: string | null } })[]> {
+    return await db.select({
+      ...comments,
+      user: {
+        username: users.username,
+        name: users.name
+      }
+    })
+    .from(comments)
+    .innerJoin(users, eq(comments.userId, users.id))
+    .where(and(
+      eq(comments.targetType, targetType),
+      eq(comments.targetId, targetId)
+    ))
+    .orderBy(comments.createdAt);
+  }
+
+  async getProjectItemByTypeAndId(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
+    const result = await db.select().from(projectItems)
+      .where(and(
+        eq(projectItems.projectId, projectId),
+        eq(projectItems.itemType, itemType),
+        eq(projectItems.itemId, itemId)
+      ));
+    return result[0];
+  }
+
+  async getProjectMemberById(id: number): Promise<ProjectMember | undefined> {
+    const result = await db.select().from(projectMembers)
+      .where(eq(projectMembers.id, id));
+    return result[0];
+  }
+
+  async updateProjectMember(id: number, data: Partial<ProjectMember>): Promise<ProjectMember | undefined> {
+    const result = await db.update(projectMembers)
+      .set(data)
+      .where(eq(projectMembers.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getProjectMembersWithUserInfo(projectId: number): Promise<(ProjectMember & { user: { username: string, name: string | null } })[]> {
+    return await db.select({
+      ...projectMembers,
+      user: {
+        username: users.username,
+        name: users.name
+      }
+    })
+    .from(projectMembers)
+    .innerJoin(users, eq(projectMembers.userId, users.id))
+    .where(eq(projectMembers.projectId, projectId));
+  }
+
+  async getProjectMemberWithUserInfo(id: number): Promise<(ProjectMember & { user: { username: string, name: string | null } }) | undefined> {
+    const result = await db.select({
+      ...projectMembers,
+      user: {
+        username: users.username,
+        name: users.name
+      }
+    })
+    .from(projectMembers)
+    .innerJoin(users, eq(projectMembers.userId, users.id))
+    .where(eq(projectMembers.id, id));
+    
+    return result[0];
+  }
+
+  async getAccessibleSharedProjects(userId: number): Promise<SharedProject[]> {
+    // Get projects created by the user
+    const ownedProjects = await db.select().from(sharedProjects)
+      .where(eq(sharedProjects.createdById, userId));
+    
+    // Get public projects
+    const publicProjects = await db.select().from(sharedProjects)
+      .where(eq(sharedProjects.isPublic, true));
+    
+    // Get projects where the user is a member
+    const memberProjectIds = (await db.select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.userId, userId))).map(row => row.projectId);
+    
+    const memberProjects = memberProjectIds.length > 0 
+      ? await db.select().from(sharedProjects)
+        .where(inArray(sharedProjects.id, memberProjectIds))
+      : [];
+    
+    // Combine all projects and remove duplicates
+    const allProjects = [...ownedProjects, ...publicProjects, ...memberProjects];
+    const uniqueProjects = allProjects.filter((project, index, self) =>
+      index === self.findIndex(p => p.id === project.id)
+    );
+    
+    return uniqueProjects;
+  }
+
+  async deleteAllProjectMembers(projectId: number): Promise<void> {
+    await db.delete(projectMembers)
+      .where(eq(projectMembers.projectId, projectId));
+  }
+
+  async deleteAllProjectItems(projectId: number): Promise<void> {
+    await db.delete(projectItems)
+      .where(eq(projectItems.projectId, projectId));
+  }
+
+  async updateProjectItem(id: number, data: Partial<ProjectItem>): Promise<ProjectItem | undefined> {
+    const result = await db.update(projectItems)
+      .set(data)
+      .where(eq(projectItems.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getProjectItem(id: number): Promise<ProjectItem | undefined> {
+    const result = await db.select().from(projectItems)
+      .where(eq(projectItems.id, id));
+    return result[0];
+  }
+
+  async removeProjectMember(id: number): Promise<void> {
+    await db.delete(projectMembers)
+      .where(eq(projectMembers.id, id));
+  }
+
+  async removeProjectItem(id: number): Promise<void> {
+    await db.delete(projectItems)
+      .where(eq(projectItems.id, id));
+  }
 }
