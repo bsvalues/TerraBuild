@@ -93,7 +93,7 @@ interface CollaborationContextType {
 }
 
 // Create the context
-const CollaborationContext = createContext(undefined);
+const CollaborationContext = createContext<CollaborationContextType | undefined>(undefined);
 
 // Provider component
 export const CollaborationProvider = ({ children }: { children: ReactNode }) => {
@@ -167,7 +167,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
     setIsLoadingMembers(true);
     
     try {
-      const response = await apiRequest(`/api/projects/${projectId}/members`);
+      const response = await apiRequest(`/api/shared-projects/${projectId}/members`);
       const data = await response.json();
       setProjectMembers(data);
     } catch (error) {
@@ -189,7 +189,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
     setIsLoadingItems(true);
     
     try {
-      const response = await apiRequest(`/api/projects/${projectId}/items`);
+      const response = await apiRequest(`/api/shared-projects/${projectId}/items`);
       const data = await response.json();
       setProjectItems(data);
     } catch (error) {
@@ -314,7 +314,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
 
   // Add a member to a project
   const addMember = async (projectId: number, userId: number, role: string): Promise<void> => {
-    const response = await apiRequest(`/api/projects/${projectId}/members`, {
+    const response = await apiRequest(`/api/shared-projects/${projectId}/members`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
 
   // Update a member's role in a project
   const updateMemberRole = async (projectId: number, userId: number, role: string): Promise<void> => {
-    const response = await apiRequest(`/api/projects/${projectId}/members/${userId}/role`, {
+    const response = await apiRequest(`/api/shared-projects/${projectId}/members/${userId}/role`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -364,7 +364,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
 
   // Remove a member from a project
   const removeMember = async (projectId: number, userId: number): Promise<void> => {
-    const response = await apiRequest(`/api/projects/${projectId}/members/${userId}`, {
+    const response = await apiRequest(`/api/shared-projects/${projectId}/members/${userId}`, {
       method: 'DELETE',
     });
     
@@ -384,7 +384,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
 
   // Add an item to a project
   const addProjectItem = async (projectId: number, itemType: string, itemId: number): Promise<void> => {
-    const response = await apiRequest(`/api/projects/${projectId}/items`, {
+    const response = await apiRequest(`/api/shared-projects/${projectId}/items`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -406,7 +406,7 @@ export const CollaborationProvider = ({ children }: { children: ReactNode }) => 
 
   // Remove an item from a project
   const removeProjectItem = async (projectId: number, itemType: string, itemId: number): Promise<void> => {
-    const response = await apiRequest(`/api/projects/${projectId}/items/${itemType}/${itemId}`, {
+    const response = await apiRequest(`/api/shared-projects/${projectId}/items/${itemType}/${itemId}`, {
       method: 'DELETE',
     });
     
