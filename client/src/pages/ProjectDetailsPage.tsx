@@ -367,7 +367,7 @@ const ProjectDetailsPage: React.FC = () => {
         </div>
         
         <div className="flex flex-wrap gap-2">
-          <Badge variant={currentProject.isPublic ? 'outline' : 'secondary'} className="flex items-center gap-1">
+          <Badge variant={currentProject.isPublic ? 'outline' : 'default'} className="flex items-center gap-1">
             {currentProject.isPublic ? (
               <>
                 <GlobeIcon className="h-3 w-3" />
@@ -442,7 +442,7 @@ const ProjectDetailsPage: React.FC = () => {
                                 {icon}
                                 <span className="ml-2">{label}s</span>
                               </div>
-                              <Badge variant="secondary">{count}</Badge>
+                              <Badge variant="default">{count}</Badge>
                             </div>
                           );
                         })}

@@ -222,7 +222,7 @@ const SharedProjectsPage: React.FC = () => {
                   <span>Updated {formatDate(project.updatedAt)}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant={project.isPublic ? 'outline' : 'secondary'} className="flex items-center gap-1">
+                  <Badge variant={project.isPublic ? 'outline' : 'default'} className="flex items-center gap-1">
                     {project.isPublic ? (
                       <>
                         <GlobeIcon className="h-3 w-3" />
