@@ -1,290 +1,382 @@
 import React, { useState } from 'react';
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
-} from '@/components/ui/table';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import { useCollaboration } from '@/contexts/CollaborationContext';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { MoreHorizontal, Shield, User, UserMinus } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { useProjectContext, ProjectMember } from '@/contexts/ProjectContext';
-import { useQueryClient } from '@tanstack/react-query';
-
-// Using ProjectMember type from ProjectContext
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
+import {
+  Users,
+  MoreHorizontal,
+  UserX,
+  ShieldAlert,
+  Edit,
+  Eye,
+  UserCheck,
+  UserCog,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ProjectMembersTableProps {
   projectId: number;
-  members: ProjectMember[];
   isLoading: boolean;
-  currentUserRole: string;
   currentUserId: number;
+  currentUserRole: string;
 }
 
-const ProjectMembersTable: React.FC<ProjectMembersTableProps> = ({
+export default function ProjectMembersTable({
   projectId,
-  members,
   isLoading,
+  currentUserId,
   currentUserRole,
-  currentUserId
-}) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [removingUserId, setRemovingUserId] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const { project } = useProjectContext();
-
-  const canManageMembers = currentUserRole === 'admin' || (project && project.createdById === currentUserId);
-
-  const getRoleBadgeVariant = (role: string): "default" | "danger" | "outline" | "success" | "warning" | null | undefined => {
-    switch (role) {
-      case 'admin':
-        return 'danger';
-      case 'editor':
-        return 'default';
-      case 'viewer':
-      default:
-        return 'outline';
-    }
+}: ProjectMembersTableProps) {
+  const {
+    projectMembers,
+    updateMemberRole,
+    removeProjectMember,
+    refreshMembers,
+  } = useCollaboration();
+  
+  const [memberToRemove, setMemberToRemove] = useState<{id: number, name: string} | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Check if current user can manage members
+  const canManageMembers = currentUserRole === 'admin' || currentUserRole === 'owner';
+  
+  // Remove a member
+  const handleRemoveMember = (memberId: number, memberName: string) => {
+    setMemberToRemove({ id: memberId, name: memberName });
+    setShowRemoveConfirm(true);
   };
-
-  const handleRemoveMember = async () => {
-    if (!removingUserId) return;
+  
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
     
-    setIsActionLoading(true);
-    
+    setIsProcessing(true);
     try {
-      const response = await apiRequest(`/api/shared-projects/${projectId}/members/${removingUserId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove member');
-      }
-      
-      // Invalidate query to refresh members list
-      queryClient.invalidateQueries({ queryKey: [`/api/shared-projects/${projectId}/members`] });
+      await removeProjectMember(projectId, memberToRemove.id);
+      setShowRemoveConfirm(false);
+      setMemberToRemove(null);
       
       toast({
         title: 'Member removed',
-        description: 'The member has been removed from the project',
+        description: `${memberToRemove.name} has been removed from the project`,
       });
       
+      refreshMembers();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to remove member',
+        description: 'Failed to remove member from project',
         variant: 'destructive',
       });
     } finally {
-      setIsActionLoading(false);
-      setIsDialogOpen(false);
-      setRemovingUserId(null);
+      setIsProcessing(false);
     }
   };
   
-  const handleChangeRole = async (userId: number, newRole: string) => {
-    setIsActionLoading(true);
-    
+  // Update member role
+  const handleRoleChange = async (memberId: number, newRole: string) => {
+    setIsProcessing(true);
     try {
-      const response = await apiRequest(`/api/shared-projects/${projectId}/members/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to change role');
-      }
-      
-      // Invalidate query to refresh members list
-      queryClient.invalidateQueries({ queryKey: [`/api/shared-projects/${projectId}/members`] });
+      await updateMemberRole(projectId, memberId, newRole);
       
       toast({
         title: 'Role updated',
-        description: `The member's role has been updated to ${newRole}`,
+        description: `Member role has been updated to ${newRole}`,
       });
       
+      refreshMembers();
     } catch (error) {
-      console.error('Error changing role:', error);
+      console.error('Error updating member role:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to change role',
+        description: 'Failed to update member role',
         variant: 'destructive',
       });
     } finally {
-      setIsActionLoading(false);
+      setIsProcessing(false);
     }
   };
-
-  const confirmRemoveMember = (userId: number) => {
-    setRemovingUserId(userId);
-    setIsDialogOpen(true);
-  };
-
-  // Get project owner
-  const projectOwner = members.find(member => project && member.userId === project.createdById);
   
-  // Get sorted members (owner first, then by role, then alphabetically)
-  const sortedMembers = [...members].sort((a, b) => {
-    // Project owner always first
-    if (project && a.userId === project.createdById) return -1;
-    if (project && b.userId === project.createdById) return 1;
+  // Helper function to determine the display name
+  const getMemberDisplayName = (member: any) => {
+    return member.user?.name || member.user?.username || `User ${member.userId}`;
+  };
+  
+  // Get initials for avatar
+  const getInitials = (name?: string): string => {
+    if (!name) return '?';
     
-    // Then sort by role importance
-    const roleImportance = { 'admin': 0, 'editor': 1, 'viewer': 2 };
-    const aImportance = roleImportance[a.role as keyof typeof roleImportance] || 3;
-    const bImportance = roleImportance[b.role as keyof typeof roleImportance] || 3;
-    
-    if (aImportance !== bImportance) {
-      return aImportance - bImportance;
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
     }
     
-    // Finally sort by username
-    return (a.user.username || '').localeCompare(b.user.username || '');
-  });
-
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  };
+  
+  // Helper function to render role badge
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return (
+          <Badge className="bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200">
+            <Crown className="h-3 w-3 mr-1" />
+            Owner
+          </Badge>
+        );
+      case 'admin':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200">
+            <ShieldAlert className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
+      case 'editor':
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200">
+            <Edit className="h-3 w-3 mr-1" />
+            Editor
+          </Badge>
+        );
+      case 'viewer':
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200">
+            <Eye className="h-3 w-3 mr-1" />
+            Viewer
+          </Badge>
+        );
+      default:
+        return <Badge>{role}</Badge>;
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Project Members</h3>
-      
-      <div className="border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Username</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center">
+          <Users className="h-5 w-5 mr-2" />
+          Project Members
+        </CardTitle>
+        <CardDescription>
+          {projectMembers.length} member{projectMembers.length !== 1 ? 's' : ''} in this project
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center">Loading members...</TableCell>
+                <TableHead>Member</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Joined</TableHead>
+                {canManageMembers && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
-            ) : sortedMembers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">No members found</TableCell>
-              </TableRow>
-            ) : (
-              sortedMembers.map((member) => {
-                const isOwner = project && member.userId === project.createdById;
+            </TableHeader>
+            <TableBody>
+              {projectMembers.map((member) => {
                 const isCurrentUser = member.userId === currentUserId;
-                const canBeManaged = canManageMembers && !isOwner && (!isCurrentUser || currentUserRole === 'admin');
+                const isOwner = member.role === 'owner';
+                const canEdit = canManageMembers && !isOwner && member.userId !== currentUserId;
+                const displayName = getMemberDisplayName(member);
                 
                 return (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium flex items-center gap-2">
-                      {isOwner ? (
-                        <Shield className="h-4 w-4 text-primary" />
-                      ) : (
-                        <User className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      {member.user.username}
-                      {isCurrentUser && <Badge variant="outline">You</Badge>}
-                    </TableCell>
-                    <TableCell>{member.user.name || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={getRoleBadgeVariant(member.role)}>
-                        {member.role}
-                      </Badge>
-                      {isOwner && <Badge variant="outline" className="ml-2">Owner</Badge>}
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{getInitials(member.user?.name)}</AvatarFallback>
+                          {member.user?.name && (
+                            <AvatarImage
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                member.user.name
+                              )}&background=random`}
+                              alt={member.user.name}
+                            />
+                          )}
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {displayName}
+                            {isCurrentUser && (
+                              <span className="ml-2 text-xs text-muted-foreground">(You)</span>
+                            )}
+                          </div>
+                          {member.user?.username && (
+                            <div className="text-xs text-muted-foreground">
+                              @{member.user.username}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
+                    <TableCell>{getRoleBadge(member.role)}</TableCell>
                     <TableCell>
-                      {new Date(member.joinedAt).toLocaleDateString()}
+                      {format(new Date(member.joinedAt), "MMM d, yyyy")}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {canBeManaged ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={isActionLoading}>
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {/* Role change options */}
-                            <DropdownMenuItem
-                              disabled={member.role === 'admin' || isActionLoading}
-                              onClick={() => handleChangeRole(member.userId, 'admin')}
-                            >
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={member.role === 'editor' || isActionLoading}
-                              onClick={() => handleChangeRole(member.userId, 'editor')}
-                            >
-                              Make Editor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={member.role === 'viewer' || isActionLoading}
-                              onClick={() => handleChangeRole(member.userId, 'viewer')}
-                            >
-                              Make Viewer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              disabled={isActionLoading}
-                              onClick={() => confirmRemoveMember(member.userId)}
-                            >
-                              <UserMinus className="h-4 w-4 mr-2" />
-                              Remove from Project
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
+                    {canManageMembers && (
+                      <TableCell className="text-right">
+                        {!canEdit ? (
+                          <div className="text-xs text-muted-foreground">
+                            {isCurrentUser
+                              ? "You can't edit your own role"
+                              : isOwner
+                                ? "Owner can't be edited"
+                                : "Insufficient permissions"}
+                          </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  <UserCog className="h-4 w-4 mr-2" />
+                                  Change Role
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                  <DropdownMenuRadioGroup
+                                    value={member.role}
+                                    onValueChange={(value) => handleRoleChange(member.userId, value)}
+                                  >
+                                    <DropdownMenuRadioItem value="admin" disabled={isProcessing}>
+                                      <ShieldAlert className="h-4 w-4 mr-2" />
+                                      Admin
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="editor" disabled={isProcessing}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Editor
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="viewer" disabled={isProcessing}>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Viewer
+                                    </DropdownMenuRadioItem>
+                                  </DropdownMenuRadioGroup>
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
+                              
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem
+                                onClick={() => handleRemoveMember(member.userId, displayName)}
+                                className="text-destructive focus:text-destructive"
+                                disabled={isProcessing}
+                              >
+                                <UserX className="h-4 w-4 mr-2" />
+                                Remove Member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove this member from the project? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isActionLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleRemoveMember} 
-              disabled={isActionLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isActionLoading ? 'Removing...' : 'Remove'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+              })}
+            </TableBody>
+          </Table>
+        )}
+        
+        {/* Remove Member Confirmation Dialog */}
+        <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Member</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove {memberToRemove?.name || 'this member'} from the project? 
+                They will lose access to all project resources.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmRemoveMember}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  "Remove Member"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   );
-};
+}
 
-export default ProjectMembersTable;
+// This Icon isn't in lucide-react by default, so we create it
+function Crown(props: any) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+    </svg>
+  );
+}

@@ -1,43 +1,19 @@
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useCollaboration } from '@/contexts/CollaborationContext';
-import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import {
-  Globe,
-  Lock,
-  Users,
-  User,
-  Edit,
-  EyeIcon,
-  Shield,
-  Trash2,
-} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,298 +24,547 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import InviteUserDialog from './InviteUserDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import {
+  Copy,
+  Globe,
+  Lock,
+  Loader2,
+  Share2,
+  Link2,
+  CalendarIcon,
+  Clock,
+  Key,
+  ShieldAlert,
+  Eye,
+  Edit,
+  CheckCircle,
+  Trash2,
+  PlusCircle
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 interface ProjectSharingControlsProps {
   projectId: number;
+  projectName: string;
   isPublic: boolean;
   isOwner: boolean;
+  currentUserId: number;
+  currentUserRole: string;
 }
 
-const ProjectSharingControls: React.FC<ProjectSharingControlsProps> = ({
+export default function ProjectSharingControls({
   projectId,
+  projectName,
   isPublic,
   isOwner,
-}) => {
-  const { toast } = useToast();
-  const { 
-    projectMembers, 
-    updateProject, 
-    updateMemberRole, 
-    removeMember,
-    currentProject,
+  currentUserId,
+  currentUserRole,
+}: ProjectSharingControlsProps) {
+  const { user } = useAuth();
+  const {
+    setProjectPublic,
+    sharedLinks,
+    isLinksLoading,
+    createSharedLink,
+    deleteSharedLink,
+    refreshLinks
   } = useCollaboration();
-
-  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
-  const [isRemovingMember, setIsRemovingMember] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<number | null>(null);
-  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
-
-  // Toggle project visibility between public and private
-  const handleToggleVisibility = async () => {
-    if (!isOwner) return;
+  
+  const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+  const [projectVisibility, setProjectVisibility] = useState(isPublic);
+  
+  // For link creation
+  const [newLinkOpen, setNewLinkOpen] = useState(false);
+  const [newLinkAccess, setNewLinkAccess] = useState('view');
+  const [newLinkExpiry, setNewLinkExpiry] = useState<Date | undefined>(undefined);
+  const [newLinkDescription, setNewLinkDescription] = useState('');
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
+  
+  // For link deletion
+  const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeletingLink, setIsDeletingLink] = useState(false);
+  
+  // Check permissions
+  const canManageLinks = isOwner || currentUserRole === 'admin';
+  const canChangeVisibility = isOwner;
+  
+  const handleVisibilityChange = async (checked: boolean) => {
+    if (!canChangeVisibility) return;
     
-    setIsUpdatingVisibility(true);
+    setIsChangingVisibility(true);
+    setProjectVisibility(checked); // Optimistic update
     
     try {
-      await updateProject(projectId, { isPublic: !isPublic });
-      
+      await setProjectPublic(projectId, checked);
       toast({
-        title: `Project is now ${!isPublic ? 'public' : 'private'}`,
-        description: !isPublic
-          ? 'Anyone can view this project'
-          : 'Only team members can view this project',
+        title: checked ? 'Project is now public' : 'Project is now private',
+        description: checked 
+          ? 'Anyone with the link can view this project' 
+          : 'Only invited members can access this project',
       });
     } catch (error) {
-      console.error('Error updating project visibility:', error);
+      console.error('Error changing project visibility', error);
+      setProjectVisibility(!checked); // Revert on error
       toast({
         title: 'Error',
         description: 'Failed to update project visibility',
         variant: 'destructive',
       });
     } finally {
-      setIsUpdatingVisibility(false);
+      setIsChangingVisibility(false);
     }
   };
-
-  // Change a member's role (e.g., from viewer to editor)
-  const handleChangeRole = async (userId: number, newRole: string) => {
-    if (!isOwner) return;
+  
+  const handleCreateLink = async () => {
+    if (!canManageLinks) return;
     
+    setIsCreatingLink(true);
     try {
-      await updateMemberRole(projectId, userId, newRole);
+      await createSharedLink({
+        projectId,
+        accessLevel: newLinkAccess,
+        expiresAt: newLinkExpiry ? newLinkExpiry.toISOString() : null,
+        description: newLinkDescription || null,
+      });
+      
+      // Reset form and close dialog
+      setNewLinkOpen(false);
+      setNewLinkAccess('view');
+      setNewLinkExpiry(undefined);
+      setNewLinkDescription('');
       
       toast({
-        title: 'Role updated',
-        description: `User's role has been updated to ${newRole}`,
+        title: 'Link created',
+        description: 'Shared link has been created successfully',
       });
-    } catch (error) {
-      console.error('Error updating member role:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update member role',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Remove a member from the project
-  const handleRemoveMember = async () => {
-    if (!isOwner || memberToRemove === null) return;
-    
-    setIsRemovingMember(true);
-    
-    try {
-      await removeMember(projectId, memberToRemove);
       
-      toast({
-        title: 'Member removed',
-        description: 'The user has been removed from the project',
-      });
+      refreshLinks();
     } catch (error) {
-      console.error('Error removing member:', error);
+      console.error('Error creating shared link', error);
       toast({
         title: 'Error',
-        description: 'Failed to remove member from project',
+        description: 'Failed to create shared link',
         variant: 'destructive',
       });
     } finally {
-      setIsRemovingMember(false);
-      setMemberToRemove(null);
-      setConfirmRemoveOpen(false);
+      setIsCreatingLink(false);
     }
   };
-
-  // Helper function to get role icon
-  const getRoleIcon = (role: string) => {
-    switch (role) {
+  
+  const handleDeleteLink = (linkId: number) => {
+    setLinkToDelete(linkId);
+    setConfirmDeleteOpen(true);
+  };
+  
+  const confirmDeleteLink = async () => {
+    if (linkToDelete === null) return;
+    
+    setIsDeletingLink(true);
+    try {
+      await deleteSharedLink(projectId, linkToDelete);
+      setConfirmDeleteOpen(false);
+      setLinkToDelete(null);
+      
+      toast({
+        title: 'Link deleted',
+        description: 'Shared link has been deleted',
+      });
+      
+      refreshLinks();
+    } catch (error) {
+      console.error('Error deleting shared link', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete shared link',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingLink(false);
+    }
+  };
+  
+  const copyLinkToClipboard = (token: string) => {
+    // Use window.location to get the base URL
+    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    const shareUrl = `${baseUrl}/shared/${token}`;
+    
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        toast({
+          title: 'Link copied',
+          description: 'Shared link has been copied to clipboard',
+        });
+      })
+      .catch((error) => {
+        console.error('Error copying to clipboard', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to copy link to clipboard',
+          variant: 'destructive',
+        });
+      });
+  };
+  
+  const getAccessLevelBadge = (accessLevel: string) => {
+    switch (accessLevel) {
+      case 'view':
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+            <Eye className="h-3 w-3 mr-1" />
+            View only
+          </Badge>
+        );
+      case 'edit':
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+            <Edit className="h-3 w-3 mr-1" />
+            Edit access
+          </Badge>
+        );
       case 'admin':
-        return <Shield className="h-4 w-4 text-blue-500" />;
-      case 'editor':
-        return <Edit className="h-4 w-4 text-green-500" />;
-      case 'viewer':
-        return <EyeIcon className="h-4 w-4 text-gray-500" />;
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+            <ShieldAlert className="h-3 w-3 mr-1" />
+            Admin access
+          </Badge>
+        );
       default:
-        return <User className="h-4 w-4" />;
+        return <Badge>{accessLevel}</Badge>;
     }
   };
-
+  
   return (
-    <div className="space-y-6">
-      {/* Project Visibility Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            {isPublic ? (
-              <Globe className="h-5 w-5 mr-2 text-blue-500" />
-            ) : (
-              <Lock className="h-5 w-5 mr-2 text-orange-500" />
-            )}
-            Project Visibility
-          </CardTitle>
-          <CardDescription>
-            Control who can see and access this project
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="font-medium">{isPublic ? 'Public' : 'Private'}</div>
-              <p className="text-sm text-muted-foreground">
-                {isPublic
-                  ? 'Anyone can view this project'
-                  : 'Only team members can view this project'}
-              </p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Share2 className="h-5 w-5 mr-2" />
+          Sharing Controls
+        </CardTitle>
+        <CardDescription>
+          Manage project visibility and sharing options
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Project Visibility Section */}
+        <div>
+          <h3 className="text-sm font-medium mb-3">Project Visibility</h3>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center space-x-3">
+              {projectVisibility ? (
+                <>
+                  <div className="rounded-full bg-green-50 p-2">
+                    <Globe className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Public project</div>
+                    <div className="text-sm text-muted-foreground">Anyone with the link can view this project</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-full bg-amber-50 p-2">
+                    <Lock className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Private project</div>
+                    <div className="text-sm text-muted-foreground">Only invited members can access this project</div>
+                  </div>
+                </>
+              )}
             </div>
-            {isOwner && (
+            
+            {canChangeVisibility && (
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="project-visibility"
-                  checked={isPublic}
-                  onCheckedChange={handleToggleVisibility}
-                  disabled={isUpdatingVisibility}
-                />
-                <Label htmlFor="project-visibility">
-                  {isPublic ? 'Public' : 'Private'}
+                <Label htmlFor="visibility-toggle" className="select-none cursor-pointer">
+                  {isChangingVisibility ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : projectVisibility ? "Public" : "Private"}
                 </Label>
+                <Switch
+                  id="visibility-toggle"
+                  checked={projectVisibility}
+                  onCheckedChange={handleVisibilityChange}
+                  disabled={isChangingVisibility}
+                />
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Team Members Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-500" />
-              Team Members
-            </CardTitle>
-            <CardDescription>
-              Manage who has access to this project
-            </CardDescription>
+        </div>
+        
+        {/* Shared Links Section */}
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium">Shared Links</h3>
+            
+            {canManageLinks && (
+              <Dialog open={newLinkOpen} onOpenChange={setNewLinkOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Create New Link
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create Shared Link</DialogTitle>
+                    <DialogDescription>
+                      Generate a new link to share this project with others.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-4 py-4">
+                    {/* Access Level */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="access-level">Access Level</Label>
+                      <Select
+                        value={newLinkAccess}
+                        onValueChange={setNewLinkAccess}
+                      >
+                        <SelectTrigger id="access-level">
+                          <SelectValue placeholder="Select access level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="view">View Only</SelectItem>
+                          <SelectItem value="edit">Can Edit</SelectItem>
+                          <SelectItem value="admin">Admin Access</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        {newLinkAccess === 'view' && "Recipients can only view the project content."}
+                        {newLinkAccess === 'edit' && "Recipients can make changes to the project."}
+                        {newLinkAccess === 'admin' && "Recipients have full administrative access."}
+                      </p>
+                    </div>
+                    
+                    {/* Expiration */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="expiry-date">Expiration Date (Optional)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            id="expiry-date"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !newLinkExpiry && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newLinkExpiry ? format(newLinkExpiry, "PPP") : "No expiration"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={newLinkExpiry}
+                            onSelect={setNewLinkExpiry}
+                            initialFocus
+                            disabled={(date) => date < new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <div className="flex items-center">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 px-3" 
+                          onClick={() => setNewLinkExpiry(undefined)}
+                          disabled={!newLinkExpiry}
+                        >
+                          Clear date
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Description */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="link-description">Description (Optional)</Label>
+                      <Textarea
+                        id="link-description"
+                        placeholder="e.g., For client review, Shared with the design team, etc."
+                        value={newLinkDescription}
+                        onChange={(e) => setNewLinkDescription(e.target.value)}
+                        className="resize-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setNewLinkOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateLink} disabled={isCreatingLink}>
+                      {isCreatingLink ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Create Link
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
-          {isOwner && (
-            <InviteUserDialog
-              projectId={projectId}
-              buttonVariant="outline"
-              buttonSize="sm"
-            />
-          )}
-        </CardHeader>
-        <CardContent>
-          {projectMembers.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  {isOwner && <TableHead className="text-right">Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projectMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">
-                      {member.user?.name || member.user?.username || `User ${member.userId}`}
-                    </TableCell>
-                    <TableCell className="flex items-center space-x-1">
-                      {getRoleIcon(member.role)}
-                      <span className="capitalize">{member.role}</span>
-                    </TableCell>
-                    {isOwner && (
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <circle cx="12" cy="12" r="1" />
-                                <circle cx="12" cy="5" r="1" />
-                                <circle cx="12" cy="19" r="1" />
-                              </svg>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleChangeRole(member.userId, 'admin')}>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChangeRole(member.userId, 'editor')}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Make Editor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChangeRole(member.userId, 'viewer')}>
-                              <EyeIcon className="h-4 w-4 mr-2" />
-                              Make Viewer
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => {
-                                setMemberToRemove(member.userId);
-                                setConfirmRemoveOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remove from Project
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          
+          {isLinksLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : sharedLinks.length === 0 ? (
+            <div className="text-center border rounded-lg p-8">
+              <div className="mx-auto rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-3">
+                <Link2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium">No shared links</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                {canManageLinks 
+                  ? "Create a link to share this project with others without inviting them as members."
+                  : "No shared links have been created for this project yet."}
+              </p>
+              {canManageLinks && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setNewLinkOpen(true)}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create a shared link
+                </Button>
+              )}
+            </div>
           ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              No team members yet
+            <div className="space-y-4">
+              {sharedLinks.map((link) => (
+                <div key={link.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center">
+                      <Link2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">
+                          {link.description || `Shared link (${format(new Date(link.createdAt), "MMM d, yyyy")})`}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground mt-1">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Created {format(new Date(link.createdAt), "PPP")}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 px-3"
+                        onClick={() => copyLinkToClipboard(link.token)}
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1" />
+                        Copy
+                      </Button>
+                      
+                      {canManageLinks && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive"
+                          onClick={() => handleDeleteLink(link.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    {getAccessLevelBadge(link.accessLevel)}
+                    
+                    {link.expiresAt ? (
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
+                        <CalendarIcon className="h-3 w-3 mr-1" />
+                        Expires {format(new Date(link.expiresAt), "MMM d, yyyy")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Never expires
+                      </Badge>
+                    )}
+                    
+                    <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                      <Key className="h-3 w-3 mr-1" />
+                      {link.token.substring(0, 8)}...
+                    </Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-        </CardContent>
-        <CardFooter className="border-t pt-4">
-          <p className="text-sm text-muted-foreground">
-            {isOwner
-              ? "As the project owner, you can invite others and manage their access."
-              : "Contact the project owner to invite more people."}
-          </p>
-        </CardFooter>
-      </Card>
-
-      {/* Confirm Remove Member Dialog */}
-      <AlertDialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove this user from the project? They will lose all access to this project.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRemoveMember}
-              disabled={isRemovingMember}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isRemovingMember ? "Removing..." : "Remove"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        </div>
+        
+        {/* Delete Link Confirmation Dialog */}
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Shared Link</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this shared link?
+                Anyone using this link will no longer be able to access the project.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingLink}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteLink}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isDeletingLink}
+              >
+                {isDeletingLink ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Link"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   );
-};
-
-export default ProjectSharingControls;
+}

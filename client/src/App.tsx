@@ -88,7 +88,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CollaborationProvider>
+        <CollaborationProvider projectId={0}>
           <DevAutoLogin />
           <RemixIconLink />
           <Router />

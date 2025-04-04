@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useCollaboration } from '@/contexts/CollaborationContext';
-import { apiRequest } from '@/lib/queryClient';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +7,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -23,169 +25,172 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/form";
 import { Input } from '@/components/ui/input';
-import { UserPlus } from 'lucide-react';
-
-// Define the form input schema
-const formInputSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  role: z.enum(['viewer', 'editor', 'admin'], {
-    required_error: 'Please select a role for the user',
-  }),
-});
-
-// Define the schema that will be used after submission (with transformation)
-const inviteFormSchema = formInputSchema.transform((data) => ({
-  userId: parseInt(data.userId, 10),
-  role: data.role
-}));
-
-// For the form itself, we need the input types
-type FormInputValues = z.infer<typeof formInputSchema>;
-// For the submission handler, we need the transformed types
-type InviteFormValues = z.infer<typeof inviteFormSchema>;
+import { Button } from '@/components/ui/button';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Loader2, UserPlus, AlertCircle, Shield, ShieldCheck, ShieldAlert, User, Eye, Edit } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
 
 interface InviteUserDialogProps {
   projectId: number;
-  buttonLabel?: string;
-  buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
-  buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
-  className?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isOwner: boolean;
 }
 
-const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
+// Form schema for user invitation
+const inviteFormSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: 'Email is required' })
+    .email({ message: 'Invalid email address' }),
+  role: z.enum(['admin', 'editor', 'viewer'], {
+    required_error: 'Please select a role',
+  }),
+  message: z.string().optional(),
+});
+
+type InviteFormValues = z.infer<typeof inviteFormSchema>;
+
+export default function InviteUserDialog({
   projectId,
-  buttonLabel = 'Invite User',
-  buttonVariant = 'default',
-  buttonSize = 'default',
-  className,
-}) => {
-  const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  open,
+  onOpenChange,
+  isOwner,
+}: InviteUserDialogProps) {
+  const { inviteUserToProject } = useCollaboration();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   
-  const form = useForm<FormInputValues>({
-    resolver: zodResolver(formInputSchema),
+  // Initialize form
+  const form = useForm<InviteFormValues>({
+    resolver: zodResolver(inviteFormSchema),
     defaultValues: {
-      userId: '',
+      email: '',
       role: 'viewer',
+      message: '',
     },
   });
-
-  const onSubmit = (formData: FormInputValues) => {
-    setIsLoading(true);
-
-    // Apply the transformation
-    const transformedData = {
-      userId: parseInt(formData.userId, 10),
-      role: formData.role
-    };
-    
-    // Check if the userId is valid after transformation
-    if (isNaN(transformedData.userId)) {
-      toast({
-        title: 'Invalid User ID',
-        description: 'Please enter a valid numeric user ID',
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-      return;
-    }
+  
+  // Handle form submission
+  const onSubmit = async (data: InviteFormValues) => {
+    setIsSubmitting(true);
+    setInviteError(null);
     
     try {
-      // Send the invitation with the user ID
-      apiRequest(`/api/shared-projects/${projectId}/invitations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transformedData),
-      }).then(response => {
-        if (!response.ok) {
-          return response.json().then(data => {
-            throw new Error(data.message || 'Failed to send invitation');
-          });
-        }
-        
-        toast({
-          title: 'Invitation sent',
-          description: `An invitation has been sent to user ID: ${transformedData.userId}`,
-        });
-        
-        form.reset();
-        setOpen(false);
-      }).catch(error => {
-        console.error('Error sending invitation:', error);
-        toast({
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'Failed to send invitation',
-          variant: 'destructive',
-        });
-      }).finally(() => {
-        setIsLoading(false);
+      await inviteUserToProject({
+        projectId,
+        email: data.email,
+        role: data.role,
+        message: data.message || null,
+      });
+      
+      // Reset form and close dialog on success
+      form.reset();
+      onOpenChange(false);
+      
+      toast({
+        title: 'Invitation sent',
+        description: `An invitation has been sent to ${data.email}`,
       });
     } catch (error) {
-      console.error('Error processing invitation:', error);
+      console.error('Error inviting user:', error);
+      setInviteError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to send invitation. Please try again.'
+      );
+      
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to process invitation',
+        description: 'Failed to send invitation',
         variant: 'destructive',
       });
-      setIsLoading(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
+  
+  // Reset error when dialog is closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form and error when dialog is closed
+      form.reset();
+      setInviteError(null);
+    }
+    onOpenChange(open);
+  };
+  
+  // Render different role descriptions based on selection
+  const getRoleDescription = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Admins can manage members and content, but cannot delete the project.';
+      case 'editor':
+        return 'Editors can view, create, and edit content, but cannot manage members.';
+      case 'viewer':
+        return 'Viewers can only view content, but cannot make any changes.';
+      default:
+        return '';
+    }
+  };
+  
+  // Render different role icons based on selection
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return <ShieldAlert className="h-4 w-4 text-red-500" />;
+      case 'editor':
+        return <Edit className="h-4 w-4 text-blue-500" />;
+      case 'viewer':
+        return <Eye className="h-4 w-4 text-green-500" />;
+      default:
+        return <User className="h-4 w-4" />;
+    }
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant={buttonVariant} size={buttonSize} className={className}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          {buttonLabel}
-        </Button>
-      </DialogTrigger>
-      
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Invite a User</DialogTitle>
+          <DialogTitle className="flex items-center">
+            <UserPlus className="h-5 w-5 mr-2" />
+            Invite User to Project
+          </DialogTitle>
           <DialogDescription>
             Send an invitation to collaborate on this project.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            // Trigger form validation
-            form.trigger().then(isValid => {
-              if (isValid) {
-                const formData = form.getValues();
-                onSubmit(formData);
-              }
-            });
-          }} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {inviteError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{inviteError}</AlertDescription>
+              </Alert>
+            )}
+            
             <FormField
               control={form.control}
-              name="userId"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>User ID</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter user ID"
+                      placeholder="user@example.com"
                       {...field}
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter the ID of the user you want to invite.
+                    An invitation email will be sent to this address.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -197,11 +202,11 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>User Role</FormLabel>
                   <Select
-                    disabled={isLoading}
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isSubmitting}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -209,13 +214,54 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectGroup>
+                        <SelectLabel>Roles</SelectLabel>
+                        {isOwner && (
+                          <SelectItem value="admin" className="flex items-center">
+                            <div className="flex items-center">
+                              <ShieldAlert className="h-4 w-4 mr-2 text-red-500" />
+                              Admin
+                            </div>
+                          </SelectItem>
+                        )}
+                        <SelectItem value="editor">
+                          <div className="flex items-center">
+                            <Edit className="h-4 w-4 mr-2 text-blue-500" />
+                            Editor
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="viewer">
+                          <div className="flex items-center">
+                            <Eye className="h-4 w-4 mr-2 text-green-500" />
+                            Viewer
+                          </div>
+                        </SelectItem>
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Choose what level of access the user will have to the project.
+                    {getRoleDescription(form.watch('role'))}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Personal Message (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Add a personal message to the invitation"
+                      {...field}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    This message will be included in the invitation email.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -226,13 +272,23 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isLoading}
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send Invitation'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Send Invitation
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -240,6 +296,4 @@ const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-export default InviteUserDialog;
+}
