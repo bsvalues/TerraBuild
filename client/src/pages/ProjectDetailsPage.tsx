@@ -10,6 +10,7 @@ import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
 import SharedLinksTable from '@/components/collaboration/SharedLinksTable';
 import ProjectActivitiesLog from '@/components/collaboration/ProjectActivitiesLog';
+import ProjectProgressTracker from '@/components/collaboration/ProjectProgressTracker';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
   Card,
@@ -506,11 +507,31 @@ const ProjectDetailsPage: React.FC = () => {
               </Card>
             </div>
             
-            <div>
-              <ProjectActivitiesLog 
-                projectId={currentProject.id}
-                className="h-full"
-              />
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Progress</CardTitle>
+                  <CardDescription>Track the completion status of this project</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProjectProgressTracker 
+                    projectId={currentProject.id}
+                  />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activities</CardTitle>
+                  <CardDescription>Track all changes and actions in this project</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProjectActivitiesLog 
+                    projectId={currentProject.id}
+                    className="h-full"
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </TabsContent>
