@@ -19,10 +19,13 @@ import {
   FileUpload, InsertFileUpload,
   WhatIfScenario, InsertWhatIfScenario,
   ScenarioVariation, InsertScenarioVariation,
+  SharedProject, InsertSharedProject,
+  ProjectMember, InsertProjectMember,
+  ProjectItem, InsertProjectItem,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
-  whatIfScenarios, scenarioVariations
+  whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -898,6 +901,146 @@ export class PostgresStorage implements IStorage {
 
   async deleteScenarioVariation(id: number): Promise<void> {
     await db.delete(scenarioVariations).where(eq(scenarioVariations.id, id));
+  }
+
+  // Shared Projects Methods
+  async getAllSharedProjects(): Promise<SharedProject[]> {
+    return await db.select().from(sharedProjects);
+  }
+
+  async getSharedProjectsByUser(userId: number): Promise<SharedProject[]> {
+    // This returns projects either created by the user or where the user is a member
+    const createdProjects = await db.select().from(sharedProjects)
+      .where(eq(sharedProjects.createdById, userId));
+    
+    // Find all projects where user is a member
+    const memberProjects = await db.select({
+      project: sharedProjects
+    })
+    .from(projectMembers)
+    .innerJoin(sharedProjects, eq(projectMembers.projectId, sharedProjects.id))
+    .where(eq(projectMembers.userId, userId));
+    
+    // Combine and deduplicate projects
+    const allProjects = [...createdProjects, ...memberProjects.map(m => m.project)];
+    const projectIds = new Set();
+    
+    return allProjects.filter(project => {
+      if (projectIds.has(project.id)) {
+        return false;
+      }
+      projectIds.add(project.id);
+      return true;
+    });
+  }
+
+  async getSharedProject(id: number): Promise<SharedProject | undefined> {
+    const result = await db.select().from(sharedProjects).where(eq(sharedProjects.id, id));
+    return result[0];
+  }
+
+  async createSharedProject(project: InsertSharedProject): Promise<SharedProject> {
+    const result = await db.insert(sharedProjects).values({
+      ...project,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined> {
+    const result = await db.update(sharedProjects)
+      .set({
+        ...project,
+        updatedAt: new Date()
+      })
+      .where(eq(sharedProjects.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSharedProject(id: number): Promise<void> {
+    // Delete all associated members and items first
+    await db.delete(projectMembers).where(eq(projectMembers.projectId, id));
+    await db.delete(projectItems).where(eq(projectItems.projectId, id));
+    
+    // Delete the project
+    await db.delete(sharedProjects).where(eq(sharedProjects.id, id));
+  }
+
+  // Project Members Methods
+  async getProjectMembers(projectId: number): Promise<ProjectMember[]> {
+    return await db.select().from(projectMembers)
+      .where(eq(projectMembers.projectId, projectId));
+  }
+
+  async getProjectMember(projectId: number, userId: number): Promise<ProjectMember | undefined> {
+    const result = await db.select().from(projectMembers)
+      .where(and(
+        eq(projectMembers.projectId, projectId),
+        eq(projectMembers.userId, userId)
+      ));
+    return result[0];
+  }
+
+  async addProjectMember(member: InsertProjectMember): Promise<ProjectMember> {
+    const result = await db.insert(projectMembers).values({
+      ...member,
+      joinedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async updateProjectMemberRole(projectId: number, userId: number, role: string): Promise<ProjectMember | undefined> {
+    const result = await db.update(projectMembers)
+      .set({ role })
+      .where(and(
+        eq(projectMembers.projectId, projectId),
+        eq(projectMembers.userId, userId)
+      ))
+      .returning();
+    return result[0];
+  }
+
+  async removeProjectMember(projectId: number, userId: number): Promise<void> {
+    await db.delete(projectMembers)
+      .where(and(
+        eq(projectMembers.projectId, projectId),
+        eq(projectMembers.userId, userId)
+      ));
+  }
+
+  // Project Items Methods
+  async getProjectItems(projectId: number): Promise<ProjectItem[]> {
+    return await db.select().from(projectItems)
+      .where(eq(projectItems.projectId, projectId));
+  }
+
+  async getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
+    const result = await db.select().from(projectItems)
+      .where(and(
+        eq(projectItems.projectId, projectId),
+        eq(projectItems.itemType, itemType),
+        eq(projectItems.itemId, itemId)
+      ));
+    return result[0];
+  }
+
+  async addProjectItem(item: InsertProjectItem): Promise<ProjectItem> {
+    const result = await db.insert(projectItems).values({
+      ...item,
+      addedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async removeProjectItem(projectId: number, itemType: string, itemId: number): Promise<void> {
+    await db.delete(projectItems)
+      .where(and(
+        eq(projectItems.projectId, projectId),
+        eq(projectItems.itemType, itemType),
+        eq(projectItems.itemId, itemId)
+      ));
   }
 
   async calculateScenarioImpact(scenarioId: number): Promise<{ totalImpact: number, variations: ScenarioVariation[] }> {

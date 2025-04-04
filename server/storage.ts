@@ -15,7 +15,10 @@ import {
   costFactorPresets, type CostFactorPreset, type InsertCostFactorPreset,
   fileUploads, type FileUpload, type InsertFileUpload,
   whatIfScenarios, type WhatIfScenario, type InsertWhatIfScenario,
-  scenarioVariations, type ScenarioVariation, type InsertScenarioVariation
+  scenarioVariations, type ScenarioVariation, type InsertScenarioVariation,
+  sharedProjects, type SharedProject, type InsertSharedProject,
+  projectMembers, type ProjectMember, type InsertProjectMember,
+  projectItems, type ProjectItem, type InsertProjectItem
 } from "@shared/schema";
 
 // Storage interface
@@ -165,6 +168,27 @@ export interface IStorage {
   createScenarioVariation(variation: InsertScenarioVariation): Promise<ScenarioVariation>;
   deleteScenarioVariation(id: number): Promise<void>;
   calculateScenarioImpact(scenarioId: number): Promise<{ totalImpact: number, variations: ScenarioVariation[] }>;
+  
+  // Shared Projects
+  getAllSharedProjects(): Promise<SharedProject[]>;
+  getSharedProjectsByUser(userId: number): Promise<SharedProject[]>;
+  getSharedProject(id: number): Promise<SharedProject | undefined>;
+  createSharedProject(project: InsertSharedProject): Promise<SharedProject>;
+  updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined>;
+  deleteSharedProject(id: number): Promise<void>;
+  
+  // Project Members
+  getProjectMembers(projectId: number): Promise<ProjectMember[]>;
+  getProjectMember(projectId: number, userId: number): Promise<ProjectMember | undefined>;
+  addProjectMember(member: InsertProjectMember): Promise<ProjectMember>;
+  updateProjectMemberRole(projectId: number, userId: number, role: string): Promise<ProjectMember | undefined>;
+  removeProjectMember(projectId: number, userId: number): Promise<void>;
+  
+  // Project Items
+  getProjectItems(projectId: number): Promise<ProjectItem[]>;
+  getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined>;
+  addProjectItem(item: InsertProjectItem): Promise<ProjectItem>;
+  removeProjectItem(projectId: number, itemType: string, itemId: number): Promise<void>;
 }
 
 // Memory Storage implementation
@@ -182,6 +206,9 @@ export class MemStorage implements IStorage {
   private scenarioVariations: Map<number, ScenarioVariation>;
   private calculationHistories: Map<number, CalculationHistory>;
   private fileUploads: Map<number, FileUpload>;
+  private sharedProjects: Map<number, SharedProject>;
+  private projectMembers: Map<number, ProjectMember>;
+  private projectItems: Map<number, ProjectItem>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -196,6 +223,9 @@ export class MemStorage implements IStorage {
   private currentFileUploadId: number;
   private currentWhatIfScenarioId: number;
   private currentScenarioVariationId: number;
+  private currentSharedProjectId: number;
+  private currentProjectMemberId: number;
+  private currentProjectItemId: number;
   
   constructor() {
     this.users = new Map();
@@ -211,6 +241,9 @@ export class MemStorage implements IStorage {
     this.fileUploads = new Map();
     this.whatIfScenarios = new Map();
     this.scenarioVariations = new Map();
+    this.sharedProjects = new Map();
+    this.projectMembers = new Map();
+    this.projectItems = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -225,6 +258,9 @@ export class MemStorage implements IStorage {
     this.currentFileUploadId = 1;
     this.currentWhatIfScenarioId = 1;
     this.currentScenarioVariationId = 1;
+    this.currentSharedProjectId = 1;
+    this.currentProjectMemberId = 1;
+    this.currentProjectItemId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -1527,6 +1563,172 @@ export class MemStorage implements IStorage {
     }
     
     return { totalImpact, variations };
+  }
+  
+  // Shared Projects
+  async getAllSharedProjects(): Promise<SharedProject[]> {
+    return Array.from(this.sharedProjects.values());
+  }
+  
+  async getSharedProjectsByUser(userId: number): Promise<SharedProject[]> {
+    // Get projects created by the user
+    const ownedProjects = Array.from(this.sharedProjects.values()).filter(
+      project => project.createdById === userId
+    );
+    
+    // Get projects where the user is a member
+    const memberProjectIds = Array.from(this.projectMembers.values())
+      .filter(member => member.userId === userId)
+      .map(member => member.projectId);
+    
+    const memberProjects = Array.from(this.sharedProjects.values()).filter(
+      project => memberProjectIds.includes(project.id)
+    );
+    
+    // Combine and remove duplicates
+    const allProjects = [...ownedProjects];
+    
+    memberProjects.forEach(project => {
+      if (!allProjects.some(p => p.id === project.id)) {
+        allProjects.push(project);
+      }
+    });
+    
+    return allProjects;
+  }
+  
+  async getSharedProject(id: number): Promise<SharedProject | undefined> {
+    return this.sharedProjects.get(id);
+  }
+  
+  async createSharedProject(project: InsertSharedProject): Promise<SharedProject> {
+    const id = this.currentSharedProjectId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    const sharedProject: SharedProject = { 
+      ...project, 
+      id, 
+      createdAt, 
+      updatedAt 
+    };
+    
+    this.sharedProjects.set(id, sharedProject);
+    return sharedProject;
+  }
+  
+  async updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined> {
+    const existingProject = this.sharedProjects.get(id);
+    if (!existingProject) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedProject = { 
+      ...existingProject, 
+      ...project,
+      updatedAt 
+    };
+    
+    this.sharedProjects.set(id, updatedProject);
+    return updatedProject;
+  }
+  
+  async deleteSharedProject(id: number): Promise<void> {
+    // Delete project members first
+    const membersToDelete = Array.from(this.projectMembers.values())
+      .filter(member => member.projectId === id);
+    
+    membersToDelete.forEach(member => {
+      this.projectMembers.delete(member.id);
+    });
+    
+    // Delete project items
+    const itemsToDelete = Array.from(this.projectItems.values())
+      .filter(item => item.projectId === id);
+    
+    itemsToDelete.forEach(item => {
+      this.projectItems.delete(item.id);
+    });
+    
+    // Delete the project
+    this.sharedProjects.delete(id);
+  }
+  
+  // Project Members
+  async getProjectMembers(projectId: number): Promise<ProjectMember[]> {
+    return Array.from(this.projectMembers.values())
+      .filter(member => member.projectId === projectId);
+  }
+  
+  async getProjectMember(projectId: number, userId: number): Promise<ProjectMember | undefined> {
+    return Array.from(this.projectMembers.values())
+      .find(member => member.projectId === projectId && member.userId === userId);
+  }
+  
+  async addProjectMember(member: InsertProjectMember): Promise<ProjectMember> {
+    const id = this.currentProjectMemberId++;
+    const joinedAt = new Date();
+    const projectMember: ProjectMember = { 
+      ...member, 
+      id, 
+      joinedAt 
+    };
+    
+    this.projectMembers.set(id, projectMember);
+    return projectMember;
+  }
+  
+  async updateProjectMemberRole(projectId: number, userId: number, role: string): Promise<ProjectMember | undefined> {
+    const member = await this.getProjectMember(projectId, userId);
+    if (!member) return undefined;
+    
+    const updatedMember = { 
+      ...member, 
+      role 
+    };
+    
+    this.projectMembers.set(member.id, updatedMember);
+    return updatedMember;
+  }
+  
+  async removeProjectMember(projectId: number, userId: number): Promise<void> {
+    const member = await this.getProjectMember(projectId, userId);
+    if (member) {
+      this.projectMembers.delete(member.id);
+    }
+  }
+  
+  // Project Items
+  async getProjectItems(projectId: number): Promise<ProjectItem[]> {
+    return Array.from(this.projectItems.values())
+      .filter(item => item.projectId === projectId);
+  }
+  
+  async getProjectItem(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
+    return Array.from(this.projectItems.values())
+      .find(item => 
+        item.projectId === projectId && 
+        item.itemType === itemType && 
+        item.itemId === itemId
+      );
+  }
+  
+  async addProjectItem(item: InsertProjectItem): Promise<ProjectItem> {
+    const id = this.currentProjectItemId++;
+    const addedAt = new Date();
+    const projectItem: ProjectItem = { 
+      ...item, 
+      id, 
+      addedAt 
+    };
+    
+    this.projectItems.set(id, projectItem);
+    return projectItem;
+  }
+  
+  async removeProjectItem(projectId: number, itemType: string, itemId: number): Promise<void> {
+    const item = await this.getProjectItem(projectId, itemType, itemId);
+    if (item) {
+      this.projectItems.delete(item.id);
+    }
   }
 }
 

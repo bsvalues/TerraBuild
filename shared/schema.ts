@@ -550,7 +550,7 @@ export const sharedProjects = pgTable("shared_projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  createdById: integer("created_by_id").notNull(),
+  createdById: integer("created_by_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   status: text("status").notNull().default("active"),
@@ -571,11 +571,11 @@ export type InsertSharedProject = z.infer<typeof insertSharedProjectSchema>;
 // Collaboration Feature: Project Members
 export const projectMembers = pgTable("project_members", {
   id: serial("id").primaryKey(),
-  projectId: integer("project_id").notNull(),
-  userId: integer("user_id").notNull(),
+  projectId: integer("project_id").notNull().references(() => sharedProjects.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   role: text("role").notNull().default("viewer"), // viewer, editor, admin
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
-  invitedBy: integer("invited_by").notNull(),
+  invitedBy: integer("invited_by").notNull().references(() => users.id),
 }, (table) => {
   return {
     memberUniqueIdx: uniqueIndex("project_user_idx").on(
@@ -598,10 +598,10 @@ export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
 // Collaboration Feature: Project Items
 export const projectItems = pgTable("project_items", {
   id: serial("id").primaryKey(),
-  projectId: integer("project_id").notNull(),
+  projectId: integer("project_id").notNull().references(() => sharedProjects.id),
   itemType: text("item_type").notNull(), // calculation, cost_matrix, report
   itemId: integer("item_id").notNull(),
-  addedBy: integer("added_by").notNull(),
+  addedBy: integer("added_by").notNull().references(() => users.id),
   addedAt: timestamp("added_at").notNull().defaultNow(),
 }, (table) => {
   return {

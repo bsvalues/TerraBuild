@@ -14,7 +14,10 @@ import {
   insertCostFactorPresetSchema,
   insertFileUploadSchema,
   insertWhatIfScenarioSchema,
-  insertScenarioVariationSchema
+  insertScenarioVariationSchema,
+  insertSharedProjectSchema,
+  insertProjectMemberSchema,
+  insertProjectItemSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -25,6 +28,7 @@ import aiRoutes from "./routes/aiRoutes";
 import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
 import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
+import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1805,6 +1809,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Register advanced analytics routes
     app.use('/api/benchmarking', advancedAnalyticsRouter);
+    
+    // Register collaboration routes
+    registerCollaborationRoutes(app);
     
     console.log('MCP framework initialized successfully');
     
