@@ -663,8 +663,28 @@ export const insertSharedLinkSchema = createInsertSchema(sharedLinks).pick({
   description: true,
 });
 
+// Project Activities for tracking actions in a project
+export const projectActivities = pgTable("project_activities", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => sharedProjects.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  activityType: text("activity_type").notNull(),
+  activityData: json("activity_data").$type<any>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProjectActivitySchema = createInsertSchema(projectActivities).pick({
+  projectId: true,
+  userId: true,
+  activityType: true,
+  activityData: true,
+});
+
 export type SharedLink = typeof sharedLinks.$inferSelect;
 export type InsertSharedLink = z.infer<typeof insertSharedLinkSchema>;
+
+export type ProjectActivity = typeof projectActivities.$inferSelect;
+export type InsertProjectActivity = z.infer<typeof insertProjectActivitySchema>;
 
 export const insertProjectItemSchema = createInsertSchema(projectItems).pick({
   projectId: true,

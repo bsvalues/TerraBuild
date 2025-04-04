@@ -101,7 +101,7 @@ const SharedLinksTable: React.FC<SharedLinksTableProps> = ({ projectId, isAdmin 
                     <TableCell>
                       <Badge variant={
                         link.accessLevel === 'admin' ? 'danger' :
-                        link.accessLevel === 'edit' ? 'outline' : 'secondary'
+                        link.accessLevel === 'edit' ? 'outline' : 'default'
                       }>
                         {link.accessLevel.charAt(0).toUpperCase() + link.accessLevel.slice(1)}
                       </Badge>

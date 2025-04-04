@@ -1003,6 +1003,11 @@ export class PostgresStorage implements IStorage {
     const result = await db.select().from(sharedProjects).where(eq(sharedProjects.id, id));
     return result[0];
   }
+  
+  async getProject(id: number): Promise<SharedProject | undefined> {
+    const result = await db.select().from(sharedProjects).where(eq(sharedProjects.id, id));
+    return result[0];
+  }
 
   async createSharedProject(project: InsertSharedProject): Promise<SharedProject> {
     const result = await db.insert(sharedProjects).values({
@@ -1046,6 +1051,11 @@ export class PostgresStorage implements IStorage {
         eq(projectMembers.userId, userId)
       ));
     return result[0];
+  }
+  
+  async isProjectMember(projectId: number, userId: number): Promise<boolean> {
+    const member = await this.getProjectMember(projectId, userId);
+    return !!member;
   }
 
   async addProjectMember(member: InsertProjectMember): Promise<ProjectMember> {
@@ -1429,6 +1439,12 @@ export class PostgresStorage implements IStorage {
       .orderBy(sharedLinks.createdAt);
   }
   
+  async getSharedLinksByProject(projectId: number): Promise<SharedLink[]> {
+    return db.select().from(sharedLinks)
+      .where(eq(sharedLinks.projectId, projectId))
+      .orderBy(sharedLinks.createdAt);
+  }
+  
   async getSharedLink(id: number): Promise<SharedLink | undefined> {
     const result = await db.select().from(sharedLinks)
       .where(eq(sharedLinks.id, id));
@@ -1471,5 +1487,140 @@ export class PostgresStorage implements IStorage {
   async deleteAllSharedLinks(projectId: number): Promise<void> {
     await db.delete(sharedLinks)
       .where(eq(sharedLinks.projectId, projectId));
+  }
+  
+  async getCostTrends(period?: string, buildingType?: string, region?: string): Promise<any[]> {
+    // Default period is yearly
+    const timePeriod = period || 'yearly';
+    
+    let query = db.select({
+      id: calculationHistory.id,
+      createdAt: calculationHistory.createdAt,
+      region: calculationHistory.region,
+      buildingType: calculationHistory.buildingType,
+      squareFootage: calculationHistory.squareFootage,
+      costPerSqft: calculationHistory.costPerSqft,
+      totalCost: calculationHistory.totalCost
+    })
+    .from(calculationHistory);
+    
+    // Apply filters if provided
+    if (buildingType) {
+      query = query.where(eq(calculationHistory.buildingType, buildingType));
+    }
+    
+    if (region) {
+      query = query.where(eq(calculationHistory.region, region));
+    }
+    
+    // Add order by after where clauses
+    query = query.orderBy(calculationHistory.createdAt);
+    
+    const results = await query;
+    
+    // Group and aggregate data based on the time period
+    const trends: any[] = [];
+    const groupedData: Record<string, any[]> = {};
+    
+    for (const result of results) {
+      const date = new Date(result.createdAt);
+      let key = '';
+      
+      if (timePeriod === 'monthly') {
+        key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      } else if (timePeriod === 'quarterly') {
+        const quarter = Math.floor(date.getMonth() / 3) + 1;
+        key = `${date.getFullYear()}-Q${quarter}`;
+      } else {
+        // Default to yearly
+        key = `${date.getFullYear()}`;
+      }
+      
+      if (!groupedData[key]) {
+        groupedData[key] = [];
+      }
+      
+      groupedData[key].push(result);
+    }
+    
+    // Calculate averages for each time period
+    for (const [period, data] of Object.entries(groupedData)) {
+      const totalCostPerSqft = data.reduce((sum, item) => sum + parseFloat(String(item.costPerSqft)), 0);
+      const avgCostPerSqft = totalCostPerSqft / data.length;
+      
+      const totalCost = data.reduce((sum, item) => sum + parseFloat(String(item.totalCost)), 0);
+      const avgTotalCost = totalCost / data.length;
+      
+      trends.push({
+        period,
+        count: data.length,
+        avgCostPerSqft,
+        avgTotalCost,
+        minCostPerSqft: data.length > 0 ? Math.min(...data.map(item => parseFloat(String(item.costPerSqft)))) : 0,
+        maxCostPerSqft: data.length > 0 ? Math.max(...data.map(item => parseFloat(String(item.costPerSqft)))) : 0,
+        minTotalCost: data.length > 0 ? Math.min(...data.map(item => parseFloat(String(item.totalCost)))) : 0,
+        maxTotalCost: data.length > 0 ? Math.max(...data.map(item => parseFloat(String(item.totalCost)))) : 0,
+        buildingTypes: [...new Set(data.map(item => item.buildingType))],
+        regions: [...new Set(data.map(item => item.region))]
+      });
+    }
+    
+    return trends.sort((a, b) => a.period.localeCompare(b.period));
+  }
+
+  // Project Activities
+  async getProjectActivities(projectId: number): Promise<ProjectActivity[]> {
+    return db
+      .select()
+      .from(projectActivities)
+      .where(eq(projectActivities.projectId, projectId))
+      .orderBy(desc(projectActivities.createdAt));
+  }
+  
+  async getProjectActivitiesWithUserInfo(projectId: number): Promise<(ProjectActivity & { user: { username: string, name: string | null } })[]> {
+    const activities = await db
+      .select()
+      .from(projectActivities)
+      .where(eq(projectActivities.projectId, projectId))
+      .orderBy(desc(projectActivities.createdAt));
+    
+    const result = [];
+    
+    for (const activity of activities) {
+      const userResults = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, activity.userId));
+      
+      const user = userResults.length > 0 ? userResults[0] : { username: 'Unknown', name: null };
+      
+      result.push({
+        ...activity,
+        user: {
+          username: user.username,
+          name: user.name
+        }
+      });
+    }
+    
+    return result;
+  }
+  
+  async getProjectActivity(id: number): Promise<ProjectActivity | undefined> {
+    const activities = await db
+      .select()
+      .from(projectActivities)
+      .where(eq(projectActivities.id, id));
+    
+    return activities.length > 0 ? activities[0] : undefined;
+  }
+  
+  async createProjectActivity(activity: InsertProjectActivity): Promise<ProjectActivity> {
+    const [result] = await db
+      .insert(projectActivities)
+      .values(activity)
+      .returning();
+    
+    return result;
   }
 }

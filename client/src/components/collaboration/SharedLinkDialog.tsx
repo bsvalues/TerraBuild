@@ -152,7 +152,7 @@ const SharedLinkDialog: React.FC<SharedLinkDialogProps> = ({ projectId }) => {
                   <FormControl>
                     <DatePicker 
                       date={field.value || undefined} 
-                      setDate={(date) => field.onChange(date)}
+                      setDate={(date: Date | undefined) => field.onChange(date)}
                     />
                   </FormControl>
                   <FormDescription>

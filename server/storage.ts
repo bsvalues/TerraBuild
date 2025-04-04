@@ -21,7 +21,8 @@ import {
   projectItems, type ProjectItem, type InsertProjectItem,
   comments, type Comment, type InsertComment,
   projectInvitations, type ProjectInvitation, type InsertProjectInvitation,
-  sharedLinks, type SharedLink, type InsertSharedLink
+  sharedLinks, type SharedLink, type InsertSharedLink,
+  projectActivities, type ProjectActivity, type InsertProjectActivity
 } from "@shared/schema";
 
 // Storage interface
@@ -176,6 +177,7 @@ export interface IStorage {
   getAllSharedProjects(): Promise<SharedProject[]>;
   getSharedProjectsByUser(userId: number): Promise<SharedProject[]>;
   getSharedProject(id: number): Promise<SharedProject | undefined>;
+  getProject(id: number): Promise<SharedProject | undefined>;
   createSharedProject(project: InsertSharedProject): Promise<SharedProject>;
   updateSharedProject(id: number, project: Partial<InsertSharedProject>): Promise<SharedProject | undefined>;
   deleteSharedProject(id: number): Promise<void>;
@@ -186,6 +188,7 @@ export interface IStorage {
   // Project Members
   getProjectMembers(projectId: number): Promise<ProjectMember[]>;
   getProjectMember(projectId: number, userId: number): Promise<ProjectMember | undefined>;
+  isProjectMember(projectId: number, userId: number): Promise<boolean>;
   addProjectMember(member: InsertProjectMember): Promise<ProjectMember>;
   updateProjectMemberRole(projectId: number, userId: number, role: string): Promise<ProjectMember | undefined>;
   removeProjectMember(projectId: number, userId: number): Promise<void>;
@@ -228,12 +231,19 @@ export interface IStorage {
   
   // Shared Links
   getSharedLinks(projectId: number): Promise<SharedLink[]>;
+  getSharedLinksByProject(projectId: number): Promise<SharedLink[]>;
   getSharedLink(id: number): Promise<SharedLink | undefined>;
   getSharedLinkByToken(token: string): Promise<SharedLink | undefined>;
   createSharedLink(link: InsertSharedLink): Promise<SharedLink>;
   updateSharedLink(id: number, data: Partial<SharedLink>): Promise<SharedLink | undefined>;
   deleteSharedLink(id: number): Promise<void>;
   deleteAllSharedLinks(projectId: number): Promise<void>;
+  
+  // Project Activities
+  getProjectActivities(projectId: number): Promise<ProjectActivity[]>;
+  getProjectActivitiesWithUserInfo(projectId: number): Promise<(ProjectActivity & { user: { username: string, name: string | null } })[]>;
+  getProjectActivity(id: number): Promise<ProjectActivity | undefined>;
+  createProjectActivity(activity: InsertProjectActivity): Promise<ProjectActivity>;
 }
 
 // Memory Storage implementation
@@ -257,6 +267,7 @@ export class MemStorage implements IStorage {
   private projectItems: Map<number, ProjectItem>;
   private comments: Map<number, Comment>;
   private sharedLinks: Map<number, SharedLink>;
+  private projectActivities: Map<number, ProjectActivity>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -277,6 +288,7 @@ export class MemStorage implements IStorage {
   private currentProjectItemId: number;
   private currentCommentId: number;
   private currentSharedLinkId: number;
+  private currentProjectActivityId: number;
   
   constructor() {
     this.users = new Map();
@@ -298,6 +310,7 @@ export class MemStorage implements IStorage {
     this.projectItems = new Map();
     this.comments = new Map();
     this.sharedLinks = new Map();
+    this.projectActivities = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -318,6 +331,7 @@ export class MemStorage implements IStorage {
     this.currentProjectItemId = 1;
     this.currentCommentId = 1;
     this.currentSharedLinkId = 1;
+    this.currentProjectActivityId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -1754,6 +1768,11 @@ export class MemStorage implements IStorage {
       .find(member => member.projectId === projectId && member.userId === userId);
   }
   
+  async isProjectMember(projectId: number, userId: number): Promise<boolean> {
+    const member = await this.getProjectMember(projectId, userId);
+    return !!member;
+  }
+  
   async addProjectMember(member: InsertProjectMember): Promise<ProjectMember> {
     const id = this.currentProjectMemberId++;
     const joinedAt = new Date();
@@ -2003,8 +2022,25 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // Shared Projects
+  async getProject(id: number): Promise<SharedProject | undefined> {
+    return this.sharedProjects.get(id);
+  }
+  
+  async isProjectMember(projectId: number, userId: number): Promise<boolean> {
+    return Array.from(this.projectMembers.values()).some(
+      member => member.projectId === projectId && member.userId === userId
+    );
+  }
+  
   // Shared Links
   async getSharedLinks(projectId: number): Promise<SharedLink[]> {
+    return Array.from(this.sharedLinks.values())
+      .filter(link => link.projectId === projectId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+  
+  async getSharedLinksByProject(projectId: number): Promise<SharedLink[]> {
     return Array.from(this.sharedLinks.values())
       .filter(link => link.projectId === projectId)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -2024,14 +2060,26 @@ export class MemStorage implements IStorage {
     const id = this.currentSharedLinkId++;
     const createdAt = new Date();
     
+    // Generate a random token if not provided
+    const token = link.token || this.generateRandomToken();
+    
     const newLink: SharedLink = {
       ...link,
+      token,
       id,
-      createdAt
+      createdAt,
+      accessLevel: link.accessLevel || 'view'
     };
     
     this.sharedLinks.set(id, newLink);
     return newLink;
+  }
+  
+  private generateRandomToken(): string {
+    // Generate a random 32-character token
+    return [...Array(32)]
+      .map(() => Math.floor(Math.random() * 36).toString(36))
+      .join('');
   }
   
   async updateSharedLink(id: number, data: Partial<SharedLink>): Promise<SharedLink | undefined> {
@@ -2058,6 +2106,50 @@ export class MemStorage implements IStorage {
     for (const link of linksToDelete) {
       this.sharedLinks.delete(link.id);
     }
+  }
+
+  // Project Activities
+  async getProjectActivities(projectId: number): Promise<ProjectActivity[]> {
+    return Array.from(this.projectActivities.values())
+      .filter(activity => activity.projectId === projectId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getProjectActivitiesWithUserInfo(projectId: number): Promise<(ProjectActivity & { user: { username: string, name: string | null } })[]> {
+    const activities = await this.getProjectActivities(projectId);
+    const results = [];
+    
+    for (const activity of activities) {
+      const user = await this.getUser(activity.userId);
+      
+      results.push({
+        ...activity,
+        user: {
+          username: user?.username || 'Unknown',
+          name: user?.name || null,
+        }
+      });
+    }
+    
+    return results;
+  }
+  
+  async getProjectActivity(id: number): Promise<ProjectActivity | undefined> {
+    return this.projectActivities.get(id);
+  }
+  
+  async createProjectActivity(activity: InsertProjectActivity): Promise<ProjectActivity> {
+    const id = this.currentProjectActivityId++;
+    const createdAt = new Date();
+    const newActivity: ProjectActivity = {
+      ...activity,
+      id,
+      createdAt,
+      activityData: activity.activityData || null
+    };
+    
+    this.projectActivities.set(id, newActivity);
+    return newActivity;
   }
 }
 
