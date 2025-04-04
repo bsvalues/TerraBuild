@@ -2,8 +2,21 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { ProjectMember } from '@/components/collaboration/ProjectMembersTable';
 import { apiRequest } from '@/lib/queryClient';
+
+// Define ProjectMember type here to avoid circular imports
+export type ProjectMember = {
+  id: number;
+  userId: number;
+  projectId: number;
+  role: string;
+  joinedAt: string | Date;
+  invitedBy: number;
+  user: {
+    username: string;
+    name: string | null;
+  };
+};
 
 export type Project = {
   id: number;
@@ -40,7 +53,7 @@ interface ProjectProviderProps {
 
 export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, currentUserId }) => {
   const { toast } = useToast();
-  const [params] = useParams();
+  const params = useParams();
   const projectId = params.id ? parseInt(params.id, 10) : undefined;
   
   const {
@@ -81,7 +94,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, curr
   });
 
   // Find current user's role in the project
-  const currentUserMember = members.find((member) => member.userId === currentUserId);
+  const currentUserMember = members.find((member: ProjectMember) => member.userId === currentUserId);
   const isOwner = project ? project.createdById === currentUserId : false;
   const currentUserRole = currentUserMember?.role || (isOwner ? 'admin' : '');
   

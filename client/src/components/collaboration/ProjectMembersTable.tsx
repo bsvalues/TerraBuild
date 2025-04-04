@@ -19,21 +19,10 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { MoreHorizontal, Shield, User, UserMinus } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useProjectContext } from '@/contexts/ProjectContext';
+import { useProjectContext, ProjectMember } from '@/contexts/ProjectContext';
 import { useQueryClient } from '@tanstack/react-query';
 
-export type ProjectMember = {
-  id: number;
-  userId: number;
-  projectId: number;
-  role: string;
-  joinedAt: Date;
-  invitedBy: number;
-  user: {
-    username: string;
-    name: string | null;
-  };
-};
+// Using ProjectMember type from ProjectContext
 
 interface ProjectMembersTableProps {
   projectId: number;
@@ -59,15 +48,15 @@ const ProjectMembersTable: React.FC<ProjectMembersTableProps> = ({
 
   const canManageMembers = currentUserRole === 'admin' || (project && project.createdById === currentUserId);
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string): "default" | "danger" | "outline" | "success" | "warning" | null | undefined => {
     switch (role) {
       case 'admin':
-        return 'destructive';
+        return 'danger';
       case 'editor':
         return 'default';
       case 'viewer':
       default:
-        return 'secondary';
+        return 'outline';
     }
   };
 
