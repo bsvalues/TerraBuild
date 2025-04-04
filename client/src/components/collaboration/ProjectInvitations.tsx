@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollaboration } from '@/contexts/CollaborationContext';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Card,
   CardContent,
@@ -47,18 +48,35 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ProjectInvitationsProps {
   projectId: number;
+  className?: string;
 }
 
-export default function ProjectInvitations({ projectId }: ProjectInvitationsProps) {
+interface ProjectInvitation {
+  id: number;
+  projectId: number;
+  userId: number;
+  invitedBy: number;
+  role: string;
+  status: string;
+  invitedAt: string;
+  projectName?: string;
+  invitedByUser?: {
+    name?: string;
+    username: string;
+  };
+  isSentByMe?: boolean;
+}
+
+export default function ProjectInvitations({ projectId, className }: ProjectInvitationsProps) {
   const {
     projectInvitations,
     isInvitationsLoading,
-    acceptInvitation,
-    declineInvitation,
-    cancelInvitation,
+    respondToInvitation,
+    deleteInvitation,
   } = useCollaboration();
   
   const [selectedInvitation, setSelectedInvitation] = useState<number | null>(null);
@@ -77,7 +95,7 @@ export default function ProjectInvitations({ projectId }: ProjectInvitationsProp
     
     setIsProcessing(true);
     try {
-      await acceptInvitation(selectedInvitation);
+      await respondToInvitation(selectedInvitation, 'accepted');
       toast({
         title: 'Invitation accepted',
         description: 'You are now a member of this project',
@@ -101,7 +119,7 @@ export default function ProjectInvitations({ projectId }: ProjectInvitationsProp
     
     setIsProcessing(true);
     try {
-      await declineInvitation(selectedInvitation);
+      await respondToInvitation(selectedInvitation, 'declined');
       toast({
         title: 'Invitation declined',
         description: 'You have declined the invitation to join this project',
@@ -125,13 +143,16 @@ export default function ProjectInvitations({ projectId }: ProjectInvitationsProp
     
     setIsProcessing(true);
     try {
-      await cancelInvitation(selectedInvitation);
-      toast({
-        title: 'Invitation canceled',
-        description: 'The invitation has been canceled',
-      });
-      setShowCancelDialog(false);
-      setSelectedInvitation(null);
+      const invitation = projectInvitations.find(inv => inv.id === selectedInvitation);
+      if (invitation) {
+        await deleteInvitation(invitation.projectId, invitation.id);
+        toast({
+          title: 'Invitation canceled',
+          description: 'The invitation has been canceled',
+        });
+        setShowCancelDialog(false);
+        setSelectedInvitation(null);
+      }
     } catch (error) {
       console.error('Error canceling invitation:', error);
       toast({
@@ -232,7 +253,7 @@ export default function ProjectInvitations({ projectId }: ProjectInvitationsProp
   };
   
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center">
           <Mail className="h-5 w-5 mr-2" />

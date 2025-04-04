@@ -71,10 +71,15 @@ export default function ProjectMembersTable({
 }: ProjectMembersTableProps) {
   const {
     projectMembers,
-    updateMemberRole,
-    removeProjectMember,
-    refreshMembers,
+    changeMemberRole, // This will be used if available, otherwise we'll try updateMemberRole
+    updateMemberRole, // Fallback
+    removeMember, // This will be used if available, otherwise we'll try removeProjectMember
+    removeProjectMember, // Fallback
   } = useCollaboration();
+  
+  // Resolve the correct functions
+  const updateRole = changeMemberRole || updateMemberRole;
+  const removeMemberFromProject = removeMember || removeProjectMember;
   
   const [memberToRemove, setMemberToRemove] = useState<{id: number, name: string} | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -94,7 +99,7 @@ export default function ProjectMembersTable({
     
     setIsProcessing(true);
     try {
-      await removeProjectMember(projectId, memberToRemove.id);
+      await removeMemberFromProject(projectId, memberToRemove.id);
       setShowRemoveConfirm(false);
       setMemberToRemove(null);
       
@@ -103,7 +108,7 @@ export default function ProjectMembersTable({
         description: `${memberToRemove.name} has been removed from the project`,
       });
       
-      refreshMembers();
+      // No refreshMembers function, rely on cache invalidation from mutation
     } catch (error) {
       console.error('Error removing member:', error);
       toast({
@@ -120,14 +125,14 @@ export default function ProjectMembersTable({
   const handleRoleChange = async (memberId: number, newRole: string) => {
     setIsProcessing(true);
     try {
-      await updateMemberRole(projectId, memberId, newRole);
+      await updateRole(projectId, memberId, newRole);
       
       toast({
         title: 'Role updated',
         description: `Member role has been updated to ${newRole}`,
       });
       
-      refreshMembers();
+      // No refreshMembers function, rely on cache invalidation from mutation
     } catch (error) {
       console.error('Error updating member role:', error);
       toast({

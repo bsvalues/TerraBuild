@@ -68,9 +68,12 @@ export default function ProjectItemsTable({
 }: ProjectItemsTableProps) {
   const {
     projectItems,
-    removeProjectItem,
-    refreshItems,
+    removeItemFromProject,
+    removeProjectItem, // This will be used if available, otherwise removeItemFromProject is used
   } = useCollaboration();
+  
+  // Resolve the correct remove function
+  const removeItem = removeProjectItem || removeItemFromProject;
   
   const [itemToRemove, setItemToRemove] = useState<{id: number, type: string, name: string} | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -90,7 +93,7 @@ export default function ProjectItemsTable({
     
     setIsProcessing(true);
     try {
-      await removeProjectItem(projectId, itemToRemove.type, itemToRemove.id);
+      await removeItem(projectId, itemToRemove.type, itemToRemove.id);
       setShowRemoveConfirm(false);
       setItemToRemove(null);
       
@@ -99,7 +102,7 @@ export default function ProjectItemsTable({
         description: `${itemToRemove.name} has been removed from the project`,
       });
       
-      refreshItems();
+      // No refreshItems function, so we'll rely on the mutation cache invalidation
     } catch (error) {
       console.error('Error removing item:', error);
       toast({
