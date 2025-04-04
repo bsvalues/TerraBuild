@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import React from 'react';
+import { useCollaboration } from '@/contexts/CollaborationContext';
 import { 
   Card, 
   CardContent, 
@@ -11,193 +8,118 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { 
-  Button 
-} from '@/components/ui/button';
-import { 
-  Skeleton 
-} from '@/components/ui/skeleton';
-import { 
-  CheckCircle2, 
-  Clock, 
-  XCircle 
-} from 'lucide-react';
-import { format } from 'date-fns';
-
-interface Invitation {
-  id: number;
-  projectId: number;
-  userId: number;
-  invitedBy: number;
-  role: string;
-  status: 'pending' | 'accepted' | 'declined';
-  invitedAt: string | Date;
-  projectName: string;
-  inviterName: string;
-}
+import { Button } from '@/components/ui/button';
+import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { BadgeCheck, Clock, Users } from 'lucide-react';
 
 const ProjectInvitations: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Fetch pending invitations
-  const { 
-    data: invitations = [], 
-    isLoading,
-    refetch: refetchInvitations
-  } = useQuery({
-    queryKey: ['/api/invitations/pending'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/invitations/pending');
-      return response.json();
-    },
-    meta: {
-      errorMessage: 'Failed to load invitations'
-    }
-  });
-  
-  // Accept invitation mutation
-  const acceptInvitationMutation = useMutation({
-    mutationFn: async (invitationId: number) => {
-      const response = await apiRequest(`/api/invitations/${invitationId}/accept`, {
-        method: 'POST'
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/invitations/pending'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects/my'] });
-      toast({
-        title: 'Invitation accepted',
-        description: 'You have successfully joined the project.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error accepting invitation',
-        description: 'There was a problem accepting the invitation. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-  
-  // Decline invitation mutation
-  const declineInvitationMutation = useMutation({
-    mutationFn: async (invitationId: number) => {
-      const response = await apiRequest(`/api/invitations/${invitationId}/decline`, {
-        method: 'POST'
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/invitations/pending'] });
-      toast({
-        title: 'Invitation declined',
-        description: 'You have declined the project invitation.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error declining invitation',
-        description: 'There was a problem declining the invitation. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-  
-  // Handle accepting an invitation
-  const handleAcceptInvitation = async (invitationId: number) => {
-    setIsProcessing(true);
+  const { myInvitations, acceptInvitation, declineInvitation, isLoadingInvitations } = useCollaboration();
+
+  // Handle accept invitation
+  const handleAccept = async (invitationId: number) => {
     try {
-      await acceptInvitationMutation.mutateAsync(invitationId);
+      await acceptInvitation(invitationId);
     } catch (error) {
-      console.error("Error accepting invitation:", error);
-    } finally {
-      setIsProcessing(false);
+      console.error('Error accepting invitation:', error);
     }
   };
-  
-  // Handle declining an invitation
-  const handleDeclineInvitation = async (invitationId: number) => {
-    setIsProcessing(true);
+
+  // Handle decline invitation
+  const handleDecline = async (invitationId: number) => {
     try {
-      await declineInvitationMutation.mutateAsync(invitationId);
+      await declineInvitation(invitationId);
     } catch (error) {
-      console.error("Error declining invitation:", error);
-    } finally {
-      setIsProcessing(false);
+      console.error('Error declining invitation:', error);
     }
   };
-  
-  if (isLoading) {
+
+  if (isLoadingInvitations) {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-3/4 mb-2" />
+          <Card key={i} className="border border-border">
+            <CardHeader className="pb-2">
+              <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-2">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-4 w-2/3" />
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-24" />
+            <CardFooter>
+              <div className="flex space-x-2">
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-9 w-20" />
+              </div>
             </CardFooter>
           </Card>
         ))}
       </div>
     );
   }
-  
-  if (invitations.length === 0) {
+
+  if (myInvitations.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-6">
-          <p className="text-muted-foreground">You don't have any pending invitations.</p>
+      <Card className="border border-border bg-muted/50">
+        <CardContent className="pt-6 flex flex-col items-center justify-center text-center space-y-2">
+          <Clock className="h-12 w-12 text-muted-foreground mb-2" />
+          <CardTitle className="text-xl">No Pending Invitations</CardTitle>
+          <CardDescription>
+            You don't have any pending project invitations at the moment.
+          </CardDescription>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
     <div className="space-y-4">
-      {invitations.map((invitation: Invitation) => (
-        <Card key={invitation.id}>
-          <CardHeader>
-            <CardTitle className="text-lg">{invitation.projectName}</CardTitle>
-            <CardDescription className="flex items-center">
-              <Clock className="h-3.5 w-3.5 mr-1" />
-              Invited {format(new Date(invitation.invitedAt), 'MMM d, yyyy')} by {invitation.inviterName}
+      {myInvitations.map((invitation) => (
+        <Card key={invitation.id} className="border border-border">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">{invitation.projectName}</CardTitle>
+              <div className="bg-primary/10 text-primary px-2 py-1 rounded-md text-sm font-medium">
+                {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
+              </div>
+            </div>
+            <CardDescription>
+              Invited by {invitation.inviterName} {invitation.invitedAt instanceof Date ? 
+                formatDistanceToNow(invitation.invitedAt, { addSuffix: true }) : 
+                formatDistanceToNow(new Date(invitation.invitedAt), { addSuffix: true })}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm mb-2">
-              You've been invited to join this project as a <span className="font-medium">{invitation.role}</span>.
-            </p>
+          <CardContent className="pb-2">
+            <div className="flex items-center text-sm text-muted-foreground space-x-4">
+              <div className="flex items-center">
+                <Users className="h-4 w-4 mr-1" />
+                <span>Collaborative Project</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                <span>Pending Response</span>
+              </div>
+            </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => handleDeclineInvitation(invitation.id)}
-              disabled={isProcessing}
-              className="flex items-center"
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Decline
-            </Button>
-            <Button
-              onClick={() => handleAcceptInvitation(invitation.id)}
-              disabled={isProcessing}
-              className="flex items-center"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Accept
-            </Button>
+          <CardFooter>
+            <div className="flex space-x-2">
+              <Button 
+                size="sm" 
+                onClick={() => handleAccept(invitation.id)}
+                className="flex items-center"
+              >
+                <BadgeCheck className="h-4 w-4 mr-1" />
+                Accept
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleDecline(invitation.id)}
+              >
+                Decline
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       ))}

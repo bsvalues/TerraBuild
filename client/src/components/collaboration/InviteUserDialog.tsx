@@ -1,176 +1,162 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { useCollaboration } from '@/contexts/CollaborationContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
 
 interface InviteUserDialogProps {
   projectId: number;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  buttonLabel?: string;
+  buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
+  buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
+  className?: string;
 }
 
-// Role options
-const ROLE_OPTIONS = [
-  { value: 'viewer', label: 'Viewer' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'admin', label: 'Admin' },
-];
-
-// Form schema
-const inviteFormSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  role: z.enum(['viewer', 'editor', 'admin'], { 
-    required_error: "Please select a role",
-  }),
-});
-
-type InviteFormValues = z.infer<typeof inviteFormSchema>;
-
-const InviteUserDialog: React.FC<InviteUserDialogProps> = ({ projectId, open, onOpenChange }) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+const InviteUserDialog: React.FC<InviteUserDialogProps> = ({
+  projectId,
+  buttonLabel = 'Invite User',
+  buttonVariant = 'default',
+  buttonSize = 'default',
+  className,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<string>('');
+  const [role, setRole] = useState<string>('viewer');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Set up form with zod validation
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteFormSchema),
-    defaultValues: {
-      email: "",
-      role: "viewer",
-    },
-  });
+  const { addMember } = useCollaboration();
+  const { toast } = useToast();
 
-  // Invite user mutation
-  const inviteUserMutation = useMutation({
-    mutationFn: async (data: InviteFormValues) => {
-      const response = await apiRequest(`/api/shared-projects/${projectId}/invite`, {
-        method: 'POST',
-        body: JSON.stringify({
-          email: data.email,
-          role: data.role,
-        }),
-        headers: { 'Content-Type': 'application/json' }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!userId || !role) {
+      toast({
+        title: 'Missing information',
+        description: 'Please provide a user ID and select a role.',
+        variant: 'destructive',
       });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/shared-projects', projectId, 'members'] });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await addMember(projectId, Number(userId), role);
+      setOpen(false);
+      setUserId('');
+      setRole('viewer');
+      
       toast({
         title: 'Invitation sent',
         description: 'The user has been invited to the project.',
       });
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: (error: any) => {
+    } catch (error) {
+      console.error('Error inviting user:', error);
       toast({
-        title: 'Error sending invitation',
-        description: error?.message || 'There was a problem sending the invitation. Please try again.',
+        title: 'Error inviting user',
+        description: 'There was a problem sending the invitation. Please try again.',
         variant: 'destructive',
       });
-    }
-  });
-
-  // Handle form submission
-  const onSubmit = async (data: InviteFormValues) => {
-    setIsSubmitting(true);
-    try {
-      await inviteUserMutation.mutateAsync(data);
-    } catch (error) {
-      console.error("Error inviting user:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button 
+          variant={buttonVariant} 
+          size={buttonSize} 
+          className={className}
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          {buttonLabel}
+        </Button>
+      </DialogTrigger>
+      
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Invite User to Project</DialogTitle>
           <DialogDescription>
-            Enter the email address of the user you want to invite and select their role.
+            Enter the user's ID and select their role in the project.
           </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="user@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="userId">User ID</Label>
+            <Input 
+              id="userId"
+              type="number"
+              placeholder="Enter user ID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ROLE_OPTIONS.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="flex items-center"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Sending..." : "Send Invitation"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            <p className="text-xs text-muted-foreground">
+              The user must be registered on the platform to receive an invitation.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select 
+              value={role} 
+              onValueChange={setRole}
+            >
+              <SelectTrigger id="role" className="w-full">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Viewer:</span> Can only view project content.<br />
+              <span className="font-medium">Editor:</span> Can view and edit project content.<br />
+              <span className="font-medium">Admin:</span> Can manage members and project settings.
+            </p>
+          </div>
+          
+          <DialogFooter className="pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Sending Invitation...' : 'Send Invitation'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
