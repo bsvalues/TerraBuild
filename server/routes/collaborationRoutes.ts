@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from 'express';
 import { IStorage } from '../storage';
+import { storage } from '../storage-implementation';
 
 export function registerCollaborationRoutes(app: Express): void {
-  const storage: IStorage = (global as any).storage;
   
   /**
    * Middleware to check if a user has access to a project
@@ -224,12 +224,19 @@ export function registerCollaborationRoutes(app: Express): void {
       }
       
       console.log("Getting projects for user:", req.user.id);
-      const projects = await storage.getUserProjects(req.user.id);
-      console.log("Retrieved projects:", projects);
-      res.json(projects);
-    } catch (error) {
+      try {
+        const projects = await storage.getUserProjects(req.user.id);
+        console.log("Retrieved projects:", projects);
+        res.json(projects);
+      } catch (dbError: any) {
+        console.error("Database error in getUserProjects:", dbError);
+        console.error("Error stack:", dbError.stack);
+        return res.status(500).json({ message: "Database error fetching user projects", error: dbError.message });
+      }
+    } catch (error: any) {
       console.error("Error fetching user projects:", error);
-      res.status(500).json({ message: "Error fetching user projects" });
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ message: "Error fetching user projects", error: error.message });
     }
   });
   
@@ -240,11 +247,19 @@ export function registerCollaborationRoutes(app: Express): void {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const projects = await storage.getPublicProjects();
-      res.json(projects);
-    } catch (error) {
+      try {
+        const projects = await storage.getPublicProjects();
+        console.log("Retrieved public projects:", projects);
+        res.json(projects);
+      } catch (dbError: any) {
+        console.error("Database error in getPublicProjects:", dbError);
+        console.error("Error stack:", dbError.stack);
+        return res.status(500).json({ message: "Database error fetching public projects", error: dbError.message });
+      }
+    } catch (error: any) {
       console.error("Error fetching public projects:", error);
-      res.status(500).json({ message: "Error fetching public projects" });
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ message: "Error fetching public projects", error: error.message });
     }
   });
   

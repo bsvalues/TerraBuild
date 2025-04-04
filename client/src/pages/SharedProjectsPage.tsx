@@ -146,7 +146,7 @@ const SharedProjectsPage: React.FC = () => {
   const viewProject = (project: any) => {
     setCurrentProject(project);
     // Navigate to project details page
-    window.location.href = `/shared-projects/${project.id}`;
+    navigate(`/shared-projects/${project.id}`);
   };
 
   return (
