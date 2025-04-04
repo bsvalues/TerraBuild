@@ -173,25 +173,22 @@ class BentonCountyCostMatrixParser:
                 
             # Initialize and run the enhanced parser
             parser = EnhancedExcelParser(self.excel_file_path)
-            result = parser.parse(progress_callback=progress_callback)
+            result = parser.parse()
+            # Call progress callback manually for 100% completion
+            progress_callback(100.0)
             
-            # If the enhanced parser succeeded, use its data
-            if result["success"]:
-                print(f"\nEnhanced parser extracted {result['rowCount']} matrix entries")
+            # Process the result from enhanced parser
+            if "data" in result and result["data"]:
+                print(f"\nEnhanced parser extracted {len(result['data'])} matrix entries")
                 self.matrix_data = result["data"]
-                self.regions = result["regions"]
-                self.building_types = result["buildingTypes"]
                 
-                # Add any warnings as non-fatal errors
-                if result["warnings"]:
-                    print(f"Found {len(result['warnings'])} warnings during parsing")
-                    self.errors.extend([f"Warning: {warning}" for warning in result["warnings"][:10]])
-                    if len(result["warnings"]) > 10:
-                        self.errors.append(f"...and {len(result['warnings'])-10} more warnings")
+                # Extract regions and building types from the data
+                self.regions = list(set(entry["region"] for entry in self.matrix_data if "region" in entry))
+                self.building_types = list(set(entry["buildingType"] for entry in self.matrix_data if "buildingType" in entry))
                 
-                # If the enhanced parser found errors, add them to our errors list
-                if result["errors"]:
-                    self.errors.extend(result["errors"])
+                # Add any validation errors
+                if "metadata" in result and "validationErrors" in result["metadata"]:
+                    self.errors.extend(result["metadata"]["validationErrors"])
                 
                 return {
                     "success": True,
@@ -205,7 +202,8 @@ class BentonCountyCostMatrixParser:
             else:
                 # Enhanced parser failed, fall back to basic parser
                 print("Enhanced parser failed, using fallback method")
-                self.errors.extend(result["errors"])
+                if "metadata" in result and "validationErrors" in result["metadata"]:
+                    self.errors.extend(result["metadata"]["validationErrors"])
                 
                 # Create default matrix entries based on building types
                 for building_type in self.building_type_mapping.keys():

@@ -1,0 +1,713 @@
+{
+  "data": [
+    {
+      "region": "CENTRAL",
+      "buildingType": "BING",
+      "buildingTypeDescription": "Bing (PC)",
+      "baseCost": 6000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 1,
+      "matrixDescription": "PC - C01-Bing - * - T1",
+      "dataPoints": 18,
+      "minCost": 2000.0,
+      "maxCost": 9000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "CENTRAL",
+      "buildingType": "RAINIE",
+      "buildingTypeDescription": "Rainie (PC)",
+      "baseCost": 6000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 2,
+      "matrixDescription": "PC - C02-Rainie - * - T1",
+      "dataPoints": 18,
+      "minCost": 2000.0,
+      "maxCost": 9000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "CENTRAL",
+      "buildingType": "CHELAN",
+      "buildingTypeDescription": "Chelan (PC)",
+      "baseCost": 6000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 4,
+      "matrixDescription": "PC - C04-Chelan - * - T1",
+      "dataPoints": 18,
+      "minCost": 2000.0,
+      "maxCost": 9000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "INDUSTRIAL",
+      "buildingType": "BURIED",
+      "buildingTypeDescription": "Buried (PC)",
+      "baseCost": 160.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 10,
+      "matrixDescription": "PC - I03-Buried - * - IRR",
+      "dataPoints": 2,
+      "minCost": 0.0,
+      "maxCost": 320.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "INDUSTRIAL",
+      "buildingType": "COOLIN",
+      "buildingTypeDescription": "Coolin (PC)",
+      "baseCost": 200.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 11,
+      "matrixDescription": "PC - I04-Coolin - * - IRR",
+      "dataPoints": 2,
+      "minCost": 200.0,
+      "maxCost": 200.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "CHERRI",
+      "buildingTypeDescription": "Cherri (PC)",
+      "baseCost": 4300.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 22,
+      "matrixDescription": "PC - O02-Cherri - * - T1",
+      "dataPoints": 18,
+      "minCost": 1500.0,
+      "maxCost": 9100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "PEARS",
+      "buildingTypeDescription": "Pears (PC)",
+      "baseCost": 3000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 26,
+      "matrixDescription": "PC - O03-Pears - * - T1",
+      "dataPoints": 11,
+      "minCost": 500.0,
+      "maxCost": 5000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "PEACHE",
+      "buildingTypeDescription": "Peache (PC)",
+      "baseCost": 2500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 27,
+      "matrixDescription": "PC - O04-Peache - * - T1",
+      "dataPoints": 11,
+      "minCost": 500.0,
+      "maxCost": 4000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "NECTAR",
+      "buildingTypeDescription": "Nectar (PC)",
+      "baseCost": 1500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 30,
+      "matrixDescription": "PC - O05-Nectar - * - T1",
+      "dataPoints": 11,
+      "minCost": 500.0,
+      "maxCost": 3000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "APRICO",
+      "buildingTypeDescription": "Aprico (PC)",
+      "baseCost": 1500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 31,
+      "matrixDescription": "PC - O06-Aprico - * - T1",
+      "dataPoints": 11,
+      "minCost": 500.0,
+      "maxCost": 2500.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "PLUMS",
+      "buildingTypeDescription": "Plums (PC)",
+      "baseCost": 1062.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 34,
+      "matrixDescription": "PC - O07-Plums - * - T1",
+      "dataPoints": 12,
+      "minCost": 500.0,
+      "maxCost": 1375.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "PRUNES",
+      "buildingTypeDescription": "Prunes (PC)",
+      "baseCost": 1062.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 35,
+      "matrixDescription": "PC - O08-Prunes - * - T1",
+      "dataPoints": 12,
+      "minCost": 500.0,
+      "maxCost": 1375.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "NUTS",
+      "buildingTypeDescription": "Nuts (PC)",
+      "baseCost": 1062.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 38,
+      "matrixDescription": "PC - O09-Nuts - * - T1",
+      "dataPoints": 12,
+      "minCost": 500.0,
+      "maxCost": 1375.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "TATURA",
+      "buildingTypeDescription": "Tatura (PC)",
+      "baseCost": 2500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 188,
+      "matrixDescription": "PC - T01-Tatura - * - TRL",
+      "dataPoints": 2,
+      "minCost": 2500.0,
+      "maxCost": 2500.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "SPINDL",
+      "buildingTypeDescription": "Spindl (PC)",
+      "baseCost": 0.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 189,
+      "matrixDescription": "PC - T02-Spindl - * - TRL",
+      "dataPoints": 3,
+      "minCost": 0.0,
+      "maxCost": 1000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "WIRE_D",
+      "buildingTypeDescription": "Wire D (PC)",
+      "baseCost": 500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 190,
+      "matrixDescription": "PC - T03-Wire D - * - TRL",
+      "dataPoints": 2,
+      "minCost": 500.0,
+      "maxCost": 500.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "WIRE_T",
+      "buildingTypeDescription": "Wire T (PC)",
+      "baseCost": 800.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 191,
+      "matrixDescription": "PC - T04-Wire T - * - TRL",
+      "dataPoints": 2,
+      "minCost": 800.0,
+      "maxCost": 800.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "HOP_TR",
+      "buildingTypeDescription": "Hop Tr (PC)",
+      "baseCost": 3700.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 192,
+      "matrixDescription": "PC - T05-Hop Tr - * - TRL",
+      "dataPoints": 18,
+      "minCost": 2000.0,
+      "maxCost": 5250.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "BLUEBE",
+      "buildingTypeDescription": "Bluebe (PC)",
+      "baseCost": 8500.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 256,
+      "matrixDescription": "PC - V31-Bluebe - PC-G - V1",
+      "dataPoints": 12,
+      "minCost": 2000.0,
+      "maxCost": 12000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "RASPBE",
+      "buildingTypeDescription": "Raspbe (PC)",
+      "baseCost": 1000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 257,
+      "matrixDescription": "PC - V32-Raspbe - PC-G - V1",
+      "dataPoints": 3,
+      "minCost": 1000.0,
+      "maxCost": 2000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 91.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 399,
+      "matrixDescription": "MH - EX-Depre",
+      "dataPoints": 10,
+      "minCost": 0.0,
+      "maxCost": 100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 79.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 400,
+      "matrixDescription": "MH - AV-Depre",
+      "dataPoints": 13,
+      "minCost": 60.0,
+      "maxCost": 100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 65.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 401,
+      "matrixDescription": "MH - P-Depre",
+      "dataPoints": 10,
+      "minCost": 25.0,
+      "maxCost": 95.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 93.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 402,
+      "matrixDescription": "MH - VG-Depre",
+      "dataPoints": 10,
+      "minCost": 50.0,
+      "maxCost": 100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 91.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 403,
+      "matrixDescription": "MH - G-Depre",
+      "dataPoints": 10,
+      "minCost": 50.0,
+      "maxCost": 100.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 68.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 404,
+      "matrixDescription": "MH - F-Depre",
+      "dataPoints": 12,
+      "minCost": 40.0,
+      "maxCost": 98.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "DEPRE",
+      "buildingTypeDescription": "Depre (MH)",
+      "baseCost": 47.5,
+      "matrixYear": 2025,
+      "sourceMatrixId": 405,
+      "matrixDescription": "MH - VP-Depre",
+      "dataPoints": 10,
+      "minCost": 0.0,
+      "maxCost": 93.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "BSMT",
+      "buildingTypeDescription": "BSMT (RES)",
+      "baseCost": 20.11,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3253,
+      "matrixDescription": "RES - U-BSMT",
+      "dataPoints": 63,
+      "minCost": 9.73,
+      "maxCost": 39.13,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "SOLID_SET_DRIP",
+      "buildingTypeDescription": "Solid Set Drip (PC)",
+      "baseCost": 1000.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3297,
+      "matrixDescription": "PC-I01-Solid Set Drip - IRR",
+      "dataPoints": 2,
+      "minCost": 1000.0,
+      "maxCost": 1000.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "SOLID_SET_SPRINKLERS",
+      "buildingTypeDescription": "Solid Set Sprinklers (PC)",
+      "baseCost": 1250.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3298,
+      "matrixDescription": "PC-I02-Solid Set Sprinklers-IRR",
+      "dataPoints": 2,
+      "minCost": 1250.0,
+      "maxCost": 1250.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "V_TRELLIS",
+      "buildingTypeDescription": "V Trellis (PC)",
+      "baseCost": 2550.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3299,
+      "matrixDescription": "PC-T08-V Trellis-TRL",
+      "dataPoints": 2,
+      "minCost": 2550.0,
+      "maxCost": 2550.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "SINGLEPOLE",
+      "buildingTypeDescription": "SinglePole (PC)",
+      "baseCost": 1550.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3301,
+      "matrixDescription": "PC-T09-SinglePole-TRL",
+      "dataPoints": 2,
+      "minCost": 1550.0,
+      "maxCost": 1550.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "VINEYARD1",
+      "buildingTypeDescription": "VINEYARD1 (PC)",
+      "baseCost": 200.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3317,
+      "matrixDescription": "PC-ASPARAGUS-VINEYARD1",
+      "dataPoints": 6,
+      "minCost": 100.0,
+      "maxCost": 250.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "VINEYARD2B",
+      "buildingTypeDescription": "VINEYARD2B (PC)",
+      "baseCost": 6750.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3787,
+      "matrixDescription": "PC - WINE- VINEYARD2B",
+      "dataPoints": 22,
+      "minCost": 2000.0,
+      "maxCost": 13500.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    },
+    {
+      "region": "UNKNOWN",
+      "buildingType": "BLUEBERRY_TRELLIS",
+      "buildingTypeDescription": "Blueberry Trellis (PC)",
+      "baseCost": 800.0,
+      "matrixYear": 2025,
+      "sourceMatrixId": 3844,
+      "matrixDescription": "PC-T10-Blueberry Trellis-TRL",
+      "dataPoints": 2,
+      "minCost": 800.0,
+      "maxCost": 800.0,
+      "adjustmentFactors": {
+        "complexity": 1.0,
+        "quality": 1.0,
+        "condition": 1.0
+      },
+      "county": "Benton",
+      "state": "WA"
+    }
+  ],
+  "metadata": {
+    "fileProcessed": "Cost Matrix 2025.xlsx",
+    "matrixYear": 2025,
+    "processedAt": "2025-04-04T23:25:52.942732",
+    "buildingTypeCount": 29,
+    "regionCount": 3,
+    "totalEntries": 35,
+    "buildingTypes": [
+      "VINEYARD1",
+      "Blueberry Trellis",
+      "Depre",
+      "Prunes",
+      "Wire D",
+      "Solid Set Drip",
+      "Bluebe",
+      "V Trellis",
+      "Plums",
+      "VINEYARD2B",
+      "BSMT",
+      "Bing",
+      "Coolin",
+      "Buried",
+      "Rainie",
+      "Hop Tr",
+      "Raspbe",
+      "Nectar",
+      "Tatura",
+      "Nuts",
+      "Wire T",
+      "Peache",
+      "Spindl",
+      "SinglePole",
+      "Solid Set Sprinklers",
+      "Aprico",
+      "Pears",
+      "Chelan",
+      "Cherri"
+    ],
+    "regions": [
+      "UNKNOWN",
+      "INDUSTRIAL",
+      "CENTRAL"
+    ]
+  }
+}

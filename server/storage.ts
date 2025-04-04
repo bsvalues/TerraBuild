@@ -116,6 +116,7 @@ export interface IStorage {
   getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]>;
   getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined>;
   createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix>;
+  createCostMatrixEntry(matrix: InsertCostMatrix): Promise<CostMatrix>; // Alias for createCostMatrix
   updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined>;
   deleteCostMatrix(id: number): Promise<void>;
   importCostMatrixFromJson(data: any[]): Promise<{ imported: number, updated: number, errors: string[] }>;
@@ -1000,6 +1001,11 @@ export class MemStorage implements IStorage {
     
     this.costMatrixEntries.set(id, newMatrix);
     return newMatrix;
+  }
+  
+  // Alias for createCostMatrix to support the batch API
+  async createCostMatrixEntry(matrix: InsertCostMatrix): Promise<CostMatrix> {
+    return this.createCostMatrix(matrix);
   }
   
   async updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined> {

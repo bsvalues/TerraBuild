@@ -1410,6 +1410,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Batch import cost matrix entries
+  app.post("/api/cost-matrix/batch", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Only allow admin users to import data
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { entries, userId } = req.body;
+      
+      if (!entries || !Array.isArray(entries)) {
+        return res.status(400).json({ message: "Invalid data format. Expected array of cost matrix entries." });
+      }
+      
+      let imported = 0;
+      const errors: Array<{entry: string, error: string}> = [];
+      
+      for (const entry of entries) {
+        try {
+          // Transform the entry to match the schema if needed
+          const matrixEntry = {
+            region: entry.region || 'Unknown',
+            buildingType: entry.buildingType || 'Unknown',
+            buildingTypeDescription: entry.buildingTypeDescription || '',
+            baseCost: parseFloat(entry.baseCost) || 0,
+            matrixYear: parseInt(entry.matrixYear) || new Date().getFullYear(),
+            sourceMatrixId: parseInt(entry.sourceMatrixId) || 0,
+            matrixDescription: entry.matrixDescription || '',
+            dataPoints: parseInt(entry.dataPoints) || 0,
+            minCost: parseFloat(entry.minCost) || 0,
+            maxCost: parseFloat(entry.maxCost) || 0,
+            complexityFactorBase: parseFloat(entry.adjustmentFactors?.complexity) || 1.0,
+            qualityFactorBase: parseFloat(entry.adjustmentFactors?.quality) || 1.0,
+            conditionFactorBase: parseFloat(entry.adjustmentFactors?.condition) || 1.0,
+            county: entry.county || 'Benton',
+            state: entry.state || 'WA',
+            isActive: true
+          };
+          
+          await storage.createCostMatrixEntry(matrixEntry);
+          imported++;
+        } catch (error: any) {
+          errors.push({
+            entry: JSON.stringify(entry).substring(0, 100),
+            error: error.message
+          });
+        }
+      }
+      
+      // Log the activity
+      if (imported > 0) {
+        await storage.createActivity({
+          action: `Batch imported ${imported} cost matrix entries`,
+          icon: "ri-database-2-line",
+          iconColor: "success",
+          userId: userId || req.user?.id
+        });
+      }
+      
+      res.status(200).json({
+        success: true,
+        imported,
+        errors,
+        total: entries.length
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error importing cost matrix data" });
+    }
+  });
+  
   // Update cost matrix entry
   app.patch("/api/cost-matrix/:id", requireAuth, async (req: Request, res: Response) => {
     try {

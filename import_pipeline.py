@@ -95,9 +95,9 @@ def main():
     
     # Execute the import_to_database.js script
     try:
-        # Run the Node.js script
+        # Run the Node.js script with ES module support
         process = subprocess.run(
-            ["node", "import_to_database.js", json_output_path],
+            ["node", "--input-type=module", "import_to_database.js", json_output_path],
             capture_output=True,
             text=True,
             check=True

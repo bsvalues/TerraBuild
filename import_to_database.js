@@ -3,9 +3,9 @@
  * This module handles calling the Python parser and importing the data into the database
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { spawn } from 'child_process';
+import path from 'path';
+import { promises as fs, existsSync, readFileSync, readdirSync } from 'fs';
 
 /**
  * Process an Excel file using the Python parser and return structured data
@@ -44,12 +44,11 @@ async function parseExcelFile(filePath) {
       
       try {
         // Read the parsed data from the temporary file
-        const parsedData = JSON.parse(fs.readFileSync(tmpOutputFile, 'utf8'));
+        const parsedData = JSON.parse(readFileSync(tmpOutputFile, 'utf8'));
         
         // Delete temporary file
-        fs.unlink(tmpOutputFile, (err) => {
-          if (err) console.warn(`Warning: Could not delete temporary file ${tmpOutputFile}`, err);
-        });
+        fs.unlink(tmpOutputFile)
+          .catch(err => console.warn(`Warning: Could not delete temporary file ${tmpOutputFile}`, err));
         
         resolve(parsedData);
       } catch (error) {
@@ -82,9 +81,9 @@ async function importCostMatrixFromExcel(storage, fileId, userId) {
     
     // If file doesn't exist at expected path, check for just the filename
     let actualFilePath = filePath;
-    if (!fs.existsSync(actualFilePath)) {
+    if (!existsSync(actualFilePath)) {
       const uploadDir = path.join(process.cwd(), 'uploads');
-      const files = fs.readdirSync(uploadDir);
+      const files = readdirSync(uploadDir);
       
       // Find a file with a name or ID that matches
       const matchingFile = files.find(file => {
@@ -188,7 +187,7 @@ async function importCostMatrixFromExcel(storage, fileId, userId) {
   }
 }
 
-module.exports = {
+export {
   parseExcelFile,
   importCostMatrixFromExcel
 };
