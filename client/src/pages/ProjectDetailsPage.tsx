@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
 import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable';
+import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import InviteUserDialog from '@/components/collaboration/InviteUserDialog';
 import CommentsSection from '@/components/comments/CommentsSection';
 import {
@@ -239,7 +240,11 @@ const ProjectDetailsPage: React.FC = () => {
     if (!currentProject || !addingItemType || !selectedItemId) return;
     
     try {
-      await addProjectItem(currentProject.id, addingItemType, Number(selectedItemId));
+      await addProjectItem({
+        projectId: currentProject.id,
+        itemType: addingItemType,
+        itemId: Number(selectedItemId)
+      });
       
       toast({
         title: 'Item added',
@@ -264,7 +269,11 @@ const ProjectDetailsPage: React.FC = () => {
     if (!currentProject) return;
     
     try {
-      await removeProjectItem(currentProject.id, itemType, itemId);
+      await removeProjectItem({
+        projectId: currentProject.id,
+        itemType: itemType,
+        itemId: itemId
+      });
       
       toast({
         title: 'Item removed',
@@ -603,6 +612,13 @@ const ProjectDetailsPage: React.FC = () => {
             </CardHeader>
             
             <CardContent>
+              <ProjectItemsTable 
+                projectId={currentProject.id}
+                items={projectItems}
+                isLoading={isLoadingItems}
+                currentUserRole={isOwner ? 'owner' : 'member'}
+              />
+              
               {addingItemType !== null && (
                 <div className="mb-6 p-4 border rounded-lg bg-muted/50">
                   <h3 className="font-medium mb-4">

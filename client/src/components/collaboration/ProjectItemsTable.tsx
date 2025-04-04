@@ -57,19 +57,22 @@ import { toast } from '@/hooks/use-toast';
 
 interface ProjectItemsTableProps {
   projectId: number;
+  items: any[]; // Project items array
   isLoading: boolean;
   currentUserRole: string;
 }
 
 export default function ProjectItemsTable({
   projectId,
+  items,
   isLoading,
   currentUserRole,
 }: ProjectItemsTableProps) {
   const {
-    projectItems,
     removeItemFromProject,
   } = useCollaboration();
+  
+  // Use the items prop instead of context projectItems
   
   const [itemToRemove, setItemToRemove] = useState<{id: number, type: string, name: string} | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -223,7 +226,7 @@ export default function ProjectItemsTable({
           Shared Items
         </CardTitle>
         <CardDescription>
-          {projectItems.length} item{projectItems.length !== 1 ? 's' : ''} shared in this project
+          {items.length} item{items.length !== 1 ? 's' : ''} shared in this project
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -231,7 +234,7 @@ export default function ProjectItemsTable({
           <div className="flex justify-center py-6">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : projectItems.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="text-center border rounded-lg p-8">
             <div className="mx-auto rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-3">
               <FolderOpen className="h-6 w-6 text-muted-foreground" />
@@ -255,7 +258,7 @@ export default function ProjectItemsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projectItems.map((item) => {
+              {items.map((item: any) => {
                 const itemName = getItemName(item);
                 return (
                   <TableRow key={`${item.itemType}-${item.itemId}`}>
