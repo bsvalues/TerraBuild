@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -143,10 +143,11 @@ const SharedProjectsPage: React.FC = () => {
   };
 
   // View a project
+  const [_, setLocation] = useLocation();
   const viewProject = (project: any) => {
     setCurrentProject(project);
     // Navigate to project details page
-    navigate(`/shared-projects/${project.id}`);
+    setLocation(`/shared-projects/${project.id}`);
   };
 
   return (
