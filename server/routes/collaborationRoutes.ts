@@ -5,7 +5,7 @@
  * enabling collaboration features for the application.
  */
 
-import { Express, Response } from 'express';
+import { Express, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage-implementation';
 import { 

@@ -37,9 +37,27 @@ export async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Authentication middleware for development that sets a mock admin user
+export const devAuthMiddleware = (req: any, res: any, next: any) => {
+  if (!req.user) {
+    req.user = {
+      id: 1,
+      username: "admin",
+      password: "password", // Not actual password, just for display
+      role: "admin",
+      name: "Admin User",
+      isActive: true
+    };
+  }
+  next();
+};
+
 export function setupAuth(app: Express) {
   // DEVELOPMENT MODE: Authentication completely disabled
   log("Authentication is completely disabled for development");
+  
+  // Add the development auth middleware to all API routes
+  app.use('/api', devAuthMiddleware);
   
   // Skip all authentication-related middleware setup
   // We'll handle user identity via the requireAuth middleware in routes.ts
