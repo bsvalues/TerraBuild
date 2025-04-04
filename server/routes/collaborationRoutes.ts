@@ -431,7 +431,7 @@ export function registerCollaborationRoutes(app: Express): void {
       
       // Log the activity
       await storage.createActivity({
-        action: `Removed ${user.username} from project: ${req.project.name}`,
+        action: `Removed ${user.username} from project: ${req.project?.name || 'Unknown'}`,
         icon: "ri-user-unfollow-line",
         iconColor: "danger"
       });
@@ -541,7 +541,7 @@ export function registerCollaborationRoutes(app: Express): void {
       
       // Log the activity
       await storage.createActivity({
-        action: `Added ${itemName} to project: ${req.project.name}`,
+        action: `Added ${itemName} to project: ${req.project?.name || 'Unknown'}`,
         icon: "ri-add-line",
         iconColor: "success"
       });
@@ -578,7 +578,7 @@ export function registerCollaborationRoutes(app: Express): void {
         
         // Log the activity
         await storage.createActivity({
-          action: `Removed ${itemType} from project: ${req.project.name}`,
+          action: `Removed ${itemType} from project: ${req.project?.name || 'Unknown'}`,
           icon: "ri-subtract-line",
           iconColor: "warning"
         });

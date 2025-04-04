@@ -21,8 +21,11 @@ import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
 import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
 import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
+import SharedProjectsPage from "@/pages/SharedProjectsPage";
+import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { useEffect } from "react";
 
 // Add link to Remix Icon for icons
@@ -71,6 +74,8 @@ function Router() {
       <ProtectedRoute path="/statistical-analysis" component={StatisticalAnalysisDemo} />
       <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
+      <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
+      <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -81,10 +86,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <DevAutoLogin />
-        <RemixIconLink />
-        <Router />
-        <Toaster />
+        <CollaborationProvider>
+          <DevAutoLogin />
+          <RemixIconLink />
+          <Router />
+          <Toaster />
+        </CollaborationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
