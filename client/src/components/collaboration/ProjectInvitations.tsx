@@ -51,7 +51,7 @@ import { toast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 interface ProjectInvitationsProps {
-  projectId: number;
+  projectId?: number;
   className?: string;
 }
 
@@ -74,8 +74,6 @@ interface ProjectInvitation {
     name: string | null;
     username: string;
   };
-  // These will be computed locally
-  isSentByMe?: boolean;
 }
 
 export default function ProjectInvitations({ projectId, className }: ProjectInvitationsProps) {
@@ -355,7 +353,7 @@ export default function ProjectInvitations({ projectId, className }: ProjectInvi
                         </Button>
                       </div>
                     )}
-                    {invitation.status === 'pending' && invitation.isSentByMe && (
+                    {invitation.status === 'pending' && invitation.invitedBy && (
                       <Button
                         variant="ghost"
                         size="sm"

@@ -69,11 +69,7 @@ export default function ProjectItemsTable({
   const {
     projectItems,
     removeItemFromProject,
-    removeProjectItem, // This will be used if available, otherwise removeItemFromProject is used
   } = useCollaboration();
-  
-  // Resolve the correct remove function
-  const removeItem = removeProjectItem || removeItemFromProject;
   
   const [itemToRemove, setItemToRemove] = useState<{id: number, type: string, name: string} | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -93,7 +89,7 @@ export default function ProjectItemsTable({
     
     setIsProcessing(true);
     try {
-      await removeItem(projectId, itemToRemove.type, itemToRemove.id);
+      await removeItemFromProject(projectId, itemToRemove.type, itemToRemove.id);
       setShowRemoveConfirm(false);
       setItemToRemove(null);
       
@@ -181,7 +177,7 @@ export default function ProjectItemsTable({
   };
   
   // Get initials for avatar
-  const getInitials = (name?: string): string => {
+  const getInitials = (name: string): string => {
     if (!name) return '?';
     
     const words = name.trim().split(/\s+/);
@@ -268,7 +264,7 @@ export default function ProjectItemsTable({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback>{getInitials(item.user?.name)}</AvatarFallback>
+                          <AvatarFallback>{getInitials(item.user?.name || '')}</AvatarFallback>
                           {item.user?.name && (
                             <AvatarImage
                               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
