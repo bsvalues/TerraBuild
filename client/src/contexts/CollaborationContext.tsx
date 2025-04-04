@@ -141,6 +141,12 @@ interface EditCommentParams {
   content: string;
 }
 
+interface ProjectActivityParams {
+  projectId: number;
+  activityType: string;
+  activityData?: Record<string, any>;
+}
+
 interface CollaborationContextType {
   // Project members
   projectMembers: ProjectMember[];
@@ -181,6 +187,9 @@ interface CollaborationContextType {
   deleteComment: (commentId: number) => Promise<void>;
   resolveComment: (commentId: number, isResolved: boolean) => Promise<void>;
   refreshComments: (targetType: string, targetId: number) => void;
+  
+  // Project Activities
+  recordProjectActivity: (params: ProjectActivityParams) => Promise<void>;
 
   // Projects
   myProjects: Project[];
@@ -679,6 +688,22 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     },
   });
   
+  // Record project activity
+  const recordProjectActivityMutation = useMutation({
+    mutationFn: async (params: ProjectActivityParams) => {
+      await apiRequest(`/api/projects/${params.projectId}/activities`, {
+        method: 'POST',
+        body: JSON.stringify({
+          activityType: params.activityType,
+          activityData: params.activityData || {},
+        }),
+      });
+    },
+    onSuccess: () => {
+      // No need to invalidate any query cache since we don't have activities query yet
+    },
+  });
+  
   // Define isLoadingItems before using it in the context value
   const isLoadingItems = isItemsLoading;
   
@@ -737,6 +762,10 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     resolveComment: (commentId: number, isResolved: boolean) => 
       resolveCommentMutation.mutateAsync({ commentId, isResolved }),
     refreshComments,
+    
+    // Project Activities
+    recordProjectActivity: (params: ProjectActivityParams) =>
+      recordProjectActivityMutation.mutateAsync(params),
     
     // Projects
     myProjects,
