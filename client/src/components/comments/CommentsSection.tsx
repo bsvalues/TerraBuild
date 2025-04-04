@@ -88,7 +88,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ targetType, targetId 
   } = useQuery({
     queryKey: ['comments', targetType, targetId],
     queryFn: async () => {
-      const response = await apiRequest(`/api/comments?targetType=${targetType}&targetId=${targetId}`);
+      const response = await apiRequest(`/api/comments/${targetType}/${targetId}`);
       return response.json();
     },
     meta: {
@@ -127,9 +127,12 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ targetType, targetId 
   // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: async (data: { content: string; targetType: string; targetId: number | string; parentCommentId: number | null }) => {
-      const response = await apiRequest('/api/comments', {
+      const response = await apiRequest(`/api/comments/${data.targetType}/${data.targetId}`, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          content: data.content,
+          parentCommentId: data.parentCommentId
+        }),
         headers: { 'Content-Type': 'application/json' },
       });
       return response.json();
