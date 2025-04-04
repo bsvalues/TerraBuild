@@ -58,6 +58,7 @@ import { toast } from '@/hooks/use-toast';
 
 interface ProjectMembersTableProps {
   projectId: number;
+  members: any[]; // Project Member array
   isLoading: boolean;
   currentUserId: number;
   currentUserRole: string;
@@ -65,6 +66,7 @@ interface ProjectMembersTableProps {
 
 export default function ProjectMembersTable({
   projectId,
+  members,
   isLoading,
   currentUserId,
   currentUserRole,
@@ -200,7 +202,7 @@ export default function ProjectMembersTable({
           Project Members
         </CardTitle>
         <CardDescription>
-          {projectMembers.length} member{projectMembers.length !== 1 ? 's' : ''} in this project
+          {members.length} member{members.length !== 1 ? 's' : ''} in this project
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -219,7 +221,7 @@ export default function ProjectMembersTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projectMembers.map((member) => {
+              {members.map((member) => {
                 const isCurrentUser = member.userId === currentUserId;
                 const isOwner = member.role === 'owner';
                 const canEdit = canManageMembers && !isOwner && member.userId !== currentUserId;

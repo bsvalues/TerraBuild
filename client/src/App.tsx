@@ -78,6 +78,7 @@ function Router() {
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
+      <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

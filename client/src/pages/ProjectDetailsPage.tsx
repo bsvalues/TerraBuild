@@ -772,7 +772,7 @@ const ProjectDetailsPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CommentsSection targetType="project" targetId={projectId} />
+              <CommentsSection targetType="project" targetId={projectId} canComment={true} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -782,8 +782,11 @@ const ProjectDetailsPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6">
               <ProjectSharingControls
                 projectId={currentProject.id}
+                projectName={currentProject.name}
                 isPublic={currentProject.isPublic}
                 isOwner={isOwner}
+                currentUserId={user?.id || 0}
+                currentUserRole={isOwner ? 'owner' : 'member'}
               />
               
               <Card>
@@ -794,7 +797,12 @@ const ProjectDetailsPage: React.FC = () => {
                       People with access to this project
                     </CardDescription>
                   </div>
-                  <InviteUserDialog projectId={currentProject.id} />
+                  <InviteUserDialog 
+                    projectId={currentProject.id}
+                    open={false} 
+                    onOpenChange={() => {}} 
+                    isOwner={isOwner} 
+                  />
                 </CardHeader>
                 <CardContent>
                   <ProjectMembersTable 
