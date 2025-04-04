@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import { db } from './db';
-import { eq, and, desc, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { 
   User, InsertUser,
   Environment, InsertEnvironment,
@@ -22,10 +22,12 @@ import {
   SharedProject, InsertSharedProject,
   ProjectMember, InsertProjectMember,
   ProjectItem, InsertProjectItem,
+  Comment, InsertComment,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
-  whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems
+  whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
+  comments
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -1113,7 +1115,7 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  async updateComment(id: number, data: Partial<Comment>): Promise<Comment | undefined> {
+  async updateComment(id: number, data: Partial<InsertComment>): Promise<Comment | undefined> {
     const result = await db.update(comments)
       .set({
         ...data,
@@ -1131,7 +1133,16 @@ export class PostgresStorage implements IStorage {
 
   async getCommentWithUserInfo(id: number): Promise<(Comment & { user: { username: string, name: string | null } }) | undefined> {
     const result = await db.select({
-      ...comments,
+      id: comments.id,
+      createdAt: comments.createdAt,
+      updatedAt: comments.updatedAt,
+      userId: comments.userId,
+      targetType: comments.targetType,
+      targetId: comments.targetId,
+      content: comments.content,
+      parentCommentId: comments.parentCommentId,
+      isResolved: comments.isResolved,
+      isEdited: comments.isEdited,
       user: {
         username: users.username,
         name: users.name
@@ -1141,12 +1152,21 @@ export class PostgresStorage implements IStorage {
     .innerJoin(users, eq(comments.userId, users.id))
     .where(eq(comments.id, id));
     
-    return result[0];
+    return result[0] as (Comment & { user: { username: string, name: string | null } });
   }
 
   async getCommentsByTargetWithUserInfo(targetType: string, targetId: number): Promise<(Comment & { user: { username: string, name: string | null } })[]> {
-    return await db.select({
-      ...comments,
+    const results = await db.select({
+      id: comments.id,
+      createdAt: comments.createdAt,
+      updatedAt: comments.updatedAt,
+      userId: comments.userId,
+      targetType: comments.targetType,
+      targetId: comments.targetId,
+      content: comments.content,
+      parentCommentId: comments.parentCommentId,
+      isResolved: comments.isResolved,
+      isEdited: comments.isEdited,
       user: {
         username: users.username,
         name: users.name
@@ -1159,6 +1179,8 @@ export class PostgresStorage implements IStorage {
       eq(comments.targetId, targetId)
     ))
     .orderBy(comments.createdAt);
+    
+    return results as (Comment & { user: { username: string, name: string | null } })[];
   }
 
   async getProjectItemByTypeAndId(projectId: number, itemType: string, itemId: number): Promise<ProjectItem | undefined> {
@@ -1186,8 +1208,13 @@ export class PostgresStorage implements IStorage {
   }
 
   async getProjectMembersWithUserInfo(projectId: number): Promise<(ProjectMember & { user: { username: string, name: string | null } })[]> {
-    return await db.select({
-      ...projectMembers,
+    const results = await db.select({
+      id: projectMembers.id,
+      projectId: projectMembers.projectId,
+      userId: projectMembers.userId,
+      role: projectMembers.role,
+      joinedAt: projectMembers.joinedAt,
+      invitedBy: projectMembers.invitedBy,
       user: {
         username: users.username,
         name: users.name
@@ -1196,11 +1223,18 @@ export class PostgresStorage implements IStorage {
     .from(projectMembers)
     .innerJoin(users, eq(projectMembers.userId, users.id))
     .where(eq(projectMembers.projectId, projectId));
+    
+    return results as (ProjectMember & { user: { username: string, name: string | null } })[];
   }
 
   async getProjectMemberWithUserInfo(id: number): Promise<(ProjectMember & { user: { username: string, name: string | null } }) | undefined> {
     const result = await db.select({
-      ...projectMembers,
+      id: projectMembers.id,
+      projectId: projectMembers.projectId,
+      userId: projectMembers.userId,
+      role: projectMembers.role,
+      joinedAt: projectMembers.joinedAt,
+      invitedBy: projectMembers.invitedBy,
       user: {
         username: users.username,
         name: users.name
@@ -1210,7 +1244,7 @@ export class PostgresStorage implements IStorage {
     .innerJoin(users, eq(projectMembers.userId, users.id))
     .where(eq(projectMembers.id, id));
     
-    return result[0];
+    return result[0] as (ProjectMember & { user: { username: string, name: string | null } });
   }
 
   async getAccessibleSharedProjects(userId: number): Promise<SharedProject[]> {
