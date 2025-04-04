@@ -137,48 +137,36 @@ export function registerCommentRoutes(app: Express): void {
       
       const { targetType, targetId } = req.params;
       
-      // Super Verbose Debugging - show all request details
-      console.log("\n\n===== SUPER DETAILED COMMENT API DEBUG =====");
-      console.log("Request Body (raw):", req.body);
-      console.log("Request Headers:", JSON.stringify(req.headers, null, 2));
-      console.log("Request Query:", JSON.stringify(req.query, null, 2));
-      console.log("Request URL:", req.url);
-      console.log("Request Method:", req.method);
-      console.log("Content-Type:", req.headers['content-type']);
-      console.log("Request is JSON?", req.is('json'), "Request is application/json?", req.is('application/json'));
+      // Log raw request body
+      console.log("\n\n===== COMMENT API REQUEST =====");
+      console.log("Raw request body:", req.body);
+      console.log("JSON.stringify(req.body):", JSON.stringify(req.body));
       
-      if (Buffer.isBuffer(req.body)) {
-        console.log("Request body is a Buffer! Content:", req.body.toString());
-      } else if (typeof req.body === 'string') {
-        console.log("Request body is a string! Content:", req.body);
-        try {
-          const parsed = JSON.parse(req.body);
-          console.log("Parsed JSON:", parsed);
-        } catch (e) {
-          console.log("Failed to parse body as JSON");
-        }
-      } else if (typeof req.body === 'object') {
-        console.log("Request body is an object. Keys:", Object.keys(req.body));
+      // Extract content
+      const content = req.body.content;
+      
+      // Extract parentCommentId directly - try multiple variants
+      let parentCommentId = null;
+      
+      if (req.body.parentId !== undefined) {
+        parentCommentId = parseInt(req.body.parentId);
+        console.log("Found parentId:", req.body.parentId, "parsed to:", parentCommentId);
+      } else if (req.body.parentCommentId !== undefined) {
+        parentCommentId = parseInt(req.body.parentCommentId);
+        console.log("Found parentCommentId:", req.body.parentCommentId, "parsed to:", parentCommentId);
+      } else if (req.body.parent_id !== undefined) {
+        parentCommentId = parseInt(req.body.parent_id);
+        console.log("Found parent_id:", req.body.parent_id, "parsed to:", parentCommentId);
+      } else if (req.body.parent_comment_id !== undefined) {
+        parentCommentId = parseInt(req.body.parent_comment_id);
+        console.log("Found parent_comment_id:", req.body.parent_comment_id, "parsed to:", parentCommentId);
       }
       
-      // Extract content and explicitly check the parentId in several ways
-      const content = req.body.content;
-      // Try multiple ways to get parentId
-      const parentIdRaw = req.body.parentId;
-      const parentIdKeysCheck = Object.prototype.hasOwnProperty.call(req.body, 'parentId');
-      
+      // Print all request body keys
+      console.log("All body keys:", Object.keys(req.body));
       console.log("Content:", content);
-      console.log("parentId (raw):", parentIdRaw);
-      console.log("parentId exists via hasOwnProperty?", parentIdKeysCheck);
-      console.log("parentId type:", typeof parentIdRaw);
-      
-      // Try to access using different casing
-      console.log("Alternative case checks:");
-      console.log("- req.body.parentid:", req.body.parentid);
-      console.log("- req.body.ParentId:", req.body.ParentId);
-      console.log("- req.body.parentID:", req.body.parentID);
-      console.log("- req.body.PARENTID:", req.body.PARENTID);
-      console.log("===== END VERBOSE DEBUG =====\n\n");
+      console.log("Final parentCommentId value:", parentCommentId);
+      console.log("===== END COMMENT API REQUEST =====\n\n");
       
       // Content is required
       if (!content) {
@@ -218,15 +206,15 @@ export function registerCommentRoutes(app: Express): void {
       };
       
       // Process parent comment ID, if provided
-      if (parentIdRaw) {
+      if (parentCommentId) {
         try {
-          const parentIdNum = parseInt(parentIdRaw);
-          console.log("Comment API: Processing parent comment ID:", parentIdNum);
+          // parentCommentId is already parsed as a number
+          console.log("Comment API: Processing parent comment ID:", parentCommentId);
           
           // Verify parent comment exists
-          const parentComment = await storage.getComment(parentIdNum);
+          const parentComment = await storage.getComment(parentCommentId);
           if (!parentComment) {
-            console.log("Comment API: Parent comment not found for ID:", parentIdNum);
+            console.log("Comment API: Parent comment not found for ID:", parentCommentId);
             return res.status(404).json({ message: "Parent comment not found" });
           }
           
@@ -241,11 +229,11 @@ export function registerCommentRoutes(app: Express): void {
           }
           
           // Update the comment data with parent ID
-          commentData.parentCommentId = parentIdNum;
+          commentData.parentCommentId = parentCommentId;
           
           console.log("Comment API: Creating reply with data:", JSON.stringify(commentData, null, 2));
         } catch (error) {
-          console.error("Comment API: Error parsing parentIdRaw:", error);
+          console.error("Comment API: Error processing parentCommentId:", error);
           return res.status(400).json({ message: "Invalid parent comment ID format" });
         }
       } else {
