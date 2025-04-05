@@ -9,6 +9,7 @@ import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import ProjectActivitiesLog from '@/components/collaboration/ProjectActivitiesLog';
 import TeamContributionChart from '@/components/collaboration/TeamContributionChart';
 import ActivityTrendChart from '@/components/collaboration/ActivityTrendChart';
+import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
 import {
   Card,
   CardContent,
@@ -39,6 +40,7 @@ import {
   Activity,
   Globe,
   MessageSquare,
+  Share,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
@@ -253,6 +255,10 @@ const SharedProjectDashboardPage: React.FC = () => {
             <FolderOpen className="h-4 w-4 mr-2" />
             Shared Items
           </TabsTrigger>
+          <TabsTrigger value="sharing" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none">
+            <Share className="h-4 w-4 mr-2" />
+            Sharing
+          </TabsTrigger>
         </TabsList>
         
         {/* Overview Tab Content */}
@@ -443,6 +449,29 @@ const SharedProjectDashboardPage: React.FC = () => {
               <ProjectItemsTable 
                 projectId={projectId} 
                 canManageItems={isAdmin || isOwner} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Sharing Tab Content */}
+        <TabsContent value="sharing">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center">
+                <Share className="h-5 w-5 mr-2" />
+                Project Sharing
+              </CardTitle>
+              <CardDescription>Control how your project is shared and accessed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProjectSharingControls 
+                projectId={projectId}
+                projectName={project?.name || currentProject.name}
+                isPublic={project?.isPublic || currentProject.isPublic || false}
+                isOwner={isOwner}
+                currentUserId={user?.id || 0}
+                currentUserRole={currentUserRole}
               />
             </CardContent>
           </Card>
