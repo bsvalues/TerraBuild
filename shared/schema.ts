@@ -894,3 +894,40 @@ export type InsertSyncSchedule = z.infer<typeof insertSyncScheduleSchema>;
 
 export type SyncHistory = typeof syncHistory.$inferSelect;
 export type InsertSyncHistory = z.infer<typeof insertSyncHistorySchema>;
+
+// FTP Connections
+export const ftpConnections = pgTable("ftp_connections", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  host: text("host").notNull(),
+  port: integer("port").notNull().default(21),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  secure: boolean("secure").notNull().default(false),
+  passiveMode: boolean("passive_mode").notNull().default(true),
+  defaultPath: text("default_path").default("/"),
+  description: text("description"),
+  lastConnected: timestamp("last_connected"),
+  status: text("status").notNull().default("unknown"), // 'connected', 'disconnected', 'error', 'unknown'
+  createdBy: integer("created_by").notNull(), // User ID of creator
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertFTPConnectionSchema = createInsertSchema(ftpConnections).pick({
+  name: true,
+  host: true,
+  port: true,
+  username: true,
+  password: true,
+  secure: true,
+  passiveMode: true,
+  defaultPath: true,
+  description: true,
+  createdBy: true,
+  isDefault: true,
+});
+
+export type FTPConnection = typeof ftpConnections.$inferSelect;
+export type InsertFTPConnection = z.infer<typeof insertFTPConnectionSchema>;

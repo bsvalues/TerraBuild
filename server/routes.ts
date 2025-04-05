@@ -37,6 +37,7 @@ import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoute
 import exportRoutes from "./routes/exportRoutes";
 import { initFTPSyncRoutes } from "./routes/ftpSyncRoutes";
 import ftpRoutes from "./routes/ftpRoutes";
+import ftpConnectionRoutes from "./routes/ftpConnectionRoutes";
 import { initSchedulerRoutes } from "./routes/schedulerRoutes";
 import multer from "multer";
 import path from "path";
@@ -1923,6 +1924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use('/api/data-connections', connectionHistoryRoutes);
     app.use('/api/data-connectors/ftp-sync', initFTPSyncRoutes(storage));
     app.use('/api/ftp', ftpRoutes);
+    app.use('/api/ftp-connections', ftpConnectionRoutes);
     app.use('/api/scheduler', initSchedulerRoutes(storage));
     
     // Log the new data connector APIs

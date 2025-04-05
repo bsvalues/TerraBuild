@@ -2,6 +2,7 @@ import * as ftp from 'basic-ftp';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
+import { FTPConnection } from '@shared/schema';
 
 interface FTPConfig {
   host: string;
@@ -9,6 +10,7 @@ interface FTPConfig {
   user: string;
   password: string;
   secure?: boolean;
+  passiveMode?: boolean;
 }
 
 interface FTPFile {
@@ -17,6 +19,12 @@ interface FTPFile {
   size: number;
   modifiedDate: string;
   permissions: string;
+}
+
+interface FTPDirectoryListing {
+  path: string;
+  files: FTPFile[];
+  parentPath?: string;
 }
 
 interface FTPResponse {
@@ -70,6 +78,21 @@ export class FTPClient {
   async close(): Promise<void> {
     this.client.close();
     console.log('FTP connection closed');
+  }
+  
+  /**
+   * Set passive mode for the FTP connection
+   * @param passive Whether to enable passive mode (true) or not (false)
+   * @returns Promise resolving when passive mode is set
+   */
+  async setPassive(passive: boolean = true): Promise<void> {
+    try {
+      this.client.ftp.passive = passive;
+      console.log(`${passive ? 'Enabled' : 'Disabled'} passive mode`);
+    } catch (error) {
+      console.error(`Error setting passive mode: ${error}`);
+      throw error;
+    }
   }
   
   /**

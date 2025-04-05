@@ -25,7 +25,8 @@ import {
   projectActivities, type ProjectActivity, type InsertProjectActivity,
   connectionHistory, type ConnectionHistory, type InsertConnectionHistory,
   syncSchedules, type SyncSchedule, type InsertSyncSchedule,
-  syncHistory, type SyncHistory, type InsertSyncHistory
+  syncHistory, type SyncHistory, type InsertSyncHistory,
+  ftpConnections, type FTPConnection, type InsertFTPConnection
 } from "@shared/schema";
 
 // Storage interface
@@ -274,8 +275,16 @@ export interface IStorage {
   
 
   
-  // FTP Connections (extended from existing connections)
-  getFTPConnection(id: number): Promise<any | undefined>;
+  // FTP Connections
+  getAllFTPConnections(): Promise<FTPConnection[]>;
+  getDefaultFTPConnection(): Promise<FTPConnection | undefined>;
+  getFTPConnectionsByUser(userId: number): Promise<FTPConnection[]>;
+  getFTPConnection(id: number): Promise<FTPConnection | undefined>;
+  createFTPConnection(connection: InsertFTPConnection): Promise<FTPConnection>;
+  updateFTPConnection(id: number, connection: Partial<InsertFTPConnection>): Promise<FTPConnection | undefined>;
+  deleteFTPConnection(id: number): Promise<void>;
+  updateFTPConnectionStatus(id: number, status: string, lastConnected?: Date): Promise<FTPConnection | undefined>;
+  setDefaultFTPConnection(id: number): Promise<FTPConnection | undefined>;
 }
 
 // Memory Storage implementation
@@ -388,6 +397,7 @@ export class MemStorage implements IStorage {
     this.connectionHistories = new Map();
     this.syncSchedules = new Map();
     this.syncHistories = new Map();
+    this.ftpConnections = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -412,9 +422,13 @@ export class MemStorage implements IStorage {
     this.currentConnectionHistoryId = 1;
     this.currentSyncScheduleId = 1;
     this.currentSyncHistoryId = 1;
+    this.currentFTPConnectionId = 1;
     
     // Initialize with sample data
     this.initializeData();
+    
+    // Initialize FTP connections
+    this.initializeFTPConnections();
   }
   
   private initializeData() {
@@ -2337,24 +2351,151 @@ export class MemStorage implements IStorage {
     return updatedHistory;
   }
   
-  // FTP Connection methods (extension of existing connection methods)
-  async getFTPConnection(id: number): Promise<any | undefined> {
-    // In a real implementation, this would retrieve FTP connection details from the database
-    // For now, just return a placeholder if requested
-    if (id > 0) {
-      return {
-        id,
-        name: `FTP Connection ${id}`,
-        host: 'ftp.example.com',
-        port: 21,
-        username: 'ftpuser',
-        password: '*****',
-        type: 'ftp',
-        lastConnected: new Date(),
-        status: 'active'
-      };
+  // FTP Connection methods
+  private ftpConnections: Map<number, FTPConnection> = new Map();
+  private currentFTPConnectionId: number = 1;
+
+  // Initialize FTP connections with default connection if environment variables exist
+  private initializeFTPConnections() {
+    // Create a default connection from environment variables if available
+    const host = process.env.FTP_HOST;
+    const port = process.env.FTP_PORT;
+    const username = process.env.FTP_USERNAME;
+    const password = process.env.FTP_PASSWORD;
+    
+    if (host && username && password) {
+      this.createFTPConnection({
+        name: "Default FTP Connection",
+        host,
+        port: parseInt(port || "21"),
+        username,
+        password,
+        secure: false,
+        passiveMode: true,
+        createdBy: 1, // Admin user
+        isDefault: true,
+        description: "Default connection created from environment variables"
+      });
     }
-    return undefined;
+  }
+  
+  async getAllFTPConnections(): Promise<FTPConnection[]> {
+    return Array.from(this.ftpConnections.values());
+  }
+  
+  async getDefaultFTPConnection(): Promise<FTPConnection | undefined> {
+    return Array.from(this.ftpConnections.values()).find(conn => conn.isDefault);
+  }
+  
+  async getFTPConnectionsByUser(userId: number): Promise<FTPConnection[]> {
+    return Array.from(this.ftpConnections.values()).filter(conn => conn.createdBy === userId);
+  }
+  
+  async getFTPConnection(id: number): Promise<FTPConnection | undefined> {
+    return this.ftpConnections.get(id);
+  }
+  
+  async createFTPConnection(connection: InsertFTPConnection): Promise<FTPConnection> {
+    const id = this.currentFTPConnectionId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    
+    // If this is marked as default, unmark any existing defaults
+    if (connection.isDefault) {
+      for (const conn of this.ftpConnections.values()) {
+        if (conn.isDefault) {
+          conn.isDefault = false;
+          this.ftpConnections.set(conn.id, conn);
+        }
+      }
+    }
+    
+    const newConnection: FTPConnection = {
+      ...connection,
+      id,
+      createdAt,
+      updatedAt,
+      lastConnected: null,
+      status: "unknown"
+    };
+    
+    this.ftpConnections.set(id, newConnection);
+    return newConnection;
+  }
+  
+  async updateFTPConnection(id: number, connection: Partial<InsertFTPConnection>): Promise<FTPConnection | undefined> {
+    const existingConnection = this.ftpConnections.get(id);
+    if (!existingConnection) return undefined;
+    
+    // If this connection is being set as default, unmark any existing defaults
+    if (connection.isDefault) {
+      for (const conn of this.ftpConnections.values()) {
+        if (conn.id !== id && conn.isDefault) {
+          conn.isDefault = false;
+          this.ftpConnections.set(conn.id, conn);
+        }
+      }
+    }
+    
+    const updatedConnection: FTPConnection = {
+      ...existingConnection,
+      ...connection,
+      updatedAt: new Date()
+    };
+    
+    this.ftpConnections.set(id, updatedConnection);
+    return updatedConnection;
+  }
+  
+  async deleteFTPConnection(id: number): Promise<void> {
+    this.ftpConnections.delete(id);
+    
+    // If this was the default connection and there are other connections,
+    // set the first one as default
+    const wasDefault = Array.from(this.ftpConnections.values()).find(conn => conn.isDefault) === undefined;
+    if (wasDefault && this.ftpConnections.size > 0) {
+      const firstConn = Array.from(this.ftpConnections.values())[0];
+      firstConn.isDefault = true;
+      this.ftpConnections.set(firstConn.id, firstConn);
+    }
+  }
+  
+  async updateFTPConnectionStatus(id: number, status: string, lastConnected?: Date): Promise<FTPConnection | undefined> {
+    const connection = this.ftpConnections.get(id);
+    if (!connection) return undefined;
+    
+    const updatedConnection: FTPConnection = {
+      ...connection,
+      status,
+      lastConnected: lastConnected || connection.lastConnected,
+      updatedAt: new Date()
+    };
+    
+    this.ftpConnections.set(id, updatedConnection);
+    return updatedConnection;
+  }
+  
+  async setDefaultFTPConnection(id: number): Promise<FTPConnection | undefined> {
+    const connection = this.ftpConnections.get(id);
+    if (!connection) return undefined;
+    
+    // Unset any existing default connections
+    for (const conn of this.ftpConnections.values()) {
+      if (conn.id !== id && conn.isDefault) {
+        conn.isDefault = false;
+        this.ftpConnections.set(conn.id, conn);
+      }
+    }
+    
+    // Set this connection as default
+    const updatedConnection: FTPConnection = {
+      ...connection,
+      isDefault: true,
+      updatedAt: new Date()
+    };
+    
+    this.ftpConnections.set(id, updatedConnection);
+    return updatedConnection;
   }
 }
 

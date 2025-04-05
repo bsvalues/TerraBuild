@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import { db } from './db';
-import { eq, and, desc, isNull, isNotNull, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, ne, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { 
   User, InsertUser,
   Environment, InsertEnvironment,
@@ -27,14 +27,19 @@ import {
   Comment, InsertComment,
   SharedLink, InsertSharedLink,
   ConnectionHistory, InsertConnectionHistory,
+  SyncSchedule, InsertSyncSchedule,
+  SyncHistory, InsertSyncHistory,
+  FTPConnection, InsertFTPConnection,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
-  comments, sharedLinks, connectionHistory
+  comments, sharedLinks, connectionHistory, syncSchedules, syncHistory, ftpConnections
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
+  // Reference to database
+  private db = db;
   // Sync Schedules
   async getAllSyncSchedules(): Promise<SyncSchedule[]> {
     // Stub implementation - replace with actual DB implementation
@@ -140,28 +145,171 @@ export class PostgresStorage implements IStorage {
   }
 
   // FTP Connections
-  async getFTPConnection(id: number): Promise<any | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+  async getFTPConnection(id: number): Promise<FTPConnection | undefined> {
+    try {
+      const result = await this.db.query.ftpConnections.findFirst({
+        where: eq(ftpConnections.id, id)
+      });
+      return result;
+    } catch (error) {
+      console.error('Error fetching FTP connection:', error);
+      return undefined;
+    }
   }
 
-  async getAllFTPConnections(): Promise<any[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+  async getAllFTPConnections(): Promise<FTPConnection[]> {
+    try {
+      const results = await this.db.query.ftpConnections.findMany({
+        orderBy: [desc(ftpConnections.isDefault), asc(ftpConnections.name)]
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching FTP connections:', error);
+      return [];
+    }
   }
 
-  async createFTPConnection(connection: any): Promise<any> {
-    // Stub implementation - replace with actual DB implementation
-    return { id: 0 };
+  async getDefaultFTPConnection(): Promise<FTPConnection | undefined> {
+    try {
+      const result = await this.db.query.ftpConnections.findFirst({
+        where: eq(ftpConnections.isDefault, true)
+      });
+      return result;
+    } catch (error) {
+      console.error('Error fetching default FTP connection:', error);
+      return undefined;
+    }
   }
 
-  async updateFTPConnection(id: number, connection: Partial<any>): Promise<any | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+  async getFTPConnectionsByUser(userId: number): Promise<FTPConnection[]> {
+    try {
+      const results = await this.db.query.ftpConnections.findMany({
+        where: eq(ftpConnections.createdBy, userId),
+        orderBy: [desc(ftpConnections.isDefault), asc(ftpConnections.name)]
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching user FTP connections:', error);
+      return [];
+    }
+  }
+
+  async createFTPConnection(connection: InsertFTPConnection): Promise<FTPConnection> {
+    try {
+      // If this is marked as default, unmark any existing defaults
+      if (connection.isDefault) {
+        await this.db.update(ftpConnections)
+          .set({ isDefault: false })
+          .where(eq(ftpConnections.isDefault, true));
+      }
+      
+      const result = await this.db.insert(ftpConnections).values({
+        ...connection,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastConnected: null,
+        status: 'new'
+      }).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error creating FTP connection:', error);
+      // Return a minimal object so the frontend doesn't break
+      return { id: 0, password: '********' } as FTPConnection;
+    }
+  }
+
+  async updateFTPConnection(id: number, connection: Partial<InsertFTPConnection>): Promise<FTPConnection | undefined> {
+    try {
+      // If this connection is being set as default, unmark any existing defaults
+      if (connection.isDefault) {
+        await this.db.update(ftpConnections)
+          .set({ isDefault: false })
+          .where(and(
+            eq(ftpConnections.isDefault, true),
+            ne(ftpConnections.id, id)
+          ));
+      }
+      
+      const result = await this.db.update(ftpConnections)
+        .set({
+          ...connection,
+          updatedAt: new Date()
+        })
+        .where(eq(ftpConnections.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating FTP connection:', error);
+      return undefined;
+    }
+  }
+
+  async updateFTPConnectionStatus(id: number, status: string, lastConnected?: Date): Promise<FTPConnection | undefined> {
+    try {
+      const updates: any = {
+        status,
+        updatedAt: new Date()
+      };
+      
+      if (lastConnected) {
+        updates.lastConnected = lastConnected;
+      }
+      
+      const result = await this.db.update(ftpConnections)
+        .set(updates)
+        .where(eq(ftpConnections.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating FTP connection status:', error);
+      return undefined;
+    }
+  }
+
+  async setDefaultFTPConnection(id: number): Promise<FTPConnection | undefined> {
+    try {
+      // Unset any existing default connections
+      await this.db.update(ftpConnections)
+        .set({ isDefault: false })
+        .where(eq(ftpConnections.isDefault, true));
+      
+      // Set this connection as default
+      const result = await this.db.update(ftpConnections)
+        .set({
+          isDefault: true,
+          updatedAt: new Date()
+        })
+        .where(eq(ftpConnections.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error setting default FTP connection:', error);
+      return undefined;
+    }
   }
 
   async deleteFTPConnection(id: number): Promise<void> {
-    // Stub implementation - replace with actual DB implementation
+    try {
+      // Check if this is the default connection
+      const connection = await this.getFTPConnection(id);
+      
+      await this.db.delete(ftpConnections)
+        .where(eq(ftpConnections.id, id));
+      
+      // If this was the default connection, set a new default if one exists
+      if (connection?.isDefault) {
+        const connections = await this.getAllFTPConnections();
+        if (connections.length > 0) {
+          await this.setDefaultFTPConnection(connections[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting FTP connection:', error);
+    }
   }
   // Users
   async getUser(id: number): Promise<User | undefined> {
