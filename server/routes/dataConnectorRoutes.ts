@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Client } from 'basic-ftp';
 import { storage } from '../storage';
+import * as ftpService from '../services/ftpService';
+import * as path from 'path';
+import * as fs from 'fs';
 
 // FTP connection settings
 const FTP_HOST = process.env.FTP_HOST;
@@ -271,6 +274,173 @@ router.get('/test/sqlserver', async (req, res) => {
       success: false,
       message: `Failed to connect to SQL Server: ${error.message}`,
       timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * FTP Environment Variables Check
+ * Returns status of FTP environment variables without exposing actual values
+ */
+router.get('/ftp/environment', async (req, res) => {
+  try {
+    return res.json({
+      FTP_HOST: { 
+        set: Boolean(FTP_HOST), 
+        value: FTP_HOST || '' 
+      },
+      FTP_USERNAME: { 
+        set: Boolean(FTP_USERNAME), 
+        value: '' // Don't expose actual username
+      },
+      FTP_PASSWORD: { 
+        set: Boolean(FTP_PASSWORD), 
+        value: '' // Don't expose actual password
+      },
+      FTP_PORT: { 
+        set: Boolean(process.env.FTP_PORT), 
+        value: String(FTP_PORT) 
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Error checking FTP environment:', error);
+    return res.status(500).json({ 
+      error: 'Failed to check FTP environment' 
+    });
+  }
+});
+
+/**
+ * Download a file from FTP server
+ * GET /ftp/download?path=path/to/file.txt
+ */
+router.get('/ftp/download', async (req, res) => {
+  try {
+    const filePath = req.query.path as string;
+    
+    if (!filePath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameter: path'
+      });
+    }
+    
+    // Log the download attempt
+    await storage.createActivity({
+      action: `FTP file download initiated: ${filePath}`,
+      icon: 'download-cloud',
+      iconColor: 'blue'
+    });
+    
+    // Store download attempt in connection history
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'pending',
+      message: `FTP file download initiated: ${filePath}`,
+      details: {
+        filePath,
+        host: FTP_HOST,
+        port: FTP_PORT
+      }
+    });
+    
+    // Download the file from FTP
+    const result = await ftpService.downloadFileToTemp(filePath);
+    
+    if (!result.success) {
+      // Record failed download in history
+      await storage.createConnectionHistory({
+        connectionType: 'ftp',
+        status: 'failed',
+        message: `Failed to download file from FTP: ${result.message}`,
+        details: {
+          filePath,
+          error: result.message
+        }
+      });
+      
+      return res.status(500).json({
+        success: false,
+        message: result.message
+      });
+    }
+    
+    // File downloaded successfully
+    const { localPath, fileName } = result;
+    
+    if (!localPath || !fileName) {
+      return res.status(500).json({
+        success: false,
+        message: 'Download succeeded but local file path is missing'
+      });
+    }
+    
+    // Log the successful download
+    await storage.createActivity({
+      action: `Successfully downloaded ${fileName} from FTP server`,
+      icon: 'download-cloud',
+      iconColor: 'green'
+    });
+    
+    // Store successful download in connection history
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'success',
+      message: `Successfully downloaded ${fileName} from FTP server`,
+      details: {
+        filePath,
+        fileName,
+        fileSize: result.fileSize || 0,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    // Set response headers
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Send the file
+    const fileStream = fs.createReadStream(localPath);
+    fileStream.pipe(res);
+    
+    // Clean up the temporary file after sending
+    fileStream.on('end', () => {
+      try {
+        fs.unlinkSync(localPath);
+        console.log(`Temporary file cleaned up: ${localPath}`);
+      } catch (cleanupErr) {
+        console.error(`Error cleaning up temporary file: ${cleanupErr}`);
+      }
+    });
+    
+    fileStream.on('error', (err) => {
+      console.error(`Error streaming file: ${err}`);
+      // If not already sent headers
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: `Error streaming file: ${err.message}`
+        });
+      }
+    });
+  } catch (error: any) {
+    console.error('Error downloading file from FTP:', error);
+    
+    // Record error in connection history
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'failed',
+      message: `Error downloading file from FTP: ${error.message}`,
+      details: {
+        filePath: req.query.path,
+        error: error.message
+      }
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: `Error downloading file: ${error.message}`
     });
   }
 });

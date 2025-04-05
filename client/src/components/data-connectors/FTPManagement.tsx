@@ -335,6 +335,45 @@ const FTPManagement: React.FC = () => {
     }
   };
   
+  // Download a file from FTP server
+  const downloadFile = async (file: FileListItem) => {
+    if (file.type !== 'file') return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const filePath = currentPath.endsWith('/')
+        ? `${currentPath}${file.name}`
+        : `${currentPath}/${file.name}`;
+      
+      toast({
+        title: "Downloading File",
+        description: `Starting download of ${file.name}`,
+        variant: "default",
+      });
+      
+      // Create a download link and trigger it
+      const downloadUrl = `/api/data-connections/ftp/download?path=${encodeURIComponent(filePath)}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', file.name);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (err: any) {
+      setError(err.message || "Error downloading file");
+      toast({
+        title: "Download Error",
+        description: err.message || "An error occurred while downloading the file",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Handle file selection for upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -615,7 +654,26 @@ const FTPManagement: React.FC = () => {
                       <div className="col-span-3 flex items-center text-sm text-muted-foreground">
                         {formatDate(file.lastModified)}
                       </div>
-                      <div className="col-span-1 flex justify-end items-center">
+                      <div className="col-span-1 flex justify-end items-center space-x-1">
+                        {file.type === 'file' && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  onClick={() => downloadFile(file)}
+                                  className="h-8 w-8"
+                                >
+                                  <Download className="h-4 w-4 text-primary" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Download File
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>

@@ -606,6 +606,146 @@ export async function testConnection(): Promise<{
  * @param retryDelay Delay between retries in milliseconds (default: 2000)
  * @returns Promise that resolves with download status
  */
+/**
+ * Download a file from FTP server to a temporary location and return its local path
+ * @param remotePath - Path to file on the FTP server
+ * @param retryAttempts - Number of connection retry attempts 
+ * @param retryDelay - Delay between retry attempts in ms
+ * @returns Promise resolving to result object with success status, message, and local file path
+ */
+export async function downloadFileToTemp(
+  remotePath: string,
+  retryAttempts: number = CONNECTION_RETRY_ATTEMPTS,
+  retryDelay: number = CONNECTION_RETRY_DELAY
+): Promise<{ 
+  success: boolean; 
+  message: string; 
+  localPath?: string;
+  fileName?: string;
+  fileSize?: number;
+}> {
+  console.log(`Downloading file from FTP: ${remotePath}`);
+  
+  // Create activity log entry for the download attempt
+  await storage.createActivity({
+    action: `Downloading file from FTP server: ${remotePath}`,
+    icon: 'download-cloud',
+    iconColor: 'blue'
+  });
+  
+  // Extract filename from path
+  const fileName = path.basename(remotePath);
+  
+  // Create a temporary local file path
+  const tempDir = './uploads/temp';
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  
+  const localFilePath = path.join(tempDir, `dl-${Date.now()}-${fileName}`);
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+    const client = new Client();
+    client.ftp.verbose = false;
+    
+    try {
+      // Record retry attempt if not the first try
+      if (attempt > 1) {
+        console.log(`Retrying download (Attempt ${attempt}/${retryAttempts})`);
+        
+        await storage.createActivity({
+          action: `Retrying download of ${fileName} (Attempt ${attempt}/${retryAttempts})`,
+          icon: 'refresh-cw',
+          iconColor: 'amber'
+        });
+      }
+      
+      // Connect to FTP server
+      await client.access({
+        host: FTP_HOST,
+        user: FTP_USERNAME,
+        password: FTP_PASSWORD,
+        port: FTP_PORT,
+        secure: false
+      });
+      
+      // Get file size for tracking progress
+      let fileSize = 0;
+      try {
+        const fileInfo = await client.size(remotePath);
+        fileSize = fileInfo;
+      } catch (sizeErr: any) {
+        console.warn(`Could not get file size: ${sizeErr.message || 'Unknown error'}`);
+      }
+      
+      // Set up progress tracking
+      let lastProgress = 0;
+      client.trackProgress(info => {
+        const currentProgress = fileSize ? Math.round((info.bytes / fileSize) * 100) : 0;
+        if (currentProgress > lastProgress + 10 || currentProgress === 100) { // Log every 10% progress
+          console.log(`Download progress: ${currentProgress}% (${info.bytes} bytes)`);
+          lastProgress = currentProgress;
+        }
+      });
+      
+      // Download the file
+      console.log(`Starting download of ${fileName} from FTP server (Attempt ${attempt}/${retryAttempts})...`);
+      await client.downloadTo(localFilePath, remotePath);
+      
+      // If we got here, download was successful
+      console.log(`✓ Successfully downloaded ${fileName} from FTP server to ${localFilePath}`);
+      
+      // Record the successful download in activity log
+      await storage.createActivity({
+        action: `Successfully downloaded ${fileName} from FTP server${attempt > 1 ? ` on attempt ${attempt}` : ''}`,
+        icon: 'download-cloud',
+        iconColor: 'green'
+      });
+      
+      // Close the client connection
+      await client.close();
+      
+      // Return success
+      return {
+        success: true,
+        message: `Successfully downloaded ${fileName}`,
+        localPath: localFilePath,
+        fileName,
+        fileSize
+      };
+    } catch (err: any) {
+      // Close the client (ignore errors during close)
+      try { await client.close(); } catch (closeErr) {}
+      
+      // Log the error
+      console.error(`Error downloading file on attempt ${attempt}/${retryAttempts}:`, err.message || 'Unknown error');
+      lastError = err;
+      
+      // If it's not the last attempt, wait before trying again
+      if (attempt < retryAttempts) {
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
+    }
+  }
+  
+  // All retries failed
+  const errorMessage = `Failed to download file after ${retryAttempts} attempts: ${lastError?.message || 'Unknown error'}`;
+  console.error(errorMessage);
+  
+  // Record the failure in activity log
+  await storage.createActivity({
+    action: `Failed to download ${fileName} from FTP server: ${lastError?.message || 'Unknown error'}`,
+    icon: 'x-circle',
+    iconColor: 'red'
+  });
+  
+  return {
+    success: false,
+    message: errorMessage
+  };
+}
+
 export async function downloadFile(
   remoteFilePath: string,
   localFilePath: string,
