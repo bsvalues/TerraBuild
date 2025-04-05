@@ -19,8 +19,14 @@ interface ActivityTrendChartProps {
   className?: string;
   showByType?: boolean; // If true, show lines for each activity type
   timeRange?: 'week' | 'month' | 'year'; // Time range to display
-  // Added prop to work with SharedProjectDashboardPage
-  activities?: any[];
+  // Added typed prop to work with SharedProjectDashboardPage
+  activities?: {
+    id: number;
+    userId: number;
+    createdAt: string | Date;
+    type: string;
+    data?: any;
+  }[];
 }
 
 export default function ActivityTrendChart({
@@ -53,42 +59,70 @@ export default function ActivityTrendChart({
 
   // Generate activity data from activities prop if data is empty
   const activityData = useMemo(() => {
-    if (data.length > 0) return data;
+    if (Array.isArray(data) && data.length > 0) return data;
     
-    if (activities.length === 0) return [];
+    if (!Array.isArray(activities) || activities.length === 0) return [];
     
-    // Convert activities to ActivityData format
+    // Convert activities to ActivityData format with improved error handling
     return activities.map(activity => {
-      const date = activity.createdAt ? 
-        (typeof activity.createdAt === 'string' ? 
-          activity.createdAt : 
-          new Date(activity.createdAt).toISOString())
-        : new Date().toISOString();
+      let date;
+      try {
+        date = activity.createdAt ? 
+          (typeof activity.createdAt === 'string' ? 
+            activity.createdAt : 
+            new Date(activity.createdAt).toISOString())
+          : new Date().toISOString();
+          
+        // Validate date format
+        if (!date.includes('T')) {
+          // Add time component if missing
+          date = `${date}T00:00:00.000Z`;
+        }
+        
+        // Check if valid ISO format, if not use current date
+        if (!isValid(parseISO(date))) {
+          date = new Date().toISOString();
+        }
+      } catch (error) {
+        // Fallback to current date if there's an error parsing
+        console.error('Error parsing date:', error);
+        date = new Date().toISOString();
+      }
       
       return {
         date,
         count: 1,
-        type: activity.type || 'unknown'
+        type: activity && activity.type ? activity.type : 'unknown'
       };
     });
   }, [data, activities]);
   
   // Process data to fit date range and aggregate by type if needed
   const processedData = useMemo(() => {
+    // If no data or invalid data, return empty structure
+    if (!Array.isArray(activityData) || activityData.length === 0) {
+      return { chartData: [], types: [] };
+    }
+    
     // Create a map of dates to counts
     const dateMap = new Map(dateRange.map(d => [d.date, { ...d }]));
     
     // If showing by type, we need to track activity types
     const typeMap = new Map();
     
-    // Process each data point
+    // Process each data point with improved error handling
     activityData.forEach(item => {
       try {
-        const date = item.date.split('T')[0]; // Get YYYY-MM-DD part
+        if (!item || !item.date) return;
+        
+        const date = typeof item.date === 'string' ? 
+          item.date.split('T')[0] : // Get YYYY-MM-DD part
+          new Date().toISOString().split('T')[0]; // Fallback to today
+          
         if (dateMap.has(date)) {
           const entry = dateMap.get(date);
           if (entry) {
-            entry.count += item.count;
+            entry.count += item.count || 1; // Default to 1 if count is undefined
             
             // Track by type if needed
             if (showByType && item.type) {
@@ -97,7 +131,7 @@ export default function ActivityTrendChart({
               if (!typedEntry[item.type]) {
                 typedEntry[item.type] = 0;
               }
-              typedEntry[item.type] += item.count;
+              typedEntry[item.type] += item.count || 1;
               typeMap.set(item.type, true);
             }
           }
@@ -127,16 +161,21 @@ export default function ActivityTrendChart({
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border rounded shadow-sm">
-          <p className="font-medium">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p 
-              key={index} 
-              className="text-sm" 
-              style={{ color: entry.color }}
-            >
-              {entry.name}: {entry.value} {entry.value === 1 ? 'activity' : 'activities'}
-            </p>
-          ))}
+          <p className="font-medium">{label || 'No date'}</p>
+          {payload.map((entry: any, index: number) => {
+            if (!entry) return null;
+            
+            const value = entry.value || 0;
+            return (
+              <p 
+                key={index} 
+                className="text-sm" 
+                style={{ color: entry.color }}
+              >
+                {entry.name || 'Activity'}: {value} {value === 1 ? 'activity' : 'activities'}
+              </p>
+            );
+          })}
         </div>
       );
     }

@@ -10,6 +10,26 @@ export interface TeamContributionData {
   count: number;
 }
 
+export interface ActivityData {
+  id: number;
+  userId: number;
+  createdAt: string | Date;
+  type: string;
+  data?: any;
+}
+
+export interface MemberData {
+  userId: number;
+  id: number;
+  projectId: number;
+  role: string;
+  joinedAt: string | Date;
+  user?: {
+    name?: string | null;
+    username: string;
+  };
+}
+
 interface TeamContributionChartProps {
   data?: TeamContributionData[];
   isLoading?: boolean;
@@ -17,9 +37,9 @@ interface TeamContributionChartProps {
   description?: string;
   className?: string;
   useProjectColors?: boolean;
-  // Added new props to work with SharedProjectDashboardPage
-  activities?: any[];
-  members?: any[];
+  // Added typed props to work with SharedProjectDashboardPage
+  activities?: ActivityData[];
+  members?: MemberData[];
 }
 
 export default function TeamContributionChart({
@@ -36,7 +56,7 @@ export default function TeamContributionChart({
   const contributionData = useMemo(() => {
     if (data.length > 0) return data;
     
-    if (activities.length === 0 || members.length === 0) return [];
+    if (!Array.isArray(activities) || !Array.isArray(members) || activities.length === 0 || members.length === 0) return [];
     
     // Count activities by user
     const activityByUser: Record<number, number> = {};
@@ -63,6 +83,9 @@ export default function TeamContributionChart({
   
   // Sort data by count descending
   const sortedData = useMemo(() => {
+    if (!contributionData || !Array.isArray(contributionData) || contributionData.length === 0) {
+      return [];
+    }
     return [...contributionData].sort((a, b) => b.count - a.count);
   }, [contributionData]);
 
@@ -73,12 +96,15 @@ export default function TeamContributionChart({
 
   // Format user names to handle long names
   const formattedData = useMemo(() => {
+    if (!Array.isArray(sortedData) || sortedData.length === 0) {
+      return [];
+    }
     return sortedData.map(item => ({
       ...item,
       // Truncate names that are too long
-      formattedName: item.userName.length > 15 
+      formattedName: item.userName && item.userName.length > 15 
         ? `${item.userName.substring(0, 12)}...` 
-        : item.userName
+        : (item.userName || `User ${item.userId || 'Unknown'}`)
     }));
   }, [sortedData]);
 
@@ -86,11 +112,13 @@ export default function TeamContributionChart({
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      if (!data) return null;
+      
       return (
         <div className="bg-white p-3 border rounded shadow-sm">
-          <p className="font-medium">{data.userName}</p>
+          <p className="font-medium">{data.userName || `User ${data.userId || 'Unknown'}`}</p>
           <p className="text-sm text-muted-foreground">
-            {data.count} {data.count === 1 ? 'activity' : 'activities'}
+            {data.count || 0} {(data.count === 1) ? 'activity' : 'activities'}
           </p>
         </div>
       );
@@ -116,7 +144,7 @@ export default function TeamContributionChart({
     );
   }
 
-  if (data.length === 0) {
+  if (formattedData.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>
