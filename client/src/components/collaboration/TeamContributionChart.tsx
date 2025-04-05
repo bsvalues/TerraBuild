@@ -17,6 +17,9 @@ interface TeamContributionChartProps {
   description?: string;
   className?: string;
   useProjectColors?: boolean;
+  // Added new props to work with SharedProjectDashboardPage
+  activities?: any[];
+  members?: any[];
 }
 
 export default function TeamContributionChart({
@@ -25,12 +28,43 @@ export default function TeamContributionChart({
   title = 'Team Contributions',
   description = 'Activity distribution across team members',
   className = '',
-  useProjectColors = false
+  useProjectColors = false,
+  activities = [],
+  members = []
 }: TeamContributionChartProps) {
+  // Generate team contribution data from activities and members if data is empty
+  const contributionData = useMemo(() => {
+    if (data.length > 0) return data;
+    
+    if (activities.length === 0 || members.length === 0) return [];
+    
+    // Count activities by user
+    const activityByUser: Record<number, number> = {};
+    activities.forEach(activity => {
+      if (activity.userId) {
+        activityByUser[activity.userId] = (activityByUser[activity.userId] || 0) + 1;
+      }
+    });
+    
+    // Convert to TeamContributionData format
+    return Object.entries(activityByUser).map(([userId, count]) => {
+      const member = members.find(m => m.userId === Number(userId));
+      const userName = member 
+        ? member.user?.name || member.user?.username || `User ${userId}`
+        : `User ${userId}`;
+      
+      return {
+        userId: Number(userId),
+        userName,
+        count
+      };
+    });
+  }, [data, activities, members]);
+  
   // Sort data by count descending
   const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => b.count - a.count);
-  }, [data]);
+    return [...contributionData].sort((a, b) => b.count - a.count);
+  }, [contributionData]);
 
   // Define Benton County theme colors for the bars
   const colors = useProjectColors ? 

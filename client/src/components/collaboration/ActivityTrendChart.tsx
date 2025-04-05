@@ -19,6 +19,8 @@ interface ActivityTrendChartProps {
   className?: string;
   showByType?: boolean; // If true, show lines for each activity type
   timeRange?: 'week' | 'month' | 'year'; // Time range to display
+  // Added prop to work with SharedProjectDashboardPage
+  activities?: any[];
 }
 
 export default function ActivityTrendChart({
@@ -28,7 +30,8 @@ export default function ActivityTrendChart({
   description = 'Project activity over time',
   className = '',
   showByType = false,
-  timeRange = 'week'
+  timeRange = 'week',
+  activities = []
 }: ActivityTrendChartProps) {
   // Generate date range for the chart
   const dateRange = useMemo(() => {
@@ -48,6 +51,28 @@ export default function ActivityTrendChart({
     return range;
   }, [timeRange]);
 
+  // Generate activity data from activities prop if data is empty
+  const activityData = useMemo(() => {
+    if (data.length > 0) return data;
+    
+    if (activities.length === 0) return [];
+    
+    // Convert activities to ActivityData format
+    return activities.map(activity => {
+      const date = activity.createdAt ? 
+        (typeof activity.createdAt === 'string' ? 
+          activity.createdAt : 
+          new Date(activity.createdAt).toISOString())
+        : new Date().toISOString();
+      
+      return {
+        date,
+        count: 1,
+        type: activity.type || 'unknown'
+      };
+    });
+  }, [data, activities]);
+  
   // Process data to fit date range and aggregate by type if needed
   const processedData = useMemo(() => {
     // Create a map of dates to counts
@@ -57,7 +82,7 @@ export default function ActivityTrendChart({
     const typeMap = new Map();
     
     // Process each data point
-    data.forEach(item => {
+    activityData.forEach(item => {
       try {
         const date = item.date.split('T')[0]; // Get YYYY-MM-DD part
         if (dateMap.has(date)) {
@@ -86,7 +111,7 @@ export default function ActivityTrendChart({
       chartData: Array.from(dateMap.values()),
       types: Array.from(typeMap.keys())
     };
-  }, [data, dateRange, showByType]);
+  }, [activityData, dateRange, showByType]);
 
   // Define Benton County theme colors for the chart
   const colors = {
@@ -136,7 +161,7 @@ export default function ActivityTrendChart({
     );
   }
 
-  if (data.length === 0) {
+  if (activityData.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>
