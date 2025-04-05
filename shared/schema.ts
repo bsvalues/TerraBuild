@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, decimal, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, decimal, jsonb, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -822,3 +822,73 @@ export const insertScenarioImpactSchema = createInsertSchema(scenarioImpacts).pi
 
 export type ScenarioImpact = typeof scenarioImpacts.$inferSelect;
 export type InsertScenarioImpact = z.infer<typeof insertScenarioImpactSchema>;
+
+// FTP Sync Schedules
+export const syncSchedules = pgTable("sync_schedules", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  connectionId: integer("connection_id").notNull(),
+  source: jsonb("source").notNull(), // {type: 'ftp'|'local', path: string}
+  destination: jsonb("destination").notNull(), // {type: 'ftp'|'local', path: string}
+  frequency: text("frequency").notNull(), // 'hourly', 'daily', 'weekly', 'monthly', 'manual'
+  time: text("time"), // HH:MM format for daily/weekly/monthly
+  dayOfWeek: integer("day_of_week"), // 0-6 for weekly (0 = Sunday)
+  dayOfMonth: integer("day_of_month"), // 1-31 for monthly
+  options: jsonb("options").notNull().default({}), // {deleteAfterSync: boolean, overwriteExisting: boolean, includeSubfolders: boolean, filePatterns: string[]}
+  enabled: boolean("enabled").notNull().default(true),
+  lastRun: timestamp("last_run"),
+  nextRun: timestamp("next_run"),
+  status: text("status").default("idle"), // 'success', 'failed', 'running', 'idle'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSyncScheduleSchema = createInsertSchema(syncSchedules).pick({
+  name: true,
+  connectionId: true,
+  source: true,
+  destination: true,
+  frequency: true,
+  time: true,
+  dayOfWeek: true,
+  dayOfMonth: true,
+  options: true,
+  enabled: true,
+  lastRun: true,
+  nextRun: true,
+  status: true,
+});
+
+// FTP Sync History
+export const syncHistory = pgTable("sync_history", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id").notNull(),
+  connectionId: integer("connection_id").notNull(),
+  scheduleName: text("schedule_name").notNull(),
+  startTime: timestamp("start_time").notNull().defaultNow(),
+  endTime: timestamp("end_time"),
+  status: text("status").notNull(), // 'success', 'failed', 'running'
+  filesTransferred: integer("files_transferred").notNull().default(0),
+  totalBytes: integer("total_bytes").notNull().default(0),
+  errors: text("errors").array().notNull().default([]),
+  details: jsonb("details").notNull().default([]), // Array of {file: string, status: string, size: number, error?: string}
+});
+
+export const insertSyncHistorySchema = createInsertSchema(syncHistory).pick({
+  scheduleId: true,
+  connectionId: true,
+  scheduleName: true,
+  startTime: true,
+  endTime: true,
+  status: true,
+  filesTransferred: true,
+  totalBytes: true,
+  errors: true,
+  details: true,
+});
+
+export type SyncSchedule = typeof syncSchedules.$inferSelect;
+export type InsertSyncSchedule = z.infer<typeof insertSyncScheduleSchema>;
+
+export type SyncHistory = typeof syncHistory.$inferSelect;
+export type InsertSyncHistory = z.infer<typeof insertSyncHistorySchema>;

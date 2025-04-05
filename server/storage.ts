@@ -23,7 +23,9 @@ import {
   projectInvitations, type ProjectInvitation, type InsertProjectInvitation,
   sharedLinks, type SharedLink, type InsertSharedLink,
   projectActivities, type ProjectActivity, type InsertProjectActivity,
-  connectionHistory, type ConnectionHistory, type InsertConnectionHistory
+  connectionHistory, type ConnectionHistory, type InsertConnectionHistory,
+  syncSchedules, type SyncSchedule, type InsertSyncSchedule,
+  syncHistory, type SyncHistory, type InsertSyncHistory
 } from "@shared/schema";
 
 // Storage interface
@@ -251,6 +253,27 @@ export interface IStorage {
   getProjectActivitiesWithUserInfo(projectId: number): Promise<(ProjectActivity & { user: { username: string, name: string | null } })[]>;
   getProjectActivity(id: number): Promise<ProjectActivity | undefined>;
   createProjectActivity(activity: InsertProjectActivity): Promise<ProjectActivity>;
+  
+  // FTP Sync Schedules
+  getAllSyncSchedules(): Promise<SyncSchedule[]>;
+  getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]>;
+  getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined>;
+  getEnabledSyncSchedules(): Promise<SyncSchedule[]>;
+  getSyncSchedule(id: number): Promise<SyncSchedule | undefined>;
+  createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule>;
+  updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined>;
+  deleteSyncSchedule(id: number): Promise<void>;
+  
+  // FTP Sync History
+  getSyncHistory(limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryById(id: number): Promise<SyncHistory | undefined>;
+  createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory>;
+  updateSyncHistory(id: number, history: Partial<InsertSyncHistory>): Promise<SyncHistory | undefined>;
+  
+  // FTP Connections (extended from existing connections)
+  getFTPConnection(id: number): Promise<any | undefined>;
 }
 
 // Memory Storage implementation
@@ -276,8 +299,8 @@ export class MemStorage implements IStorage {
   private sharedLinks: Map<number, SharedLink>;
   private projectActivities: Map<number, ProjectActivity>;
   private connectionHistories: Map<number, ConnectionHistory>;
-  
-
+  private syncSchedules: Map<number, SyncSchedule>;
+  private syncHistories: Map<number, SyncHistory>;
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -300,6 +323,8 @@ export class MemStorage implements IStorage {
   private currentSharedLinkId: number;
   private currentProjectActivityId: number;
   private currentConnectionHistoryId: number;
+  private currentSyncScheduleId: number = 1;
+  private currentSyncHistoryId: number = 1;
   
   // Add connection history to the interface
   async createConnectionHistory(history: InsertConnectionHistory): Promise<ConnectionHistory> {
@@ -359,6 +384,8 @@ export class MemStorage implements IStorage {
     this.sharedLinks = new Map();
     this.projectActivities = new Map();
     this.connectionHistories = new Map();
+    this.syncSchedules = new Map();
+    this.syncHistories = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -381,6 +408,8 @@ export class MemStorage implements IStorage {
     this.currentSharedLinkId = 1;
     this.currentProjectActivityId = 1;
     this.currentConnectionHistoryId = 1;
+    this.currentSyncScheduleId = 1;
+    this.currentSyncHistoryId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -2204,6 +2233,126 @@ export class MemStorage implements IStorage {
     
     this.projectActivities.set(id, newActivity);
     return newActivity;
+  }
+
+  // FTP Sync Schedules
+  async getAllSyncSchedules(): Promise<SyncSchedule[]> {
+    return Array.from(this.syncSchedules.values());
+  }
+  
+  async getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]> {
+    return Array.from(this.syncSchedules.values())
+      .filter(schedule => schedule.connectionId === connectionId);
+  }
+  
+  async getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined> {
+    return Array.from(this.syncSchedules.values())
+      .find(schedule => schedule.connectionId === connectionId && schedule.name === name);
+  }
+  
+  async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
+    return Array.from(this.syncSchedules.values())
+      .filter(schedule => schedule.enabled);
+  }
+  
+  async getSyncSchedule(id: number): Promise<SyncSchedule | undefined> {
+    return this.syncSchedules.get(id);
+  }
+  
+  async createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule> {
+    const id = this.currentSyncScheduleId++;
+    const createdAt = new Date();
+    const updatedAt = new Date();
+    const newSchedule: SyncSchedule = {
+      ...schedule,
+      id,
+      createdAt,
+      updatedAt,
+      status: schedule.status || 'idle'
+    };
+    this.syncSchedules.set(id, newSchedule);
+    return newSchedule;
+  }
+  
+  async updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined> {
+    const existingSchedule = this.syncSchedules.get(id);
+    if (!existingSchedule) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedSchedule = { ...existingSchedule, ...schedule, updatedAt };
+    this.syncSchedules.set(id, updatedSchedule);
+    return updatedSchedule;
+  }
+  
+  async deleteSyncSchedule(id: number): Promise<void> {
+    this.syncSchedules.delete(id);
+  }
+  
+  // FTP Sync History
+  async getSyncHistory(limit = 10, offset = 0): Promise<SyncHistory[]> {
+    const history = Array.from(this.syncHistories.values())
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+    
+    return history.slice(offset, offset + limit);
+  }
+  
+  async getSyncHistoryByConnection(connectionId: number, limit = 10, offset = 0): Promise<SyncHistory[]> {
+    const history = Array.from(this.syncHistories.values())
+      .filter(h => h.connectionId === connectionId)
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+    
+    return history.slice(offset, offset + limit);
+  }
+  
+  async getSyncHistoryBySchedule(scheduleId: number, limit = 10, offset = 0): Promise<SyncHistory[]> {
+    const history = Array.from(this.syncHistories.values())
+      .filter(h => h.scheduleId === scheduleId)
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+    
+    return history.slice(offset, offset + limit);
+  }
+  
+  async getSyncHistoryById(id: number): Promise<SyncHistory | undefined> {
+    return this.syncHistories.get(id);
+  }
+  
+  async createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory> {
+    const id = this.currentSyncHistoryId++;
+    const newHistory: SyncHistory = {
+      ...history,
+      id
+    };
+    this.syncHistories.set(id, newHistory);
+    return newHistory;
+  }
+  
+  async updateSyncHistory(id: number, history: Partial<InsertSyncHistory>): Promise<SyncHistory | undefined> {
+    const existingHistory = this.syncHistories.get(id);
+    if (!existingHistory) return undefined;
+    
+    const updatedHistory = { ...existingHistory, ...history };
+    this.syncHistories.set(id, updatedHistory);
+    return updatedHistory;
+  }
+  
+  // FTP Connection methods (extension of existing connection methods)
+  async getFTPConnection(id: number): Promise<any | undefined> {
+    // In a real implementation, this would retrieve FTP connection details from the database
+    // For now, just return a placeholder if requested
+    if (id > 0) {
+      return {
+        id,
+        name: `FTP Connection ${id}`,
+        host: 'ftp.example.com',
+        port: 21,
+        username: 'ftpuser',
+        password: '*****',
+        type: 'ftp',
+        lastConnected: new Date(),
+        status: 'active'
+      };
+    }
+    return undefined;
   }
 }
 

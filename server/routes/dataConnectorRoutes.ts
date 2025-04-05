@@ -346,55 +346,58 @@ router.get('/ftp/download', async (req, res) => {
     });
     
     // Download the file from FTP
-    const result = await ftpService.downloadFileToTemp(filePath);
-    
-    if (!result.success) {
-      // Record failed download in history
+    try {
+      // For now, we're using 0 as a placeholder for connectionId
+      const localFilePath = await ftpService.downloadFileToTemp(0, filePath);
+      
+      // Record successful download in history
       await storage.createConnectionHistory({
         connectionType: 'ftp',
-        status: 'failed',
-        message: `Failed to download file from FTP: ${result.message}`,
+        status: 'success',
+        message: `Downloaded file from FTP: ${filePath}`,
         details: {
           filePath,
-          error: result.message
+          localFilePath
         }
       });
       
-      return res.status(500).json({
-        success: false,
-        message: result.message
-      });
-    }
-    
-    // File downloaded successfully
-    const { localPath, fileName } = result;
-    
-    if (!localPath || !fileName) {
-      return res.status(500).json({
-        success: false,
-        message: 'Download succeeded but local file path is missing'
-      });
-    }
-    
-    // Log the successful download
-    await storage.createActivity({
-      action: `Successfully downloaded ${fileName} from FTP server`,
-      icon: 'download-cloud',
-      iconColor: 'green'
-    });
-    
-    // Store successful download in connection history
-    await storage.createConnectionHistory({
-      connectionType: 'ftp',
-      status: 'success',
-      message: `Successfully downloaded ${fileName} from FTP server`,
-      details: {
-        filePath,
-        fileName,
-        fileSize: result.fileSize || 0,
-        timestamp: new Date().toISOString()
+      // Create result object with the format our existing code expects
+      const result = {
+        success: true,
+        localPath: localFilePath,
+        fileName: path.basename(filePath),
+        fileSize: fs.statSync(localFilePath).size
+      };
+      
+      // File downloaded successfully
+      const { localPath, fileName } = result;
+      
+      if (!localPath || !fileName) {
+        return res.status(500).json({
+          success: false,
+          message: 'Download succeeded but local file path is missing'
+        });
       }
-    });
+      
+      // Log the successful download
+      await storage.createActivity({
+        action: `Successfully downloaded ${fileName} from FTP server`,
+        icon: 'download-cloud',
+        iconColor: 'green'
+      });
+    
+      // Store successful download in connection history
+      await storage.createConnectionHistory({
+        connectionType: 'ftp',
+        status: 'success',
+        message: `Successfully downloaded ${fileName} from FTP server`,
+        details: {
+          filePath,
+          fileName,
+          fileSize: result.fileSize || 0,
+          timestamp: new Date().toISOString()
+        }
+      });
     
     // Set response headers
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);

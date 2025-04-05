@@ -1,495 +1,201 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { formatDistanceToNow } from 'date-fns';
+import React from 'react';
+import { format } from 'date-fns';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  CheckIcon as IconCheck, 
-  PencilIcon as IconEdit,
-  ShareIcon as IconShare,
-  UsersIcon as IconUsers,
-  CalculatorIcon as IconCalculator,
-  TrashIcon as IconTrash,
-  PlusIcon as IconPlus,
-  MessageSquareIcon as IconMessage,
-  LinkIcon as IconLink,
-  UploadIcon as IconFileUpload,
-  HomeIcon as IconHome,
-  BuildingIcon as IconBuilding,
-  DatabaseIcon as IconDatabase,
-  FileBarChart2Icon as IconChart,
-  TableIcon as IconTable,
-  PercentIcon as IconPercent,
-  MoveRightIcon as IconArrowRight,
-  FilterIcon as IconFilter,
-  FileTextIcon as IconFileText,
-  DownloadIcon as IconDownload,
-  ClockIcon as IconClock,
-  BookmarkIcon as IconBookmark
+  FileText, Users, CheckSquare, Calendar, 
+  FileArchive, RefreshCw, FileUp, FileDown,
+  Link as LinkIcon, MessageSquare, Settings, 
+  Layers, Database, Upload, Download
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Loader2 as Spinner } from 'lucide-react';
 
-export interface ProjectActivityProps {
-  projectId: number;
-  limit?: number;
-  showTitle?: boolean;
-  className?: string;
-}
+// Activity types with their corresponding icons
+const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
+  'created_project': <FileText className="h-4 w-4 text-blue-500" />,
+  'updated_project': <FileText className="h-4 w-4 text-yellow-500" />,
+  'deleted_project': <FileText className="h-4 w-4 text-red-500" />,
+  'added_member': <Users className="h-4 w-4 text-green-500" />,
+  'removed_member': <Users className="h-4 w-4 text-red-500" />,
+  'updated_member_role': <Users className="h-4 w-4 text-yellow-500" />,
+  'completed_task': <CheckSquare className="h-4 w-4 text-green-500" />,
+  'added_milestone': <Calendar className="h-4 w-4 text-purple-500" />,
+  'added_document': <FileArchive className="h-4 w-4 text-blue-500" />,
+  'updated_document': <FileArchive className="h-4 w-4 text-yellow-500" />,
+  'synced_data': <RefreshCw className="h-4 w-4 text-blue-500" />,
+  'uploaded_file': <FileUp className="h-4 w-4 text-green-500" />,
+  'downloaded_file': <FileDown className="h-4 w-4 text-blue-500" />,
+  'shared_link': <LinkIcon className="h-4 w-4 text-purple-500" />,
+  'added_comment': <MessageSquare className="h-4 w-4 text-blue-500" />,
+  'updated_settings': <Settings className="h-4 w-4 text-yellow-500" />,
+  'added_item': <Layers className="h-4 w-4 text-green-500" />,
+  'removed_item': <Layers className="h-4 w-4 text-red-500" />,
+  'updated_item': <Layers className="h-4 w-4 text-yellow-500" />,
+  'connected_database': <Database className="h-4 w-4 text-purple-500" />,
+  'ftp_upload': <Upload className="h-4 w-4 text-green-500" />,
+  'ftp_download': <Download className="h-4 w-4 text-blue-500" />,
+  'ftp_sync_started': <RefreshCw className="h-4 w-4 text-blue-500" />,
+  'ftp_sync_completed': <RefreshCw className="h-4 w-4 text-green-500" />,
+  'ftp_sync_failed': <RefreshCw className="h-4 w-4 text-red-500" />,
+};
 
-type ActivityIcon = {
-  icon: React.ReactNode;
-  color: string;
-}
-
-interface ProjectActivity {
+interface ActivityItem {
   id: number;
-  projectId: number;
-  userId: number;
-  activityType: string;
-  activityData: any;
-  createdAt: string;
+  type: string;
+  timestamp: string;
   user: {
-    username: string;
-    name: string | null;
+    id: number;
+    name: string;
+    avatarUrl?: string;
+  };
+  details?: {
+    [key: string]: any;
   };
 }
 
-const activityIcons: Record<string, ActivityIcon> = {
-  // Project activities
-  'project_created': { icon: <IconHome className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
-  'project_updated': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'project_deleted': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
-  'project_shared': { icon: <IconShare className="h-4 w-4" />, color: 'bg-violet-100 text-violet-800' },
-  'project_exported': { icon: <IconDownload className="h-4 w-4" />, color: 'bg-sky-100 text-sky-800' },
-  'project_finalized': { icon: <IconCheck className="h-4 w-4" />, color: 'bg-emerald-100 text-emerald-800' },
-  
-  // Team activities
-  'member_added': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-indigo-100 text-indigo-800' },
-  'member_removed': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-rose-100 text-rose-800' },
-  'member_role_changed': { icon: <IconUsers className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
-  
-  // Item activities
-  'item_added': { icon: <IconPlus className="h-4 w-4" />, color: 'bg-emerald-100 text-emerald-800' },
-  'item_removed': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-amber-100 text-amber-800' },
-  'item_updated': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  
-  // Calculation activities
-  'calculation_created': { icon: <IconCalculator className="h-4 w-4" />, color: 'bg-cyan-100 text-cyan-800' },
-  'calculation_updated': { icon: <IconCalculator className="h-4 w-4" />, color: 'bg-teal-100 text-teal-800' },
-  'calculation_deleted': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
-  
-  // Communication activities
-  'comment_added': { icon: <IconMessage className="h-4 w-4" />, color: 'bg-sky-100 text-sky-800' },
-  'comment_edited': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'comment_deleted': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
-  
-  // Sharing activities
-  'link_created': { icon: <IconLink className="h-4 w-4" />, color: 'bg-fuchsia-100 text-fuchsia-800' },
-  'link_deleted': { icon: <IconLink className="h-4 w-4" />, color: 'bg-pink-100 text-pink-800' },
-  'link_accessed': { icon: <IconArrowRight className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  
-  // File activities
-  'file_uploaded': { icon: <IconFileUpload className="h-4 w-4" />, color: 'bg-lime-100 text-lime-800' },
-  'file_downloaded': { icon: <IconDownload className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'file_deleted': { icon: <IconTrash className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
-  
-  // CAMA-specific activities
-  'cost_matrix_imported': { icon: <IconTable className="h-4 w-4" />, color: 'bg-amber-100 text-amber-800' },
-  'cost_matrix_updated': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'cost_matrix_exported': { icon: <IconDownload className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
-  'building_cost_created': { icon: <IconBuilding className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
-  'building_cost_updated': { icon: <IconEdit className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'depreciation_table_updated': { icon: <IconPercent className="h-4 w-4" />, color: 'bg-indigo-100 text-indigo-800' },
-  'region_factor_updated': { icon: <IconFilter className="h-4 w-4" />, color: 'bg-cyan-100 text-cyan-800' },
-  'assessment_report_generated': { icon: <IconFileText className="h-4 w-4" />, color: 'bg-emerald-100 text-emerald-800' },
-  'benchmark_comparison_run': { icon: <IconChart className="h-4 w-4" />, color: 'bg-violet-100 text-violet-800' },
-  'cama_export_generated': { icon: <IconDatabase className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-  'appraisal_milestone_reached': { icon: <IconBookmark className="h-4 w-4" />, color: 'bg-pink-100 text-pink-800' },
+interface ProjectActivitiesLogProps {
+  activities: ActivityItem[];
+  title?: string;
+  description?: string;
+  isLoading?: boolean;
+}
 
-  // Default
-  'default': { icon: <IconClock className="h-4 w-4" />, color: 'bg-gray-100 text-gray-800' }
-};
-
-const getActivityIcon = (type: string) => {
-  return activityIcons[type] || activityIcons.default;
-};
-
-const getActivityDescription = (activity: ProjectActivity): string => {
-  const { activityType, activityData, user } = activity;
-  const userName = user.name || user.username;
-  
-  switch (activityType) {
-    // Project activities
-    case 'project_created':
-      return `${userName} created this project`;
-    case 'project_updated':
-      return `${userName} updated project details`;
-    case 'project_deleted':
-      return `${userName} marked the project for deletion`;
-    case 'project_shared':
-      return `${userName} shared the project`;
-    case 'project_exported':
-      if (activityData?.format) {
-        return `${userName} exported the project as ${activityData.format}`;
-      }
-      return `${userName} exported the project`;
-    case 'project_finalized':
-      return `${userName} finalized the project`;
-      
-    // Team activities
-    case 'member_added':
-      if (activityData?.memberName) {
-        return `${userName} added ${activityData.memberName} to the project`;
-      }
-      return `${userName} added a new member to the project`;
-    case 'member_removed':
-      if (activityData?.memberName) {
-        return `${userName} removed ${activityData.memberName} from the project`;
-      }
-      return `${userName} removed a member from the project`;
-    case 'member_role_changed':
-      if (activityData?.memberName && activityData?.role) {
-        return `${userName} changed ${activityData.memberName}'s role to ${activityData.role}`;
-      }
-      return `${userName} changed a member's role`;
-      
-    // Item activities
-    case 'item_added':
-      if (activityData?.itemType && activityData?.itemName) {
-        return `${userName} added ${activityData.itemType} "${activityData.itemName}"`;
-      }
-      return `${userName} added an item to the project`;
-    case 'item_removed':
-      if (activityData?.itemType) {
-        return `${userName} removed a ${activityData.itemType} from the project`;
-      }
-      return `${userName} removed an item from the project`;
-    case 'item_updated':
-      if (activityData?.itemType && activityData?.itemName) {
-        return `${userName} updated ${activityData.itemType} "${activityData.itemName}"`;
-      }
-      return `${userName} updated an item`;
-      
-    // Calculation activities
-    case 'calculation_created':
-      if (activityData?.name) {
-        return `${userName} created calculation "${activityData.name}"`;
-      }
-      return `${userName} created a new calculation`;
-    case 'calculation_updated':
-      if (activityData?.name) {
-        return `${userName} updated calculation "${activityData.name}"`;
-      }
-      return `${userName} updated a calculation`;
-    case 'calculation_deleted':
-      if (activityData?.name) {
-        return `${userName} deleted calculation "${activityData.name}"`;
-      }
-      return `${userName} deleted a calculation`;
-      
-    // Communication activities
-    case 'comment_added':
-      if (activityData?.targetType) {
-        return `${userName} commented on a ${activityData.targetType}`;
-      }
-      return `${userName} added a comment`;
-    case 'comment_edited':
-      return `${userName} edited a comment`;
-    case 'comment_deleted':
-      return `${userName} deleted a comment`;
-      
-    // Sharing activities
-    case 'link_created':
-      if (activityData?.accessLevel) {
-        return `${userName} created a ${activityData.accessLevel} access link`;
-      }
-      return `${userName} created a sharing link`;
-    case 'link_deleted':
-      return `${userName} deleted a sharing link`;
-    case 'link_accessed':
-      if (activityData?.accessedBy) {
-        return `${activityData.accessedBy} accessed the project via sharing link`;
-      }
-      return `Someone accessed the project via sharing link`;
-      
-    // File activities
-    case 'file_uploaded':
-      if (activityData?.fileName) {
-        return `${userName} uploaded file "${activityData.fileName}"`;
-      }
-      return `${userName} uploaded a file`;
-    case 'file_downloaded':
-      if (activityData?.fileName) {
-        return `${userName} downloaded file "${activityData.fileName}"`;
-      }
-      return `${userName} downloaded a file`;
-    case 'file_deleted':
-      if (activityData?.fileName) {
-        return `${userName} deleted file "${activityData.fileName}"`;
-      }
-      return `${userName} deleted a file`;
-      
-    // CAMA-specific activities
-    case 'cost_matrix_imported':
-      if (activityData?.matrixName) {
-        return `${userName} imported cost matrix "${activityData.matrixName}"`;
-      }
-      return `${userName} imported a cost matrix`;
-    case 'cost_matrix_updated':
-      if (activityData?.matrixName) {
-        return `${userName} updated cost matrix "${activityData.matrixName}"`;
-      }
-      return `${userName} updated a cost matrix`;
-    case 'cost_matrix_exported':
-      if (activityData?.matrixName) {
-        return `${userName} exported cost matrix "${activityData.matrixName}"`;
-      }
-      return `${userName} exported a cost matrix`;
-    case 'building_cost_created':
-      if (activityData?.buildingType) {
-        return `${userName} created ${activityData.buildingType} building cost estimate`;
-      }
-      return `${userName} created a building cost estimate`;
-    case 'building_cost_updated':
-      if (activityData?.buildingType) {
-        return `${userName} updated ${activityData.buildingType} building cost estimate`;
-      }
-      return `${userName} updated a building cost estimate`;
-    case 'depreciation_table_updated':
-      if (activityData?.tableType) {
-        return `${userName} updated ${activityData.tableType} depreciation table`;
-      }
-      return `${userName} updated a depreciation table`;
-    case 'region_factor_updated':
-      if (activityData?.region) {
-        return `${userName} updated cost factors for ${activityData.region} region`;
-      }
-      return `${userName} updated regional cost factors`;
-    case 'assessment_report_generated':
-      if (activityData?.reportType) {
-        return `${userName} generated ${activityData.reportType} assessment report`;
-      }
-      return `${userName} generated an assessment report`;
-    case 'benchmark_comparison_run':
-      if (activityData?.comparisonType) {
-        return `${userName} ran ${activityData.comparisonType} benchmark comparison`;
-      }
-      return `${userName} ran a benchmark comparison`;
-    case 'cama_export_generated':
-      if (activityData?.exportFormat) {
-        return `${userName} generated CAMA export in ${activityData.exportFormat} format`;
-      }
-      return `${userName} generated a CAMA system export`;
-    case 'appraisal_milestone_reached':
-      if (activityData?.milestone) {
-        return `${userName} marked appraisal milestone: ${activityData.milestone}`;
-      }
-      return `${userName} reached an appraisal milestone`;
-      
-    // Default
-    default:
-      return `${userName} performed an action`;
-  }
-};
-
-const ActivityItem = ({ activity }: { activity: ProjectActivity }) => {
-  const { activityType, createdAt } = activity;
-  const { icon, color } = getActivityIcon(activityType);
-  const description = getActivityDescription(activity);
-  const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
-  
-  // Format the activity type for display
-  const formatActivityType = (type: string) => {
-    return type
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-  
-  return (
-    <div className="flex items-start space-x-4 py-3">
-      <div className={`p-2 rounded-full ${color}`}>
-        {icon}
-      </div>
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium">{description}</p>
-        <div className="flex items-center">
-          <Badge variant="outline" className="text-xs">{formatActivityType(activityType)}</Badge>
-          <span className="ml-2 text-xs text-muted-foreground">{timeAgo}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SkeletonActivityItem = () => (
-  <div className="flex items-start space-x-4 py-3">
-    <Skeleton className="h-8 w-8 rounded-full" />
-    <div className="flex-1 space-y-2">
-      <Skeleton className="h-4 w-full" />
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-    </div>
-  </div>
-);
-
-export const ProjectActivitiesLog: React.FC<ProjectActivityProps> = ({ 
-  projectId, 
-  limit = 10, 
-  showTitle = true,
-  className = ""
+const ProjectActivitiesLog: React.FC<ProjectActivitiesLogProps> = ({
+  activities,
+  title = "Recent Activities",
+  description = "Recent project activities and updates",
+  isLoading = false,
 }) => {
-  const [filter, setFilter] = useState<string>('all');
-  const { data, isLoading, error } = useQuery({
-    queryKey: [`/api/projects/${projectId}/activities`],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/activities`),
-    enabled: !!projectId
-  });
-
-  const activities = Array.isArray(data) ? data as ProjectActivity[] : [];
-  
-  // Filter activities based on the selected filter
-  const filteredActivities = activities.filter(activity => {
-    if (filter === 'all') return true;
-    if (filter === 'cama') {
-      return [
-        'cost_matrix_imported', 'cost_matrix_updated', 'cost_matrix_exported',
-        'building_cost_created', 'building_cost_updated', 'depreciation_table_updated',
-        'region_factor_updated', 'assessment_report_generated', 'benchmark_comparison_run',
-        'cama_export_generated', 'appraisal_milestone_reached'
-      ].includes(activity.activityType);
-    }
-    if (filter === 'team') {
-      return [
-        'member_added', 'member_removed', 'member_role_changed',
-        'comment_added', 'comment_edited', 'comment_deleted'
-      ].includes(activity.activityType);
-    }
-    if (filter === 'project') {
-      return [
-        'project_created', 'project_updated', 'project_deleted',
-        'project_shared', 'project_exported', 'project_finalized',
-        'link_created', 'link_deleted', 'link_accessed'
-      ].includes(activity.activityType);
-    }
-    if (filter === 'items') {
-      return [
-        'item_added', 'item_removed', 'item_updated',
-        'calculation_created', 'calculation_updated', 'calculation_deleted',
-        'file_uploaded', 'file_downloaded', 'file_deleted'
-      ].includes(activity.activityType);
-    }
-    return true;
-  });
-  
-  const displayActivities = limit > 0 ? filteredActivities.slice(0, limit) : filteredActivities;
-
-  // Get statistics for activity types
-  const getActivityStats = () => {
-    if (!activities.length) return null;
-    
-    const camaActivities = activities.filter(a => 
-      ['cost_matrix_imported', 'cost_matrix_updated', 'building_cost_created', 'depreciation_table_updated',
-       'region_factor_updated', 'assessment_report_generated', 'benchmark_comparison_run', 'cama_export_generated',
-       'appraisal_milestone_reached'].includes(a.activityType)
-    ).length;
-    
-    const teamActivities = activities.filter(a => 
-      ['member_added', 'member_removed', 'member_role_changed', 'comment_added'].includes(a.activityType)
-    ).length;
-    
-    return {
-      total: activities.length,
-      cama: camaActivities,
-      team: teamActivities,
-      other: activities.length - camaActivities - teamActivities
-    };
-  };
-
-  const stats = getActivityStats();
-
-  if (error) {
+  if (isLoading) {
     return (
-      <Card className={className}>
-        {showTitle && (
-          <CardHeader>
-            <CardTitle>Project Activity</CardTitle>
-            <CardDescription>Recent activity in this project</CardDescription>
-          </CardHeader>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
         <CardContent>
-          <div className="text-center p-4 text-red-500">
-            Failed to load project activities
+          <div className="flex items-center justify-center h-60">
+            <p className="text-muted-foreground">Loading activities...</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <Card className={className}>
-      {showTitle && (
+  if (!activities || activities.length === 0) {
+    return (
+      <Card>
         <CardHeader>
-          <CardTitle>Project Activity</CardTitle>
-          <CardDescription>Track all changes and actions in this project</CardDescription>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
-      )}
-      
-      {stats && !limit && (
-        <div className="px-6 -mt-2 mb-4">
-          <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList className="grid grid-cols-5 mb-2">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="cama">CAMA</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="project">Project</TabsTrigger>
-              <TabsTrigger value="items">Items</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      )}
-      
+        <CardContent>
+          <div className="flex items-center justify-center h-60">
+            <p className="text-muted-foreground">No activities found</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Format the activity message based on type
+  const getActivityMessage = (activity: ActivityItem) => {
+    const { type, details } = activity;
+    
+    switch (type) {
+      case 'created_project':
+        return `created project "${details?.projectName || 'Unnamed project'}"`;
+      case 'updated_project':
+        return `updated project details`;
+      case 'deleted_project':
+        return `deleted project "${details?.projectName || 'Unnamed project'}"`;
+      case 'added_member':
+        return `added ${details?.memberName || 'a new member'} to the project`;
+      case 'removed_member':
+        return `removed ${details?.memberName || 'a member'} from the project`;
+      case 'updated_member_role':
+        return `updated ${details?.memberName || 'a member'}'s role to ${details?.newRole || 'a new role'}`;
+      case 'completed_task':
+        return `completed task "${details?.taskName || 'Unnamed task'}"`;
+      case 'added_milestone':
+        return `added milestone "${details?.milestoneName || 'Unnamed milestone'}"`;
+      case 'added_document':
+        return `added document "${details?.documentName || 'Unnamed document'}"`;
+      case 'updated_document':
+        return `updated document "${details?.documentName || 'Unnamed document'}"`;
+      case 'synced_data':
+        return `synced data with ${details?.source || 'external system'}`;
+      case 'uploaded_file':
+        return `uploaded file "${details?.fileName || 'a file'}"`;
+      case 'downloaded_file':
+        return `downloaded file "${details?.fileName || 'a file'}"`;
+      case 'shared_link':
+        return `shared a link to the project`;
+      case 'added_comment':
+        return `commented on ${details?.itemType || 'an item'}`;
+      case 'updated_settings':
+        return `updated project settings`;
+      case 'added_item':
+        return `added ${details?.itemType || 'an item'} "${details?.itemName || 'Unnamed item'}"`;
+      case 'removed_item':
+        return `removed ${details?.itemType || 'an item'} "${details?.itemName || 'Unnamed item'}"`;
+      case 'updated_item':
+        return `updated ${details?.itemType || 'an item'} "${details?.itemName || 'Unnamed item'}"`;
+      case 'connected_database':
+        return `connected to database "${details?.databaseName || 'Unnamed database'}"`;
+      case 'ftp_upload':
+        return `uploaded file "${details?.fileName || 'a file'}" via FTP`;
+      case 'ftp_download':
+        return `downloaded file "${details?.fileName || 'a file'}" via FTP`;
+      case 'ftp_sync_started':
+        return `started FTP sync job "${details?.jobName || 'Unnamed job'}"`;
+      case 'ftp_sync_completed':
+        return `completed FTP sync job "${details?.jobName || 'Unnamed job'}"`;
+      case 'ftp_sync_failed':
+        return `failed FTP sync job "${details?.jobName || 'Unnamed job'}"`;
+      default:
+        return `performed action "${type}"`;
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array(3).fill(0).map((_, i) => (
-              <SkeletonActivityItem key={i} />
-            ))}
+        <ScrollArea className="h-[350px] pr-4">
+          <div className="space-y-4">
+            {activities.map((activity) => {
+              const activityIcon = ACTIVITY_ICONS[activity.type] || 
+                <FileText className="h-4 w-4 text-muted-foreground" />;
+              const formattedDate = activity.timestamp ? 
+                format(new Date(activity.timestamp), 'MMM d, yyyy h:mm a') : 
+                'Unknown date';
+                
+              return (
+                <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={activity.user.avatarUrl} alt={activity.user.name} />
+                    <AvatarFallback>{activity.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">{activity.user.name}</span>
+                      <span className="text-muted-foreground">{getActivityMessage(activity)}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      {activityIcon}
+                      <span className="ml-1">{formattedDate}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ) : activities.length === 0 ? (
-          <div className="text-center p-4 text-muted-foreground">
-            No activities recorded yet
-          </div>
-        ) : (
-          <div className="space-y-1 divide-y">
-            {displayActivities.map((activity) => (
-              <ActivityItem key={activity.id} activity={activity} />
-            ))}
-          </div>
-        )}
+        </ScrollArea>
       </CardContent>
-      
-      {stats && !limit && displayActivities.length > 0 && (
-        <CardFooter className="flex justify-between text-xs text-muted-foreground border-t pt-4">
-          <div>Total: {stats.total} activities</div>
-          {stats.cama > 0 && (
-            <div>CAMA-related: {stats.cama} activities</div>
-          )}
-        </CardFooter>
-      )}
     </Card>
   );
 };
