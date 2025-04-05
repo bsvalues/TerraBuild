@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import DataConnectionTester from '@/components/data-connectors/DataConnectionTester';
+import ConnectionHistory from '@/components/data-connectors/ConnectionHistory';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Server, Database, FolderSync } from 'lucide-react';
@@ -98,9 +99,7 @@ const DataConnectionsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center p-8">
-                <p className="text-muted-foreground">Connection history will be displayed here</p>
-              </div>
+              <ConnectionHistory />
             </CardContent>
           </Card>
         </TabsContent>

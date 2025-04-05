@@ -29,6 +29,7 @@ import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
 import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
 import dataConnectorRoutes from "./routes/dataConnectorRoutes";
+import connectionHistoryRoutes from "./routes/connectionHistoryRoutes";
 import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
@@ -1916,6 +1917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Register export and data connector routes
     app.use('/api/export', exportRoutes);
     app.use('/api/data-connections', dataConnectorRoutes);
+    app.use('/api/data-connections', connectionHistoryRoutes);
     
     // Log the new data connector APIs
     await storage.createActivity({

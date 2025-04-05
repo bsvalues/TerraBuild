@@ -26,11 +26,12 @@ import {
   ProjectItem, InsertProjectItem,
   Comment, InsertComment,
   SharedLink, InsertSharedLink,
+  ConnectionHistory, InsertConnectionHistory,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
-  comments, sharedLinks
+  comments, sharedLinks, connectionHistory
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -1622,5 +1623,42 @@ export class PostgresStorage implements IStorage {
       .returning();
     
     return result;
+  }
+
+  // Connection History
+  async createConnectionHistory(history: InsertConnectionHistory): Promise<ConnectionHistory> {
+    const [result] = await db
+      .insert(connectionHistory)
+      .values({
+        ...history,
+        timestamp: new Date()
+      })
+      .returning();
+    
+    return result;
+  }
+  
+  async getConnectionHistory(options?: { connectionType?: string, limit?: number }): Promise<ConnectionHistory[]> {
+    let query = db.select().from(connectionHistory).orderBy(desc(connectionHistory.timestamp));
+    
+    if (options?.connectionType) {
+      query = query.where(eq(connectionHistory.connectionType, options.connectionType));
+    }
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    return await query;
+  }
+  
+  async getConnectionHistoryById(id: number): Promise<ConnectionHistory | undefined> {
+    const result = await db.select().from(connectionHistory).where(eq(connectionHistory.id, id));
+    return result[0];
+  }
+  
+  // Alias for createCostMatrix
+  async createCostMatrixEntry(matrix: InsertCostMatrix): Promise<CostMatrix> {
+    return this.createCostMatrix(matrix);
   }
 }
