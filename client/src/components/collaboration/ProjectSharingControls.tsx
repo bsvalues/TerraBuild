@@ -61,6 +61,9 @@ interface ProjectSharingControlsProps {
   projectId: number;
   projectName: string;
   isOwner: boolean;
+  isPublic?: boolean;
+  currentUserId?: number;
+  currentUserRole?: string;
   className?: string;
 }
 
@@ -68,6 +71,9 @@ export default function ProjectSharingControls({
   projectId,
   projectName,
   isOwner,
+  isPublic,
+  currentUserId,
+  currentUserRole,
   className
 }: ProjectSharingControlsProps) {
   const { toast } = useToast();
@@ -322,7 +328,8 @@ export default function ProjectSharingControls({
     return `Expires on ${expirationDate.toLocaleDateString()}`;
   };
 
-  const isProjectPublic = projectData?.isPublic || false;
+  // Use prop value if provided, otherwise use fetched data
+  const isProjectPublic = isPublic !== undefined ? isPublic : (projectData?.isPublic || false);
   const members = membersData || [];
   const shareLinks = linksData || [];
 
@@ -339,6 +346,11 @@ export default function ProjectSharingControls({
                 onCheckedChange={() => setIsPublicDialogOpen(true)}
                 disabled={!isOwner}
               />
+            )}
+            {!isOwner && (
+              <Badge variant={isProjectPublic ? "outline" : "default"} className="ml-auto opacity-70">
+                {isProjectPublic ? "Public" : "Private"}
+              </Badge>
             )}
           </CardTitle>
           <CardDescription>
@@ -409,12 +421,13 @@ export default function ProjectSharingControls({
                               size="icon" 
                               className="h-8 w-8 text-muted-foreground/70 hover:text-destructive"
                               onClick={() => removeMemberMutation.mutate(member.userId)}
+                              disabled={currentUserId === member.userId}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Remove member</p>
+                            <p>{currentUserId === member.userId ? "Cannot remove yourself" : "Remove member"}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -471,6 +484,7 @@ export default function ProjectSharingControls({
                       {link.description || 'Untitled Link'}
                     </div>
                     <div className="flex gap-1">
+                      {/* Anyone can copy the link */}
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -489,6 +503,7 @@ export default function ProjectSharingControls({
                         </Tooltip>
                       </TooltipProvider>
                       
+                      {/* Only owner can delete links */}
                       {isOwner && (
                         <TooltipProvider>
                           <Tooltip>
@@ -516,6 +531,13 @@ export default function ProjectSharingControls({
                       <Clock className="h-3.5 w-3.5 mr-1" />
                       {formatExpiration(link.expiresAt)}
                     </span>
+                    
+                    {/* Show who created the link if you're not the owner */}
+                    {!isOwner && currentUserRole !== 'owner' && (
+                      <Badge variant="outline" className="ml-2 opacity-70">
+                        Created by owner
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}

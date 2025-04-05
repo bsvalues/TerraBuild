@@ -62,15 +62,19 @@ export default function ActivityTrendChart({
         const date = item.date.split('T')[0]; // Get YYYY-MM-DD part
         if (dateMap.has(date)) {
           const entry = dateMap.get(date);
-          entry.count += item.count;
-          
-          // Track by type if needed
-          if (showByType && item.type) {
-            if (!entry[item.type]) {
-              entry[item.type] = 0;
+          if (entry) {
+            entry.count += item.count;
+            
+            // Track by type if needed
+            if (showByType && item.type) {
+              // Use type-safe indexing with a type assertion
+              const typedEntry = entry as Record<string, any>;
+              if (!typedEntry[item.type]) {
+                typedEntry[item.type] = 0;
+              }
+              typedEntry[item.type] += item.count;
+              typeMap.set(item.type, true);
             }
-            entry[item.type] += item.count;
-            typeMap.set(item.type, true);
           }
         }
       } catch (error) {
