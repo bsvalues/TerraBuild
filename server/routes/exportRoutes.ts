@@ -9,13 +9,17 @@ import {
   testConnection, 
   listFiles, 
   removeFile, 
-  createDirectory 
+  createDirectory,
+  uploadFile
 } from '../services/ftpService';
 import { 
   exportBuildingCostsToFTP,
   exportProjectProgressToFTP 
 } from '../services/exportService';
 import { storage } from '../storage';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -759,6 +763,103 @@ router.delete('/file', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error deleting file from FTP server:', err);
     res.status(500).json({ success: false, message: `File deletion failed: ${err.message}` });
+  }
+});
+
+/**
+ * Upload a file to the FTP server
+ * POST /api/export/file
+ * 
+ * This endpoint uploads a file to the FTP server.
+ * It uses 'multer' to handle the file upload.
+ * 
+ * Form data:
+ * - file: The file to upload
+ * - remotePath: The remote path on the FTP server where the file should be stored
+ * - createDir: (Optional) Whether to create parent directories if they don't exist (default: true)
+ */
+
+
+// Set up multer storage for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = './uploads/temp';
+    // Ensure directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+router.post('/file', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    const { remotePath } = req.body;
+    const createDir = req.body.createDir !== 'false'; // Default to true
+    
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'No file was uploaded' });
+    }
+    
+    if (!remotePath) {
+      // Remove the uploaded file to clean up
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      return res.status(400).json({ success: false, message: 'Remote path is required' });
+    }
+    
+    // Construct the full remote path, including the filename
+    let fullRemotePath = remotePath;
+    if (!remotePath.endsWith('/') && !path.basename(remotePath).includes('.')) {
+      // If remotePath doesn't end with a slash and doesn't have a file extension,
+      // assume it's a directory and append the original filename
+      fullRemotePath = path.posix.join(remotePath, file.originalname);
+    }
+    
+    // Log the upload request
+    console.log(`Received request to upload file ${file.originalname} to ${fullRemotePath}`);
+    await storage.createActivity({
+      action: `Requested file upload to FTP server: ${fullRemotePath}`,
+      icon: 'upload-cloud',
+      iconColor: 'blue'
+    });
+    
+    // Upload the file to the FTP server
+    const result = await uploadFile(
+      file.path,
+      fullRemotePath,
+      createDir,
+      3, // retryAttempts
+      2000 // retryDelay
+    );
+    
+    // Remove the temporary file after upload
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    
+    res.status(result.success ? 200 : 500).json({ 
+      ...result,
+      originalName: file.originalname,
+      size: file.size
+    });
+  } catch (err: any) {
+    console.error('Error uploading file to FTP server:', err);
+    
+    // Clean up any temporary file
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({ success: false, message: `File upload failed: ${err.message}` });
   }
 });
 

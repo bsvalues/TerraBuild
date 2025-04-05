@@ -1,350 +1,701 @@
-import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Loader2, FolderPlus, Trash2, FileUp, List } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import React, { useState, useEffect } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { 
+  Upload,
+  FileType,
+  Folder,
+  Download,
+  File as FileIcon,
+  FolderPlus,
+  ArrowUp,
+  ArrowLeft,
+  Trash2,
+  RefreshCw,
+  FolderOpen,
+  AlertCircle,
+  CheckCircle,
+  Ban,
+  Loader2
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
-interface FileItem {
+// Define file type returned from API
+type FileListItem = {
   name: string;
-  type: string;
-  size: number;
-  modified: string;
-  path: string;
-}
+  type: 'file' | 'directory';
+  size?: number;
+  lastModified?: string;
+  permissions?: string;
+  owner?: string;
+};
 
+// Component for FTP management
 const FTPManagement: React.FC = () => {
   const { toast } = useToast();
-  const [directoryPath, setDirectoryPath] = useState('');
-  const [filePath, setFilePath] = useState('');
-  const [createParents, setCreateParents] = useState(true);
-  const [listPath, setListPath] = useState('/');
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isListing, setIsListing] = useState(false);
+  const [currentPath, setCurrentPath] = useState('/');
+  const [files, setFiles] = useState<FileListItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [newDirName, setNewDirName] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPath, setUploadPath] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [createDirOpen, setCreateDirOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<FileListItem | null>(null);
 
-  const handleCreateDirectory = async () => {
-    if (!directoryPath) {
-      toast({
-        title: 'Error',
-        description: 'Directory path is required',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsLoading(true);
+  // Test FTP connection
+  const testConnection = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await apiRequest('/api/export/create-directory', {
-        method: 'POST',
-        body: JSON.stringify({
-          path: directoryPath,
-          createParents
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.success) {
+      // This endpoint is actually calling testConnection() in the ftpService
+      const response = await fetch('/api/export/test-connection');
+      const data = await response.json();
+      
+      if (data.success) {
+        setConnectionStatus(true);
         toast({
-          title: 'Success',
-          description: `Directory "${directoryPath}" created successfully`,
-          variant: 'default'
+          title: "Connection Successful",
+          description: data.message || "Connected to FTP server successfully",
+          variant: "default",
         });
-        setDirectoryPath('');
       } else {
+        setConnectionStatus(false);
+        setError(data.message || "Connection failed");
         toast({
-          title: 'Error',
-          description: response.message || 'Failed to create directory',
-          variant: 'destructive'
+          title: "Connection Failed",
+          description: data.message || "Failed to connect to FTP server",
+          variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error('Error creating directory:', error);
+    } catch (err: any) {
+      setConnectionStatus(false);
+      setError(err.message || "Error testing connection");
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while creating the directory',
-        variant: 'destructive'
+        title: "Connection Error",
+        description: err.message || "An error occurred while testing connection",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-
-  const handleDeleteFile = async () => {
-    if (!filePath) {
-      toast({
-        title: 'Error',
-        description: 'File path is required',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!window.confirm(`Are you sure you want to delete the file "${filePath}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    setIsLoading(true);
+  
+  // Load files from current directory
+  const loadFiles = async (path: string = currentPath) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await apiRequest('/api/export/file', {
-        method: 'DELETE',
-        body: JSON.stringify({
-          path: filePath
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.success) {
-        toast({
-          title: 'Success',
-          description: `File "${filePath}" deleted successfully`,
-          variant: 'default'
+      const response = await fetch(`/api/export/list-files?path=${encodeURIComponent(path)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Sort: directories first, then files alphabetically
+        const sortedFiles = [...(data.files || [])].sort((a, b) => {
+          if (a.type !== b.type) {
+            return a.type === 'directory' ? -1 : 1;
+          }
+          return a.name.localeCompare(b.name);
         });
-        setFilePath('');
         
-        // If we're listing files and the deleted file is in the current directory,
-        // refresh the file list
-        if (isListing && filePath.startsWith(listPath)) {
-          handleListFiles();
-        }
+        setFiles(sortedFiles);
+        setCurrentPath(data.path || path);
+        setConnectionStatus(true);
       } else {
-        toast({
-          title: 'Error',
-          description: response.message || 'Failed to delete file',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while deleting the file',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleListFiles = async () => {
-    setIsListing(true);
-    try {
-      const response = await apiRequest(`/api/export/list-files?path=${encodeURIComponent(listPath)}`, {
-        method: 'GET'
-      });
-
-      if (response.success) {
-        setFiles(response.files || []);
-        toast({
-          title: 'Success',
-          description: `Listed ${response.files?.length || 0} items in "${listPath}"`,
-          variant: 'default'
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: response.message || 'Failed to list files',
-          variant: 'destructive'
-        });
+        setError(data.message || "Failed to load files");
         setFiles([]);
+        toast({
+          title: "Error Loading Files",
+          description: data.message || "Failed to load files from FTP server",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error('Error listing files:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while listing files',
-        variant: 'destructive'
-      });
+    } catch (err: any) {
+      setError(err.message || "Error loading files");
       setFiles([]);
+      toast({
+        title: "Error Loading Files",
+        description: err.message || "An error occurred while loading files",
+        variant: "destructive",
+      });
     } finally {
-      setIsListing(false);
+      setLoading(false);
     }
   };
-
-  const formatFileSize = (size: number): string => {
-    if (size < 1024) return `${size} B`;
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`;
-    if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-    return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  
+  // Navigate to a directory
+  const navigateToDirectory = (dirName: string) => {
+    let newPath;
+    
+    if (dirName === '..') {
+      // Go up one directory level
+      const pathParts = currentPath.split('/').filter(Boolean);
+      pathParts.pop();
+      newPath = pathParts.length ? `/${pathParts.join('/')}/` : '/';
+    } else {
+      // Go into the directory
+      newPath = currentPath.endsWith('/') 
+        ? `${currentPath}${dirName}/` 
+        : `${currentPath}/${dirName}/`;
+    }
+    
+    loadFiles(newPath);
   };
-
-  const navigateToDirectory = (path: string) => {
-    setListPath(path);
-    setFiles([]);
-    setTimeout(() => {
-      handleListFiles();
-    }, 100);
+  
+  // Create a new directory
+  const createDirectory = async () => {
+    if (!newDirName) {
+      toast({
+        title: "Error",
+        description: "Directory name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    const dirPath = currentPath.endsWith('/') 
+      ? `${currentPath}${newDirName}` 
+      : `${currentPath}/${newDirName}`;
+    
+    try {
+      const response = await fetch('/api/export/create-directory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: dirPath })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Directory Created",
+          description: `Created directory "${newDirName}" successfully`,
+          variant: "default",
+        });
+        setNewDirName('');
+        setCreateDirOpen(false);
+        loadFiles(); // Refresh file list
+      } else {
+        setError(data.message || "Failed to create directory");
+        toast({
+          title: "Error Creating Directory",
+          description: data.message || "Failed to create directory",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || "Error creating directory");
+      toast({
+        title: "Error Creating Directory",
+        description: err.message || "An error occurred while creating directory",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
+  
+  // Delete a file
+  const deleteFile = async (filePath: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/export/file', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: filePath })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "File Deleted",
+          description: `Deleted "${filePath}" successfully`,
+          variant: "default",
+        });
+        setSelectedFile(null);
+        loadFiles(); // Refresh file list
+      } else {
+        setError(data.message || "Failed to delete file");
+        toast({
+          title: "Error Deleting File",
+          description: data.message || "Failed to delete file",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || "Error deleting file");
+      toast({
+        title: "Error Deleting File",
+        description: err.message || "An error occurred while deleting file",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Upload a file
+  const uploadFileToFTP = async () => {
+    if (!uploadFile) {
+      toast({
+        title: "Error",
+        description: "No file selected for upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+    
+    // Determine upload path
+    const uploadPathToUse = uploadPath || currentPath;
+    
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    formData.append('remotePath', uploadPathToUse);
+    formData.append('createDir', 'true');
+    
+    try {
+      const response = await fetch('/api/export/file', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "File Uploaded",
+          description: `Uploaded "${uploadFile.name}" successfully`,
+          variant: "default",
+        });
+        setUploadFile(null);
+        setUploadPath('');
+        loadFiles(); // Refresh file list
+      } else {
+        setError(data.message || "Failed to upload file");
+        toast({
+          title: "Error Uploading File",
+          description: data.message || "Failed to upload file",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || "Error uploading file");
+      toast({
+        title: "Error Uploading File",
+        description: err.message || "An error occurred while uploading file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+  
+  // Handle file selection for upload
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setUploadFile(e.target.files[0]);
+    }
+  };
+  
+  // Load files on initial render and when path changes
+  useEffect(() => {
+    testConnection().then(() => {
+      loadFiles('/');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Format file size
+  const formatFileSize = (bytes?: number): string => {
+    if (bytes === undefined) return 'Unknown';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  };
+  
+  // Format date
+  const formatDate = (dateStr?: string): string => {
+    if (!dateStr) return 'Unknown';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString();
+    } catch (e) {
+      return dateStr;
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>FTP File Management</CardTitle>
-          <CardDescription>
-            Manage files and directories on the FTP server
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <CardTitle className="text-2xl font-bold">FTP Management</CardTitle>
+            <CardDescription>
+              Browse, upload, and manage files on the FTP server
+            </CardDescription>
+          </div>
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => testConnection()} 
+              variant="outline" 
+              size="sm"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Test Connection
+            </Button>
+            {connectionStatus !== null && (
+              connectionStatus ? (
+                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                  <CheckCircle className="h-3 w-3 mr-1" /> Connected
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                  <Ban className="h-3 w-3 mr-1" /> Disconnected
+                </Badge>
+              )
+            )}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Create Directory Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Create Directory</h3>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="directoryPath">Directory Path</Label>
-                <Input
-                  id="directoryPath"
-                  placeholder="/path/to/new/directory"
-                  value={directoryPath}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDirectoryPath(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="createParents"
-                  checked={createParents}
-                  onCheckedChange={(checked: boolean | "indeterminate") => setCreateParents(checked === true)}
-                />
-                <Label
-                  htmlFor="createParents"
-                  className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="flex items-center space-x-2 mb-4">
+            <Button 
+              onClick={() => navigateToDirectory('..')} 
+              variant="outline" 
+              size="sm"
+              disabled={loading || currentPath === '/'}
+            >
+              <ArrowUp className="h-4 w-4 mr-1" /> Up
+            </Button>
+            
+            <div className="bg-muted px-3 py-2 rounded-md flex-1 overflow-x-auto whitespace-nowrap text-sm">
+              {currentPath || '/'}
+            </div>
+            
+            <Dialog open={createDirOpen} onOpenChange={setCreateDirOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={loading}
                 >
-                  Create parent directories if they don't exist
-                </Label>
-              </div>
-              <Button
-                onClick={handleCreateDirectory}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <FolderPlus className="mr-2 h-4 w-4" />
-                    Create Directory
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Delete File Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Delete File</h3>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="filePath">File Path</Label>
-                <Input
-                  id="filePath"
-                  placeholder="/path/to/file.txt"
-                  value={filePath}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilePath(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteFile}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete File
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* List Files Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">List Files</h3>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="listPath">Path</Label>
-                <Input
-                  id="listPath"
-                  placeholder="/"
-                  value={listPath}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setListPath(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={handleListFiles}
-                disabled={isListing}
-              >
-                {isListing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Listing...
-                  </>
-                ) : (
-                  <>
-                    <List className="mr-2 h-4 w-4" />
-                    List Files
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {files.length > 0 && (
-              <div className="border rounded-md mt-4">
-                <div className="grid grid-cols-4 gap-4 p-4 font-medium text-sm border-b">
-                  <div>Name</div>
-                  <div>Type</div>
-                  <div>Size</div>
-                  <div>Modified</div>
+                  <FolderPlus className="h-4 w-4 mr-1" /> New Directory
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Directory</DialogTitle>
+                  <DialogDescription>
+                    Enter a name for the new directory to be created at the current location.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dirName">Directory Name</Label>
+                    <Input
+                      id="dirName"
+                      value={newDirName}
+                      onChange={(e) => setNewDirName(e.target.value)}
+                      placeholder="Enter directory name"
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Will be created at: {currentPath}
+                  </div>
                 </div>
-                <div className="divide-y">
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button 
+                    onClick={createDirectory} 
+                    disabled={!newDirName || loading}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FolderPlus className="h-4 w-4 mr-2" />}
+                    Create Directory
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={loading}
+                >
+                  <Upload className="h-4 w-4 mr-1" /> Upload File
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Upload File to FTP</DialogTitle>
+                  <DialogDescription>
+                    Select a file to upload to the current directory.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="file">File to Upload</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      onChange={handleFileChange}
+                      className="cursor-pointer"
+                    />
+                    {uploadFile && (
+                      <div className="text-sm font-medium">
+                        Selected: {uploadFile.name} ({formatFileSize(uploadFile.size)})
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="uploadPath">Remote Path (Optional)</Label>
+                    <Input
+                      id="uploadPath"
+                      value={uploadPath}
+                      onChange={(e) => setUploadPath(e.target.value)}
+                      placeholder={`Default: ${currentPath}`}
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      Leave empty to use current directory ({currentPath})
+                    </div>
+                  </div>
+                  
+                  {isUploading && (
+                    <div className="space-y-2">
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary" 
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-center">{uploadProgress}% Complete</div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" disabled={isUploading}>Cancel</Button>
+                  </DialogClose>
+                  <Button 
+                    onClick={uploadFileToFTP} 
+                    disabled={!uploadFile || isUploading}
+                  >
+                    {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                    {isUploading ? 'Uploading...' : 'Upload File'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Button 
+              onClick={() => loadFiles(currentPath)}
+              variant="outline" 
+              size="sm" 
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+              Refresh
+            </Button>
+          </div>
+          
+          <div className="border rounded-md">
+            <div className="grid grid-cols-12 gap-2 p-2 bg-muted font-medium text-sm border-b">
+              <div className="col-span-1"></div>
+              <div className="col-span-5">Name</div>
+              <div className="col-span-2">Size</div>
+              <div className="col-span-3">Last Modified</div>
+              <div className="col-span-1 text-right">Action</div>
+            </div>
+            
+            <ScrollArea className="h-[350px]">
+              {loading ? (
+                <div className="flex justify-center items-center h-[350px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : files.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-[350px] text-muted-foreground">
+                  <FolderOpen className="h-12 w-12 mb-2" />
+                  <p>No files found in this directory</p>
+                </div>
+              ) : (
+                <div>
                   {files.map((file, index) => (
-                    <div key={index} className="grid grid-cols-4 gap-4 p-4 text-sm">
-                      <div className="flex items-center">
+                    <div key={index} className="grid grid-cols-12 gap-2 p-2 hover:bg-muted/50 border-b last:border-b-0">
+                      <div className="col-span-1 flex items-center">
                         {file.type === 'directory' ? (
-                          <button
-                            className="text-blue-600 hover:underline flex items-center"
-                            onClick={() => navigateToDirectory(file.path)}
-                          >
-                            <FolderPlus className="mr-2 h-4 w-4" />
-                            {file.name}
-                          </button>
+                          <Folder className="h-5 w-5 text-primary" />
                         ) : (
-                          <div className="flex items-center">
-                            <FileUp className="mr-2 h-4 w-4" />
-                            {file.name}
-                          </div>
+                          <FileIcon className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
-                      <div>{file.type}</div>
-                      <div>{file.type === 'file' ? formatFileSize(file.size) : '-'}</div>
-                      <div>{file.modified ? new Date(file.modified).toLocaleString() : '-'}</div>
+                      <div className="col-span-5 flex items-center truncate">
+                        {file.type === 'directory' ? (
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto font-normal justify-start" 
+                            onClick={() => navigateToDirectory(file.name)}
+                          >
+                            {file.name}
+                          </Button>
+                        ) : (
+                          <span className="truncate">{file.name}</span>
+                        )}
+                      </div>
+                      <div className="col-span-2 flex items-center text-sm">
+                        {file.type === 'directory' ? (
+                          <Badge variant="outline" className="font-normal">Directory</Badge>
+                        ) : (
+                          formatFileSize(file.size)
+                        )}
+                      </div>
+                      <div className="col-span-3 flex items-center text-sm text-muted-foreground">
+                        {formatDate(file.lastModified)}
+                      </div>
+                      <div className="col-span-1 flex justify-end items-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => setSelectedFile(file)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Delete {file.type === 'directory' ? 'Directory' : 'File'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </ScrollArea>
           </div>
+          
+          {/* Confirmation Dialog for Delete */}
+          <Dialog open={selectedFile !== null} onOpenChange={(open) => !open && setSelectedFile(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="text-destructive">Confirm Deletion</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete{' '}
+                  <span className="font-medium">
+                    {selectedFile?.name}
+                  </span>?
+                  {selectedFile?.type === 'directory' && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                        This will delete the directory and all its contents. This action cannot be undone.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (selectedFile) {
+                      const path = currentPath.endsWith('/') 
+                        ? `${currentPath}${selectedFile.name}` 
+                        : `${currentPath}/${selectedFile.name}`;
+                      deleteFile(path);
+                    }
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                  Delete {selectedFile?.type}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
+        
+        <CardFooter className="bg-muted/30 flex items-center justify-between px-6 py-3">
+          <div className="text-sm text-muted-foreground">
+            <FileType className="h-4 w-4 inline-block mr-1" />
+            {files.length} items in directory
+          </div>
+          
+          <div className="text-sm">
+            {files.filter(f => f.type === 'directory').length} directories, {files.filter(f => f.type === 'file').length} files
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
