@@ -405,6 +405,28 @@ export type InsertBentonImprvSchedMatrixAssoc = z.infer<typeof insertBentonImprv
 export type BentonDepreciationMatrix = typeof bentonDepreciationMatrix.$inferSelect;
 export type InsertBentonDepreciationMatrix = z.infer<typeof insertBentonDepreciationMatrixSchema>;
 
+// Connection History
+export const connectionHistory = pgTable("connection_history", {
+  id: serial("id").primaryKey(),
+  connectionType: text("connection_type").notNull(), // ftp, arcgis, sqlserver, etc.
+  status: text("status").notNull(), // success, failed
+  message: text("message").notNull(),
+  details: json("details"), // Store any additional details like host, port, etc.
+  userId: integer("user_id"), // Optional - which user triggered the connection test
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+export const insertConnectionHistorySchema = createInsertSchema(connectionHistory).pick({
+  connectionType: true,
+  status: true,
+  message: true,
+  details: true,
+  userId: true,
+});
+
+export type ConnectionHistory = typeof connectionHistory.$inferSelect;
+export type InsertConnectionHistory = z.infer<typeof insertConnectionHistorySchema>;
+
 // Cost Matrix (simplified representation from Excel data)
 export const costMatrix = pgTable("cost_matrix", {
   id: serial("id").primaryKey(),

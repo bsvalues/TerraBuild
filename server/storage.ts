@@ -22,7 +22,8 @@ import {
   comments, type Comment, type InsertComment,
   projectInvitations, type ProjectInvitation, type InsertProjectInvitation,
   sharedLinks, type SharedLink, type InsertSharedLink,
-  projectActivities, type ProjectActivity, type InsertProjectActivity
+  projectActivities, type ProjectActivity, type InsertProjectActivity,
+  connectionHistory, type ConnectionHistory, type InsertConnectionHistory
 } from "@shared/schema";
 
 // Storage interface
@@ -34,6 +35,11 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
+  
+  // Connection History
+  createConnectionHistory(connectionHistory: InsertConnectionHistory): Promise<ConnectionHistory>;
+  getConnectionHistory(options?: { connectionType?: string, limit?: number }): Promise<ConnectionHistory[]>;
+  getConnectionHistoryById(id: number): Promise<ConnectionHistory | undefined>;
   
   // Environments
   getAllEnvironments(): Promise<Environment[]>;
@@ -269,6 +275,9 @@ export class MemStorage implements IStorage {
   private comments: Map<number, Comment>;
   private sharedLinks: Map<number, SharedLink>;
   private projectActivities: Map<number, ProjectActivity>;
+  private connectionHistories: Map<number, ConnectionHistory>;
+  
+
   
   private currentUserId: number;
   private currentEnvironmentId: number;
@@ -290,6 +299,43 @@ export class MemStorage implements IStorage {
   private currentCommentId: number;
   private currentSharedLinkId: number;
   private currentProjectActivityId: number;
+  private currentConnectionHistoryId: number;
+  
+  // Add connection history to the interface
+  async createConnectionHistory(history: InsertConnectionHistory): Promise<ConnectionHistory> {
+    const id = this.currentConnectionHistoryId++;
+    const timestamp = new Date();
+    const newHistory: ConnectionHistory = { 
+      ...history, 
+      id, 
+      timestamp 
+    };
+    this.connectionHistories.set(id, newHistory);
+    return newHistory;
+  }
+  
+  async getConnectionHistory(options?: { connectionType?: string, limit?: number }): Promise<ConnectionHistory[]> {
+    let histories = Array.from(this.connectionHistories.values());
+    
+    // Filter by connection type if provided
+    if (options?.connectionType) {
+      histories = histories.filter(h => h.connectionType === options.connectionType);
+    }
+    
+    // Sort by most recent first
+    histories = histories.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    // Apply limit if provided
+    if (options?.limit && options.limit > 0) {
+      histories = histories.slice(0, options.limit);
+    }
+    
+    return histories;
+  }
+  
+  async getConnectionHistoryById(id: number): Promise<ConnectionHistory | undefined> {
+    return this.connectionHistories.get(id);
+  }
   
   constructor() {
     this.users = new Map();
@@ -312,6 +358,7 @@ export class MemStorage implements IStorage {
     this.comments = new Map();
     this.sharedLinks = new Map();
     this.projectActivities = new Map();
+    this.connectionHistories = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
@@ -333,6 +380,7 @@ export class MemStorage implements IStorage {
     this.currentCommentId = 1;
     this.currentSharedLinkId = 1;
     this.currentProjectActivityId = 1;
+    this.currentConnectionHistoryId = 1;
     
     // Initialize with sample data
     this.initializeData();
