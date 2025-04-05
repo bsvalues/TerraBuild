@@ -107,14 +107,14 @@ const RegionalCostComparison: React.FC = () => {
 
   // Get unique regions and building types for filters
   const regions = useMemo(() => {
-    if (!costMatrixData) return [];
+    if (!costMatrixData || !Array.isArray(costMatrixData)) return [];
     const uniqueRegions = new Set<string>();
     costMatrixData.forEach((item: CostMatrixData) => uniqueRegions.add(item.region));
     return Array.from(uniqueRegions).sort();
   }, [costMatrixData]);
 
   const buildingTypes = useMemo(() => {
-    if (!costMatrixData) return [];
+    if (!costMatrixData || !Array.isArray(costMatrixData)) return [];
     const uniqueTypes = new Set<string>();
     costMatrixData.forEach((item: CostMatrixData) => uniqueTypes.add(item.buildingType));
     return Array.from(uniqueTypes).sort();
@@ -135,7 +135,7 @@ const RegionalCostComparison: React.FC = () => {
 
   // Calculate adjusted cost based on factors
   const enhancedData: EnhancedCostMatrixData[] = useMemo(() => {
-    if (!costMatrixData) return [];
+    if (!costMatrixData || !Array.isArray(costMatrixData)) return [];
     
     return costMatrixData.map((item: CostMatrixData) => {
       const adjustedBaseCost = item.baseCost * 
@@ -644,7 +644,10 @@ const RegionalCostComparison: React.FC = () => {
                       dataKey="value"
                     >
                       {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={'color' in entry ? entry.color : COLORS[index % COLORS.length]} 
+                        />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
