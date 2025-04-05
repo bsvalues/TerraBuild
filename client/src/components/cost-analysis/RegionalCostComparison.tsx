@@ -163,19 +163,19 @@ const RegionalCostComparison: React.FC = () => {
   const regionAverages = useMemo(() => {
     if (filteredData.length === 0) return [];
 
-    const regionMap = new Map<string, { total: number, count: number }>();
+    // Use a regular object instead of Map
+    const regionMap: Record<string, { total: number, count: number }> = {};
     
     filteredData.forEach(item => {
       const cost = useAdjustedCosts ? item.adjustedBaseCost : item.baseCost;
-      if (!regionMap.has(item.region)) {
-        regionMap.set(item.region, { total: 0, count: 0 });
+      if (!regionMap[item.region]) {
+        regionMap[item.region] = { total: 0, count: 0 };
       }
-      const data = regionMap.get(item.region)!;
-      data.total += cost;
-      data.count += 1;
+      regionMap[item.region].total += cost;
+      regionMap[item.region].count += 1;
     });
     
-    return Array.from(regionMap.entries()).map(([region, { total, count }]) => ({
+    return Object.entries(regionMap).map(([region, { total, count }]) => ({
       region,
       averageCost: total / count,
       count
@@ -186,23 +186,23 @@ const RegionalCostComparison: React.FC = () => {
   const buildingTypeAverages = useMemo(() => {
     if (filteredData.length === 0) return [];
 
-    const typeMap = new Map<string, { total: number, count: number, description: string }>();
+    // Use a regular object instead of Map
+    const typeMap: Record<string, { total: number, count: number, description: string }> = {};
     
     filteredData.forEach(item => {
       const cost = useAdjustedCosts ? item.adjustedBaseCost : item.baseCost;
-      if (!typeMap.has(item.buildingType)) {
-        typeMap.set(item.buildingType, { 
+      if (!typeMap[item.buildingType]) {
+        typeMap[item.buildingType] = { 
           total: 0, 
           count: 0, 
           description: item.buildingTypeDescription 
-        });
+        };
       }
-      const data = typeMap.get(item.buildingType)!;
-      data.total += cost;
-      data.count += 1;
+      typeMap[item.buildingType].total += cost;
+      typeMap[item.buildingType].count += 1;
     });
     
-    return Array.from(typeMap.entries()).map(([buildingType, { total, count, description }]) => ({
+    return Object.entries(typeMap).map(([buildingType, { total, count, description }]) => ({
       buildingType,
       description,
       averageCost: total / count,
