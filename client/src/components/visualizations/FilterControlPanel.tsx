@@ -4,6 +4,7 @@
  * A component that displays and manages active filters for visualizations,
  * allowing users to view, modify, and clear filters in a centralized interface.
  */
+import { ReactNode } from 'react';
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -103,7 +104,9 @@ export function FilterControlPanel({
   const handleCostRangeChange = (value: number[]) => {
     const range: [number, number] = [value[0], value[1]];
     setCostRangeValue(range);
-    setCostRange(range);
+    if (setCostRange) {
+      setCostRange(range);
+    }
   };
   
   // Format the cost value for display
@@ -119,10 +122,10 @@ export function FilterControlPanel({
   
   // Count active filters
   const activeFilterCount = (
-    (filters.regions.length > 0 ? 1 : 0) +
-    (filters.buildingTypes.length > 0 ? 1 : 0) +
-    (filters.counties.length > 0 ? 1 : 0) +
-    (filters.costRange !== null ? 1 : 0)
+    (filters?.regions?.length > 0 ? 1 : 0) +
+    (filters?.buildingTypes?.length > 0 ? 1 : 0) +
+    (filters?.counties?.length > 0 ? 1 : 0) +
+    (filters?.costRange !== null ? 1 : 0)
   );
   
   return (
@@ -162,21 +165,21 @@ export function FilterControlPanel({
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Regions</h3>
                   </div>
-                  {filters.regions.length > 0 && (
+                  {filters?.regions?.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 text-xs"
-                      onClick={clearRegionFilters}
+                      onClick={() => clearRegionFilters && clearRegionFilters()}
                     >
                       Clear
                     </Button>
                   )}
                 </div>
                 
-                {filters.regions.length > 0 ? (
+                {filters?.regions?.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {filters.regions.map(region => (
+                    {filters?.regions?.map(region => (
                       <Badge 
                         key={region} 
                         variant="outline"
@@ -187,7 +190,7 @@ export function FilterControlPanel({
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => removeRegionFilter(region)}
+                          onClick={() => removeRegionFilter && removeRegionFilter(region)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -207,21 +210,21 @@ export function FilterControlPanel({
                     <Building className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Building Types</h3>
                   </div>
-                  {filters.buildingTypes.length > 0 && (
+                  {filters?.buildingTypes?.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 text-xs"
-                      onClick={clearBuildingTypeFilters}
+                      onClick={() => clearBuildingTypeFilters && clearBuildingTypeFilters()}
                     >
                       Clear
                     </Button>
                   )}
                 </div>
                 
-                {filters.buildingTypes.length > 0 ? (
+                {filters?.buildingTypes?.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {filters.buildingTypes.map(buildingType => (
+                    {filters?.buildingTypes?.map(buildingType => (
                       <Badge 
                         key={buildingType} 
                         variant="outline"
@@ -232,7 +235,7 @@ export function FilterControlPanel({
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => removeBuildingTypeFilter(buildingType)}
+                          onClick={() => removeBuildingTypeFilter && removeBuildingTypeFilter(buildingType)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -252,12 +255,12 @@ export function FilterControlPanel({
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Cost Range</h3>
                   </div>
-                  {filters.costRange && (
+                  {filters?.costRange && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 text-xs"
-                      onClick={clearCostRange}
+                      onClick={() => clearCostRange && clearCostRange()}
                     >
                       Clear
                     </Button>
@@ -289,21 +292,21 @@ export function FilterControlPanel({
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Counties</h3>
                   </div>
-                  {filters.counties.length > 0 && (
+                  {filters?.counties?.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 text-xs"
-                      onClick={clearCountyFilters}
+                      onClick={() => clearCountyFilters && clearCountyFilters()}
                     >
                       Clear
                     </Button>
                   )}
                 </div>
                 
-                {filters.counties.length > 0 ? (
+                {filters?.counties?.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {filters.counties.map(county => (
+                    {filters?.counties?.map(county => (
                       <Badge 
                         key={county} 
                         variant="outline"
@@ -314,7 +317,7 @@ export function FilterControlPanel({
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => removeCountyFilter(county)}
+                          onClick={() => removeCountyFilter && removeCountyFilter(county)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -334,7 +337,7 @@ export function FilterControlPanel({
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={clearAllFilters}
+                onClick={() => clearAllFilters && clearAllFilters()}
                 disabled={activeFilterCount === 0}
               >
                 <RefreshCw className="h-3.5 w-3.5 mr-2" />
@@ -347,3 +350,6 @@ export function FilterControlPanel({
     </Card>
   );
 }
+
+// Export the component as default as well
+export default FilterControlPanel;

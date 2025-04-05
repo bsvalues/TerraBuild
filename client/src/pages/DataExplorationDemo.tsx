@@ -97,20 +97,22 @@ export default function DataExplorationDemo() {
     } = useVisualizationContext();
     
     // Filter data based on context
-    const filteredData = prepareVisualizationData().filter(item => 
-      isRegionFiltered(item.region) && 
-      isBuildingTypeFiltered(item.buildingType) &&
-      (!filters.costRange || 
-        (item.baseCost >= filters.costRange[0] && 
-         item.baseCost <= filters.costRange[1]))
-    );
+    const filteredData = prepareVisualizationData().filter(item => {
+      // Check if filters exist before applying them
+      const passesRegionFilter = !isRegionFiltered || isRegionFiltered(item.region);
+      const passesBuildingTypeFilter = !isBuildingTypeFiltered || isBuildingTypeFiltered(item.buildingType);
+      const passesCostFilter = !filters?.costRange || 
+        (item.baseCost >= filters.costRange[0] && item.baseCost <= filters.costRange[1]);
+      
+      return passesRegionFilter && passesBuildingTypeFilter && passesCostFilter;
+    });
     
     // Handle region selection from visualization
     const handleRegionSelectWithContext = (region: string) => {
       setSelectedRegion(region);
       
       // Only add region filter if none are currently applied
-      if (filters.regions.length === 0) {
+      if (!filters?.regions || filters.regions.length === 0) {
         addRegionFilter(region);
       } else {
         // Clear existing and add new
@@ -136,7 +138,9 @@ export default function DataExplorationDemo() {
           <div className="md:col-span-2">
             <FilterControlPanel />
             
-            {filters.regions.length > 0 || filters.buildingTypes.length > 0 || filters.costRange !== null ? (
+            {filters && ((filters.regions && filters.regions.length > 0) || 
+               (filters.buildingTypes && filters.buildingTypes.length > 0) || 
+               filters.costRange !== null) ? (
               <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
                 <h3 className="text-sm font-medium mb-1 text-blue-800">Active Filters</h3>
                 <p className="text-xs text-blue-700">{getFilterSummary()}</p>
