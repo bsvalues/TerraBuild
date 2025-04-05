@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,14 @@ interface FTPConnectionStatusProps {
   connectionId: number;
   connectionName: string;
   onRefresh?: () => void;
+  onStatusChange?: (isConnected: boolean) => void;
 }
 
 export function FTPConnectionStatus({ 
   connectionId, 
   connectionName,
-  onRefresh 
+  onRefresh,
+  onStatusChange
 }: FTPConnectionStatusProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -25,6 +27,12 @@ export function FTPConnectionStatus({
     queryFn: () => checkFTPConnectionStatus(connectionId),
   });
   
+  useEffect(() => {
+    if (onStatusChange && data) {
+      onStatusChange(data.status === 'connected');
+    }
+  }, [data, onStatusChange]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();

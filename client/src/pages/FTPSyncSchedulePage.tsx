@@ -57,7 +57,11 @@ const FTPSyncSchedulePage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-1 space-y-6">
-          <FTPConnectionStatus onStatusChange={handleConnectionStatusChange} />
+          <FTPConnectionStatus 
+            connectionId={connectionId} 
+            connectionName="FTP Connection" 
+            onStatusChange={handleConnectionStatusChange} 
+          />
           
           <Card>
             <CardHeader>

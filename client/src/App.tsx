@@ -28,6 +28,7 @@ import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import SharedProjectDashboardPage from "@/pages/SharedProjectDashboardPage";
 import DataConnectionsPage from "@/pages/DataConnectionsPage";
 import FTPConnectionPage from "@/pages/FTPConnectionPage";
+import FTPSyncSchedulePage from "@/pages/FTPSyncSchedulePage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
@@ -82,6 +83,7 @@ function Router() {
       <ProtectedRoute path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
       <ProtectedRoute path="/data-connections" component={DataConnectionsPage} />
       <ProtectedRoute path="/data-connections/ftp" component={FTPConnectionPage} />
+      <ProtectedRoute path="/settings/ftp-sync" component={FTPSyncSchedulePage} />
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
