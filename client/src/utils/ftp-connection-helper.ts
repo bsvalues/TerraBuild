@@ -7,19 +7,15 @@ export interface FTPConnectionStatus {
 }
 
 /**
- * Test an FTP connection using the provided credentials
+ * Test the FTP connection using environment variables
+ * 
+ * Note: This uses the server's environment variables (FTP_HOST, FTP_PORT, FTP_USERNAME, FTP_PASSWORD)
+ * rather than sending credentials from the client.
  */
-export async function testFTPConnection(connectionData: {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  secure: boolean;
-}): Promise<FTPConnectionStatus> {
+export async function testFTPConnection(): Promise<FTPConnectionStatus> {
   try {
-    const result = await apiRequest('/api/ftp/test-connection', {
-      method: 'POST',
-      data: connectionData
+    const result = await apiRequest('/api/ftp/test', {
+      method: 'GET'
     });
     
     return {
@@ -42,6 +38,12 @@ export async function testFTPConnection(connectionData: {
  */
 export async function checkFTPConnectionStatus(connectionId: number): Promise<FTPConnectionStatus> {
   try {
+    // For the default system connection (id=1), use the test endpoint
+    if (connectionId === 1) {
+      return testFTPConnection();
+    }
+    
+    // For other saved connections, use the connections endpoint
     const result = await apiRequest(`/api/ftp/connections/${connectionId}/status`, {
       method: 'GET'
     });
@@ -68,7 +70,7 @@ export async function listFTPDirectory(connectionId: number, path: string): Prom
   try {
     const result = await apiRequest(`/api/ftp/connections/${connectionId}/list`, {
       method: 'POST',
-      data: { path }
+      body: JSON.stringify({ path })
     });
     
     return result.files || [];
