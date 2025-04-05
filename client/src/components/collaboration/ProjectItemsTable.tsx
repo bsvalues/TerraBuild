@@ -56,17 +56,22 @@ import {
 import { toast } from '@/hooks/use-toast';
 
 interface ProjectItemsTableProps {
+  // Required props
   projectId: number;
-  items: any[]; // Project items array
-  isLoading: boolean;
-  currentUserRole: string;
+  // Optional props with defaults
+  items?: any[]; // Project items array
+  isLoading?: boolean;
+  currentUserRole?: string;
+  // Direct prop for permissions
+  canManageItems?: boolean;
 }
 
 export default function ProjectItemsTable({
   projectId,
-  items,
-  isLoading,
-  currentUserRole,
+  items = [],
+  isLoading = false,
+  currentUserRole = 'viewer',
+  canManageItems: propCanManageItems,
 }: ProjectItemsTableProps) {
   const {
     removeProjectItem,
@@ -78,8 +83,10 @@ export default function ProjectItemsTable({
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Check if current user can manage items
-  const canManageItems = ['admin', 'owner', 'editor'].includes(currentUserRole);
+  // Check if current user can manage items - use provided prop or calculate from role
+  const canManageItems = propCanManageItems !== undefined 
+    ? propCanManageItems 
+    : ['admin', 'owner', 'editor'].includes(currentUserRole);
   
   // Remove an item
   const handleRemoveItem = (itemId: number, itemType: string, itemName: string) => {

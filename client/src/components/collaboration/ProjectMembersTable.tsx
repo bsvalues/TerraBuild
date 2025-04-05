@@ -57,19 +57,26 @@ import {
 import { toast } from '@/hooks/use-toast';
 
 interface ProjectMembersTableProps {
+  // Required props
   projectId: number;
-  members: any[]; // Project Member array
-  isLoading: boolean;
-  currentUserId: number;
-  currentUserRole: string;
+  // Optional props with defaults
+  members?: any[]; // Project Member array
+  isLoading?: boolean;
+  currentUserId?: number;
+  currentUserRole?: string;
+  // Props for direct usage in SharedProjectDashboardPage
+  isAdmin?: boolean;
+  isOwner?: boolean;
 }
 
 export default function ProjectMembersTable({
   projectId,
-  members,
-  isLoading,
-  currentUserId,
-  currentUserRole,
+  members = [],
+  isLoading = false,
+  currentUserId = 0,
+  currentUserRole = 'viewer',
+  isAdmin = false,
+  isOwner = false,
 }: ProjectMembersTableProps) {
   const {
     changeMemberRole,
