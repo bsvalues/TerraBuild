@@ -7,6 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import FTPFilePreview from "./FTPFilePreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,9 @@ import {
   AlertCircle,
   CheckCircle,
   Ban,
-  Loader2
+  Loader2,
+  FileText,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -74,6 +77,7 @@ const FTPManagement: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [createDirOpen, setCreateDirOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileListItem | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileListItem | null>(null);
 
   // Test FTP connection
   const testConnection = async () => {
@@ -374,6 +378,12 @@ const FTPManagement: React.FC = () => {
     }
   };
   
+  // Open file preview
+  const previewFileContent = (file: FileListItem) => {
+    if (file.type !== 'file') return;
+    setPreviewFile(file);
+  };
+  
   // Handle file selection for upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -656,23 +666,43 @@ const FTPManagement: React.FC = () => {
                       </div>
                       <div className="col-span-1 flex justify-end items-center space-x-1">
                         {file.type === 'file' && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  onClick={() => downloadFile(file)}
-                                  className="h-8 w-8"
-                                >
-                                  <Download className="h-4 w-4 text-primary" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                Download File
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => previewFileContent(file)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Preview File
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => downloadFile(file)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Download className="h-4 w-4 text-primary" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Download File
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </>
                         )}
                         <TooltipProvider>
                           <Tooltip>
@@ -742,6 +772,18 @@ const FTPManagement: React.FC = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          
+          {/* File Preview Dialog */}
+          {previewFile && (
+            <FTPFilePreview
+              filePath={`${currentPath.endsWith('/') ? currentPath : currentPath + '/'}${previewFile.name}`}
+              fileName={previewFile.name}
+              fileType={previewFile.type}
+              isOpen={Boolean(previewFile)}
+              onClose={() => setPreviewFile(null)}
+              onDownload={() => downloadFile(previewFile)}
+            />
+          )}
         </CardContent>
         
         <CardFooter className="bg-muted/30 flex items-center justify-between px-6 py-3">

@@ -445,4 +445,165 @@ router.get('/ftp/download', async (req, res) => {
   }
 });
 
+/**
+ * Preview a file from FTP server
+ * GET /ftp/preview?path=path/to/file.txt
+ * Returns file content for preview without forcing download
+ */
+router.get('/ftp/preview', async (req, res) => {
+  try {
+    const filePath = req.query.path as string;
+    
+    if (!filePath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameter: path'
+      });
+    }
+    
+    // Log the preview attempt
+    await storage.createActivity({
+      action: `FTP file preview initiated: ${filePath}`,
+      icon: 'file-search',
+      iconColor: 'blue'
+    });
+    
+    // Store preview attempt in connection history
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'pending',
+      message: `FTP file preview initiated: ${filePath}`,
+      details: {
+        filePath,
+        host: FTP_HOST,
+        port: FTP_PORT
+      }
+    });
+    
+    // Download the file from FTP
+    const result = await ftpService.downloadFileToTemp(filePath);
+    
+    if (!result.success) {
+      // Record failed preview in history
+      await storage.createConnectionHistory({
+        connectionType: 'ftp',
+        status: 'failed',
+        message: `Failed to preview file from FTP: ${result.message}`,
+        details: {
+          filePath,
+          error: result.message
+        }
+      });
+      
+      return res.status(500).json({
+        success: false,
+        message: result.message
+      });
+    }
+    
+    // File downloaded successfully
+    const { localPath, fileName } = result;
+    
+    if (!localPath || !fileName) {
+      return res.status(500).json({
+        success: false,
+        message: 'Preview download succeeded but local file path is missing'
+      });
+    }
+    
+    // Log the successful preview download
+    await storage.createActivity({
+      action: `Successfully retrieved ${fileName} from FTP server for preview`,
+      icon: 'file-search',
+      iconColor: 'green'
+    });
+    
+    // Store successful preview in connection history
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'success',
+      message: `Successfully retrieved ${fileName} from FTP server for preview`,
+      details: {
+        filePath,
+        fileName,
+        fileSize: result.fileSize || 0,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    // Determine content type based on file extension
+    const extension = path.extname(fileName).toLowerCase();
+    let contentType = 'application/octet-stream';
+    
+    // Map common extensions to content types
+    const contentTypeMap: Record<string, string> = {
+      '.txt': 'text/plain',
+      '.csv': 'text/csv',
+      '.json': 'application/json',
+      '.xml': 'application/xml',
+      '.html': 'text/html',
+      '.htm': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.ts': 'application/typescript',
+      '.md': 'text/markdown',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.webp': 'image/webp',
+      '.pdf': 'application/pdf',
+    };
+    
+    if (extension in contentTypeMap) {
+      contentType = contentTypeMap[extension];
+    }
+    
+    // Set response headers for inline viewing rather than download
+    res.setHeader('Content-Type', contentType);
+    
+    // Send the file
+    const fileStream = fs.createReadStream(localPath);
+    fileStream.pipe(res);
+    
+    // Clean up the temporary file after sending
+    fileStream.on('end', () => {
+      try {
+        fs.unlinkSync(localPath);
+        console.log(`Temporary file cleaned up: ${localPath}`);
+      } catch (cleanupErr) {
+        console.error(`Error cleaning up temporary file: ${cleanupErr}`);
+      }
+    });
+    
+    fileStream.on('error', (err) => {
+      console.error(`Error streaming file: ${err}`);
+      // If not already sent headers
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: `Error streaming file: ${err.message}`
+        });
+      }
+    });
+  } catch (error: any) {
+    console.error('Error previewing FTP file:', error);
+    
+    await storage.createConnectionHistory({
+      connectionType: 'ftp',
+      status: 'failed',
+      message: `Error previewing FTP file: ${error.message}`,
+      details: {
+        error: error.message
+      }
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: `Error previewing FTP file: ${error.message}`
+    });
+  }
+});
+
 export default router;
