@@ -62,6 +62,7 @@ export const activities = pgTable("activities", {
   action: text("action").notNull(),
   icon: text("icon").notNull(),
   iconColor: text("icon_color").notNull().default("primary"),
+  details: json("details").$type<any>(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
@@ -69,6 +70,7 @@ export const insertActivitySchema = createInsertSchema(activities).pick({
   action: true,
   icon: true,
   iconColor: true,
+  details: true,
 });
 
 // Repository status

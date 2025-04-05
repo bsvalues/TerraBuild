@@ -100,6 +100,27 @@ const DataConnectionsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
               <FTPConnectionStatus />
+              <div className="mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>FTP File Manager</CardTitle>
+                    <CardDescription>
+                      Access the full-featured FTP file manager
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Use our advanced FTP connection manager to browse, upload, and download
+                      files from the remote server.
+                    </p>
+                    <a href="/data-connections/ftp" className="inline-block w-full">
+                      <button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        Open FTP Connection Manager
+                      </button>
+                    </a>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
             <div className="md:col-span-2">
               <FTPManagement />

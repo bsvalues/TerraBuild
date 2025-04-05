@@ -6,7 +6,84 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { uploadContent } from './ftpService';
+import { promises as fsPromises } from 'fs';
+import FTPClient from './ftpService';
+import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Upload content to FTP server
+ * 
+ * @param content Content to upload
+ * @param remotePath Remote path on FTP server
+ * @returns Promise that resolves with upload results
+ */
+async function uploadContent(
+  content: string,
+  remotePath: string
+): Promise<{success: boolean; message: string}> {
+  // Create a temporary file
+  const tempDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(tempDir)) {
+    await fsPromises.mkdir(tempDir, { recursive: true });
+  }
+  
+  const tempFilePath = path.join(tempDir, `temp_${uuidv4()}.csv`);
+  
+  try {
+    // Write content to temporary file
+    await fsPromises.writeFile(tempFilePath, content, 'utf8');
+    
+    // Upload to FTP server
+    const client = new FTPClient();
+    
+    // Get FTP credentials from environment
+    const host = process.env.FTP_HOST;
+    const port = process.env.FTP_PORT ? parseInt(process.env.FTP_PORT, 10) : 21;
+    const username = process.env.FTP_USERNAME;
+    const password = process.env.FTP_PASSWORD;
+    
+    if (!host || !username || !password) {
+      return {
+        success: false,
+        message: 'FTP credentials not configured properly'
+      };
+    }
+    
+    // Connect to FTP server
+    await client.connect({
+      host,
+      port,
+      user: username,
+      password,
+      secure: false
+    });
+    
+    // Upload the file
+    await client.upload(tempFilePath, remotePath);
+    
+    // Close the connection
+    await client.close();
+    
+    return {
+      success: true,
+      message: 'Content uploaded successfully'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to upload content: ${error.message}`
+    };
+  } finally {
+    // Clean up temporary file
+    try {
+      if (fs.existsSync(tempFilePath)) {
+        await fsPromises.unlink(tempFilePath);
+      }
+    } catch (error) {
+      console.error('Failed to delete temporary file:', error);
+    }
+  }
+}
 
 /**
  * Convert an array of objects to CSV format

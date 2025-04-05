@@ -36,6 +36,7 @@ import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
 import exportRoutes from "./routes/exportRoutes";
 import { initFTPSyncRoutes } from "./routes/ftpSyncRoutes";
+import ftpRoutes from "./routes/ftpRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1920,6 +1921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use('/api/data-connections', dataConnectorRoutes);
     app.use('/api/data-connections', connectionHistoryRoutes);
     app.use('/api/data-connectors/ftp-sync', initFTPSyncRoutes(storage));
+    app.use('/api/ftp', ftpRoutes);
     
     // Log the new data connector APIs
     await storage.createActivity({
