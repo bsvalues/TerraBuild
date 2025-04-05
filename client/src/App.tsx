@@ -25,6 +25,7 @@ import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
+import SharedProjectDashboardPage from "@/pages/SharedProjectDashboardPage";
 import DataConnectionsPage from "@/pages/DataConnectionsPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -82,6 +83,7 @@ function Router() {
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
+      <ProtectedRoute path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

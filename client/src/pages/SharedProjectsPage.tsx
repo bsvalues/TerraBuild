@@ -42,6 +42,7 @@ import {
   GlobeIcon,
   ClockIcon,
   Users,
+  BarChart3,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -244,11 +245,17 @@ const SharedProjectsPage: React.FC = () => {
                 </div>
               </CardContent>
               
-              <CardFooter className="pt-0">
-                <Link to={`/shared-projects/${project.id}`}>
+              <CardFooter className="pt-0 flex gap-2">
+                <Link to={`/shared-projects/${project.id}`} className="flex-1">
                   <Button variant="default" className="w-full">
                     <EyeIcon className="h-4 w-4 mr-2" />
                     View Project
+                  </Button>
+                </Link>
+                <Link to={`/shared-projects/${project.id}/dashboard`} className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Dashboard
                   </Button>
                 </Link>
               </CardFooter>

@@ -63,6 +63,7 @@ import {
   Calculator,
   BarChart,
   Table,
+  BarChart3,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -356,35 +357,45 @@ const ProjectDetailsPage: React.FC = () => {
             </div>
           </div>
           
-          {isOwner && (
-            <div className="mt-4 md:mt-0 flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setLocation(`/shared-projects/${currentProject.id}/edit`)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={handleDeleteProject}
-                    className="text-destructive focus:text-destructive"
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete Project'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+          <div className="mt-4 md:mt-0 flex space-x-2">
+            <Button
+              variant="default"
+              onClick={() => setLocation(`/shared-projects/${currentProject.id}/dashboard`)}
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Dashboard
+            </Button>
+
+            {isOwner && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation(`/shared-projects/${currentProject.id}/edit`)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={handleDeleteProject}
+                      className="text-destructive focus:text-destructive"
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isDeleting ? 'Deleting...' : 'Delete Project'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-2">
