@@ -411,7 +411,7 @@ export const connectionHistory = pgTable("connection_history", {
   connectionType: text("connection_type").notNull(), // ftp, arcgis, sqlserver, etc.
   status: text("status").notNull(), // success, failed
   message: text("message").notNull(),
-  details: json("details"), // Store any additional details like host, port, etc.
+  details: json("details").notNull().default({}), // Store any additional details like host, port, etc.
   userId: integer("user_id"), // Optional - which user triggered the connection test
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
