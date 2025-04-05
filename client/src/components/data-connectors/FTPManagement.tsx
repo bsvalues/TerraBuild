@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -8,6 +8,8 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import FTPFilePreview from "./FTPFilePreview";
+import FTPBreadcrumb from "./FTPBreadcrumb";
+import FileTypeIcon from "./FileTypeIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +33,11 @@ import {
   Ban,
   Loader2,
   FileText,
-  Eye
+  Eye,
+  ArrowUpDown,
+  ArrowDownUp,
+  SortAsc,
+  SortDesc
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -78,6 +84,8 @@ const FTPManagement: React.FC = () => {
   const [createDirOpen, setCreateDirOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileListItem | null>(null);
   const [previewFile, setPreviewFile] = useState<FileListItem | null>(null);
+  const [sortField, setSortField] = useState<'name' | 'size' | 'lastModified'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Test FTP connection
   const testConnection = async () => {
@@ -425,6 +433,48 @@ const FTPManagement: React.FC = () => {
     }
   };
   
+  // Toggle sort field or direction
+  const toggleSort = (field: 'name' | 'size' | 'lastModified') => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new field and reset direction to ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  // Get sorted files
+  const sortedFiles = useMemo(() => {
+    if (!files.length) return [];
+    
+    return [...files].sort((a, b) => {
+      // Always put directories first
+      if (a.type !== b.type) {
+        return a.type === 'directory' ? -1 : 1;
+      }
+      
+      // Then sort by the specified field
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      
+      switch (sortField) {
+        case 'name':
+          return a.name.localeCompare(b.name) * direction;
+        case 'size':
+          const aSize = a.size || 0;
+          const bSize = b.size || 0;
+          return (aSize - bSize) * direction;
+        case 'lastModified':
+          const aDate = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+          const bDate = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+          return (aDate - bDate) * direction;
+        default:
+          return 0;
+      }
+    });
+  }, [files, sortField, sortDirection]);
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -478,8 +528,11 @@ const FTPManagement: React.FC = () => {
               <ArrowUp className="h-4 w-4 mr-1" /> Up
             </Button>
             
-            <div className="bg-muted px-3 py-2 rounded-md flex-1 overflow-x-auto whitespace-nowrap text-sm">
-              {currentPath || '/'}
+            <div className="flex-1">
+              <FTPBreadcrumb 
+                path={currentPath || '/'} 
+                onNavigate={(path) => loadFiles(path)} 
+              />
             </div>
             
             <Dialog open={createDirOpen} onOpenChange={setCreateDirOpen}>
@@ -614,9 +667,39 @@ const FTPManagement: React.FC = () => {
           <div className="border rounded-md">
             <div className="grid grid-cols-12 gap-2 p-2 bg-muted font-medium text-sm border-b">
               <div className="col-span-1"></div>
-              <div className="col-span-5">Name</div>
-              <div className="col-span-2">Size</div>
-              <div className="col-span-3">Last Modified</div>
+              <div 
+                className="col-span-5 flex items-center cursor-pointer" 
+                onClick={() => toggleSort('name')}
+              >
+                <span>Name</span>
+                {sortField === 'name' && (
+                  <span className="ml-1">
+                    {sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />}
+                  </span>
+                )}
+              </div>
+              <div 
+                className="col-span-2 flex items-center cursor-pointer" 
+                onClick={() => toggleSort('size')}
+              >
+                <span>Size</span>
+                {sortField === 'size' && (
+                  <span className="ml-1">
+                    {sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />}
+                  </span>
+                )}
+              </div>
+              <div 
+                className="col-span-3 flex items-center cursor-pointer" 
+                onClick={() => toggleSort('lastModified')}
+              >
+                <span>Last Modified</span>
+                {sortField === 'lastModified' && (
+                  <span className="ml-1">
+                    {sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />}
+                  </span>
+                )}
+              </div>
               <div className="col-span-1 text-right">Action</div>
             </div>
             
@@ -632,14 +715,14 @@ const FTPManagement: React.FC = () => {
                 </div>
               ) : (
                 <div>
-                  {files.map((file, index) => (
+                  {sortedFiles.map((file, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 p-2 hover:bg-muted/50 border-b last:border-b-0">
                       <div className="col-span-1 flex items-center">
-                        {file.type === 'directory' ? (
-                          <Folder className="h-5 w-5 text-primary" />
-                        ) : (
-                          <FileIcon className="h-5 w-5 text-muted-foreground" />
-                        )}
+                        <FileTypeIcon 
+                          fileName={file.name} 
+                          type={file.type} 
+                          className="h-5 w-5 text-primary" 
+                        />
                       </div>
                       <div className="col-span-5 flex items-center truncate">
                         {file.type === 'directory' ? (
