@@ -32,6 +32,7 @@ import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
+import exportRoutes from "./routes/exportRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1910,6 +1911,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     registerCommentRoutes(app);
     registerSharedLinksRoutes(app, storage);
     registerProjectActivitiesRoutes(app, storage);
+    
+    // Register export and FTP routes
+    app.use('/api/export', exportRoutes);
     
     console.log('MCP framework initialized successfully');
     
