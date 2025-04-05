@@ -6,7 +6,24 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 
+// Helper function for safe activity details formatting
+// The details field in activities table is defined as a json type
+// This helper ensures we're passing a proper JSON object, not a string
+const formatActivityDetails = (details: any): Record<string, any> => {
+  if (typeof details === 'string') {
+    // Handle string details by making it a message object
+    return { message: details };
+  } else if (details && typeof details === 'object') {
+    // Return object for storage
+    return details;
+  }
+  return { data: String(details) };
+};
+
 const router = Router();
+
+// Default connection ID for the system
+const DEFAULT_FTP_CONNECTION_ID = 1;
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -67,7 +84,7 @@ router.get('/status', async (req: Request, res: Response) => {
       action: 'FTP Connection Status Checked',
       icon: 'check-circle',
       iconColor: 'green',
-      details: { host, port, status: 'success' }
+      details: formatActivityDetails({ host, port, status: 'success' })
     });
     
     await client.close();
@@ -84,7 +101,7 @@ router.get('/status', async (req: Request, res: Response) => {
       action: 'FTP Connection Status Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: { error: error.message }
+      details: formatActivityDetails({ error: error.message })
     });
     
     return res.status(500).json({
@@ -125,7 +142,7 @@ router.get('/list', async (req: Request, res: Response) => {
       action: 'FTP Directory Listed',
       icon: 'folder-open',
       iconColor: 'blue',
-      details: { path: remotePath, fileCount: files.length }
+      details: formatActivityDetails({ path: remotePath, fileCount: files.length })
     });
     
     await client.close();
@@ -143,7 +160,7 @@ router.get('/list', async (req: Request, res: Response) => {
       action: 'FTP Directory List Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: { path: req.query.path, error: error.message }
+      details: formatActivityDetails({ path: req.query.path, error: error.message })
     });
     
     return res.status(500).json({
@@ -199,11 +216,11 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       action: 'File Uploaded to FTP',
       icon: 'upload',
       iconColor: 'green',
-      details: { 
+      details: formatActivityDetails({ 
         path: remotePath, 
         filename: uploadedFile.originalname,
         size: uploadedFile.size
-      }
+      })
     });
     
     await client.close();
@@ -234,11 +251,11 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       action: 'FTP File Upload Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: { 
+      details: formatActivityDetails({ 
         path: req.body.path, 
         filename: req.file?.originalname,
         error: error.message
-      }
+      })
     });
     
     return res.status(500).json({
@@ -301,7 +318,7 @@ router.get('/download', async (req: Request, res: Response) => {
       action: 'File Downloaded from FTP',
       icon: 'download',
       iconColor: 'blue',
-      details: { path: remotePath, filename }
+      details: formatActivityDetails({ path: remotePath, filename })
     });
     
     await client.close();
@@ -330,11 +347,11 @@ router.get('/download', async (req: Request, res: Response) => {
       action: 'FTP File Download Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: { 
+      details: formatActivityDetails({ 
         path: req.query.path, 
         filename: req.query.filename,
         error: error.message
-      }
+      })
     });
     
     return res.status(500).json({
@@ -384,7 +401,7 @@ router.post('/delete', async (req: Request, res: Response) => {
       action: 'File Deleted from FTP',
       icon: 'trash',
       iconColor: 'red',
-      details: { path: remotePath, filename }
+      details: formatActivityDetails({ path: remotePath, filename })
     });
     
     await client.close();
@@ -401,16 +418,139 @@ router.post('/delete', async (req: Request, res: Response) => {
       action: 'FTP File Delete Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: { 
+      details: formatActivityDetails({ 
         path: req.body.path, 
         filename: req.body.filename,
         error: error.message
-      }
+      })
     });
     
     return res.status(500).json({
       success: false,
       message: `Failed to delete file: ${error.message}`
+    });
+  }
+});
+
+// FTP connection details endpoint (for frontend)
+router.get('/details', async (req: Request, res: Response) => {
+  try {
+    const validation = validateFTPCredentials();
+    
+    // Return basic connection info with the default connection ID
+    return res.status(200).json({
+      id: DEFAULT_FTP_CONNECTION_ID,
+      isConfigured: validation.valid,
+      host: validation.valid ? validation.credentials!.host : null,
+      port: validation.valid ? validation.credentials!.port : null,
+      username: validation.valid ? '********' : null,
+    });
+  } catch (error: any) {
+    console.error('FTP Details Error:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: `Failed to retrieve FTP details: ${error.message}`
+    });
+  }
+});
+
+// FTP environment information endpoint
+router.get('/environment', async (req: Request, res: Response) => {
+  try {
+    const timestamp = new Date().toISOString();
+    
+    // Check environment variables and return their status (set or not)
+    // but never return the actual values for security reasons
+    return res.status(200).json({
+      FTP_HOST: { 
+        set: !!process.env.FTP_HOST, 
+        value: process.env.FTP_HOST ? process.env.FTP_HOST : ''
+      },
+      FTP_USERNAME: { 
+        set: !!process.env.FTP_USERNAME, 
+        value: ''  // Never return the actual username
+      },
+      FTP_PASSWORD: { 
+        set: !!process.env.FTP_PASSWORD, 
+        value: ''  // Never return the actual password
+      },
+      FTP_PORT: { 
+        set: !!process.env.FTP_PORT, 
+        value: process.env.FTP_PORT || '21'
+      },
+      timestamp
+    });
+  } catch (error: any) {
+    console.error('FTP Environment Error:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: `Failed to retrieve FTP environment info: ${error.message}`
+    });
+  }
+});
+
+// FTP connection test endpoint
+router.get('/test', async (req: Request, res: Response) => {
+  try {
+    const validation = validateFTPCredentials();
+    const timestamp = new Date().toISOString();
+    
+    if (!validation.valid) {
+      return res.status(200).json({
+        success: false,
+        message: 'FTP connection not configured',
+        details: validation.message,
+        timestamp
+      });
+    }
+
+    const { host, port, username, password } = validation.credentials!;
+    const client = new FTPClient();
+    
+    // Try to connect to test credentials
+    await client.connect({
+      host,
+      port,
+      user: username,
+      password,
+      secure: false
+    });
+    
+    // Log the activity
+    await storage.createActivity({
+      action: 'FTP Connection Test Successful',
+      icon: 'check-circle',
+      iconColor: 'green',
+      details: formatActivityDetails({ message: `Connected to ${host}:${port}` })
+    });
+    
+    // Close the connection
+    await client.close();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'FTP connection successful',
+      details: `Successfully connected to ${host}:${port}`,
+      timestamp
+    });
+  } catch (error: any) {
+    console.error('FTP Test Error:', error);
+    
+    // Log the failed activity
+    await storage.createActivity({
+      action: 'FTP Connection Test Failed',
+      icon: 'x-circle',
+      iconColor: 'red',
+      details: formatActivityDetails({ error: error.message })
+    });
+    
+    return res.status(200).json({
+      success: false,
+      message: 'FTP connection failed',
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
