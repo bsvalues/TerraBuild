@@ -27,12 +27,12 @@ export async function testFTPConnection(connectionData: {
       message: result.message || 'Connection successful',
       details: result.details
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('FTP connection test error:', error);
     return {
       status: 'error',
-      message: error.response?.data?.message || 'Connection failed',
-      details: error.response?.data
+      message: error?.response?.data?.message || 'Connection failed',
+      details: error?.response?.data || { error: 'Unknown error' }
     };
   }
 }
@@ -51,12 +51,12 @@ export async function checkFTPConnectionStatus(connectionId: number): Promise<FT
       message: result.message || 'Connection status checked',
       details: result.details
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('FTP connection status check error:', error);
     return {
       status: 'error',
-      message: error.response?.data?.message || 'Status check failed',
-      details: error.response?.data
+      message: error?.response?.data?.message || 'Status check failed',
+      details: error?.response?.data || { error: 'Unknown error' }
     };
   }
 }
@@ -72,9 +72,9 @@ export async function listFTPDirectory(connectionId: number, path: string): Prom
     });
     
     return result.files || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error('FTP directory listing error:', error);
-    throw error;
+    throw new Error(error?.response?.data?.message || 'Failed to list directory');
   }
 }
 
@@ -88,8 +88,8 @@ export async function getFTPConnections(): Promise<any[]> {
     });
     
     return result || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting FTP connections:', error);
-    throw error;
+    throw new Error(error?.response?.data?.message || 'Failed to get FTP connections');
   }
 }
