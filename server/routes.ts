@@ -33,6 +33,7 @@ import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
 import exportRoutes from "./routes/exportRoutes";
+import dataConnectorRoutes from "./routes/dataConnectorRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1912,8 +1913,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     registerSharedLinksRoutes(app, storage);
     registerProjectActivitiesRoutes(app, storage);
     
-    // Register export and FTP routes
+    // Register export and data connector routes
     app.use('/api/export', exportRoutes);
+    app.use('/api/data-connector', dataConnectorRoutes);
+    
+    // Log the new data connector APIs
+    await storage.createActivity({
+      action: "Enhanced data connector APIs added (FTP, ArcGIS, SQL Server)",
+      icon: "plug",
+      iconColor: "success"
+    });
     
     console.log('MCP framework initialized successfully');
     
