@@ -38,6 +38,24 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
   
+  // Sync Schedules
+  getAllSyncSchedules(): Promise<SyncSchedule[]>;
+  getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]>;
+  getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined>;
+  getEnabledSyncSchedules(): Promise<SyncSchedule[]>;
+  getSyncSchedule(id: number): Promise<SyncSchedule | undefined>;
+  createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule>;
+  updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined>;
+  deleteSyncSchedule(id: number): Promise<void>;
+  
+  // Sync History
+  getSyncHistory(limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
+  getSyncHistoryById(id: number): Promise<SyncHistory | undefined>;
+  createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory>;
+  updateSyncHistory(id: number, history: Partial<InsertSyncHistory>): Promise<SyncHistory | undefined>;
+  
   // Connection History
   createConnectionHistory(connectionHistory: InsertConnectionHistory): Promise<ConnectionHistory>;
   getConnectionHistory(options?: { connectionType?: string, limit?: number }): Promise<ConnectionHistory[]>;
@@ -254,23 +272,7 @@ export interface IStorage {
   getProjectActivity(id: number): Promise<ProjectActivity | undefined>;
   createProjectActivity(activity: InsertProjectActivity): Promise<ProjectActivity>;
   
-  // FTP Sync Schedules
-  getAllSyncSchedules(): Promise<SyncSchedule[]>;
-  getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]>;
-  getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined>;
-  getEnabledSyncSchedules(): Promise<SyncSchedule[]>;
-  getSyncSchedule(id: number): Promise<SyncSchedule | undefined>;
-  createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule>;
-  updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined>;
-  deleteSyncSchedule(id: number): Promise<void>;
-  
-  // FTP Sync History
-  getSyncHistory(limit?: number, offset?: number): Promise<SyncHistory[]>;
-  getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
-  getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<SyncHistory[]>;
-  getSyncHistoryById(id: number): Promise<SyncHistory | undefined>;
-  createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory>;
-  updateSyncHistory(id: number, history: Partial<InsertSyncHistory>): Promise<SyncHistory | undefined>;
+
   
   // FTP Connections (extended from existing connections)
   getFTPConnection(id: number): Promise<any | undefined>;

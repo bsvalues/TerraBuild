@@ -31,6 +31,14 @@ export class FTPSyncService {
     }
     return this.storage.getAllSyncSchedules();
   }
+  
+  /**
+   * Get all enabled sync schedules
+   */
+  async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
+    const allSchedules = await this.storage.getAllSyncSchedules();
+    return allSchedules.filter(schedule => schedule.enabled === true);
+  }
 
   /**
    * Get a specific sync schedule by name
@@ -229,7 +237,7 @@ export class FTPSyncService {
    */
   async runScheduledJobs(): Promise<number> {
     const now = new Date();
-    const schedules = await this.storage.getEnabledSyncSchedules();
+    const schedules = await this.getEnabledSyncSchedules();
     let runCount = 0;
     
     // Find schedules that are due to run

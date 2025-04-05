@@ -35,6 +35,134 @@ import {
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
+  // Sync Schedules
+  async getAllSyncSchedules(): Promise<SyncSchedule[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncSchedule(id: number): Promise<SyncSchedule | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule> {
+    // Stub implementation - replace with actual DB implementation
+    return {
+      id: 0,
+      name: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      connectionId: 0,
+      source: {},
+      destination: {},
+      frequency: '',
+      time: null,
+      dayOfWeek: null,
+      dayOfMonth: null,
+      options: {},
+      enabled: false,
+      status: '',
+      lastRun: null,
+      nextRun: null
+    };
+  }
+
+  async updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async deleteSyncSchedule(id: number): Promise<void> {
+    // Stub implementation - replace with actual DB implementation
+  }
+
+  // Sync History
+  async getAllSyncHistory(): Promise<SyncHistory[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncHistoryBySchedule(scheduleId: number): Promise<SyncHistory[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncHistoryByConnection(connectionId: number): Promise<SyncHistory[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async getSyncHistory(id: number): Promise<SyncHistory | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory> {
+    // Stub implementation - replace with actual DB implementation
+    return {
+      id: 0,
+      connectionId: 0,
+      status: '',
+      details: {},
+      scheduleId: 0,
+      scheduleName: '',
+      startTime: new Date(),
+      endTime: null,
+      filesTransferred: 0,
+      totalBytes: 0,
+      errors: []
+    };
+  }
+
+  async updateSyncHistory(id: number, history: Partial<SyncHistory>): Promise<SyncHistory | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async deleteSyncHistory(id: number): Promise<void> {
+    // Stub implementation - replace with actual DB implementation
+  }
+
+  // FTP Connections
+  async getFTPConnection(id: number): Promise<any | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async getAllFTPConnections(): Promise<any[]> {
+    // Stub implementation - replace with actual DB implementation
+    return [];
+  }
+
+  async createFTPConnection(connection: any): Promise<any> {
+    // Stub implementation - replace with actual DB implementation
+    return { id: 0 };
+  }
+
+  async updateFTPConnection(id: number, connection: Partial<any>): Promise<any | undefined> {
+    // Stub implementation - replace with actual DB implementation
+    return undefined;
+  }
+
+  async deleteFTPConnection(id: number): Promise<void> {
+    // Stub implementation - replace with actual DB implementation
+  }
   // Users
   async getUser(id: number): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id));

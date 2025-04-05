@@ -1,13 +1,10 @@
-// Type definitions to extend Express Request
-
+import { IStorage } from '../storage';
 import { User } from '@shared/schema';
 
-declare global {
-  namespace Express {
-    export interface Request {
-      user?: User;
-      project?: any;
-      projectMember?: any;
-    }
+// Extend Express Request interface to add storage property
+declare namespace Express {
+  export interface Request {
+    storage: IStorage;
+    user?: User;
   }
 }
