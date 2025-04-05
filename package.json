@@ -57,6 +57,7 @@
     "aframe-react": "^4.4.0",
     "ajv": "^8.17.1",
     "ar.js": "^2.2.2",
+    "axios": "^1.8.4",
     "basic-ftp": "^5.0.5",
     "chai": "^5.2.0",
     "class-variance-authority": "^0.7.0",

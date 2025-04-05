@@ -25,6 +25,7 @@ import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
+import DataConnectionsPage from "@/pages/DataConnectionsPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
@@ -77,6 +78,7 @@ function Router() {
       <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
       <ProtectedRoute path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
+      <ProtectedRoute path="/data-connections" component={DataConnectionsPage} />
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />

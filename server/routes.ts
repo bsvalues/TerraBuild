@@ -28,12 +28,12 @@ import aiRoutes from "./routes/aiRoutes";
 import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
 import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
+import dataConnectorRoutes from "./routes/dataConnectorRoutes";
 import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
 import exportRoutes from "./routes/exportRoutes";
-import dataConnectorRoutes from "./routes/dataConnectorRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1915,7 +1915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Register export and data connector routes
     app.use('/api/export', exportRoutes);
-    app.use('/api/data-connector', dataConnectorRoutes);
+    app.use('/api/data-connections', dataConnectorRoutes);
     
     // Log the new data connector APIs
     await storage.createActivity({
