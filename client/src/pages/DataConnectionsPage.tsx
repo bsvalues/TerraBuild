@@ -2,9 +2,10 @@ import React from 'react';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import DataConnectionTester from '@/components/data-connectors/DataConnectionTester';
 import ConnectionHistory from '@/components/data-connectors/ConnectionHistory';
+import FTPManagement from '@/components/data-connectors/FTPManagement';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Server, Database, FolderSync } from 'lucide-react';
+import { Shield, Server, Database, FolderSync, FileType } from 'lucide-react';
 
 const DataConnectionsPage = () => {
   useDocumentTitle('Data Connections - BCBS');
@@ -19,7 +20,7 @@ const DataConnectionsPage = () => {
       </div>
 
       <Tabs defaultValue="test">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="test">
             <Server className="h-4 w-4 mr-2" />
             Connection Test
@@ -27,6 +28,10 @@ const DataConnectionsPage = () => {
           <TabsTrigger value="config">
             <Shield className="h-4 w-4 mr-2" />
             Connection Settings
+          </TabsTrigger>
+          <TabsTrigger value="ftp">
+            <FileType className="h-4 w-4 mr-2" />
+            FTP Management
           </TabsTrigger>
           <TabsTrigger value="history">
             <Database className="h-4 w-4 mr-2" />
@@ -88,6 +93,10 @@ const DataConnectionsPage = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="ftp" className="space-y-6 mt-6">
+          <FTPManagement />
         </TabsContent>
         
         <TabsContent value="history" className="space-y-6 mt-6">

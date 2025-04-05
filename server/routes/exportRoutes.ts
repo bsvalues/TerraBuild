@@ -5,7 +5,12 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { testConnection, listFiles } from '../services/ftpService';
+import { 
+  testConnection, 
+  listFiles, 
+  removeFile, 
+  createDirectory 
+} from '../services/ftpService';
 import { 
   exportBuildingCostsToFTP,
   exportProjectProgressToFTP 
@@ -669,6 +674,91 @@ router.post('/project-progress/:id', async (req: Request, res: Response) => {
       message: errorMessage,
       timestamp: new Date().toISOString()
     });
+  }
+});
+
+/**
+ * Create a directory on the FTP server
+ * POST /api/export/create-directory
+ * 
+ * This endpoint creates a directory on the FTP server.
+ * It supports creating parent directories if needed.
+ * 
+ * Request body:
+ * {
+ *   path: string,       // Required - remote path to create
+ *   createParents: boolean // Optional - whether to create parent directories (default: true)
+ * }
+ */
+router.post('/create-directory', async (req: Request, res: Response) => {
+  try {
+    const { path: remotePath, createParents = true } = req.body;
+    
+    if (!remotePath) {
+      return res.status(400).json({ success: false, message: 'Path is required' });
+    }
+    
+    // Log the directory creation request
+    console.log(`Received request to create directory: ${remotePath}`);
+    await storage.createActivity({
+      action: `Requested directory creation on FTP server: ${remotePath}`,
+      icon: 'folder-plus',
+      iconColor: 'blue'
+    });
+    
+    // Create the directory
+    const result = await createDirectory(
+      remotePath,
+      createParents,
+      3, // retryAttempts
+      2000 // retryDelay
+    );
+    
+    res.status(result.success ? 200 : 500).json(result);
+  } catch (err: any) {
+    console.error('Error creating directory on FTP server:', err);
+    res.status(500).json({ success: false, message: `Directory creation failed: ${err.message}` });
+  }
+});
+
+/**
+ * Delete a file from the FTP server
+ * DELETE /api/export/file
+ * 
+ * This endpoint deletes a file from the FTP server.
+ * 
+ * Request body:
+ * {
+ *   path: string  // Required - remote path to the file to delete
+ * }
+ */
+router.delete('/file', async (req: Request, res: Response) => {
+  try {
+    const { path: remotePath } = req.body;
+    
+    if (!remotePath) {
+      return res.status(400).json({ success: false, message: 'Path is required' });
+    }
+    
+    // Log the file deletion request
+    console.log(`Received request to delete file: ${remotePath}`);
+    await storage.createActivity({
+      action: `Requested file deletion on FTP server: ${remotePath}`,
+      icon: 'trash-2',
+      iconColor: 'red'
+    });
+    
+    // Delete the file
+    const result = await removeFile(
+      remotePath,
+      3, // retryAttempts
+      2000 // retryDelay
+    );
+    
+    res.status(result.success ? 200 : 500).json(result);
+  } catch (err: any) {
+    console.error('Error deleting file from FTP server:', err);
+    res.status(500).json({ success: false, message: `File deletion failed: ${err.message}` });
   }
 });
 
