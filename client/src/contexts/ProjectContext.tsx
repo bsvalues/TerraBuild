@@ -35,6 +35,10 @@ interface ProjectContextType {
   error: Error | null;
   members: ProjectMember[];
   isMembersLoading: boolean;
+  activities: any[]; // Add this property
+  items: any[]; // Add this property
+  isActivitiesLoading: boolean; // Add this property
+  isItemsLoading: boolean; // Add this property
   currentUserRole: string;
   currentUserId: number;
   isOwner: boolean;
@@ -49,12 +53,14 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 interface ProjectProviderProps {
   children: ReactNode;
   currentUserId: number;
+  projectId?: number;
 }
 
-export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, currentUserId }) => {
+export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, currentUserId, projectId: propsProjectId }) => {
   const { toast } = useToast();
   const params = useParams();
-  const projectId = params.id ? parseInt(params.id, 10) : undefined;
+  const paramProjectId = params.id ? parseInt(params.id, 10) : undefined;
+  const projectId = propsProjectId || paramProjectId;
   
   const {
     data: project,
@@ -92,6 +98,44 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, curr
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+  
+  // Fetch project activities
+  const {
+    data: activities = [],
+    isLoading: isActivitiesLoading,
+    refetch: refetchActivities
+  } = useQuery({
+    queryKey: [`/api/shared-projects/${projectId}/activities`],
+    queryFn: async () => {
+      if (!projectId) return [];
+      const response = await fetch(`/api/shared-projects/${projectId}/activities`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch project activities');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
+  // Fetch project items
+  const {
+    data: items = [],
+    isLoading: isItemsLoading,
+    refetch: refetchItems
+  } = useQuery({
+    queryKey: [`/api/shared-projects/${projectId}/items`],
+    queryFn: async () => {
+      if (!projectId) return [];
+      const response = await fetch(`/api/shared-projects/${projectId}/items`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch project items');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   // Find current user's role in the project
   const currentUserMember = members.find((member: ProjectMember) => member.userId === currentUserId);
@@ -118,6 +162,10 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children, curr
         error,
         members,
         isMembersLoading,
+        activities,
+        items,
+        isActivitiesLoading,
+        isItemsLoading,
         currentUserRole,
         currentUserId,
         isOwner,

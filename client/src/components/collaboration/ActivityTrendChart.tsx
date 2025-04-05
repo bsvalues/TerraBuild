@@ -1,275 +1,240 @@
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ChartBarIcon } from 'lucide-react';
-import { format, parseISO, subDays, isValid } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { format, subDays, isAfter, subMonths, subYears, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
-export interface ActivityData {
-  date: string; // ISO date string
-  count: number;
-  type?: string;
+type ActivityData = {
+  userId: number;
+  type: string;
+  data?: any;
+  createdAt: string | Date;
 }
 
 interface ActivityTrendChartProps {
-  data?: ActivityData[];
-  isLoading?: boolean;
-  title?: string;
-  description?: string;
+  activities: ActivityData[];
   className?: string;
-  showByType?: boolean; // If true, show lines for each activity type
-  timeRange?: 'week' | 'month' | 'year'; // Time range to display
-  // Added typed prop to work with SharedProjectDashboardPage
-  activities?: {
-    id: number;
-    userId: number;
-    createdAt: string | Date;
-    type: string;
-    data?: any;
-  }[];
 }
 
-export default function ActivityTrendChart({
-  data = [],
-  isLoading = false,
-  title = 'Activity Trend',
-  description = 'Project activity over time',
-  className = '',
-  showByType = false,
-  timeRange = 'week',
-  activities = []
-}: ActivityTrendChartProps) {
-  // Generate date range for the chart
-  const dateRange = useMemo(() => {
-    const today = new Date();
-    const days = timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 365;
-    const range = [];
+// Defines the time range for the chart
+type TimeRange = 'week' | 'month' | 'year';
+
+const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ activities, className = '' }) => {
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
+  
+  // Group activities by date and type
+  const chartData = useMemo(() => {
+    if (!activities || !activities.length) {
+      return [];
+    }
+
+    let startDate;
+    const now = new Date();
     
-    for (let i = days - 1; i >= 0; i--) {
-      const date = subDays(today, i);
-      range.push({
-        date: format(date, 'yyyy-MM-dd'),
-        displayDate: format(date, 'MMM dd'),
-        count: 0
-      });
+    // Determine the start date based on the selected time range
+    switch (timeRange) {
+      case 'week':
+        startDate = subDays(now, 7);
+        break;
+      case 'month':
+        startDate = subMonths(now, 1);
+        break;
+      case 'year':
+        startDate = subYears(now, 1);
+        break;
+      default:
+        startDate = subDays(now, 7);
     }
     
-    return range;
-  }, [timeRange]);
-
-  // Generate activity data from activities prop if data is empty
-  const activityData = useMemo(() => {
-    if (Array.isArray(data) && data.length > 0) return data;
+    // Filter activities within the selected time range
+    const filteredActivities = activities.filter(activity => {
+      const activityDate = typeof activity.createdAt === 'string' 
+        ? parseISO(activity.createdAt) 
+        : activity.createdAt;
+      return isAfter(activityDate, startDate);
+    });
     
-    if (!Array.isArray(activities) || activities.length === 0) return [];
+    // Count activities per day and per type
+    const dailyActivityCounts: Record<string, Record<string, number>> = {};
     
-    // Convert activities to ActivityData format with improved error handling
-    return activities.map(activity => {
-      let date;
-      try {
-        date = activity.createdAt ? 
-          (typeof activity.createdAt === 'string' ? 
-            activity.createdAt : 
-            new Date(activity.createdAt).toISOString())
-          : new Date().toISOString();
-          
-        // Validate date format
-        if (!date.includes('T')) {
-          // Add time component if missing
-          date = `${date}T00:00:00.000Z`;
-        }
-        
-        // Check if valid ISO format, if not use current date
-        if (!isValid(parseISO(date))) {
-          date = new Date().toISOString();
-        }
-      } catch (error) {
-        // Fallback to current date if there's an error parsing
-        console.error('Error parsing date:', error);
-        date = new Date().toISOString();
+    filteredActivities.forEach(activity => {
+      const activityDate = typeof activity.createdAt === 'string' 
+        ? parseISO(activity.createdAt) 
+        : activity.createdAt;
+      
+      // Format date based on time range
+      let formattedDate;
+      if (timeRange === 'week') {
+        formattedDate = format(activityDate, 'EEE');
+      } else if (timeRange === 'month') {
+        formattedDate = format(activityDate, 'MMM dd');
+      } else {
+        formattedDate = format(activityDate, 'MMM');
       }
       
-      return {
-        date,
-        count: 1,
-        type: activity && activity.type ? activity.type : 'unknown'
-      };
-    });
-  }, [data, activities]);
-  
-  // Process data to fit date range and aggregate by type if needed
-  const processedData = useMemo(() => {
-    // If no data or invalid data, return empty structure
-    if (!Array.isArray(activityData) || activityData.length === 0) {
-      return { chartData: [], types: [] };
-    }
-    
-    // Create a map of dates to counts
-    const dateMap = new Map(dateRange.map(d => [d.date, { ...d }]));
-    
-    // If showing by type, we need to track activity types
-    const typeMap = new Map();
-    
-    // Process each data point with improved error handling
-    activityData.forEach(item => {
-      try {
-        if (!item || !item.date) return;
-        
-        const date = typeof item.date === 'string' ? 
-          item.date.split('T')[0] : // Get YYYY-MM-DD part
-          new Date().toISOString().split('T')[0]; // Fallback to today
-          
-        if (dateMap.has(date)) {
-          const entry = dateMap.get(date);
-          if (entry) {
-            entry.count += item.count || 1; // Default to 1 if count is undefined
-            
-            // Track by type if needed
-            if (showByType && item.type) {
-              // Use type-safe indexing with a type assertion
-              const typedEntry = entry as Record<string, any>;
-              if (!typedEntry[item.type]) {
-                typedEntry[item.type] = 0;
-              }
-              typedEntry[item.type] += item.count || 1;
-              typeMap.set(item.type, true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error processing activity data:', error);
+      // Initialize counts for this date if not exists
+      if (!dailyActivityCounts[formattedDate]) {
+        dailyActivityCounts[formattedDate] = {};
       }
+      
+      // Initialize counts for this activity type if not exists
+      const activityType = activity.type || 'general';
+      if (!dailyActivityCounts[formattedDate][activityType]) {
+        dailyActivityCounts[formattedDate][activityType] = 0;
+      }
+      
+      // Increment count
+      dailyActivityCounts[formattedDate][activityType]++;
     });
     
-    return {
-      chartData: Array.from(dateMap.values()),
-      types: Array.from(typeMap.keys())
-    };
-  }, [activityData, dateRange, showByType]);
-
-  // Define Benton County theme colors for the chart
-  const colors = {
-    primary: '#33A4CB',
-    secondary: '#47AD55',
-    accent: '#243E4D',
-    highlight: '#FFD23F',
-    warning: '#D4770D'
+    // Convert to array format for the chart
+    const uniqueActivityTypes = new Set<string>();
+    
+    // First collect all activity types
+    Object.values(dailyActivityCounts).forEach(dayData => {
+      Object.keys(dayData).forEach(type => uniqueActivityTypes.add(type));
+    });
+    
+    // Then create data points with all types represented (even if 0)
+    const result = Object.entries(dailyActivityCounts).map(([date, counts]) => {
+      const dataPoint: Record<string, any> = { date };
+      
+      // Ensure all activity types are represented
+      uniqueActivityTypes.forEach(type => {
+        dataPoint[type] = counts[type] || 0;
+      });
+      
+      // Add total count
+      dataPoint.total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      
+      return dataPoint;
+    });
+    
+    // Sort by date
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  }, [activities, timeRange]);
+  
+  // Get unique activity types for the legend
+  const activityTypes = useMemo(() => {
+    if (!chartData.length) return [];
+    
+    // Get all property names except 'date' and 'total'
+    const firstDataPoint = chartData[0];
+    return Object.keys(firstDataPoint).filter(key => key !== 'date' && key !== 'total');
+  }, [chartData]);
+  
+  // Define colors for the different activity types
+  const typeColors: Record<string, string> = {
+    comment: '#8884d8',
+    edit: '#82ca9d',
+    upload: '#ffc658',
+    share: '#ff8042',
+    review: '#0088FE',
+    export: '#00C49F',
+    general: '#FFBB28',
   };
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border rounded shadow-sm">
-          <p className="font-medium">{label || 'No date'}</p>
-          {payload.map((entry: any, index: number) => {
-            if (!entry) return null;
-            
-            const value = entry.value || 0;
-            return (
-              <p 
-                key={index} 
-                className="text-sm" 
-                style={{ color: entry.color }}
-              >
-                {entry.name || 'Activity'}: {value} {value === 1 ? 'activity' : 'activities'}
-              </p>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  if (isLoading) {
+  
+  // Show empty state if no data
+  if (!chartData.length) {
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle>Activity Trends</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <div className="space-y-3 w-full">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-4 w-2/3 mx-auto" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (activityData.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent className="h-[300px] flex flex-col items-center justify-center">
-          <ChartBarIcon className="h-12 w-12 text-muted-foreground/60 mb-3" />
-          <p className="text-muted-foreground font-medium">No activity data available</p>
-          <p className="text-muted-foreground/70 text-sm">
-            Activity data will be shown as project members interact with the project
-          </p>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <p className="text-muted-foreground">No activity data available</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={processedData.chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 20 }}
+    <Card className={cn("", className)}>
+      <CardHeader className="pb-2">
+        <CardTitle>Activity Trends</CardTitle>
+        <div className="flex items-center justify-between pt-2">
+          <Tabs
+            defaultValue="week"
+            value={timeRange}
+            onValueChange={(value) => setTimeRange(value as TimeRange)}
+            className="w-[240px]"
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="displayDate" 
-              tick={{ fontSize: 12 }}
-              angle={-45}
-              textAnchor="end"
-              height={50}
-            />
-            <YAxis 
-              allowDecimals={false}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            {showByType ? (
-              <>
-                {processedData.types.map((type, index) => (
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+              <TabsTrigger value="year">Year</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <Tabs
+            defaultValue="line"
+            value={chartType}
+            onValueChange={(value) => setChartType(value as 'line' | 'bar')}
+            className="w-[160px]"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="line">Line</TabsTrigger>
+              <TabsTrigger value="bar">Bar</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            {chartType === 'line' ? (
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {activityTypes.map((type) => (
                   <Line
                     key={type}
                     type="monotone"
                     dataKey={type}
-                    name={type}
-                    stroke={Object.values(colors)[index % Object.values(colors).length]}
+                    stroke={typeColors[type] || '#8884d8'}
                     activeDot={{ r: 8 }}
+                    name={type.charAt(0).toUpperCase() + type.slice(1)}
                   />
                 ))}
-                <Legend />
-              </>
+              </LineChart>
             ) : (
-              <Line
-                type="monotone"
-                dataKey="count"
-                name="Activities"
-                stroke={colors.primary}
-                strokeWidth={2}
-                activeDot={{ r: 8 }}
-              />
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {activityTypes.map((type) => (
+                  <Bar
+                    key={type}
+                    dataKey={type}
+                    fill={typeColors[type] || '#8884d8'}
+                    name={type.charAt(0).toUpperCase() + type.slice(1)}
+                  />
+                ))}
+              </BarChart>
             )}
-          </LineChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ActivityTrendChart;

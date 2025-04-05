@@ -7,8 +7,8 @@ import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable';
 import ProjectItemsTable from '@/components/collaboration/ProjectItemsTable';
 import ProjectActivitiesLog from '@/components/collaboration/ProjectActivitiesLog';
-import TeamContributionChart from '@/components/collaboration/TeamContributionChart';
-import ActivityTrendChart from '@/components/collaboration/ActivityTrendChart';
+import TeamContributionChart from '../components/collaboration/TeamContributionChart';
+import ActivityTrendChart from '../components/collaboration/ActivityTrendChart';
 import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
 import {
   Card,
@@ -181,6 +181,7 @@ const SharedProjectDashboardPage: React.FC = () => {
     return {
       totalActivities,
       activityByType,
+      activityByUser,
       mostActiveUserId,
       mostActiveUserName,
       mostRecentActivity: mostRecentActivity 
@@ -485,9 +486,10 @@ const SharedProjectDashboardPage: React.FC = () => {
 const SharedProjectDashboardPageWrapper: React.FC = () => {
   const params = useParams<{ id: string }>();
   const projectId = Number(params.id);
+  const { user } = useAuth();
   
   return (
-    <ProjectProvider projectId={projectId}>
+    <ProjectProvider projectId={projectId} currentUserId={user?.id || 0}>
       <SharedProjectDashboardPage />
     </ProjectProvider>
   );
