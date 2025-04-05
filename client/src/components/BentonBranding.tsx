@@ -16,6 +16,7 @@ interface BentonBrandingProps {
   variant?: 'horizontal' | 'vertical' | 'seal' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   showTagline?: boolean;
+  className?: string;
 }
 
 /**
@@ -27,7 +28,8 @@ interface BentonBrandingProps {
 export const BentonBranding: React.FC<BentonBrandingProps> = ({ 
   variant = 'horizontal', 
   size = 'md', 
-  showTagline = false
+  showTagline = false,
+  className = ''
 }) => {
   // Size classes
   const sizeClasses = {
@@ -39,7 +41,7 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
   // Horizontal version (default)
   if (variant === 'horizontal') {
     return (
-      <div className="flex flex-col items-center">
+      <div className={`flex flex-col items-center ${className}`}>
         <div className={`font-bold leading-tight ${sizeClasses[size]}`}>
           <span style={{ color: BentonColors.darkTeal }}>BENTON</span>
           <span style={{ color: BentonColors.green }}> COUNTY</span>
@@ -55,7 +57,7 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
   // Vertical version
   if (variant === 'vertical') {
     return (
-      <div className="flex flex-col items-center text-center">
+      <div className={`flex flex-col items-center text-center ${className}`}>
         <div className={`font-bold ${sizeClasses[size]}`}>
           <div style={{ color: BentonColors.darkTeal }}>BENTON</div>
           <div style={{ color: BentonColors.green }}>COUNTY</div>
@@ -71,7 +73,7 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
   // Seal version
   if (variant === 'seal') {
     return (
-      <div className="flex flex-col items-center text-center">
+      <div className={`flex flex-col items-center text-center ${className}`}>
         <div 
           style={{ border: `3px solid ${BentonColors.darkTeal}` }} 
           className="rounded-full p-4 flex flex-col items-center justify-center"
@@ -95,7 +97,7 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
   // Outline version (with state outline)
   if (variant === 'outline') {
     return (
-      <div className="flex flex-col items-center">
+      <div className={`flex flex-col items-center ${className}`}>
         <div className="relative">
           {/* Simplified WA state outline */}
           <div 
@@ -126,7 +128,7 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
 
   // Fallback to horizontal if variant not recognized
   return (
-    <div className={`font-bold ${sizeClasses[size]}`}>
+    <div className={`font-bold ${sizeClasses[size]} ${className}`}>
       <span style={{ color: BentonColors.darkTeal }}>BENTON</span>
       <span style={{ color: BentonColors.green }}> COUNTY</span>
       <span style={{ color: BentonColors.lightBlue }}>WA</span>

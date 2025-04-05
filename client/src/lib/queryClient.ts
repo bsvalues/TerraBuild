@@ -1,104 +1,88 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryKey } from '@tanstack/react-query';
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
-export async function apiRequest(
-  urlOrOptions: string | {
-    url: string,
-    method: string,
-    body?: any,
-    headers?: Record<string, string>
-  },
-  data?: unknown | undefined,
-): Promise<Response> {
-  let url: string;
-  let method: string = 'GET';
-  let body: any = undefined;
-  
-  let headers: Record<string, string> = {};
-  
-  if (typeof urlOrOptions === 'string') {
-    url = urlOrOptions;
-    method = data ? 'POST' : 'GET';
-    body = data;
-  } else {
-    url = urlOrOptions.url;
-    method = urlOrOptions.method;
-    body = urlOrOptions.body;
-    headers = urlOrOptions.headers || {};
-  }
-  
-  console.log(`API Request: ${method} ${url}`, body);
-  
-  const isFormData = body instanceof FormData;
-  
-  // Set up headers based on content type
-  const defaultHeaders: Record<string, string> = {};
-  
-  // Add Content-Type header only for JSON requests
-  if (body && !isFormData) {
-    defaultHeaders["Content-Type"] = "application/json";
-  }
-  
-  // Merge with custom headers
-  const mergedHeaders = { ...defaultHeaders, ...headers };
-  
-  const res = await fetch(url, {
-    method,
-    headers: mergedHeaders,
-    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-    credentials: "include",
+/**
+ * Helper function to make API requests using fetch
+ * This provides consistent error handling and response parsing
+ */
+export async function apiRequest<T = any>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
   });
 
-  console.log(`API Response: ${method} ${url}`, {
-    status: res.status,
-    statusText: res.statusText,
-    headers: Object.fromEntries(res.headers.entries()),
-    // Don't clone the response yet as it would consume the body
-  });
-
-  await throwIfResNotOk(res);
-  const clonedRes = res.clone(); // Clone so the body can be read multiple times
-  if (clonedRes.headers.get('content-type')?.includes('application/json')) {
-    return await clonedRes.json();
+  // Handle non-2xx responses
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData.message || response.statusText || 'Unknown error';
+    const error = new Error(errorMessage);
+    (error as any).status = response.status;
+    (error as any).data = errorData;
+    throw error;
   }
-  return clonedRes;
+
+  // Return empty object for 204 No Content
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  // Parse and return JSON response
+  return response.json();
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+/**
+ * Common query function for TanStack Query
+ * @param queryKey - Query key array or string
+ */
+export function getQueryFn({ queryKey }: { queryKey: QueryKey }) {
+  // Convert queryKey to URL string if it's an array
+  const url = Array.isArray(queryKey) 
+    ? queryKey[0] as string
+    : queryKey as string;
+    
+  // Additional parameters can be passed in the queryKey array
+  const params = Array.isArray(queryKey) && queryKey.length > 1 
+    ? queryKey[1]
+    : undefined;
+  
+  // Apply params as query string if provided
+  const urlWithParams = params 
+    ? `${url}${url.includes('?') ? '&' : '?'}${new URLSearchParams(params as any).toString()}`
+    : url;
+  
+  return apiRequest(urlWithParams);
+}
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
-
+// Create a client
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      queryFn: async ({ queryKey }) => {
+        // Convert queryKey to URL string if it's an array
+        const url = Array.isArray(queryKey) 
+          ? queryKey[0] as string
+          : queryKey as string;
+          
+        // Additional parameters can be passed in the queryKey array
+        const params = Array.isArray(queryKey) && queryKey.length > 1 
+          ? queryKey[1]
+          : undefined;
+        
+        // Apply params as query string if provided
+        const urlWithParams = params 
+          ? `${url}${url.includes('?') ? '&' : '?'}${new URLSearchParams(params as any).toString()}`
+          : url;
+        
+        return apiRequest(urlWithParams);
+      },
     },
   },
 });

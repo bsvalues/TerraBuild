@@ -21,6 +21,7 @@ import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
 import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
 import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
+import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
@@ -75,6 +76,7 @@ function Router() {
       <ProtectedRoute path="/statistical-analysis" component={StatisticalAnalysisDemo} />
       <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
+      <ProtectedRoute path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />

@@ -25,7 +25,8 @@ import {
   LineChart,
   BookOpen,
   Share2,
-  UsersRound
+  UsersRound,
+  Map
 } from "lucide-react";
 
 interface SidebarProps {
@@ -156,6 +157,13 @@ export default function Sidebar({ className }: SidebarProps) {
               icon={<LineChart />}
               badge="New"
               badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
+            />
+            <SidebarItem
+              href="/regional-cost-comparison"
+              title="Regional Costs"
+              icon={<Map />}
+              badge="New"
+              badgeColor="bg-[#dcf0db] text-[#3CAB36]"
             />
           </SidebarSection>
           
