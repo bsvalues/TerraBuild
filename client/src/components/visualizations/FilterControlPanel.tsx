@@ -122,9 +122,9 @@ export function FilterControlPanel({
   
   // Count active filters
   const activeFilterCount = (
-    (filters?.regions?.length > 0 ? 1 : 0) +
-    (filters?.buildingTypes?.length > 0 ? 1 : 0) +
-    (filters?.counties?.length > 0 ? 1 : 0) +
+    ((filters?.regions && filters.regions.length > 0) ? 1 : 0) +
+    ((filters?.buildingTypes && filters.buildingTypes.length > 0) ? 1 : 0) +
+    ((filters?.counties && filters.counties.length > 0) ? 1 : 0) +
     (filters?.costRange !== null ? 1 : 0)
   );
   
@@ -165,7 +165,7 @@ export function FilterControlPanel({
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Regions</h3>
                   </div>
-                  {filters?.regions?.length > 0 && (
+                  {filters?.regions && filters.regions.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -177,7 +177,7 @@ export function FilterControlPanel({
                   )}
                 </div>
                 
-                {filters?.regions?.length > 0 ? (
+                {filters?.regions && filters.regions.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {filters?.regions?.map(region => (
                       <Badge 
@@ -210,7 +210,7 @@ export function FilterControlPanel({
                     <Building className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Building Types</h3>
                   </div>
-                  {filters?.buildingTypes?.length > 0 && (
+                  {filters?.buildingTypes && filters.buildingTypes.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -222,7 +222,7 @@ export function FilterControlPanel({
                   )}
                 </div>
                 
-                {filters?.buildingTypes?.length > 0 ? (
+                {filters?.buildingTypes && filters.buildingTypes.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {filters?.buildingTypes?.map(buildingType => (
                       <Badge 
@@ -292,7 +292,7 @@ export function FilterControlPanel({
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <h3 className="text-sm font-medium">Counties</h3>
                   </div>
-                  {filters?.counties?.length > 0 && (
+                  {filters?.counties && filters.counties.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -304,9 +304,9 @@ export function FilterControlPanel({
                   )}
                 </div>
                 
-                {filters?.counties?.length > 0 ? (
+                {filters?.counties && filters.counties.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {filters?.counties?.map(county => (
+                    {filters?.counties?.map((county: string) => (
                       <Badge 
                         key={county} 
                         variant="outline"

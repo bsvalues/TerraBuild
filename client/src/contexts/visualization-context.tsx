@@ -111,10 +111,11 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const removeRegionFilter = (region: string) => {
     setFilters(prev => {
       if (!prev?.regions) return prev;
-      const regions = prev.regions.filter(r => r !== region);
+      const regions = prev.regions.filter((r: string) => r !== region);
       const newFilters = { ...prev, regions };
-      if (regions.length === 0) {
-        delete newFilters.regions;
+      if (regions.length === 0 && 'regions' in newFilters) {
+        const { regions, ...rest } = newFilters;
+        return Object.keys(rest).length === 0 ? null : rest;
       }
       return Object.keys(newFilters).length === 0 ? null : newFilters;
     });
@@ -123,9 +124,9 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const clearRegionFilters = () => {
     setFilters(prev => {
       if (!prev) return null;
-      const newFilters = { ...prev };
-      delete newFilters.regions;
-      return Object.keys(newFilters).length === 0 ? null : newFilters;
+      if (!('regions' in prev)) return prev;
+      const { regions, ...rest } = prev;
+      return Object.keys(rest).length === 0 ? null : rest;
     });
   };
   
@@ -149,8 +150,9 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
       if (!prev?.buildingTypes) return prev;
       const buildingTypes = prev.buildingTypes.filter(bt => bt !== buildingType);
       const newFilters = { ...prev, buildingTypes };
-      if (buildingTypes.length === 0) {
-        delete newFilters.buildingTypes;
+      if (buildingTypes.length === 0 && 'buildingTypes' in newFilters) {
+        const { buildingTypes, ...rest } = newFilters;
+        return Object.keys(rest).length === 0 ? null : rest;
       }
       return Object.keys(newFilters).length === 0 ? null : newFilters;
     });
@@ -159,9 +161,9 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const clearBuildingTypeFilters = () => {
     setFilters(prev => {
       if (!prev) return null;
-      const newFilters = { ...prev };
-      delete newFilters.buildingTypes;
-      return Object.keys(newFilters).length === 0 ? null : newFilters;
+      if (!('buildingTypes' in prev)) return prev;
+      const { buildingTypes, ...rest } = prev;
+      return Object.keys(rest).length === 0 ? null : rest;
     });
   };
   
@@ -183,10 +185,11 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const removeCountyFilter = (county: string) => {
     setFilters(prev => {
       if (!prev?.counties) return prev;
-      const counties = prev.counties.filter(c => c !== county);
+      const counties = prev.counties.filter((c: string) => c !== county);
       const newFilters = { ...prev, counties };
-      if (counties.length === 0) {
-        delete newFilters.counties;
+      if (counties.length === 0 && 'counties' in newFilters) {
+        const { counties, ...rest } = newFilters;
+        return Object.keys(rest).length === 0 ? null : rest;
       }
       return Object.keys(newFilters).length === 0 ? null : newFilters;
     });
@@ -195,9 +198,9 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const clearCountyFilters = () => {
     setFilters(prev => {
       if (!prev) return null;
-      const newFilters = { ...prev };
-      delete newFilters.counties;
-      return Object.keys(newFilters).length === 0 ? null : newFilters;
+      if (!('counties' in prev)) return prev;
+      const { counties, ...rest } = prev;
+      return Object.keys(rest).length === 0 ? null : rest;
     });
   };
   
@@ -211,9 +214,9 @@ export function VisualizationContextProvider({ children }: { children: ReactNode
   const clearCostRange = () => {
     setFilters(prev => {
       if (!prev) return null;
-      const newFilters = { ...prev };
-      delete newFilters.costRange;
-      return Object.keys(newFilters).length === 0 ? null : newFilters;
+      if (!('costRange' in prev)) return prev;
+      const { costRange, ...rest } = prev;
+      return Object.keys(rest).length === 0 ? null : rest;
     });
   };
   

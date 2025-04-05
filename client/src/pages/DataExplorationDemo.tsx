@@ -113,11 +113,11 @@ export default function DataExplorationDemo() {
       
       // Only add region filter if none are currently applied
       if (!filters?.regions || filters.regions.length === 0) {
-        addRegionFilter(region);
+        addRegionFilter && addRegionFilter(region);
       } else {
         // Clear existing and add new
-        clearRegionFilters();
-        addRegionFilter(region);
+        clearRegionFilters && clearRegionFilters();
+        addRegionFilter && addRegionFilter(region);
       }
     };
     
@@ -143,7 +143,7 @@ export default function DataExplorationDemo() {
                filters.costRange !== null) ? (
               <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
                 <h3 className="text-sm font-medium mb-1 text-blue-800">Active Filters</h3>
-                <p className="text-xs text-blue-700">{getFilterSummary()}</p>
+                <p className="text-xs text-blue-700">{getFilterSummary && getFilterSummary()}</p>
               </div>
             ) : null}
           </div>
@@ -193,7 +193,7 @@ export default function DataExplorationDemo() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => clearRegionFilters()}
+                          onClick={() => clearRegionFilters && clearRegionFilters()}
                         >
                           Clear Region Filters
                         </Button>
