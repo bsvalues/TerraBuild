@@ -30,6 +30,7 @@ import DataConnectionsPage from "@/pages/DataConnectionsPage";
 import FTPConnectionPage from "@/pages/FTPConnectionPage";
 import FTPSyncSchedulePage from "@/pages/FTPSyncSchedulePage";
 import FTPConnectionTestPage from "@/pages/FTPConnectionTestPage";
+import ContextualDataPage from "@/pages/contextual-data";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
@@ -84,6 +85,7 @@ function Router() {
       <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
       <ProtectedRoute path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
+      <ProtectedRoute path="/contextual-data" component={ContextualDataPage} />
       <ProtectedRoute path="/data-connections" component={DataConnectionsPage} />
       <ProtectedRoute path="/data-connections/ftp" component={FTPConnectionPage} />
       <ProtectedRoute path="/data-connections/ftp/test" component={FTPConnectionTestPage} />

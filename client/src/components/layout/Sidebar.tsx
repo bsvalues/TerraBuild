@@ -429,6 +429,13 @@ export default function Sidebar({ className }: SidebarProps) {
                 title="Cost Trend Analysis"
                 icon={<Activity />}
               />
+              <SidebarItem
+                href="/contextual-data"
+                title="Contextual Data"
+                icon={<BarChart2 />}
+                badge="New"
+                badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
+              />
             </SidebarSection>
             
             {isAdmin && (
