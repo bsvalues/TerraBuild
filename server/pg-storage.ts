@@ -392,17 +392,7 @@ export class PostgresStorage implements IStorage {
   async getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         return [];
       }
@@ -431,17 +421,7 @@ export class PostgresStorage implements IStorage {
   async getSyncHistoryById(id: number): Promise<SyncHistory | undefined> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         return undefined;
       }
@@ -459,17 +439,7 @@ export class PostgresStorage implements IStorage {
   async getSyncHistory(limit: number = 10, offset: number = 0): Promise<SyncHistory[]> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         return [];
       }
@@ -490,17 +460,7 @@ export class PostgresStorage implements IStorage {
   async createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         // Return a minimal object so the frontend doesn't break
         return {
@@ -552,17 +512,7 @@ export class PostgresStorage implements IStorage {
   async updateSyncHistory(id: number, history: Partial<SyncHistory>): Promise<SyncHistory | undefined> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         return undefined;
       }
@@ -582,17 +532,7 @@ export class PostgresStorage implements IStorage {
   async deleteSyncHistory(id: number): Promise<void> {
     try {
       // Check if the syncHistory table exists
-      const tableCheck = await this.db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'sync_history'
-        );
-      `);
-      
-      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
-      
-      if (!tableExists) {
+      if (!(await this.tableExists('sync_history'))) {
         console.warn('Sync history table does not exist yet.');
         return;
       }
@@ -770,11 +710,11 @@ export class PostgresStorage implements IStorage {
       let syncSchedulesExist = false;
       try {
         if (await this.tableExists('sync_schedules')) {
-          const syncSchedules = await this.db.select()
+          const schedules = await this.db.select()
             .from(syncSchedules)
             .where(eq(syncSchedules.connectionId, id));
           
-          syncSchedulesExist = syncSchedules.length > 0;
+          syncSchedulesExist = schedules.length > 0;
         }
       } catch (scheduleError) {
         // Ignore errors if the sync_schedules table doesn't exist yet
