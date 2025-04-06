@@ -103,6 +103,7 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.4",
     "recharts": "^2.15.1",
+    "rest-express": "file:",
     "sinon": "^20.0.0",
     "supertest": "^7.1.0",
     "tailwind-merge": "^2.5.4",

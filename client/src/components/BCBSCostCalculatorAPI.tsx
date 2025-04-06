@@ -13,12 +13,13 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle, BrainCircuit, Share2, Loader2 } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle, BrainCircuit, Share2, Loader2, FileDown } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import CostReportPDFExport from "./CostReportPDFExport";
 
 // Form schema for calculator
 const calculatorSchema = z.object({
@@ -167,7 +168,8 @@ const BCBSCostCalculatorAPI = () => {
       if (response.data.materialCosts) {
         // Add individual material costs
         Object.entries(response.data.materialCosts).forEach(([category, cost]) => {
-          breakdown.push({ category: category.charAt(0).toUpperCase() + category.slice(1), cost });
+          const costValue = typeof cost === 'number' ? cost : Number(cost) || 0;
+          breakdown.push({ category: category.charAt(0).toUpperCase() + category.slice(1), cost: costValue });
         });
       }
 
@@ -640,6 +642,15 @@ const BCBSCostCalculatorAPI = () => {
                       <Copy className="mr-2 h-4 w-4" />
                       Copy Data
                     </Button>
+                    
+                    {/* PDF Export Button */}
+                    {calculationResult && (
+                      <CostReportPDFExport 
+                        calculationResult={calculationResult}
+                        costBreakdown={costBreakdown}
+                        projectName={`${calculationResult.buildingType} Building Cost Report`}
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
