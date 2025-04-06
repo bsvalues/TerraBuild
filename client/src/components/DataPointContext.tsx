@@ -187,16 +187,26 @@ const DataPointContext: React.FC<DataPointContextProps> = ({
   // Handle hover and click interactions
   const handleMouseEnter = () => {
     setIsHovered(true);
-    if (onInteraction) onInteraction('hover', value);
+    if (onInteraction) {
+      console.log('Hover interaction triggered:', value);
+      onInteraction('hover', value);
+    }
   };
   
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent event propagation which could interfere with Popover
+    e.stopPropagation();
+    
+    console.log('Click interaction triggered:', value);
     setIsClicked(!isClicked);
-    if (onInteraction) onInteraction('click', value);
+    
+    if (onInteraction) {
+      onInteraction('click', value);
+    }
   };
 
   // Get the appropriate indicator icon

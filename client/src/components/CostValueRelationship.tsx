@@ -104,9 +104,20 @@ const CostValueRelationship: React.FC<CostValueRelationshipProps> = ({
   };
   
   // Handle click on a data point
-  const handlePointClick = (point: ValuePoint) => {
-    setSelectedPoint(selectedPoint?.label === point.label ? null : point);
+  const handlePointClick = (point: ValuePoint, event: React.MouseEvent) => {
+    // Prevent event bubbling
+    event.stopPropagation();
+    
+    console.log('Clicked on data point:', point.label, point);
+    
+    // Toggle the selected point
+    setSelectedPoint(prevSelected => 
+      prevSelected?.label === point.label ? null : point
+    );
+    
+    // Call the callback if provided
     if (onSelectDataPoint) {
+      console.log('Calling onSelectDataPoint callback');
       onSelectDataPoint(point);
     }
   };
@@ -181,7 +192,7 @@ const CostValueRelationship: React.FC<CostValueRelationshipProps> = ({
                   }}
                   onMouseEnter={() => setHoveredPoint(point)}
                   onMouseLeave={() => setHoveredPoint(null)}
-                  onClick={() => handlePointClick(point)}
+                  onClick={(e) => handlePointClick(point, e)}
                 >
                   <div 
                     className={cn(

@@ -127,8 +127,11 @@ const CostBreakdownCard: React.FC<CostBreakdownCardProps> = ({
 
   // Handle interaction with a cost factor
   const handleFactorInteraction = (factor: string, type: 'hover' | 'click') => {
+    console.log(`CostBreakdownCard: ${type} interaction on ${factor}`);
+    
     if (type === 'click') {
-      setSelectedFactor(selectedFactor === factor ? null : factor);
+      console.log('Toggling selected factor:', factor, 'Current:', selectedFactor);
+      setSelectedFactor(prevSelected => prevSelected === factor ? null : factor);
     }
     
     if (onFactorInteraction) {

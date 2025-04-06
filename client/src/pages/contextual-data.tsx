@@ -127,13 +127,19 @@ const ContextualDataPage: React.FC = () => {
 
   // Handle data point interactions
   const handleDataPointInteraction = (label: string, value: string | number, type: 'hover' | 'click') => {
+    console.log(`Interaction detected: ${type} on ${label}, value: ${value}`);
+    
     const newInteraction = {
       label,
-      action: `${type === 'hover' ? 'Hovered over' : 'Clicked on'} ${label}: ${value}`,
+      action: `${type === 'hover' ? 'Hovered over' : 'Clicked on'} ${label}${value ? ': ' + value : ''}`,
       timestamp: Date.now()
     };
     
-    setInteractions(prev => [newInteraction, ...prev.slice(0, 4)]);
+    // Update the interactions state
+    setInteractions(prevInteractions => {
+      console.log('Current interactions:', prevInteractions);
+      return [newInteraction, ...prevInteractions.slice(0, 4)];
+    });
   };
 
   return (
