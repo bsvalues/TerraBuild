@@ -10,6 +10,9 @@ import {
   User,
   Menu,
 } from 'lucide-react';
+
+// Import Benton County logo directly
+import bentonLogo from '@assets/BC.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +62,7 @@ export default function TopNavbar({ toggleSidebar }: TopNavbarProps) {
           }}
         >
           <img 
-            src="@assets/BC.png" 
+            src={bentonLogo} 
             alt="Benton County" 
             className="h-10 w-10 mr-2" 
           />

@@ -15,6 +15,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Key, Loader2 } from "lucide-react";
 import { APP_NAME } from "@/data/constants";
 
+// Import Benton County logo directly
+import bentonSeal from '@assets/BC.png';
+import bentonScenicLogo from '@assets/ogimage.jpg';
+
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
@@ -89,12 +93,17 @@ export default function AuthPage() {
       {/* Auth Form */}
       <div className="flex flex-col w-full md:w-1/2 p-8 justify-center">
         <div className="w-full max-w-md mx-auto space-y-6">
-          <div className="flex justify-center mb-8">
-            <Building2 className="h-12 w-12 text-primary" />
+          <div className="flex justify-center mb-6">
+            <img 
+              src={bentonSeal} 
+              alt="Benton County Seal" 
+              className="h-20 w-20"
+            />
           </div>
           
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">{APP_NAME}</h1>
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-[#243E4D]">{APP_NAME}</h1>
+            <h2 className="text-xl font-medium text-[#47AD55] mt-1">Benton County, Washington</h2>
             <p className="text-muted-foreground mt-2">
               Sign in to access the Building Cost Estimation Tool
             </p>
@@ -257,25 +266,40 @@ export default function AuthPage() {
       </div>
 
       {/* Hero Section */}
-      <div className="hidden md:flex w-1/2 bg-gradient-to-tr from-primary to-primary/50 text-primary-foreground p-12 flex-col justify-center">
-        <div className="max-w-lg">
-          <h1 className="text-4xl font-bold mb-6">Building Cost Estimation Tool</h1>
-          <p className="text-xl mb-6">
-            A comprehensive solution for accurately estimating construction costs
-            across different regions and building types.
-          </p>
-          <div className="grid grid-cols-1 gap-4 mt-8">
-            <div className="bg-white/10 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Accurate Estimates</h3>
-              <p>Get precise building cost estimates based on the latest industry data.</p>
+      <div className="hidden md:block w-1/2 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${bentonScenicLogo})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        ></div>
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-primary/90 to-transparent flex flex-col justify-center p-12"
+        >
+          <div className="max-w-lg text-white">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2">Building Cost Estimation Tool</h1>
+              <h2 className="text-2xl font-semibold text-white/80">Benton County, Washington</h2>
             </div>
-            <div className="bg-white/10 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Regional Adjustments</h3>
-              <p>Automatically adjust costs based on regional factors across the country.</p>
-            </div>
-            <div className="bg-white/10 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Project Management</h3>
-              <p>Track and manage your cost estimates for multiple projects.</p>
+            <p className="text-xl mb-6 text-white/90">
+              A comprehensive solution for accurately estimating construction costs
+              across different regions and building types within Benton County.
+            </p>
+            <div className="grid grid-cols-1 gap-4 mt-8">
+              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Accurate Estimates</h3>
+                <p>Get precise building cost estimates based on Benton County's latest construction data.</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Regional Adjustments</h3>
+                <p>Automatically adjust costs based on specific regions within Benton County.</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Official County Tool</h3>
+                <p>Access the official building cost assessment system used by Benton County.</p>
+              </div>
             </div>
           </div>
         </div>
