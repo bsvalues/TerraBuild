@@ -1,23 +1,23 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import FTPClient from '../services/ftpService';
+import FTPClient, { FileFilterOptions } from '../services/ftpService';
 import { storage } from '../storage';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 
 // Helper function for safe activity details formatting
-// The details field in activities table is defined as a json type
-// This helper ensures we're passing a proper JSON object, not a string
-const formatActivityDetails = (details: any): Record<string, any> => {
+// The details field in activities table is defined as an array type [any, ...any[]]
+// This helper ensures we're passing a proper format for the details field
+const formatActivityDetails = (details: any): [any, ...any[]] => {
   if (typeof details === 'string') {
-    // Handle string details by making it a message object
-    return { message: details };
+    // Handle string details by making it a single-element array with a message object
+    return [{ message: details }];
   } else if (details && typeof details === 'object') {
-    // Return object for storage
-    return details;
+    // Convert object to array format
+    return [details];
   }
-  return { data: String(details) };
+  return [{ data: String(details) }];
 };
 
 const router = Router();
@@ -124,33 +124,75 @@ router.get('/list', async (req: Request, res: Response) => {
     }
 
     const { host, port, username, password } = validation.credentials!;
-    const client = new FTPClient();
     const remotePath = (req.query.path as string) || '/';
     
-    await client.connect({
-      host,
-      port,
-      user: username,
-      password,
-      secure: false
+    // Parse filter options from query parameters
+    const filterOptions: FileFilterOptions = {};
+    
+    // Handle include patterns
+    if (req.query.include) {
+      filterOptions.includePatterns = Array.isArray(req.query.include) 
+        ? (req.query.include as string[]) 
+        : [(req.query.include as string)];
+    }
+    
+    // Handle exclude patterns
+    if (req.query.exclude) {
+      filterOptions.excludePatterns = Array.isArray(req.query.exclude) 
+        ? (req.query.exclude as string[]) 
+        : [(req.query.exclude as string)];
+    }
+    
+    // Handle size filters
+    if (req.query.minSize) {
+      filterOptions.minSize = parseInt(req.query.minSize as string, 10);
+    }
+    
+    if (req.query.maxSize) {
+      filterOptions.maxSize = parseInt(req.query.maxSize as string, 10);
+    }
+    
+    // Handle date filters
+    if (req.query.newerThan) {
+      filterOptions.newerThan = new Date(req.query.newerThan as string);
+    }
+    
+    if (req.query.olderThan) {
+      filterOptions.olderThan = new Date(req.query.olderThan as string);
+    }
+    
+    // Use the enhanced ftpService.listFiles function instead of direct client
+    const response = await import('../services/ftpService').then(module => {
+      return module.listFiles(remotePath, 
+        Object.keys(filterOptions).length > 0 ? filterOptions : undefined
+      );
     });
     
-    const files = await client.list(remotePath);
+    if (!response.success) {
+      throw new Error(response.message);
+    }
     
-    // Log the activity
+    // Log the activity with enhanced information
     await storage.createActivity({
       action: 'FTP Directory Listed',
       icon: 'folder-open',
       iconColor: 'blue',
-      details: formatActivityDetails({ path: remotePath, fileCount: files.length })
+      details: formatActivityDetails({ 
+        path: remotePath, 
+        fileCount: response.files?.length || 0,
+        filtered: response.stats?.filteringApplied || false,
+        filterOptions: response.filterOptions,
+        stats: response.stats
+      })
     });
     
-    await client.close();
-    
+    // Return the enhanced response directly
     return res.status(200).json({
       success: true,
-      message: `Listed ${files.length} files in directory ${remotePath}`,
-      files
+      message: response.message,
+      files: response.files,
+      filterOptions: response.filterOptions,
+      stats: response.stats
     });
   } catch (error: any) {
     console.error('FTP List Error:', error);
@@ -160,7 +202,11 @@ router.get('/list', async (req: Request, res: Response) => {
       action: 'FTP Directory List Failed',
       icon: 'x-circle',
       iconColor: 'red',
-      details: formatActivityDetails({ path: req.query.path, error: error.message })
+      details: formatActivityDetails({ 
+        path: req.query.path, 
+        error: error.message,
+        filterAttempt: req.query.include || req.query.exclude || req.query.minSize || req.query.maxSize || req.query.newerThan || req.query.olderThan
+      })
     });
     
     return res.status(500).json({
@@ -189,27 +235,25 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       });
     }
 
-    const { host, port, username, password } = validation.credentials!;
-    const client = new FTPClient();
     const remotePath = req.body.path || '/';
     const uploadedFile = req.file;
+    const fullRemotePath = `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${uploadedFile.originalname}`;
     
-    await client.connect({
-      host,
-      port,
-      user: username,
-      password,
-      secure: false
+    // Use the enhanced ftpService.uploadFile function
+    const response = await import('../services/ftpService').then(module => {
+      return module.uploadFile(uploadedFile.path, fullRemotePath);
     });
     
-    // Upload the file
-    await client.upload(
-      uploadedFile.path,
-      `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${uploadedFile.originalname}`
-    );
+    // Clean up temporary file regardless of success or failure
+    try {
+      await fsPromises.unlink(uploadedFile.path);
+    } catch (unlinkError) {
+      console.error('Failed to delete temporary file:', unlinkError);
+    }
     
-    // Clean up temporary file
-    await fsPromises.unlink(uploadedFile.path);
+    if (!response.success) {
+      throw new Error(response.message);
+    }
     
     // Log the activity
     await storage.createActivity({
@@ -223,11 +267,9 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       })
     });
     
-    await client.close();
-    
     return res.status(200).json({
       success: true,
-      message: `Successfully uploaded ${uploadedFile.originalname} to ${remotePath}`,
+      message: response.message || `Successfully uploaded ${uploadedFile.originalname} to ${remotePath}`,
       file: {
         name: uploadedFile.originalname,
         size: uploadedFile.size,
@@ -237,12 +279,13 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
   } catch (error: any) {
     console.error('FTP Upload Error:', error);
     
-    // Clean up temporary file if it exists
+    // Clean up temporary file if it exists and hasn't been deleted yet
     if (req.file) {
       try {
+        await fsPromises.access(req.file.path);
         await fsPromises.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Failed to delete temporary file:', unlinkError);
+      } catch {
+        // File doesn't exist or can't be accessed, already deleted
       }
     }
     
@@ -267,6 +310,9 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
 
 // Download file from FTP server
 router.get('/download', async (req: Request, res: Response) => {
+  // Track created temporary files for cleanup
+  let tempFilePath: string | null = null;
+  
   try {
     const validation = validateFTPCredentials();
     
@@ -287,17 +333,6 @@ router.get('/download', async (req: Request, res: Response) => {
       });
     }
 
-    const { host, port, username, password } = validation.credentials!;
-    const client = new FTPClient();
-    
-    await client.connect({
-      host,
-      port,
-      user: username,
-      password,
-      secure: false
-    });
-    
     // Create temporary directory if it doesn't exist
     const tempDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(tempDir)) {
@@ -306,12 +341,20 @@ router.get('/download', async (req: Request, res: Response) => {
     
     // Temporary local file path
     const localFilePath = path.join(tempDir, filename);
+    tempFilePath = localFilePath;
     
-    // Download the file
-    await client.download(
-      `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${filename}`,
-      localFilePath
-    );
+    // Construct full remote path
+    const fullRemotePath = `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${filename}`;
+    
+    // Use dynamic import to get the ftpService module
+    const ftpService = await import('../services/ftpService');
+    
+    // Create a temporary file to capture the download content
+    const response = await ftpService.downloadFile(fullRemotePath, localFilePath);
+    
+    if (!response.success) {
+      throw new Error(response.message);
+    }
     
     // Log the activity
     await storage.createActivity({
@@ -320,8 +363,6 @@ router.get('/download', async (req: Request, res: Response) => {
       iconColor: 'blue',
       details: formatActivityDetails({ path: remotePath, filename })
     });
-    
-    await client.close();
     
     // Set content disposition header for download
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -333,14 +374,38 @@ router.get('/download', async (req: Request, res: Response) => {
     // Clean up the temporary file after it's been sent
     fileStream.on('end', async () => {
       try {
-        await fsPromises.unlink(localFilePath);
+        if (tempFilePath) {
+          await fsPromises.unlink(tempFilePath);
+          tempFilePath = null;
+        }
       } catch (error) {
         console.error('Failed to delete temporary file:', error);
       }
     });
     
+    // Handle unexpected disconnection
+    req.on('close', async () => {
+      try {
+        if (tempFilePath) {
+          await fsPromises.unlink(tempFilePath);
+          tempFilePath = null;
+        }
+      } catch (error) {
+        console.error('Failed to delete temporary file after connection close:', error);
+      }
+    });
+    
   } catch (error: any) {
     console.error('FTP Download Error:', error);
+    
+    // Clean up any temporary file if it exists
+    if (tempFilePath) {
+      try {
+        await fsPromises.unlink(tempFilePath);
+      } catch (unlinkError) {
+        console.error('Failed to delete temporary file after error:', unlinkError);
+      }
+    }
     
     // Log the failed activity
     await storage.createActivity({
@@ -382,19 +447,18 @@ router.post('/delete', async (req: Request, res: Response) => {
       });
     }
 
-    const { host, port, username, password } = validation.credentials!;
-    const client = new FTPClient();
+    // Construct full remote path
+    const fullRemotePath = `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${filename}`;
     
-    await client.connect({
-      host,
-      port,
-      user: username,
-      password,
-      secure: false
-    });
+    // Use dynamic import to get the ftpService module
+    const ftpService = await import('../services/ftpService');
     
-    // Delete the file
-    await client.delete(`${remotePath}${remotePath.endsWith('/') ? '' : '/'}${filename}`);
+    // Use the ftpService.removeFile function
+    const response = await ftpService.removeFile(fullRemotePath);
+    
+    if (!response.success) {
+      throw new Error(response.message);
+    }
     
     // Log the activity
     await storage.createActivity({
@@ -404,11 +468,9 @@ router.post('/delete', async (req: Request, res: Response) => {
       details: formatActivityDetails({ path: remotePath, filename })
     });
     
-    await client.close();
-    
     return res.status(200).json({
       success: true,
-      message: `Successfully deleted ${filename} from ${remotePath}`
+      message: response.message || `Successfully deleted ${filename} from ${remotePath}`
     });
   } catch (error: any) {
     console.error('FTP Delete Error:', error);
@@ -506,33 +568,28 @@ router.get('/test', async (req: Request, res: Response) => {
       });
     }
 
-    const { host, port, username, password } = validation.credentials!;
-    const client = new FTPClient();
+    // Use dynamic import to get the ftpService module
+    const ftpService = await import('../services/ftpService');
     
-    // Try to connect to test credentials
-    await client.connect({
-      host,
-      port,
-      user: username,
-      password,
-      secure: false
-    });
+    // Use the ftpService.testConnection function
+    const response = await ftpService.testConnection();
+    
+    if (!response.success) {
+      throw new Error(response.message);
+    }
     
     // Log the activity
     await storage.createActivity({
       action: 'FTP Connection Test Successful',
       icon: 'check-circle',
       iconColor: 'green',
-      details: formatActivityDetails({ message: `Connected to ${host}:${port}` })
+      details: formatActivityDetails({ message: response.message })
     });
-    
-    // Close the connection
-    await client.close();
     
     return res.status(200).json({
       success: true,
       message: 'FTP connection successful',
-      details: `Successfully connected to ${host}:${port}`,
+      details: response.message,
       timestamp
     });
   } catch (error: any) {

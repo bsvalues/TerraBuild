@@ -2,6 +2,7 @@ import * as ftp from 'basic-ftp';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
+import { minimatch } from 'minimatch';
 import { FTPConnection } from '@shared/schema';
 
 interface FTPConfig {
@@ -21,16 +22,34 @@ interface FTPFile {
   permissions: string;
 }
 
+export interface FileFilterOptions {
+  includePatterns?: string[];   // Glob patterns to include (e.g., "*.txt", "data/*.csv")
+  excludePatterns?: string[];   // Glob patterns to exclude
+  minSize?: number;             // Minimum file size in bytes
+  maxSize?: number;             // Maximum file size in bytes
+  newerThan?: Date;             // Only files modified after this date
+  olderThan?: Date;             // Only files modified before this date
+}
+
+// Interface for filter statistics
+export interface FilterStats {
+  totalUnfiltered: number;      // Total number of files before filtering
+  totalFiltered: number;        // Total number of files after filtering
+  filteringApplied: boolean;    // Whether any filtering was applied
+}
+
 interface FTPDirectoryListing {
   path: string;
   files: FTPFile[];
   parentPath?: string;
 }
 
-interface FTPResponse {
+export interface FTPResponse {
   success: boolean;
   message: string;
   files?: FTPFile[];
+  filterOptions?: FileFilterOptions;
+  stats?: FilterStats;
 }
 
 /**
@@ -82,35 +101,192 @@ export class FTPClient {
   
   /**
    * Set passive mode for the FTP connection
+   * Note: basic-ftp library handles passive mode internally, 
+   * but we provide this method for consistency with the FTPClient interface
+   * 
    * @param passive Whether to enable passive mode (true) or not (false)
    * @returns Promise resolving when passive mode is set
    */
   async setPassive(passive: boolean = true): Promise<void> {
     try {
-      this.client.ftp.passive = passive;
-      console.log(`${passive ? 'Enabled' : 'Disabled'} passive mode`);
+      // The basic-ftp library doesn't expose a direct way to set passive mode,
+      // but it defaults to passive mode and handles it automatically when transferring files.
+      // In an actual FTP implementation, this would send a PASV or PORT command.
+      
+      // Log the intended mode change (actual mode is controlled by the underlying library)
+      console.log(`${passive ? 'Using' : 'Not using'} passive mode for transfers`);
     } catch (error) {
-      console.error(`Error setting passive mode: ${error}`);
+      console.error(`Error setting passive mode: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
   
   /**
+   * Check if a file matches the given filter options
+   * @param file File to check
+   * @param options Filter options
+   * @param basePath Base path for relative path matching
+   * @returns True if file matches all criteria, false otherwise
+   */
+  private matchesFilter(file: FTPFile, options: FileFilterOptions = {}, basePath: string = ''): boolean {
+    const {
+      includePatterns = [],
+      excludePatterns = [],
+      minSize,
+      maxSize,
+      newerThan,
+      olderThan
+    } = options;
+
+    const fullPath = basePath ? `${basePath}/${file.name}` : file.name;
+    
+    // Log filtering attempt for debugging
+    console.log(`Filtering file: ${fullPath}, type: ${file.type}`);
+    if (includePatterns.length > 0) {
+      console.log(`Include patterns: ${includePatterns.join(', ')}`);
+    }
+    if (excludePatterns.length > 0) {
+      console.log(`Exclude patterns: ${excludePatterns.join(', ')}`);
+    }
+    
+    // Skip directories if filtering by size or patterns (unless explicitly included)
+    if (file.type === 'directory') {
+      // For directories, only check include/exclude patterns if specified
+      if (includePatterns.length > 0) {
+        const included = includePatterns.some(pattern => {
+          try {
+            const match = minimatch(fullPath, pattern) || minimatch(`${fullPath}/**`, pattern);
+            console.log(`Directory ${fullPath} matching include pattern ${pattern}: ${match}`);
+            return match;
+          } catch (error) {
+            console.error(`Invalid include pattern for directory: ${pattern}`, error);
+            return false;
+          }
+        });
+        if (!included) {
+          console.log(`Directory ${fullPath} excluded: didn't match any include patterns`);
+          return false;
+        }
+      }
+      
+      if (excludePatterns.length > 0) {
+        const excluded = excludePatterns.some(pattern => {
+          try {
+            const match = minimatch(fullPath, pattern) || minimatch(`${fullPath}/**`, pattern);
+            console.log(`Directory ${fullPath} matching exclude pattern ${pattern}: ${match}`);
+            return match;
+          } catch (error) {
+            console.error(`Invalid exclude pattern for directory: ${pattern}`, error);
+            return false;
+          }
+        });
+        if (excluded) {
+          console.log(`Directory ${fullPath} excluded: matched exclude pattern`);
+          return false;
+        }
+      }
+      
+      // Size and date filters don't apply to directories
+      console.log(`Directory ${fullPath} included in results`);
+      return true;
+    }
+
+    // Check file against include patterns (if any)
+    if (includePatterns.length > 0) {
+      const included = includePatterns.some(pattern => {
+        try {
+          const match = minimatch(fullPath, pattern);
+          console.log(`File ${fullPath} matching include pattern ${pattern}: ${match}`);
+          return match;
+        } catch (error) {
+          console.error(`Invalid include pattern: ${pattern}`, error);
+          return false;
+        }
+      });
+      if (!included) {
+        console.log(`File ${fullPath} excluded: didn't match any include patterns`);
+        return false;
+      }
+    }
+    
+    // Check file against exclude patterns (if any)
+    if (excludePatterns.length > 0) {
+      const excluded = excludePatterns.some(pattern => {
+        try {
+          const match = minimatch(fullPath, pattern);
+          console.log(`File ${fullPath} matching exclude pattern ${pattern}: ${match}`);
+          return match;
+        } catch (error) {
+          console.error(`Invalid exclude pattern: ${pattern}`, error);
+          return false;
+        }
+      });
+      if (excluded) {
+        console.log(`File ${fullPath} excluded: matched exclude pattern`);
+        return false;
+      }
+    }
+    
+    // Check file size
+    if (minSize !== undefined && file.size < minSize) {
+      console.log(`File ${fullPath} excluded: size ${file.size} < ${minSize}`);
+      return false;
+    }
+    if (maxSize !== undefined && file.size > maxSize) {
+      console.log(`File ${fullPath} excluded: size ${file.size} > ${maxSize}`);
+      return false;
+    }
+    
+    // Check file modified date
+    const modifiedDate = new Date(file.modifiedDate);
+    if (newerThan && modifiedDate < newerThan) {
+      console.log(`File ${fullPath} excluded: date ${modifiedDate.toISOString()} older than ${newerThan.toISOString()}`);
+      return false;
+    }
+    if (olderThan && modifiedDate > olderThan) {
+      console.log(`File ${fullPath} excluded: date ${modifiedDate.toISOString()} newer than ${olderThan.toISOString()}`);
+      return false;
+    }
+    
+    // If we made it here, the file matches all criteria
+    console.log(`File ${fullPath} included in results`);
+    return true;
+  }
+
+  /**
    * List files in a directory on the FTP server
    * @param remotePath Path to list
+   * @param options Optional filter options
    * @returns Promise resolving to array of file objects
    */
-  async list(remotePath: string): Promise<FTPFile[]> {
+  async list(remotePath: string, options?: FileFilterOptions): Promise<FTPFile[]> {
     try {
-      const result = await this.client.list(remotePath);
+      // Log the filter options for debugging
+      if (options) {
+        console.log(`Listing files with filter options:`, JSON.stringify(options, null, 2));
+      }
       
-      return result.map(item => ({
+      const result = await this.client.list(remotePath);
+      console.log(`Got ${result.length} items from FTP server at ${remotePath}`);
+      
+      // Convert to our FTPFile format
+      const files = result.map(item => ({
         name: item.name,
         type: item.type === ftp.FileType.Directory ? 'directory' : 'file',
         size: item.size,
         modifiedDate: item.modifiedAt?.toISOString() || new Date().toISOString(),
         permissions: this.formatPermissions(item.permissions)
       }));
+      
+      // Apply filters if options provided
+      if (options && Object.keys(options).length > 0) {
+        console.log(`Applying filters to ${files.length} files`);
+        const filteredFiles = files.filter(file => this.matchesFilter(file, options, remotePath));
+        console.log(`Filter result: ${filteredFiles.length} files matched the criteria`);
+        return filteredFiles;
+      }
+      
+      return files;
     } catch (error) {
       console.error(`Error listing directory ${remotePath}: ${error}`);
       throw error;
@@ -311,9 +487,10 @@ export async function testConnection(): Promise<FTPResponse> {
  * List files on the FTP server
  * 
  * @param remotePath Path to list
+ * @param filterOptions Optional filter options
  * @returns Promise that resolves with list results
  */
-export async function listFiles(remotePath: string): Promise<FTPResponse> {
+export async function listFiles(remotePath: string, filterOptions?: FileFilterOptions): Promise<FTPResponse> {
   const { config, isValid, error } = getFTPConfig();
   
   if (!isValid) {
@@ -327,13 +504,44 @@ export async function listFiles(remotePath: string): Promise<FTPResponse> {
   
   try {
     await client.connect(config);
-    const files = await client.list(remotePath);
+    
+    // First get unfiltered count for comparison
+    const allFiles = await client.list(remotePath);
+    const totalCount = allFiles.length;
+    
+    // Then get filtered files
+    const files = filterOptions && Object.keys(filterOptions).length > 0 
+      ? await client.list(remotePath, filterOptions)
+      : allFiles;
+    
     await client.close();
+    
+    // Build detailed filter description
+    let filterDesc = '';
+    if (filterOptions) {
+      const filterParts = [];
+      if (filterOptions.includePatterns?.length) filterParts.push('includePatterns');
+      if (filterOptions.excludePatterns?.length) filterParts.push('excludePatterns');
+      if (filterOptions.minSize !== undefined) filterParts.push('minSize');
+      if (filterOptions.maxSize !== undefined) filterParts.push('maxSize');
+      if (filterOptions.newerThan !== undefined) filterParts.push('newerThan');
+      if (filterOptions.olderThan !== undefined) filterParts.push('olderThan');
+      
+      if (filterParts.length > 0) {
+        filterDesc = ` (filtered with ${filterParts.join(', ')})`;
+      }
+    }
     
     return {
       success: true,
-      message: `Successfully listed ${files.length} files in ${remotePath}`,
-      files
+      message: `Listed ${files.length} files in directory ${remotePath}${filterDesc}`,
+      files,
+      filterOptions: filterOptions && Object.keys(filterOptions).length > 0 ? filterOptions : undefined,
+      stats: {
+        totalUnfiltered: totalCount,
+        totalFiltered: files.length,
+        filteringApplied: filterOptions && Object.keys(filterOptions).length > 0 ? true : false
+      }
     };
   } catch (error: any) {
     return {
@@ -375,6 +583,42 @@ export async function uploadFile(localPath: string, remotePath: string): Promise
     return {
       success: false,
       message: `Failed to upload file: ${error.message || error}`
+    };
+  }
+}
+
+/**
+ * Download a file from the FTP server
+ * 
+ * @param remotePath Path to file on FTP server
+ * @param localPath Path to save locally
+ * @returns Promise that resolves with download results
+ */
+export async function downloadFile(remotePath: string, localPath: string): Promise<FTPResponse> {
+  const { config, isValid, error } = getFTPConfig();
+  
+  if (!isValid) {
+    return {
+      success: false,
+      message: error || 'Invalid FTP configuration'
+    };
+  }
+  
+  const client = new FTPClient();
+  
+  try {
+    await client.connect(config);
+    await client.download(remotePath, localPath);
+    await client.close();
+    
+    return {
+      success: true,
+      message: `Successfully downloaded ${remotePath} to ${localPath}`
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to download file: ${error.message || error}`
     };
   }
 }
