@@ -5,6 +5,80 @@ import * as path from 'path';
 import { minimatch } from 'minimatch';
 import { FTPConnection } from '@shared/schema';
 
+/**
+ * Helper function to properly match a filename against a glob pattern
+ * @param filename Filename or path to match
+ * @param pattern Glob pattern to match against
+ * @returns Boolean indicating if the file matches the pattern
+ */
+function matchGlobPattern(filename: string, pattern: string): boolean {
+  try {
+    // Log the matching attempt for debugging
+    console.log(`Attempting to match '${filename}' with pattern '${pattern}'`);
+    
+    // Simplest case: direct match
+    if (minimatch(filename, pattern)) {
+      console.log(`Direct match: ${filename} matches ${pattern}`);
+      return true;
+    }
+    
+    // Try basename matching
+    const basename = path.basename(filename);
+    if (minimatch(basename, pattern)) {
+      console.log(`Basename match: ${basename} matches ${pattern}`);
+      return true;
+    }
+    
+    // Try with different path separators
+    const normalizedFilename = filename.replace(/\\/g, '/');
+    if (minimatch(normalizedFilename, pattern)) {
+      console.log(`Normalized path match: ${normalizedFilename} matches ${pattern}`);
+      return true;
+    }
+    
+    // For extremely simple patterns like "*.csv", match against basename
+    if (pattern.startsWith('*') && basename.endsWith(pattern.substring(1))) {
+      console.log(`Simple suffix match: ${basename} ends with ${pattern.substring(1)}`);
+      return true;
+    }
+    
+    // For simple prefix patterns like "properties_*", match with startsWith
+    if (pattern.endsWith('*') && basename.startsWith(pattern.substring(0, pattern.length - 1))) {
+      console.log(`Simple prefix match: ${basename} starts with ${pattern.substring(0, pattern.length - 1)}`);
+      return true;
+    }
+    
+    // Special case for direct string match with * on patterns like "properties_*"
+    if (pattern.endsWith('*')) {
+      const prefix = pattern.substring(0, pattern.length - 1);
+      if (basename.startsWith(prefix)) {
+        console.log(`Manual prefix match: ${basename} starts with ${prefix}`);
+        return true;
+      }
+    }
+    
+    // Try with explicit minimatch options
+    if (minimatch(filename, pattern, { matchBase: true })) {
+      console.log(`MatchBase match: ${filename} matches ${pattern} with matchBase option`);
+      return true;
+    }
+    
+    // Handle escaped special characters in filenames
+    const escapedPattern = pattern.replace(/([.+^${}()|[\]\\])/g, '\\$1')
+                              .replace(/\*/g, '.*');
+    if (new RegExp(`^${escapedPattern}$`).test(basename)) {
+      console.log(`RegExp match: ${basename} matches regex ${escapedPattern}`);
+      return true;
+    }
+    
+    console.log(`No match found for ${filename} with pattern ${pattern}`);
+    return false;
+  } catch (error) {
+    console.error(`Error matching glob pattern: ${error}`);
+    return false;
+  }
+}
+
 interface FTPConfig {
   host: string;
   port: number;
@@ -155,14 +229,57 @@ export class FTPClient {
       if (includePatterns.length > 0) {
         const included = includePatterns.some(pattern => {
           try {
-            const match = minimatch(fullPath, pattern) || minimatch(`${fullPath}/**`, pattern);
-            console.log(`Directory ${fullPath} matching include pattern ${pattern}: ${match}`);
-            return match;
+            // Extra debugging for pattern matching
+            console.log(`Testing directory '${file.name}' against pattern '${pattern}'`);
+            
+            // Always include directory if it's part of a path pattern (like "dir/subdir/*.txt")
+            if (pattern.includes('/')) {
+              console.log(`Directory ${fullPath} included due to path pattern ${pattern}`);
+              return true;
+            }
+            
+            // Try direct basename matching
+            const basename = path.basename(file.name);
+            let match = minimatch(basename, pattern);
+            
+            if (match) {
+              console.log(`Direct basename match for directory: ${basename} matches ${pattern}`);
+              return true;
+            }
+            
+            // Try with matchBase
+            match = minimatch(file.name, pattern, { matchBase: true });
+            if (match) {
+              console.log(`MatchBase match for directory: ${file.name} matches ${pattern}`);
+              return true;
+            }
+            
+            // For simple prefix patterns
+            if (pattern.endsWith('*')) {
+              const prefix = pattern.substring(0, pattern.length - 1);
+              if (basename.startsWith(prefix)) {
+                console.log(`Simple prefix match for directory: ${basename} starts with ${prefix}`);
+                return true;
+              }
+            }
+            
+            // For simple suffix patterns
+            if (pattern.startsWith('*')) {
+              const suffix = pattern.substring(1);
+              if (basename.endsWith(suffix)) {
+                console.log(`Simple suffix match for directory: ${basename} ends with ${suffix}`);
+                return true;
+              }
+            }
+            
+            console.log(`Directory ${fullPath} not matching include pattern ${pattern}`);
+            return false;
           } catch (error) {
             console.error(`Invalid include pattern for directory: ${pattern}`, error);
             return false;
           }
         });
+        
         if (!included) {
           console.log(`Directory ${fullPath} excluded: didn't match any include patterns`);
           return false;
@@ -172,14 +289,51 @@ export class FTPClient {
       if (excludePatterns.length > 0) {
         const excluded = excludePatterns.some(pattern => {
           try {
-            const match = minimatch(fullPath, pattern) || minimatch(`${fullPath}/**`, pattern);
-            console.log(`Directory ${fullPath} matching exclude pattern ${pattern}: ${match}`);
-            return match;
+            // Extra debugging for pattern matching
+            console.log(`Testing directory '${file.name}' for exclude pattern '${pattern}'`);
+            
+            // Try direct basename matching
+            const basename = path.basename(file.name);
+            let match = minimatch(basename, pattern);
+            
+            if (match) {
+              console.log(`Direct basename match for directory exclusion: ${basename} matches ${pattern}`);
+              return true;
+            }
+            
+            // Try with matchBase
+            match = minimatch(file.name, pattern, { matchBase: true });
+            if (match) {
+              console.log(`MatchBase match for directory exclusion: ${file.name} matches ${pattern}`);
+              return true;
+            }
+            
+            // For simple prefix patterns
+            if (pattern.endsWith('*')) {
+              const prefix = pattern.substring(0, pattern.length - 1);
+              if (basename.startsWith(prefix)) {
+                console.log(`Simple prefix match for directory exclusion: ${basename} starts with ${prefix}`);
+                return true;
+              }
+            }
+            
+            // For simple suffix patterns
+            if (pattern.startsWith('*')) {
+              const suffix = pattern.substring(1);
+              if (basename.endsWith(suffix)) {
+                console.log(`Simple suffix match for directory exclusion: ${basename} ends with ${suffix}`);
+                return true;
+              }
+            }
+            
+            console.log(`Directory ${fullPath} not matching exclude pattern ${pattern}`);
+            return false;
           } catch (error) {
             console.error(`Invalid exclude pattern for directory: ${pattern}`, error);
             return false;
           }
         });
+        
         if (excluded) {
           console.log(`Directory ${fullPath} excluded: matched exclude pattern`);
           return false;
@@ -193,16 +347,108 @@ export class FTPClient {
 
     // Check file against include patterns (if any)
     if (includePatterns.length > 0) {
+      console.log(`DEBUG Include patterns (${includePatterns.length}): ` + JSON.stringify(includePatterns));
+      
+      // Test if the file matches at least one include pattern
       const included = includePatterns.some(pattern => {
         try {
-          const match = minimatch(fullPath, pattern);
-          console.log(`File ${fullPath} matching include pattern ${pattern}: ${match}`);
-          return match;
+          // Get the basename for pattern matching
+          const basename = path.basename(file.name);
+          
+          console.log(`DEBUG INCLUDE CHECK: File='${basename}', Pattern='${pattern}', PatternType=${typeof pattern}`);
+          
+          if (!pattern) {
+            console.log(`DEBUG: Skipping empty pattern`);
+            return false;
+          }
+          
+          // EXTREME DEBUG - direct string comparison first
+          if (basename === pattern) {
+            console.log(`EXACT MATCH: '${basename}' is identical to pattern '${pattern}'`);
+            return true;
+          }
+          
+          // Special case for CSV pattern - the most common case
+          if (pattern === '*.csv') {
+            const hasCsvExtension = basename.toLowerCase().endsWith('.csv');
+            console.log(`DEBUG *.csv check: ${basename} ends with .csv? ${hasCsvExtension}`);
+            if (hasCsvExtension) {
+              console.log(`CSV EXTENSION MATCH: ${basename} is a CSV file`);
+              return true;
+            }
+          }
+        
+          // Special case for property files
+          if (pattern === 'properties_*') {
+            const isPropertyFile = basename.toLowerCase().startsWith('properties_');
+            console.log(`DEBUG properties_* check: ${basename} starts with properties_? ${isPropertyFile}`);
+            if (isPropertyFile) {
+              console.log(`PROPERTIES FILE MATCH: ${basename} is a properties file`);
+              return true;
+            }
+          }
+          
+          // Check extension match - case insensitive
+          if (pattern.startsWith('*.')) {
+            const extension = pattern.substring(1); // e.g., ".csv" from "*.csv"
+            const hasExtension = basename.toLowerCase().endsWith(extension.toLowerCase());
+            console.log(`DEBUG extension check: ${basename} ends with ${extension}? ${hasExtension}`);
+            
+            if (hasExtension) {
+              console.log(`EXTENSION MATCH: ${basename} ends with ${extension}`);
+              return true;
+            }
+          }
+          
+          // Check prefix match - case insensitive
+          if (pattern.endsWith('*') && pattern.length > 1) {
+            const prefix = pattern.substring(0, pattern.length - 1); // e.g., "properties_" from "properties_*"
+            const hasPrefix = basename.toLowerCase().startsWith(prefix.toLowerCase());
+            console.log(`DEBUG prefix check: ${basename} starts with ${prefix}? ${hasPrefix}`);
+            
+            if (hasPrefix) {
+              console.log(`PREFIX MATCH: ${basename} starts with ${prefix}`);
+              return true;
+            }
+          }
+          
+          // Very basic * wildcard test
+          if (pattern.includes('*')) {
+            // Convert glob pattern to regex pattern
+            const regexPattern = pattern
+              .replace(/\./g, '\\.') // escape dots
+              .replace(/\*/g, '.*'); // convert * to .*
+            
+            const regex = new RegExp(`^${regexPattern}$`, 'i');
+            const regexMatch = regex.test(basename);
+            console.log(`DEBUG regex check: ${basename} matches ${regex}? ${regexMatch}`);
+            
+            if (regexMatch) {
+              console.log(`REGEX MATCH: ${basename} matches regex ${regex}`);
+              return true;
+            }
+          }
+          
+          // Last resort - use minimatch
+          console.log(`DEBUG minimatch check: ${basename} against ${pattern}`);
+          const minimatchResult = minimatch(basename, pattern);
+          console.log(`DEBUG minimatch result: ${minimatchResult}`);
+          
+          if (minimatchResult) {
+            console.log(`MINIMATCH success: ${basename} matches ${pattern}`);
+            return true;
+          }
+          
+          console.log(`DEBUG: No pattern match methods worked for ${basename} with pattern ${pattern}`);
+          return false;
         } catch (error) {
-          console.error(`Invalid include pattern: ${pattern}`, error);
+          console.error(`Error in pattern matching: ${error}`);
           return false;
         }
       });
+      
+      console.log(`DEBUG RESULT: File ${fullPath} matching include pattern ${includePatterns}: ${included}`);
+      
       if (!included) {
         console.log(`File ${fullPath} excluded: didn't match any include patterns`);
         return false;
@@ -213,14 +459,62 @@ export class FTPClient {
     if (excludePatterns.length > 0) {
       const excluded = excludePatterns.some(pattern => {
         try {
-          const match = minimatch(fullPath, pattern);
-          console.log(`File ${fullPath} matching exclude pattern ${pattern}: ${match}`);
-          return match;
+          // Get the basename for pattern matching
+          const basename = path.basename(file.name);
+          
+          console.log(`Checking if '${basename}' should be excluded with pattern '${pattern}'`);
+          
+          // Special case for CSV pattern - the most common case
+          if (pattern === '*.csv') {
+            const hasCsvExtension = basename.toLowerCase().endsWith('.csv');
+            if (hasCsvExtension) {
+              console.log(`CSV EXTENSION EXCLUDE MATCH: ${basename} is a CSV file to exclude`);
+              return true;
+            }
+          }
+        
+          // Special case for property files
+          if (pattern === 'properties_*') {
+            const isPropertyFile = basename.toLowerCase().startsWith('properties_');
+            if (isPropertyFile) {
+              console.log(`PROPERTIES FILE EXCLUDE MATCH: ${basename} is a properties file to exclude`);
+              return true;
+            }
+          }
+          
+          // Very direct filename endsWith check for extension patterns
+          if (pattern.startsWith('*.')) {
+            const extension = pattern.substring(1); // e.g., ".csv" from "*.csv"
+            if (basename.toLowerCase().endsWith(extension.toLowerCase())) {
+              console.log(`EXTENSION DIRECT EXCLUDE MATCH: ${basename} ends with ${extension}`);
+              return true;
+            }
+          }
+          
+          // Direct startsWith check for prefix patterns 
+          if (pattern.endsWith('*')) {
+            const prefix = pattern.substring(0, pattern.length - 1); // e.g., "properties_" from "properties_*"
+            if (basename.toLowerCase().startsWith(prefix.toLowerCase())) {
+              console.log(`PREFIX DIRECT EXCLUDE MATCH: ${basename} starts with ${prefix}`);
+              return true;
+            }
+          }
+          
+          // Last resort - use minimatch
+          console.log(`Trying minimatch as last resort for exclude: ${basename} against ${pattern}`);
+          if (minimatch(basename, pattern)) {
+            console.log(`MINIMATCH exclude success: ${basename} matches ${pattern}`);
+            return true;
+          }
+          
+          console.log(`No exclude pattern match methods worked for ${basename} with pattern ${pattern}`);
+          return false;
         } catch (error) {
-          console.error(`Invalid exclude pattern: ${pattern}`, error);
+          console.error(`Error in exclude pattern matching: ${error}`);
           return false;
         }
       });
+      
       if (excluded) {
         console.log(`File ${fullPath} excluded: matched exclude pattern`);
         return false;
@@ -605,9 +899,34 @@ export async function downloadFile(remotePath: string, localPath: string): Promi
   }
   
   const client = new FTPClient();
+  let downloadError: any = null;
   
   try {
+    console.log(`Attempting to download ${remotePath} to ${localPath}`);
     await client.connect(config);
+    
+    // Check if file exists before attempting download
+    try {
+      // List parent directory and check if file exists
+      const pathParts = remotePath.split('/');
+      const filename = pathParts.pop() || '';
+      const parentDir = pathParts.join('/') || '/';
+      
+      console.log(`Checking if file ${filename} exists in ${parentDir}`);
+      const files = await client.list(parentDir);
+      const fileExists = files.some(file => file.name === filename);
+      
+      if (!fileExists) {
+        throw new Error(`File ${filename} does not exist in ${parentDir}`);
+      }
+      
+      console.log(`File ${filename} found, proceeding with download`);
+    } catch (listError: any) {
+      console.error(`Error checking file existence: ${listError.message}`);
+      // Continue with download attempt anyway
+    }
+    
+    // Attempt the download
     await client.download(remotePath, localPath);
     await client.close();
     
@@ -616,9 +935,33 @@ export async function downloadFile(remotePath: string, localPath: string): Promi
       message: `Successfully downloaded ${remotePath} to ${localPath}`
     };
   } catch (error: any) {
+    downloadError = error;
+    console.error(`Download error: ${error.message}`, error);
+    
+    // Try to close the client connection even after error
+    try {
+      await client.close();
+    } catch (closeError) {
+      console.error('Error closing FTP client after download error:', closeError);
+    }
+    
+    // Format a more user-friendly error message
+    let errorMessage = error.message || String(error);
+    
+    // Handle specific FTP error codes
+    if (errorMessage.includes('550')) {
+      if (errorMessage.includes('not supported')) {
+        errorMessage = `The FTP server does not support downloading '${remotePath}'. The file may not exist or server configuration prevents downloads.`;
+      } else if (errorMessage.includes('No such file')) {
+        errorMessage = `File '${remotePath}' was not found on the FTP server.`;
+      } else {
+        errorMessage = `Unable to download '${remotePath}'. Error 550: ${errorMessage}`;
+      }
+    }
+    
     return {
       success: false,
-      message: `Failed to download file: ${error.message || error}`
+      message: `Failed to download file: ${errorMessage}`
     };
   }
 }

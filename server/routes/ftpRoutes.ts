@@ -131,9 +131,19 @@ router.get('/list', async (req: Request, res: Response) => {
     
     // Handle include patterns
     if (req.query.include) {
-      filterOptions.includePatterns = Array.isArray(req.query.include) 
-        ? (req.query.include as string[]) 
-        : [(req.query.include as string)];
+      const includeValue = req.query.include;
+      console.log(`Raw include value type: ${typeof includeValue}, value: ${JSON.stringify(includeValue)}`);
+      
+      filterOptions.includePatterns = Array.isArray(includeValue) 
+        ? (includeValue as string[]) 
+        : [includeValue as string];
+      
+      console.log(`FTP route include patterns: ${JSON.stringify(filterOptions.includePatterns)}`);
+      
+      // Test some simple cases directly in the route handler
+      if (filterOptions.includePatterns.includes("*.csv")) {
+        console.log("DEBUG: Include pattern contains *.csv - this should match CSV files");
+      }
     }
     
     // Handle exclude patterns
@@ -141,6 +151,7 @@ router.get('/list', async (req: Request, res: Response) => {
       filterOptions.excludePatterns = Array.isArray(req.query.exclude) 
         ? (req.query.exclude as string[]) 
         : [(req.query.exclude as string)];
+      console.log(`FTP route exclude patterns: ${JSON.stringify(filterOptions.excludePatterns)}`);
     }
     
     // Handle size filters
@@ -323,13 +334,24 @@ router.get('/download', async (req: Request, res: Response) => {
       });
     }
 
-    const remotePath = req.query.path as string;
-    const filename = req.query.filename as string;
+    const remotePath = req.query.remotePath as string;
+    const localPathParam = req.query.localPath as string;
     
-    if (!remotePath || !filename) {
+    if (!remotePath) {
       return res.status(400).json({
         success: false,
-        message: 'Path and filename are required'
+        message: 'Remote path is required'
+      });
+    }
+
+    // Extract filename from the remote path
+    const pathParts = remotePath.split('/');
+    const filename = pathParts[pathParts.length - 1];
+    
+    if (!filename) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid remote path - no filename detected'
       });
     }
 
@@ -339,18 +361,21 @@ router.get('/download', async (req: Request, res: Response) => {
       await fsPromises.mkdir(tempDir, { recursive: true });
     }
     
-    // Temporary local file path
-    const localFilePath = path.join(tempDir, filename);
+    // Use provided local path or create a temporary one
+    const localFilePath = localPathParam || path.join(tempDir, filename);
     tempFilePath = localFilePath;
     
-    // Construct full remote path
-    const fullRemotePath = `${remotePath}${remotePath.endsWith('/') ? '' : '/'}${filename}`;
+    // Ensure the directory for the local file exists
+    const localDir = path.dirname(localFilePath);
+    if (!fs.existsSync(localDir)) {
+      await fsPromises.mkdir(localDir, { recursive: true });
+    }
     
     // Use dynamic import to get the ftpService module
     const ftpService = await import('../services/ftpService');
     
-    // Create a temporary file to capture the download content
-    const response = await ftpService.downloadFile(fullRemotePath, localFilePath);
+    // Download the file
+    const response = await ftpService.downloadFile(remotePath, localFilePath);
     
     if (!response.success) {
       throw new Error(response.message);
@@ -361,7 +386,11 @@ router.get('/download', async (req: Request, res: Response) => {
       action: 'File Downloaded from FTP',
       icon: 'download',
       iconColor: 'blue',
-      details: formatActivityDetails({ path: remotePath, filename })
+      details: formatActivityDetails({ 
+        remotePath, 
+        localPath: localFilePath,
+        filename
+      })
     });
     
     // Set content disposition header for download
@@ -373,33 +402,35 @@ router.get('/download', async (req: Request, res: Response) => {
     
     // Clean up the temporary file after it's been sent
     fileStream.on('end', async () => {
-      try {
-        if (tempFilePath) {
+      // Only clean up if it's a temporary file (not user-provided local path)
+      if (tempFilePath && !localPathParam) {
+        try {
           await fsPromises.unlink(tempFilePath);
           tempFilePath = null;
+        } catch (error) {
+          console.error('Failed to delete temporary file:', error);
         }
-      } catch (error) {
-        console.error('Failed to delete temporary file:', error);
       }
     });
     
     // Handle unexpected disconnection
     req.on('close', async () => {
-      try {
-        if (tempFilePath) {
+      // Only clean up if it's a temporary file (not user-provided local path)
+      if (tempFilePath && !localPathParam) {
+        try {
           await fsPromises.unlink(tempFilePath);
           tempFilePath = null;
+        } catch (error) {
+          console.error('Failed to delete temporary file after connection close:', error);
         }
-      } catch (error) {
-        console.error('Failed to delete temporary file after connection close:', error);
       }
     });
     
   } catch (error: any) {
     console.error('FTP Download Error:', error);
     
-    // Clean up any temporary file if it exists
-    if (tempFilePath) {
+    // Clean up any temporary file if it exists (only if not user-provided)
+    if (tempFilePath && !(req.query.localPath as string)) {
       try {
         await fsPromises.unlink(tempFilePath);
       } catch (unlinkError) {
@@ -413,8 +444,8 @@ router.get('/download', async (req: Request, res: Response) => {
       icon: 'x-circle',
       iconColor: 'red',
       details: formatActivityDetails({ 
-        path: req.query.path, 
-        filename: req.query.filename,
+        remotePath: req.query.remotePath, 
+        localPath: req.query.localPath,
         error: error.message
       })
     });
