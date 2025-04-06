@@ -8,7 +8,6 @@ import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
-import LandingPage from "@/pages/LandingPage";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -65,12 +64,7 @@ const DevAutoLogin = () => {
 function Router() {
   return (
     <Switch>
-      {/* Public routes */}
-      <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={AuthPage} />
-      
-      {/* Protected routes (require authentication) */}
-      <ProtectedRoute path="/app" component={Dashboard} />
+      <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/calculator" component={CalculatorPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
@@ -97,8 +91,7 @@ function Router() {
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
       <ProtectedRoute path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
-      
-      {/* Catch-all route for 404 */}
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
