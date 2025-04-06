@@ -17,6 +17,7 @@ import CostImpactAnimation from './CostImpactAnimation';
 import ExportPdfDialog from './ExportPdfDialog';
 import ExportExcelDialog from './ExportExcelDialog';
 import PrintDialog from './PrintDialog';
+import QuickExportButton from './QuickExportButton';
 import { PredictiveCostAnalysis } from './PredictiveCostAnalysis';
 import { MaterialSubstitutionEngine } from './MaterialSubstitutionEngine';
 import { Badge } from "@/components/ui/badge";
@@ -1760,6 +1761,33 @@ const BCBSCostCalculator = () => {
                     <FileText className="h-5 w-5 mr-2 text-[#243E4D]" />
                     Export Options
                   </h3>
+                  
+                  <div className="mb-4">
+                    <QuickExportButton 
+                      calculation={{
+                        buildingType: form.getValues().buildingType,
+                        squareFootage: form.getValues().squareFootage,
+                        quality: form.getValues().quality,
+                        buildingAge: form.getValues().buildingAge,
+                        region: form.getValues().region,
+                        complexityFactor: form.getValues().complexityFactor,
+                        conditionFactor: form.getValues().conditionFactor,
+                        baseCost: form.getValues().squareFootage * getBaseCostPerSqFt(form.getValues().buildingType, form.getValues().quality),
+                        regionalMultiplier: getRegionalMultiplier(form.getValues().region),
+                        ageDepreciation: getDepreciationPercentage(form.getValues().buildingAge, form.getValues().buildingType),
+                        totalCost: calculateTotalCost(form.getValues(), materials).totalCost,
+                        materialCosts: materials.map(material => ({
+                          category: 'Materials',
+                          description: material.name,
+                          quantity: material.quantity,
+                          unitCost: material.unitPrice,
+                          totalCost: material.quantity * material.unitPrice
+                        }))
+                      }}
+                    />
+                  </div>
+                  
+                  <h4 className="text-sm font-medium mb-2 text-gray-600">Advanced Export Options</h4>
                   <div className="flex flex-wrap gap-2">
                     <ExportPdfDialog 
                       calculation={{
