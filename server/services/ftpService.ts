@@ -2,81 +2,24 @@ import * as ftp from 'basic-ftp';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
-import { minimatch } from 'minimatch';
+import * as minimatchModule from 'minimatch'; 
 import { FTPConnection } from '@shared/schema';
+import { matchesPattern, shouldInclude, shouldExclude } from '../utils/filePatternMatcher';
+
+// Extract the minimatch function
+const minimatch = minimatchModule.minimatch;
 
 /**
  * Helper function to properly match a filename against a glob pattern
+ * Delegates to the dedicated filePatternMatcher utility
+ * 
  * @param filename Filename or path to match
  * @param pattern Glob pattern to match against
  * @returns Boolean indicating if the file matches the pattern
  */
 function matchGlobPattern(filename: string, pattern: string): boolean {
-  try {
-    // Log the matching attempt for debugging
-    console.log(`Attempting to match '${filename}' with pattern '${pattern}'`);
-    
-    // Simplest case: direct match
-    if (minimatch(filename, pattern)) {
-      console.log(`Direct match: ${filename} matches ${pattern}`);
-      return true;
-    }
-    
-    // Try basename matching
-    const basename = path.basename(filename);
-    if (minimatch(basename, pattern)) {
-      console.log(`Basename match: ${basename} matches ${pattern}`);
-      return true;
-    }
-    
-    // Try with different path separators
-    const normalizedFilename = filename.replace(/\\/g, '/');
-    if (minimatch(normalizedFilename, pattern)) {
-      console.log(`Normalized path match: ${normalizedFilename} matches ${pattern}`);
-      return true;
-    }
-    
-    // For extremely simple patterns like "*.csv", match against basename
-    if (pattern.startsWith('*') && basename.endsWith(pattern.substring(1))) {
-      console.log(`Simple suffix match: ${basename} ends with ${pattern.substring(1)}`);
-      return true;
-    }
-    
-    // For simple prefix patterns like "properties_*", match with startsWith
-    if (pattern.endsWith('*') && basename.startsWith(pattern.substring(0, pattern.length - 1))) {
-      console.log(`Simple prefix match: ${basename} starts with ${pattern.substring(0, pattern.length - 1)}`);
-      return true;
-    }
-    
-    // Special case for direct string match with * on patterns like "properties_*"
-    if (pattern.endsWith('*')) {
-      const prefix = pattern.substring(0, pattern.length - 1);
-      if (basename.startsWith(prefix)) {
-        console.log(`Manual prefix match: ${basename} starts with ${prefix}`);
-        return true;
-      }
-    }
-    
-    // Try with explicit minimatch options
-    if (minimatch(filename, pattern, { matchBase: true })) {
-      console.log(`MatchBase match: ${filename} matches ${pattern} with matchBase option`);
-      return true;
-    }
-    
-    // Handle escaped special characters in filenames
-    const escapedPattern = pattern.replace(/([.+^${}()|[\]\\])/g, '\\$1')
-                              .replace(/\*/g, '.*');
-    if (new RegExp(`^${escapedPattern}$`).test(basename)) {
-      console.log(`RegExp match: ${basename} matches regex ${escapedPattern}`);
-      return true;
-    }
-    
-    console.log(`No match found for ${filename} with pattern ${pattern}`);
-    return false;
-  } catch (error) {
-    console.error(`Error matching glob pattern: ${error}`);
-    return false;
-  }
+  console.log(`Matching '${filename}' with pattern '${pattern}' using filePatternMatcher`);
+  return matchesPattern(filename, pattern);
 }
 
 interface FTPConfig {
@@ -227,58 +170,15 @@ export class FTPClient {
     if (file.type === 'directory') {
       // For directories, only check include/exclude patterns if specified
       if (includePatterns.length > 0) {
-        const included = includePatterns.some(pattern => {
-          try {
-            // Extra debugging for pattern matching
-            console.log(`Testing directory '${file.name}' against pattern '${pattern}'`);
-            
-            // Always include directory if it's part of a path pattern (like "dir/subdir/*.txt")
-            if (pattern.includes('/')) {
-              console.log(`Directory ${fullPath} included due to path pattern ${pattern}`);
-              return true;
-            }
-            
-            // Try direct basename matching
-            const basename = path.basename(file.name);
-            let match = minimatch(basename, pattern);
-            
-            if (match) {
-              console.log(`Direct basename match for directory: ${basename} matches ${pattern}`);
-              return true;
-            }
-            
-            // Try with matchBase
-            match = minimatch(file.name, pattern, { matchBase: true });
-            if (match) {
-              console.log(`MatchBase match for directory: ${file.name} matches ${pattern}`);
-              return true;
-            }
-            
-            // For simple prefix patterns
-            if (pattern.endsWith('*')) {
-              const prefix = pattern.substring(0, pattern.length - 1);
-              if (basename.startsWith(prefix)) {
-                console.log(`Simple prefix match for directory: ${basename} starts with ${prefix}`);
-                return true;
-              }
-            }
-            
-            // For simple suffix patterns
-            if (pattern.startsWith('*')) {
-              const suffix = pattern.substring(1);
-              if (basename.endsWith(suffix)) {
-                console.log(`Simple suffix match for directory: ${basename} ends with ${suffix}`);
-                return true;
-              }
-            }
-            
-            console.log(`Directory ${fullPath} not matching include pattern ${pattern}`);
-            return false;
-          } catch (error) {
-            console.error(`Invalid include pattern for directory: ${pattern}`, error);
-            return false;
-          }
-        });
+        // Always include directory if it's part of a path pattern (like "dir/subdir/*.txt")
+        const hasPathPattern = includePatterns.some(pattern => pattern.includes('/'));
+        if (hasPathPattern) {
+          console.log(`Directory ${fullPath} included due to path pattern in filter`);
+          return true;
+        }
+        
+        // Use our utility to match directory names
+        const included = shouldInclude(file.name, includePatterns);
         
         if (!included) {
           console.log(`Directory ${fullPath} excluded: didn't match any include patterns`);
@@ -287,52 +187,8 @@ export class FTPClient {
       }
       
       if (excludePatterns.length > 0) {
-        const excluded = excludePatterns.some(pattern => {
-          try {
-            // Extra debugging for pattern matching
-            console.log(`Testing directory '${file.name}' for exclude pattern '${pattern}'`);
-            
-            // Try direct basename matching
-            const basename = path.basename(file.name);
-            let match = minimatch(basename, pattern);
-            
-            if (match) {
-              console.log(`Direct basename match for directory exclusion: ${basename} matches ${pattern}`);
-              return true;
-            }
-            
-            // Try with matchBase
-            match = minimatch(file.name, pattern, { matchBase: true });
-            if (match) {
-              console.log(`MatchBase match for directory exclusion: ${file.name} matches ${pattern}`);
-              return true;
-            }
-            
-            // For simple prefix patterns
-            if (pattern.endsWith('*')) {
-              const prefix = pattern.substring(0, pattern.length - 1);
-              if (basename.startsWith(prefix)) {
-                console.log(`Simple prefix match for directory exclusion: ${basename} starts with ${prefix}`);
-                return true;
-              }
-            }
-            
-            // For simple suffix patterns
-            if (pattern.startsWith('*')) {
-              const suffix = pattern.substring(1);
-              if (basename.endsWith(suffix)) {
-                console.log(`Simple suffix match for directory exclusion: ${basename} ends with ${suffix}`);
-                return true;
-              }
-            }
-            
-            console.log(`Directory ${fullPath} not matching exclude pattern ${pattern}`);
-            return false;
-          } catch (error) {
-            console.error(`Invalid exclude pattern for directory: ${pattern}`, error);
-            return false;
-          }
-        });
+        // Use our utility to match directory names against exclude patterns
+        const excluded = shouldExclude(file.name, excludePatterns);
         
         if (excluded) {
           console.log(`Directory ${fullPath} excluded: matched exclude pattern`);
@@ -347,107 +203,12 @@ export class FTPClient {
 
     // Check file against include patterns (if any)
     if (includePatterns.length > 0) {
-      console.log(`DEBUG Include patterns (${includePatterns.length}): ` + JSON.stringify(includePatterns));
+      console.log(`Include patterns (${includePatterns.length}): ${JSON.stringify(includePatterns)}`);
       
-      // Test if the file matches at least one include pattern
-      const included = includePatterns.some(pattern => {
-        try {
-          // Get the basename for pattern matching
-          const basename = path.basename(file.name);
-          
-          console.log(`DEBUG INCLUDE CHECK: File='${basename}', Pattern='${pattern}', PatternType=${typeof pattern}`);
-          
-          if (!pattern) {
-            console.log(`DEBUG: Skipping empty pattern`);
-            return false;
-          }
-          
-          // EXTREME DEBUG - direct string comparison first
-          if (basename === pattern) {
-            console.log(`EXACT MATCH: '${basename}' is identical to pattern '${pattern}'`);
-            return true;
-          }
-          
-          // Special case for CSV pattern - the most common case
-          if (pattern === '*.csv') {
-            const hasCsvExtension = basename.toLowerCase().endsWith('.csv');
-            console.log(`DEBUG *.csv check: ${basename} ends with .csv? ${hasCsvExtension}`);
-            if (hasCsvExtension) {
-              console.log(`CSV EXTENSION MATCH: ${basename} is a CSV file`);
-              return true;
-            }
-          }
-        
-          // Special case for property files
-          if (pattern === 'properties_*') {
-            const isPropertyFile = basename.toLowerCase().startsWith('properties_');
-            console.log(`DEBUG properties_* check: ${basename} starts with properties_? ${isPropertyFile}`);
-            if (isPropertyFile) {
-              console.log(`PROPERTIES FILE MATCH: ${basename} is a properties file`);
-              return true;
-            }
-          }
-          
-          // Check extension match - case insensitive
-          if (pattern.startsWith('*.')) {
-            const extension = pattern.substring(1); // e.g., ".csv" from "*.csv"
-            const hasExtension = basename.toLowerCase().endsWith(extension.toLowerCase());
-            console.log(`DEBUG extension check: ${basename} ends with ${extension}? ${hasExtension}`);
-            
-            if (hasExtension) {
-              console.log(`EXTENSION MATCH: ${basename} ends with ${extension}`);
-              return true;
-            }
-          }
-          
-          // Check prefix match - case insensitive
-          if (pattern.endsWith('*') && pattern.length > 1) {
-            const prefix = pattern.substring(0, pattern.length - 1); // e.g., "properties_" from "properties_*"
-            const hasPrefix = basename.toLowerCase().startsWith(prefix.toLowerCase());
-            console.log(`DEBUG prefix check: ${basename} starts with ${prefix}? ${hasPrefix}`);
-            
-            if (hasPrefix) {
-              console.log(`PREFIX MATCH: ${basename} starts with ${prefix}`);
-              return true;
-            }
-          }
-          
-          // Very basic * wildcard test
-          if (pattern.includes('*')) {
-            // Convert glob pattern to regex pattern
-            const regexPattern = pattern
-              .replace(/\./g, '\\.') // escape dots
-              .replace(/\*/g, '.*'); // convert * to .*
-            
-            const regex = new RegExp(`^${regexPattern}$`, 'i');
-            const regexMatch = regex.test(basename);
-            console.log(`DEBUG regex check: ${basename} matches ${regex}? ${regexMatch}`);
-            
-            if (regexMatch) {
-              console.log(`REGEX MATCH: ${basename} matches regex ${regex}`);
-              return true;
-            }
-          }
-          
-          // Last resort - use minimatch
-          console.log(`DEBUG minimatch check: ${basename} against ${pattern}`);
-          const minimatchResult = minimatch(basename, pattern);
-          console.log(`DEBUG minimatch result: ${minimatchResult}`);
-          
-          if (minimatchResult) {
-            console.log(`MINIMATCH success: ${basename} matches ${pattern}`);
-            return true;
-          }
-          
-          console.log(`DEBUG: No pattern match methods worked for ${basename} with pattern ${pattern}`);
-          return false;
-        } catch (error) {
-          console.error(`Error in pattern matching: ${error}`);
-          return false;
-        }
-      });
+      // Use our new utility function for more reliable pattern matching
+      const included = shouldInclude(file.name, includePatterns);
       
-      console.log(`DEBUG RESULT: File ${fullPath} matching include pattern ${includePatterns}: ${included}`);
+      console.log(`File ${fullPath} matching include patterns: ${included}`);
       
       if (!included) {
         console.log(`File ${fullPath} excluded: didn't match any include patterns`);
@@ -457,63 +218,12 @@ export class FTPClient {
     
     // Check file against exclude patterns (if any)
     if (excludePatterns.length > 0) {
-      const excluded = excludePatterns.some(pattern => {
-        try {
-          // Get the basename for pattern matching
-          const basename = path.basename(file.name);
-          
-          console.log(`Checking if '${basename}' should be excluded with pattern '${pattern}'`);
-          
-          // Special case for CSV pattern - the most common case
-          if (pattern === '*.csv') {
-            const hasCsvExtension = basename.toLowerCase().endsWith('.csv');
-            if (hasCsvExtension) {
-              console.log(`CSV EXTENSION EXCLUDE MATCH: ${basename} is a CSV file to exclude`);
-              return true;
-            }
-          }
-        
-          // Special case for property files
-          if (pattern === 'properties_*') {
-            const isPropertyFile = basename.toLowerCase().startsWith('properties_');
-            if (isPropertyFile) {
-              console.log(`PROPERTIES FILE EXCLUDE MATCH: ${basename} is a properties file to exclude`);
-              return true;
-            }
-          }
-          
-          // Very direct filename endsWith check for extension patterns
-          if (pattern.startsWith('*.')) {
-            const extension = pattern.substring(1); // e.g., ".csv" from "*.csv"
-            if (basename.toLowerCase().endsWith(extension.toLowerCase())) {
-              console.log(`EXTENSION DIRECT EXCLUDE MATCH: ${basename} ends with ${extension}`);
-              return true;
-            }
-          }
-          
-          // Direct startsWith check for prefix patterns 
-          if (pattern.endsWith('*')) {
-            const prefix = pattern.substring(0, pattern.length - 1); // e.g., "properties_" from "properties_*"
-            if (basename.toLowerCase().startsWith(prefix.toLowerCase())) {
-              console.log(`PREFIX DIRECT EXCLUDE MATCH: ${basename} starts with ${prefix}`);
-              return true;
-            }
-          }
-          
-          // Last resort - use minimatch
-          console.log(`Trying minimatch as last resort for exclude: ${basename} against ${pattern}`);
-          if (minimatch(basename, pattern)) {
-            console.log(`MINIMATCH exclude success: ${basename} matches ${pattern}`);
-            return true;
-          }
-          
-          console.log(`No exclude pattern match methods worked for ${basename} with pattern ${pattern}`);
-          return false;
-        } catch (error) {
-          console.error(`Error in exclude pattern matching: ${error}`);
-          return false;
-        }
-      });
+      console.log(`Exclude patterns (${excludePatterns.length}): ${JSON.stringify(excludePatterns)}`);
+      
+      // Use our new utility function for more reliable pattern matching
+      const excluded = shouldExclude(file.name, excludePatterns);
+      
+      console.log(`File ${fullPath} matching exclude patterns: ${excluded}`);
       
       if (excluded) {
         console.log(`File ${fullPath} excluded: matched exclude pattern`);

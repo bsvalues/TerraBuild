@@ -1,0 +1,385 @@
+===== TESTING ENHANCED FILE PATTERN MATCHER =====
+
+----- BASIC PATTERN TESTS -----
+
+CSV Files: Testing pattern: "*.csv" (case-insensitive)
+[FilePatternMatcher] DIRECT CSV MATCH: data.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: DATA.CSV is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: properties_2025.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: data.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: summary.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: .hidden_file.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: values.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: property_values_2024.csv is a CSV file
+[FilePatternMatcher] DIRECT CSV MATCH: property_values_2025.csv is a CSV file
+Matching files:
+  ✅ data.csv
+  ✅ DATA.CSV
+  ✅ properties_2025.csv
+  ✅ archive/data.csv
+  ✅ reports/2025/april/summary.csv
+  ✅ .hidden_file.csv
+  ✅ assessor_data/2025/values.csv
+  ✅ exports/property_values_2024.csv
+  ✅ exports/property_values_2025.csv
+Non-matching files:
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+Text Files: Testing pattern: "*.txt" (case-insensitive)
+[FilePatternMatcher] EXTENSION MATCH: properties_april.txt ends with .txt
+[FilePatternMatcher] EXTENSION MATCH: sample.txt ends with .txt
+Matching files:
+  ✅ properties_april.txt
+  ✅ sample.txt
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ archive/data.csv
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+Properties Files: Testing pattern: "properties_*" (case-insensitive)
+[FilePatternMatcher] PREFIX MATCH: properties_2025.csv starts with properties_
+[FilePatternMatcher] PREFIX MATCH: properties_april.txt starts with properties_
+Matching files:
+  ✅ properties_2025.csv
+  ✅ properties_april.txt
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+Archive Directory: Testing pattern: "archive/*" (case-insensitive)
+[FilePatternMatcher] MINIMATCH FULL PATH SUCCESS: archive/data.csv matches archive/*
+Matching files:
+  ✅ archive/data.csv
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+Reports Directory (Recursive): Testing pattern: "reports/**/*" (case-insensitive)
+[FilePatternMatcher] DEEP PATH MATCH: reports/2025/april/summary.csv matches deep pattern reports/**/*
+Matching files:
+  ✅ reports/2025/april/summary.csv
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+----- CASE SENSITIVITY TESTS -----
+
+CSV Files (case-insensitive): Testing pattern: "*.CSV" (case-insensitive)
+[FilePatternMatcher] EXTENSION MATCH: data.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: DATA.CSV ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: properties_2025.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: data.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: summary.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: .hidden_file.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: values.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: property_values_2024.csv ends with .CSV
+[FilePatternMatcher] EXTENSION MATCH: property_values_2025.csv ends with .CSV
+Matching files:
+  ✅ data.csv
+  ✅ DATA.CSV
+  ✅ properties_2025.csv
+  ✅ archive/data.csv
+  ✅ reports/2025/april/summary.csv
+  ✅ .hidden_file.csv
+  ✅ assessor_data/2025/values.csv
+  ✅ exports/property_values_2024.csv
+  ✅ exports/property_values_2025.csv
+Non-matching files:
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+CSV Files (case-sensitive): Testing pattern: "*.CSV" (case-sensitive)
+[FilePatternMatcher] EXTENSION MATCH: DATA.CSV ends with .CSV
+Matching files:
+  ✅ DATA.CSV
+Non-matching files:
+  ❌ data.csv
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+----- DEEP DIRECTORY PATTERN TESTS -----
+
+Property Values CSV Files: Testing pattern: "**/*_values_*.csv" (case-insensitive)
+[FilePatternMatcher] DEEP PATH MATCH: exports/property_values_2024.csv matches deep pattern **/*_values_*.csv
+[FilePatternMatcher] DEEP PATH MATCH: exports/property_values_2025.csv matches deep pattern **/*_values_*.csv
+Matching files:
+  ✅ exports/property_values_2024.csv
+  ✅ exports/property_values_2025.csv
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ assessor_data/2025/values.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+Assessor Data CSV Files: Testing pattern: "assessor_data/**/*.csv" (case-insensitive)
+[FilePatternMatcher] DEEP PATH MATCH: assessor_data/2025/values.csv matches deep pattern assessor_data/**/*.csv
+Matching files:
+  ✅ assessor_data/2025/values.csv
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ reports/2025/april/summary.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+All 2025 Files: Testing pattern: "**/2025/**" (case-insensitive)
+[FilePatternMatcher] DEEP PATH MATCH: reports/2025/april/summary.csv matches deep pattern **/2025/**
+[FilePatternMatcher] DEEP PATH MATCH: assessor_data/2025/values.csv matches deep pattern **/2025/**
+Matching files:
+  ✅ reports/2025/april/summary.csv
+  ✅ assessor_data/2025/values.csv
+Non-matching files:
+  ❌ data.csv
+  ❌ DATA.CSV
+  ❌ properties_2025.csv
+  ❌ properties_april.txt
+  ❌ sample.txt
+  ❌ archive/data.csv
+  ❌ .hidden_file.csv
+  ❌ image.jpg
+  ❌ document.pdf
+  ❌ archive.zip
+  ❌ backup.tar.gz
+  ❌ exports/property_values_2024.csv
+  ❌ exports/property_values_2025.csv
+  ❌ backups/january/properties.bak
+  ❌ configs/settings.json
+
+----- PATTERN FILTERING TESTS -----
+
+Testing filtering with:
+  Include patterns: ["*.CSV"]
+  Exclude patterns: []
+  Options: {"caseSensitive":false}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+Testing filtering with:
+  Include patterns: ["*.CSV"]
+  Exclude patterns: []
+  Options: {"caseSensitive":true}
+Filtered files:
+  - DATA.CSV
+
+Testing filtering with:
+  Include patterns: ["*.csv"]
+  Exclude patterns: []
+  Options: {"dot":false}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+Testing filtering with:
+  Include patterns: ["*.csv"]
+  Exclude patterns: []
+  Options: {"dot":true}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+Testing filtering with:
+  Include patterns: ["*.csv"]
+  Exclude patterns: ["properties_*"]
+  Options: {"caseSensitive":false}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+Testing filtering with:
+  Include patterns: ["**/*.csv"]
+  Exclude patterns: ["**/2024*","**/backup*"]
+  Options: {"caseSensitive":false}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+----- COMPLEX FILTERING PATTERNS -----
+
+Testing filtering with:
+  Include patterns: ["*.csv","*.txt"]
+  Exclude patterns: ["**/backups/**"]
+  Options: {}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - properties_april.txt
+  - sample.txt
+  - archive/data.csv
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+Testing filtering with:
+  Include patterns: ["**/*.{csv,txt,json}"]
+  Exclude patterns: ["**/archive/**","**/backup*"]
+  Options: {}
+Filtered files:
+  - data.csv
+  - DATA.CSV
+  - properties_2025.csv
+  - properties_april.txt
+  - sample.txt
+  - reports/2025/april/summary.csv
+  - .hidden_file.csv
+  - assessor_data/2025/values.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+  - configs/settings.json
+
+Testing filtering with:
+  Include patterns: ["**/2025/**/*.csv"]
+  Exclude patterns: []
+  Options: {}
+Filtered files:
+  - reports/2025/april/summary.csv
+  - assessor_data/2025/values.csv
+
+Testing filtering with:
+  Include patterns: ["**/reports/**","**/exports/**"]
+  Exclude patterns: []
+  Options: {}
+Filtered files:
+  - reports/2025/april/summary.csv
+  - exports/property_values_2024.csv
+  - exports/property_values_2025.csv
+
+===== TEST COMPLETED =====
