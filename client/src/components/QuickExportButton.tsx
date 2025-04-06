@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FilePlus2, Printer, FileSpreadsheet, FileText } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { FilePlus2, Printer, FileSpreadsheet, FileText, ShieldAlert, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { SimpleDataAnonymizer } from '@/components/DataAnonymizer';
+import { anonymizeCalculationData } from '@/utils/anonymizeData';
 
 interface QuickExportButtonProps {
   /** Content element selector to be exported (defaults to main content area) */
@@ -59,6 +61,9 @@ export default function QuickExportButton({
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<string | null>(null);
+  const [isAnonymized, setIsAnonymized] = useState(false);
+  const [anonymizedData, setAnonymizedData] = useState<any>(null);
+  const [anonymizedCalculation, setAnonymizedCalculation] = useState<any>(null);
 
   // Helper to show a visual animation during export
   const animateExport = (format: string, callback: () => Promise<void>) => {
@@ -135,11 +140,12 @@ export default function QuickExportButton({
         let yPosition = 30;
         
         // If we have calculation data, add a nice summary
-        if (calculation) {
+        const currentCalculation = isAnonymized && anonymizedCalculation ? anonymizedCalculation : calculation;
+        if (currentCalculation) {
           // Building Information Section
           pdf.setTextColor(36, 62, 77);
           pdf.setFontSize(14);
-          pdf.text('Building Cost Calculation Summary', margin, yPosition);
+          pdf.text(`Building Cost Calculation Summary${isAnonymized ? ' (Anonymized)' : ''}`, margin, yPosition);
           yPosition += 8;
           
           pdf.setFontSize(12);
@@ -148,11 +154,11 @@ export default function QuickExportButton({
           
           // Create table with building info
           const buildingInfoData = [
-            ['Building Type:', calculation.buildingType],
-            ['Region:', calculation.region],
-            ['Square Footage:', calculation.squareFootage.toLocaleString() + ' sq.ft.'],
-            ['Complexity Factor:', calculation.complexityFactor.toFixed(2)],
-            ['Condition Factor:', calculation.conditionFactor.toFixed(2)]
+            ['Building Type:', currentCalculation.buildingType],
+            ['Region:', currentCalculation.region],
+            ['Square Footage:', currentCalculation.squareFootage.toLocaleString() + ' sq.ft.'],
+            ['Complexity Factor:', currentCalculation.complexityFactor.toFixed(2)],
+            ['Condition Factor:', currentCalculation.conditionFactor.toFixed(2)]
           ];
           
           // Set table formatting
@@ -184,9 +190,9 @@ export default function QuickExportButton({
           
           // Create table with cost components
           const costComponentsData = [
-            ['Base Cost:', formatCurrency(calculation.baseCost)],
-            ['Regional Multiplier:', `x${calculation.regionalMultiplier.toFixed(2)}`],
-            ['Age Depreciation:', formatPercentage(calculation.ageDepreciation)]
+            ['Base Cost:', formatCurrency(currentCalculation.baseCost)],
+            ['Regional Multiplier:', `x${currentCalculation.regionalMultiplier.toFixed(2)}`],
+            ['Age Depreciation:', formatPercentage(currentCalculation.ageDepreciation)]
           ];
           
           // Draw the cost components table
@@ -210,11 +216,11 @@ export default function QuickExportButton({
           pdf.setFont('helvetica', 'bold');
           pdf.text('TOTAL COST:', margin + 2, yPosition);
           pdf.setTextColor(36, 62, 77);
-          pdf.text(formatCurrency(calculation.totalCost), margin + 50, yPosition);
+          pdf.text(formatCurrency(currentCalculation.totalCost), margin + 50, yPosition);
           yPosition += 10;
           
           // Add material costs if any
-          if (calculation.materialCosts && calculation.materialCosts.length > 0) {
+          if (currentCalculation.materialCosts && currentCalculation.materialCosts.length > 0) {
             pdf.setTextColor(36, 62, 77);
             pdf.text('Material Costs', margin, yPosition);
             yPosition += 6;
@@ -231,7 +237,7 @@ export default function QuickExportButton({
             
             // Table rows
             pdf.setTextColor(0, 0, 0);
-            calculation.materialCosts.forEach((material, index) => {
+            currentCalculation.materialCosts.forEach((material, index) => {
               const isEvenRow = index % 2 === 0;
               if (isEvenRow) {
                 pdf.setFillColor(245, 245, 245);
@@ -304,62 +310,63 @@ export default function QuickExportButton({
   // Export to Excel/CSV
   const exportToExcel = () => {
     animateExport('Excel', async () => {
-      // If data is provided directly, use it
-      let exportData = data;
+      // If data is provided directly, use it (check for anonymized version)
+      let exportData = isAnonymized && anonymizedData ? anonymizedData : data;
       
       // If calculation data is provided, format it for Excel
-      if (!exportData && calculation) {
+      const currentCalculation = isAnonymized && anonymizedCalculation ? anonymizedCalculation : calculation;
+      if (!exportData && currentCalculation) {
         // First add the summary data
         const summaryData = [
           { 
             Category: 'Building Information',
             Description: 'Building Type', 
-            Value: calculation.buildingType 
+            Value: currentCalculation.buildingType 
           },
           { 
             Category: 'Building Information',
             Description: 'Region', 
-            Value: calculation.region 
+            Value: currentCalculation.region 
           },
           { 
             Category: 'Building Information',
             Description: 'Square Footage', 
-            Value: calculation.squareFootage 
+            Value: currentCalculation.squareFootage 
           },
           { 
             Category: 'Building Information',
             Description: 'Complexity Factor', 
-            Value: calculation.complexityFactor 
+            Value: currentCalculation.complexityFactor 
           },
           { 
             Category: 'Building Information',
             Description: 'Condition Factor', 
-            Value: calculation.conditionFactor 
+            Value: currentCalculation.conditionFactor 
           },
           { 
             Category: 'Cost Components',
             Description: 'Base Cost', 
-            Value: formatCurrency(calculation.baseCost) 
+            Value: formatCurrency(currentCalculation.baseCost) 
           },
           { 
             Category: 'Cost Components',
             Description: 'Regional Multiplier', 
-            Value: calculation.regionalMultiplier 
+            Value: currentCalculation.regionalMultiplier 
           },
           { 
             Category: 'Cost Components',
             Description: 'Age Depreciation', 
-            Value: formatPercentage(calculation.ageDepreciation) 
+            Value: formatPercentage(currentCalculation.ageDepreciation) 
           },
           { 
             Category: 'Cost Result',
             Description: 'Total Cost', 
-            Value: formatCurrency(calculation.totalCost) 
+            Value: formatCurrency(currentCalculation.totalCost) 
           }
         ];
         
         // Then add any material costs
-        const materialData = calculation.materialCosts.map(mat => ({
+        const materialData = currentCalculation.materialCosts.map(mat => ({
           Category: mat.category,
           Description: mat.description,
           Quantity: mat.quantity,
@@ -431,6 +438,29 @@ export default function QuickExportButton({
       maximumFractionDigits: 1
     }).format(value);
   };
+  
+  // Handle data anonymization
+  const handleAnonymize = (anonymizedResult: any) => {
+    if (anonymizedResult) {
+      setIsAnonymized(true);
+      
+      // If we have calculation data, store the anonymized version
+      if (calculation && !Array.isArray(anonymizedResult)) {
+        setAnonymizedCalculation(anonymizedResult);
+      }
+      
+      // If we have regular data, store the anonymized version
+      if (data) {
+        setAnonymizedData(anonymizedResult);
+      }
+      
+      toast({
+        title: "Data Anonymized",
+        description: "Your data has been anonymized and is ready for export",
+        variant: "default",
+      });
+    }
+  };
 
   // Print content
   const printContent = () => {
@@ -448,7 +478,8 @@ export default function QuickExportButton({
       
       // Generate enhanced calculation table if calculation data is available
       let calculationHtml = '';
-      if (calculation) {
+      const currentCalculation = isAnonymized && anonymizedCalculation ? anonymizedCalculation : calculation;
+      if (currentCalculation) {
         calculationHtml = `
           <div class="calculation-summary">
             <h3 style="color: #243E4D; margin-top: 20px;">Building Cost Calculation Summary</h3>
@@ -461,23 +492,23 @@ export default function QuickExportButton({
               <tbody>
                 <tr>
                   <td><strong>Building Type</strong></td>
-                  <td>${calculation.buildingType}</td>
+                  <td>${currentCalculation.buildingType}</td>
                 </tr>
                 <tr>
                   <td><strong>Region</strong></td>
-                  <td>${calculation.region}</td>
+                  <td>${currentCalculation.region}</td>
                 </tr>
                 <tr>
                   <td><strong>Square Footage</strong></td>
-                  <td>${calculation.squareFootage.toLocaleString()} sq.ft.</td>
+                  <td>${currentCalculation.squareFootage.toLocaleString()} sq.ft.</td>
                 </tr>
                 <tr>
                   <td><strong>Complexity Factor</strong></td>
-                  <td>${calculation.complexityFactor.toFixed(2)}</td>
+                  <td>${currentCalculation.complexityFactor.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td><strong>Condition Factor</strong></td>
-                  <td>${calculation.conditionFactor.toFixed(2)}</td>
+                  <td>${currentCalculation.conditionFactor.toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
@@ -493,24 +524,24 @@ export default function QuickExportButton({
               <tbody>
                 <tr>
                   <td><strong>Base Cost</strong></td>
-                  <td>${formatCurrency(calculation.baseCost)}</td>
+                  <td>${formatCurrency(currentCalculation.baseCost)}</td>
                 </tr>
                 <tr>
                   <td><strong>Regional Multiplier</strong></td>
-                  <td>x${calculation.regionalMultiplier.toFixed(2)}</td>
+                  <td>x${currentCalculation.regionalMultiplier.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td><strong>Age Depreciation</strong></td>
-                  <td>${formatPercentage(calculation.ageDepreciation)}</td>
+                  <td>${formatPercentage(currentCalculation.ageDepreciation)}</td>
                 </tr>
                 <tr style="font-weight: bold; background-color: #f8f9fa;">
                   <td><strong>TOTAL COST</strong></td>
-                  <td>${formatCurrency(calculation.totalCost)}</td>
+                  <td>${formatCurrency(currentCalculation.totalCost)}</td>
                 </tr>
               </tbody>
             </table>
             
-            ${calculation.materialCosts && calculation.materialCosts.length > 0 ? `
+            ${currentCalculation.materialCosts && currentCalculation.materialCosts.length > 0 ? `
               <h3 style="color: #243E4D; margin-top: 20px;">Material Costs</h3>
               <table>
                 <thead>
@@ -522,7 +553,7 @@ export default function QuickExportButton({
                   </tr>
                 </thead>
                 <tbody>
-                  ${calculation.materialCosts.map(mat => `
+                  ${currentCalculation.materialCosts.map(mat => `
                     <tr>
                       <td>${mat.description}</td>
                       <td>${mat.quantity}</td>
@@ -691,7 +722,7 @@ export default function QuickExportButton({
             <span className="absolute inset-0 bg-gradient-to-r from-[#243E4D]/0 via-[#243E4D]/10 to-[#243E4D]/0 opacity-0 group-hover:opacity-100 duration-700 transform -translate-x-full animate-shimmer"></span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 p-1">
+        <DropdownMenuContent align="end" className="w-56 p-1">
           <DropdownMenuItem 
             onClick={exportToPDF}
             className="flex items-center cursor-pointer"
@@ -713,6 +744,25 @@ export default function QuickExportButton({
             <Printer className="h-4 w-4 mr-2" />
             <span>Print</span>
           </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          <div className="px-2 py-1.5">
+            <div className="text-xs font-medium text-muted-foreground mb-1 pl-1">Privacy Options</div>
+            {isAnonymized ? (
+              <div className="flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md">
+                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                <span className="flex-1">Data anonymized</span>
+              </div>
+            ) : (
+              <SimpleDataAnonymizer
+                data={calculation || data}
+                dataType={calculation ? 'calculation' : 'building'}
+                onAnonymize={handleAnonymize}
+                isAnonymized={isAnonymized}
+              />
+            )}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
