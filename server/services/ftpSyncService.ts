@@ -36,8 +36,13 @@ export class FTPSyncService {
    * Get all enabled sync schedules
    */
   async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
-    const allSchedules = await this.storage.getAllSyncSchedules();
-    return allSchedules.filter(schedule => schedule.enabled === true);
+    try {
+      const allSchedules = await this.storage.getAllSyncSchedules();
+      return allSchedules.filter(schedule => schedule.enabled === true);
+    } catch (error) {
+      console.warn('Failed to fetch sync schedules, database tables may not be set up yet:', error);
+      return [];
+    }
   }
 
   /**
@@ -236,75 +241,126 @@ export class FTPSyncService {
    * Run scheduled jobs that are due
    */
   async runScheduledJobs(): Promise<number> {
-    const now = new Date();
-    const schedules = await this.getEnabledSyncSchedules();
-    let runCount = 0;
-    
-    // Find schedules that are due to run
-    const dueSchedules = schedules.filter(schedule => {
-      if (!schedule.nextRun) return false;
-      return schedule.nextRun <= now && schedule.status !== 'running';
-    });
-    
-    // Run each due schedule
-    for (const schedule of dueSchedules) {
-      try {
-        // Skip if there's an active job for this schedule
-        const jobKey = `${schedule.connectionId}-${schedule.name}`;
-        if (this.activeJobs.get(jobKey)) {
-          continue;
-        }
-        
-        // Execute the job
+    try {
+      const now = new Date();
+      const schedules = await this.getEnabledSyncSchedules();
+      let runCount = 0;
+      
+      // If no schedules found (possibly because table doesn't exist yet), return early
+      if (!schedules || schedules.length === 0) {
+        return 0;
+      }
+      
+      // Find schedules that are due to run
+      const dueSchedules = schedules.filter(schedule => {
+        if (!schedule.nextRun) return false;
+        return schedule.nextRun <= now && schedule.status !== 'running';
+      });
+      
+      // Run each due schedule
+      for (const schedule of dueSchedules) {
+        try {
+          // Skip if there's an active job for this schedule
+          const jobKey = `${schedule.connectionId}-${schedule.name}`;
+          if (this.activeJobs.get(jobKey)) {
+            continue;
+          }
+          
+          // Execute the job
         this.activeJobs.set(jobKey, true);
         
         // Update status to running
-        await this.storage.updateSyncSchedule(schedule.id, { status: 'running' });
+        try {
+          await this.storage.updateSyncSchedule(schedule.id, { status: 'running' });
+        } catch (updateError) {
+          console.error(`Failed to update sync schedule status to running: ${updateError}`);
+          // Continue anyway since this is just a status update
+        }
         
         // Log activity
-        await this.storage.createActivity({
-          action: `Scheduled FTP Sync job '${schedule.name}' started`,
-          icon: 'ri-refresh-line',
-          iconColor: 'warning'
-        });
+        try {
+          await this.storage.createActivity({
+            action: `Scheduled FTP Sync job '${schedule.name}' started`,
+            icon: 'ri-refresh-line',
+            iconColor: 'warning'
+          });
+        } catch (activityError) {
+          // Activity logging failure shouldn't stop the sync job
+          console.warn('Failed to log sync job start activity:', activityError);
+        }
         
         // Execute the sync
-        const result = await this._executeSync(schedule);
+        let result;
+        try {
+          result = await this._executeSync(schedule);
+        } catch (syncError) {
+          console.error(`Error executing sync job '${schedule.name}': ${syncError}`);
+          throw syncError; // Rethrow to be caught by the outer try-catch
+        }
         
         // Update next run time
         const nextRun = this.calculateNextRunTime(schedule);
-        await this.storage.updateSyncSchedule(schedule.id, { 
-          status: result.status, 
-          nextRun,
-          lastRun: new Date() 
-        });
+        try {
+          await this.storage.updateSyncSchedule(schedule.id, { 
+            status: result.status, 
+            nextRun,
+            lastRun: new Date() 
+          });
+        } catch (updateError) {
+          console.error(`Failed to update sync schedule with completed status and next run time: ${updateError}`);
+          // Continue anyway since we already completed the job
+        }
         
         // Log activity
-        await this.storage.createActivity({
-          action: `Scheduled FTP Sync job '${schedule.name}' completed`,
-          icon: 'ri-check-line',
-          iconColor: 'success'
-        });
+        try {
+          await this.storage.createActivity({
+            action: `Scheduled FTP Sync job '${schedule.name}' completed`,
+            icon: 'ri-check-line',
+            iconColor: 'success'
+          });
+        } catch (activityError) {
+          // Activity logging failure shouldn't stop the sync job
+          console.warn('Failed to log sync job completion activity:', activityError);
+        }
         
         runCount++;
       } catch (error) {
         console.error(`Error running scheduled sync job '${schedule.name}':`, error);
         
         // Update status to failed
-        await this.storage.updateSyncSchedule(schedule.id, { status: 'failed' });
+        try {
+          await this.storage.updateSyncSchedule(schedule.id, { status: 'failed' });
+        } catch (updateError) {
+          console.error(`Failed to update sync schedule status to failed: ${updateError}`);
+        }
         
         // Log activity
-        await this.storage.createActivity({
-          action: `Scheduled FTP Sync job '${schedule.name}' failed: ${error.message}`,
-          icon: 'ri-error-warning-line',
-          iconColor: 'danger'
-        });
+        try {
+          await this.storage.createActivity({
+            action: `Scheduled FTP Sync job '${schedule.name}' failed: ${error.message || 'Unknown error'}`,
+            icon: 'ri-error-warning-line',
+            iconColor: 'danger'
+          });
+        } catch (activityError) {
+          // Activity logging failure shouldn't stop the sync job processing
+          console.warn('Failed to log sync job failure activity:', activityError);
+        }
       } finally {
         this.activeJobs.delete(`${schedule.connectionId}-${schedule.name}`);
       }
     }
     
     return runCount;
+    } catch (error) {
+      // Handle error gracefully - expected error on service initialization
+      // when tables don't exist yet
+      if (error?.code === '42P01') { // PostgreSQL code for 'relation does not exist'
+        console.warn('Error running scheduled jobs: database tables may not be set up yet');
+      } else {
+        console.error("Error running scheduled jobs:", error);
+      }
+      return 0;
+    }
   }
 
   /**
@@ -331,40 +387,106 @@ export class FTPSyncService {
     
     try {
       // Create the history record
-      const historyRecord = await this.storage.createSyncHistory(result);
-      result.id = historyRecord.id;
+      try {
+        const historyRecord = await this.storage.createSyncHistory(result);
+        result.id = historyRecord.id;
+      } catch (historyError) {
+        console.error(`Failed to create initial sync history record: ${historyError}`);
+        // Continue anyway since we can still try to perform the sync
+      }
       
       // Get connection details
-      const connection = await this.storage.getFTPConnection(schedule.connectionId);
-      
-      if (!connection) {
-        throw new Error(`FTP connection ${schedule.connectionId} not found`);
+      let connection;
+      try {
+        connection = await this.storage.getFTPConnection(schedule.connectionId);
+        
+        if (!connection) {
+          throw new Error(`FTP connection ${schedule.connectionId} not found`);
+        }
+      } catch (connectionError) {
+        console.error(`Failed to retrieve FTP connection: ${connectionError}`);
+        throw new Error(`Failed to retrieve FTP connection: ${connectionError.message}`);
       }
       
       // Connect to FTP
-      await this.ftpService.connect({
-        host: connection.host,
-        port: connection.port,
-        user: connection.username,
-        password: connection.password,
-        secure: connection.secure
-      });
+      try {
+        // Check connection parameters
+        if (!connection.host || !connection.username || !connection.password) {
+          throw new Error('Missing required FTP connection parameters (host, username, or password)');
+        }
+        
+        // Set default port if not specified
+        const port = connection.port || 21;
+        
+        // Attempt connection with retry
+        let retryCount = 0;
+        const maxRetries = 3;
+        let lastError;
+        
+        while (retryCount < maxRetries) {
+          try {
+            await this.ftpService.connect({
+              host: connection.host,
+              port: port,
+              user: connection.username,
+              password: connection.password,
+              secure: connection.secure
+            });
+            
+            // Connection successful, break the retry loop
+            break;
+          } catch (connectionError) {
+            lastError = connectionError;
+            retryCount++;
+            
+            if (retryCount < maxRetries) {
+              // Log retry attempt
+              console.warn(`FTP connection attempt ${retryCount} failed, retrying in 3 seconds...`);
+              
+              // Wait 3 seconds before retrying
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          }
+        }
+        
+        // If we exhausted all retries, throw the last error
+        if (retryCount === maxRetries && lastError) {
+          throw lastError;
+        }
+      } catch (ftpConnectError) {
+        const errorMsg = ftpConnectError instanceof Error 
+          ? ftpConnectError.message 
+          : String(ftpConnectError);
+        
+        console.error(`Failed to connect to FTP server ${connection.host}:${connection.port}: ${errorMsg}`);
+        throw new Error(`Failed to connect to FTP server: ${errorMsg}`);
+      }
       
       // Route to correct sync method based on source/destination
-      if (schedule.source.type === 'ftp' && schedule.destination.type === 'local') {
-        await this._syncFromFTPToLocal(schedule, connection, result);
-      } else if (schedule.source.type === 'local' && schedule.destination.type === 'ftp') {
-        await this._syncFromLocalToFTP(schedule, connection, result);
-      } else if (schedule.source.type === 'ftp' && schedule.destination.type === 'ftp') {
-        await this._syncFromFTPToFTP(schedule, connection, result);
-      } else {
-        throw new Error('Unsupported source/destination combination');
+      try {
+        if (schedule.source.type === 'ftp' && schedule.destination.type === 'local') {
+          await this._syncFromFTPToLocal(schedule, connection, result);
+        } else if (schedule.source.type === 'local' && schedule.destination.type === 'ftp') {
+          await this._syncFromLocalToFTP(schedule, connection, result);
+        } else if (schedule.source.type === 'ftp' && schedule.destination.type === 'ftp') {
+          await this._syncFromFTPToFTP(schedule, connection, result);
+        } else {
+          throw new Error(`Unsupported source/destination combination: ${schedule.source.type} to ${schedule.destination.type}`);
+        }
+      } catch (syncError) {
+        console.error(`Error during sync operation: ${syncError}`);
+        throw new Error(`Sync operation failed: ${syncError.message}`);
       }
       
       // Update history record
       result.status = 'success';
       result.endTime = new Date();
-      await this.storage.updateSyncHistory(result.id, result);
+      try {
+        await this.storage.updateSyncHistory(result.id, result);
+      } catch (updateError) {
+        console.error(`Failed to update sync history record: ${updateError}`);
+        // Continue anyway since the sync was successful
+      }
       
       return result;
     } catch (error) {
@@ -375,10 +497,15 @@ export class FTPSyncService {
       result.endTime = new Date();
       result.errors.push(error.message);
       
-      if (result.id) {
-        await this.storage.updateSyncHistory(result.id, result);
-      } else {
-        await this.storage.createSyncHistory(result);
+      try {
+        if (result.id) {
+          await this.storage.updateSyncHistory(result.id, result);
+        } else {
+          await this.storage.createSyncHistory(result);
+        }
+      } catch (historyError) {
+        console.error(`Failed to update/create sync history record for failed sync: ${historyError}`);
+        // Continue anyway since we need to propagate the original error
       }
       
       throw error;
@@ -458,8 +585,37 @@ export class FTPSyncService {
           continue;
         }
         
-        // Download file
-        await this.ftpService.downloadFile(remoteFilePath, localFilePath);
+        // Download file with retry mechanism
+        let downloadSuccess = false;
+        let downloadError = null;
+        const maxDownloadRetries = 3;
+        
+        for (let retry = 0; retry < maxDownloadRetries; retry++) {
+          try {
+            // If not first attempt, log retry
+            if (retry > 0) {
+              console.warn(`Retrying download of ${remoteFilePath} (attempt ${retry + 1}/${maxDownloadRetries})...`);
+            }
+            
+            await this.ftpService.downloadFile(remoteFilePath, localFilePath);
+            downloadSuccess = true;
+            break;
+          } catch (error) {
+            downloadError = error;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(`Download attempt ${retry + 1} failed for ${remoteFilePath}: ${errorMsg}`);
+            
+            if (retry < maxDownloadRetries - 1) {
+              // Wait before retry (increasing delay with each retry: 1s, 3s, 5s...)
+              const delay = (retry + 1) * 2000;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        if (!downloadSuccess) {
+          throw new Error(`Failed to download file after ${maxDownloadRetries} attempts: ${downloadError?.message || 'Unknown error'}`);
+        }
         
         // Update stats
         result.filesTransferred++;
@@ -557,8 +713,37 @@ export class FTPSyncService {
           continue;
         }
         
-        // Upload file
-        await this.ftpService.uploadFile(file.path, remoteFilePath);
+        // Upload file with retry mechanism
+        let uploadSuccess = false;
+        let uploadError = null;
+        const maxUploadRetries = 3;
+        
+        for (let retry = 0; retry < maxUploadRetries; retry++) {
+          try {
+            // If not first attempt, log retry
+            if (retry > 0) {
+              console.warn(`Retrying upload of ${file.path} (attempt ${retry + 1}/${maxUploadRetries})...`);
+            }
+            
+            await this.ftpService.uploadFile(file.path, remoteFilePath);
+            uploadSuccess = true;
+            break;
+          } catch (error) {
+            uploadError = error;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(`Upload attempt ${retry + 1} failed for ${file.path}: ${errorMsg}`);
+            
+            if (retry < maxUploadRetries - 1) {
+              // Wait before retry (increasing delay with each retry: 1s, 3s, 5s...)
+              const delay = (retry + 1) * 2000;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        if (!uploadSuccess) {
+          throw new Error(`Failed to upload file after ${maxUploadRetries} attempts: ${uploadError?.message || 'Unknown error'}`);
+        }
         
         // Update stats
         result.filesTransferred++;
@@ -663,11 +848,69 @@ export class FTPSyncService {
         // For FTP to FTP, we need to download to a temp file then upload
         const tempFilePath = path.join(this.uploadsDir, file.name);
         
-        // Download to temp
-        await this.ftpService.downloadFile(sourceFilePath, tempFilePath);
+        // Download to temp with retry mechanism
+        let downloadSuccess = false;
+        let downloadError = null;
+        const maxDownloadRetries = 3;
         
-        // Upload to destination
-        await this.ftpService.uploadFile(tempFilePath, destFilePath);
+        for (let retry = 0; retry < maxDownloadRetries; retry++) {
+          try {
+            // If not first attempt, log retry
+            if (retry > 0) {
+              console.warn(`Retrying download of ${sourceFilePath} (attempt ${retry + 1}/${maxDownloadRetries})...`);
+            }
+            
+            await this.ftpService.downloadFile(sourceFilePath, tempFilePath);
+            downloadSuccess = true;
+            break;
+          } catch (error) {
+            downloadError = error;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(`Download attempt ${retry + 1} failed for ${sourceFilePath}: ${errorMsg}`);
+            
+            if (retry < maxDownloadRetries - 1) {
+              // Wait before retry (increasing delay with each retry: 1s, 3s, 5s...)
+              const delay = (retry + 1) * 2000;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        if (!downloadSuccess) {
+          throw new Error(`Failed to download file after ${maxDownloadRetries} attempts: ${downloadError?.message || 'Unknown error'}`);
+        }
+        
+        // Upload to destination with retry mechanism
+        let uploadSuccess = false;
+        let uploadError = null;
+        const maxUploadRetries = 3;
+        
+        for (let retry = 0; retry < maxUploadRetries; retry++) {
+          try {
+            // If not first attempt, log retry
+            if (retry > 0) {
+              console.warn(`Retrying upload to ${destFilePath} (attempt ${retry + 1}/${maxUploadRetries})...`);
+            }
+            
+            await this.ftpService.uploadFile(tempFilePath, destFilePath);
+            uploadSuccess = true;
+            break;
+          } catch (error) {
+            uploadError = error;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(`Upload attempt ${retry + 1} failed for ${destFilePath}: ${errorMsg}`);
+            
+            if (retry < maxUploadRetries - 1) {
+              // Wait before retry (increasing delay with each retry: 1s, 3s, 5s...)
+              const delay = (retry + 1) * 2000;
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        if (!uploadSuccess) {
+          throw new Error(`Failed to upload file after ${maxUploadRetries} attempts: ${uploadError?.message || 'Unknown error'}`);
+        }
         
         // Clean up temp file
         fs.unlinkSync(tempFilePath);

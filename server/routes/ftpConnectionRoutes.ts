@@ -211,23 +211,54 @@ router.delete('/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     
     if (isNaN(id)) {
-      return res.status(400).json({ message: 'Invalid connection ID' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid connection ID. The ID must be a valid number.' 
+      });
     }
     
     // Validate that connection exists
     const existingConnection = await storage.getFTPConnection(id);
     
     if (!existingConnection) {
-      return res.status(404).json({ message: 'FTP connection not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: `FTP connection with ID ${id} not found` 
+      });
     }
     
-    // Delete the connection
-    await storage.deleteFTPConnection(id);
-    
-    res.status(204).send();
+    try {
+      // Delete the connection - this may throw errors if the connection is in use
+      await storage.deleteFTPConnection(id);
+      
+      // If successful, return a success response
+      return res.status(200).json({
+        success: true,
+        message: `FTP connection '${existingConnection.name}' successfully deleted`
+      });
+    } catch (deleteError) {
+      // Handle specific error cases
+      const errorMessage = deleteError instanceof Error ? deleteError.message : String(deleteError);
+      
+      if (errorMessage.includes('has associated sync schedules')) {
+        return res.status(409).json({
+          success: false,
+          message: 'Cannot delete this connection because it has associated sync schedules. Please delete all schedules using this connection first.',
+          detail: errorMessage
+        });
+      } else {
+        throw deleteError; // Re-throw for general error handling
+      }
+    }
   } catch (error) {
     console.error('Error deleting FTP connection:', error);
-    res.status(500).json({ message: 'Failed to delete FTP connection', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete FTP connection', 
+      detail: errorMessage 
+    });
   }
 });
 

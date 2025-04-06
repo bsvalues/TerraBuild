@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import { db } from './db';
-import { eq, and, desc, asc, ne, isNull, isNotNull, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, ne, isNull, isNotNull, inArray, sql } from 'drizzle-orm';
 import { 
   User, InsertUser,
   Environment, InsertEnvironment,
@@ -40,9 +40,38 @@ import {
 export class PostgresStorage implements IStorage {
   // Reference to database
   private db = db;
+  
+  /**
+   * Helper method to check if a table exists in the database
+   * @param tableName The name of the table to check
+   * @returns Promise resolving to true if the table exists, false otherwise
+   */
+  async tableExists(tableName: string): Promise<boolean> {
+    try {
+      const result = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public'
+          AND table_name = ${tableName}
+        );
+      `);
+      
+      return result.rows && result.rows[0] && result.rows[0].exists === true;
+    } catch (error) {
+      console.error(`Error checking if table ${tableName} exists:`, error);
+      return false;
+    }
+  }
+  
   // Sync Schedules
   async getAllSyncSchedules(): Promise<SyncSchedule[]> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return [];
+      }
+      
       const results = await this.db.query.syncSchedules.findMany({
         orderBy: [desc(syncSchedules.updatedAt)]
       });
@@ -55,6 +84,12 @@ export class PostgresStorage implements IStorage {
 
   async getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return [];
+      }
+      
       const results = await this.db.query.syncSchedules.findMany({
         where: eq(syncSchedules.connectionId, connectionId),
         orderBy: [desc(syncSchedules.updatedAt)]
@@ -68,6 +103,12 @@ export class PostgresStorage implements IStorage {
 
   async getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return undefined;
+      }
+    
       const result = await this.db.query.syncSchedules.findFirst({
         where: and(
           eq(syncSchedules.connectionId, connectionId),
@@ -83,6 +124,12 @@ export class PostgresStorage implements IStorage {
 
   async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return [];
+      }
+      
       const results = await this.db.query.syncSchedules.findMany({
         where: eq(syncSchedules.enabled, true)
       });
@@ -95,6 +142,12 @@ export class PostgresStorage implements IStorage {
 
   async getSyncSchedule(id: number): Promise<SyncSchedule | undefined> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return undefined;
+      }
+      
       const result = await this.db.query.syncSchedules.findFirst({
         where: eq(syncSchedules.id, id)
       });
@@ -107,6 +160,29 @@ export class PostgresStorage implements IStorage {
 
   async createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return {
+          id: 0,
+          name: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          connectionId: 0,
+          source: {},
+          destination: {},
+          frequency: '',
+          time: null,
+          dayOfWeek: null,
+          dayOfMonth: null,
+          options: {},
+          enabled: false,
+          status: 'error',
+          lastRun: null,
+          nextRun: null
+        };
+      }
+      
       const result = await this.db.insert(syncSchedules).values({
         ...schedule,
         createdAt: new Date(),
@@ -142,6 +218,12 @@ export class PostgresStorage implements IStorage {
 
   async updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return undefined;
+      }
+      
       // Calculate next run time if frequency-related fields were updated
       let nextRun = undefined;
       if (schedule.frequency || schedule.time || schedule.dayOfWeek || schedule.dayOfMonth) {
@@ -173,6 +255,12 @@ export class PostgresStorage implements IStorage {
 
   async deleteSyncSchedule(id: number): Promise<void> {
     try {
+      // Check if the syncSchedules table exists
+      if (!(await this.tableExists('sync_schedules'))) {
+        console.warn('Sync schedules table does not exist yet.');
+        return;
+      }
+      
       await this.db.delete(syncSchedules)
         .where(eq(syncSchedules.id, id));
     } catch (error) {
@@ -256,6 +344,12 @@ export class PostgresStorage implements IStorage {
   // Sync History
   async getAllSyncHistory(): Promise<SyncHistory[]> {
     try {
+      // Check if the syncHistory table exists
+      if (!(await this.tableExists('sync_history'))) {
+        console.warn('Sync history table does not exist yet.');
+        return [];
+      }
+      
       const results = await this.db.query.syncHistory.findMany({
         orderBy: [desc(syncHistory.startTime)]
       });
@@ -268,6 +362,12 @@ export class PostgresStorage implements IStorage {
 
   async getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<SyncHistory[]> {
     try {
+      // Check if the syncHistory table exists
+      if (!(await this.tableExists('sync_history'))) {
+        console.warn('Sync history table does not exist yet.');
+        return [];
+      }
+      
       // Create query params
       const queryParams: any = {
         where: eq(syncHistory.scheduleId, scheduleId),
@@ -291,6 +391,22 @@ export class PostgresStorage implements IStorage {
 
   async getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        return [];
+      }
+      
       // Create query params
       const queryParams: any = {
         where: eq(syncHistory.connectionId, connectionId),
@@ -314,6 +430,22 @@ export class PostgresStorage implements IStorage {
 
   async getSyncHistoryById(id: number): Promise<SyncHistory | undefined> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        return undefined;
+      }
+      
       const result = await this.db.query.syncHistory.findFirst({
         where: eq(syncHistory.id, id)
       });
@@ -326,6 +458,22 @@ export class PostgresStorage implements IStorage {
 
   async getSyncHistory(limit: number = 10, offset: number = 0): Promise<SyncHistory[]> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        return [];
+      }
+      
       // Create a properly typed query object
       const results = await this.db.query.syncHistory.findMany({
         orderBy: [desc(syncHistory.startTime)],
@@ -341,6 +489,35 @@ export class PostgresStorage implements IStorage {
 
   async createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        // Return a minimal object so the frontend doesn't break
+        return {
+          id: 0,
+          connectionId: 0,
+          status: 'error',
+          details: { error: 'Failed to create sync history record - table does not exist' },
+          scheduleId: 0,
+          scheduleName: '',
+          startTime: new Date(),
+          endTime: null,
+          filesTransferred: 0,
+          totalBytes: 0,
+          errors: ['Database table does not exist']
+        };
+      }
+      
       // Ensure required fields have default values
       const historyWithDefaults = {
         ...history,
@@ -374,6 +551,22 @@ export class PostgresStorage implements IStorage {
 
   async updateSyncHistory(id: number, history: Partial<SyncHistory>): Promise<SyncHistory | undefined> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        return undefined;
+      }
+      
       const result = await this.db.update(syncHistory)
         .set(history)
         .where(eq(syncHistory.id, id))
@@ -388,6 +581,22 @@ export class PostgresStorage implements IStorage {
 
   async deleteSyncHistory(id: number): Promise<void> {
     try {
+      // Check if the syncHistory table exists
+      const tableCheck = await this.db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'sync_history'
+        );
+      `);
+      
+      const tableExists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
+      
+      if (!tableExists) {
+        console.warn('Sync history table does not exist yet.');
+        return;
+      }
+      
       await this.db.delete(syncHistory)
         .where(eq(syncHistory.id, id));
     } catch (error) {
@@ -545,14 +754,73 @@ export class PostgresStorage implements IStorage {
 
   async deleteFTPConnection(id: number): Promise<void> {
     try {
-      // Check if this is the default connection
+      // Check if the connections table exists
+      if (!(await this.tableExists('ftp_connections'))) {
+        throw new Error('FTP connections table does not exist');
+      }
+      
+      // Check if this is the default connection and if it exists
       const connection = await this.getFTPConnection(id);
       
-      await this.db.delete(ftpConnections)
-        .where(eq(ftpConnections.id, id));
+      if (!connection) {
+        throw new Error(`FTP connection with ID ${id} not found`);
+      }
+      
+      // Check if there are any sync schedules using this connection before deleting
+      let syncSchedulesExist = false;
+      try {
+        if (await this.tableExists('sync_schedules')) {
+          const syncSchedules = await this.db.select()
+            .from(syncSchedules)
+            .where(eq(syncSchedules.connectionId, id));
+          
+          syncSchedulesExist = syncSchedules.length > 0;
+        }
+      } catch (scheduleError) {
+        // Ignore errors if the sync_schedules table doesn't exist yet
+        console.warn('Could not check for sync schedules:', scheduleError);
+      }
+      
+      if (syncSchedulesExist) {
+        throw new Error(`Cannot delete connection with ID ${id} because it has associated sync schedules`);
+      }
+      
+      // Execute deletion in a transaction
+      await this.db.transaction(async (tx) => {
+        // Delete connection history records if the table exists
+        try {
+          if (await this.tableExists('connection_history')) {
+            await tx.delete(connectionHistory)
+              .where(eq(connectionHistory.connectionId, id));
+          }
+        } catch (historyError) {
+          console.warn(`Error cleaning up connection history for connection ${id}:`, historyError);
+          // Continue with deletion anyway
+        }
+        
+        // Delete sync history if the table exists
+        try {
+          if (await this.tableExists('sync_history')) {
+            await tx.delete(syncHistory)
+              .where(eq(syncHistory.connectionId, id));
+          }
+        } catch (syncHistoryError) {
+          console.warn(`Error cleaning up sync history for connection ${id}:`, syncHistoryError);
+          // Continue with deletion anyway
+        }
+        
+        // Delete the connection itself
+        const result = await tx.delete(ftpConnections)
+          .where(eq(ftpConnections.id, id))
+          .returning();
+        
+        if (result.length === 0) {
+          throw new Error(`FTP connection with ID ${id} could not be deleted`);
+        }
+      });
       
       // If this was the default connection, set a new default if one exists
-      if (connection?.isDefault) {
+      if (connection.isDefault) {
         const connections = await this.getAllFTPConnections();
         if (connections.length > 0) {
           await this.setDefaultFTPConnection(connections[0].id);
@@ -560,6 +828,8 @@ export class PostgresStorage implements IStorage {
       }
     } catch (error) {
       console.error('Error deleting FTP connection:', error);
+      // Re-throw the error to be handled by the caller
+      throw new Error(`Failed to delete FTP connection: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   // Users
