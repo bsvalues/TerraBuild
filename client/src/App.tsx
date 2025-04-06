@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
+import LandingPage from "@/pages/LandingPage";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -67,7 +68,10 @@ const DevAutoLogin = () => {
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
+      {/* Use LandingPage as the root route without authentication */}
+      <Route path="/" component={LandingPage} />
+      
+      {/* Protected routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/calculator" component={CalculatorPage} />
       <ProtectedRoute path="/users" component={UsersPage} />

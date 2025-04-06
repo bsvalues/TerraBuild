@@ -1,414 +1,238 @@
-import React from 'react';
-import { Link, useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { BentonBranding } from '@/components/BentonBranding';
-import { 
-  Calculator, 
-  History, 
-  CheckCircle2, 
-  BarChart3, 
-  BrainCircuit, 
-  MessageSquareText, 
-  AlertTriangle, 
-  ThumbsUp, 
-  ArrowRight,
-  LogIn,
-  Home,
-  Users
-} from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+import { ArrowRight, Building2, Calculator, ChartBar, Database, FileSpreadsheet, Map } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { APP_NAME } from "@/data/constants";
 
-// Import Benton County header image
-import headerImage from '@assets/Header-Vineyard-BC.png';
+// Import Benton County images
+import bentonSeal from '@assets/BC.png';
+import bentonScenicLogo from '@assets/ogimage.jpg';
+import imageLogo from '@assets/images.png';
 
 export default function LandingPage() {
-  const [_, navigate] = useLocation();
-
-  const handleLogin = () => {
-    navigate('/auth');
-  };
-
-  const handleDashboard = () => {
-    navigate('/app');
-  };
+  const [activeFeature, setActiveFeature] = useState(0);
+  
+  // Rotate through features automatically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % 6);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  const features = [
+    {
+      icon: <Calculator className="h-6 w-6" />,
+      title: "Cost Calculator",
+      description: "Accurately calculate building costs based on structure type, size, and region.",
+    },
+    {
+      icon: <ChartBar className="h-6 w-6" />,
+      title: "Data Visualization",
+      description: "Advanced charts and graphs to help interpret complex cost data at a glance.",
+    },
+    {
+      icon: <Map className="h-6 w-6" />,
+      title: "Regional Analysis",
+      description: "Compare construction costs across different regions in Benton County.",
+    },
+    {
+      icon: <Database className="h-6 w-6" />,
+      title: "Data Import/Export",
+      description: "Easily import and export cost data in various formats, including Excel and PDF.",
+    },
+    {
+      icon: <Building2 className="h-6 w-6" />,
+      title: "What-If Scenarios",
+      description: "Model different building scenarios and see how they affect overall costs.",
+    },
+    {
+      icon: <FileSpreadsheet className="h-6 w-6" />,
+      title: "Cost Matrix Management",
+      description: "Maintain and update cost matrices for different building types and regions.",
+    },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="bg-white shadow-sm py-4 px-4 fixed top-0 left-0 right-0 z-50">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <BentonBranding className="mr-4" />
-              <span className="font-bold text-lg text-[#243E4D]">LevyMaster</span>
-            </div>
-            
-            <div className="hidden md:flex space-x-8 text-[#243E4D]">
-              <Link href="/" className="hover:text-[#29B7D3] transition-colors">
-                Home
-              </Link>
-              <Link href="#features" className="hover:text-[#29B7D3] transition-colors">
-                Features
-              </Link>
-              <Link href="#analytics" className="hover:text-[#29B7D3] transition-colors">
-                Analytics
-              </Link>
-              <Link href="#about" className="hover:text-[#29B7D3] transition-colors">
-                About
-              </Link>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                className="border-[#243E4D] text-[#243E4D] hover:bg-[#243E4D] hover:text-white"
-                onClick={handleLogin}
-              >
-                <LogIn className="mr-2 h-4 w-4" /> Log In
-              </Button>
-              <Button 
-                className="bg-[#29B7D3] text-white hover:bg-[#1e9cb5]"
-                onClick={handleDashboard}
-              >
-                <Users className="mr-2 h-4 w-4" /> Go to App
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-      
-      {/* Empty space to compensate for fixed header */}
-      <div className="pt-20"></div>
-      
       {/* Hero Section */}
       <section 
-        className="relative bg-gradient-to-b from-[#1e3a5f] to-[#2c5282] text-white py-16 overflow-hidden"
+        className="relative h-[600px] flex items-center justify-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(30, 58, 95, 0.85), rgba(44, 82, 130, 0.9)), url(${headerImage})`,
+          backgroundImage: `url(${bentonScenicLogo})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'center'
         }}
       >
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <BentonBranding className="mb-8 w-24 h-24" />
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">LevyMaster</h1>
-            <h2 className="text-xl md:text-2xl mb-6">Benton County's Intelligent Property Tax Platform</h2>
-            <p className="text-lg mb-8 max-w-2xl opacity-90">
-              Transform complex tax calculations into streamlined workflows for property owners.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" className="bg-[#29B7D3] hover:bg-[#1e9cb5] text-white">
-                Calculate Levy
-              </Button>
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10">
-                Property Search
-              </Button>
-            </div>
+        <div className="absolute inset-0 bg-black/50"></div>
+        
+        <div className="relative z-10 container mx-auto px-6 text-center text-white">
+          <div className="flex justify-center mb-6">
+            <img 
+              src={bentonSeal} 
+              alt="Benton County Seal" 
+              className="h-24 w-24 drop-shadow-lg"
+            />
           </div>
-        </div>
-      </section>
-
-      {/* Tax Analysis Tools Section */}
-      <section id="features" className="py-16 bg-[#f5f7fa]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-[#243E4D]">
-            Powerful Tax Analysis Tools
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Comprehensive solutions for property tax management in Benton County
+          
+          <h1 className="text-5xl font-bold mb-4 tracking-tight">
+            {APP_NAME}
+          </h1>
+          
+          <p className="text-2xl mb-6 max-w-3xl mx-auto">
+            The official Building Cost Estimation System for Benton County, Washington
           </p>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Levy Calculation Card */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <Calculator className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl text-[#243E4D]">Levy Calculation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Accurate calculation of property taxes based on up-to-date assessment values, exemptions, and levy rates.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Historical Analysis Card */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <History className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle className="text-xl text-[#243E4D]">Historical Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Compare property values and tax charges over time with interactive visualizations and trend insights.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Compliance Verification Card */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-                  <CheckCircle2 className="h-6 w-6 text-amber-600" />
-                </div>
-                <CardTitle className="text-xl text-[#243E4D]">Compliance Verification</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Automated verification of property classifications and exemption eligibility based on county regulations.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
+            <Link href="/calculator">
+              <Button size="lg" className="bg-[#47AD55] hover:bg-[#3a8c45] text-white">
+                Launch Calculator
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            
+            <Link href="/data-import">
+              <Button size="lg" variant="outline" className="bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm">
+                Import Data
+                <Database className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
-
-      {/* Interactive Dashboard Section */}
-      <section id="analytics" className="py-16 relative bg-gradient-to-r from-[#2c5282] to-[#1e3a5f] text-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Interactive Dashboard</h2>
-          
-          <div className="grid md:grid-cols-5 gap-8 items-center">
-            <div className="md:col-span-2">
-              <div className="space-y-6">
-                <p className="text-lg mb-4">
-                  Monitor key metrics, visualize trends, and gain insights with our intuitive dashboard interface.
-                </p>
-                
-                <div className="space-y-3">
-                  <div className="flex items-start">
-                    <div className="mt-1 mr-3 text-[#29B7D3]">
-                      <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                    <p>Real-time data visualization</p>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mt-1 mr-3 text-[#29B7D3]">
-                      <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                    <p>Customizable reports and exports</p>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mt-1 mr-3 text-[#29B7D3]">
-                      <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                    <p>Advanced trend analysis</p>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="text-white border-white hover:bg-white/10">
-                  Explore Dashboard
-                </Button>
-              </div>
-            </div>
-            
-            <div className="md:col-span-3 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="aspect-video rounded-md bg-gray-800/40 flex items-center justify-center">
-                <BarChart3 className="h-24 w-24 text-[#29B7D3] opacity-50" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* AI-Powered Intelligence Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-[#243E4D]">
-            AI-Powered Intelligence
-          </h2>
-          <div className="w-16 h-1 bg-[#29B7D3] mx-auto mb-12"></div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Predictive Analysis Card */}
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <div className="flex items-center">
-                  <div className="mr-4 text-blue-500">
-                    <BrainCircuit className="h-6 w-6" />
-                  </div>
-                  <CardTitle>Predictive Analysis</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-gray-600 mb-4">
-                  Leverage advanced machine learning algorithms to predict future trends for accurate property tax forecasts and planning decisions.
-                </p>
-                <Button variant="ghost" size="sm" className="text-blue-500">
-                  View Details <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Natural Language Analysis Card */}
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <div className="flex items-center">
-                  <div className="mr-4 text-indigo-500">
-                    <MessageSquareText className="h-6 w-6" />
-                  </div>
-                  <CardTitle>Natural Language Analysis</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-gray-600 mb-4">
-                  Use intuitive questions in plain English to extract complex property data, financial trends, and compliance requirements.
-                </p>
-                <Button variant="ghost" size="sm" className="text-indigo-500">
-                  Try It Out <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Intelligent Recommendations Card */}
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <div className="flex items-center">
-                  <div className="mr-4 text-amber-500">
-                    <ThumbsUp className="h-6 w-6" />
-                  </div>
-                  <CardTitle>Intelligent Recommendations</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-gray-600 mb-4">
-                  Receive data-driven recommendations for optimizing tax rates, improving assessments, and enhancing operational efficiency.
-                </p>
-                <Button variant="ghost" size="sm" className="text-amber-500">
-                  View Examples <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Anomaly Detection Card */}
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <div className="flex items-center">
-                  <div className="mr-4 text-red-500">
-                    <AlertTriangle className="h-6 w-6" />
-                  </div>
-                  <CardTitle>Anomaly Detection</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <p className="text-gray-600 mb-4">
-                  Automatically identify unusual patterns, outliers, and potential errors in tax assessment calculations and property data.
-                </p>
-                <Button variant="ghost" size="sm" className="text-red-500">
-                  View Anomalies <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* System Capabilities Section */}
-      <section id="about" className="py-16 bg-[#f5f7fa]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-[#243E4D]">
-            System Capabilities
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Trusted tools for comprehensive property tax management
-          </p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {/* Accuracy */}
-            <div>
-              <div className="text-purple-600 text-4xl font-bold mb-2">100%</div>
-              <div className="text-gray-700">Accuracy</div>
-            </div>
-            
-            {/* Compliance */}
-            <div>
-              <div className="text-green-600 text-4xl font-bold mb-2">99.9%</div>
-              <div className="text-gray-700">Compliance Rate</div>
-            </div>
-            
-            {/* Years Experience */}
-            <div>
-              <div className="text-amber-600 text-4xl font-bold mb-2">5+</div>
-              <div className="text-gray-700">Years Experience</div>
-            </div>
-            
-            {/* Client Success */}
-            <div>
-              <div className="text-red-600 text-4xl font-bold mb-2">10+</div>
-              <div className="text-gray-700">Service Awards</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-14 bg-gradient-to-r from-[#3182ce] to-[#805ad5]">
-        <div className="container mx-auto px-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 text-center text-white max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Ready to Transform Your Tax Calculations?
-            </h2>
-            <p className="mb-8 opacity-90">
-              Start exploring the powerful features of LevyMaster today
+      
+      {/* Features Section */}
+      <section className="py-20 bg-gradient-to-b from-[#243E4D]/5 to-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-[#243E4D] mb-4">Powerful Features</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our comprehensive building cost system provides a suite of tools to help you
+              accurately estimate and analyze construction costs.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-white text-blue-600 hover:bg-gray-100"
-                onClick={handleDashboard}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card 
+                key={index}
+                className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
+                  index === activeFeature 
+                    ? 'border-[#47AD55] shadow-md' 
+                    : 'border-transparent'
+                }`}
+                onClick={() => setActiveFeature(index)}
               >
-                Start Calculating
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="text-white border-white hover:bg-white/10"
-                onClick={handleLogin}
-              >
-                Log In
-              </Button>
+                <CardContent className="p-6">
+                  <div className={`mb-4 p-3 rounded-full inline-flex bg-[#243E4D]/10 ${
+                    index === activeFeature ? 'text-[#47AD55]' : 'text-[#243E4D]'
+                  }`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Statistics Section */}
+      <section className="py-16 bg-[#243E4D] text-white">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">3,500+</div>
+              <div className="text-white/70">Building Cost Records</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">25+</div>
+              <div className="text-white/70">Building Types</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">15+</div>
+              <div className="text-white/70">County Regions</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">97%</div>
+              <div className="text-white/70">Estimation Accuracy</div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-[#1a365d] text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      {/* About Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="flex items-center">
-                <BentonBranding className="w-8 h-8 mr-3" />
-                <span className="font-bold">Benton County</span>
-              </div>
-              <p className="text-sm mt-2 text-gray-300">
-                Providing quality services for citizens in Benton County since 1905.
-                <br />© 2025 Benton County Government. All rights reserved.
+              <h2 className="text-3xl font-bold text-[#243E4D] mb-4">About The System</h2>
+              <p className="text-lg mb-6">
+                The Benton County Building Cost System (BCBS) is the official tool used by county assessors,
+                property managers, and construction professionals to accurately estimate building costs 
+                across Benton County, Washington.
               </p>
+              <p className="text-lg mb-6">
+                Our system leverages advanced data analytics and machine learning to provide the most
+                accurate building cost estimations based on real construction data collected over many years.
+              </p>
+              <div className="flex gap-4 mt-8">
+                <Link href="/data-exploration">
+                  <Button size="lg" className="bg-[#243E4D] hover:bg-[#1c313d]">
+                    Explore Data
+                  </Button>
+                </Link>
+                <Link href="/benchmarking">
+                  <Button size="lg" variant="outline">
+                    View Benchmarks
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="flex justify-center lg:justify-end">
+              <img 
+                src={imageLogo} 
+                alt="Benton County Building" 
+                className="max-w-md rounded-xl shadow-xl"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* County Branding Footer */}
+      <footer className="py-8 bg-[#243E4D]/5">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center mb-4 md:mb-0">
+              <img 
+                src={bentonSeal} 
+                alt="Benton County Seal" 
+                className="h-12 w-12 mr-4"
+              />
+              <div>
+                <div className="text-lg font-bold text-[#243E4D]">Benton County</div>
+                <div className="text-sm text-muted-foreground">Washington State</div>
+              </div>
             </div>
             
-            <div>
-              <h3 className="font-bold mb-2">Quick Links</h3>
-              <ul className="space-y-1 text-sm text-gray-300">
-                <li><a href="#" className="hover:text-white">Property Records</a></li>
-                <li><a href="#" className="hover:text-white">Tax Calculator</a></li>
-                <li><a href="#" className="hover:text-white">Payment Options</a></li>
-                <li><a href="#" className="hover:text-white">Contact Assessor</a></li>
-              </ul>
+            <div className="flex gap-8">
+              <Link href="/calculator">
+                <span className="text-muted-foreground hover:text-[#47AD55] cursor-pointer">Calculator</span>
+              </Link>
+              <Link href="/visualizations">
+                <span className="text-muted-foreground hover:text-[#47AD55] cursor-pointer">Visualizations</span>
+              </Link>
+              <Link href="/data-import">
+                <span className="text-muted-foreground hover:text-[#47AD55] cursor-pointer">Data Import</span>
+              </Link>
             </div>
             
-            <div>
-              <h3 className="font-bold mb-2">Contact Information</h3>
-              <ul className="space-y-1 text-sm text-gray-300">
-                <li>5600 W Canal Drive, Kennewick, WA</li>
-                <li>Phone: (509) 555-1212</li>
-                <li>Email: info@bentoncounty.gov</li>
-              </ul>
+            <div className="text-sm text-muted-foreground mt-4 md:mt-0">
+              © {new Date().getFullYear()} Benton County. All rights reserved.
             </div>
           </div>
         </div>
