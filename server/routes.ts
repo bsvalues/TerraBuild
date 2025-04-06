@@ -40,6 +40,7 @@ import { initFTPSyncRoutes } from "./routes/ftpSyncRoutes";
 import ftpRoutes from "./routes/ftpRoutes";
 import ftpConnectionRoutes from "./routes/ftpConnectionRoutes";
 import { initSchedulerRoutes } from "./routes/schedulerRoutes";
+import costCalculationRoutes from "./routes/costCalculationRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -444,6 +445,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Calculate building cost estimator
+  // Commented out as this has been moved to costCalculationRoutes.ts
+  /*
   app.post("/api/costs/calculate", async (req: Request, res: Response) => {
     try {
       const { region, buildingType, squareFootage, complexityMultiplier = 1 } = req.body;
@@ -484,6 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error calculating building cost" });
     }
   });
+  */
 
   // User Management API
 
@@ -793,6 +797,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Calculate Materials Breakdown
+  // Commented out as this has been moved to costCalculationRoutes.ts
+  /*
   app.post("/api/costs/calculate-materials", requireAuth, async (req: Request, res: Response) => {
     try {
       const { region, buildingType, squareFootage, complexityMultiplier = 1 } = req.body;
@@ -851,6 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error processing request" });
     }
   });
+  */
   
   // Calculation History API
   
@@ -1731,6 +1738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Calculate building cost
+  // Calculate building cost - Commented out as this has been moved to costCalculationRoutes.ts
+  /*
   app.post("/api/building-cost/calculate", requireAuth, async (req: Request, res: Response) => {
     try {
       // Validate input data
@@ -1823,6 +1832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  */
   
   // Save calculation to history
   app.post("/api/calculation-history", requireAuth, async (req: Request, res: Response) => {
@@ -1941,6 +1951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use('/api/ftp', ftpRoutes);
     app.use('/api/ftp-connections', ftpConnectionRoutes);
     app.use('/api/scheduler', initSchedulerRoutes(storage));
+    app.use('/api', costCalculationRoutes);
     
     // Log the new data connector APIs
     await storage.createActivity({
