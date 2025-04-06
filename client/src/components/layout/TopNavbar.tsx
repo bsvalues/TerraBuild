@@ -59,15 +59,11 @@ export default function TopNavbar({ toggleSidebar }: TopNavbarProps) {
           }}
         >
           <img 
-            src="/logo.svg" 
+            src="@assets/BC.png" 
             alt="Benton County" 
-            className="h-8 w-8 mr-2" 
-            onError={(e) => {
-              e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
-              e.currentTarget.style.filter = 'invert(30%) sepia(38%) saturate(481%) hue-rotate(165deg) brightness(94%) contrast(88%)';
-            }} 
+            className="h-10 w-10 mr-2" 
           />
-          <span className="text-lg font-semibold text-[#243E4D]">BCBS</span>
+          <span className="text-lg font-semibold text-[#243E4D]">Building Cost System</span>
         </div>
 
         {/* Quick navigation links */}

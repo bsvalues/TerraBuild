@@ -1,10 +1,16 @@
 import React from 'react';
 
+// Import Benton County logo assets
+import bentonSeal from '@assets/BC.png';
+import bentonLogo from '@assets/images.png';
+import bentonHeader from '@assets/1.jpg';
+import bentonScenicLogo from '@assets/ogimage.jpg';
+
 // Benton County Brand Colors
 export const BentonColors = {
   darkTeal: '#243E4D',  // Primary dark blue/teal
-  green: '#3CAB36',     // Green for "COUNTY"
-  lightBlue: '#29B7D3', // Teal/blue for "WA"
+  green: '#47AD55',     // Green for "COUNTY"
+  lightBlue: '#33A4CB', // Teal/blue for "WA"
   orange: '#F09E1D',    // Warm orange
   darkOrange: '#E55E23', // Darker orange
   brown: '#93714D',     // Brown
@@ -13,7 +19,7 @@ export const BentonColors = {
 };
 
 interface BentonBrandingProps {
-  variant?: 'horizontal' | 'vertical' | 'seal' | 'outline';
+  variant?: 'horizontal' | 'vertical' | 'seal' | 'official' | 'scenic';
   size?: 'sm' | 'md' | 'lg';
   showTagline?: boolean;
   className?: string;
@@ -22,8 +28,8 @@ interface BentonBrandingProps {
 /**
  * Benton County Branding Component
  * 
- * This component renders the Benton County branding using official colors
- * in various formats (horizontal, vertical, seal, or outline)
+ * This component renders the Benton County branding using official logos and colors
+ * in various formats: horizontal logo, vertical text, official seal, or scenic logo
  */
 export const BentonBranding: React.FC<BentonBrandingProps> = ({ 
   variant = 'horizontal', 
@@ -31,107 +37,141 @@ export const BentonBranding: React.FC<BentonBrandingProps> = ({
   showTagline = false,
   className = ''
 }) => {
-  // Size classes
-  const sizeClasses = {
-    sm: 'text-lg md:text-xl',
-    md: 'text-xl md:text-2xl',
-    lg: 'text-2xl md:text-3xl'
+  // Size classes for images
+  const imageSizeClasses = {
+    sm: 'h-8 w-8',
+    md: 'h-12 w-12',
+    lg: 'h-16 w-16'
+  };
+  
+  // Size classes for text
+  const textSizeClasses = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
   };
 
-  // Horizontal version (default)
-  if (variant === 'horizontal') {
+  // Official seal version (using the BC.png image)
+  if (variant === 'seal') {
     return (
       <div className={`flex flex-col items-center ${className}`}>
-        <div className={`font-bold leading-tight ${sizeClasses[size]}`}>
-          <span style={{ color: BentonColors.darkTeal }}>BENTON</span>
-          <span style={{ color: BentonColors.green }}> COUNTY</span>
-          <span style={{ color: BentonColors.lightBlue }}>WA</span>
-        </div>
+        <img 
+          src={bentonSeal} 
+          alt="Benton County Seal" 
+          className={imageSizeClasses[size]}
+        />
         {showTagline && (
-          <div className="text-xs text-gray-600 mt-1">Building Cost Assessment System</div>
+          <div className={`${textSizeClasses[size]} text-gray-600 mt-2`}>
+            Building Cost Assessment System
+          </div>
         )}
       </div>
     );
   }
 
-  // Vertical version
+  // Horizontal logo version (using the images.png image)
+  if (variant === 'horizontal') {
+    return (
+      <div className={`flex flex-col items-center ${className}`}>
+        <img 
+          src={bentonLogo} 
+          alt="Benton County" 
+          className={size === 'sm' ? 'h-6' : size === 'md' ? 'h-8' : 'h-12'}
+          style={{ width: 'auto' }}
+        />
+        {showTagline && (
+          <div className={`${textSizeClasses[size]} text-gray-600 mt-1`}>
+            Building Cost Assessment System
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Official header version (has all the navigation elements)
+  if (variant === 'official') {
+    return (
+      <div className={`flex flex-col items-center ${className}`}>
+        <div className="relative overflow-hidden rounded">
+          <img 
+            src={bentonHeader} 
+            alt="Benton County Official Header" 
+            className="w-full"
+            style={{ maxHeight: size === 'sm' ? '50px' : size === 'md' ? '80px' : '120px', objectFit: 'cover' }}
+          />
+        </div>
+        {showTagline && (
+          <div className={`${textSizeClasses[size]} text-gray-600 mt-2`}>
+            Building Cost Assessment System
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Scenic logo version (with the landscape and seal)
+  if (variant === 'scenic') {
+    return (
+      <div className={`flex flex-col items-center ${className}`}>
+        <div className="relative overflow-hidden rounded-full">
+          <img 
+            src={bentonScenicLogo} 
+            alt="Benton County Scenic Logo" 
+            className={size === 'sm' ? 'h-20 w-20' : size === 'md' ? 'h-32 w-32' : 'h-48 w-48'}
+            style={{ objectFit: 'cover' }}
+          />
+        </div>
+        {showTagline && (
+          <div className={`${textSizeClasses[size]} text-gray-600 mt-2`}>
+            Building Cost Assessment System
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Vertical text version (fallback if images don't load)
   if (variant === 'vertical') {
     return (
       <div className={`flex flex-col items-center text-center ${className}`}>
-        <div className={`font-bold ${sizeClasses[size]}`}>
+        <div className="font-bold">
           <div style={{ color: BentonColors.darkTeal }}>BENTON</div>
           <div style={{ color: BentonColors.green }}>COUNTY</div>
           <div style={{ color: BentonColors.lightBlue }}>WASHINGTON</div>
         </div>
         {showTagline && (
-          <div className="text-xs text-gray-600 mt-2">Building Cost Assessment System</div>
-        )}
-      </div>
-    );
-  }
-
-  // Seal version
-  if (variant === 'seal') {
-    return (
-      <div className={`flex flex-col items-center text-center ${className}`}>
-        <div 
-          style={{ border: `3px solid ${BentonColors.darkTeal}` }} 
-          className="rounded-full p-4 flex flex-col items-center justify-center"
-        >
-          <div className={`font-bold ${sizeClasses[size]}`}>
-            <div style={{ color: BentonColors.darkTeal }}>COUNTY OF</div>
-            <div className="my-1" style={{ color: BentonColors.darkTeal }}>
-              BEN<span style={{ color: BentonColors.lightBlue }}>T</span>ON
-            </div>
-            <div style={{ color: BentonColors.darkTeal }}>WASHINGTON</div>
+          <div className={`${textSizeClasses[size]} text-gray-600 mt-2`}>
+            Building Cost Assessment System
           </div>
-          <div className="text-xs text-gray-600 mt-1">EST. 1905</div>
-        </div>
-        {showTagline && (
-          <div className="text-xs text-gray-600 mt-2">Building Cost Assessment System</div>
         )}
       </div>
     );
   }
 
-  // Outline version (with state outline)
-  if (variant === 'outline') {
-    return (
-      <div className={`flex flex-col items-center ${className}`}>
-        <div className="relative">
-          {/* Simplified WA state outline */}
-          <div 
-            style={{ 
-              border: `2px solid ${BentonColors.green}`,
-              width: size === 'sm' ? '60px' : size === 'md' ? '80px' : '100px',
-              height: size === 'sm' ? '50px' : size === 'md' ? '70px' : '90px'
-            }} 
-            className="rounded-sm relative"
-          ></div>
-          
-          {/* Text overlay */}
-          <div 
-            className={`absolute inset-0 flex items-center justify-center ${sizeClasses[size]}`}
-          >
-            <div className="text-center">
-              <div style={{ color: BentonColors.darkTeal }}>BENTON</div>
-              <div style={{ color: BentonColors.green }}>WASHINGTON</div>
-            </div>
-          </div>
-        </div>
-        {showTagline && (
-          <div className="text-xs text-gray-600 mt-2">Building Cost Assessment System</div>
-        )}
-      </div>
-    );
-  }
-
-  // Fallback to horizontal if variant not recognized
+  // Fallback to seal if variant not recognized or images fail to load
   return (
-    <div className={`font-bold ${sizeClasses[size]} ${className}`}>
-      <span style={{ color: BentonColors.darkTeal }}>BENTON</span>
-      <span style={{ color: BentonColors.green }}> COUNTY</span>
-      <span style={{ color: BentonColors.lightBlue }}>WA</span>
+    <div className={`flex items-center ${className}`}>
+      <img 
+        src={bentonSeal} 
+        alt="Benton County" 
+        className={imageSizeClasses[size]}
+        onError={(e) => {
+          // If image fails to load, show text fallback
+          const target = e.currentTarget;
+          const parent = target.parentElement;
+          if (parent) {
+            const fallbackElement = document.createElement('div');
+            fallbackElement.className = 'font-bold text-[#243E4D]';
+            fallbackElement.innerHTML = 'BENTON COUNTY';
+            parent.replaceChild(fallbackElement, target);
+          }
+        }}
+      />
+      {showTagline && (
+        <div className={`${textSizeClasses[size]} text-gray-600 ml-2`}>
+          Building Cost Assessment System
+        </div>
+      )}
     </div>
   );
 };
