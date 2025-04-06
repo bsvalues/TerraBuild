@@ -19,6 +19,7 @@ import {
   insertProjectMemberSchema,
   insertProjectItemSchema
 } from "@shared/schema";
+import { calculateBuildingCost, calculateMaterialCosts } from "./calculationEngine";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 import { validateExcelFile, validateBatchExcelFiles } from "./validators/excelValidator";
@@ -792,7 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Calculate Materials Breakdown
-  app.post("/api/costs/calculate-materials", async (req: Request, res: Response) => {
+  app.post("/api/costs/calculate-materials", requireAuth, async (req: Request, res: Response) => {
     try {
       const { region, buildingType, squareFootage, complexityMultiplier = 1 } = req.body;
       
@@ -818,7 +819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // If user is authenticated, save to calculation history
-        if (req.isAuthenticated() && req.user?.id) {
+        if (req.user?.id) {
           const userId = req.user.id;
           await storage.createCalculationHistory({
             userId,
@@ -1758,8 +1759,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Import the calculationEngine 
-      const { calculateBuildingCost, calculateMaterialCosts } = require('./calculationEngine');
+      // Import the calculationEngine is already done at the top level
+      // Use the imported functions directly
       
       // Calculate building cost
       const calculationResult = await calculateBuildingCost({
