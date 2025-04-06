@@ -1,321 +1,720 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { 
-  TooltipProvider, 
-  Tooltip, 
-  TooltipTrigger, 
-  TooltipContent 
-} from "@/components/ui/tooltip";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Download, FileType, FileSpreadsheet, Printer, Share2 } from 'lucide-react';
-import { generateCostReport } from '@/utils/pdfGenerator';
-import { exportCostToExcel } from '@/utils/excelGenerator';
-import { CostCalculation } from '@/utils/excelGenerator';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FilePlus2, Printer, FileSpreadsheet, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 interface QuickExportButtonProps {
-  calculation: CostCalculation;
+  /** Content element selector to be exported (defaults to main content area) */
+  contentSelector?: string;
+  /** Filename used when exporting (without extension) */
+  filename?: string;
+  /** Data to be exported as CSV/Excel (if not provided, will try to extract from HTML tables) */
+  data?: Array<Record<string, any>>;
+  /** Show visual feedback animation when exporting */
+  showExportAnimation?: boolean;
+  /** Customized button variant */
+  variant?: 'default' | 'outline' | 'ghost';
+  /** Additional class names */
   className?: string;
+  /** Building cost calculation data for export */
+  calculation?: {
+    buildingType: string;
+    squareFootage: number;
+    quality?: string;
+    buildingAge?: number;
+    region: string;
+    complexityFactor: number;
+    conditionFactor: number;
+    baseCost: number;
+    regionalMultiplier: number;
+    ageDepreciation: number;
+    totalCost: number;
+    materialCosts: Array<{
+      category: string;
+      description: string;
+      quantity: number;
+      unitCost: number;
+      totalCost: number;
+    }>;
+  };
 }
 
-const QuickExportButton = ({ calculation, className = "" }: QuickExportButtonProps) => {
-  const [isExporting, setIsExporting] = useState<string | null>(null);
-  const [exportComplete, setExportComplete] = useState(false);
+/**
+ * QuickExportButton provides a dropdown with options to export content as PDF, Excel/CSV, or Print
+ */
+export default function QuickExportButton({
+  contentSelector = '.dashboard-content',
+  filename = 'benton-county-export',
+  data,
+  showExportAnimation = true,
+  variant = 'outline',
+  className = '',
+  calculation,
+}: QuickExportButtonProps) {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<string | null>(null);
 
-  // Format building type for display
-  const getBuildingTypeLabel = (type: string): string => {
-    const typeMap: Record<string, string> = {
-      'RESIDENTIAL': 'Residential',
-      'COMMERCIAL': 'Commercial',
-      'INDUSTRIAL': 'Industrial'
-    };
-    return typeMap[type] || type;
-  };
-
-  // Format quality level for display
-  const getQualityLabel = (quality: string): string => {
-    const qualityMap: Record<string, string> = {
-      'STANDARD': 'Standard',
-      'PREMIUM': 'Premium',
-      'LUXURY': 'Luxury'
-    };
-    return qualityMap[quality] || quality;
-  };
-
-  // Get formatted region display
-  const getRegionLabel = (region: string): string => {
-    // Convert snake case to readable format
-    if (region.includes('_')) {
-      return region.toLowerCase().split('_').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ');
+  // Helper to show a visual animation during export
+  const animateExport = (format: string, callback: () => Promise<void>) => {
+    if (!showExportAnimation) {
+      callback();
+      return;
     }
-    
-    return region.charAt(0).toUpperCase() + region.slice(1).toLowerCase();
+
+    setIsExporting(true);
+    setExportFormat(format);
+
+    // Wait briefly to show the animation
+    setTimeout(async () => {
+      try {
+        await callback();
+        toast({
+          title: "Export Successful",
+          description: `Your content has been exported as ${format}`,
+          variant: "default",
+        });
+      } catch (error) {
+        console.error('Export failed:', error);
+        toast({
+          title: "Export Failed",
+          description: "There was a problem exporting your content",
+          variant: "destructive",
+        });
+      } finally {
+        setIsExporting(false);
+        setExportFormat(null);
+      }
+    }, 300);
   };
 
-  // Handle one-click PDF export
-  const handleQuickPdfExport = async () => {
-    try {
-      setIsExporting('pdf');
+  // Export to PDF
+  const exportToPDF = async () => {
+    animateExport('PDF', async () => {
+      const element = document.querySelector(contentSelector) as HTMLElement;
+      if (!element) {
+        throw new Error(`Element "${contentSelector}" not found`);
+      }
+
+      // Save original styles for recovery
+      const originalPosition = element.style.position;
+      const originalZIndex = element.style.zIndex;
+      const originalBackground = element.style.background;
       
-      // Format the calculation data for PDF
-      const formattedCalculation = {
-        ...calculation,
-        buildingType: getBuildingTypeLabel(calculation.buildingType),
-        quality: getQualityLabel(calculation.quality),
-        region: getRegionLabel(calculation.region)
-      };
-      
-      // Generate the PDF with default options
-      const pdfBlob = await generateCostReport(formattedCalculation, {
-        title: 'Benton County Building Cost Report',
-        showLogo: true,
-        includeDate: true,
-        includeMaterials: true,
-        contactInfo: 'Benton County Building Department • (555) 123-4567',
-        includeNotes: false
-      });
-      
-      // Create a download link and trigger it
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `building-cost-report-${new Date().toISOString().slice(0, 10)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      // Show success indicator
-      setExportComplete(true);
-      setTimeout(() => setExportComplete(false), 3000);
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      alert('An error occurred while exporting the PDF. Please try again.');
-    } finally {
-      setIsExporting(null);
-    }
+      // Temporarily modify styles for better capture
+      element.style.position = 'relative';
+      element.style.zIndex = '9999';
+      element.style.background = 'white';
+
+      try {
+        // Create a new PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
+        
+        // Standard A4 dimensions
+        const pdfWidth = pdf.internal.pageSize.width;  // 210mm
+        const pdfHeight = pdf.internal.pageSize.height; // 297mm
+        const margin = 10; // margin in mm
+        
+        // Add Benton County branding header
+        pdf.setFillColor(36, 62, 77); // #243E4D
+        pdf.rect(0, 0, pdfWidth, 20, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(16);
+        pdf.text('Benton County Building Cost System', margin, 14);
+        
+        // Set y position after header
+        let yPosition = 30;
+        
+        // If we have calculation data, add a nice summary
+        if (calculation) {
+          // Building Information Section
+          pdf.setTextColor(36, 62, 77);
+          pdf.setFontSize(14);
+          pdf.text('Building Cost Calculation Summary', margin, yPosition);
+          yPosition += 8;
+          
+          pdf.setFontSize(12);
+          pdf.text('Building Information', margin, yPosition);
+          yPosition += 6;
+          
+          // Create table with building info
+          const buildingInfoData = [
+            ['Building Type:', calculation.buildingType],
+            ['Region:', calculation.region],
+            ['Square Footage:', calculation.squareFootage.toLocaleString() + ' sq.ft.'],
+            ['Complexity Factor:', calculation.complexityFactor.toFixed(2)],
+            ['Condition Factor:', calculation.conditionFactor.toFixed(2)]
+          ];
+          
+          // Set table formatting
+          pdf.setFontSize(10);
+          pdf.setTextColor(0, 0, 0);
+          
+          // Draw the table
+          buildingInfoData.forEach((row, index) => {
+            const isEvenRow = index % 2 === 0;
+            if (isEvenRow) {
+              pdf.setFillColor(245, 245, 245);
+              pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
+            }
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text(row[0], margin + 2, yPosition);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(row[1], margin + 50, yPosition);
+            yPosition += 6;
+          });
+          
+          yPosition += 8;
+          
+          // Cost Components Section
+          pdf.setFontSize(12);
+          pdf.setTextColor(36, 62, 77);
+          pdf.text('Cost Components', margin, yPosition);
+          yPosition += 6;
+          
+          // Create table with cost components
+          const costComponentsData = [
+            ['Base Cost:', formatCurrency(calculation.baseCost)],
+            ['Regional Multiplier:', `x${calculation.regionalMultiplier.toFixed(2)}`],
+            ['Age Depreciation:', formatPercentage(calculation.ageDepreciation)]
+          ];
+          
+          // Draw the cost components table
+          costComponentsData.forEach((row, index) => {
+            const isEvenRow = index % 2 === 0;
+            if (isEvenRow) {
+              pdf.setFillColor(245, 245, 245);
+              pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
+            }
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text(row[0], margin + 2, yPosition);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(row[1], margin + 50, yPosition);
+            yPosition += 6;
+          });
+          
+          // Add Total Cost with highlight
+          pdf.setFillColor(230, 240, 245);
+          pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
+          pdf.setFont(undefined, 'bold');
+          pdf.text('TOTAL COST:', margin + 2, yPosition);
+          pdf.setTextColor(36, 62, 77);
+          pdf.text(formatCurrency(calculation.totalCost), margin + 50, yPosition);
+          yPosition += 10;
+          
+          // Add material costs if any
+          if (calculation.materialCosts && calculation.materialCosts.length > 0) {
+            pdf.setTextColor(36, 62, 77);
+            pdf.text('Material Costs', margin, yPosition);
+            yPosition += 6;
+            
+            // Table headers
+            pdf.setFillColor(36, 62, 77);
+            pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.text('Description', margin + 2, yPosition);
+            pdf.text('Quantity', margin + 70, yPosition);
+            pdf.text('Unit Cost', margin + 95, yPosition);
+            pdf.text('Total Cost', margin + 130, yPosition);
+            yPosition += 6;
+            
+            // Table rows
+            pdf.setTextColor(0, 0, 0);
+            calculation.materialCosts.forEach((material, index) => {
+              const isEvenRow = index % 2 === 0;
+              if (isEvenRow) {
+                pdf.setFillColor(245, 245, 245);
+                pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
+              }
+              
+              pdf.setFont(undefined, 'normal');
+              pdf.text(material.description, margin + 2, yPosition);
+              pdf.text(material.quantity.toString(), margin + 70, yPosition);
+              pdf.text(formatCurrency(material.unitCost), margin + 95, yPosition);
+              pdf.text(formatCurrency(material.totalCost), margin + 130, yPosition);
+              yPosition += 6;
+            });
+            
+            yPosition += 8;
+          }
+          
+          // Add separator line
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(margin, yPosition - 4, pdfWidth - margin, yPosition - 4);
+          yPosition += 8;
+        }
+        
+        // Capture the element content
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+        
+        // Restore original styles
+        element.style.position = originalPosition;
+        element.style.zIndex = originalZIndex;
+        element.style.background = originalBackground;
+        
+        // Add content image with remaining space
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pdfWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Check if we need a new page for the image
+        const remainingSpace = pdfHeight - yPosition - margin;
+        if (imgHeight > remainingSpace) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        
+        // Add generated timestamp to footer
+        const timestamp = new Date().toLocaleString();
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFontSize(8);
+        pdf.text(`Generated: ${timestamp}`, margin, pdfHeight - 5);
+        pdf.text(`© Benton County, Washington`, pdfWidth - 60, pdfHeight - 5);
+        
+        // Save the PDF
+        pdf.save(`${filename}.pdf`);
+      } catch (error) {
+        // Ensure we restore styles even if there's an error
+        element.style.position = originalPosition;
+        element.style.zIndex = originalZIndex;
+        element.style.background = originalBackground;
+        throw error;
+      }
+    });
   };
 
-  // Handle one-click Excel export
-  const handleQuickExcelExport = () => {
-    try {
-      setIsExporting('excel');
+  // Export to Excel/CSV
+  const exportToExcel = () => {
+    animateExport('Excel', async () => {
+      // If data is provided directly, use it
+      let exportData = data;
       
-      // Format the calculation data for Excel
-      const formattedCalculation = {
-        ...calculation,
-        buildingType: getBuildingTypeLabel(calculation.buildingType),
-        quality: getQualityLabel(calculation.quality),
-        region: getRegionLabel(calculation.region)
-      };
-      
-      // Export to Excel with default options
-      exportCostToExcel(formattedCalculation, 
-        `building-cost-report-${new Date().toISOString().slice(0, 10)}.csv`, {
-        includeHeader: true,
-        includeCompanyInfo: true,
-        includeMaterials: true,
-        companyName: 'Benton County Building Department',
-        companyContact: 'building@bentoncounty.gov • (555) 123-4567',
-        includeBreakdown: true
-      });
-      
-      // Show success indicator
-      setExportComplete(true);
-      setTimeout(() => setExportComplete(false), 3000);
-    } catch (error) {
-      console.error('Error exporting Excel:', error);
-      alert('An error occurred while exporting to Excel. Please try again.');
-    } finally {
-      setIsExporting(null);
-    }
-  };
-
-  // Print the report
-  const handlePrint = () => {
-    try {
-      setIsExporting('print');
-      
-      // Create a hidden print container
-      const printContainer = document.createElement('div');
-      printContainer.style.display = 'none';
-      document.body.appendChild(printContainer);
-      
-      // Generate the content for printing
-      printContainer.innerHTML = `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #243E4D; text-align: center;">Benton County Building Cost Report</h1>
-          <div style="border-bottom: 2px solid #29B7D3; margin-bottom: 20px;"></div>
-          
-          <h2>Building Information</h2>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Building Type:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${getBuildingTypeLabel(calculation.buildingType)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Square Footage:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${calculation.squareFootage.toLocaleString()} sq ft</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Quality Level:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${getQualityLabel(calculation.quality)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Building Age:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${calculation.buildingAge} ${calculation.buildingAge === 1 ? 'year' : 'years'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Region:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${getRegionLabel(calculation.region)}</td>
-            </tr>
-          </table>
-          
-          <h2>Cost Calculation</h2>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Base Cost:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${calculation.baseCost.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Complexity Factor:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">×${calculation.complexityFactor.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Condition Factor:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">×${calculation.conditionFactor.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Regional Multiplier:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">×${calculation.regionalMultiplier.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Age Depreciation:</strong></td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">−${calculation.ageDepreciation}%</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border-bottom: 3px double #243E4D;"><strong>TOTAL ESTIMATED COST:</strong></td>
-              <td style="padding: 8px; border-bottom: 3px double #243E4D; text-align: right; font-weight: bold; font-size: 1.2em;">$${calculation.totalCost.toLocaleString()}</td>
-            </tr>
-          </table>
-          
-          ${calculation.materialCosts && calculation.materialCosts.length > 0 ? `
-            <h2>Materials Breakdown</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background-color: #f9f9f9;">
-                <th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Category</th>
-                <th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Description</th>
-                <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Quantity</th>
-                <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Unit Cost</th>
-                <th style="padding: 8px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
-              </tr>
-              ${calculation.materialCosts.map(material => `
-                <tr>
-                  <td style="padding: 8px; border-bottom: 1px solid #eee;">${material.category}</td>
-                  <td style="padding: 8px; border-bottom: 1px solid #eee;">${material.description}</td>
-                  <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${material.quantity}</td>
-                  <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${material.unitCost.toFixed(2)}</td>
-                  <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${material.totalCost.toLocaleString()}</td>
-                </tr>
-              `).join('')}
-            </table>
-          ` : ''}
-          
-          <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px; font-size: 0.8em; text-align: center; color: #666;">
-            <p>Benton County Building Department • (555) 123-4567 • building@bentoncounty.gov</p>
-            <p>Report generated on ${new Date().toLocaleDateString()}</p>
-          </div>
-        </div>
-      `;
-      
-      // Print the contents
-      const printFrame = window.open('', 'printFrame') as Window;
-      if (printFrame && printFrame.document) {
-        printFrame.document.body.innerHTML = printContainer.innerHTML;
-        printFrame.focus();
-        printFrame.print();
+      // If calculation data is provided, format it for Excel
+      if (!exportData && calculation) {
+        // First add the summary data
+        const summaryData = [
+          { 
+            Category: 'Building Information',
+            Description: 'Building Type', 
+            Value: calculation.buildingType 
+          },
+          { 
+            Category: 'Building Information',
+            Description: 'Region', 
+            Value: calculation.region 
+          },
+          { 
+            Category: 'Building Information',
+            Description: 'Square Footage', 
+            Value: calculation.squareFootage 
+          },
+          { 
+            Category: 'Building Information',
+            Description: 'Complexity Factor', 
+            Value: calculation.complexityFactor 
+          },
+          { 
+            Category: 'Building Information',
+            Description: 'Condition Factor', 
+            Value: calculation.conditionFactor 
+          },
+          { 
+            Category: 'Cost Components',
+            Description: 'Base Cost', 
+            Value: formatCurrency(calculation.baseCost) 
+          },
+          { 
+            Category: 'Cost Components',
+            Description: 'Regional Multiplier', 
+            Value: calculation.regionalMultiplier 
+          },
+          { 
+            Category: 'Cost Components',
+            Description: 'Age Depreciation', 
+            Value: formatPercentage(calculation.ageDepreciation) 
+          },
+          { 
+            Category: 'Cost Result',
+            Description: 'Total Cost', 
+            Value: formatCurrency(calculation.totalCost) 
+          }
+        ];
+        
+        // Then add any material costs
+        const materialData = calculation.materialCosts.map(mat => ({
+          Category: mat.category,
+          Description: mat.description,
+          Quantity: mat.quantity,
+          'Unit Cost': formatCurrency(mat.unitCost),
+          'Total Cost': formatCurrency(mat.totalCost)
+        }));
+        
+        // Combine all data
+        exportData = [...summaryData, ...materialData];
       }
       
-      // Clean up
-      document.body.removeChild(printContainer);
+      // If still no data, try to extract from HTML tables
+      if (!exportData) {
+        const tables = document.querySelectorAll(`${contentSelector} table`);
+        if (tables.length === 0) {
+          throw new Error('No tables found to export');
+        }
+        
+        // Extract data from the first table
+        const table = tables[0];
+        const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent?.trim() || '');
+        
+        exportData = Array.from(table.querySelectorAll('tbody tr')).map(row => {
+          const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent?.trim() || '');
+          return headers.reduce((obj, header, index) => {
+            obj[header] = cells[index] || '';
+            return obj;
+          }, {} as Record<string, string>);
+        });
+      }
       
-      // Show success indicator
-      setExportComplete(true);
-      setTimeout(() => setExportComplete(false), 3000);
-    } catch (error) {
-      console.error('Error printing report:', error);
-      alert('An error occurred while printing the report. Please try again.');
-    } finally {
-      setIsExporting(null);
-    }
+      if (!exportData || exportData.length === 0) {
+        throw new Error('No data available to export');
+      }
+      
+      // Create a new workbook and add the data
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Add some styling and column widths
+      const colWidths = Object.keys(exportData[0]).map(key => ({ wch: Math.max(key.length, 10) }));
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Benton County Data');
+      
+      // Generate the Excel file as a blob
+      const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBlob], { type: 'application/octet-stream' });
+      
+      // Save the file
+      saveAs(blob, `${filename}.xlsx`);
+    });
+  };
+  
+  // Helper function to format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+  
+  // Helper function to format percentage
+  const formatPercentage = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }).format(value);
+  };
+
+  // Print content
+  const printContent = () => {
+    animateExport('Print', async () => {
+      const element = document.querySelector(contentSelector) as HTMLElement;
+      if (!element) {
+        throw new Error(`Element "${contentSelector}" not found`);
+      }
+
+      // Create a clone of the element to print
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Could not open print window. Please check if popup blocking is enabled.');
+      }
+      
+      // Generate enhanced calculation table if calculation data is available
+      let calculationHtml = '';
+      if (calculation) {
+        calculationHtml = `
+          <div class="calculation-summary">
+            <h3 style="color: #243E4D; margin-top: 20px;">Building Cost Calculation Summary</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th colspan="2">Building Information</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Building Type</strong></td>
+                  <td>${calculation.buildingType}</td>
+                </tr>
+                <tr>
+                  <td><strong>Region</strong></td>
+                  <td>${calculation.region}</td>
+                </tr>
+                <tr>
+                  <td><strong>Square Footage</strong></td>
+                  <td>${calculation.squareFootage.toLocaleString()} sq.ft.</td>
+                </tr>
+                <tr>
+                  <td><strong>Complexity Factor</strong></td>
+                  <td>${calculation.complexityFactor.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td><strong>Condition Factor</strong></td>
+                  <td>${calculation.conditionFactor.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <h3 style="color: #243E4D; margin-top: 20px;">Cost Components</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Base Cost</strong></td>
+                  <td>${formatCurrency(calculation.baseCost)}</td>
+                </tr>
+                <tr>
+                  <td><strong>Regional Multiplier</strong></td>
+                  <td>x${calculation.regionalMultiplier.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td><strong>Age Depreciation</strong></td>
+                  <td>${formatPercentage(calculation.ageDepreciation)}</td>
+                </tr>
+                <tr style="font-weight: bold; background-color: #f8f9fa;">
+                  <td><strong>TOTAL COST</strong></td>
+                  <td>${formatCurrency(calculation.totalCost)}</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            ${calculation.materialCosts && calculation.materialCosts.length > 0 ? `
+              <h3 style="color: #243E4D; margin-top: 20px;">Material Costs</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Unit Cost</th>
+                    <th>Total Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${calculation.materialCosts.map(mat => `
+                    <tr>
+                      <td>${mat.description}</td>
+                      <td>${mat.quantity}</td>
+                      <td>${formatCurrency(mat.unitCost)}</td>
+                      <td>${formatCurrency(mat.totalCost)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // Write the HTML content to the new window
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Benton County Building Cost System - Print</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+              }
+              .print-header {
+                background: #243E4D;
+                color: white;
+                padding: 10px 20px;
+                margin-bottom: 20px;
+                border-radius: 4px 4px 0 0;
+              }
+              .print-logo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+              }
+              .print-logo .logo-text {
+                font-size: 18px;
+                font-weight: bold;
+              }
+              .print-content {
+                padding: 0 20px;
+              }
+              .print-footer {
+                margin-top: 30px;
+                border-top: 1px solid #eee;
+                padding-top: 10px;
+                font-size: 12px;
+                color: #666;
+                padding: 10px 20px;
+              }
+              table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 20px;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 10px;
+                text-align: left;
+              }
+              th {
+                background-color: #f2f2f2;
+              }
+              h3 {
+                margin-top: 30px;
+                margin-bottom: 10px;
+                color: #243E4D;
+              }
+              .calculation-summary {
+                background-color: #f9f9f9;
+                padding: 20px;
+                border-radius: 5px;
+                margin-bottom: 30px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              }
+              @media print {
+                .print-header { 
+                  -webkit-print-color-adjust: exact; 
+                  print-color-adjust: exact; 
+                }
+                body {
+                  padding: 0;
+                }
+                .calculation-summary {
+                  break-inside: avoid;
+                  page-break-inside: avoid;
+                }
+                table {
+                  page-break-inside: avoid;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="print-header">
+              <div class="print-logo">
+                <span class="logo-text">Benton County Building Cost System</span>
+              </div>
+            </div>
+            
+            <div class="print-content">
+              ${calculationHtml}
+              ${element.innerHTML}
+            </div>
+            
+            <div class="print-footer">
+              <p>Generated: ${new Date().toLocaleString()}</p>
+              <p>© Benton County, Washington</p>
+            </div>
+          </body>
+        </html>
+      `);
+
+      // Wait for content to load then print
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+        // We don't close the window to give the user the option to cancel printing
+      };
+    });
   };
 
   return (
-    <div className="relative">
+    <div 
+      className={`relative ${className}`}
+      style={{ 
+        transformStyle: 'preserve-3d',
+        perspective: '1000px' 
+      }}
+    >
+      {/* Export animation overlay */}
+      {isExporting && (
+        <div 
+          className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 rounded-md"
+          style={{
+            transform: 'translateZ(10px)',
+            boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.1)',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin mb-2"></div>
+            <span className="text-sm font-medium text-primary">Exporting to {exportFormat}...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Export dropdown button */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="default"
-            size="lg" 
-            className={`text-white bg-[#243E4D] hover:bg-[#243E4D]/90 transition-all duration-200 relative overflow-hidden group ${className} ${exportComplete ? 'animate-pulse' : ''}`}
+          <Button 
+            variant={variant} 
+            size="sm" 
+            className="relative overflow-hidden"
+            style={{ 
+              transformStyle: 'preserve-3d',
+              transform: 'translateZ(2px)',
+              boxShadow: '0 4px 12px -4px rgba(0, 0, 0, 0.1)'
+            }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#29B7D3]/0 via-[#29B7D3]/30 to-[#29B7D3]/0 opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-out"></div>
-            <Download className="h-5 w-5 mr-2" />
-            <span>Export Report</span>
-            {isExporting && (
-              <span className="absolute inset-0 flex items-center justify-center bg-[#243E4D]/90">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </span>
-            )}
+            <FilePlus2 className="h-4 w-4 mr-1" />
+            <span>Export</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-[#243E4D]/0 via-[#243E4D]/10 to-[#243E4D]/0 opacity-0 group-hover:opacity-100 duration-700 transform -translate-x-full animate-shimmer"></span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuLabel>Export Options</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer flex items-center" onClick={handleQuickPdfExport}>
-            <FileType className="mr-2 h-4 w-4 text-red-600" />
+        <DropdownMenuContent align="end" className="w-48 p-1">
+          <DropdownMenuItem 
+            onClick={exportToPDF}
+            className="flex items-center cursor-pointer"
+          >
+            <FileText className="h-4 w-4 mr-2" />
             <span>Export as PDF</span>
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer flex items-center" onClick={handleQuickExcelExport}>
-            <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-            <span>Export as Excel/CSV</span>
+          <DropdownMenuItem 
+            onClick={exportToExcel}
+            className="flex items-center cursor-pointer"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            <span>Export as Excel</span>
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer flex items-center" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4 text-blue-600" />
-            <span>Print Report</span>
+          <DropdownMenuItem 
+            onClick={printContent}
+            className="flex items-center cursor-pointer"
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            <span>Print</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      
-      {exportComplete && (
-        <Badge 
-          className="absolute -top-2 -right-2 bg-green-500 animate-bounce"
-          variant="default"
-        >
-          <span className="text-xs">✓</span>
-        </Badge>
-      )}
     </div>
   );
-};
-
-export default QuickExportButton;
+}

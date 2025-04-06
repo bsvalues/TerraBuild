@@ -33,6 +33,8 @@ import FTPConnectionTestPage from "@/pages/FTPConnectionTestPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
+import { SidebarProvider } from "./contexts/SidebarContext";
+import { WindowProvider } from "./contexts/WindowContext";
 import { useEffect } from "react";
 
 // Add link to Remix Icon for icons
@@ -104,8 +106,12 @@ function App() {
         <CollaborationProvider projectId={0}>
           <DevAutoLogin />
           <RemixIconLink />
-          <Router />
-          <Toaster />
+          <SidebarProvider>
+            <WindowProvider>
+              <Router />
+              <Toaster />
+            </WindowProvider>
+          </SidebarProvider>
         </CollaborationProvider>
       </AuthProvider>
     </QueryClientProvider>
