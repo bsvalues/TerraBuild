@@ -16,6 +16,8 @@ import { CostMatrixManager } from "@/components/dashboard/CostMatrixManager";
 import { CostComparisonWizard } from "@/components/dashboard/CostComparisonWizard";
 import { CostFactorWeightSlider } from "@/components/dashboard/CostFactorWeightSlider";
 import CostMatrixCompare from "@/components/dashboard/CostMatrixCompare";
+import DataSlicer from "@/components/DataSlicer";
+import CarouselCards from "@/components/CarouselCards";
 
 // Defining the TabButton component with 3D effects and tear-away capability
 interface TabButtonProps {
@@ -361,6 +363,99 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
+        
+        {/* Interactive Filter and Data Slicer */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+          <h2 className="text-lg font-semibold text-[#243E4D] mb-4">Data Filters</h2>
+          <DataSlicer 
+            categories={[
+              {
+                id: 'region',
+                name: 'Region',
+                type: 'select',
+                options: [
+                  { id: 'CENTRAL', label: 'Central', checked: false },
+                  { id: 'EAST', label: 'East', checked: false },
+                  { id: 'WEST', label: 'West', checked: false },
+                  { id: 'NORTH', label: 'North', checked: false },
+                  { id: 'SOUTH', label: 'South', checked: false }
+                ]
+              },
+              {
+                id: 'buildingType',
+                name: 'Building Type',
+                type: 'multiselect',
+                options: [
+                  { id: 'RESIDENTIAL', label: 'Residential', checked: false },
+                  { id: 'COMMERCIAL', label: 'Commercial', checked: false },
+                  { id: 'INDUSTRIAL', label: 'Industrial', checked: false },
+                  { id: 'AGRICULTURAL', label: 'Agricultural', checked: false },
+                  { id: 'MUNICIPAL', label: 'Municipal', checked: false }
+                ]
+              },
+              {
+                id: 'squareFootage',
+                name: 'Square Footage',
+                type: 'range',
+                range: {
+                  min: 500,
+                  max: 10000,
+                  value: [1000, 5000],
+                  step: 100,
+                  formatValue: (value: number) => `${value.toLocaleString()} sq.ft.`
+                }
+              }
+            ]}
+            onFilterChange={(filters: Record<string, any>) => {
+              console.log('Filters changed:', filters);
+            }}
+          />
+        </div>
+        
+        {/* Featured Insights Carousel */}
+        <div className="mb-6">
+          <CarouselCards 
+            title="Building Cost Insights"
+            description="Latest trends and patterns in building costs across Benton County"
+            cardWidth={320}
+            cards={[
+              <div key="card1" className="p-6 h-full">
+                <h3 className="text-lg font-semibold mb-2">Cost Trends</h3>
+                <p className="text-sm text-gray-600 mb-4">Regional cost variations across Benton County.</p>
+                <div className="bg-gray-100 h-40 rounded-md flex items-center justify-center mb-4">
+                  <span className="text-gray-500">Cost Trend Chart</span>
+                </div>
+                <p className="text-sm text-gray-700">Central regions showing 12% increase in commercial costs since last quarter.</p>
+              </div>,
+              <div key="card2" className="p-6 h-full">
+                <h3 className="text-lg font-semibold mb-2">Material Analysis</h3>
+                <p className="text-sm text-gray-600 mb-4">Impact of material costs on overall assessments.</p>
+                <div className="bg-gray-100 h-40 rounded-md flex items-center justify-center mb-4">
+                  <span className="text-gray-500">Material Cost Breakdown</span>
+                </div>
+                <p className="text-sm text-gray-700">Lumber costs have decreased by 5.3% while metal components increased by 8.2%.</p>
+              </div>,
+              <div key="card3" className="p-6 h-full">
+                <h3 className="text-lg font-semibold mb-2">Regional Comparison</h3>
+                <p className="text-sm text-gray-600 mb-4">Building costs across different regions.</p>
+                <div className="bg-gray-100 h-40 rounded-md flex items-center justify-center mb-4">
+                  <span className="text-gray-500">Regional Map</span>
+                </div>
+                <p className="text-sm text-gray-700">Eastern regions demonstrate the highest cost efficiency for industrial structures.</p>
+              </div>,
+              <div key="card4" className="p-6 h-full">
+                <h3 className="text-lg font-semibold mb-2">Seasonal Patterns</h3>
+                <p className="text-sm text-gray-600 mb-4">How seasons affect building costs in Benton County.</p>
+                <div className="bg-gray-100 h-40 rounded-md flex items-center justify-center mb-4">
+                  <span className="text-gray-500">Seasonal Chart</span>
+                </div>
+                <p className="text-sm text-gray-700">Summer construction shows 14% higher costs due to labor and material availability.</p>
+              </div>
+            ]}
+            autoPlay={true}
+            interval={6000}
+          />
         </div>
         
         {/* Quick Actions and Info */}

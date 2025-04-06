@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import Sidebar from "./Sidebar";
-import TopNav from "./TopNav";
+import TopNavbar from "./TopNavbar";
 import Footer from "./Footer";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
@@ -16,7 +16,7 @@ interface DashboardLayoutProps {
 
 function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   const { isLoading } = useAuth();
-  const { isExpanded } = useSidebar();
+  const { isExpanded, toggleSidebar } = useSidebar();
 
   if (isLoading) {
     return (
@@ -41,26 +41,28 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-      <Sidebar />
-      <div 
-        className={cn(
-          "flex-1 flex flex-col transition-all duration-300",
-          isExpanded ? "ml-0" : "ml-0" // We're not shifting the content here but could if needed
-        )}
-      >
-        <TopNav />
-        <main className="flex-1 overflow-auto p-6" 
-          style={{ 
-            perspective: '1000px',
-            transformStyle: 'preserve-3d'
-          }}
+    <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
+      <TopNavbar toggleSidebar={toggleSidebar} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <div 
+          className={cn(
+            "flex-1 flex flex-col transition-all duration-300",
+            isExpanded ? "ml-0" : "ml-0" // We're not shifting the content here but could if needed
+          )}
         >
-          <div className="relative" style={{ transform: 'translateZ(2px)' }}>
-            {children}
-          </div>
-        </main>
-        <Footer />
+          <main className="flex-1 overflow-auto p-6" 
+            style={{ 
+              perspective: '1000px',
+              transformStyle: 'preserve-3d'
+            }}
+          >
+            <div className="relative" style={{ transform: 'translateZ(2px)' }}>
+              {children}
+            </div>
+          </main>
+          <Footer />
+        </div>
       </div>
     </div>
   );

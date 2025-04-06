@@ -167,9 +167,9 @@ export default function QuickExportButton({
               pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
             }
             
-            pdf.setFont(undefined, 'bold');
+            pdf.setFont('helvetica', 'bold');
             pdf.text(row[0], margin + 2, yPosition);
-            pdf.setFont(undefined, 'normal');
+            pdf.setFont('helvetica', 'normal');
             pdf.text(row[1], margin + 50, yPosition);
             yPosition += 6;
           });
@@ -197,9 +197,9 @@ export default function QuickExportButton({
               pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
             }
             
-            pdf.setFont(undefined, 'bold');
+            pdf.setFont('helvetica', 'bold');
             pdf.text(row[0], margin + 2, yPosition);
-            pdf.setFont(undefined, 'normal');
+            pdf.setFont('helvetica', 'normal');
             pdf.text(row[1], margin + 50, yPosition);
             yPosition += 6;
           });
@@ -207,7 +207,7 @@ export default function QuickExportButton({
           // Add Total Cost with highlight
           pdf.setFillColor(230, 240, 245);
           pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
-          pdf.setFont(undefined, 'bold');
+          pdf.setFont('helvetica', 'bold');
           pdf.text('TOTAL COST:', margin + 2, yPosition);
           pdf.setTextColor(36, 62, 77);
           pdf.text(formatCurrency(calculation.totalCost), margin + 50, yPosition);
@@ -238,7 +238,7 @@ export default function QuickExportButton({
                 pdf.rect(margin, yPosition - 4, pdfWidth - (margin * 2), 6, 'F');
               }
               
-              pdf.setFont(undefined, 'normal');
+              pdf.setFont('helvetica', 'normal');
               pdf.text(material.description, margin + 2, yPosition);
               pdf.text(material.quantity.toString(), margin + 70, yPosition);
               pdf.text(formatCurrency(material.unitCost), margin + 95, yPosition);

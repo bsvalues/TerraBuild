@@ -7,6 +7,7 @@ interface SidebarContextType {
   togglePinned: () => void;
   expandSidebar: () => void;
   collapseSidebar: () => void;
+  toggleSidebar: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType>({
@@ -16,6 +17,7 @@ const SidebarContext = createContext<SidebarContextType>({
   togglePinned: () => {},
   expandSidebar: () => {},
   collapseSidebar: () => {},
+  toggleSidebar: () => {},
 });
 
 export const useSidebar = () => useContext(SidebarContext);
@@ -117,6 +119,15 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({ children }) =>
     };
   }, [autoCollapseTimeoutId]);
   
+  // Create a toggleSidebar function
+  const toggleSidebar = () => {
+    setIsExpanded(prev => !prev);
+    if (!isExpanded && !isPinned) {
+      // If we're expanding and not pinned, start auto-collapse timer
+      startAutoCollapseTimer();
+    }
+  };
+
   const contextValue = {
     isExpanded,
     isPinned,
@@ -124,6 +135,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({ children }) =>
     togglePinned,
     expandSidebar,
     collapseSidebar,
+    toggleSidebar,
   };
   
   return (
