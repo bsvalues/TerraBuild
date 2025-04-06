@@ -1455,16 +1455,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             region: entry.region || 'Unknown',
             buildingType: entry.buildingType || 'Unknown',
             buildingTypeDescription: entry.buildingTypeDescription || '',
-            baseCost: parseFloat(entry.baseCost) || 0,
+            baseCost: String(parseFloat(entry.baseCost) || 0),
             matrixYear: parseInt(entry.matrixYear) || new Date().getFullYear(),
             sourceMatrixId: parseInt(entry.sourceMatrixId) || 0,
             matrixDescription: entry.matrixDescription || '',
             dataPoints: parseInt(entry.dataPoints) || 0,
-            minCost: parseFloat(entry.minCost) || 0,
-            maxCost: parseFloat(entry.maxCost) || 0,
-            complexityFactorBase: parseFloat(entry.adjustmentFactors?.complexity) || 1.0,
-            qualityFactorBase: parseFloat(entry.adjustmentFactors?.quality) || 1.0,
-            conditionFactorBase: parseFloat(entry.adjustmentFactors?.condition) || 1.0,
+            minCost: String(parseFloat(entry.minCost) || 0),
+            maxCost: String(parseFloat(entry.maxCost) || 0),
+            complexityFactorBase: String(parseFloat(entry.adjustmentFactors?.complexity) || 1.0),
+            qualityFactorBase: String(parseFloat(entry.adjustmentFactors?.quality) || 1.0),
+            conditionFactorBase: String(parseFloat(entry.adjustmentFactors?.condition) || 1.0),
             county: entry.county || 'Benton',
             state: entry.state || 'WA',
             isActive: true
@@ -1486,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           action: `Batch imported ${imported} cost matrix entries`,
           icon: "ri-database-2-line",
           iconColor: "success",
-          userId: userId || req.user?.id
+          details: { userId: userId || req.user?.id }
         });
       }
       

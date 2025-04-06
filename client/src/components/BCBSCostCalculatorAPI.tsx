@@ -20,6 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import CostReportPDFExport from "./CostReportPDFExport";
+import BuildingBlocksAnimation from "./BuildingBlocksAnimation";
 
 // Form schema for calculator
 const calculatorSchema = z.object({
@@ -526,18 +527,34 @@ const BCBSCostCalculatorAPI = () => {
                   <div>
                     <h3 className="text-xl font-semibold mb-4">Cost Breakdown</h3>
                     
-                    {/* Cost Breakdown Table */}
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-1/2">Category</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead className="text-right">Percentage</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {costBreakdown.map((item, index) => {
+                    {/* Cost Visualization Tabs */}
+                    <Tabs defaultValue="table" className="mb-6">
+                      <TabsList className="w-full mb-4">
+                        <TabsTrigger value="table" className="flex-1">
+                          <div className="flex items-center">
+                            <span>Table View</span>
+                          </div>
+                        </TabsTrigger>
+                        <TabsTrigger value="blocks" className="flex-1">
+                          <div className="flex items-center">
+                            <span>Building Blocks Animation</span>
+                          </div>
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="table">
+                        {/* Cost Breakdown Table */}
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-1/2">Category</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead className="text-right">Percentage</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {costBreakdown.map((item, index) => {
                             // Skip items with zero or negative costs
                             if (item.cost <= 0) return null;
                             
@@ -562,8 +579,18 @@ const BCBSCostCalculatorAPI = () => {
                             <TableCell className="text-right">100%</TableCell>
                           </TableRow>
                         </TableBody>
-                      </Table>
-                    </div>
+                          </Table>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="blocks">
+                        {/* Building Blocks Animation */}
+                        <BuildingBlocksAnimation 
+                          costBreakdown={costBreakdown} 
+                          totalCost={calculationResult.totalCost}
+                        />
+                      </TabsContent>
+                    </Tabs>
                   </div>
 
                   {/* Material Costs Visualization */}
