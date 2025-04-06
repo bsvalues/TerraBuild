@@ -821,20 +821,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If user is authenticated, save to calculation history
         if (req.user?.id) {
           const userId = req.user.id;
-          await storage.createCalculationHistory({
+          // Create calculation history with fields matching the database schema
+          const calculationData = {
             userId,
             name: `${buildingType} Building in ${region}`,
             region,
             buildingType,
             squareFootage: Number(squareFootage),
-            costPerSqft: materialsBreakdown.costPerSqft.toString(),
-            totalCost: materialsBreakdown.totalCost.toString(),
-
             baseCost: materialsBreakdown.baseCost.toString(),
             regionFactor: materialsBreakdown.regionFactor.toString(),
+            complexity: "Standard", // Required field in the DB
             complexityFactor: materialsBreakdown.complexityFactor.toString(),
-            materialsBreakdown: materialsBreakdown
-          });
+            quality: "Average",
+            qualityFactor: "1.0",
+            condition: "Good",
+            conditionFactor: "1.0",
+            costPerSqft: materialsBreakdown.costPerSqft.toString(),
+            totalCost: materialsBreakdown.totalCost.toString(),
+            adjustedCost: materialsBreakdown.totalCost.toString()
+          };
+          await storage.createCalculationHistory(calculationData);
         }
         
         res.json(materialsBreakdown);
@@ -1732,9 +1738,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         region, 
         buildingType, 
         squareFootage, 
-        complexityFactor, 
-        conditionFactor, 
-        yearBuilt,
+        complexityFactor = 1.0, 
+        conditionFactor = 1.0, 
+        yearBuilt = new Date().getFullYear(),
+        quality = "STANDARD",
         condition,
         stories,
         qualityGrade,
@@ -1759,10 +1766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Import the calculationEngine is already done at the top level
-      // Use the imported functions directly
-      
-      // Calculate building cost
+      // Calculate building cost (using the properties that match the BuildingCostOptions interface)
       const calculationResult = await calculateBuildingCost({
         region,
         buildingType,
@@ -1770,24 +1774,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         complexityFactor: Number(complexityFactor),
         conditionFactor: Number(conditionFactor),
         yearBuilt: Number(yearBuilt),
-        condition,
-        stories: stories ? Number(stories) : undefined,
-        qualityGrade,
-        occupancyType
+        quality
       });
       
-      if (calculationResult.error) {
-        return res.status(400).json({ message: calculationResult.error });
-      }
-      
       // Calculate material costs
-      const materialCosts = calculateMaterialCosts(calculationResult.baseCost, buildingType);
+      const materialCosts = calculateMaterialCosts(calculationResult.totalCost, buildingType);
       
-      // Add material costs to the result
-      calculationResult.materialCosts = materialCosts;
+      // Create response object with all needed fields
+      const response = {
+        region,
+        buildingType,
+        squareFootage: Number(squareFootage),
+        baseCost: calculationResult.baseCost,
+        adjustedCost: calculationResult.adjustedCost,
+        totalCost: calculationResult.totalCost,
+        depreciationAdjustment: calculationResult.depreciationAdjustment,
+        complexityFactor: Number(complexityFactor),
+        conditionFactor: Number(conditionFactor),
+        materialCosts
+      };
       
       // Add calculation to history if user is logged in
       if (req.user) {
+        // Calculate cost per square foot (total cost / square footage)
+        const costPerSqft = calculationResult.totalCost / Number(squareFootage);
+        
         await storage.createCalculationHistory({
           userId: req.user.id,
           region,
@@ -1797,14 +1808,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalCost: calculationResult.totalCost.toString(),
           complexityFactor: complexityFactor.toString(),
           conditionFactor: conditionFactor.toString(),
-          yearBuilt: Number(yearBuilt),
-          depreciationAmount: calculationResult.depreciationAmount?.toString(),
-          costPerSqft: calculationResult.costPerSqft?.toString(),
-          regionFactor: calculationResult.regionFactor?.toString()
+          complexity: quality || "STANDARD", // Ensure the required field is present
+          adjustedCost: calculationResult.adjustedCost.toString(),
+          costPerSqft: costPerSqft.toString(), // Add the required field
+          regionFactor: "1.0" // Add default value for the required field
         });
       }
       
-      res.status(200).json(calculationResult);
+      res.status(200).json(response);
     } catch (error: any) {
       console.error("Building cost calculation error:", error);
       res.status(500).json({ 
@@ -1822,8 +1833,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const userId = req.user.id;
       
+      // Make a copy of the request body but ensure we don't include propertyClass
+      const { propertyClass, ...calculationData } = req.body;
+      
       const calculation = {
-        ...req.body,
+        ...calculationData,
         userId,
         calculatedAt: new Date()
       };

@@ -1148,7 +1148,27 @@ export class PostgresStorage implements IStorage {
   }
   
   async createCalculationHistory(calculation: InsertCalculationHistory): Promise<CalculationHistory> {
-    const result = await db.insert(calculationHistory).values(calculation).returning();
+    // Remove any fields that don't exist in the database schema
+    const {
+      propertyClass, // This doesn't exist in the database
+      materialsBreakdown, // This doesn't exist in the database
+      taxLotId, // This doesn't exist in the database
+      propertyId, // This doesn't exist in the database
+      assessmentYear, // This doesn't exist in the database
+      yearBuilt, // This doesn't exist in the database
+      depreciationAmount, // This doesn't exist in the database
+      ...calculationData
+    } = calculation as any;
+    
+    // Ensure required fields are present
+    if (!calculationData.complexity) {
+      calculationData.complexity = "Standard";
+    }
+    if (!calculationData.adjustedCost) {
+      calculationData.adjustedCost = calculationData.totalCost;
+    }
+    
+    const result = await db.insert(calculationHistory).values(calculationData).returning();
     return result[0];
   }
   
