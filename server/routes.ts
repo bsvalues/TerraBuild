@@ -1406,7 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.importCostMatrixFromJson(data);
       
       await storage.createActivity({
-        action: `Imported ${result.imported} cost matrix entries`,
+        action: `Imported ${result.imported} and updated ${result.updated} cost matrix entries`,
         icon: "ri-database-2-line",
         iconColor: "success"
       });

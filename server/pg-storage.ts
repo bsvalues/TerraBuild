@@ -42,106 +42,357 @@ export class PostgresStorage implements IStorage {
   private db = db;
   // Sync Schedules
   async getAllSyncSchedules(): Promise<SyncSchedule[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+    try {
+      const results = await this.db.query.syncSchedules.findMany({
+        orderBy: [desc(syncSchedules.updatedAt)]
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching all sync schedules:', error);
+      return [];
+    }
   }
 
   async getSyncSchedulesByConnection(connectionId: number): Promise<SyncSchedule[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+    try {
+      const results = await this.db.query.syncSchedules.findMany({
+        where: eq(syncSchedules.connectionId, connectionId),
+        orderBy: [desc(syncSchedules.updatedAt)]
+      });
+      return results;
+    } catch (error) {
+      console.error(`Error fetching sync schedules for connection ${connectionId}:`, error);
+      return [];
+    }
   }
 
   async getSyncScheduleByName(connectionId: number, name: string): Promise<SyncSchedule | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+    try {
+      const result = await this.db.query.syncSchedules.findFirst({
+        where: and(
+          eq(syncSchedules.connectionId, connectionId),
+          eq(syncSchedules.name, name)
+        )
+      });
+      return result;
+    } catch (error) {
+      console.error(`Error fetching sync schedule by name (${name}) for connection ${connectionId}:`, error);
+      return undefined;
+    }
   }
 
   async getEnabledSyncSchedules(): Promise<SyncSchedule[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+    try {
+      const results = await this.db.query.syncSchedules.findMany({
+        where: eq(syncSchedules.enabled, true)
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching enabled sync schedules:', error);
+      return [];
+    }
   }
 
   async getSyncSchedule(id: number): Promise<SyncSchedule | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+    try {
+      const result = await this.db.query.syncSchedules.findFirst({
+        where: eq(syncSchedules.id, id)
+      });
+      return result;
+    } catch (error) {
+      console.error(`Error fetching sync schedule ${id}:`, error);
+      return undefined;
+    }
   }
 
   async createSyncSchedule(schedule: InsertSyncSchedule): Promise<SyncSchedule> {
-    // Stub implementation - replace with actual DB implementation
-    return {
-      id: 0,
-      name: '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      connectionId: 0,
-      source: {},
-      destination: {},
-      frequency: '',
-      time: null,
-      dayOfWeek: null,
-      dayOfMonth: null,
-      options: {},
-      enabled: false,
-      status: '',
-      lastRun: null,
-      nextRun: null
-    };
+    try {
+      const result = await this.db.insert(syncSchedules).values({
+        ...schedule,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: schedule.status || 'pending',
+        lastRun: null,
+        nextRun: this.calculateNextRunTime(schedule)
+      }).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error creating sync schedule:', error);
+      return {
+        id: 0,
+        name: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        connectionId: 0,
+        source: {},
+        destination: {},
+        frequency: '',
+        time: null,
+        dayOfWeek: null,
+        dayOfMonth: null,
+        options: {},
+        enabled: false,
+        status: 'error',
+        lastRun: null,
+        nextRun: null
+      };
+    }
   }
 
   async updateSyncSchedule(id: number, schedule: Partial<InsertSyncSchedule>): Promise<SyncSchedule | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+    try {
+      // Calculate next run time if frequency-related fields were updated
+      let nextRun = undefined;
+      if (schedule.frequency || schedule.time || schedule.dayOfWeek || schedule.dayOfMonth) {
+        const currentSchedule = await this.getSyncSchedule(id);
+        if (currentSchedule) {
+          const mergedSchedule = {
+            ...currentSchedule,
+            ...schedule
+          };
+          nextRun = this.calculateNextRunTime(mergedSchedule);
+        }
+      }
+      
+      const result = await this.db.update(syncSchedules)
+        .set({
+          ...schedule,
+          updatedAt: new Date(),
+          ...(nextRun && { nextRun })
+        })
+        .where(eq(syncSchedules.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error updating sync schedule ${id}:`, error);
+      return undefined;
+    }
   }
 
   async deleteSyncSchedule(id: number): Promise<void> {
-    // Stub implementation - replace with actual DB implementation
+    try {
+      await this.db.delete(syncSchedules)
+        .where(eq(syncSchedules.id, id));
+    } catch (error) {
+      console.error(`Error deleting sync schedule ${id}:`, error);
+    }
+  }
+  
+  // Helper function to calculate the next run time based on schedule configuration
+  private calculateNextRunTime(schedule: Partial<SyncSchedule>): Date | null {
+    if (!schedule.enabled || !schedule.frequency) {
+      return null;
+    }
+    
+    const now = new Date();
+    const result = new Date(now);
+    
+    // Add 1 minute as minimum delay
+    result.setMinutes(result.getMinutes() + 1);
+    
+    switch (schedule.frequency) {
+      case 'hourly':
+        // Set to the next hour
+        result.setMinutes(0);
+        result.setSeconds(0);
+        result.setHours(result.getHours() + 1);
+        break;
+        
+      case 'daily':
+        // Set to the specified time or midnight
+        result.setHours(schedule.time ? parseInt(schedule.time.split(':')[0], 10) : 0);
+        result.setMinutes(schedule.time ? parseInt(schedule.time.split(':')[1], 10) : 0);
+        result.setSeconds(0);
+        
+        // If the calculated time is in the past, move to the next day
+        if (result <= now) {
+          result.setDate(result.getDate() + 1);
+        }
+        break;
+        
+      case 'weekly':
+        // Set to the specified day of week and time
+        const weekTargetDay = schedule.dayOfWeek || 0; // Use Sunday (0) as default
+        const currentDay = result.getDay();
+        
+        // Calculate days to add
+        let daysToAdd = weekTargetDay - currentDay;
+        if (daysToAdd <= 0) {
+          daysToAdd += 7; // Move to next week if the day has passed this week
+        }
+        
+        result.setDate(result.getDate() + daysToAdd);
+        result.setHours(schedule.time ? parseInt(schedule.time.split(':')[0], 10) : 0);
+        result.setMinutes(schedule.time ? parseInt(schedule.time.split(':')[1], 10) : 0);
+        result.setSeconds(0);
+        break;
+        
+      case 'monthly':
+        // Set to the specified day of month and time
+        const monthTargetDay = schedule.dayOfMonth || 1; // Use 1st day as default
+        
+        result.setDate(monthTargetDay);
+        result.setHours(schedule.time ? parseInt(schedule.time.split(':')[0], 10) : 0);
+        result.setMinutes(schedule.time ? parseInt(schedule.time.split(':')[1], 10) : 0);
+        result.setSeconds(0);
+        
+        // If the calculated time is in the past, move to the next month
+        if (result <= now) {
+          result.setMonth(result.getMonth() + 1);
+        }
+        break;
+        
+      default:
+        // For immediate or custom, set to 5 minutes from now
+        result.setMinutes(result.getMinutes() + 5);
+        break;
+    }
+    
+    return result;
   }
 
   // Sync History
   async getAllSyncHistory(): Promise<SyncHistory[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+    try {
+      const results = await this.db.query.syncHistory.findMany({
+        orderBy: [desc(syncHistory.startTime)]
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching all sync history:', error);
+      return [];
+    }
   }
 
-  async getSyncHistoryBySchedule(scheduleId: number): Promise<SyncHistory[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+  async getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<SyncHistory[]> {
+    try {
+      // Create query params
+      const queryParams: any = {
+        where: eq(syncHistory.scheduleId, scheduleId),
+        orderBy: [desc(syncHistory.startTime)]
+      };
+      
+      if (limit !== undefined) {
+        queryParams.limit = limit;
+      }
+      if (offset !== undefined) {
+        queryParams.offset = offset;
+      }
+      
+      const results = await this.db.query.syncHistory.findMany(queryParams);
+      return results;
+    } catch (error) {
+      console.error(`Error fetching sync history for schedule ${scheduleId}:`, error);
+      return [];
+    }
   }
 
-  async getSyncHistoryByConnection(connectionId: number): Promise<SyncHistory[]> {
-    // Stub implementation - replace with actual DB implementation
-    return [];
+  async getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<SyncHistory[]> {
+    try {
+      // Create query params
+      const queryParams: any = {
+        where: eq(syncHistory.connectionId, connectionId),
+        orderBy: [desc(syncHistory.startTime)]
+      };
+      
+      if (limit !== undefined) {
+        queryParams.limit = limit;
+      }
+      if (offset !== undefined) {
+        queryParams.offset = offset;
+      }
+      
+      const results = await this.db.query.syncHistory.findMany(queryParams);
+      return results;
+    } catch (error) {
+      console.error(`Error fetching sync history for connection ${connectionId}:`, error);
+      return [];
+    }
   }
 
-  async getSyncHistory(id: number): Promise<SyncHistory | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+  async getSyncHistoryById(id: number): Promise<SyncHistory | undefined> {
+    try {
+      const result = await this.db.query.syncHistory.findFirst({
+        where: eq(syncHistory.id, id)
+      });
+      return result;
+    } catch (error) {
+      console.error(`Error fetching sync history by id ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async getSyncHistory(limit: number = 10, offset: number = 0): Promise<SyncHistory[]> {
+    try {
+      // Create a properly typed query object
+      const results = await this.db.query.syncHistory.findMany({
+        orderBy: [desc(syncHistory.startTime)],
+        limit: limit,
+        offset: offset
+      });
+      return results;
+    } catch (error) {
+      console.error('Error fetching sync history:', error);
+      return []; // Return empty array for a listing that failed
+    }
   }
 
   async createSyncHistory(history: InsertSyncHistory): Promise<SyncHistory> {
-    // Stub implementation - replace with actual DB implementation
-    return {
-      id: 0,
-      connectionId: 0,
-      status: '',
-      details: {},
-      scheduleId: 0,
-      scheduleName: '',
-      startTime: new Date(),
-      endTime: null,
-      filesTransferred: 0,
-      totalBytes: 0,
-      errors: []
-    };
+    try {
+      // Ensure required fields have default values
+      const historyWithDefaults = {
+        ...history,
+        startTime: history.startTime || new Date(),
+        filesTransferred: history.filesTransferred || 0,
+        totalBytes: history.totalBytes || 0,
+        errors: history.errors || []
+      };
+
+      const result = await this.db.insert(syncHistory).values(historyWithDefaults).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error creating sync history:', error);
+      // Return a minimal object so the frontend doesn't break
+      return {
+        id: 0,
+        connectionId: 0,
+        status: 'error',
+        details: { error: 'Failed to create sync history record' },
+        scheduleId: 0,
+        scheduleName: '',
+        startTime: new Date(),
+        endTime: null,
+        filesTransferred: 0,
+        totalBytes: 0,
+        errors: ['Database error']
+      };
+    }
   }
 
   async updateSyncHistory(id: number, history: Partial<SyncHistory>): Promise<SyncHistory | undefined> {
-    // Stub implementation - replace with actual DB implementation
-    return undefined;
+    try {
+      const result = await this.db.update(syncHistory)
+        .set(history)
+        .where(eq(syncHistory.id, id))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error updating sync history ${id}:`, error);
+      return undefined;
+    }
   }
 
   async deleteSyncHistory(id: number): Promise<void> {
-    // Stub implementation - replace with actual DB implementation
+    try {
+      await this.db.delete(syncHistory)
+        .where(eq(syncHistory.id, id));
+    } catch (error) {
+      console.error(`Error deleting sync history ${id}:`, error);
+    }
   }
 
   // FTP Connections
@@ -859,14 +1110,15 @@ export class PostgresStorage implements IStorage {
     };
   }
   
-  async importCostMatrixFromJson(data: any[]): Promise<{ imported: number; errors: string[] }> {
+  async importCostMatrixFromJson(data: any[]): Promise<{ imported: number; updated: number; errors: string[] }> {
     const errors: string[] = [];
     let imported = 0;
+    let updated = 0;
     
     try {
       if (!Array.isArray(data)) {
         errors.push("Invalid data format: expected an array of cost matrix entries");
-        return { imported, errors };
+        return { imported, updated, errors };
       }
       
       for (const item of data) {
@@ -908,11 +1160,11 @@ export class PostgresStorage implements IStorage {
           
           if (existing) {
             await this.updateCostMatrix(existing.id, matrixEntry);
+            updated++;
           } else {
             await this.createCostMatrix(matrixEntry);
+            imported++;
           }
-          
-          imported++;
         } catch (error: any) {
           errors.push(`Error importing item: ${JSON.stringify(item)}, Error: ${error.message}`);
         }
@@ -921,7 +1173,7 @@ export class PostgresStorage implements IStorage {
       errors.push(`General import error: ${error.message}`);
     }
     
-    return { imported, errors };
+    return { imported, updated, errors };
   }
 
   // Cost Factor Presets Methods
