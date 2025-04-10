@@ -1,0 +1,41 @@
+2useAuth.ts:107  Uncaught Error: useAuth must be used within an AuthProvider
+    at useAuth (useAuth.ts:107:11)
+    at WhatIfScenariosPage (WhatIfScenariosPage.tsx:49:20)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+react-dom.development.js:18704  The above error occurred in the <WhatIfScenariosPage> component:
+
+    at WhatIfScenariosPage (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/pages/WhatIfScenariosPage.tsx?t=1744316661535:62:20)
+    at Route (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=49bffcda:323:16)
+    at ProtectedRoute (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/lib/protected-route.tsx:19:3)
+    at Switch (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=49bffcda:379:17)
+    at Router
+    at WindowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at SidebarProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/SidebarContext.tsx:38:35)
+    at CollaborationProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/CollaborationContext.tsx:25:3)
+    at AuthProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=49bffcda:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+react-dom.development.js:26962  Uncaught Error: useAuth must be used within an AuthProvider
+    at useAuth (useAuth.ts:107:11)
+    at WhatIfScenariosPage (WhatIfScenariosPage.tsx:49:20)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+what-if-scenarios:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+what-if-scenarios:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON

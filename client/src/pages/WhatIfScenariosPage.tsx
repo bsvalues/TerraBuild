@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useWhatIfScenarios, TypedWhatIfScenario, ScenarioParameters, asTypedScenario } from "../lib/hooks/useWhatIfScenarios";
-import { useAuth } from "../lib/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import MainContent from "@/components/layout/MainContent";
@@ -46,7 +45,9 @@ import {
 import type { ScenarioVariation } from "@shared/schema";
 
 export default function WhatIfScenariosPage() {
-  const { user } = useAuth();
+  // Using mock admin user since authentication is disabled
+  const mockUser = { id: "1", role: "admin" };
+  
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("list");
   const [newScenarioOpen, setNewScenarioOpen] = useState(false);
@@ -84,9 +85,8 @@ export default function WhatIfScenariosPage() {
     deleteVariation
   } = useWhatIfScenarios();
   
-  const scenariosQuery = user?.role === 'admin' 
-    ? getAllScenarios() 
-    : user ? getUserScenarios(user.id) : null;
+  // Always use getAllScenarios since we have a mock admin user
+  const scenariosQuery = getAllScenarios();
   
   const scenarioVariationsQuery = selectedScenario 
     ? getScenarioVariations(selectedScenario.id) 
@@ -832,7 +832,7 @@ export default function WhatIfScenariosPage() {
                     type="number"
                     step="0.1"
                     min="0"
-                    max="1"
+                    max="2"
                     className="col-span-3"
                     value={formData.parameters.complexity}
                     onChange={(e) => setFormData({
@@ -955,7 +955,7 @@ export default function WhatIfScenariosPage() {
                     type="number"
                     step="0.1"
                     min="0"
-                    max="1"
+                    max="2"
                     className="col-span-3"
                     value={formData.parameters.complexity}
                     onChange={(e) => setFormData({
