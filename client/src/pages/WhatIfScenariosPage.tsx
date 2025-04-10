@@ -64,11 +64,12 @@ export default function WhatIfScenariosPage() {
       region: "Central"
     }
   });
+  // Define a more flexible type for variation form to handle different parameter types
   const [variationForm, setVariationForm] = useState({
     name: "",
     parameterKey: "complexity",
     originalValue: 1.0,
-    newValue: 1.1,
+    newValue: 1.1 as string | number,
   });
   
   const {
@@ -243,7 +244,7 @@ export default function WhatIfScenariosPage() {
             name: "",
             parameterKey: "complexity",
             originalValue: 1.0,
-            newValue: 1.1,
+            newValue: 1.1 as string | number,
           });
         },
         onError: () => {
@@ -583,7 +584,7 @@ export default function WhatIfScenariosPage() {
                                 name: "",
                                 parameterKey: "complexity",
                                 originalValue: selectedScenario.parameters.complexity || 1.0,
-                                newValue: (selectedScenario.parameters.complexity || 1.0) * 1.1,
+                                newValue: ((selectedScenario.parameters.complexity || 1.0) * 1.1) as string | number,
                               });
                               setNewVariationOpen(true);
                             }
@@ -612,7 +613,7 @@ export default function WhatIfScenariosPage() {
                                     name: "",
                                     parameterKey: "complexity",
                                     originalValue: selectedScenario.parameters.complexity || 1.0,
-                                    newValue: (selectedScenario.parameters.complexity || 1.0) * 1.1,
+                                    newValue: ((selectedScenario.parameters.complexity || 1.0) * 1.1) as string | number,
                                   });
                                   setNewVariationOpen(true);
                                 }
@@ -692,7 +693,7 @@ export default function WhatIfScenariosPage() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" />
                                 <YAxis />
-                                <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+                                <RechartsTooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
                                 <Legend />
                                 <Bar 
                                   dataKey="impact" 
@@ -723,7 +724,7 @@ export default function WhatIfScenariosPage() {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                   ))}
                                 </Pie>
-                                <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+                                <RechartsTooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
                               </PieChart>
                             </ResponsiveContainer>
                           </div>
