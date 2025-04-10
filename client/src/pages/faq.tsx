@@ -1,5 +1,6 @@
 import React from "react";
 import MainContent from "@/components/layout/MainContent";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { motion } from "framer-motion";
 import { 
   Accordion, 
