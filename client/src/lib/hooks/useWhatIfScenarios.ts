@@ -179,7 +179,7 @@ export function useWhatIfScenarios() {
   // Delete a variation
   const deleteVariation = useMutation({
     mutationFn: ({ variationId, scenarioId }: { variationId: number, scenarioId: number }) => 
-      apiRequest<void>(`/api/what-if-scenarios/${scenarioId}/variations/${variationId}`, {
+      apiRequest<void>(`/api/what-if-scenarios/variations/${variationId}`, {
         method: "DELETE",
       }),
     onSuccess: (_, variables) => {
