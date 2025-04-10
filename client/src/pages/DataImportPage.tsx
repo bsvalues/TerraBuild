@@ -3,6 +3,8 @@ import { useDropzone } from "react-dropzone";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import MainContent from '@/components/layout/MainContent';
 import { 
   Card, 
   CardContent, 
@@ -366,7 +368,9 @@ const DataImportPage = () => {
   };
   
   return (
-    <div className="container mx-auto py-6">
+    <LayoutWrapper>
+      <MainContent title="Data Import">
+        <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Benton County Data Import</h1>
       </div>
@@ -871,6 +875,8 @@ const DataImportPage = () => {
         </SheetContent>
       </Sheet>
     </div>
+      </MainContent>
+    </LayoutWrapper>
   );
 };
 
