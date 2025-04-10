@@ -102,104 +102,106 @@ export default function FAQPage() {
   ];
 
   return (
-    <MainContent title="FAQ">
-      <div className="container mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
-        >
-          <img 
-            src={bentonSeal} 
-            alt="Benton County Seal" 
-            className="h-16 w-16 mx-auto mb-4"
-          />
-          <h1 className="text-3xl font-bold text-[#243E4D] mb-2">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Find answers to common questions about the Benton County Building Cost System
-          </p>
-        </motion.div>
-        
-        <motion.div 
-          className="mb-8 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div className="relative">
-            <Input 
-              type="text"
-              placeholder="Search for answers..." 
-              className="pl-10 pr-4 py-2 border-2 focus:border-[#47AD55]"
+    <LayoutWrapper>
+      <MainContent title="FAQ">
+        <div className="container mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 text-center"
+          >
+            <img 
+              src={bentonSeal} 
+              alt="Benton County Seal" 
+              className="h-16 w-16 mx-auto mb-4"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Button 
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-[#47AD55] hover:bg-[#3a8c45] h-8"
-            >
-              Search
-            </Button>
+            <h1 className="text-3xl font-bold text-[#243E4D] mb-2">
+              Frequently Asked Questions
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Find answers to common questions about the Benton County Building Cost System
+            </p>
+          </motion.div>
+          
+          <motion.div 
+            className="mb-8 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div className="relative">
+              <Input 
+                type="text"
+                placeholder="Search for answers..." 
+                className="pl-10 pr-4 py-2 border-2 focus:border-[#47AD55]"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Button 
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-[#47AD55] hover:bg-[#3a8c45] h-8"
+              >
+                Search
+              </Button>
+            </div>
+          </motion.div>
+          
+          <div className="max-w-3xl mx-auto">
+            {faqCategories.map((category, categoryIndex) => (
+              <motion.div 
+                key={categoryIndex}
+                className="mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 + categoryIndex * 0.1 }}
+              >
+                <h2 className="text-2xl font-bold text-[#243E4D] mb-4">
+                  {category.category}
+                </h2>
+                <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
+                  {category.items.map((item, itemIndex) => (
+                    <AccordionItem key={itemIndex} value={`${categoryIndex}-${itemIndex}`}>
+                      <AccordionTrigger className="hover:text-[#47AD55] px-4 text-left">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4 text-muted-foreground">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
-        
-        <div className="max-w-3xl mx-auto">
-          {faqCategories.map((category, categoryIndex) => (
-            <motion.div 
-              key={categoryIndex}
-              className="mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 + categoryIndex * 0.1 }}
-            >
-              <h2 className="text-2xl font-bold text-[#243E4D] mb-4">
-                {category.category}
-              </h2>
-              <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
-                {category.items.map((item, itemIndex) => (
-                  <AccordionItem key={itemIndex} value={`${categoryIndex}-${itemIndex}`}>
-                    <AccordionTrigger className="hover:text-[#47AD55] px-4 text-left">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 text-muted-foreground">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </motion.div>
-          ))}
+          
+          <motion.div 
+            className="max-w-3xl mx-auto mt-12 p-6 bg-[#47AD55]/10 rounded-lg border border-[#47AD55]/20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <h2 className="text-xl font-semibold text-[#243E4D] mb-3">
+              Still have questions?
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              If you can't find the answer you're looking for, please contact our support team.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                className="bg-[#243E4D] hover:bg-[#1c313d]"
+                onClick={() => window.location.href = "mailto:support@bentoncounty.wa.gov"}
+              >
+                Contact Support
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-[#243E4D] text-[#243E4D] hover:bg-[#243E4D] hover:text-white"
+              >
+                Submit Feedback
+              </Button>
+            </div>
+          </motion.div>
         </div>
-        
-        <motion.div 
-          className="max-w-3xl mx-auto mt-12 p-6 bg-[#47AD55]/10 rounded-lg border border-[#47AD55]/20"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <h2 className="text-xl font-semibold text-[#243E4D] mb-3">
-            Still have questions?
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            If you can't find the answer you're looking for, please contact our support team.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button 
-              className="bg-[#243E4D] hover:bg-[#1c313d]"
-              onClick={() => window.location.href = "mailto:support@bentoncounty.wa.gov"}
-            >
-              Contact Support
-            </Button>
-            <Button 
-              variant="outline" 
-              className="border-[#243E4D] text-[#243E4D] hover:bg-[#243E4D] hover:text-white"
-            >
-              Submit Feedback
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-    </MainContent>
+      </MainContent>
+    </LayoutWrapper>
   );
 }
