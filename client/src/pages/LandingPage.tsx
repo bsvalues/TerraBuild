@@ -43,31 +43,37 @@ export default function LandingPage() {
       icon: <Calculator className="h-6 w-6" />,
       title: "Cost Calculator",
       description: "Accurately calculate building costs based on structure type, size, and region.",
+      link: "/calculator"
     },
     {
       icon: <ChartBar className="h-6 w-6" />,
       title: "Data Visualization",
       description: "Advanced charts and graphs to help interpret complex cost data at a glance.",
+      link: "/visualizations"
     },
     {
       icon: <Map className="h-6 w-6" />,
       title: "Regional Analysis",
       description: "Compare construction costs across different regions in Benton County.",
+      link: "/regional-cost-comparison"
     },
     {
       icon: <Database className="h-6 w-6" />,
       title: "Data Import/Export",
       description: "Easily import and export cost data in various formats, including Excel and PDF.",
+      link: "/data-import"
     },
     {
       icon: <Building2 className="h-6 w-6" />,
       title: "What-If Scenarios",
       description: "Model different building scenarios and see how they affect overall costs.",
+      link: "/what-if-scenarios"
     },
     {
       icon: <FileSpreadsheet className="h-6 w-6" />,
       title: "Cost Matrix Management",
       description: "Maintain and update cost matrices for different building types and regions.",
+      link: "/data-import"
     },
   ];
 
@@ -190,61 +196,63 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Card 
-                  className={`border-2 transition-all duration-300 hover:shadow-xl group overflow-hidden cursor-pointer ${
-                    index === activeFeature 
-                      ? 'border-[#47AD55] shadow-lg' 
-                      : 'border-transparent'
-                  }`}
-                  onClick={() => setActiveFeature(index)}
-                >
-                  <CardContent className="p-6 relative">
-                    {/* Background pattern only visible on hover or active */}
-                    <div 
-                      className={`absolute inset-0 bg-gradient-to-tr rounded-lg transition-opacity duration-500 opacity-0 ${
-                        index === activeFeature ? 'opacity-5' : 'group-hover:opacity-5'
-                      }`}
-                      style={{
-                        backgroundImage: 'radial-gradient(circle at 10px 10px, #47AD55 1px, transparent 0)',
-                        backgroundSize: '20px 20px'
-                      }}
-                    />
-                    
-                    {/* Animated icon container */}
-                    <motion.div 
-                      className={`mb-4 p-4 rounded-full inline-flex bg-[#243E4D]/10 transition-all duration-300 ${
-                        index === activeFeature ? 'text-[#47AD55] scale-110' : 'text-[#243E4D] group-hover:text-[#47AD55]'
-                      }`}
-                      whileHover={{ rotate: 10, scale: 1.1 }}
-                      animate={index === activeFeature ? { 
-                        y: [0, -5, 0],
-                        scale: [1, 1.1, 1],
-                        transition: { 
-                          repeat: 2, 
-                          duration: 0.5 
-                        }
-                      } : {}}
-                    >
-                      {feature.icon}
-                    </motion.div>
-                    
-                    <h3 className="text-xl font-bold mb-2 transition-colors duration-300 group-hover:text-[#47AD55]">
-                      {feature.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground group-hover:text-gray-700 transition-colors duration-300">
-                      {feature.description}
-                    </p>
-                    
-                    {/* Show more link that appears on hover */}
-                    <div className={`mt-4 flex items-center gap-1 text-sm font-medium overflow-hidden transition-all duration-300 ${
-                      index === activeFeature ? 'text-[#47AD55] max-h-6' : 'max-h-0 group-hover:max-h-6 text-[#243E4D] group-hover:text-[#47AD55]'
-                    }`}>
-                      <span>Learn more</span>
-                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </CardContent>
-                </Card>
+                <Link href={feature.link}>
+                  <Card 
+                    className={`border-2 transition-all duration-300 hover:shadow-xl group overflow-hidden cursor-pointer ${
+                      index === activeFeature 
+                        ? 'border-[#47AD55] shadow-lg' 
+                        : 'border-transparent'
+                    }`}
+                    onClick={() => setActiveFeature(index)}
+                  >
+                    <CardContent className="p-6 relative">
+                      {/* Background pattern only visible on hover or active */}
+                      <div 
+                        className={`absolute inset-0 bg-gradient-to-tr rounded-lg transition-opacity duration-500 opacity-0 ${
+                          index === activeFeature ? 'opacity-5' : 'group-hover:opacity-5'
+                        }`}
+                        style={{
+                          backgroundImage: 'radial-gradient(circle at 10px 10px, #47AD55 1px, transparent 0)',
+                          backgroundSize: '20px 20px'
+                        }}
+                      />
+                      
+                      {/* Animated icon container */}
+                      <motion.div 
+                        className={`mb-4 p-4 rounded-full inline-flex bg-[#243E4D]/10 transition-all duration-300 ${
+                          index === activeFeature ? 'text-[#47AD55] scale-110' : 'text-[#243E4D] group-hover:text-[#47AD55]'
+                        }`}
+                        whileHover={{ rotate: 10, scale: 1.1 }}
+                        animate={index === activeFeature ? { 
+                          y: [0, -5, 0],
+                          scale: [1, 1.1, 1],
+                          transition: { 
+                            repeat: 2, 
+                            duration: 0.5 
+                          }
+                        } : {}}
+                      >
+                        {feature.icon}
+                      </motion.div>
+                      
+                      <h3 className="text-xl font-bold mb-2 transition-colors duration-300 group-hover:text-[#47AD55]">
+                        {feature.title}
+                      </h3>
+                      
+                      <p className="text-muted-foreground group-hover:text-gray-700 transition-colors duration-300">
+                        {feature.description}
+                      </p>
+                      
+                      {/* Show more link that appears on hover */}
+                      <div className={`mt-4 flex items-center gap-1 text-sm font-medium overflow-hidden transition-all duration-300 ${
+                        index === activeFeature ? 'text-[#47AD55] max-h-6' : 'max-h-0 group-hover:max-h-6 text-[#243E4D] group-hover:text-[#47AD55]'
+                      }`}>
+                        <span>Learn more</span>
+                        <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>

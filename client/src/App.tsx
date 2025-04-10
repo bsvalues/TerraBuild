@@ -25,6 +25,9 @@ import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
 import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
 import CreateProjectPage from "@/pages/CreateProjectPage";
+import DocumentationPage from "@/pages/documentation";
+import TutorialsPage from "@/pages/tutorials";
+import FAQPage from "@/pages/faq";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import SharedProjectDashboardPage from "@/pages/SharedProjectDashboardPage";
 import DataConnectionsPage from "@/pages/DataConnectionsPage";
@@ -70,6 +73,9 @@ function Router() {
     <Switch>
       {/* Use LandingPage as the root route without authentication */}
       <Route path="/" component={LandingPage} />
+      <Route path="/documentation" component={DocumentationPage} />
+      <Route path="/tutorials" component={TutorialsPage} />
+      <Route path="/faq" component={FAQPage} />
       
       {/* Protected routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
