@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import ARViewer from '@/components/ar/ARViewer';
 import { useToast } from '@/hooks/use-toast';
+import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import MainContent from '@/components/layout/MainContent';
+import { Glasses } from 'lucide-react';
 
 // Define the form schema for building data
 const buildingSchema = z.object({
@@ -131,8 +134,8 @@ const ARVisualizationPage = () => {
   };
   
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">AR Building Cost Visualization</h1>
+    <div className="w-full">
+      {/* Main content without redundant heading */}
       
       <Tabs defaultValue="input" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -440,7 +443,22 @@ const ARVisualizationPage = () => {
 
 // Define it as a function that returns a JSX.Element to match the type expected by the router
 function ARVisualizationPageWrapper(): JSX.Element {
-  return <ARVisualizationPage />;
+  return (
+    <LayoutWrapper>
+      <MainContent title="AR Visualization">
+        <div className="flex flex-col space-y-2 mb-6">
+          <h1 className="text-3xl font-bold flex items-center">
+            <Glasses className="mr-2 h-6 w-6 text-primary" />
+            AR Building Visualization
+          </h1>
+          <p className="text-muted-foreground">
+            Visualize buildings in augmented reality based on cost calculations
+          </p>
+        </div>
+        <ARVisualizationPage />
+      </MainContent>
+    </LayoutWrapper>
+  );
 }
 
 export default ARVisualizationPageWrapper;
