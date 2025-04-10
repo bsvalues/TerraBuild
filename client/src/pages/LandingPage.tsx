@@ -8,10 +8,7 @@ import {
   Database, 
   FileSpreadsheet, 
   Map, 
-  ChevronDown,
-  Quote,
-  ChevronLeft,
-  ChevronRight
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +26,6 @@ import additionalImage from '@assets/1.jpg';
 
 export default function LandingPage() {
   const [activeFeature, setActiveFeature] = useState(0);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
   
   // Rotate through features automatically
   useEffect(() => {
@@ -37,38 +33,10 @@ export default function LandingPage() {
       setActiveFeature((prev) => (prev + 1) % 6);
     }, 5000);
     
-    const testimonialInterval = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 8000);
-    
     return () => {
       clearInterval(featureInterval);
-      clearInterval(testimonialInterval);
     };
   }, []);
-  
-  const testimonials = [
-    {
-      quote: "The Benton County Building Cost System has revolutionized how we conduct property assessments. It's accurate, efficient, and has saved countless hours of manual calculations.",
-      author: "Maria Johnson",
-      title: "Chief Assessor, Benton County",
-    },
-    {
-      quote: "As a property developer, having access to this tool has made planning new projects much more predictable. The regional cost breakdowns are invaluable for our budget forecasting.",
-      author: "James Wilson",
-      title: "Development Director, PNW Builders",
-    },
-    {
-      quote: "The BCBS provides the most accurate building cost estimates in the region. The data import feature seamlessly integrates with our existing systems.",
-      author: "Robert Chen",
-      title: "County Commissioner",
-    },
-    {
-      quote: "Before this system, we struggled with inconsistent cost estimations. Now, all departments work from the same reliable data source.",
-      author: "Sarah Martinez",
-      title: "Construction Manager",
-    },
-  ];
   
   const features = [
     {
@@ -555,96 +523,6 @@ export default function LandingPage() {
               <Map className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
-        </div>
-      </section>
-      
-      {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-b from-white to-[#243E4D]/5">
-        <div className="container mx-auto px-6">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-3xl font-bold text-[#243E4D] mb-4">What People Are Saying</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Trusted by assessors, developers, and construction professionals across Benton County.
-            </p>
-          </motion.div>
-          
-          <div className="relative">
-            {/* Testimonial carousel */}
-            <div className="overflow-hidden">
-              <div className="flex flex-col items-center">
-                <motion.div
-                  key={activeTestimonial}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5 }}
-                  className="max-w-3xl mx-auto text-center px-6"
-                >
-                  <div className="mb-6 text-[#243E4D]">
-                    <Quote className="h-12 w-12 mx-auto opacity-20" />
-                  </div>
-                  <p className="text-xl mb-8 italic text-gray-700">
-                    "{testimonials[activeTestimonial].quote}"
-                  </p>
-                  <div>
-                    <h4 className="font-bold text-lg text-[#243E4D]">
-                      {testimonials[activeTestimonial].author}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {testimonials[activeTestimonial].title}
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-            
-            {/* Navigation arrows */}
-            <div className="flex justify-between absolute top-1/2 left-0 right-0 -mt-4 px-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="bg-white/80 hover:bg-white/90 rounded-full shadow-md"
-                onClick={() => setActiveTestimonial(prev => 
-                  prev === 0 ? testimonials.length - 1 : prev - 1
-                )}
-              >
-                <ChevronLeft className="h-5 w-5 text-[#243E4D]" />
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="bg-white/80 hover:bg-white/90 rounded-full shadow-md"
-                onClick={() => setActiveTestimonial(prev => 
-                  (prev + 1) % testimonials.length
-                )}
-              >
-                <ChevronRight className="h-5 w-5 text-[#243E4D]" />
-              </Button>
-            </div>
-            
-            {/* Dots indicator */}
-            <div className="flex justify-center mt-8 gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === activeTestimonial 
-                      ? 'w-8 bg-[#47AD55]' 
-                      : 'w-2 bg-[#243E4D]/30 hover:bg-[#243E4D]/50'
-                  }`}
-                  onClick={() => setActiveTestimonial(index)}
-                  aria-label={`View testimonial ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
         </div>
       </section>
       
