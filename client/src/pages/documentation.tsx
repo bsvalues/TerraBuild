@@ -1,5 +1,6 @@
 import React from "react";
 import MainContent from "@/components/layout/MainContent";
+import SharedLayout from "@/components/layout/SharedLayout";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

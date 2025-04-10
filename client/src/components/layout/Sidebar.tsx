@@ -472,13 +472,18 @@ export default function Sidebar({ className }: SidebarProps) {
               isCollapsed={!isExpanded}
             >
               <SidebarItem
-                href="/help"
+                href="/documentation"
                 title="Documentation"
                 icon={<BookOpen />}
               />
               <SidebarItem
-                href="/support"
-                title="Get Support"
+                href="/tutorials"
+                title="Tutorials"
+                icon={<BookOpen />}
+              />
+              <SidebarItem
+                href="/faq"
+                title="FAQ"
                 icon={<HelpCircle />}
               />
             </SidebarSection>
