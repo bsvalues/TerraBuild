@@ -17,6 +17,7 @@ import BenchmarkingPage from "@/pages/BenchmarkingPage";
 import MCPOverviewPage from "@/pages/MCPOverviewPage";
 import WhatIfScenariosPage from "@/pages/WhatIfScenariosPage";
 import VisualizationsPage from "@/pages/VisualizationsPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 import DataExplorationDemo from "@/pages/DataExplorationDemo";
 import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
 import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
@@ -80,6 +81,7 @@ function Router() {
       {/* Protected routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/calculator" component={CalculatorPage} />
+      <ProtectedRoute path="/analytics" component={AnalyticsPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
       <ProtectedRoute path="/ai-tools" component={AIToolsPage} />
       <ProtectedRoute path="/ai-cost-wizard" component={AICostWizardPage} />
