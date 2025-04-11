@@ -19,17 +19,19 @@ import {
 export class PropertyPostgresStorage extends PostgresStorage {
   // Property Methods
   async getAllProperties(options?: { limit?: number; offset?: number }): Promise<Property[]> {
-    let query = db.select().from(properties).orderBy(properties.propId);
+    // Create a base query with proper type inference
+    const baseQuery = db.select().from(properties).orderBy(properties.propId);
     
-    if (options?.offset) {
-      query = query.offset(options.offset);
+    // Apply pagination options using the baseQuery to create new queries
+    if (options?.offset !== undefined && options?.limit !== undefined) {
+      return await baseQuery.limit(options.limit).offset(options.offset).execute();
+    } else if (options?.limit !== undefined) {
+      return await baseQuery.limit(options.limit).execute();
+    } else if (options?.offset !== undefined) {
+      return await baseQuery.offset(options.offset).execute();
     }
     
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    return await query.execute();
+    return await baseQuery.execute();
   }
   
   async getProperty(id: number): Promise<Property | undefined> {
