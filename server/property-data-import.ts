@@ -28,7 +28,8 @@ interface ImportResults {
 }
 
 /**
- * Import property data from CSV files
+ * Import property data from CSV files or buffers
+ * This function supports both file paths and in-memory buffers
  */
 export async function importPropertyData(storage: IStorage, options: ImportOptions): Promise<ImportResults> {
   console.log(`Starting property data import process...`);
@@ -475,10 +476,10 @@ async function importImprovementItems(
 }
 
 /**
- * Import land details from CSV file
+ * Import land details from CSV file or buffer
  */
 async function importLandDetails(
-  filePath: string,
+  filePathOrBuffer: string | Buffer,
   batchSize: number,
   storage: IStorage, 
   results: ImportResults
@@ -487,13 +488,24 @@ async function importLandDetails(
     const details: InsertLandDetail[] = [];
     let batch: InsertLandDetail[] = [];
     
-    // Create a readable stream for the CSV file
-    const parser = fs.createReadStream(filePath)
-      .pipe(parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true
-      }));
+    // Create a parser based on file path or buffer
+    let parser;
+    if (typeof filePathOrBuffer === 'string') {
+      parser = require('fs').createReadStream(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    } else {
+      // Use buffer directly
+      parser = Readable.from(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    }
     
     parser.on('data', async (record) => {
       try {
