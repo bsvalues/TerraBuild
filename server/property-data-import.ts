@@ -39,7 +39,7 @@ export async function importPropertyData(storage: IStorage, options: ImportOptio
     action: "Property data import started",
     icon: "ri-file-transfer-line",
     iconColor: "primary",
-    userId: options.userId
+    details: [{ userId: options.userId }]
   });
   
   const batchSize = options.batchSize || 100;
@@ -78,7 +78,7 @@ export async function importPropertyData(storage: IStorage, options: ImportOptio
       action: "Property data import completed successfully",
       icon: "ri-check-line",
       iconColor: "success",
-      userId: options.userId
+      details: [{ userId: options.userId }]
     });
     
   } catch (error) {
@@ -89,7 +89,7 @@ export async function importPropertyData(storage: IStorage, options: ImportOptio
         action: "Property data import failed",
         icon: "ri-error-warning-line",
         iconColor: "danger",
-        userId: options.userId
+        details: [{ userId: options.userId }]
       });
     } catch (error) {
       console.error("Failed to log error activity:", error);
