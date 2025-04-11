@@ -103,14 +103,22 @@ export async function processCostMatrixFile(
         
         // Validate the matrix entry against rules
         const validationResult = validateCostMatrix(matrixEntry, {
-          ruleSets: [RuleType.COST_MATRIX],
           relatedData: {
             validBuildingTypes: options.validBuildingTypes
           }
         });
         
+        // Create a simple report for tracking
+        const validationReport = {
+          timestamp: new Date(),
+          entityType: RuleType.COST_MATRIX,
+          passed: validationResult.passed,
+          message: validationResult.message || '',
+          details: validationResult.details || {}
+        };
+        
         // Track validation results
-        qualityReports.push(validationResult.report);
+        qualityReports.push(validationReport);
         
         // Skip insert if validate-only mode is enabled
         if (options.validateOnly) {
@@ -119,7 +127,7 @@ export async function processCostMatrixFile(
           } else {
             errors++;
             console.log(`Validation failed for matrix [${region}][${buildingType}]:`, 
-              validationResult.report.issues.map(i => i.message).join(', '));
+              validationResult.message);
           }
           continue;
         }
@@ -137,7 +145,7 @@ export async function processCostMatrixFile(
         } else {
           errors++;
           console.log(`Validation failed for matrix [${region}][${buildingType}]:`, 
-            validationResult.report.issues.map(i => i.message).join(', '));
+            validationResult.message);
         }
       }
     } catch (error) {
@@ -165,7 +173,7 @@ export async function processCostMatrixFile(
  * @param reports Individual validation reports
  * @returns Aggregated quality summary
  */
-function aggregateQualityReports(reports: ValidationReport[]): any {
+function aggregateQualityReports(reports: any[]): any {
   // Initialize summary counters
   const summary = {
     timestamp: new Date(),
@@ -174,46 +182,23 @@ function aggregateQualityReports(reports: ValidationReport[]): any {
     passedRecords: reports.filter(r => r.passed).length,
     failedRecords: reports.filter(r => !r.passed).length,
     criticalErrors: 0,
-    errors: 0,
+    errors: reports.filter(r => !r.passed).length, // Count each failed validation as an error
     warnings: 0,
     infoMessages: 0,
     ruleStats: [] as any[]
   };
   
-  // Create a map for rule statistics
+  // Create a map for rule statistics (simplified for our custom reports)
   const ruleStatsMap = new Map();
   
-  // Process each report
-  for (const report of reports) {
-    // Count issues by severity
-    for (const issue of report.issues) {
-      switch (issue.severity) {
-        case 'CRITICAL':
-          summary.criticalErrors++;
-          break;
-        case 'ERROR':
-          summary.errors++;
-          break;
-        case 'WARNING':
-          summary.warnings++;
-          break;
-        case 'INFO':
-          summary.infoMessages++;
-          break;
-      }
-      
-      // Track rule statistics
-      if (!ruleStatsMap.has(issue.ruleId)) {
-        ruleStatsMap.set(issue.ruleId, {
-          ruleId: issue.ruleId,
-          failed: 0,
-          total: reports.length
-        });
-      }
-      
-      const ruleStat = ruleStatsMap.get(issue.ruleId);
-      ruleStat.failed++;
-    }
+  // Add a generic rule stat entry for validation failures
+  if (summary.failedRecords > 0) {
+    ruleStatsMap.set('cost-matrix-validation', {
+      ruleId: 'cost-matrix-validation',
+      ruleName: 'Cost Matrix Validation',
+      failed: summary.failedRecords,
+      total: reports.length
+    });
   }
   
   // Convert rule stats map to array
