@@ -30,11 +30,13 @@ import {
   SyncSchedule, InsertSyncSchedule,
   SyncHistory, InsertSyncHistory,
   FTPConnection, InsertFTPConnection,
+  ImportRecord, InsertImportRecord,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
-  comments, sharedLinks, connectionHistory, syncSchedules, syncHistory, ftpConnections
+  comments, sharedLinks, connectionHistory, syncSchedules, syncHistory, ftpConnections,
+  importRecords
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
@@ -2418,5 +2420,184 @@ export class PostgresStorage implements IStorage {
   // Alias for createCostMatrix
   async createCostMatrixEntry(matrix: InsertCostMatrix): Promise<CostMatrix> {
     return this.createCostMatrix(matrix);
+  }
+  
+  // Import Records
+  async createImportRecord(data: { 
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status?: string;
+    errors?: any;
+    processedItems?: number;
+    totalItems?: number;
+    errorCount?: number;
+  }): Promise<{ 
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
+    try {
+      // Check if the importRecords table exists
+      if (!(await this.tableExists('import_records'))) {
+        console.warn('Import records table does not exist yet.');
+        throw new Error('Import records table does not exist');
+      }
+      
+      const now = new Date();
+      const result = await db.insert(importRecords).values({
+        fileName: data.fileName,
+        fileType: data.fileType,
+        fileSize: data.fileSize,
+        uploadedBy: data.uploadedBy,
+        status: data.status || 'pending',
+        errors: data.errors || {},
+        processedItems: data.processedItems || 0,
+        totalItems: data.totalItems || null,
+        errorCount: data.errorCount || 0,
+        createdAt: now,
+        updatedAt: now
+      }).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error creating import record:', error);
+      throw error;
+    }
+  }
+  
+  async getImportRecord(id: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined> {
+    try {
+      // Check if the importRecords table exists
+      if (!(await this.tableExists('import_records'))) {
+        console.warn('Import records table does not exist yet.');
+        return undefined;
+      }
+      
+      const result = await db.select().from(importRecords).where(eq(importRecords.id, id)).execute();
+      return result[0];
+    } catch (error) {
+      console.error(`Error getting import record ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async getImportRecords(limit?: number, offset?: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }[]> {
+    try {
+      // Check if the importRecords table exists
+      if (!(await this.tableExists('import_records'))) {
+        console.warn('Import records table does not exist yet.');
+        return [];
+      }
+      
+      let query = db.select().from(importRecords).orderBy(desc(importRecords.createdAt));
+      
+      if (limit !== undefined) {
+        query = query.limit(limit);
+      }
+      
+      if (offset !== undefined) {
+        query = query.offset(offset);
+      }
+      
+      const results = await query.execute();
+      return results;
+    } catch (error) {
+      console.error('Error getting import records:', error);
+      return [];
+    }
+  }
+  
+  async updateImportRecord(id: number, data: Partial<{
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+  }>): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined> {
+    try {
+      // Check if the importRecords table exists
+      if (!(await this.tableExists('import_records'))) {
+        console.warn('Import records table does not exist yet.');
+        return undefined;
+      }
+      
+      const now = new Date();
+      const result = await db.update(importRecords)
+        .set({
+          ...data,
+          updatedAt: now
+        })
+        .where(eq(importRecords.id, id))
+        .returning();
+        
+      return result[0];
+    } catch (error) {
+      console.error(`Error updating import record ${id}:`, error);
+      return undefined;
+    }
+  }
+  
+  async deleteImportRecord(id: number): Promise<void> {
+    try {
+      // Check if the importRecords table exists
+      if (!(await this.tableExists('import_records'))) {
+        console.warn('Import records table does not exist yet.');
+        return;
+      }
+      
+      await db.delete(importRecords).where(eq(importRecords.id, id));
+    } catch (error) {
+      console.error(`Error deleting import record ${id}:`, error);
+    }
   }
 }

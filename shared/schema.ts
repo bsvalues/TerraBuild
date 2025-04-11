@@ -926,5 +926,36 @@ export const insertFTPConnectionSchema = createInsertSchema(ftpConnections).pick
 export type FTPConnection = typeof ftpConnections.$inferSelect;
 export type InsertFTPConnection = z.infer<typeof insertFTPConnectionSchema>;
 
+// Import Records for tracking data imports
+export const importRecords = pgTable("import_records", {
+  id: serial("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
+  status: text("status").notNull().default("pending"),
+  errors: json("errors").$type<any>().default({}),
+  processedItems: integer("processed_items").notNull().default(0),
+  totalItems: integer("total_items"),
+  errorCount: integer("error_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertImportRecordSchema = createInsertSchema(importRecords).pick({
+  fileName: true,
+  fileType: true,
+  fileSize: true,
+  uploadedBy: true,
+  status: true,
+  errors: true,
+  processedItems: true,
+  totalItems: true,
+  errorCount: true,
+});
+
+export type ImportRecord = typeof importRecords.$inferSelect;
+export type InsertImportRecord = z.infer<typeof insertImportRecordSchema>;
+
 // Export property data schema
 export * from './property-schema';
