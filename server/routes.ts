@@ -2403,27 +2403,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Object.keys(req.files).map(key => `${key}: ${(req.files as any)[key]?.length || 0} files`).join(", "));
       
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const fs = require('fs');
-      const path = require('path');
-      const uploadsDir = path.join(process.cwd(), 'uploads');
-      
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      
-      // Create temporary files from buffers and get their paths
-      const tempFilePaths: {[key: string]: string} = {};
-      
-      for (const [fieldName, fileArray] of Object.entries(files)) {
-        if (fileArray.length > 0) {
-          const file = fileArray[0];
-          const tempFilePath = path.join(uploadsDir, `temp-${Date.now()}-${file.originalname}`);
-          fs.writeFileSync(tempFilePath, file.buffer);
-          tempFilePaths[fieldName] = tempFilePath;
-          
-          console.log(`Saved ${fieldName} to ${tempFilePath}, size: ${file.size} bytes`);
-        }
-      }
       
       // Create uploads for each file
       const fileUploads: {[key: string]: number} = {};
@@ -2445,24 +2424,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Get file paths
+      // Get file buffers directly from the uploaded files
       const options: {
-        propertiesFile: string;
-        improvementsFile: string;
-        improvementDetailsFile: string;
-        improvementItemsFile: string;
-        landDetailsFile: string;
+        propertiesFile?: Buffer;
+        improvementsFile: Buffer;
+        improvementDetailsFile: Buffer;
+        improvementItemsFile: Buffer;
+        landDetailsFile: Buffer;
         userId: number;
         batchSize?: number;
       } = {
-        propertiesFile: tempFilePaths['propertiesFile'] || '',
-        improvementsFile: tempFilePaths['improvementsFile'] || '',
-        improvementDetailsFile: tempFilePaths['improvementDetailsFile'] || '',
-        improvementItemsFile: tempFilePaths['improvementItemsFile'] || '',
-        landDetailsFile: tempFilePaths['landDetailsFile'] || '',
         userId: req.user?.id || 1, // Default to admin user if authentication is disabled
         batchSize: req.body.batchSize ? parseInt(req.body.batchSize) : 100
       };
+      
+      // Assign buffers from uploaded files
+      if (files['propertiesFile']?.[0]) {
+        options.propertiesFile = files['propertiesFile'][0].buffer;
+      }
+      
+      if (files['improvementsFile']?.[0]) {
+        options.improvementsFile = files['improvementsFile'][0].buffer;
+      }
+      
+      if (files['improvementDetailsFile']?.[0]) {
+        options.improvementDetailsFile = files['improvementDetailsFile'][0].buffer;
+      }
+      
+      if (files['improvementItemsFile']?.[0]) {
+        options.improvementItemsFile = files['improvementItemsFile'][0].buffer;
+      }
+      
+      if (files['landDetailsFile']?.[0]) {
+        options.landDetailsFile = files['landDetailsFile'][0].buffer;
+      }
       
       // Validate required files
       if (!options.improvementsFile || !options.improvementDetailsFile || 
@@ -2472,9 +2467,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log("Processing property data import with options:", options);
+      console.log("Processing property data import with file buffers");
       
-      // Process import
+      // Process import with buffers directly (no temporary files)
       const importResult = await importPropertyData(storage, options);
       
       console.log("Import result:", importResult);
@@ -2488,16 +2483,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           1, // Total items
           [] // No errors
         );
-      }
-      
-      // Clean up temporary files
-      for (const filePath of Object.values(tempFilePaths)) {
-        try {
-          fs.unlinkSync(filePath);
-          console.log(`Cleaned up temporary file: ${filePath}`);
-        } catch (e) {
-          console.error(`Error deleting file ${filePath}:`, e);
-        }
       }
       
       // Log activity
