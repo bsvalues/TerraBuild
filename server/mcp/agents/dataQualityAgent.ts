@@ -90,7 +90,7 @@ export class DataQualityAgent extends BaseAgent {
     console.log(`Data Quality Agent received ${entityType} data`);
     
     // Auto-validate incoming data if configured to do so
-    if (this.state.context.autoValidate) {
+    if (this.state.context && this.state.context.autoValidate) {
       await this.validateData({ entityType, data });
     }
   }
@@ -202,7 +202,13 @@ export class DataQualityAgent extends BaseAgent {
           criticalCount: validationResults.criticalErrors,
           infoCount: validationResults.infoMessages,
           totalRules: validationResults.totalRules,
-          ruleResults: validationResults.ruleStats.map(stat => ({
+          ruleResults: validationResults.ruleStats.map((stat: { 
+            ruleId: string;
+            passed: boolean;
+            severity: string;
+            message?: string;
+            details?: any;
+          }) => ({
             ruleId: stat.ruleId,
             passed: stat.passed,
             severity: stat.severity,
@@ -295,7 +301,8 @@ export class DataQualityAgent extends BaseAgent {
         
         // Validate the record
         const validationReport = dataQualityFramework.validate(record, ruleType, dataSet.context);
-        const result = validationReport.getSummary();
+        const result = validationReport.toJSON();
+        const { summary } = result;
         
         // Update counts
         if (result.passedRecords === result.totalRecords) {
@@ -329,7 +336,10 @@ export class DataQualityAgent extends BaseAgent {
               fieldStats[key].emptyCount++;
             } else if (
               // Check if this field had validation issues
-              result.ruleStats.some(rule => 
+              result.ruleStats.some((rule: {
+                passed: boolean;
+                details?: { field?: string };
+              }) => 
                 rule.passed === false && 
                 rule.details && 
                 rule.details.field === key
