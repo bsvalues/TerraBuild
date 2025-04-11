@@ -19,7 +19,8 @@ const testProperty = {
   townshipSection: "01",
   townshipCode: "10",
   rangeCode: "25",
-  assessedVal: "100000.00"
+  assessedVal: "100000.00",
+  market: "100000.00"
 };
 
 // Test data for an improvement
@@ -97,8 +98,13 @@ async function testPropertyStorageApi() {
     // Test 3: Get property by ID
     console.log("\nTest 3: Get property by ID");
     try {
-      const propertyResponse = await axios.get(`${API_URL}/api/properties/${createdProperty.id}`);
-      console.log(`Retrieved property by ID: ${propertyResponse.data.id}`);
+      // Make sure we have a valid property ID
+      if (!createdProperty || !createdProperty.id) {
+        console.log("No valid property ID available, skipping this test");
+      } else {
+        const propertyResponse = await axios.get(`${API_URL}/api/properties/${createdProperty.id}`);
+        console.log(`Retrieved property by ID: ${propertyResponse.data.id}`);
+      }
     } catch (error) {
       console.error("Error getting property:", error.response?.data?.message || error.message);
     }

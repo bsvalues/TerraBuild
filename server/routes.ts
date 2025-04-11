@@ -2567,6 +2567,333 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching property details" });
     }
   });
+  
+  // Get property by propId
+  app.get("/api/properties/by-prop-id/:propId", async (req: Request, res: Response) => {
+    try {
+      const propId = parseInt(req.params.propId);
+      const property = await storage.getPropertyByPropId(propId);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      res.json(property);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching property by propId" });
+    }
+  });
+  
+  // Create property
+  app.post("/api/properties", async (req: Request, res: Response) => {
+    try {
+      const propertyData = req.body;
+      const property = await storage.createProperty(propertyData);
+      res.status(201).json(property);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error creating property: ${error.message}` });
+    }
+  });
+  
+  // Update property
+  app.put("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const propertyData = req.body;
+      const property = await storage.updateProperty(id, propertyData);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      res.json(property);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error updating property: ${error.message}` });
+    }
+  });
+  
+  // Delete property
+  app.delete("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteProperty(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ message: `Error deleting property: ${error.message}` });
+    }
+  });
+  
+  // Get improvements by property ID
+  app.get("/api/properties/:id/improvements", async (req: Request, res: Response) => {
+    try {
+      const propId = parseInt(req.params.id);
+      const improvements = await storage.getImprovementsByPropertyId(propId);
+      res.json(improvements);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvements: ${error.message}` });
+    }
+  });
+  
+  // IMPROVEMENT ENDPOINTS
+  
+  // Get improvement by ID
+  app.get("/api/improvements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const improvement = await storage.getImprovement(id);
+      
+      if (!improvement) {
+        return res.status(404).json({ message: "Improvement not found" });
+      }
+      
+      res.json(improvement);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvement: ${error.message}` });
+    }
+  });
+  
+  // Create improvement
+  app.post("/api/improvements", async (req: Request, res: Response) => {
+    try {
+      const improvementData = req.body;
+      const improvement = await storage.createImprovement(improvementData);
+      res.status(201).json(improvement);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error creating improvement: ${error.message}` });
+    }
+  });
+  
+  // Update improvement
+  app.put("/api/improvements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const improvementData = req.body;
+      const improvement = await storage.updateImprovement(id, improvementData);
+      
+      if (!improvement) {
+        return res.status(404).json({ message: "Improvement not found" });
+      }
+      
+      res.json(improvement);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error updating improvement: ${error.message}` });
+    }
+  });
+  
+  // Delete improvement
+  app.delete("/api/improvements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteImprovement(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ message: `Error deleting improvement: ${error.message}` });
+    }
+  });
+  
+  // IMPROVEMENT DETAIL ENDPOINTS
+  
+  // Get improvement detail by ID
+  app.get("/api/improvement-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const detail = await storage.getImprovementDetail(id);
+      
+      if (!detail) {
+        return res.status(404).json({ message: "Improvement detail not found" });
+      }
+      
+      res.json(detail);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvement detail: ${error.message}` });
+    }
+  });
+  
+  // Get improvement details by improvement ID
+  app.get("/api/improvements/:id/details", async (req: Request, res: Response) => {
+    try {
+      const imprvId = parseInt(req.params.id);
+      const details = await storage.getImprovementDetailsByImprovementId(imprvId);
+      res.json(details);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvement details: ${error.message}` });
+    }
+  });
+  
+  // Create improvement detail
+  app.post("/api/improvement-details", async (req: Request, res: Response) => {
+    try {
+      const detailData = req.body;
+      const detail = await storage.createImprovementDetail(detailData);
+      res.status(201).json(detail);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error creating improvement detail: ${error.message}` });
+    }
+  });
+  
+  // Update improvement detail
+  app.put("/api/improvement-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const detailData = req.body;
+      const detail = await storage.updateImprovementDetail(id, detailData);
+      
+      if (!detail) {
+        return res.status(404).json({ message: "Improvement detail not found" });
+      }
+      
+      res.json(detail);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error updating improvement detail: ${error.message}` });
+    }
+  });
+  
+  // Delete improvement detail
+  app.delete("/api/improvement-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteImprovementDetail(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ message: `Error deleting improvement detail: ${error.message}` });
+    }
+  });
+  
+  // IMPROVEMENT ITEM ENDPOINTS
+  
+  // Get improvement item by ID
+  app.get("/api/improvement-items/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.getImprovementItem(id);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Improvement item not found" });
+      }
+      
+      res.json(item);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvement item: ${error.message}` });
+    }
+  });
+  
+  // Get improvement items by improvement ID
+  app.get("/api/improvements/:id/items", async (req: Request, res: Response) => {
+    try {
+      const imprvId = parseInt(req.params.id);
+      const items = await storage.getImprovementItemsByImprovementId(imprvId);
+      res.json(items);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching improvement items: ${error.message}` });
+    }
+  });
+  
+  // Create improvement item
+  app.post("/api/improvement-items", async (req: Request, res: Response) => {
+    try {
+      const itemData = req.body;
+      const item = await storage.createImprovementItem(itemData);
+      res.status(201).json(item);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error creating improvement item: ${error.message}` });
+    }
+  });
+  
+  // Update improvement item
+  app.put("/api/improvement-items/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const itemData = req.body;
+      const item = await storage.updateImprovementItem(id, itemData);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Improvement item not found" });
+      }
+      
+      res.json(item);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error updating improvement item: ${error.message}` });
+    }
+  });
+  
+  // Delete improvement item
+  app.delete("/api/improvement-items/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteImprovementItem(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ message: `Error deleting improvement item: ${error.message}` });
+    }
+  });
+  
+  // LAND DETAIL ENDPOINTS
+  
+  // Get land detail by ID
+  app.get("/api/land-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const detail = await storage.getLandDetail(id);
+      
+      if (!detail) {
+        return res.status(404).json({ message: "Land detail not found" });
+      }
+      
+      res.json(detail);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching land detail: ${error.message}` });
+    }
+  });
+  
+  // Get land details by property ID
+  app.get("/api/properties/:id/land-details", async (req: Request, res: Response) => {
+    try {
+      const propId = parseInt(req.params.id);
+      const details = await storage.getLandDetailsByPropertyId(propId);
+      res.json(details);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error fetching land details: ${error.message}` });
+    }
+  });
+  
+  // Create land detail
+  app.post("/api/land-details", async (req: Request, res: Response) => {
+    try {
+      const detailData = req.body;
+      const detail = await storage.createLandDetail(detailData);
+      res.status(201).json(detail);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error creating land detail: ${error.message}` });
+    }
+  });
+  
+  // Update land detail
+  app.put("/api/land-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const detailData = req.body;
+      const detail = await storage.updateLandDetail(id, detailData);
+      
+      if (!detail) {
+        return res.status(404).json({ message: "Land detail not found" });
+      }
+      
+      res.json(detail);
+    } catch (error: any) {
+      res.status(400).json({ message: `Error updating land detail: ${error.message}` });
+    }
+  });
+  
+  // Delete land detail
+  app.delete("/api/land-details/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteLandDetail(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ message: `Error deleting land detail: ${error.message}` });
+    }
+  });
 
   // Log the new endpoints
   await storage.createActivity({
