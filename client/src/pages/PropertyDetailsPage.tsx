@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -26,6 +27,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
+import {
   ChevronLeft,
   Home,
   Building,
@@ -35,7 +49,10 @@ import {
   Clock,
   User,
   Mail,
-  MapPin
+  MapPin,
+  DollarSign,
+  BarChart2,
+  Calculator
 } from "lucide-react";
 
 // Type definitions
@@ -319,6 +336,14 @@ const PropertyDetailsPage = () => {
                   <FileText className="h-4 w-4 mr-1" />
                   Legal Description
                 </TabsTrigger>
+                <TabsTrigger value="cost">
+                  <Calculator className="h-4 w-4 mr-1" />
+                  Cost Analysis
+                </TabsTrigger>
+                <TabsTrigger value="visualize">
+                  <BarChart2 className="h-4 w-4 mr-1" />
+                  Visualizations
+                </TabsTrigger>
               </TabsList>
               
               {/* Improvements Tab */}
@@ -557,6 +582,232 @@ const PropertyDetailsPage = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+              
+              {/* Cost Analysis Tab */}
+              <TabsContent value="cost">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Calculator className="h-5 w-5 mr-2" />
+                      Cost Analysis
+                    </CardTitle>
+                    <CardDescription>
+                      Building cost estimation based on property characteristics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {data.improvements && data.improvements.length > 0 ? (
+                      <div className="space-y-6">
+                        {data.improvements.map((improvement) => {
+                          // Extract building type based on primary use code
+                          const buildingType = determineBuildingType(improvement.primaryUseCd);
+                          // Determine region based on property location
+                          const region = determineRegion(data.property);
+                          
+                          // Calculate estimated cost based on improvement characteristics
+                          const squareFootage = improvement.totalArea ? parseFloat(improvement.totalArea) : 0;
+                          const baseCost = calculateBaseCost(buildingType, region);
+                          const qualityFactor = determineQualityFactor(improvement);
+                          const ageFactor = determineAgeFactor(improvement.actualYearBuilt);
+                          
+                          const estimatedCost = squareFootage * baseCost * qualityFactor * ageFactor;
+                          const assessedValue = improvement.imprvVal ? parseFloat(improvement.imprvVal) : 0;
+                          
+                          const costDifference = assessedValue - estimatedCost;
+                          const costDifferencePercent = assessedValue > 0 
+                            ? (costDifference / assessedValue) * 100 
+                            : 0;
+                          
+                          return (
+                            <div key={improvement.id} className="border rounded-md p-4">
+                              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                                <Building className="h-5 w-5 mr-2" />
+                                {improvement.imprvDesc || `Improvement #${improvement.imprvId}`}
+                              </h3>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div className="space-y-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Building Type</p>
+                                    <p className="font-medium">{buildingType || 'Unknown'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Region</p>
+                                    <p className="font-medium">{region || 'Unknown'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Square Footage</p>
+                                    <p className="font-medium">{squareFootage.toLocaleString()} sq ft</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Quality Factor</p>
+                                    <p className="font-medium">{qualityFactor.toFixed(2)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Age Factor</p>
+                                    <p className="font-medium">{ageFactor.toFixed(2)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Base Cost per Sq.Ft.</p>
+                                    <p className="font-medium">${baseCost.toFixed(2)}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-accent/30 rounded-lg p-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Estimated Cost</p>
+                                    <p className="text-xl font-semibold">${estimatedCost.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Assessed Value</p>
+                                    <p className="text-xl font-semibold">${assessedValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground mb-1">Difference</p>
+                                    <p className={`text-xl font-semibold ${costDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {costDifference >= 0 ? '+' : ''}${Math.abs(costDifference).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                                      <span className="text-sm ml-1">({costDifferencePercent.toFixed(1)}%)</span>
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium mb-1">Cost vs. Assessment Comparison</p>
+                                <div className="h-6 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full rounded-full ${costDifference >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                                    style={{ 
+                                      width: `${Math.min(Math.abs(costDifferencePercent), 100)}%`, 
+                                      marginLeft: costDifference >= 0 ? '50%' : `${50 - Math.min(Math.abs(costDifferencePercent)/2, 50)}%` 
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>Undervalued</span>
+                                  <span>Accurate</span>
+                                  <span>Overvalued</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Calculator className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-muted-foreground">No improvements found to analyze</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              {/* Visualizations Tab */}
+              <TabsContent value="visualize">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <BarChart2 className="h-5 w-5 mr-2" />
+                      Property Visualizations
+                    </CardTitle>
+                    <CardDescription>
+                      Visual representation of property data
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {data.improvements && data.improvements.length > 0 ? (
+                      <div className="space-y-8">
+                        {/* Building Age Distribution */}
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Building Age Distribution</h3>
+                          <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={data.improvements.map(imp => ({
+                                  name: imp.imprvDesc || `Improvement #${imp.imprvId}`,
+                                  age: imp.actualYearBuilt ? (new Date().getFullYear() - imp.actualYearBuilt) : 0
+                                }))}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />
+                                <YAxis label={{ value: 'Age (years)', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip formatter={(value) => [`${value} years`, 'Age']} />
+                                <Bar dataKey="age" fill="#8884d8" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
+                        {/* Improvement Value Distribution */}
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Improvement Value Distribution</h3>
+                          <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={data.improvements.map(imp => ({
+                                    name: imp.imprvDesc || `Improvement #${imp.imprvId}`,
+                                    value: imp.imprvVal ? parseFloat(imp.imprvVal) : 0
+                                  }))}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={true}
+                                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                  outerRadius={80}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  {data.improvements.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Value']} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
+                        {/* Building Size Comparison */}
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Building Size Comparison</h3>
+                          <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={data.improvements.map(imp => ({
+                                  name: imp.imprvDesc || `Improvement #${imp.imprvId}`,
+                                  totalArea: imp.totalArea ? parseFloat(imp.totalArea) : 0,
+                                  livingArea: imp.livingArea ? parseFloat(imp.livingArea) : 0
+                                }))}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />
+                                <YAxis label={{ value: 'Square Feet', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip formatter={(value) => [`${value.toLocaleString()} sq ft`, 'Area']} />
+                                <Legend />
+                                <Bar dataKey="totalArea" fill="#8884d8" name="Total Area" />
+                                <Bar dataKey="livingArea" fill="#82ca9d" name="Living Area" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <BarChart2 className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-muted-foreground">No improvement data available for visualization</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </>
         ) : (
@@ -575,6 +826,140 @@ const PropertyDetailsPage = () => {
       </MainContent>
     </LayoutWrapper>
   );
+};
+
+// Cost calculation helper functions
+const determineBuildingType = (primaryUseCd: string | null): string => {
+  if (!primaryUseCd) return 'R1'; // Default to Residential
+
+  // Map primary use codes to building type codes
+  const codeMap: Record<string, string> = {
+    '100': 'R1', // Single Family Residential
+    '101': 'R1',
+    '102': 'R2', // Multi-Family Residential
+    '103': 'R2',
+    '104': 'R3', // Apartments
+    '200': 'C1', // Retail Commercial
+    '201': 'C1',
+    '300': 'C2', // Office Commercial
+    '301': 'C2',
+    '400': 'I1', // Light Industrial
+    '401': 'I1',
+    '500': 'I2', // Heavy Industrial
+    '501': 'I2',
+    '600': 'A1', // Agricultural
+    '601': 'A1',
+  };
+
+  return codeMap[primaryUseCd] || 'R1';
+};
+
+const determineRegion = (property: Property): string => {
+  // Determine region based on property location
+  // This is a simple implementation that could be enhanced with more detailed mapping
+  if (!property.neighborhood) return 'Central Benton';
+
+  const neighborhood = property.neighborhood.toLowerCase();
+  
+  if (neighborhood.includes('west') || neighborhood.includes('richland')) {
+    return 'West Benton';
+  } else if (neighborhood.includes('east') || neighborhood.includes('kennewick')) {
+    return 'East Benton';
+  } else {
+    return 'Central Benton';
+  }
+};
+
+const calculateBaseCost = (buildingType: string, region: string): number => {
+  // Base costs per square foot by building type and region
+  const costMatrix: Record<string, Record<string, number>> = {
+    'R1': {
+      'Central Benton': 125.50,
+      'East Benton': 135.75,
+      'West Benton': 145.25
+    },
+    'R2': {
+      'Central Benton': 110.25,
+      'East Benton': 118.50,
+      'West Benton': 127.75
+    },
+    'R3': {
+      'Central Benton': 95.50,
+      'East Benton': 102.25,
+      'West Benton': 109.75
+    },
+    'C1': {
+      'Central Benton': 155.75,
+      'East Benton': 162.50,
+      'West Benton': 170.25
+    },
+    'C2': {
+      'Central Benton': 175.25,
+      'East Benton': 182.75,
+      'West Benton': 190.50
+    },
+    'I1': {
+      'Central Benton': 85.50,
+      'East Benton': 92.25,
+      'West Benton': 99.75
+    },
+    'I2': {
+      'Central Benton': 75.25,
+      'East Benton': 82.75,
+      'West Benton': 90.25
+    },
+    'A1': {
+      'Central Benton': 55.25,
+      'East Benton': 60.75,
+      'West Benton': 65.25
+    }
+  };
+
+  const regionCosts = costMatrix[buildingType] || costMatrix['R1'];
+  return regionCosts[region] || regionCosts['Central Benton'];
+};
+
+const determineQualityFactor = (improvement: Improvement): number => {
+  // Extract quality code from improvement detail if available
+  const qualityCode = improvement.details && improvement.details.length > 0 
+    ? improvement.details[0].qualityCd 
+    : null;
+  
+  // Quality factors by quality code
+  const qualityFactors: Record<string, number> = {
+    'A+': 1.3,  // Excellent Plus
+    'A': 1.2,   // Excellent
+    'B+': 1.15, // Very Good Plus
+    'B': 1.1,   // Very Good
+    'C+': 1.05, // Good Plus
+    'C': 1.0,   // Good (Standard)
+    'D+': 0.95, // Average Plus
+    'D': 0.9,   // Average
+    'E+': 0.85, // Fair Plus
+    'E': 0.8,   // Fair
+    'F+': 0.75, // Poor Plus
+    'F': 0.7    // Poor
+  };
+  
+  return qualityCode && qualityFactors[qualityCode] 
+    ? qualityFactors[qualityCode] 
+    : 1.0; // Default to standard quality
+};
+
+const determineAgeFactor = (yearBuilt: number | null): number => {
+  if (!yearBuilt) return 1.0;
+  
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - yearBuilt;
+  
+  // Age depreciation factors
+  if (age <= 5) return 1.0;        // New buildings (0-5 years)
+  if (age <= 10) return 0.95;     // 6-10 years
+  if (age <= 20) return 0.9;      // 11-20 years
+  if (age <= 30) return 0.85;     // 21-30 years
+  if (age <= 40) return 0.8;      // 31-40 years
+  if (age <= 50) return 0.75;     // 41-50 years
+  return 0.7;                     // 50+ years
 };
 
 export default PropertyDetailsPage;
