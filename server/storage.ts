@@ -340,6 +340,89 @@ export interface IStorage {
   deleteLandDetail(id: number): Promise<void>;
   bulkInsertLandDetails(details: InsertLandDetail[]): Promise<{ count: number }>;
   
+  // Import Records for Data Import Tracking
+  createImportRecord(data: { 
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status?: string;
+    errors?: any;
+    processedItems?: number;
+    totalItems?: number;
+    errorCount?: number;
+  }): Promise<{ 
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+  
+  getImportRecord(id: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined>;
+  
+  getImportRecords(limit?: number, offset?: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }[]>;
+  
+  updateImportRecord(id: number, data: Partial<{
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+  }>): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined>;
+  
+  deleteImportRecord(id: number): Promise<void>;
+  
   // Property Data Import
   importPropertyData(options: {
     propertiesFile: string;
