@@ -942,15 +942,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 10 * 1024 * 1024, // 10MB file size limit
     },
     fileFilter: (req, file, cb) => {
-      // Accept only Excel files
+      // Accept Excel and CSV files
       if (
         file.mimetype === 'application/vnd.ms-excel' ||
-        file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.mimetype === 'text/csv' ||
+        file.mimetype === 'application/csv'
       ) {
         cb(null, true);
       } else {
         cb(null, false);
-        cb(new Error('Only Excel files are allowed'));
+        cb(new Error('Only Excel and CSV files are allowed'));
       }
     }
   });
@@ -2340,6 +2342,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting report:", error);
       res.status(500).json({ error: "Error exporting report" });
+    }
+  });
+
+  // Property Data Import API
+  
+  // Import property data
+  app.post("/api/properties/import", upload.fields([
+    { name: 'propertiesFile', maxCount: 1 },
+    { name: 'improvementsFile', maxCount: 1 },
+    { name: 'improvementDetailsFile', maxCount: 1 },
+    { name: 'improvementItemsFile', maxCount: 1 },
+    { name: 'landDetailsFile', maxCount: 1 }
+  ]), async (req: Request, res: Response) => {
+    try {
+      if (!req.files) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      // Get file paths
+      const options: {
+        propertiesFile: string;
+        improvementsFile: string;
+        improvementDetailsFile: string;
+        improvementItemsFile: string;
+        landDetailsFile: string;
+        userId: number;
+        batchSize?: number;
+      } = {
+        propertiesFile: files['propertiesFile']?.[0]?.path || '',
+        improvementsFile: files['improvementsFile']?.[0]?.path || '',
+        improvementDetailsFile: files['improvementDetailsFile']?.[0]?.path || '',
+        improvementItemsFile: files['improvementItemsFile']?.[0]?.path || '',
+        landDetailsFile: files['landDetailsFile']?.[0]?.path || '',
+        userId: req.user?.id || 1, // Default to admin user if authentication is disabled
+        batchSize: req.body.batchSize ? parseInt(req.body.batchSize) : 100
+      };
+      
+      // Validate required files
+      if (!options.improvementsFile || !options.improvementDetailsFile || 
+          !options.improvementItemsFile || !options.landDetailsFile) {
+        return res.status(400).json({ 
+          message: "Missing required files. Please upload all required property data files." 
+        });
+      }
+      
+      // Process import
+      const importResult = await importPropertyData(storage, options);
+      
+      // Clean up uploaded files
+      Object.values(files).forEach(fileArray => {
+        fileArray.forEach(file => {
+          try {
+            fs.unlinkSync(file.path);
+          } catch (e) {
+            console.error(`Error deleting file ${file.path}:`, e);
+          }
+        });
+      });
+      
+      // Log activity
+      await storage.createActivity({
+        action: `Imported property data: ${importResult.properties.success} properties, ${importResult.improvements.success} improvements`,
+        icon: "ri-file-list-line",
+        iconColor: "success"
+      });
+      
+      // Return import result
+      res.json(importResult);
+    } catch (error: any) {
+      res.status(500).json({ message: `Error importing property data: ${error.message}` });
+    }
+  });
+  
+  // Get all properties
+  app.get("/api/properties", async (req: Request, res: Response) => {
+    try {
+      const properties = await storage.getAllProperties();
+      res.json(properties);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching properties" });
+    }
+  });
+  
+  // Get property by ID
+  app.get("/api/properties/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      res.json(property);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching property" });
+    }
+  });
+  
+  // Get property with related data
+  app.get("/api/properties/:id/details", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      // Get related improvements
+      const improvements = await storage.getImprovementsByPropertyId(id);
+      
+      // Get improvement details and items for each improvement
+      const improvementDetails = [];
+      for (const improvement of improvements) {
+        const details = await storage.getImprovementDetailsByImprovementId(improvement.id);
+        const items = await storage.getImprovementItemsByImprovementId(improvement.id);
+        improvementDetails.push({
+          ...improvement,
+          details,
+          items
+        });
+      }
+      
+      // Get land details for property
+      const landDetails = await storage.getLandDetailsByPropertyId(id);
+      
+      // Combine and return all data
+      res.json({
+        property,
+        improvements: improvementDetails,
+        landDetails
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching property details" });
     }
   });
 
