@@ -925,3 +925,6 @@ export const insertFTPConnectionSchema = createInsertSchema(ftpConnections).pick
 
 export type FTPConnection = typeof ftpConnections.$inferSelect;
 export type InsertFTPConnection = z.infer<typeof insertFTPConnectionSchema>;
+
+// Export property data schema
+export * from './property-schema';
