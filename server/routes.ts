@@ -1215,7 +1215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get cost matrix by ID
-  app.get("/api/cost-matrix/:id", async (req: Request, res: Response) => {
+  // Note: We're checking if the ID is numeric to avoid conflicts with other /api/cost-matrix/* routes
+  app.get("/api/cost-matrix/:id([0-9]+)", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const matrix = await storage.getCostMatrix(id);
@@ -1519,7 +1520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update cost matrix entry
-  app.patch("/api/cost-matrix/:id", requireAuth, async (req: Request, res: Response) => {
+  app.patch("/api/cost-matrix/:id([0-9]+)", requireAuth, async (req: Request, res: Response) => {
     try {
       // Only allow admin users to update entries
       if (req.user?.role !== "admin") {
@@ -1542,7 +1543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Delete cost matrix entry
-  app.delete("/api/cost-matrix/:id", requireAuth, async (req: Request, res: Response) => {
+  app.delete("/api/cost-matrix/:id([0-9]+)", requireAuth, async (req: Request, res: Response) => {
     try {
       // Only allow admin users to delete entries
       if (req.user?.role !== "admin") {
@@ -1988,6 +1989,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     registerSharedLinksRoutes(app, storage);
     registerProjectActivitiesRoutes(app, storage);
     
+    // IMPORTANT: Register the cost matrix import router BEFORE the other routes
+    // to ensure specific routes are handled correctly
+    app.use('/', createCostMatrixImportRouter(storage));
+    
     // Register export and data connector routes
     app.use('/api/export', exportRoutes);
     app.use('/api/data-connections', dataConnectorRoutes);
@@ -1996,7 +2001,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use('/api/ftp', ftpRoutes);
     app.use('/api/ftp-connections', ftpConnectionRoutes);
     app.use('/api/scheduler', initSchedulerRoutes(storage));
-    app.use('/', createCostMatrixImportRouter(storage));
     app.use('/api', costCalculationRoutes);
     
     // Log the new data connector APIs
