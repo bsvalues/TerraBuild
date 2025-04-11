@@ -26,7 +26,13 @@ import {
   connectionHistory, type ConnectionHistory, type InsertConnectionHistory,
   syncSchedules, type SyncSchedule, type InsertSyncSchedule,
   syncHistory, type SyncHistory, type InsertSyncHistory,
-  ftpConnections, type FTPConnection, type InsertFTPConnection
+  ftpConnections, type FTPConnection, type InsertFTPConnection,
+  // Property data types
+  properties, type Property, type InsertProperty,
+  improvements, type Improvement, type InsertImprovement,
+  improvementDetails, type ImprovementDetail, type InsertImprovementDetail,
+  improvementItems, type ImprovementItem, type InsertImprovementItem,
+  landDetails, type LandDetail, type InsertLandDetail
 } from "@shared/schema";
 
 // Storage interface
@@ -285,6 +291,71 @@ export interface IStorage {
   deleteFTPConnection(id: number): Promise<void>;
   updateFTPConnectionStatus(id: number, status: string, lastConnected?: Date): Promise<FTPConnection | undefined>;
   setDefaultFTPConnection(id: number): Promise<FTPConnection | undefined>;
+  
+  // Property Data Methods
+  // Properties
+  getAllProperties(limit?: number, offset?: number): Promise<Property[]>;
+  getProperty(id: number): Promise<Property | undefined>;
+  getPropertyByPropId(propId: number): Promise<Property | undefined>;
+  createProperty(property: InsertProperty): Promise<Property>;
+  updateProperty(id: number, property: Partial<InsertProperty>): Promise<Property | undefined>;
+  deleteProperty(id: number): Promise<void>;
+  bulkInsertProperties(properties: InsertProperty[]): Promise<{ count: number }>;
+  
+  // Improvements
+  getAllImprovements(limit?: number, offset?: number): Promise<Improvement[]>;
+  getImprovement(id: number): Promise<Improvement | undefined>;
+  getImprovementsByPropId(propId: number): Promise<Improvement[]>;
+  createImprovement(improvement: InsertImprovement): Promise<Improvement>;
+  updateImprovement(id: number, improvement: Partial<InsertImprovement>): Promise<Improvement | undefined>;
+  deleteImprovement(id: number): Promise<void>;
+  bulkInsertImprovements(improvements: InsertImprovement[]): Promise<{ count: number }>;
+  
+  // Improvement Details
+  getAllImprovementDetails(limit?: number, offset?: number): Promise<ImprovementDetail[]>;
+  getImprovementDetail(id: number): Promise<ImprovementDetail | undefined>;
+  getImprovementDetailsByPropId(propId: number): Promise<ImprovementDetail[]>;
+  getImprovementDetailsByImprvId(imprvId: number): Promise<ImprovementDetail[]>;
+  createImprovementDetail(detail: InsertImprovementDetail): Promise<ImprovementDetail>;
+  updateImprovementDetail(id: number, detail: Partial<InsertImprovementDetail>): Promise<ImprovementDetail | undefined>;
+  deleteImprovementDetail(id: number): Promise<void>;
+  bulkInsertImprovementDetails(details: InsertImprovementDetail[]): Promise<{ count: number }>;
+  
+  // Improvement Items
+  getAllImprovementItems(limit?: number, offset?: number): Promise<ImprovementItem[]>;
+  getImprovementItem(id: number): Promise<ImprovementItem | undefined>;
+  getImprovementItemsByPropId(propId: number): Promise<ImprovementItem[]>;
+  getImprovementItemsByImprvId(imprvId: number): Promise<ImprovementItem[]>;
+  createImprovementItem(item: InsertImprovementItem): Promise<ImprovementItem>;
+  updateImprovementItem(id: number, item: Partial<InsertImprovementItem>): Promise<ImprovementItem | undefined>;
+  deleteImprovementItem(id: number): Promise<void>;
+  bulkInsertImprovementItems(items: InsertImprovementItem[]): Promise<{ count: number }>;
+  
+  // Land Details
+  getAllLandDetails(limit?: number, offset?: number): Promise<LandDetail[]>;
+  getLandDetail(id: number): Promise<LandDetail | undefined>;
+  getLandDetailsByPropId(propId: number): Promise<LandDetail[]>;
+  createLandDetail(detail: InsertLandDetail): Promise<LandDetail>;
+  updateLandDetail(id: number, detail: Partial<InsertLandDetail>): Promise<LandDetail | undefined>;
+  deleteLandDetail(id: number): Promise<void>;
+  bulkInsertLandDetails(details: InsertLandDetail[]): Promise<{ count: number }>;
+  
+  // Property Data Import
+  importPropertyData(options: {
+    propertiesFile: string;
+    improvementsFile: string;
+    improvementDetailsFile: string;
+    improvementItemsFile: string;
+    landDetailsFile: string;
+    batchSize?: number;
+    userId: number;
+  }): Promise<{
+    properties: { processed: number, success: number, errors: any[] },
+    improvements: { processed: number, success: number, errors: any[] },
+    improvementDetails: { processed: number, success: number, errors: any[] },
+    improvementItems: { processed: number, success: number, errors: any[] },
+    landDetails: { processed: number, success: number, errors: any[] }
+  }>;
 }
 
 // Memory Storage implementation
