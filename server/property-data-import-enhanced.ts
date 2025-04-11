@@ -358,7 +358,7 @@ async function processImprovementDetailsFile(
     
     try {
       // Transform records for the database schema
-      const detailsBatch = batch.map(record => {
+      const detailsBatch = batch.map((record: Record<string, any>) => {
         processed++;
         
         return {
@@ -369,9 +369,16 @@ async function processImprovementDetailsFile(
         };
       });
       
-      // Insert into database
-      const result = await storage.createImprovementDetails(detailsBatch);
-      success += result.length;
+      // Insert into database using individual create method for each detail
+      for (const detail of detailsBatch) {
+        try {
+          await storage.createImprovementDetail(detail);
+          success++;
+        } catch (error) {
+          console.error(`Error creating improvement detail:`, error);
+          errors++;
+        }
+      }
     } catch (error) {
       console.error(`Error processing improvement details batch ${i}-${i + batch.length}:`, error);
       errors += batch.length;
@@ -436,7 +443,7 @@ async function processImprovementItemsFile(
     
     try {
       // Transform records for the database schema
-      const itemsBatch = batch.map(record => {
+      const itemsBatch = batch.map((record: Record<string, any>) => {
         processed++;
         
         return {
@@ -449,9 +456,16 @@ async function processImprovementItemsFile(
         };
       });
       
-      // Insert into database
-      const result = await storage.createImprovementItems(itemsBatch);
-      success += result.length;
+      // Insert into database using individual create method for each item
+      for (const item of itemsBatch) {
+        try {
+          await storage.createImprovementItem(item);
+          success++;
+        } catch (error) {
+          console.error(`Error creating improvement item:`, error);
+          errors++;
+        }
+      }
     } catch (error) {
       console.error(`Error processing improvement items batch ${i}-${i + batch.length}:`, error);
       errors += batch.length;
@@ -516,7 +530,7 @@ async function processLandDetailsFile(
     
     try {
       // Transform records for the database schema
-      const landDetailsBatch = batch.map(record => {
+      const landDetailsBatch = batch.map((record: Record<string, any>) => {
         processed++;
         
         return {
@@ -529,9 +543,16 @@ async function processLandDetailsFile(
         };
       });
       
-      // Insert into database
-      const result = await storage.createLandDetails(landDetailsBatch);
-      success += result.length;
+      // Insert into database using individual create method for each land detail
+      for (const landDetail of landDetailsBatch) {
+        try {
+          await storage.createLandDetail(landDetail);
+          success++;
+        } catch (error) {
+          console.error(`Error creating land detail:`, error);
+          errors++;
+        }
+      }
     } catch (error) {
       console.error(`Error processing land details batch ${i}-${i + batch.length}:`, error);
       errors += batch.length;
