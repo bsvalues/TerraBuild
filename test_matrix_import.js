@@ -1,13 +1,10 @@
-const axios = require('axios');
-const fs = require('fs');
-const FormData = require('form-data');
+import axios from 'axios';
+import fs from 'fs';
+import FormData from 'form-data';
 
 async function testCostMatrixImport() {
   try {
     const form = new FormData();
-    
-    // If using an actual file:
-    // form.append('file', fs.createReadStream('./sample_cost_matrix.csv'));
     
     // For a simple test, create a buffer from a string (sample CSV)
     const csvContent = `region,buildingType,buildingTypeDescription,baseCost,matrixYear,sourceMatrixId,matrixDescription,dataPoints,notes,hasComplexityFactors,hasQualityFactors,isActive
@@ -36,6 +33,33 @@ Western,C4,Office Building,145.75,2025,1002,Western region commercial matrix,38,
     );
     
     console.log('Response:', JSON.stringify(response.data, null, 2));
+    
+    // Now test the validation endpoint
+    console.log('\nTesting validation endpoint...');
+    
+    const validateForm = new FormData();
+    validateForm.append('file', Buffer.from(csvContent), {
+      filename: 'test_cost_matrix.csv',
+      contentType: 'text/csv',
+    });
+    
+    const validateResponse = await axios.post(
+      'http://localhost:5000/api/cost-matrix/validate',
+      validateForm,
+      {
+        headers: {
+          ...validateForm.getHeaders(),
+        },
+      }
+    );
+    
+    console.log('Validation Response:', JSON.stringify(validateResponse.data, null, 2));
+    
+    // Get import records
+    console.log('\nGetting import records...');
+    
+    const importsResponse = await axios.get('http://localhost:5000/api/cost-matrix/imports');
+    console.log('Import Records:', JSON.stringify(importsResponse.data, null, 2));
     
   } catch (error) {
     console.error('Error testing cost matrix import:', error.response ? error.response.data : error.message);
