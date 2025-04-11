@@ -474,7 +474,24 @@ export class MemStorage implements IStorage {
   private improvementItems: Map<number, ImprovementItem> = new Map();
   private landDetails: Map<number, LandDetail> = new Map();
   
+  // Import records storage
+  private importRecords: Map<number, {
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }> = new Map();
+  
   private currentUserId: number;
+  private currentImportRecordId: number = 1;
   private currentEnvironmentId: number;
   private currentApiEndpointId: number;
   private currentSettingId: number;
@@ -497,6 +514,142 @@ export class MemStorage implements IStorage {
   private currentConnectionHistoryId: number;
   private currentSyncScheduleId: number = 1;
   private currentSyncHistoryId: number = 1;
+  
+  // Import Records
+  async createImportRecord(data: { 
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status?: string;
+    errors?: any;
+    processedItems?: number;
+    totalItems?: number;
+    errorCount?: number;
+  }): Promise<{ 
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }> {
+    const id = this.currentImportRecordId++;
+    const now = new Date();
+    const record = {
+      id,
+      fileName: data.fileName,
+      fileType: data.fileType,
+      fileSize: data.fileSize,
+      uploadedBy: data.uploadedBy,
+      status: data.status || 'pending',
+      errors: data.errors || [],
+      processedItems: data.processedItems || 0,
+      totalItems: data.totalItems || null,
+      errorCount: data.errorCount || 0,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.importRecords.set(id, record);
+    return record;
+  }
+  
+  async getImportRecord(id: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined> {
+    return this.importRecords.get(id);
+  }
+  
+  async getImportRecords(limit?: number, offset?: number): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }[]> {
+    let records = Array.from(this.importRecords.values());
+    
+    // Sort by newest first
+    records = records.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    // Apply offset if provided
+    if (offset && offset > 0) {
+      records = records.slice(offset);
+    }
+    
+    // Apply limit if provided
+    if (limit && limit > 0) {
+      records = records.slice(0, limit);
+    }
+    
+    return records;
+  }
+  
+  async updateImportRecord(id: number, data: Partial<{
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+  }>): Promise<{
+    id: number;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    uploadedBy: number;
+    status: string;
+    errors: any;
+    processedItems: number;
+    totalItems: number | null;
+    errorCount: number;
+    createdAt: Date;
+    updatedAt: Date;
+  } | undefined> {
+    const record = this.importRecords.get(id);
+    if (!record) return undefined;
+    
+    const updatedRecord = { 
+      ...record, 
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    this.importRecords.set(id, updatedRecord);
+    return updatedRecord;
+  }
+  
+  async deleteImportRecord(id: number): Promise<void> {
+    this.importRecords.delete(id);
+  }
   
   // Add connection history to the interface
   async createConnectionHistory(history: InsertConnectionHistory): Promise<ConnectionHistory> {
@@ -559,6 +712,7 @@ export class MemStorage implements IStorage {
     this.syncSchedules = new Map();
     this.syncHistories = new Map();
     this.ftpConnections = new Map();
+    this.importRecords = new Map();
     
     this.currentUserId = 1;
     this.currentEnvironmentId = 1;
