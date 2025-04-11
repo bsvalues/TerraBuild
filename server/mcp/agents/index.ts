@@ -58,17 +58,21 @@ export const agentRegistry: AgentRegistry = {
       case 'dataquality':
       case 'data-quality':
       case 'data_quality':
+      case 'data-quality-agent':
         return this.dataQuality;
         
       case 'compliance':
+      case 'compliance-agent':
         return this.compliance;
         
       case 'costanalysis':
       case 'cost-analysis':
       case 'cost_analysis':
+      case 'cost-analysis-agent':
         return this.costAnalysis;
         
       default:
+        console.log(`Agent not found in registry: ${name}`);
         return undefined;
     }
   },
