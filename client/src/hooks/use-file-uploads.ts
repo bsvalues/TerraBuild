@@ -139,12 +139,51 @@ export function useFileUploads() {
     }
   });
 
+  // Import property data from CSV files
+  const importPropertyData = useMutation({
+    mutationFn: async (files: { 
+      propertiesFile?: number; 
+      improvementsFile: number; 
+      improvementDetailsFile: number; 
+      improvementItemsFile: number; 
+      landDetailsFile: number;
+      batchSize?: number;
+    }) => {
+      return apiRequest('/api/properties/import', {
+        method: 'POST',
+        data: files
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
+      
+      const properties = data?.properties?.success || 0;
+      const improvements = data?.improvements?.success || 0;
+      const improvementDetails = data?.improvementDetails?.success || 0;
+      const improvementItems = data?.improvementItems?.success || 0;
+      const landDetails = data?.landDetails?.success || 0;
+      
+      toast({
+        title: 'Property data import successful',
+        description: `Imported ${properties} properties, ${improvements} improvements, ${improvementDetails} details, ${improvementItems} items, and ${landDetails} land details`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Property data import failed',
+        description: error.message || 'Failed to import property data',
+        variant: 'destructive'
+      });
+    }
+  });
+
   return {
     getAll,
     getById,
     create,
     updateStatus,
     remove,
-    importExcel
+    importExcel,
+    importPropertyData
   };
 }
