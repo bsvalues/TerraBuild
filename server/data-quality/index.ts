@@ -24,6 +24,8 @@ import {
   validateImprovement 
 } from './property-rules';
 
+import costMatrixRules from './cost-matrix-rules';
+
 // Export the framework components
 export {
   Rule,
@@ -45,8 +47,26 @@ export {
   validateImprovement
 };
 
+// Export cost matrix rules
+export { costMatrixRules };
+
 // Create a global validator instance with all rules
-export const globalValidator = new DataQualityValidator(allPropertyRules);
+const allRules = [...allPropertyRules, ...costMatrixRules];
+export const globalValidator = new DataQualityValidator(allRules);
+
+/**
+ * Validate a cost matrix entry
+ * 
+ * @param matrix Cost matrix entry to validate
+ * @param context Optional validation context 
+ * @returns Validation results
+ */
+export function validateCostMatrix(
+  matrix: Record<string, any>,
+  context?: ValidationContext
+): ValidationResult {
+  return globalValidator.validate(matrix, RuleType.COST_MATRIX, context);
+}
 
 /**
  * Initialize the data quality framework
@@ -61,7 +81,13 @@ export function initializeDataQualityFramework(): DataQualityValidator {
   // Register all property rules
   validator.registerRules(allPropertyRules);
   
-  console.log(`Data quality framework initialized with ${allPropertyRules.length} rules`);
+  // Register all cost matrix rules
+  validator.registerRules(costMatrixRules);
+  
+  const totalRules = allPropertyRules.length + costMatrixRules.length;
+  console.log(`Data quality framework initialized with ${totalRules} rules`);
+  console.log(`- Property rules: ${allPropertyRules.length}`);
+  console.log(`- Cost matrix rules: ${costMatrixRules.length}`);
   
   return validator;
 }
