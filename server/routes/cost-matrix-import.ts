@@ -243,5 +243,38 @@ export function createCostMatrixImportRouter(storageImpl: IStorage): Router {
     }
   });
   
+  /**
+   * Test endpoint for creating an import record
+   */
+  router.post('/api/cost-matrix/test-import-record', async (req: Request, res: Response) => {
+    try {
+      const { fileName, fileType, fileSize, uploadedBy, status } = req.body;
+      
+      // Create an import record
+      const importRecord = await storageImpl.createImportRecord({
+        fileName: fileName || 'test.xlsx',
+        fileType: fileType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSize: fileSize || 1000,
+        uploadedBy: uploadedBy || 1,
+        status: status || 'TESTING',
+        errors: {},
+        processedItems: 0,
+        errorCount: 0
+      });
+      
+      return res.status(200).json({
+        success: true,
+        message: `Created test import record`,
+        importRecord
+      });
+    } catch (error) {
+      console.error('Error creating test import record:', error);
+      return res.status(500).json({
+        success: false,
+        message: `Error creating test import record: ${(error as Error).message}`
+      });
+    }
+  });
+  
   return router;
 }
