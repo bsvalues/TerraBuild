@@ -99,6 +99,15 @@ export class AgentCoordinator {
   private pollInterval: NodeJS.Timeout | null = null;
   private readonly POLL_INTERVAL_MS = 5000; // 5 seconds
   private readonly MAX_TASKS_HISTORY = 100;
+  private messages: Array<{
+    id: string;
+    from: string;
+    to: string;
+    type: string;
+    timestamp: Date;
+    content?: any;
+  }> = [];
+  private messageTypeCounts: Record<string, number> = {};
   
   /**
    * Private constructor for singleton pattern
@@ -883,6 +892,48 @@ export class AgentCoordinator {
    */
   public getPerformanceMetrics(): PerformanceMetrics {
     return { ...this.performanceMetrics };
+  }
+  
+  /**
+   * Get the total count of messages exchanged
+   * 
+   * @returns The number of messages exchanged
+   */
+  public getMessageCount(): number {
+    return this.messages.length;
+  }
+  
+  /**
+   * Get message distribution by type
+   * 
+   * @returns Record mapping message types to counts
+   */
+  public getMessageTypeDistribution(): Record<string, number> {
+    return { ...this.messageTypeCounts };
+  }
+  
+  /**
+   * Get the latest messages
+   * 
+   * @param limit Maximum number of messages to return
+   * @returns Array of the latest messages
+   */
+  public getLatestMessages(limit: number = 10): Array<{
+    id: string;
+    from: string;
+    to: string;
+    type: string;
+    timestamp: string;
+  }> {
+    return this.messages
+      .slice(-limit)
+      .map(msg => ({
+        id: msg.id,
+        from: msg.from,
+        to: msg.to,
+        type: msg.type,
+        timestamp: msg.timestamp.toISOString()
+      }));
   }
 }
 

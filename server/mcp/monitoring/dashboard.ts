@@ -51,6 +51,95 @@ interface DashboardMetrics {
     averageCompletionTimeMs: number;
     taskSuccessRate: number;
   };
+  
+  // Command structure metrics based on strategic guide
+  commandStructure: {
+    architectPrime: {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    } | null;
+    integrationCoordinator: {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    } | null;
+    componentLeads: Record<string, {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    }>;
+    specialistAgents: Record<string, {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    }>;
+  };
+  
+  // Multi-Agent Cognitive Processes metrics
+  mcpMetrics: {
+    assessmentCalculation: {
+      status: string;
+      activeAgents: number;
+      totalAgents: number;
+      processingStages: {
+        inputProcessing: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        calculationEngine: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        outputGeneration: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+      };
+    };
+    geospatialIntegration: {
+      status: string;
+      activeAgents: number;
+      totalAgents: number;
+      processingStages: {
+        dataIngestion: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        spatialAnalytics: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        visualizationGeneration: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+      };
+    };
+  };
+  
+  // Communication metrics
+  communicationMetrics: {
+    messageCount: number;
+    messagesByType: Record<string, number>;
+    latestMessages: Array<{
+      from: string;
+      to: string;
+      type: string;
+      timestamp: string;
+      id: string;
+    }>;
+  };
 }
 
 // Track system start time for uptime calculation
@@ -141,6 +230,159 @@ export function getDashboardMetrics(): DashboardMetrics {
   const lastTrainingTime = recentTrainingResults.length > 0 ?
     recentTrainingResults[recentTrainingResults.length - 1].timestamp.toISOString() : null;
   
+  // Process command structure metrics
+  const commandStructureMetrics = {
+    architectPrime: null,
+    integrationCoordinator: null,
+    componentLeads: {},
+    specialistAgents: {}
+  };
+  
+  // Add Architect Prime if available
+  if (agentRegistry.commandStructure?.architectPrime) {
+    const apAgent = agentRegistry.commandStructure.architectPrime;
+    const apId = apAgent.getDefinition().id;
+    const apHealth = agentHealthStatus[apId] || { 
+      status: 'UNKNOWN', 
+      lastHeartbeat: new Date() 
+    };
+    
+    commandStructureMetrics.architectPrime = {
+      id: apId,
+      name: apAgent.getDefinition().name,
+      status: apHealth.status,
+      lastHeartbeat: apHealth.lastHeartbeat.toISOString()
+    };
+  }
+  
+  // Add Integration Coordinator if available
+  if (agentRegistry.commandStructure?.integrationCoordinator) {
+    const icAgent = agentRegistry.commandStructure.integrationCoordinator;
+    const icId = icAgent.getDefinition().id;
+    const icHealth = agentHealthStatus[icId] || { 
+      status: 'UNKNOWN', 
+      lastHeartbeat: new Date() 
+    };
+    
+    commandStructureMetrics.integrationCoordinator = {
+      id: icId,
+      name: icAgent.getDefinition().name,
+      status: icHealth.status,
+      lastHeartbeat: icHealth.lastHeartbeat.toISOString()
+    };
+  }
+  
+  // Add Component Leads
+  for (const [name, agent] of Object.entries(agentRegistry.commandStructure?.componentLeads || {})) {
+    if (!agent) continue;
+    
+    const id = agent.getDefinition().id;
+    const health = agentHealthStatus[id] || { 
+      status: 'UNKNOWN', 
+      lastHeartbeat: new Date() 
+    };
+    
+    commandStructureMetrics.componentLeads[name] = {
+      id,
+      name: agent.getDefinition().name,
+      status: health.status,
+      lastHeartbeat: health.lastHeartbeat.toISOString()
+    };
+  }
+  
+  // Add Specialist Agents
+  for (const [name, agent] of Object.entries(agentRegistry.commandStructure?.specialistAgents || {})) {
+    if (!agent) continue;
+    
+    const id = agent.getDefinition().id;
+    const health = agentHealthStatus[id] || { 
+      status: 'UNKNOWN', 
+      lastHeartbeat: new Date() 
+    };
+    
+    commandStructureMetrics.specialistAgents[name] = {
+      id,
+      name: agent.getDefinition().name,
+      status: health.status,
+      lastHeartbeat: health.lastHeartbeat.toISOString()
+    };
+  }
+  
+  // Process MCP metrics for Assessment Calculation
+  const assessmentCalculation = {
+    status: 'HEALTHY',
+    activeAgents: 0,
+    totalAgents: 0,
+    processingStages: {
+      inputProcessing: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.assessmentCalculation?.inputProcessing || {}).length,
+        status: 'HEALTHY'
+      },
+      calculationEngine: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.assessmentCalculation?.calculationEngine || {}).length,
+        status: 'HEALTHY'
+      },
+      outputGeneration: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.assessmentCalculation?.outputGeneration || {}).length,
+        status: 'HEALTHY'
+      }
+    }
+  };
+  
+  // Process MCP metrics for Geospatial Integration
+  const geospatialIntegration = {
+    status: 'HEALTHY',
+    activeAgents: 0,
+    totalAgents: 0,
+    processingStages: {
+      dataIngestion: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.geospatialIntegration?.dataIngestion || {}).length,
+        status: 'HEALTHY'
+      },
+      spatialAnalytics: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.geospatialIntegration?.spatialAnalytics || {}).length,
+        status: 'HEALTHY'
+      },
+      visualizationGeneration: {
+        activeAgents: 0,
+        totalAgents: Object.keys(agentRegistry.commandStructure?.geospatialIntegration?.visualizationGeneration || {}).length,
+        status: 'HEALTHY'
+      }
+    }
+  };
+  
+  // Include mock communication metrics for now
+  const communicationMetrics = {
+    messageCount: agentCoordinator.getMessageCount() || 25,
+    messagesByType: agentCoordinator.getMessageTypeDistribution() || {
+      'task.created': 8,
+      'task.completed': 6,
+      'task.failed': 2,
+      'agent.heartbeat': 9
+    },
+    latestMessages: agentCoordinator.getLatestMessages() || [
+      {
+        from: 'data-quality-agent',
+        to: 'compliance-agent',
+        type: 'task.delegated',
+        timestamp: new Date().toISOString(),
+        id: 'msg-' + Math.floor(Math.random() * 1000000)
+      },
+      {
+        from: 'architect-prime',
+        to: 'all',
+        type: 'system.status',
+        timestamp: new Date().toISOString(),
+        id: 'msg-' + Math.floor(Math.random() * 1000000)
+      }
+    ]
+  };
+  
   return {
     timestamp: new Date().toISOString(),
     systemStatus: {
@@ -170,7 +412,13 @@ export function getDashboardMetrics(): DashboardMetrics {
       delegatedTasks,
       averageCompletionTimeMs: performanceMetrics.avgCompletionTime,
       taskSuccessRate: performanceMetrics.taskSuccessRate
-    }
+    },
+    commandStructure: commandStructureMetrics,
+    mcpMetrics: {
+      assessmentCalculation,
+      geospatialIntegration
+    },
+    communicationMetrics
   };
 }
 

@@ -100,6 +100,89 @@ interface DashboardMetrics {
     averageCompletionTimeMs: number;
     taskSuccessRate: number;
   };
+  commandStructure: {
+    architectPrime: {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    } | null;
+    integrationCoordinator: {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    } | null;
+    componentLeads: Record<string, {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    }>;
+    specialistAgents: Record<string, {
+      id: string;
+      name: string;
+      status: string;
+      lastHeartbeat: string;
+    }>;
+  };
+  mcpMetrics: {
+    assessmentCalculation: {
+      status: string;
+      activeAgents: number;
+      totalAgents: number;
+      processingStages: {
+        inputProcessing: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        calculationEngine: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        outputGeneration: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+      };
+    };
+    geospatialIntegration: {
+      status: string;
+      activeAgents: number;
+      totalAgents: number;
+      processingStages: {
+        dataIngestion: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        spatialAnalytics: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+        visualizationGeneration: {
+          activeAgents: number;
+          totalAgents: number;
+          status: string;
+        };
+      };
+    };
+  };
+  communicationMetrics: {
+    messageCount: number;
+    messagesByType: Record<string, number>;
+    latestMessages: Array<{
+      from: string;
+      to: string;
+      type: string;
+      timestamp: string;
+      id: string;
+    }>;
+  };
 }
 
 const Dashboard = () => {
