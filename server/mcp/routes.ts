@@ -8,6 +8,7 @@ import express from 'express';
 import { agentCoordinator, TaskType } from './experience';
 import { agentRegistry } from './agents';
 import { handleDashboardRequest, handleHtmlDashboardRequest } from './monitoring/dashboard';
+import { cacheMiddleware } from '../utils/cache';
 
 const router = express.Router();
 
@@ -260,9 +261,9 @@ router.post('/request-assistance', (req, res) => {
 });
 
 // GET /api/mcp/dashboard - Get dashboard metrics
-router.get('/dashboard', handleDashboardRequest);
+router.get('/dashboard', cacheMiddleware(15), handleDashboardRequest); // Cache for 15 seconds
 
 // GET /api/mcp/dashboard/view - View HTML dashboard
-router.get('/dashboard/view', handleHtmlDashboardRequest);
+router.get('/dashboard/view', cacheMiddleware(30), handleHtmlDashboardRequest); // Cache for 30 seconds
 
 export default router;
