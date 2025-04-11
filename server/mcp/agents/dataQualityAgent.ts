@@ -8,7 +8,7 @@
 
 import { FunctionResponse } from '../schemas/types';
 import { BaseAgent, AgentEventType } from './baseAgent';
-import { DataQualityValidator, allPropertyRules, costMatrixRules } from '../../data-quality';
+import { DataQualityValidator, allPropertyRules, costMatrixRules, RuleType } from '../../data-quality';
 
 // Create a data quality validator instance
 const dataQualityFramework = new DataQualityValidator([...allPropertyRules, ...costMatrixRules]);
@@ -143,20 +143,21 @@ export class DataQualityAgent extends BaseAgent {
     });
     
     try {
-      // Select appropriate rules based on entity type
-      let validationResults;
+      // Map entity type to RuleType
+      let ruleType: RuleType;
       
       switch (request.entityType) {
         case 'property':
-          validationResults = await dataQualityFramework.validateEntity('property', request.data, allPropertyRules);
+          ruleType = RuleType.PROPERTY;
           break;
         case 'cost_matrix':
-          validationResults = await dataQualityFramework.validateEntity('cost_matrix', request.data, costMatrixRules);
+          ruleType = RuleType.COST_MATRIX;
           break;
         case 'improvement':
+          ruleType = RuleType.IMPROVEMENT;
+          break;
         case 'land':
-          // Use specialized rules or property rules as a fallback
-          validationResults = await dataQualityFramework.validateEntity(request.entityType, request.data, allPropertyRules);
+          ruleType = RuleType.LAND_DETAIL;
           break;
         default:
           return {
@@ -164,6 +165,13 @@ export class DataQualityAgent extends BaseAgent {
             error: `Unsupported entity type: ${request.entityType}`
           };
       }
+      
+      // Validate the data using the framework
+      const validationReport = dataQualityFramework.validate(request.data, ruleType, request.context);
+      
+      // Extract validation statistics using toJSON() which returns the summary
+      const validationResults = validationReport.toJSON();
+      const { summary } = validationResults;
       
       // Record validation in memory
       this.recordMemory({
@@ -276,11 +284,18 @@ export class DataQualityAgent extends BaseAgent {
       
       // Validate each record
       for (const record of dataSet.records) {
-        // Determine rule set based on entity type
-        const ruleSet = dataSet.entityType === 'cost_matrix' ? costMatrixRules : allPropertyRules;
+        // Map entity type to RuleType
+        const ruleType = dataSet.entityType === 'cost_matrix' ? 
+          RuleType.COST_MATRIX : 
+          dataSet.entityType === 'improvement' ? 
+            RuleType.IMPROVEMENT : 
+            dataSet.entityType === 'land' ? 
+              RuleType.LAND_DETAIL : 
+              RuleType.PROPERTY;
         
         // Validate the record
-        const result = await dataQualityFramework.validateEntity(dataSet.entityType, record, ruleSet);
+        const validationReport = dataQualityFramework.validate(record, ruleType, dataSet.context);
+        const result = validationReport.getSummary();
         
         // Update counts
         if (result.passedRecords === result.totalRecords) {

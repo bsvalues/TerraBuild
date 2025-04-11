@@ -7,6 +7,7 @@
 import express from 'express';
 import { agentCoordinator, TaskType } from './experience';
 import { agentRegistry } from './agents';
+import { handleDashboardRequest, handleHtmlDashboardRequest } from './monitoring/dashboard';
 
 const router = express.Router();
 
@@ -257,5 +258,11 @@ router.post('/request-assistance', (req, res) => {
     });
   }
 });
+
+// GET /api/mcp/dashboard - Get dashboard metrics
+router.get('/dashboard', handleDashboardRequest);
+
+// GET /api/mcp/dashboard/view - View HTML dashboard
+router.get('/dashboard/view', handleHtmlDashboardRequest);
 
 export default router;
