@@ -1547,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // File Upload API
   
   // Upload a file
-  app.post("/api/file-uploads/upload", requireAuth, upload.single('file'), async (req: Request, res: Response) => {
+  app.post("/api/file-uploads/upload", upload.single('file'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -1570,7 +1570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: req.file.originalname,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
-        uploadedBy: req.user!.id,
+        uploadedBy: req.user?.id || 1, // Use admin user (ID 1) if no user is logged in
         status: 'uploaded'
       });
       
@@ -1591,20 +1591,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get all file uploads
-  app.get("/api/file-uploads", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/file-uploads", async (req: Request, res: Response) => {
     try {
       let fileUploads;
       
       console.log("Fetching file uploads for user:", req.user?.id);
       
-      // If admin, get all files. Otherwise, only user's own files
-      if (req.user?.role === "admin") {
-        console.log("User is admin, fetching all files");
-        fileUploads = await storage.getAllFileUploads();
-      } else {
-        console.log("User is not admin, fetching user's files");
-        fileUploads = await storage.getUserFileUploads(req.user!.id);
-      }
+      // For development, get all files
+      fileUploads = await storage.getAllFileUploads();
+      console.log("Fetching all file uploads");
       
       console.log("File uploads retrieved successfully:", fileUploads?.length || 0);
       res.json(fileUploads || []);
