@@ -1,713 +1,857 @@
-{
-  "data": [
-    {
-      "region": "CENTRAL",
-      "buildingType": "BING",
-      "buildingTypeDescription": "Bing (PC)",
-      "baseCost": 6000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 1,
-      "matrixDescription": "PC - C01-Bing - * - T1",
-      "dataPoints": 18,
-      "minCost": 2000.0,
-      "maxCost": 9000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "CENTRAL",
-      "buildingType": "RAINIE",
-      "buildingTypeDescription": "Rainie (PC)",
-      "baseCost": 6000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 2,
-      "matrixDescription": "PC - C02-Rainie - * - T1",
-      "dataPoints": 18,
-      "minCost": 2000.0,
-      "maxCost": 9000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "CENTRAL",
-      "buildingType": "CHELAN",
-      "buildingTypeDescription": "Chelan (PC)",
-      "baseCost": 6000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 4,
-      "matrixDescription": "PC - C04-Chelan - * - T1",
-      "dataPoints": 18,
-      "minCost": 2000.0,
-      "maxCost": 9000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "INDUSTRIAL",
-      "buildingType": "BURIED",
-      "buildingTypeDescription": "Buried (PC)",
-      "baseCost": 160.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 10,
-      "matrixDescription": "PC - I03-Buried - * - IRR",
-      "dataPoints": 2,
-      "minCost": 0.0,
-      "maxCost": 320.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "INDUSTRIAL",
-      "buildingType": "COOLIN",
-      "buildingTypeDescription": "Coolin (PC)",
-      "baseCost": 200.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 11,
-      "matrixDescription": "PC - I04-Coolin - * - IRR",
-      "dataPoints": 2,
-      "minCost": 200.0,
-      "maxCost": 200.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "CHERRI",
-      "buildingTypeDescription": "Cherri (PC)",
-      "baseCost": 4300.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 22,
-      "matrixDescription": "PC - O02-Cherri - * - T1",
-      "dataPoints": 18,
-      "minCost": 1500.0,
-      "maxCost": 9100.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "PEARS",
-      "buildingTypeDescription": "Pears (PC)",
-      "baseCost": 3000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 26,
-      "matrixDescription": "PC - O03-Pears - * - T1",
-      "dataPoints": 11,
-      "minCost": 500.0,
-      "maxCost": 5000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "PEACHE",
-      "buildingTypeDescription": "Peache (PC)",
-      "baseCost": 2500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 27,
-      "matrixDescription": "PC - O04-Peache - * - T1",
-      "dataPoints": 11,
-      "minCost": 500.0,
-      "maxCost": 4000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "NECTAR",
-      "buildingTypeDescription": "Nectar (PC)",
-      "baseCost": 1500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 30,
-      "matrixDescription": "PC - O05-Nectar - * - T1",
-      "dataPoints": 11,
-      "minCost": 500.0,
-      "maxCost": 3000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "APRICO",
-      "buildingTypeDescription": "Aprico (PC)",
-      "baseCost": 1500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 31,
-      "matrixDescription": "PC - O06-Aprico - * - T1",
-      "dataPoints": 11,
-      "minCost": 500.0,
-      "maxCost": 2500.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "PLUMS",
-      "buildingTypeDescription": "Plums (PC)",
-      "baseCost": 1062.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 34,
-      "matrixDescription": "PC - O07-Plums - * - T1",
-      "dataPoints": 12,
-      "minCost": 500.0,
-      "maxCost": 1375.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "PRUNES",
-      "buildingTypeDescription": "Prunes (PC)",
-      "baseCost": 1062.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 35,
-      "matrixDescription": "PC - O08-Prunes - * - T1",
-      "dataPoints": 12,
-      "minCost": 500.0,
-      "maxCost": 1375.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "NUTS",
-      "buildingTypeDescription": "Nuts (PC)",
-      "baseCost": 1062.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 38,
-      "matrixDescription": "PC - O09-Nuts - * - T1",
-      "dataPoints": 12,
-      "minCost": 500.0,
-      "maxCost": 1375.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "TATURA",
-      "buildingTypeDescription": "Tatura (PC)",
-      "baseCost": 2500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 188,
-      "matrixDescription": "PC - T01-Tatura - * - TRL",
-      "dataPoints": 2,
-      "minCost": 2500.0,
-      "maxCost": 2500.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "SPINDL",
-      "buildingTypeDescription": "Spindl (PC)",
-      "baseCost": 0.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 189,
-      "matrixDescription": "PC - T02-Spindl - * - TRL",
-      "dataPoints": 3,
-      "minCost": 0.0,
-      "maxCost": 1000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "WIRE_D",
-      "buildingTypeDescription": "Wire D (PC)",
-      "baseCost": 500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 190,
-      "matrixDescription": "PC - T03-Wire D - * - TRL",
-      "dataPoints": 2,
-      "minCost": 500.0,
-      "maxCost": 500.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "WIRE_T",
-      "buildingTypeDescription": "Wire T (PC)",
-      "baseCost": 800.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 191,
-      "matrixDescription": "PC - T04-Wire T - * - TRL",
-      "dataPoints": 2,
-      "minCost": 800.0,
-      "maxCost": 800.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "HOP_TR",
-      "buildingTypeDescription": "Hop Tr (PC)",
-      "baseCost": 3700.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 192,
-      "matrixDescription": "PC - T05-Hop Tr - * - TRL",
-      "dataPoints": 18,
-      "minCost": 2000.0,
-      "maxCost": 5250.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "BLUEBE",
-      "buildingTypeDescription": "Bluebe (PC)",
-      "baseCost": 8500.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 256,
-      "matrixDescription": "PC - V31-Bluebe - PC-G - V1",
-      "dataPoints": 12,
-      "minCost": 2000.0,
-      "maxCost": 12000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "RASPBE",
-      "buildingTypeDescription": "Raspbe (PC)",
-      "baseCost": 1000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 257,
-      "matrixDescription": "PC - V32-Raspbe - PC-G - V1",
-      "dataPoints": 3,
-      "minCost": 1000.0,
-      "maxCost": 2000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 91.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 399,
-      "matrixDescription": "MH - EX-Depre",
-      "dataPoints": 10,
-      "minCost": 0.0,
-      "maxCost": 100.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 79.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 400,
-      "matrixDescription": "MH - AV-Depre",
-      "dataPoints": 13,
-      "minCost": 60.0,
-      "maxCost": 100.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 65.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 401,
-      "matrixDescription": "MH - P-Depre",
-      "dataPoints": 10,
-      "minCost": 25.0,
-      "maxCost": 95.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 93.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 402,
-      "matrixDescription": "MH - VG-Depre",
-      "dataPoints": 10,
-      "minCost": 50.0,
-      "maxCost": 100.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 91.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 403,
-      "matrixDescription": "MH - G-Depre",
-      "dataPoints": 10,
-      "minCost": 50.0,
-      "maxCost": 100.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 68.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 404,
-      "matrixDescription": "MH - F-Depre",
-      "dataPoints": 12,
-      "minCost": 40.0,
-      "maxCost": 98.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "DEPRE",
-      "buildingTypeDescription": "Depre (MH)",
-      "baseCost": 47.5,
-      "matrixYear": 2025,
-      "sourceMatrixId": 405,
-      "matrixDescription": "MH - VP-Depre",
-      "dataPoints": 10,
-      "minCost": 0.0,
-      "maxCost": 93.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "BSMT",
-      "buildingTypeDescription": "BSMT (RES)",
-      "baseCost": 20.11,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3253,
-      "matrixDescription": "RES - U-BSMT",
-      "dataPoints": 63,
-      "minCost": 9.73,
-      "maxCost": 39.13,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "SOLID_SET_DRIP",
-      "buildingTypeDescription": "Solid Set Drip (PC)",
-      "baseCost": 1000.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3297,
-      "matrixDescription": "PC-I01-Solid Set Drip - IRR",
-      "dataPoints": 2,
-      "minCost": 1000.0,
-      "maxCost": 1000.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "SOLID_SET_SPRINKLERS",
-      "buildingTypeDescription": "Solid Set Sprinklers (PC)",
-      "baseCost": 1250.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3298,
-      "matrixDescription": "PC-I02-Solid Set Sprinklers-IRR",
-      "dataPoints": 2,
-      "minCost": 1250.0,
-      "maxCost": 1250.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "V_TRELLIS",
-      "buildingTypeDescription": "V Trellis (PC)",
-      "baseCost": 2550.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3299,
-      "matrixDescription": "PC-T08-V Trellis-TRL",
-      "dataPoints": 2,
-      "minCost": 2550.0,
-      "maxCost": 2550.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "SINGLEPOLE",
-      "buildingTypeDescription": "SinglePole (PC)",
-      "baseCost": 1550.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3301,
-      "matrixDescription": "PC-T09-SinglePole-TRL",
-      "dataPoints": 2,
-      "minCost": 1550.0,
-      "maxCost": 1550.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "VINEYARD1",
-      "buildingTypeDescription": "VINEYARD1 (PC)",
-      "baseCost": 200.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3317,
-      "matrixDescription": "PC-ASPARAGUS-VINEYARD1",
-      "dataPoints": 6,
-      "minCost": 100.0,
-      "maxCost": 250.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "VINEYARD2B",
-      "buildingTypeDescription": "VINEYARD2B (PC)",
-      "baseCost": 6750.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3787,
-      "matrixDescription": "PC - WINE- VINEYARD2B",
-      "dataPoints": 22,
-      "minCost": 2000.0,
-      "maxCost": 13500.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    },
-    {
-      "region": "UNKNOWN",
-      "buildingType": "BLUEBERRY_TRELLIS",
-      "buildingTypeDescription": "Blueberry Trellis (PC)",
-      "baseCost": 800.0,
-      "matrixYear": 2025,
-      "sourceMatrixId": 3844,
-      "matrixDescription": "PC-T10-Blueberry Trellis-TRL",
-      "dataPoints": 2,
-      "minCost": 800.0,
-      "maxCost": 800.0,
-      "adjustmentFactors": {
-        "complexity": 1.0,
-        "quality": 1.0,
-        "condition": 1.0
-      },
-      "county": "Benton",
-      "state": "WA"
-    }
-  ],
-  "metadata": {
-    "fileProcessed": "Cost Matrix 2025.xlsx",
+[
+  {
+    "region": "Eastern",
+    "buildingType": "100",
+    "buildingTypeDescription": "Single Family Residence",
+    "baseCost": 29925.0,
     "matrixYear": 2025,
-    "processedAt": "2025-04-11T02:15:29.215582",
-    "buildingTypeCount": 29,
-    "regionCount": 3,
-    "totalEntries": 35,
-    "buildingTypes": [
-      "VINEYARD2B",
-      "Nectar",
-      "Solid Set Drip",
-      "Raspbe",
-      "Pears",
-      "SinglePole",
-      "VINEYARD1",
-      "Tatura",
-      "Coolin",
-      "Bluebe",
-      "Cherri",
-      "Buried",
-      "Plums",
-      "V Trellis",
-      "Spindl",
-      "Solid Set Sprinklers",
-      "Bing",
-      "Wire D",
-      "Depre",
-      "Aprico",
-      "BSMT",
-      "Chelan",
-      "Prunes",
-      "Nuts",
-      "Wire T",
-      "Rainie",
-      "Peache",
-      "Hop Tr",
-      "Blueberry Trellis"
-    ],
-    "regions": [
-      "UNKNOWN",
-      "CENTRAL",
-      "INDUSTRIAL"
-    ]
+    "sourceMatrixId": 1350,
+    "matrixDescription": "Benton County Eastern Region - Single Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "100",
+    "buildingTypeDescription": "Single Family Residence",
+    "baseCost": 31500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1350,
+    "matrixDescription": "Benton County Central Region - Single Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "100",
+    "buildingTypeDescription": "Single Family Residence",
+    "baseCost": 33075.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1350,
+    "matrixDescription": "Benton County Western Region - Single Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "125",
+    "buildingTypeDescription": "Manufactured Home",
+    "baseCost": 4275.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1079,
+    "matrixDescription": "Benton County Eastern Region - Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "125",
+    "buildingTypeDescription": "Manufactured Home",
+    "baseCost": 4500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1079,
+    "matrixDescription": "Benton County Central Region - Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "125",
+    "buildingTypeDescription": "Manufactured Home",
+    "baseCost": 4725.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1079,
+    "matrixDescription": "Benton County Western Region - Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "200",
+    "buildingTypeDescription": "Multi-Family Residence",
+    "baseCost": 29925.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1418,
+    "matrixDescription": "Benton County Eastern Region - Multi-Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "200",
+    "buildingTypeDescription": "Multi-Family Residence",
+    "baseCost": 31500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1418,
+    "matrixDescription": "Benton County Central Region - Multi-Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "200",
+    "buildingTypeDescription": "Multi-Family Residence",
+    "baseCost": 33075.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1418,
+    "matrixDescription": "Benton County Western Region - Multi-Family Residence",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "300",
+    "buildingTypeDescription": "Commercial Office",
+    "baseCost": 38823.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1323,
+    "matrixDescription": "Benton County Eastern Region - Commercial Office",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "300",
+    "buildingTypeDescription": "Commercial Office",
+    "baseCost": 40866.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1323,
+    "matrixDescription": "Benton County Central Region - Commercial Office",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "300",
+    "buildingTypeDescription": "Commercial Office",
+    "baseCost": 42910.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1323,
+    "matrixDescription": "Benton County Western Region - Commercial Office",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "310",
+    "buildingTypeDescription": "Medical Office",
+    "baseCost": 6.3,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3484,
+    "matrixDescription": "Benton County Eastern Region - Medical Office",
+    "dataPoints": 19,
+    "minCost": 0.0,
+    "maxCost": 17.65,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "310",
+    "buildingTypeDescription": "Medical Office",
+    "baseCost": 6.63,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3484,
+    "matrixDescription": "Benton County Central Region - Medical Office",
+    "dataPoints": 19,
+    "minCost": 0.0,
+    "maxCost": 17.65,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "310",
+    "buildingTypeDescription": "Medical Office",
+    "baseCost": 6.96,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3484,
+    "matrixDescription": "Benton County Western Region - Medical Office",
+    "dataPoints": 19,
+    "minCost": 0.0,
+    "maxCost": 17.65,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "400",
+    "buildingTypeDescription": "Retail Store",
+    "baseCost": 25966.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 683,
+    "matrixDescription": "Benton County Eastern Region - Retail Store",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "400",
+    "buildingTypeDescription": "Retail Store",
+    "baseCost": 27333.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 683,
+    "matrixDescription": "Benton County Central Region - Retail Store",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "400",
+    "buildingTypeDescription": "Retail Store",
+    "baseCost": 28700.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 683,
+    "matrixDescription": "Benton County Western Region - Retail Store",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "450",
+    "buildingTypeDescription": "Shopping Center",
+    "baseCost": 4275.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1266,
+    "matrixDescription": "Benton County Eastern Region - Shopping Center",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "450",
+    "buildingTypeDescription": "Shopping Center",
+    "baseCost": 4500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1266,
+    "matrixDescription": "Benton County Central Region - Shopping Center",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "450",
+    "buildingTypeDescription": "Shopping Center",
+    "baseCost": 4725.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1266,
+    "matrixDescription": "Benton County Western Region - Shopping Center",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "500",
+    "buildingTypeDescription": "Warehouse",
+    "baseCost": 134.65,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3566,
+    "matrixDescription": "Benton County Eastern Region - Warehouse",
+    "dataPoints": 28,
+    "minCost": 86.1,
+    "maxCost": 215.35,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "500",
+    "buildingTypeDescription": "Warehouse",
+    "baseCost": 141.74,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3566,
+    "matrixDescription": "Benton County Central Region - Warehouse",
+    "dataPoints": 28,
+    "minCost": 86.1,
+    "maxCost": 215.35,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "500",
+    "buildingTypeDescription": "Warehouse",
+    "baseCost": 148.83,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3566,
+    "matrixDescription": "Benton County Western Region - Warehouse",
+    "dataPoints": 28,
+    "minCost": 86.1,
+    "maxCost": 215.35,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "510",
+    "buildingTypeDescription": "Manufacturing",
+    "baseCost": 13352.78,
+    "matrixYear": 2025,
+    "sourceMatrixId": 710,
+    "matrixDescription": "Benton County Eastern Region - Manufacturing",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "510",
+    "buildingTypeDescription": "Manufacturing",
+    "baseCost": 14055.56,
+    "matrixYear": 2025,
+    "sourceMatrixId": 710,
+    "matrixDescription": "Benton County Central Region - Manufacturing",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "510",
+    "buildingTypeDescription": "Manufacturing",
+    "baseCost": 14758.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 710,
+    "matrixDescription": "Benton County Western Region - Manufacturing",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "550",
+    "buildingTypeDescription": "Industrial Processing",
+    "baseCost": 34.44,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3524,
+    "matrixDescription": "Benton County Eastern Region - Industrial Processing",
+    "dataPoints": 4400,
+    "minCost": 0.0,
+    "maxCost": 130.9,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "550",
+    "buildingTypeDescription": "Industrial Processing",
+    "baseCost": 36.25,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3524,
+    "matrixDescription": "Benton County Central Region - Industrial Processing",
+    "dataPoints": 4400,
+    "minCost": 0.0,
+    "maxCost": 130.9,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "550",
+    "buildingTypeDescription": "Industrial Processing",
+    "baseCost": 38.07,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3524,
+    "matrixDescription": "Benton County Western Region - Industrial Processing",
+    "dataPoints": 4400,
+    "minCost": 0.0,
+    "maxCost": 130.9,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "600",
+    "buildingTypeDescription": "Municipal Building",
+    "baseCost": 3694.44,
+    "matrixYear": 2025,
+    "sourceMatrixId": 478,
+    "matrixDescription": "Benton County Eastern Region - Municipal Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 35000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "600",
+    "buildingTypeDescription": "Municipal Building",
+    "baseCost": 3888.89,
+    "matrixYear": 2025,
+    "sourceMatrixId": 478,
+    "matrixDescription": "Benton County Central Region - Municipal Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 35000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "600",
+    "buildingTypeDescription": "Municipal Building",
+    "baseCost": 4083.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 478,
+    "matrixDescription": "Benton County Western Region - Municipal Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 35000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "650",
+    "buildingTypeDescription": "Educational Facility",
+    "baseCost": 34833.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 717,
+    "matrixDescription": "Benton County Eastern Region - Educational Facility",
+    "dataPoints": 9,
+    "minCost": 18000.0,
+    "maxCost": 60000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "650",
+    "buildingTypeDescription": "Educational Facility",
+    "baseCost": 36666.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 717,
+    "matrixDescription": "Benton County Central Region - Educational Facility",
+    "dataPoints": 9,
+    "minCost": 18000.0,
+    "maxCost": 60000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "650",
+    "buildingTypeDescription": "Educational Facility",
+    "baseCost": 38500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 717,
+    "matrixDescription": "Benton County Western Region - Educational Facility",
+    "dataPoints": 9,
+    "minCost": 18000.0,
+    "maxCost": 60000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "700",
+    "buildingTypeDescription": "Agricultural Building",
+    "baseCost": 3377.78,
+    "matrixYear": 2025,
+    "sourceMatrixId": 470,
+    "matrixDescription": "Benton County Eastern Region - Agricultural Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "700",
+    "buildingTypeDescription": "Agricultural Building",
+    "baseCost": 3555.56,
+    "matrixYear": 2025,
+    "sourceMatrixId": 470,
+    "matrixDescription": "Benton County Central Region - Agricultural Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "700",
+    "buildingTypeDescription": "Agricultural Building",
+    "baseCost": 3733.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 470,
+    "matrixDescription": "Benton County Western Region - Agricultural Building",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 32000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "800",
+    "buildingTypeDescription": "Religious Building",
+    "baseCost": 37841.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1515,
+    "matrixDescription": "Benton County Eastern Region - Religious Building",
+    "dataPoints": 9,
+    "minCost": 27500.0,
+    "maxCost": 55000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "800",
+    "buildingTypeDescription": "Religious Building",
+    "baseCost": 39833.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1515,
+    "matrixDescription": "Benton County Central Region - Religious Building",
+    "dataPoints": 9,
+    "minCost": 27500.0,
+    "maxCost": 55000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "800",
+    "buildingTypeDescription": "Religious Building",
+    "baseCost": 41825.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1515,
+    "matrixDescription": "Benton County Western Region - Religious Building",
+    "dataPoints": 9,
+    "minCost": 27500.0,
+    "maxCost": 55000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Eastern",
+    "buildingType": "850",
+    "buildingTypeDescription": "Recreational Facility",
+    "baseCost": 3166.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 446,
+    "matrixDescription": "Benton County Eastern Region - Recreational Facility",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 30000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central",
+    "buildingType": "850",
+    "buildingTypeDescription": "Recreational Facility",
+    "baseCost": 3333.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 446,
+    "matrixDescription": "Benton County Central Region - Recreational Facility",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 30000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Western",
+    "buildingType": "850",
+    "buildingTypeDescription": "Recreational Facility",
+    "baseCost": 3500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 446,
+    "matrixDescription": "Benton County Western Region - Recreational Facility",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 30000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
   }
-}
+]
