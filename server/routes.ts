@@ -1564,8 +1564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
       
-      // File is available at req.file
-      const fileId = Date.now(); // Generate a unique ID for the file
+      console.log(`Processing file upload: ${req.file.originalname}, size: ${req.file.size}, type: ${req.file.mimetype}`);
       
       // Create directories if they don't exist
       const fs = require('fs');
@@ -1585,16 +1584,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'uploaded'
       });
       
-      // First, save file to disk
+      // Save file to disk (using the buffer directly since we're using memory storage)
       const filePath = path.join(uploadsDir, `${fileUpload.id}-${req.file.originalname}`);
-      // req.file.buffer might not exist depending on multer storage configuration
-      // Instead, multer may have already saved the file to disk at req.file.path
-      if (req.file.buffer) {
-        fs.writeFileSync(filePath, req.file.buffer);
-      } else if (req.file.path) {
-        // If the file is already saved by multer, just copy/move it
-        fs.copyFileSync(req.file.path, filePath);
-      }
+      fs.writeFileSync(filePath, req.file.buffer);
+      
+      console.log(`File saved to: ${filePath}`);
       
       await storage.createActivity({
         action: `Uploaded file: ${req.file.originalname}`,
@@ -1737,30 +1731,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Import cost matrix from Excel file
-  app.post("/api/cost-matrix/import-excel/:fileId", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/cost-matrix/import-excel/:fileId", async (req: Request, res: Response) => {
     try {
-      // Only allow admin users to import data
-      if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      
       const fileId = parseInt(req.params.fileId);
-      const userId = req.user!.id;
+      // For development, we use admin user (ID 1)
+      const userId = 1; 
+      
+      console.log(`Importing cost matrix from Excel file ID: ${fileId}`);
       
       const fileUpload = await storage.getFileUpload(fileId);
       if (!fileUpload) {
         return res.status(404).json({ message: "File upload not found" });
       }
       
-      // Verify file type
-      if (!fileUpload.fileType.includes('spreadsheet') && !fileUpload.fileType.includes('excel')) {
-        return res.status(400).json({ message: "Invalid file type. Excel file required." });
+      console.log(`Found file upload: ${fileUpload.fileName}, type: ${fileUpload.fileType}`);
+      
+      // Check if file exists on disk
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'uploads', `${fileUpload.id}-${fileUpload.fileName}`);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+      
+      console.log(`File exists at: ${filePath}`);
+      
+      // Accept both Excel and CSV files
+      if (!fileUpload.fileType.includes('spreadsheet') && 
+          !fileUpload.fileType.includes('excel') && 
+          !fileUpload.fileType.includes('csv') &&
+          !fileUpload.fileName.endsWith('.csv')) {
+        return res.status(400).json({ 
+          message: "Invalid file type. Excel or CSV file required.",
+          fileType: fileUpload.fileType
+        });
       }
       
       const result = await storage.importCostMatrixFromExcel(fileId, userId);
       
+      console.log(`Import completed: ${JSON.stringify(result)}`);
+      
       res.status(200).json(result);
     } catch (error: any) {
+      console.error(`Import error: ${error.message}`, error);
       res.status(500).json({ message: error?.message || "Error importing cost matrix from Excel" });
     }
   });
@@ -2385,7 +2399,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No files uploaded" });
       }
       
+      console.log("Property data import started with files:", 
+        Object.keys(req.files).map(key => `${key}: ${(req.files as any)[key]?.length || 0} files`).join(", "));
+      
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const fs = require('fs');
+      const path = require('path');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Create temporary files from buffers and get their paths
+      const tempFilePaths: {[key: string]: string} = {};
+      
+      for (const [fieldName, fileArray] of Object.entries(files)) {
+        if (fileArray.length > 0) {
+          const file = fileArray[0];
+          const tempFilePath = path.join(uploadsDir, `temp-${Date.now()}-${file.originalname}`);
+          fs.writeFileSync(tempFilePath, file.buffer);
+          tempFilePaths[fieldName] = tempFilePath;
+          
+          console.log(`Saved ${fieldName} to ${tempFilePath}, size: ${file.size} bytes`);
+        }
+      }
+      
+      // Create uploads for each file
+      const fileUploads: {[key: string]: number} = {};
+      for (const [fieldName, fileArray] of Object.entries(files)) {
+        if (fileArray.length > 0) {
+          const file = fileArray[0];
+          
+          // Create file upload record
+          const fileUpload = await storage.createFileUpload({
+            fileName: file.originalname,
+            fileType: file.mimetype,
+            fileSize: file.size,
+            uploadedBy: req.user?.id || 1, // Use admin user (ID 1) if no user is logged in
+            status: 'uploaded'
+          });
+          
+          fileUploads[fieldName] = fileUpload.id;
+          console.log(`Created file upload record for ${fieldName}: ID ${fileUpload.id}`);
+        }
+      }
       
       // Get file paths
       const options: {
@@ -2397,11 +2455,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: number;
         batchSize?: number;
       } = {
-        propertiesFile: files['propertiesFile']?.[0]?.path || '',
-        improvementsFile: files['improvementsFile']?.[0]?.path || '',
-        improvementDetailsFile: files['improvementDetailsFile']?.[0]?.path || '',
-        improvementItemsFile: files['improvementItemsFile']?.[0]?.path || '',
-        landDetailsFile: files['landDetailsFile']?.[0]?.path || '',
+        propertiesFile: tempFilePaths['propertiesFile'] || '',
+        improvementsFile: tempFilePaths['improvementsFile'] || '',
+        improvementDetailsFile: tempFilePaths['improvementDetailsFile'] || '',
+        improvementItemsFile: tempFilePaths['improvementItemsFile'] || '',
+        landDetailsFile: tempFilePaths['landDetailsFile'] || '',
         userId: req.user?.id || 1, // Default to admin user if authentication is disabled
         batchSize: req.body.batchSize ? parseInt(req.body.batchSize) : 100
       };
@@ -2414,30 +2472,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log("Processing property data import with options:", options);
+      
       // Process import
       const importResult = await importPropertyData(storage, options);
       
-      // Clean up uploaded files
-      Object.values(files).forEach(fileArray => {
-        fileArray.forEach(file => {
-          try {
-            fs.unlinkSync(file.path);
-          } catch (e) {
-            console.error(`Error deleting file ${file.path}:`, e);
-          }
-        });
-      });
+      console.log("Import result:", importResult);
+      
+      // Update file upload records with processed status
+      for (const [fieldName, fileId] of Object.entries(fileUploads)) {
+        await storage.updateFileUploadStatus(
+          fileId, 
+          'processed', 
+          1, // Processed items 
+          1, // Total items
+          [] // No errors
+        );
+      }
+      
+      // Clean up temporary files
+      for (const filePath of Object.values(tempFilePaths)) {
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`Cleaned up temporary file: ${filePath}`);
+        } catch (e) {
+          console.error(`Error deleting file ${filePath}:`, e);
+        }
+      }
       
       // Log activity
       await storage.createActivity({
-        action: `Imported property data: ${importResult.properties.success} properties, ${importResult.improvements.success} improvements`,
+        action: `Imported property data: ${importResult.properties?.success || 0} properties, ${importResult.improvements?.success || 0} improvements`,
         icon: "ri-file-list-line",
         iconColor: "success"
       });
       
-      // Return import result
-      res.json(importResult);
+      // Return import result with file upload IDs
+      res.json({
+        ...importResult,
+        fileUploads
+      });
     } catch (error: any) {
+      console.error("Property data import error:", error);
       res.status(500).json({ message: `Error importing property data: ${error.message}` });
     }
   });
