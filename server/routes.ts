@@ -20,6 +20,7 @@ import {
   insertProjectItemSchema
 } from "@shared/schema";
 import { importPropertyData } from "./property-data-import";
+import { importPropertyDataEnhanced } from "./property-data-import-enhanced";
 import { calculateBuildingCost, calculateMaterialCosts } from "./calculationEngine";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -30,6 +31,7 @@ import aiRoutes from "./routes/aiRoutes";
 import { registerBenchmarkingRoutes } from "./routes/benchmarkingRoutes";
 import advancedAnalyticsRouter from "./routes/advancedAnalyticsRoutes";
 import advancedPredictionRoutes from "./routes/advancedPredictionRoutes";
+import { registerPropertyImportRoutes } from "./routes/property-import";
 import dataConnectorRoutes from "./routes/dataConnectorRoutes";
 import connectionHistoryRoutes from "./routes/connectionHistoryRoutes";
 import { registerCollaborationRoutes } from "./routes/collaborationRoutes";

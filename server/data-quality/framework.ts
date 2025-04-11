@@ -1,426 +1,294 @@
 /**
- * Data Quality Framework - Core Implementation
+ * Data Quality Framework for Benton County Building Cost System
  * 
- * This module implements the data quality framework for property assessment data,
- * including validation rules, statistical profiling, and outlier detection.
+ * This module defines the core framework for data quality validation,
+ * including the Rule interface, ValidationContext, and ValidationResult structures.
  */
 
-import { 
-  ValidationRule, 
-  ValidationResult, 
-  RuleValidationResult,
-  BatchValidationResult, 
-  EntityValidationIssue,
-  DataProfile,
-  NumericFieldProfile,
-  CategoricalFieldProfile,
-  HistogramBin,
-  OutlierRecord
-} from './types';
+import { z } from 'zod';
 
-/**
- * Core data quality framework service
- */
-export class DataQualityFramework {
-  private rules: Map<string, ValidationRule[]> = new Map();
-  private statisticalProfiles: Map<string, DataProfile> = new Map();
+export enum RuleType {
+  PROPERTY = 'property',
+  IMPROVEMENT = 'improvement',
+  LAND_DETAIL = 'land_detail',
+  IMPROVEMENT_DETAIL = 'improvement_detail',
+  IMPROVEMENT_ITEM = 'improvement_item',
+  COST_MATRIX = 'cost_matrix',
+  GENERAL = 'general'
+}
+
+export enum Severity {
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+  CRITICAL = 'critical'
+}
+
+export interface Rule {
+  id: string;
+  name: string;
+  description: string;
+  type: RuleType;
+  severity: Severity;
+  validate: (value: any, context: ValidationContext) => ValidationResult;
+}
+
+export interface ValidationContext {
+  relatedData?: Record<string, any>;
+  options?: Record<string, any>;
+}
+
+export interface ValidationResult {
+  passed: boolean;
+  message?: string;
+  details?: any;
+}
+
+export class ValidationReport {
+  rules: Rule[] = [];
+  results: Map<string, ValidationResult> = new Map();
+  timestamp: Date = new Date();
   
-  constructor() {
-    // Initialize with default rules if needed
+  constructor(public entityType: RuleType) {}
+  
+  addResult(rule: Rule, result: ValidationResult): void {
+    this.rules.push(rule);
+    this.results.set(rule.id, result);
   }
   
-  /**
-   * Register a validation rule for a specific entity type
-   */
-  registerRule(entityType: string, rule: ValidationRule): void {
-    if (!this.rules.has(entityType)) {
-      this.rules.set(entityType, []);
-    }
-    
-    // Check if rule with same ID already exists
-    const existingRuleIndex = this.rules.get(entityType)!.findIndex(r => r.id === rule.id);
-    if (existingRuleIndex >= 0) {
-      // Replace existing rule
-      this.rules.get(entityType)![existingRuleIndex] = rule;
-    } else {
-      // Add new rule
-      this.rules.get(entityType)!.push(rule);
-    }
+  get passed(): boolean {
+    return Array.from(this.results.values()).every(result => result.passed);
   }
   
-  /**
-   * Validate a single entity against all registered rules for its type
-   */
-  async validateEntity(entityType: string, entity: any): Promise<ValidationResult> {
-    const rules = this.rules.get(entityType) || [];
-    
-    // Apply all rules
-    const ruleResults: RuleValidationResult[] = [];
-    
-    for (const rule of rules) {
-      try {
-        const result = rule.validate(entity);
-        ruleResults.push({
-          ruleId: rule.id,
-          ruleName: rule.name,
-          ...result
-        });
-      } catch (error) {
-        console.error(`Error in rule ${rule.id}:`, error);
-        ruleResults.push({
-          ruleId: rule.id,
-          ruleName: rule.name,
-          valid: false,
-          score: 0,
-          issues: [{
-            code: 'rule-execution-error',
-            message: `Error executing rule: ${error instanceof Error ? error.message : String(error)}`,
-            severity: 'error'
-          }]
-        });
-      }
-    }
-    
-    // Aggregate results
-    const isValid = ruleResults.every(r => r.valid);
-    const avgScore = ruleResults.length > 0
-      ? ruleResults.reduce((sum, r) => sum + r.score, 0) / ruleResults.length
-      : 1.0;
-    const allIssues = ruleResults.flatMap(r => r.issues);
-    
+  get criticalErrorCount(): number {
+    return this.rules.filter(rule => 
+      rule.severity === Severity.CRITICAL && 
+      !this.results.get(rule.id)?.passed
+    ).length;
+  }
+  
+  get errorCount(): number {
+    return this.rules.filter(rule => 
+      rule.severity === Severity.ERROR && 
+      !this.results.get(rule.id)?.passed
+    ).length;
+  }
+  
+  get warningCount(): number {
+    return this.rules.filter(rule => 
+      rule.severity === Severity.WARNING && 
+      !this.results.get(rule.id)?.passed
+    ).length;
+  }
+  
+  get infoCount(): number {
+    return this.rules.filter(rule => 
+      rule.severity === Severity.INFO && 
+      !this.results.get(rule.id)?.passed
+    ).length;
+  }
+  
+  toJSON(): any {
     return {
-      valid: isValid,
-      qualityScore: avgScore,
-      issues: allIssues,
-      ruleResults
-    };
-  }
-  
-  /**
-   * Validate a batch of entities
-   */
-  async validateBatch(entityType: string, entities: any[]): Promise<BatchValidationResult> {
-    if (!entities || entities.length === 0) {
-      return {
-        totalProcessed: 0,
-        valid: 0,
-        invalid: 0,
-        qualityScore: 1.0,
-        issues: []
-      };
-    }
-    
-    // Validate each entity
-    const results = await Promise.all(
-      entities.map(entity => this.validateEntity(entityType, entity))
-    );
-    
-    // Count valid/invalid
-    const valid = results.filter(r => r.valid).length;
-    const invalid = results.length - valid;
-    
-    // Calculate overall quality score
-    const avgQualityScore = results.reduce((sum, r) => sum + r.qualityScore, 0) / results.length;
-    
-    // Extract all issues
-    const allIssues: EntityValidationIssue[] = [];
-    
-    for (let idx = 0; idx < results.length; idx++) {
-      const result = results[idx];
-      const entity = entities[idx];
-      
-      if (result.issues.length > 0) {
-        const entityIssues = result.issues.map(issue => ({
-          ...issue,
-          entityIndex: idx,
-          entity
-        }));
-        
-        allIssues.push(...entityIssues);
-      }
-    }
-    
-    return {
-      totalProcessed: entities.length,
-      valid,
-      invalid,
-      qualityScore: avgQualityScore,
-      issues: allIssues
-    };
-  }
-  
-  /**
-   * Generate statistical profile for a dataset
-   */
-  async generateStatisticalProfile(entityType: string, entities: any[]): Promise<DataProfile> {
-    if (!entities || entities.length === 0) {
-      throw new Error("Cannot generate profile for empty dataset");
-    }
-    
-    // Identify field types
-    const firstEntity = entities[0];
-    const fields = Object.keys(firstEntity);
-    
-    const numericFields: string[] = [];
-    const categoricalFields: string[] = [];
-    
-    // Categorize fields
-    for (const field of fields) {
-      const value = firstEntity[field];
-      if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
-        numericFields.push(field);
-      } else {
-        categoricalFields.push(field);
-      }
-    }
-    
-    // Generate profiles for each field type
-    const numericProfiles: Record<string, NumericFieldProfile> = {};
-    for (const field of numericFields) {
-      numericProfiles[field] = this.generateNumericProfile(entities, field);
-    }
-    
-    const categoricalProfiles: Record<string, CategoricalFieldProfile> = {};
-    for (const field of categoricalFields) {
-      categoricalProfiles[field] = this.generateCategoricalProfile(entities, field);
-    }
-    
-    // Detect outliers in numeric fields
-    const outliers = this.detectOutliers(entities, numericProfiles);
-    
-    // Create profile
-    const profile: DataProfile = {
-      entityType,
-      timestamp: new Date().toISOString(),
-      recordCount: entities.length,
-      numericProfiles,
-      categoricalProfiles,
-      outliers
-    };
-    
-    // Store profile
-    this.statisticalProfiles.set(entityType, profile);
-    
-    return profile;
-  }
-  
-  /**
-   * Generate statistical profile for a numeric field
-   */
-  private generateNumericProfile(entities: any[], fieldName: string): NumericFieldProfile {
-    // Extract values, filtering out nulls and converting strings to numbers
-    const values = entities
-      .map(entity => {
-        const val = entity[fieldName];
-        if (val === null || val === undefined) return null;
-        return typeof val === 'number' ? val : parseFloat(val);
+      entityType: this.entityType,
+      passed: this.passed,
+      timestamp: this.timestamp,
+      summary: {
+        total: this.rules.length,
+        passed: this.rules.filter(rule => this.results.get(rule.id)?.passed).length,
+        failed: this.rules.filter(rule => !this.results.get(rule.id)?.passed).length,
+        criticalErrors: this.criticalErrorCount,
+        errors: this.errorCount,
+        warnings: this.warningCount,
+        info: this.infoCount
+      },
+      details: this.rules.map(rule => {
+        const ruleResult = this.results.get(rule.id);
+        return {
+          id: rule.id,
+          name: rule.name,
+          type: rule.type,
+          severity: rule.severity,
+          passed: ruleResult?.passed,
+          message: ruleResult?.message,
+          details: ruleResult?.details
+        };
       })
-      .filter((val): val is number => val !== null && !isNaN(val));
-    
-    const nullCount = entities.length - values.length;
-    
-    if (values.length === 0) {
-      return {
-        fieldName,
-        count: 0,
-        nullCount,
-        min: 0,
-        max: 0,
-        mean: 0,
-        median: 0,
-        stdDev: 0,
-        percentiles: {}
-      };
-    }
-    
-    // Sort values for percentile calculations
-    const sortedValues = [...values].sort((a, b) => a - b);
-    
-    // Calculate basic statistics
-    const min = sortedValues[0];
-    const max = sortedValues[sortedValues.length - 1];
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const median = this.calculateMedian(sortedValues);
-    
-    // Calculate standard deviation
-    const sumSquaredDiffs = values.reduce((sum, val) => {
-      const diff = val - mean;
-      return sum + (diff * diff);
-    }, 0);
-    const stdDev = Math.sqrt(sumSquaredDiffs / values.length);
-    
-    // Calculate percentiles
-    const percentiles: Record<string, number> = {
-      "25": this.calculatePercentile(sortedValues, 25),
-      "50": median,
-      "75": this.calculatePercentile(sortedValues, 75),
-      "90": this.calculatePercentile(sortedValues, 90),
-      "95": this.calculatePercentile(sortedValues, 95),
-      "99": this.calculatePercentile(sortedValues, 99)
     };
-    
-    // Create histogram (10 bins)
-    const histogram = this.createHistogram(values, min, max, 10);
-    
-    return {
-      fieldName,
-      count: values.length,
-      nullCount,
-      min,
-      max,
-      mean,
-      median,
-      stdDev,
-      percentiles,
-      histogram
-    };
-  }
-  
-  /**
-   * Calculate median of a sorted array
-   */
-  private calculateMedian(sortedValues: number[]): number {
-    const mid = Math.floor(sortedValues.length / 2);
-    return sortedValues.length % 2 === 0
-      ? (sortedValues[mid - 1] + sortedValues[mid]) / 2
-      : sortedValues[mid];
-  }
-  
-  /**
-   * Calculate percentile of a sorted array
-   */
-  private calculatePercentile(sortedValues: number[], percentile: number): number {
-    const index = (percentile / 100) * (sortedValues.length - 1);
-    const lower = Math.floor(index);
-    const upper = Math.ceil(index);
-    const weight = index - lower;
-    
-    if (upper >= sortedValues.length) return sortedValues[sortedValues.length - 1];
-    if (lower === upper) return sortedValues[lower];
-    
-    return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
-  }
-  
-  /**
-   * Create histogram with fixed number of bins
-   */
-  private createHistogram(values: number[], min: number, max: number, binCount: number): HistogramBin[] {
-    const range = max - min;
-    const binWidth = range / binCount;
-    
-    if (range === 0 || binWidth === 0) {
-      return [{
-        min,
-        max,
-        count: values.length
-      }];
-    }
-    
-    // Initialize bins
-    const bins: HistogramBin[] = [];
-    for (let i = 0; i < binCount; i++) {
-      bins.push({
-        min: min + (i * binWidth),
-        max: min + ((i + 1) * binWidth),
-        count: 0
-      });
-    }
-    
-    // Count values in each bin
-    for (const value of values) {
-      // Handle edge case for max value
-      if (value === max) {
-        bins[bins.length - 1].count++;
-        continue;
-      }
-      
-      // Find bin index
-      const binIndex = Math.floor((value - min) / binWidth);
-      bins[binIndex].count++;
-    }
-    
-    return bins;
-  }
-  
-  /**
-   * Generate statistical profile for a categorical field
-   */
-  private generateCategoricalProfile(entities: any[], fieldName: string): CategoricalFieldProfile {
-    // Extract values, filtering out nulls
-    const values = entities
-      .map(entity => entity[fieldName])
-      .filter(val => val !== null && val !== undefined)
-      .map(val => String(val));
-    
-    const nullCount = entities.length - values.length;
-    
-    // Count frequencies
-    const frequencies: Record<string, number> = {};
-    for (const value of values) {
-      frequencies[value] = (frequencies[value] || 0) + 1;
-    }
-    
-    // Get unique count
-    const uniqueCount = Object.keys(frequencies).length;
-    
-    // Get top values
-    const topValues = Object.entries(frequencies)
-      .map(([value, count]) => ({ value, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-    
-    return {
-      fieldName,
-      count: values.length,
-      nullCount,
-      uniqueCount,
-      frequencies,
-      topValues
-    };
-  }
-  
-  /**
-   * Detect outliers in numeric fields using z-score method
-   */
-  private detectOutliers(entities: any[], numericProfiles: Record<string, NumericFieldProfile>): OutlierRecord[] {
-    const outliers: OutlierRecord[] = [];
-    const zScoreThreshold = 3.0; // Standard threshold for z-score outliers
-    
-    for (const [fieldName, profile] of Object.entries(numericProfiles)) {
-      // Skip fields with too few values or no variation
-      if (profile.count < 5 || profile.stdDev === 0) continue;
-      
-      // Check each entity for outliers
-      for (let i = 0; i < entities.length; i++) {
-        const entity = entities[i];
-        const value = entity[fieldName];
-        
-        // Skip nulls
-        if (value === null || value === undefined) continue;
-        
-        // Convert to number if needed
-        const numValue = typeof value === 'number' ? value : parseFloat(value);
-        if (isNaN(numValue)) continue;
-        
-        // Calculate z-score
-        const zScore = Math.abs((numValue - profile.mean) / profile.stdDev);
-        
-        // Check if it's an outlier
-        if (zScore > zScoreThreshold) {
-          outliers.push({
-            entityIndex: i,
-            fieldName,
-            value: numValue,
-            method: 'zscore',
-            score: zScore
-          });
-        }
-      }
-    }
-    
-    return outliers;
   }
 }
 
-// Export singleton instance
-export const dataQualityFramework = new DataQualityFramework();
+export class DataQualityValidator {
+  private rules: Map<RuleType, Rule[]> = new Map();
+  
+  constructor(rules: Rule[] = []) {
+    this.registerRules(rules);
+  }
+  
+  registerRule(rule: Rule): void {
+    if (!this.rules.has(rule.type)) {
+      this.rules.set(rule.type, []);
+    }
+    this.rules.get(rule.type)?.push(rule);
+  }
+  
+  registerRules(rules: Rule[]): void {
+    rules.forEach(rule => this.registerRule(rule));
+  }
+  
+  validate(data: any, type: RuleType, context: ValidationContext = {}): ValidationReport {
+    const report = new ValidationReport(type);
+    const rules = this.rules.get(type) || [];
+    
+    for (const rule of rules) {
+      try {
+        const result = rule.validate(data, context);
+        report.addResult(rule, result);
+      } catch (error) {
+        console.error(`Error validating rule ${rule.id} - ${rule.name}:`, error);
+        report.addResult(rule, {
+          passed: false,
+          message: `Validation failed with error: ${(error as Error).message}`,
+          details: error
+        });
+      }
+    }
+    
+    return report;
+  }
+  
+  validateBatch(dataArray: any[], type: RuleType, context: ValidationContext = {}): ValidationReport[] {
+    return dataArray.map(data => this.validate(data, type, context));
+  }
+}
+
+// Helper functions for creating rules
+export function createRule(
+  id: string,
+  name: string,
+  description: string,
+  type: RuleType,
+  severity: Severity,
+  validateFn: (value: any, context: ValidationContext) => ValidationResult
+): Rule {
+  return {
+    id,
+    name,
+    description,
+    type,
+    severity,
+    validate: validateFn
+  };
+}
+
+export function createZodRule(
+  id: string,
+  name: string,
+  description: string,
+  type: RuleType,
+  severity: Severity,
+  schema: z.ZodType<any>
+): Rule {
+  return createRule(
+    id,
+    name,
+    description,
+    type,
+    severity,
+    (value) => {
+      const result = schema.safeParse(value);
+      return {
+        passed: result.success,
+        message: result.success ? 'Validation passed' : 'Validation failed',
+        details: result.success ? undefined : result.error.format()
+      };
+    }
+  );
+}
+
+/**
+ * Create a data quality report for a batch of records
+ * 
+ * @param records Array of records to validate
+ * @param validator DataQualityValidator instance
+ * @param type RuleType to apply
+ * @param context Optional validation context
+ * @returns Summary report with statistics
+ */
+export function createBatchQualityReport(
+  records: any[],
+  validator: DataQualityValidator,
+  type: RuleType,
+  context: ValidationContext = {}
+): any {
+  const reports = validator.validateBatch(records, type, context);
+  
+  const totalRecords = records.length;
+  const passedRecords = reports.filter(r => r.passed).length;
+  
+  const criticalErrors = reports.reduce((sum, r) => sum + r.criticalErrorCount, 0);
+  const errors = reports.reduce((sum, r) => sum + r.errorCount, 0);
+  const warnings = reports.reduce((sum, r) => sum + r.warningCount, 0);
+  const infoCount = reports.reduce((sum, r) => sum + r.infoCount, 0);
+  
+  // Aggregate results by rule ID
+  const ruleStats: Record<string, { total: number, passed: number, failed: number }> = {};
+  
+  reports.forEach(report => {
+    report.rules.forEach(rule => {
+      if (!ruleStats[rule.id]) {
+        ruleStats[rule.id] = { total: 0, passed: 0, failed: 0 };
+      }
+      
+      ruleStats[rule.id].total++;
+      
+      if (report.results.get(rule.id)?.passed) {
+        ruleStats[rule.id].passed++;
+      } else {
+        ruleStats[rule.id].failed++;
+      }
+    });
+  });
+  
+  return {
+    timestamp: new Date(),
+    entityType: type,
+    summary: {
+      totalRecords,
+      passedRecords,
+      failedRecords: totalRecords - passedRecords,
+      passRate: totalRecords > 0 ? (passedRecords / totalRecords) * 100 : 0,
+      criticalErrors,
+      errors,
+      warnings,
+      infoMessages: infoCount
+    },
+    ruleStats: Object.entries(ruleStats).map(([ruleId, stats]) => ({
+      ruleId,
+      total: stats.total,
+      passed: stats.passed,
+      failed: stats.failed,
+      passRate: stats.total > 0 ? (stats.passed / stats.total) * 100 : 0
+    })),
+    // Include only failed records in the detailed results to keep the report size manageable
+    details: reports
+      .filter(r => !r.passed)
+      .map((r, i) => ({
+        recordIndex: i,
+        passed: r.passed,
+        criticalErrors: r.criticalErrorCount,
+        errors: r.errorCount,
+        warnings: r.warningCount,
+        infoMessages: r.infoCount,
+        rules: r.rules
+          .filter(rule => !r.results.get(rule.id)?.passed)
+          .map(rule => ({
+            id: rule.id,
+            name: rule.name,
+            severity: rule.severity,
+            message: r.results.get(rule.id)?.message,
+            details: r.results.get(rule.id)?.details
+          }))
+      }))
+  };
+}

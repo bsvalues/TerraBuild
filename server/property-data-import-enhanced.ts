@@ -1,537 +1,641 @@
 /**
- * Enhanced Property Data Import System
+ * Enhanced Property Data Import Module with Data Quality Validation
  * 
  * This module enhances the property data import process with data quality validation
- * to ensure compliance with Washington State assessment requirements and Benton County standards.
+ * and provides improved error handling and logging.
  */
 
-import { Readable } from 'stream';
-import { parse } from 'csv-parse';
-import type { IStorage } from './storage';
+import fs from 'fs';
+import * as csvParse from 'csv-parse';
+import { IStorage } from './storage';
+import { parse } from 'csv-parse/sync';
 import { 
-  InsertProperty,
-  InsertImprovement,
-  InsertImprovementDetail,
-  InsertImprovementItem,
-  InsertLandDetail
-} from '@shared/property-schema';
-import { dataQualityFramework } from './data-quality';
-import { BatchValidationResult, ValidationResult } from './data-quality/types';
+  DataQualityValidator, 
+  RuleType, 
+  ValidationContext,
+  createBatchQualityReport
+} from './data-quality/framework';
+import { allPropertyRules } from './data-quality/property-rules';
+
+// Create a validator with all property rules
+const propertyValidator = new DataQualityValidator(allPropertyRules);
 
 interface ImportOptions {
-  propertiesFile?: string | Buffer;
-  improvementsFile: string | Buffer;
-  improvementDetailsFile: string | Buffer;
-  improvementItemsFile: string | Buffer;
-  landDetailsFile: string | Buffer;
-  batchSize?: number;
+  propertiesFile?: Buffer;
+  improvementsFile: Buffer;
+  improvementDetailsFile: Buffer;
+  improvementItemsFile: Buffer;
+  landDetailsFile: Buffer;
   userId: number;
-  validateOnly?: boolean; // If true, only validate without importing
-  qualityThreshold?: number; // Minimum quality score (0-1) required to import
+  batchSize?: number;
 }
 
 interface ImportResults {
-  properties: { 
-    processed: number, 
-    success: number, 
-    errors: any[],
-    quality?: number,
-    invalid?: number,
-    validationReport?: BatchValidationResult
+  properties?: {
+    processed: number;
+    success: number;
+    errors: number;
+    quality: any;
   };
-  improvements: { 
-    processed: number, 
-    success: number, 
-    errors: any[],
-    quality?: number,
-    invalid?: number,
-    validationReport?: BatchValidationResult
+  improvements?: {
+    processed: number;
+    success: number;
+    errors: number;
+    quality: any;
   };
-  improvementDetails: { 
-    processed: number, 
-    success: number, 
-    errors: any[],
-    quality?: number,
-    invalid?: number,
-    validationReport?: BatchValidationResult
+  improvementDetails?: {
+    processed: number;
+    success: number;
+    errors: number;
+    quality: any;
   };
-  improvementItems: { 
-    processed: number, 
-    success: number, 
-    errors: any[],
-    quality?: number,
-    invalid?: number,
-    validationReport?: BatchValidationResult
+  improvementItems?: {
+    processed: number;
+    success: number;
+    errors: number;
+    quality: any;
   };
-  landDetails: { 
-    processed: number, 
-    success: number, 
-    errors: any[],
-    quality?: number,
-    invalid?: number,
-    validationReport?: BatchValidationResult
+  landDetails?: {
+    processed: number;
+    success: number;
+    errors: number;
+    quality: any;
   };
+  duration: number;
+  errors?: string[];
 }
 
 /**
- * Enhanced property data import with data quality validation
+ * Import property data with enhanced data quality validation
+ * 
+ * @param storage Storage interface
+ * @param options Import options including file buffers
+ * @returns Import results with data quality reports
  */
 export async function importPropertyDataEnhanced(
-  storage: IStorage, 
+  storage: IStorage,
   options: ImportOptions
 ): Promise<ImportResults> {
-  console.log(`Starting enhanced property data import process with data quality validation...`);
-  
-  // Create activity for import start
-  await storage.createActivity({
-    action: "Enhanced property data import started",
-    icon: "ri-file-transfer-line",
-    iconColor: "primary",
-    details: [{ 
-      userId: options.userId,
-      validateOnly: options.validateOnly || false,
-      qualityThreshold: options.qualityThreshold || 0.7
-    }]
-  });
-  
+  const startTime = Date.now();
   const batchSize = options.batchSize || 100;
-  const qualityThreshold = options.qualityThreshold || 0.7;
-  
   const results: ImportResults = {
-    properties: { processed: 0, success: 0, errors: [] },
-    improvements: { processed: 0, success: 0, errors: [] },
-    improvementDetails: { processed: 0, success: 0, errors: [] },
-    improvementItems: { processed: 0, success: 0, errors: [] },
-    landDetails: { processed: 0, success: 0, errors: [] }
+    duration: 0,
+    errors: []
   };
   
+  console.log(`Starting enhanced property data import process...`);
+  
   try {
-    // Import properties first as other tables depend on them
-    console.log("Importing properties with data quality validation...");
-    await importProperties(options.propertiesFile, batchSize, storage, results, options.validateOnly, qualityThreshold);
+    // Process properties file if provided
+    if (options.propertiesFile) {
+      results.properties = await processPropertiesFile(
+        storage,
+        options.propertiesFile,
+        batchSize
+      );
+    }
     
-    // Import improvements 
-    console.log("Importing improvements with data quality validation...");
-    await importImprovements(options.improvementsFile, batchSize, storage, results, options.validateOnly, qualityThreshold);
+    // Process improvements file
+    results.improvements = await processImprovementsFile(
+      storage, 
+      options.improvementsFile,
+      batchSize
+    );
     
-    // Import improvement details
-    console.log("Importing improvement details...");
-    await importImprovementDetails(options.improvementDetailsFile, batchSize, storage, results);
+    // Process improvement details file
+    results.improvementDetails = await processImprovementDetailsFile(
+      storage,
+      options.improvementDetailsFile,
+      batchSize
+    );
     
-    // Import improvement items
-    console.log("Importing improvement items...");
-    await importImprovementItems(options.improvementItemsFile, batchSize, storage, results);
+    // Process improvement items file
+    results.improvementItems = await processImprovementItemsFile(
+      storage,
+      options.improvementItemsFile,
+      batchSize
+    );
     
-    // Import land details
-    console.log("Importing land details...");
-    await importLandDetails(options.landDetailsFile, batchSize, storage, results);
+    // Process land details file
+    results.landDetails = await processLandDetailsFile(
+      storage,
+      options.landDetailsFile,
+      batchSize
+    );
     
-    // Generate summary message
-    const totalProcessed = results.properties.processed + 
-                          results.improvements.processed + 
-                          results.improvementDetails.processed + 
-                          results.improvementItems.processed + 
-                          results.landDetails.processed;
+    // Calculate total duration
+    results.duration = Date.now() - startTime;
     
-    const totalSuccess = results.properties.success + 
-                         results.improvements.success + 
-                         results.improvementDetails.success + 
-                         results.improvementItems.success + 
-                         results.landDetails.success;
-    
-    const totalInvalid = (results.properties.invalid || 0) + 
-                         (results.improvements.invalid || 0);
-    
-    const averageQuality = [
-      results.properties.quality || 0,
-      results.improvements.quality || 0
-    ].filter(q => q > 0).reduce((sum, q) => sum + q, 0) / 
-    [results.properties.quality, results.improvements.quality].filter(q => q !== undefined).length;
-    
-    const summaryMessage = options.validateOnly
-      ? `Property data validation completed: ${totalProcessed} records processed, ${totalInvalid} invalid, average quality: ${(averageQuality * 100).toFixed(1)}%`
-      : `Property data import completed: ${totalProcessed} records processed, ${totalSuccess} imported, ${totalInvalid} invalid`;
-    
-    console.log(summaryMessage);
-    
-    await storage.createActivity({
-      action: options.validateOnly ? "Property data validation completed" : "Property data import completed successfully",
-      icon: "ri-check-line",
-      iconColor: "success",
-      details: [{ 
-        userId: options.userId,
-        processed: totalProcessed,
-        success: totalSuccess,
-        invalid: totalInvalid,
-        averageQuality: averageQuality
-      }]
-    });
+    console.log(`Property data import completed successfully in ${results.duration}ms`);
+    return results;
     
   } catch (error) {
-    console.error("Error during property data import:", error);
+    console.error("Error during enhanced property data import:", error);
+    results.errors = results.errors || [];
+    results.errors.push((error as Error).message);
+    results.duration = Date.now() - startTime;
+    return results;
+  }
+}
+
+/**
+ * Process properties file with data quality validation
+ * 
+ * @param storage Storage interface
+ * @param fileBuffer File buffer containing CSV data
+ * @param batchSize Number of records to process in one batch
+ * @returns Import results
+ */
+async function processPropertiesFile(
+  storage: IStorage,
+  fileBuffer: Buffer,
+  batchSize: number
+): Promise<{
+  processed: number;
+  success: number;
+  errors: number;
+  quality: any;
+}> {
+  console.log(`Processing properties file...`);
+  
+  // Parse CSV file
+  const records = parse(fileBuffer, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  
+  // Validate data quality
+  const qualityReport = createBatchQualityReport(
+    records,
+    propertyValidator,
+    RuleType.PROPERTY
+  );
+  
+  console.log(`Data quality validation complete: ${qualityReport.summary.passedRecords} of ${qualityReport.summary.totalRecords} records passed`);
+  
+  // Initialize counters
+  let processed = 0;
+  let success = 0;
+  let errors = 0;
+  
+  // Process records in batches
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    
     try {
-      console.error(error);
-      await storage.createActivity({
-        action: "Property data import failed",
-        icon: "ri-error-warning-line",
-        iconColor: "danger",
-        details: [{ 
-          userId: options.userId,
-          error: error instanceof Error ? error.message : String(error)
-        }]
-      });
-    } catch (error) {
-      console.error("Failed to log error activity:", error);
-    }
-  }
-  
-  return results;
-}
-
-/**
- * Import properties with data quality validation
- */
-async function importProperties(
-  filePathOrBuffer: string | Buffer | undefined,
-  batchSize: number,
-  storage: IStorage, 
-  results: ImportResults,
-  validateOnly?: boolean,
-  qualityThreshold?: number
-): Promise<void> {
-  // If no file is provided, resolve immediately (properties are optional)
-  if (!filePathOrBuffer) {
-    console.log("No properties file provided, skipping properties import");
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve, reject) => {
-    const properties: InsertProperty[] = [];
-    let batch: InsertProperty[] = [];
-    
-    // Create a parser based on file path or buffer
-    let parser;
-    if (typeof filePathOrBuffer === 'string') {
-      parser = require('fs').createReadStream(filePathOrBuffer)
-        .pipe(parse({
-          columns: true,
-          skip_empty_lines: true,
-          trim: true
-        }));
-    } else {
-      // Use buffer directly
-      parser = Readable.from(filePathOrBuffer)
-        .pipe(parse({
-          columns: true,
-          skip_empty_lines: true,
-          trim: true
-        }));
-    }
-    
-    parser.on('data', async (record) => {
-      try {
-        results.properties.processed++;
+      // Transform records
+      const propertyBatch = batch.map((record: any) => {
+        processed++;
         
-        // Convert CSV record to property data model
-        const property: InsertProperty = {
-          propId: parseInt(record.PROP_ID || '0'),
-          block: record.BLOCK || null,
-          tractOrLot: record.TRACT_OR_LOT || null,
-          legalDesc: record.LEGAL_DESC || null,
-          legalDesc2: record.LEGAL_DESC_2 || null,
-          townshipSection: record.TOWNSHIP_SECTION || null,
-          townshipCode: record.TOWNSHIP_CODE || null,
-          rangeCode: record.RANGE_CODE || null,
-          townshipQSection: record.TOWNSHIP_Q_SECTION || null,
-          cycle: record.CYCLE || null,
-          propertyUseCd: record.PROPERTY_USE_CD || null,
-          propertyUseDesc: record.PROPERTY_USE_DESC || null,
-          market: record.MARKET ? parseFloat(record.MARKET) : null,
-          landHstdVal: record.LAND_HSTD_VAL ? parseFloat(record.LAND_HSTD_VAL) : null,
-          landNonHstdVal: record.LAND_NON_HSTD_VAL ? parseFloat(record.LAND_NON_HSTD_VAL) : null,
-          imprvHstdVal: record.IMPRV_HSTD_VAL ? parseFloat(record.IMPRV_HSTD_VAL) : null,
-          imprvNonHstdVal: record.IMPRV_NON_HSTD_VAL ? parseFloat(record.IMPRV_NON_HSTD_VAL) : null,
-          hoodCd: record.HOOD_CD || null,
-          absSubdvCd: record.ABS_SUBDV_CD || null,
-          appraisedVal: record.APPRAISED_VAL ? parseFloat(record.APPRAISED_VAL) : null,
-          assessedVal: record.ASSESSED_VAL ? parseFloat(record.ASSESSED_VAL) : null,
-          legalAcreage: record.LEGAL_ACREAGE ? parseFloat(record.LEGAL_ACREAGE) : null,
-          propTypeCd: record.PROP_TYPE_CD || null,
-          imagePath: record.IMAGE_PATH || null,
-          geoId: record.GEO_ID || null,
-          isActive: record.IS_ACTIVE ? record.IS_ACTIVE.toLowerCase() === 'true' : true,
-          tca: record.TCA || null
+        // Transform the record data
+        return {
+          propId: record.propId || record.property_id || record.id,
+          block: record.block || null,
+          tractOr: record.tractOr || record.tract || null,
+          lot: record.lot || null,
+          address: record.address || record.street_address || null,
+          city: record.city || null,
+          state: record.state || null,
+          zip: record.zip || record.zipcode || record.zip_code || null,
+          acres: parseFloat(record.acres || 0) || null,
+          landValue: parseFloat(record.landValue || record.land_value || 0) || null,
+          improvementValue: parseFloat(record.improvementValue || record.improvement_value || 0) || null,
+          totalValue: parseFloat(record.totalValue || record.total_value || 0) || null
         };
-        
-        // Add property to batch
-        batch.push(property);
-        
-        // Process batch when it reaches the batch size
-        if (batch.length >= batchSize) {
-          parser.pause();
-          try {
-            const validBatch = await processBatch(batch, storage, results, validateOnly, qualityThreshold);
-            results.properties.success += validBatch.length;
-          } catch (error) {
-            results.properties.errors.push(error);
-          }
-          batch = []; // Clear batch
-          parser.resume();
-        }
-      } catch (error) {
-        results.properties.errors.push({
-          error,
-          record
-        });
-      }
-    });
-    
-    parser.on('error', (error) => {
-      console.error('Error parsing properties file:', error);
-      results.properties.errors.push(error);
-      reject(error);
-    });
-    
-    parser.on('end', async () => {
-      try {
-        // Process remaining records in the last batch
-        if (batch.length > 0) {
-          const validBatch = await processBatch(batch, storage, results, validateOnly, qualityThreshold);
-          results.properties.success += validBatch.length;
-        }
-        
-        // Generate statistical profile for all imported properties
-        if (properties.length > 0) {
-          try {
-            const profile = await dataQualityFramework.generateStatisticalProfile('property', properties);
-            console.log(`Generated statistical profile for ${properties.length} properties`);
-            
-            // Store the statistical profile
-            await storage.createActivity({
-              action: "Property data statistical profile generated",
-              icon: "ri-bar-chart-box-line",
-              iconColor: "info",
-              details: [{ profile }]
-            });
-          } catch (error) {
-            console.error("Failed to generate statistical profile:", error);
-          }
-        }
-        
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
-  
-  /**
-   * Process a batch of properties with data quality validation
-   */
-  async function processBatch(
-    batch: InsertProperty[], 
-    storage: IStorage, 
-    results: ImportResults,
-    validateOnly?: boolean,
-    qualityThreshold: number = 0.7
-  ): Promise<InsertProperty[]> {
-    console.log(`Processing batch of ${batch.length} properties...`);
-    
-    // Run data quality validation
-    const validationResult = await dataQualityFramework.validateBatch('property', batch);
-    
-    // Update validation stats in results
-    if (!results.properties.validationReport) {
-      results.properties.validationReport = validationResult;
-      results.properties.quality = validationResult.qualityScore;
-      results.properties.invalid = validationResult.invalid;
-    } else {
-      // Merge with existing validation report
-      results.properties.validationReport.totalProcessed += validationResult.totalProcessed;
-      results.properties.validationReport.valid += validationResult.valid;
-      results.properties.validationReport.invalid += validationResult.invalid;
-      
-      // Weighted average of quality scores
-      const totalRecords = results.properties.validationReport.totalProcessed;
-      const previousTotal = totalRecords - validationResult.totalProcessed;
-      const previousQuality = results.properties.quality || 0;
-      
-      results.properties.quality = (
-        (previousQuality * previousTotal) + 
-        (validationResult.qualityScore * validationResult.totalProcessed)
-      ) / totalRecords;
-      
-      results.properties.invalid = (results.properties.invalid || 0) + validationResult.invalid;
-      
-      // Merge issues
-      results.properties.validationReport.issues = [
-        ...results.properties.validationReport.issues,
-        ...validationResult.issues
-      ];
-    }
-    
-    // If validation only, don't import and return empty array
-    if (validateOnly) {
-      console.log(`Validation only mode: ${validationResult.valid} valid, ${validationResult.invalid} invalid, quality score: ${validationResult.qualityScore.toFixed(2)}`);
-      return [];
-    }
-    
-    // Filter records that pass quality threshold
-    const validBatch = batch.filter((property, index) => {
-      const entityResult = validationResult.issues.find(issue => issue.entityIndex === index);
-      return !entityResult || entityResult.severity !== 'critical';
-    });
-    
-    // If quality score is below threshold, add warning
-    if (validationResult.qualityScore < qualityThreshold) {
-      console.warn(`Batch quality score (${validationResult.qualityScore.toFixed(2)}) is below threshold (${qualityThreshold})`);
-      results.properties.errors.push({
-        warning: 'Quality threshold not met',
-        qualityScore: validationResult.qualityScore,
-        threshold: qualityThreshold
       });
+      
+      // Insert into database using individual create method for each property
+      for (const property of propertyBatch) {
+        try {
+          await storage.createProperty(property);
+          success++;
+        } catch (error) {
+          console.error(`Error creating property:`, error);
+          errors++;
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing property batch ${i}-${i + batch.length}:`, error);
+      errors += batch.length;
     }
-    
-    // If no valid records, return empty array
-    if (validBatch.length === 0) {
-      console.log('No valid properties to import after validation');
-      return [];
-    }
-    
-    // Import valid records
-    const importResult = await storage.createProperties(validBatch);
-    console.log(`Imported ${importResult.length} properties (${batch.length - validBatch.length} rejected by validation)`);
-    
-    return validBatch;
   }
+  
+  console.log(`Processed ${processed} properties: ${success} successful, ${errors} failed`);
+  
+  return {
+    processed,
+    success,
+    errors,
+    quality: qualityReport
+  };
 }
 
 /**
- * Import improvements with data quality validation
+ * Process improvements file with data quality validation
+ * 
+ * @param storage Storage interface
+ * @param fileBuffer File buffer containing CSV data
+ * @param batchSize Number of records to process in one batch
+ * @returns Import results
  */
-async function importImprovements(
-  filePathOrBuffer: string | Buffer,
-  batchSize: number,
-  storage: IStorage, 
-  results: ImportResults,
-  validateOnly?: boolean,
-  qualityThreshold?: number
-): Promise<void> {
-  // Similar enhancement pattern to importProperties...
-  // Abbreviated for now - would implement full validation like the properties function
+async function processImprovementsFile(
+  storage: IStorage,
+  fileBuffer: Buffer,
+  batchSize: number
+): Promise<{
+  processed: number;
+  success: number;
+  errors: number;
+  quality: any;
+}> {
+  console.log(`Processing improvements file...`);
   
-  return new Promise((resolve, reject) => {
-    const improvements: InsertImprovement[] = [];
-    let batch: InsertImprovement[] = [];
-    
-    // Create parser similar to properties
-    let parser;
-    if (typeof filePathOrBuffer === 'string') {
-      parser = require('fs').createReadStream(filePathOrBuffer)
-        .pipe(parse({
-          columns: true,
-          skip_empty_lines: true,
-          trim: true
-        }));
-    } else {
-      parser = Readable.from(filePathOrBuffer)
-        .pipe(parse({
-          columns: true,
-          skip_empty_lines: true,
-          trim: true
-        }));
-    }
-    
-    parser.on('data', (record) => {
-      results.improvements.processed++;
-      
-      const improvement: InsertImprovement = {
-        propId: parseInt(record.PROP_ID || '0'),
-        imprvId: parseInt(record.IMPRV_ID || '0'),
-        imprvDesc: record.IMPRV_DESC || null,
-        imprvVal: record.IMPRV_VAL ? parseFloat(record.IMPRV_VAL) : null,
-        livingArea: record.LIVING_AREA ? parseFloat(record.LIVING_AREA) : null,
-        primaryUseCd: record.PRIMARY_USE_CD || null,
-        stories: record.STORIES ? parseFloat(record.STORIES) : null,
-        actualYearBuilt: record.ACTUAL_YEAR_BUILT ? parseInt(record.ACTUAL_YEAR_BUILT) : null,
-        totalArea: record.TOTAL_AREA ? parseFloat(record.TOTAL_AREA) : null
-      };
-      
-      batch.push(improvement);
-      
-      if (batch.length >= batchSize) {
-        parser.pause();
-        
-        // This would include validation in the enhanced version
-        storage.createImprovements(batch)
-          .then((result) => {
-            results.improvements.success += result.length;
-            batch = [];
-            parser.resume();
-          })
-          .catch((error) => {
-            results.improvements.errors.push(error);
-            batch = [];
-            parser.resume();
-          });
-      }
-    });
-    
-    parser.on('error', (error) => {
-      results.improvements.errors.push(error);
-      reject(error);
-    });
-    
-    parser.on('end', () => {
-      // Process any remaining batch
-      if (batch.length > 0) {
-        storage.createImprovements(batch)
-          .then((result) => {
-            results.improvements.success += result.length;
-            resolve();
-          })
-          .catch((error) => {
-            results.improvements.errors.push(error);
-            resolve();
-          });
-      } else {
-        resolve();
-      }
-    });
+  // Parse CSV file
+  const records = parse(fileBuffer, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
   });
+  
+  // Validate data quality
+  const qualityReport = createBatchQualityReport(
+    records,
+    propertyValidator,
+    RuleType.IMPROVEMENT
+  );
+  
+  console.log(`Data quality validation complete: ${qualityReport.summary.passedRecords} of ${qualityReport.summary.totalRecords} records passed`);
+  
+  // Initialize counters
+  let processed = 0;
+  let success = 0;
+  let errors = 0;
+  
+  // Process records in batches
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    
+    try {
+      // Transform records
+      const improvementBatch = batch.map((record: any) => {
+        processed++;
+        
+        // Transform the record data
+        return {
+          propId: record.propId || record.property_id,
+          improvementId: record.improvementId || record.improvement_id || record.id,
+          buildingType: record.buildingType || record.building_type || null,
+          yearBuilt: parseInt(record.yearBuilt || record.year_built || 0) || null,
+          quality: record.quality || null,
+          condition: record.condition || null,
+          squareFeet: parseFloat(record.squareFeet || record.square_feet || record.area || 0) || null,
+          value: parseFloat(record.value || record.total_value || 0) || null
+        };
+      });
+      
+      // Insert into database using individual create method for each improvement
+      for (const improvement of improvementBatch) {
+        try {
+          await storage.createImprovement(improvement);
+          success++;
+        } catch (error) {
+          console.error(`Error creating improvement:`, error);
+          errors++;
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing improvement batch ${i}-${i + batch.length}:`, error);
+      errors += batch.length;
+    }
+  }
+  
+  console.log(`Processed ${processed} improvements: ${success} successful, ${errors} failed`);
+  
+  return {
+    processed,
+    success,
+    errors,
+    quality: qualityReport
+  };
 }
 
-// Remaining import functions (improvementDetails, improvementItems, landDetails)
-// would follow similar patterns but are omitted for brevity
-async function importImprovementDetails(
-  filePathOrBuffer: string | Buffer,
-  batchSize: number,
-  storage: IStorage, 
-  results: ImportResults
-): Promise<void> {
-  // Implementation similar to original import function
-  // Would be enhanced with validation in full implementation
-  return Promise.resolve();
+/**
+ * Process improvement details file
+ * 
+ * @param storage Storage interface
+ * @param fileBuffer File buffer containing CSV data
+ * @param batchSize Number of records to process in one batch
+ * @returns Import results
+ */
+async function processImprovementDetailsFile(
+  storage: IStorage,
+  fileBuffer: Buffer,
+  batchSize: number
+): Promise<{
+  processed: number;
+  success: number;
+  errors: number;
+  quality: any;
+}> {
+  console.log(`Processing improvement details file...`);
+  
+  // Parse CSV file
+  const records = parse(fileBuffer, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  
+  // Initialize counters
+  let processed = 0;
+  let success = 0;
+  let errors = 0;
+  
+  // Process records in batches
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    
+    try {
+      // Transform records for the database schema
+      const detailsBatch = batch.map(record => {
+        processed++;
+        
+        return {
+          improvementId: record.improvementId || record.improvement_id,
+          detailType: record.detailType || record.detail_type || record.type,
+          description: record.description || null,
+          value: parseFloat(record.value || 0) || null
+        };
+      });
+      
+      // Insert into database
+      const result = await storage.createImprovementDetails(detailsBatch);
+      success += result.length;
+    } catch (error) {
+      console.error(`Error processing improvement details batch ${i}-${i + batch.length}:`, error);
+      errors += batch.length;
+    }
+  }
+  
+  console.log(`Processed ${processed} improvement details: ${success} successful, ${errors} failed`);
+  
+  // No specific validation rules for improvement details yet
+  return {
+    processed,
+    success,
+    errors,
+    quality: {
+      timestamp: new Date(),
+      entityType: RuleType.IMPROVEMENT_DETAIL,
+      summary: {
+        totalRecords: processed,
+        passedRecords: success,
+        failedRecords: errors,
+        passRate: processed > 0 ? (success / processed) * 100 : 0
+      }
+    }
+  };
 }
 
-async function importImprovementItems(
-  filePathOrBuffer: string | Buffer,
-  batchSize: number,
-  storage: IStorage, 
-  results: ImportResults
-): Promise<void> {
-  // Implementation similar to original import function
-  // Would be enhanced with validation in full implementation
-  return Promise.resolve();
+/**
+ * Process improvement items file
+ * 
+ * @param storage Storage interface
+ * @param fileBuffer File buffer containing CSV data
+ * @param batchSize Number of records to process in one batch
+ * @returns Import results
+ */
+async function processImprovementItemsFile(
+  storage: IStorage,
+  fileBuffer: Buffer,
+  batchSize: number
+): Promise<{
+  processed: number;
+  success: number;
+  errors: number;
+  quality: any;
+}> {
+  console.log(`Processing improvement items file...`);
+  
+  // Parse CSV file
+  const records = parse(fileBuffer, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  
+  // Initialize counters
+  let processed = 0;
+  let success = 0;
+  let errors = 0;
+  
+  // Process records in batches
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    
+    try {
+      // Transform records for the database schema
+      const itemsBatch = batch.map(record => {
+        processed++;
+        
+        return {
+          improvementId: record.improvementId || record.improvement_id,
+          itemType: record.itemType || record.item_type || record.type,
+          description: record.description || null,
+          quantity: parseFloat(record.quantity || 1) || 1,
+          unitCost: parseFloat(record.unitCost || record.unit_cost || 0) || null,
+          totalCost: parseFloat(record.totalCost || record.total_cost || 0) || null
+        };
+      });
+      
+      // Insert into database
+      const result = await storage.createImprovementItems(itemsBatch);
+      success += result.length;
+    } catch (error) {
+      console.error(`Error processing improvement items batch ${i}-${i + batch.length}:`, error);
+      errors += batch.length;
+    }
+  }
+  
+  console.log(`Processed ${processed} improvement items: ${success} successful, ${errors} failed`);
+  
+  // No specific validation rules for improvement items yet
+  return {
+    processed,
+    success,
+    errors,
+    quality: {
+      timestamp: new Date(),
+      entityType: RuleType.IMPROVEMENT_ITEM,
+      summary: {
+        totalRecords: processed,
+        passedRecords: success,
+        failedRecords: errors,
+        passRate: processed > 0 ? (success / processed) * 100 : 0
+      }
+    }
+  };
 }
 
-async function importLandDetails(
-  filePathOrBuffer: string | Buffer,
-  batchSize: number,
-  storage: IStorage, 
-  results: ImportResults
-): Promise<void> {
-  // Implementation similar to original import function
-  // Would be enhanced with validation in full implementation
-  return Promise.resolve();
+/**
+ * Process land details file
+ * 
+ * @param storage Storage interface
+ * @param fileBuffer File buffer containing CSV data
+ * @param batchSize Number of records to process in one batch
+ * @returns Import results
+ */
+async function processLandDetailsFile(
+  storage: IStorage,
+  fileBuffer: Buffer,
+  batchSize: number
+): Promise<{
+  processed: number;
+  success: number;
+  errors: number;
+  quality: any;
+}> {
+  console.log(`Processing land details file...`);
+  
+  // Parse CSV file
+  const records = parse(fileBuffer, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  
+  // Initialize counters
+  let processed = 0;
+  let success = 0;
+  let errors = 0;
+  
+  // Process records in batches
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    
+    try {
+      // Transform records for the database schema
+      const landDetailsBatch = batch.map(record => {
+        processed++;
+        
+        return {
+          propId: record.propId || record.property_id,
+          landType: record.landType || record.land_type || record.type,
+          acres: parseFloat(record.acres || 0) || null,
+          squareFeet: parseFloat(record.squareFeet || record.square_feet || 0) || null,
+          value: parseFloat(record.value || 0) || null,
+          description: record.description || null
+        };
+      });
+      
+      // Insert into database
+      const result = await storage.createLandDetails(landDetailsBatch);
+      success += result.length;
+    } catch (error) {
+      console.error(`Error processing land details batch ${i}-${i + batch.length}:`, error);
+      errors += batch.length;
+    }
+  }
+  
+  console.log(`Processed ${processed} land details: ${success} successful, ${errors} failed`);
+  
+  // No specific validation rules for land details yet
+  return {
+    processed,
+    success,
+    errors,
+    quality: {
+      timestamp: new Date(),
+      entityType: RuleType.LAND_DETAIL,
+      summary: {
+        totalRecords: processed,
+        passedRecords: success,
+        failedRecords: errors,
+        passRate: processed > 0 ? (success / processed) * 100 : 0
+      }
+    }
+  };
+}
+
+/**
+ * Summarize data quality issues
+ * 
+ * @param qualityReports Quality reports from import process
+ * @returns Summarized quality issues
+ */
+export function summarizeDataQualityIssues(qualityReports: Record<string, any>): any {
+  const summary = {
+    timestamp: new Date(),
+    totalIssues: 0,
+    criticalIssues: 0,
+    errorIssues: 0,
+    warningIssues: 0,
+    infoIssues: 0,
+    records: {
+      total: 0,
+      withIssues: 0,
+      clean: 0
+    },
+    byEntityType: {} as Record<string, any>,
+    topIssues: [] as any[]
+  };
+  
+  // Process each report
+  Object.entries(qualityReports).forEach(([entityType, report]) => {
+    const { summary: reportSummary } = report;
+    
+    // Add to the total counts
+    summary.records.total += reportSummary.totalRecords;
+    summary.records.withIssues += reportSummary.failedRecords;
+    summary.records.clean += reportSummary.passedRecords;
+    
+    summary.criticalIssues += reportSummary.criticalErrors || 0;
+    summary.errorIssues += reportSummary.errors || 0;
+    summary.warningIssues += reportSummary.warnings || 0;
+    summary.infoIssues += reportSummary.infoMessages || 0;
+    
+    // Total issues
+    const entityIssues = (reportSummary.criticalErrors || 0) +
+                        (reportSummary.errors || 0) +
+                        (reportSummary.warnings || 0) +
+                        (reportSummary.infoMessages || 0);
+    
+    summary.totalIssues += entityIssues;
+    
+    // Add entity-specific summary
+    summary.byEntityType[entityType] = {
+      totalRecords: reportSummary.totalRecords,
+      passedRecords: reportSummary.passedRecords,
+      failedRecords: reportSummary.failedRecords,
+      passRate: reportSummary.passRate,
+      issues: entityIssues
+    };
+    
+    // Collect top issues if available
+    if (report.ruleStats) {
+      report.ruleStats
+        .sort((a: any, b: any) => b.failed - a.failed)
+        .slice(0, 5)
+        .forEach((rule: any) => {
+          if (rule.failed > 0) {
+            summary.topIssues.push({
+              ruleId: rule.ruleId,
+              entityType,
+              failed: rule.failed,
+              total: rule.total,
+              failRate: (rule.failed / rule.total) * 100
+            });
+          }
+        });
+    }
+  });
+  
+  // Sort top issues by failure count
+  summary.topIssues.sort((a, b) => b.failed - a.failed);
+  
+  // Get only the top 10 issues overall
+  summary.topIssues = summary.topIssues.slice(0, 10);
+  
+  return summary;
 }
