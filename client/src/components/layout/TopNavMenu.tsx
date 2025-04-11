@@ -225,6 +225,33 @@ export default function TopNavMenu() {
               </div>
             </NavigationMenuContent>
           </NavigationMenuItem>
+          
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className={cn(
+              location.includes('mcp-') 
+                ? "bg-[#e6eef2] text-[#243E4D]" 
+                : ""
+            )}>
+              <BrainCircuit className="h-4 w-4 mr-2" /> MCP Framework
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="p-4 w-[300px]">
+                <DropdownSection label="Model Content Protocol">
+                  <NavLink
+                    href="/mcp-overview"
+                    label="MCP Overview"
+                    icon={<BrainCircuit className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/mcp-dashboard"
+                    label="MCP Dashboard"
+                    icon={<Activity className="h-4 w-4" />}
+                    className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                  />
+                </DropdownSection>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
 
           <NavigationMenuItem>
             <NavigationMenuTrigger className={cn(
@@ -263,17 +290,6 @@ export default function TopNavMenu() {
                     href="/ai-tools"
                     label="AI Tools"
                     icon={<BrainCircuit className="h-4 w-4" />}
-                  />
-                  <NavLink
-                    href="/mcp-overview"
-                    label="MCP Framework"
-                    icon={<BrainCircuit className="h-4 w-4" />}
-                  />
-                  <NavLink
-                    href="/mcp-dashboard"
-                    label="MCP Dashboard"
-                    icon={<Activity className="h-4 w-4" />}
-                    className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
                   />
                   <NavLink
                     href="/ar-visualization"
