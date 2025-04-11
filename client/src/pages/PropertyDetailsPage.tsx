@@ -162,16 +162,45 @@ const PropertyDetailsPage = () => {
   const propertyId = params?.id ? parseInt(params.id) : 0;
 
   // Fetch property details
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, dataUpdatedAt, isFetching } = useQuery({
     queryKey: [`/api/properties/${propertyId}/details`],
     queryFn: async () => {
-      const response = await fetch(`/api/properties/${propertyId}/details`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch property details');
+      const startTime = Date.now();
+      try {
+        // Show loading indicator with console log for debugging
+        console.log("Fetching property details data...");
+        
+        // Make the API request
+        const response = await fetch(`/api/properties/${propertyId}/details`);
+        
+        // Handle error response
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Property fetch error:", errorText);
+          throw new Error(`Failed to fetch property details: ${response.status} ${response.statusText} ${errorText}`);
+        }
+        
+        // Parse response
+        const data = await response.json() as PropertyDetails;
+        console.log("Received property data:", data);
+        
+        // Ensure loading spinner shows for at least 800ms for better user experience
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < 800) {
+          await new Promise(resolve => setTimeout(resolve, 800 - elapsedTime));
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("Error fetching property data:", error);
+        throw error;
       }
-      return response.json() as Promise<PropertyDetails>;
     },
     enabled: !!propertyId,
+    // Add retry logic for better resilience
+    retry: 2,
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 10000),
+    staleTime: 5 * 60 * 1000, // Data remains fresh for 5 minutes
   });
 
   if (isError) {
