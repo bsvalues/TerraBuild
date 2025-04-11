@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/dashboard";
+import MCPDashboard from "@/pages/Dashboard";
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
@@ -91,6 +91,7 @@ function Router() {
       <ProtectedRoute path="/data-import" component={DataImportPage} />
       <ProtectedRoute path="/benchmarking" component={BenchmarkingPage} />
       <ProtectedRoute path="/mcp-overview" component={MCPOverviewPage} />
+      <ProtectedRoute path="/mcp-dashboard" component={MCPDashboard} />
       <ProtectedRoute path="/what-if-scenarios" component={WhatIfScenariosPage} />
       <ProtectedRoute path="/visualizations" component={VisualizationsPage} />
       <ProtectedRoute path="/data-exploration" component={DataExplorationDemo} />
