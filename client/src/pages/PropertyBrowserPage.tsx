@@ -79,7 +79,9 @@ const PropertyBrowserPage = () => {
     }
   });
 
+  // Show error toast only when error state changes
   useEffect(() => {
+    // Only show toast when error first occurs
     if (isError) {
       toast({
         title: "Error",
@@ -87,7 +89,7 @@ const PropertyBrowserPage = () => {
         variant: "destructive",
       });
     }
-  }, [isError, toast]);
+  }, [isError]); // Intentionally omit toast from deps to avoid re-render loop
 
   // Filtered properties based on search
   const filteredProperties = searchQuery && data 
