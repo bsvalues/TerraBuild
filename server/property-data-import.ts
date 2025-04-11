@@ -1,21 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse';
-import { IStorage } from './storage';
-import { log } from './vite';
+import type { IStorage } from './storage';
+import { 
+  InsertProperty,
+  InsertImprovement,
+  InsertImprovementDetail,
+  InsertImprovementItem,
+  InsertLandDetail
+} from '@shared/property-schema';
 
-// CSV parsing options
-const csvParseOptions = {
-  columns: true,
-  skip_empty_lines: true,
-  trim: true,
-  cast: true
-};
-
-/**
- * Import property data from CSV files
- */
-export async function importPropertyData(storage: IStorage, options: {
+interface ImportOptions {
   propertiesFile: string;
   improvementsFile: string;
   improvementDetailsFile: string;
@@ -23,177 +18,168 @@ export async function importPropertyData(storage: IStorage, options: {
   landDetailsFile: string;
   batchSize?: number;
   userId: number;
-}) {
+}
+
+interface ImportResults {
+  properties: { processed: number, success: number, errors: any[] };
+  improvements: { processed: number, success: number, errors: any[] };
+  improvementDetails: { processed: number, success: number, errors: any[] };
+  improvementItems: { processed: number, success: number, errors: any[] };
+  landDetails: { processed: number, success: number, errors: any[] };
+}
+
+/**
+ * Import property data from CSV files
+ */
+export async function importPropertyData(storage: IStorage, options: ImportOptions): Promise<ImportResults> {
+  console.log(`Starting property data import process...`);
+  
+  // Create activity for import start
+  await storage.createActivity({
+    action: "Property data import started",
+    icon: "ri-file-transfer-line",
+    iconColor: "primary",
+    userId: options.userId
+  });
+  
   const batchSize = options.batchSize || 100;
-  const results = {
+  
+  const results: ImportResults = {
     properties: { processed: 0, success: 0, errors: [] },
     improvements: { processed: 0, success: 0, errors: [] },
     improvementDetails: { processed: 0, success: 0, errors: [] },
     improvementItems: { processed: 0, success: 0, errors: [] },
     landDetails: { processed: 0, success: 0, errors: [] }
   };
-
-  // Create activity log entry
-  await storage.createActivity({
-    action: `Started importing Benton County property data`,
-    icon: "ri-database-2-line",
-    iconColor: "info",
-    userId: options.userId
-  });
-
+  
   try {
-    // 1. Import Properties
-    log("Importing properties...");
-    await importProperties(
-      options.propertiesFile, 
-      storage, 
-      batchSize, 
-      results.properties
-    );
-
-    // 2. Import Improvements
-    log("Importing improvements...");
-    await importImprovements(
-      options.improvementsFile, 
-      storage, 
-      batchSize, 
-      results.improvements
-    );
-
-    // 3. Import Improvement Details
-    log("Importing improvement details...");
-    await importImprovementDetails(
-      options.improvementDetailsFile, 
-      storage, 
-      batchSize, 
-      results.improvementDetails
-    );
-
-    // 4. Import Improvement Items
-    log("Importing improvement items...");
-    await importImprovementItems(
-      options.improvementItemsFile, 
-      storage, 
-      batchSize, 
-      results.improvementItems
-    );
-
-    // 5. Import Land Details
-    log("Importing land details...");
-    await importLandDetails(
-      options.landDetailsFile, 
-      storage, 
-      batchSize, 
-      results.landDetails
-    );
-
-    // Create activity log for completion
+    // Import properties first as other tables depend on them
+    console.log("Importing properties...");
+    await importProperties(options.propertiesFile, batchSize, storage, results);
+    
+    // Import improvements 
+    console.log("Importing improvements...");
+    await importImprovements(options.improvementsFile, batchSize, storage, results);
+    
+    // Import improvement details
+    console.log("Importing improvement details...");
+    await importImprovementDetails(options.improvementDetailsFile, batchSize, storage, results);
+    
+    // Import improvement items
+    console.log("Importing improvement items...");
+    await importImprovementItems(options.improvementItemsFile, batchSize, storage, results);
+    
+    // Import land details
+    console.log("Importing land details...");
+    await importLandDetails(options.landDetailsFile, batchSize, storage, results);
+    
+    console.log("Property data import completed successfully");
     await storage.createActivity({
-      action: `Completed importing Benton County property data: 
-        ${results.properties.success} properties, 
-        ${results.improvements.success} improvements, 
-        ${results.improvementDetails.success} improvement details, 
-        ${results.improvementItems.success} improvement items, 
-        ${results.landDetails.success} land details`,
-      icon: "ri-database-2-line",
+      action: "Property data import completed successfully",
+      icon: "ri-check-line",
       iconColor: "success",
       userId: options.userId
     });
-
-    return results;
+    
   } catch (error) {
-    log(`Error importing property data: ${error.message}`);
-    
-    // Log error
-    await storage.createActivity({
-      action: `Error importing Benton County property data: ${error.message}`,
-      icon: "ri-error-warning-line",
-      iconColor: "error",
-      userId: options.userId
-    });
-    
-    throw error;
+    console.error("Error during property data import:", error);
+    try {
+      console.error(error);
+      await storage.createActivity({
+        action: "Property data import failed",
+        icon: "ri-error-warning-line",
+        iconColor: "danger",
+        userId: options.userId
+      });
+    } catch (error) {
+      console.error("Failed to log error activity:", error);
+    }
   }
+  
+  return results;
 }
 
 /**
  * Import properties from CSV file
  */
 async function importProperties(
-  filePath: string, 
-  storage: IStorage, 
+  filePath: string,
   batchSize: number,
-  results: { processed: number, success: number, errors: any[] }
-) {
-  return new Promise<void>((resolve, reject) => {
-    const parser = fs.createReadStream(filePath).pipe(parse(csvParseOptions));
-    const batch: any[] = [];
-
-    parser.on('readable', async function() {
-      let record;
-      while ((record = parser.read())) {
-        try {
-          // Convert fields as needed
-          const property = {
-            propId: parseInt(record.prop_id),
-            block: record.block || null,
-            tractOrLot: record.tract_or_lot || null,
-            legalDesc: record.legal_desc || null,
-            legalDesc2: record.legal_desc_2 || null,
-            townshipSection: record.township_section || null,
-            townshipCode: record.township_code || null,
-            rangeCode: record.range_code || null,
-            townshipQSection: record.township_q_section || null,
-            cycle: record.cycle || null,
-            propertyUseCd: record.property_use_cd || null,
-            propertyUseDesc: record.property_use_desc || null,
-            market: record.market ? parseFloat(record.market) : null,
-            landHstdVal: record.land_hstd_val ? parseFloat(record.land_hstd_val) : null,
-            landNonHstdVal: record.land_non_hstd_val ? parseFloat(record.land_non_hstd_val) : null,
-            imprvHstdVal: record.imprv_hstd_val ? parseFloat(record.imprv_hstd_val) : null,
-            imprvNonHstdVal: record.imprv_non_hstd_val ? parseFloat(record.imprv_non_hstd_val) : null,
-            hoodCd: record.hood_cd || null,
-            absSubdvCd: record.abs_subdv_cd || null,
-            appraisedVal: record.appraised_val ? parseFloat(record.appraised_val) : null,
-            assessedVal: record.assessed_val ? parseFloat(record.assessed_val) : null,
-            legalAcreage: record.legal_acreage ? parseFloat(record.legal_acreage) : null,
-            propTypeCd: record.prop_type_cd || null,
-            imagePath: record.image_path || null,
-            geoId: record.geo_id || null,
-            isActive: record.isactive === '1',
-            tca: record.TCA || null
-          };
-
-          batch.push(property);
-          results.processed++;
-
-          // Process batch when it reaches batchSize
-          if (batch.length >= batchSize) {
-            await processBatch('properties', batch, storage, results);
-            batch.length = 0; // Clear batch
-          }
-        } catch (error) {
-          results.errors.push({ 
-            record: record.prop_id, 
-            error: error.message 
-          });
+  storage: IStorage, 
+  results: ImportResults
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const properties: InsertProperty[] = [];
+    let batch: InsertProperty[] = [];
+    
+    // Create a readable stream for the CSV file
+    const parser = fs.createReadStream(filePath)
+      .pipe(parse({
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }));
+    
+    parser.on('data', async (record) => {
+      try {
+        results.properties.processed++;
+        
+        // Convert CSV record to property data model
+        const property: InsertProperty = {
+          propId: parseInt(record.PROP_ID || '0'),
+          accountId: record.ACCOUNT_ID || null,
+          ownerId: parseInt(record.OWNER_ID || '0'),
+          parcelId: record.PARCEL_ID || null,
+          taxYear: parseInt(record.TAX_YEAR || '0'),
+          taxCode: record.TAX_CODE || null,
+          propClass: record.PROP_CLASS || null,
+          propStatus: record.PROP_STATUS || null,
+          propType: record.PROP_TYPE || null,
+          siteAddress: record.SITE_ADDRESS || null,
+          siteCity: record.SITE_CITY || null,
+          siteState: record.SITE_STATE || null,
+          siteZip: record.SITE_ZIP || null,
+          legalDesc: record.LEGAL_DESC || null,
+          acreage: parseFloat(record.ACREAGE || '0'),
+          marketValue: parseInt(record.MARKET_VALUE || '0'),
+          assessedValue: parseInt(record.ASSESSED_VALUE || '0'),
+          taxableValue: parseInt(record.TAXABLE_VALUE || '0'),
+          landValue: parseInt(record.LAND_VALUE || '0'),
+          improvementValue: parseInt(record.IMPROVEMENT_VALUE || '0')
+        };
+        
+        batch.push(property);
+        
+        // Process in batches for efficiency
+        if (batch.length >= batchSize) {
+          parser.pause();
+          await processBatch('properties', batch, storage, results);
+          batch = [];
+          parser.resume();
         }
+        
+      } catch (error) {
+        results.properties.errors.push({
+          record,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     });
-
-    parser.on('end', async function() {
+    
+    parser.on('end', async () => {
       try {
-        // Process any remaining records in the batch
+        // Process any remaining records
         if (batch.length > 0) {
           await processBatch('properties', batch, storage, results);
         }
+        console.log(`Properties import completed: ${results.properties.success} of ${results.properties.processed} records imported successfully`);
         resolve();
       } catch (error) {
         reject(error);
       }
     });
-
-    parser.on('error', function(error) {
+    
+    parser.on('error', (error) => {
       reject(error);
     });
   });
@@ -203,61 +189,85 @@ async function importProperties(
  * Import improvements from CSV file
  */
 async function importImprovements(
-  filePath: string, 
-  storage: IStorage, 
+  filePath: string,
   batchSize: number,
-  results: { processed: number, success: number, errors: any[] }
-) {
-  return new Promise<void>((resolve, reject) => {
-    const parser = fs.createReadStream(filePath).pipe(parse(csvParseOptions));
-    const batch: any[] = [];
-
-    parser.on('readable', async function() {
-      let record;
-      while ((record = parser.read())) {
-        try {
-          const improvement = {
-            propId: parseInt(record.prop_id),
-            imprvId: parseInt(record.imprv_id),
-            imprvDesc: record.imprv_desc || null,
-            imprvVal: record.imprv_val ? parseFloat(record.imprv_val) : null,
-            livingArea: record.living_area ? parseFloat(record.living_area) : null,
-            primaryUseCd: record.primary_use_cd || null,
-            stories: record.stories ? parseFloat(record.stories) : null,
-            actualYearBuilt: record.actual_year_built ? parseInt(record.actual_year_built) : null,
-            totalArea: record.total_area ? parseFloat(record.total_area) : null
-          };
-
-          batch.push(improvement);
-          results.processed++;
-
-          // Process batch when it reaches batchSize
-          if (batch.length >= batchSize) {
-            await processBatch('improvements', batch, storage, results);
-            batch.length = 0; // Clear batch
-          }
-        } catch (error) {
-          results.errors.push({ 
-            record: `${record.prop_id}-${record.imprv_id}`, 
-            error: error.message 
-          });
+  storage: IStorage, 
+  results: ImportResults
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const improvements: InsertImprovement[] = [];
+    let batch: InsertImprovement[] = [];
+    
+    // Create a readable stream for the CSV file
+    const parser = fs.createReadStream(filePath)
+      .pipe(parse({
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }));
+    
+    parser.on('data', async (record) => {
+      try {
+        results.improvements.processed++;
+        
+        // Convert CSV record to improvement data model
+        const improvement: InsertImprovement = {
+          imprvId: parseInt(record.IMPRV_ID || '0'),
+          propId: parseInt(record.PROP_ID || '0'),
+          buildingNumber: parseInt(record.BUILDING_NUMBER || '0'),
+          buildingType: record.BUILDING_TYPE || null,
+          yearBuilt: parseInt(record.YEAR_BUILT || '0'),
+          squareFeet: parseInt(record.SQUARE_FEET || '0'),
+          stories: parseFloat(record.STORIES || '0'),
+          quality: record.QUALITY || null,
+          condition: record.CONDITION || null,
+          grade: record.GRADE || null,
+          depreciation: parseFloat(record.DEPRECIATION || '0'),
+          constructionType: record.CONSTRUCTION_TYPE || null,
+          foundationType: record.FOUNDATION_TYPE || null,
+          roofType: record.ROOF_TYPE || null,
+          heatingCooling: record.HEATING_COOLING || null,
+          improvementClass: record.IMPROVEMENT_CLASS || null,
+          improvementType: record.IMPROVEMENT_TYPE || null,
+          bedrooms: parseInt(record.BEDROOMS || '0'),
+          bathrooms: parseFloat(record.BATHROOMS || '0'),
+          marketValue: parseInt(record.MARKET_VALUE || '0'),
+          replacementCost: parseInt(record.REPLACEMENT_COST || '0'),
+          scheduleNumber: record.SCHEDULE_NUMBER || null
+        };
+        
+        batch.push(improvement);
+        
+        // Process in batches for efficiency
+        if (batch.length >= batchSize) {
+          parser.pause();
+          await processBatch('improvements', batch, storage, results);
+          batch = [];
+          parser.resume();
         }
+        
+      } catch (error) {
+        results.improvements.errors.push({
+          record,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     });
-
-    parser.on('end', async function() {
+    
+    parser.on('end', async () => {
       try {
-        // Process any remaining records in the batch
+        // Process any remaining records
         if (batch.length > 0) {
           await processBatch('improvements', batch, storage, results);
         }
+        console.log(`Improvements import completed: ${results.improvements.success} of ${results.improvements.processed} records imported successfully`);
         resolve();
       } catch (error) {
         reject(error);
       }
     });
-
-    parser.on('error', function(error) {
+    
+    parser.on('error', (error) => {
       reject(error);
     });
   });
@@ -267,65 +277,79 @@ async function importImprovements(
  * Import improvement details from CSV file
  */
 async function importImprovementDetails(
-  filePath: string, 
-  storage: IStorage, 
+  filePath: string,
   batchSize: number,
-  results: { processed: number, success: number, errors: any[] }
-) {
-  return new Promise<void>((resolve, reject) => {
-    const parser = fs.createReadStream(filePath).pipe(parse(csvParseOptions));
-    const batch: any[] = [];
-
-    parser.on('readable', async function() {
-      let record;
-      while ((record = parser.read())) {
-        try {
-          const detail = {
-            propId: parseInt(record.prop_id),
-            imprvId: parseInt(record.imprv_id),
-            livingArea: record.living_area ? parseFloat(record.living_area) : null,
-            belowGradeLivingArea: record.below_grade_living_area ? parseFloat(record.below_grade_living_area) : null,
-            conditionCd: record.condition_cd || null,
-            imprvDetSubClassCd: record.imprv_det_sub_class_cd || null,
-            yrBuilt: record.yr_built ? parseInt(record.yr_built) : null,
-            actualAge: record.actual_age ? parseInt(record.actual_age) : null,
-            numStories: record.num_stories ? parseFloat(record.num_stories) : null,
-            imprvDetTypeCd: record.imprv_det_type_cd || null,
-            imprvDetDesc: record.imprv_det_desc || null,
-            imprvDetArea: record.imprv_det_area ? parseFloat(record.imprv_det_area) : null,
-            imprvDetClassCd: record.imprv_det_class_cd || null
-          };
-
-          batch.push(detail);
-          results.processed++;
-
-          // Process batch when it reaches batchSize
-          if (batch.length >= batchSize) {
-            await processBatch('improvementDetails', batch, storage, results);
-            batch.length = 0; // Clear batch
-          }
-        } catch (error) {
-          results.errors.push({ 
-            record: `${record.prop_id}-${record.imprv_id}`, 
-            error: error.message 
-          });
+  storage: IStorage, 
+  results: ImportResults
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const details: InsertImprovementDetail[] = [];
+    let batch: InsertImprovementDetail[] = [];
+    
+    // Create a readable stream for the CSV file
+    const parser = fs.createReadStream(filePath)
+      .pipe(parse({
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }));
+    
+    parser.on('data', async (record) => {
+      try {
+        results.improvementDetails.processed++;
+        
+        // Convert CSV record to improvement detail data model
+        const detail: InsertImprovementDetail = {
+          detailId: parseInt(record.DETAIL_ID || '0'),
+          propId: parseInt(record.PROP_ID || '0'),
+          imprvId: parseInt(record.IMPRV_ID || '0'),
+          detailType: record.DETAIL_TYPE || null,
+          detailDescription: record.DETAIL_DESCRIPTION || null,
+          area: parseFloat(record.AREA || '0'),
+          width: parseFloat(record.WIDTH || '0'),
+          depth: parseFloat(record.DEPTH || '0'),
+          height: parseFloat(record.HEIGHT || '0'),
+          units: parseInt(record.UNITS || '0'),
+          unitOfMeasure: record.UNIT_OF_MEASURE || null,
+          location: record.LOCATION || null,
+          quality: record.QUALITY || null,
+          condition: record.CONDITION || null,
+          yearBuilt: parseInt(record.YEAR_BUILT || '0'),
+          valueContribution: parseInt(record.VALUE_CONTRIBUTION || '0')
+        };
+        
+        batch.push(detail);
+        
+        // Process in batches for efficiency
+        if (batch.length >= batchSize) {
+          parser.pause();
+          await processBatch('improvementDetails', batch, storage, results);
+          batch = [];
+          parser.resume();
         }
+        
+      } catch (error) {
+        results.improvementDetails.errors.push({
+          record,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     });
-
-    parser.on('end', async function() {
+    
+    parser.on('end', async () => {
       try {
-        // Process any remaining records in the batch
+        // Process any remaining records
         if (batch.length > 0) {
           await processBatch('improvementDetails', batch, storage, results);
         }
+        console.log(`Improvement details import completed: ${results.improvementDetails.success} of ${results.improvementDetails.processed} records imported successfully`);
         resolve();
       } catch (error) {
         reject(error);
       }
     });
-
-    parser.on('error', function(error) {
+    
+    parser.on('error', (error) => {
       reject(error);
     });
   });
@@ -335,65 +359,78 @@ async function importImprovementDetails(
  * Import improvement items from CSV file
  */
 async function importImprovementItems(
-  filePath: string, 
-  storage: IStorage, 
+  filePath: string,
   batchSize: number,
-  results: { processed: number, success: number, errors: any[] }
-) {
-  return new Promise<void>((resolve, reject) => {
-    const parser = fs.createReadStream(filePath).pipe(parse(csvParseOptions));
-    const batch: any[] = [];
-
-    parser.on('readable', async function() {
-      let record;
-      while ((record = parser.read())) {
-        try {
-          const item = {
-            imprvId: parseInt(record.imprv_id),
-            propId: parseInt(record.prop_id),
-            bedrooms: record.bedrooms ? parseFloat(record.bedrooms) : null,
-            baths: record.baths ? parseFloat(record.baths) : null,
-            halfBath: record.halfbath ? parseFloat(record.halfbath) : null,
-            foundation: record.foundation || null,
-            extwallDesc: record.extwall_desc || null,
-            roofcoverDesc: record.roofcover_desc || null,
-            hvacDesc: record.hvac_desc || null,
-            fireplaces: record.fireplaces ? parseFloat(record.fireplaces) : null,
-            sprinkler: record.sprinkler === 'Y',
-            framingClass: record.framing_class || null,
-            comHvac: record.com_hvac || null
-          };
-
-          batch.push(item);
-          results.processed++;
-
-          // Process batch when it reaches batchSize
-          if (batch.length >= batchSize) {
-            await processBatch('improvementItems', batch, storage, results);
-            batch.length = 0; // Clear batch
-          }
-        } catch (error) {
-          results.errors.push({ 
-            record: `${record.prop_id}-${record.imprv_id}`, 
-            error: error.message 
-          });
+  storage: IStorage, 
+  results: ImportResults
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const items: InsertImprovementItem[] = [];
+    let batch: InsertImprovementItem[] = [];
+    
+    // Create a readable stream for the CSV file
+    const parser = fs.createReadStream(filePath)
+      .pipe(parse({
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }));
+    
+    parser.on('data', async (record) => {
+      try {
+        results.improvementItems.processed++;
+        
+        // Convert CSV record to improvement item data model
+        const item: InsertImprovementItem = {
+          itemId: parseInt(record.ITEM_ID || '0'),
+          propId: parseInt(record.PROP_ID || '0'),
+          imprvId: parseInt(record.IMPRV_ID || '0'),
+          itemType: record.ITEM_TYPE || null,
+          itemDescription: record.ITEM_DESCRIPTION || null,
+          quantity: parseInt(record.QUANTITY || '0'),
+          unitOfMeasure: record.UNIT_OF_MEASURE || null,
+          unitCost: parseFloat(record.UNIT_COST || '0'),
+          totalCost: parseFloat(record.TOTAL_COST || '0'),
+          yearInstalled: parseInt(record.YEAR_INSTALLED || '0'),
+          effectiveAge: parseInt(record.EFFECTIVE_AGE || '0'),
+          condition: record.CONDITION || null,
+          quality: record.QUALITY || null,
+          location: record.LOCATION || null,
+          notes: record.NOTES || null
+        };
+        
+        batch.push(item);
+        
+        // Process in batches for efficiency
+        if (batch.length >= batchSize) {
+          parser.pause();
+          await processBatch('improvementItems', batch, storage, results);
+          batch = [];
+          parser.resume();
         }
+        
+      } catch (error) {
+        results.improvementItems.errors.push({
+          record,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     });
-
-    parser.on('end', async function() {
+    
+    parser.on('end', async () => {
       try {
-        // Process any remaining records in the batch
+        // Process any remaining records
         if (batch.length > 0) {
           await processBatch('improvementItems', batch, storage, results);
         }
+        console.log(`Improvement items import completed: ${results.improvementItems.success} of ${results.improvementItems.processed} records imported successfully`);
         resolve();
       } catch (error) {
         reject(error);
       }
     });
-
-    parser.on('error', function(error) {
+    
+    parser.on('error', (error) => {
       reject(error);
     });
   });
@@ -403,59 +440,83 @@ async function importImprovementItems(
  * Import land details from CSV file
  */
 async function importLandDetails(
-  filePath: string, 
-  storage: IStorage, 
+  filePath: string,
   batchSize: number,
-  results: { processed: number, success: number, errors: any[] }
-) {
-  return new Promise<void>((resolve, reject) => {
-    const parser = fs.createReadStream(filePath).pipe(parse(csvParseOptions));
-    const batch: any[] = [];
-
-    parser.on('readable', async function() {
-      let record;
-      while ((record = parser.read())) {
-        try {
-          const landDetail = {
-            propId: parseInt(record.prop_id),
-            sizeAcres: record.size_acres ? parseFloat(record.size_acres) : null,
-            sizeSquareFeet: record.size_square_feet ? parseFloat(record.size_square_feet) : null,
-            landTypeCd: record.land_type_cd || null,
-            landSoilCode: record.land_soil_code || null,
-            agUseCd: record.ag_use_cd || null,
-            primaryUseCd: record.primary_use_cd || null
-          };
-
-          batch.push(landDetail);
-          results.processed++;
-
-          // Process batch when it reaches batchSize
-          if (batch.length >= batchSize) {
-            await processBatch('landDetails', batch, storage, results);
-            batch.length = 0; // Clear batch
-          }
-        } catch (error) {
-          results.errors.push({ 
-            record: record.prop_id, 
-            error: error.message 
-          });
+  storage: IStorage, 
+  results: ImportResults
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const details: InsertLandDetail[] = [];
+    let batch: InsertLandDetail[] = [];
+    
+    // Create a readable stream for the CSV file
+    const parser = fs.createReadStream(filePath)
+      .pipe(parse({
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      }));
+    
+    parser.on('data', async (record) => {
+      try {
+        results.landDetails.processed++;
+        
+        // Convert CSV record to land detail data model
+        const detail: InsertLandDetail = {
+          landId: parseInt(record.LAND_ID || '0'),
+          propId: parseInt(record.PROP_ID || '0'),
+          landType: record.LAND_TYPE || null,
+          landUse: record.LAND_USE || null,
+          landClass: record.LAND_CLASS || null,
+          soilType: record.SOIL_TYPE || null,
+          acreage: parseFloat(record.ACREAGE || '0'),
+          squareFeet: parseInt(record.SQUARE_FEET || '0'),
+          frontage: parseFloat(record.FRONTAGE || '0'),
+          depth: parseFloat(record.DEPTH || '0'),
+          valuePerUnit: parseFloat(record.VALUE_PER_UNIT || '0'),
+          unitOfMeasure: record.UNIT_OF_MEASURE || null,
+          marketAdjustment: parseFloat(record.MARKET_ADJUSTMENT || '0'),
+          landValue: parseInt(record.LAND_VALUE || '0'),
+          zoning: record.ZONING || null,
+          topography: record.TOPOGRAPHY || null,
+          utilities: record.UTILITIES || null,
+          accessType: record.ACCESS_TYPE || null,
+          locationInfluence: record.LOCATION_INFLUENCE || null,
+          notes: record.NOTES || null
+        };
+        
+        batch.push(detail);
+        
+        // Process in batches for efficiency
+        if (batch.length >= batchSize) {
+          parser.pause();
+          await processBatch('landDetails', batch, storage, results);
+          batch = [];
+          parser.resume();
         }
+        
+      } catch (error) {
+        results.landDetails.errors.push({
+          record,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     });
-
-    parser.on('end', async function() {
+    
+    parser.on('end', async () => {
       try {
-        // Process any remaining records in the batch
+        // Process any remaining records
         if (batch.length > 0) {
           await processBatch('landDetails', batch, storage, results);
         }
+        console.log(`Land details import completed: ${results.landDetails.success} of ${results.landDetails.processed} records imported successfully`);
         resolve();
       } catch (error) {
         reject(error);
       }
     });
-
-    parser.on('error', function(error) {
+    
+    parser.on('error', (error) => {
       reject(error);
     });
   });
@@ -465,60 +526,41 @@ async function importLandDetails(
  * Process a batch of records
  */
 async function processBatch(
-  entityType: 'properties' | 'improvements' | 'improvementDetails' | 'improvementItems' | 'landDetails',
+  type: keyof ImportResults,
   batch: any[],
   storage: IStorage,
-  results: { processed: number, success: number, errors: any[] }
-) {
+  results: ImportResults
+): Promise<void> {
   try {
-    switch(entityType) {
+    let response;
+    
+    switch (type) {
       case 'properties':
-        await storage.bulkInsertProperties(batch);
+        response = await storage.bulkInsertProperties(batch);
         break;
       case 'improvements':
-        await storage.bulkInsertImprovements(batch);
+        response = await storage.bulkInsertImprovements(batch);
         break;
       case 'improvementDetails':
-        await storage.bulkInsertImprovementDetails(batch);
+        response = await storage.bulkInsertImprovementDetails(batch);
         break;
       case 'improvementItems':
-        await storage.bulkInsertImprovementItems(batch);
+        response = await storage.bulkInsertImprovementItems(batch);
         break;
       case 'landDetails':
-        await storage.bulkInsertLandDetails(batch);
+        response = await storage.bulkInsertLandDetails(batch);
         break;
     }
-    results.success += batch.length;
-  } catch (error) {
-    // Try inserting one by one to identify problematic records
-    for (const record of batch) {
-      try {
-        switch(entityType) {
-          case 'properties':
-            await storage.createProperty(record);
-            break;
-          case 'improvements':
-            await storage.createImprovement(record);
-            break;
-          case 'improvementDetails':
-            await storage.createImprovementDetail(record);
-            break;
-          case 'improvementItems':
-            await storage.createImprovementItem(record);
-            break;
-          case 'landDetails':
-            await storage.createLandDetail(record);
-            break;
-        }
-        results.success++;
-      } catch (err) {
-        results.errors.push({
-          record: entityType === 'properties' ? record.propId : 
-                 (entityType === 'landDetails' ? record.propId : 
-                 `${record.propId}-${record.imprvId}`),
-          error: err.message
-        });
-      }
+    
+    results[type].success += response?.count || 0;
+    
+  } catch (err) {
+    console.error(`Error processing batch of ${type}:`, err);
+    for (const item of batch) {
+      results[type].errors.push({
+        record: item,
+        error: err instanceof Error ? err.message : String(err)
+      });
     }
   }
 }
