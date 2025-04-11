@@ -127,25 +127,32 @@ async function importProperties(
         // Convert CSV record to property data model
         const property: InsertProperty = {
           propId: parseInt(record.PROP_ID || '0'),
-          accountId: record.ACCOUNT_ID || null,
-          ownerId: parseInt(record.OWNER_ID || '0'),
-          parcelId: record.PARCEL_ID || null,
-          taxYear: parseInt(record.TAX_YEAR || '0'),
-          taxCode: record.TAX_CODE || null,
-          propClass: record.PROP_CLASS || null,
-          propStatus: record.PROP_STATUS || null,
-          propType: record.PROP_TYPE || null,
-          siteAddress: record.SITE_ADDRESS || null,
-          siteCity: record.SITE_CITY || null,
-          siteState: record.SITE_STATE || null,
-          siteZip: record.SITE_ZIP || null,
+          block: record.BLOCK || null,
+          tractOrLot: record.TRACT_OR_LOT || null,
           legalDesc: record.LEGAL_DESC || null,
-          acreage: parseFloat(record.ACREAGE || '0'),
-          marketValue: parseInt(record.MARKET_VALUE || '0'),
-          assessedValue: parseInt(record.ASSESSED_VALUE || '0'),
-          taxableValue: parseInt(record.TAXABLE_VALUE || '0'),
-          landValue: parseInt(record.LAND_VALUE || '0'),
-          improvementValue: parseInt(record.IMPROVEMENT_VALUE || '0')
+          legalDesc2: record.LEGAL_DESC_2 || null,
+          townshipSection: record.TOWNSHIP_SECTION || null,
+          townshipCode: record.TOWNSHIP_CODE || null,
+          rangeCode: record.RANGE_CODE || null,
+          townshipQSection: record.TOWNSHIP_Q_SECTION || null,
+          cycle: record.CYCLE || null,
+          propertyUseCd: record.PROPERTY_USE_CD || null,
+          propertyUseDesc: record.PROPERTY_USE_DESC || null,
+          market: record.MARKET ? parseFloat(record.MARKET) : null,
+          landHstdVal: record.LAND_HSTD_VAL ? parseFloat(record.LAND_HSTD_VAL) : null,
+          landNonHstdVal: record.LAND_NON_HSTD_VAL ? parseFloat(record.LAND_NON_HSTD_VAL) : null,
+          imprvHstdVal: record.IMPRV_HSTD_VAL ? parseFloat(record.IMPRV_HSTD_VAL) : null,
+          imprvNonHstdVal: record.IMPRV_NON_HSTD_VAL ? parseFloat(record.IMPRV_NON_HSTD_VAL) : null,
+          hoodCd: record.HOOD_CD || null,
+          absSubdvCd: record.ABS_SUBDV_CD || null,
+          appraisedVal: record.APPRAISED_VAL ? parseFloat(record.APPRAISED_VAL) : null,
+          assessedVal: record.ASSESSED_VAL ? parseFloat(record.ASSESSED_VAL) : null,
+          legalAcreage: record.LEGAL_ACREAGE ? parseFloat(record.LEGAL_ACREAGE) : null,
+          propTypeCd: record.PROP_TYPE_CD || null,
+          imagePath: record.IMAGE_PATH || null,
+          geoId: record.GEO_ID || null,
+          isActive: record.IS_ACTIVE === 'true' || record.IS_ACTIVE === '1' ? true : false,
+          tca: record.TCA || null
         };
         
         batch.push(property);
@@ -214,26 +221,13 @@ async function importImprovements(
         const improvement: InsertImprovement = {
           imprvId: parseInt(record.IMPRV_ID || '0'),
           propId: parseInt(record.PROP_ID || '0'),
-          buildingNumber: parseInt(record.BUILDING_NUMBER || '0'),
-          buildingType: record.BUILDING_TYPE || null,
-          yearBuilt: parseInt(record.YEAR_BUILT || '0'),
-          squareFeet: parseInt(record.SQUARE_FEET || '0'),
-          stories: parseFloat(record.STORIES || '0'),
-          quality: record.QUALITY || null,
-          condition: record.CONDITION || null,
-          grade: record.GRADE || null,
-          depreciation: parseFloat(record.DEPRECIATION || '0'),
-          constructionType: record.CONSTRUCTION_TYPE || null,
-          foundationType: record.FOUNDATION_TYPE || null,
-          roofType: record.ROOF_TYPE || null,
-          heatingCooling: record.HEATING_COOLING || null,
-          improvementClass: record.IMPROVEMENT_CLASS || null,
-          improvementType: record.IMPROVEMENT_TYPE || null,
-          bedrooms: parseInt(record.BEDROOMS || '0'),
-          bathrooms: parseFloat(record.BATHROOMS || '0'),
-          marketValue: parseInt(record.MARKET_VALUE || '0'),
-          replacementCost: parseInt(record.REPLACEMENT_COST || '0'),
-          scheduleNumber: record.SCHEDULE_NUMBER || null
+          imprvDesc: record.IMPRV_DESC || null,
+          imprvVal: record.IMPRV_VAL ? parseFloat(record.IMPRV_VAL) : null,
+          livingArea: record.LIVING_AREA ? parseFloat(record.LIVING_AREA) : null,
+          primaryUseCd: record.PRIMARY_USE_CD || null,
+          stories: record.STORIES ? parseFloat(record.STORIES) : null,
+          actualYearBuilt: record.ACTUAL_YEAR_BUILT ? parseInt(record.ACTUAL_YEAR_BUILT) : null,
+          totalArea: record.TOTAL_AREA ? parseFloat(record.TOTAL_AREA) : null
         };
         
         batch.push(improvement);
@@ -300,22 +294,19 @@ async function importImprovementDetails(
         
         // Convert CSV record to improvement detail data model
         const detail: InsertImprovementDetail = {
-          detailId: parseInt(record.DETAIL_ID || '0'),
           propId: parseInt(record.PROP_ID || '0'),
           imprvId: parseInt(record.IMPRV_ID || '0'),
-          detailType: record.DETAIL_TYPE || null,
-          detailDescription: record.DETAIL_DESCRIPTION || null,
-          area: parseFloat(record.AREA || '0'),
-          width: parseFloat(record.WIDTH || '0'),
-          depth: parseFloat(record.DEPTH || '0'),
-          height: parseFloat(record.HEIGHT || '0'),
-          units: parseInt(record.UNITS || '0'),
-          unitOfMeasure: record.UNIT_OF_MEASURE || null,
-          location: record.LOCATION || null,
-          quality: record.QUALITY || null,
-          condition: record.CONDITION || null,
-          yearBuilt: parseInt(record.YEAR_BUILT || '0'),
-          valueContribution: parseInt(record.VALUE_CONTRIBUTION || '0')
+          livingArea: record.LIVING_AREA ? parseFloat(record.LIVING_AREA).toString() : null,
+          belowGradeLivingArea: record.BELOW_GRADE_LIVING_AREA ? parseFloat(record.BELOW_GRADE_LIVING_AREA).toString() : null,
+          conditionCd: record.CONDITION_CD || null,
+          imprvDetSubClassCd: record.IMPRV_DET_SUB_CLASS_CD || null,
+          yrBuilt: record.YR_BUILT ? parseInt(record.YR_BUILT) : null,
+          actualAge: record.ACTUAL_AGE ? parseInt(record.ACTUAL_AGE) : null,
+          numStories: record.NUM_STORIES ? parseFloat(record.NUM_STORIES).toString() : null,
+          imprvDetTypeCd: record.IMPRV_DET_TYPE_CD || null,
+          imprvDetDesc: record.IMPRV_DET_DESC || null,
+          imprvDetArea: record.IMPRV_DET_AREA ? parseFloat(record.IMPRV_DET_AREA).toString() : null,
+          imprvDetClassCd: record.IMPRV_DET_CLASS_CD || null
         };
         
         batch.push(detail);
@@ -382,21 +373,19 @@ async function importImprovementItems(
         
         // Convert CSV record to improvement item data model
         const item: InsertImprovementItem = {
-          itemId: parseInt(record.ITEM_ID || '0'),
           propId: parseInt(record.PROP_ID || '0'),
           imprvId: parseInt(record.IMPRV_ID || '0'),
-          itemType: record.ITEM_TYPE || null,
-          itemDescription: record.ITEM_DESCRIPTION || null,
-          quantity: parseInt(record.QUANTITY || '0'),
-          unitOfMeasure: record.UNIT_OF_MEASURE || null,
-          unitCost: parseFloat(record.UNIT_COST || '0'),
-          totalCost: parseFloat(record.TOTAL_COST || '0'),
-          yearInstalled: parseInt(record.YEAR_INSTALLED || '0'),
-          effectiveAge: parseInt(record.EFFECTIVE_AGE || '0'),
-          condition: record.CONDITION || null,
-          quality: record.QUALITY || null,
-          location: record.LOCATION || null,
-          notes: record.NOTES || null
+          bedrooms: record.BEDROOMS ? parseFloat(record.BEDROOMS).toString() : null,
+          baths: record.BATHS ? parseFloat(record.BATHS).toString() : null,
+          halfBath: record.HALFBATH ? parseFloat(record.HALFBATH).toString() : null,
+          foundation: record.FOUNDATION || null,
+          extwallDesc: record.EXTWALL_DESC || null,
+          roofcoverDesc: record.ROOFCOVER_DESC || null,
+          hvacDesc: record.HVAC_DESC || null,
+          fireplaces: record.FIREPLACES ? parseFloat(record.FIREPLACES).toString() : null,
+          sprinkler: record.SPRINKLER === 'true' || record.SPRINKLER === '1',
+          framingClass: record.FRAMING_CLASS || null,
+          comHvac: record.COM_HVAC || null
         };
         
         batch.push(item);
@@ -463,26 +452,13 @@ async function importLandDetails(
         
         // Convert CSV record to land detail data model
         const detail: InsertLandDetail = {
-          landId: parseInt(record.LAND_ID || '0'),
           propId: parseInt(record.PROP_ID || '0'),
-          landType: record.LAND_TYPE || null,
-          landUse: record.LAND_USE || null,
-          landClass: record.LAND_CLASS || null,
-          soilType: record.SOIL_TYPE || null,
-          acreage: parseFloat(record.ACREAGE || '0'),
-          squareFeet: parseInt(record.SQUARE_FEET || '0'),
-          frontage: parseFloat(record.FRONTAGE || '0'),
-          depth: parseFloat(record.DEPTH || '0'),
-          valuePerUnit: parseFloat(record.VALUE_PER_UNIT || '0'),
-          unitOfMeasure: record.UNIT_OF_MEASURE || null,
-          marketAdjustment: parseFloat(record.MARKET_ADJUSTMENT || '0'),
-          landValue: parseInt(record.LAND_VALUE || '0'),
-          zoning: record.ZONING || null,
-          topography: record.TOPOGRAPHY || null,
-          utilities: record.UTILITIES || null,
-          accessType: record.ACCESS_TYPE || null,
-          locationInfluence: record.LOCATION_INFLUENCE || null,
-          notes: record.NOTES || null
+          sizeAcres: record.SIZE_ACRES ? parseFloat(record.SIZE_ACRES).toString() : null,
+          sizeSquareFeet: record.SIZE_SQUARE_FEET ? parseFloat(record.SIZE_SQUARE_FEET).toString() : null,
+          landTypeCd: record.LAND_TYPE_CD || null,
+          landSoilCode: record.LAND_SOIL_CODE || null,
+          agUseCd: record.AG_USE_CD || null,
+          primaryUseCd: record.PRIMARY_USE_CD || null
         };
         
         batch.push(detail);
