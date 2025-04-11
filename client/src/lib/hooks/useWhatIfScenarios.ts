@@ -21,24 +21,57 @@ const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  const response = await fetch(endpoint, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    ...options,
-  });
+  console.log(`API Request: ${options.method || 'GET'} ${endpoint}`);
+  
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      ...options,
+    });
+    
+    console.log(`Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      // Get response text first to see if it's HTML or JSON
+      const responseText = await response.text();
+      console.log(`Error response: ${responseText.substring(0, 200)}...`);
+      
+      let errorMessage = "An unknown error occurred";
+      try {
+        // Try to parse as JSON if possible
+        const errorJson = JSON.parse(responseText);
+        errorMessage = errorJson.message || `API error: ${response.status}`;
+      } catch (parseError) {
+        // Handle case where response is HTML (e.g., auth redirect)
+        if (responseText.includes("<!DOCTYPE html>")) {
+          errorMessage = "Received HTML instead of JSON - possible authentication redirect";
+        } else {
+          errorMessage = `API error (${response.status}): Not a valid JSON response`;
+        }
+      }
+      throw new Error(errorMessage);
+    }
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "An unknown error occurred" }));
-    throw new Error(error.message || `API error: ${response.status}`);
+    // For DELETE operations that don't return content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    // Get response text first for better error handling
+    const responseText = await response.text();
+    
+    try {
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse JSON response:", responseText.substring(0, 200));
+      throw new Error("Invalid JSON response from server");
+    }
+  } catch (error) {
+    console.error("API request failed:", error);
+    throw error;
   }
-
-  // For DELETE operations that don't return content
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
 };
 
 // Helper to convert WhatIfScenario to TypedWhatIfScenario

@@ -89,13 +89,13 @@ export default function WhatIfScenariosPage() {
   // Always use getAllScenarios since we have a mock admin user
   const scenariosQuery = getAllScenarios();
   
-  const scenarioVariationsQuery = selectedScenario 
-    ? getScenarioVariations(selectedScenario.id) 
-    : null;
+  // Use a fixed ID (like -1) when no scenario is selected to maintain hook call order
+  // This ensures that hooks are always called in the same order regardless of selectedScenario
+  const scenarioId = selectedScenario ? selectedScenario.id : -1;
   
-  const scenarioImpactQuery = selectedScenario 
-    ? getScenarioImpact(selectedScenario.id) 
-    : null;
+  // Always call hooks with consistent parameters
+  const scenarioVariationsQuery = getScenarioVariations(scenarioId);
+  const scenarioImpactQuery = getScenarioImpact(scenarioId);
   
   // Handle creating a new scenario
   const handleCreateScenario = () => {
