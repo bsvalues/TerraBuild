@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
@@ -79,13 +79,15 @@ const PropertyBrowserPage = () => {
     }
   });
 
-  if (isError) {
-    toast({
-      title: "Error",
-      description: "Failed to load properties. Please try again later.",
-      variant: "destructive",
-    });
-  }
+  useEffect(() => {
+    if (isError) {
+      toast({
+        title: "Error",
+        description: "Failed to load properties. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [isError, toast]);
 
   // Filtered properties based on search
   const filteredProperties = searchQuery && data 
