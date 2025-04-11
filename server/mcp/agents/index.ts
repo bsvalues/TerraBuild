@@ -2,6 +2,9 @@
  * Agent Exports for Model Content Protocol
  * 
  * This file exports all MCP agents for easy importing throughout the application.
+ * Implements the command structure from the strategic guide:
+ * 
+ * ARCHITECT PRIME → INTEGRATION COORDINATOR → COMPONENT LEADS → SPECIALIST AGENTS
  */
 
 // Export agent types from base agent
@@ -22,12 +25,45 @@ import { complianceAgent } from './complianceAgent';
 import { costAnalysisAgent } from './costAnalysisAgent';
 
 /**
+ * Represents the command structure from the strategic guide:
+ * ARCHITECT PRIME → INTEGRATION COORDINATOR → COMPONENT LEADS → SPECIALIST AGENTS
+ */
+interface CommandStructure {
+  architectPrime: BaseAgent | null;
+  integrationCoordinator: BaseAgent | null;
+  componentLeads: {
+    BSBCmaster?: BaseAgent;
+    BCBSGISPRO?: BaseAgent;
+    BCBSLevy?: BaseAgent;
+    BCBSCOSTApp?: BaseAgent;
+    BCBSGeoAssessmentPro?: BaseAgent;
+  };
+  specialistAgents: Record<string, BaseAgent>;
+  
+  // MCP Processing Groups
+  assessmentCalculation: {
+    inputProcessing: Record<string, BaseAgent>;
+    calculationEngine: Record<string, BaseAgent>;
+    outputGeneration: Record<string, BaseAgent>;
+  };
+  geospatialIntegration: {
+    dataIngestion: Record<string, BaseAgent>;
+    spatialAnalytics: Record<string, BaseAgent>;
+    visualizationGeneration: Record<string, BaseAgent>;
+  };
+}
+
+/**
  * Registry of all available agents
  */
 interface AgentRegistry {
+  // Core agents from initial development
   dataQuality: BaseAgent;
   compliance: BaseAgent;
   costAnalysis: BaseAgent;
+  
+  // Command structure based on strategic guide
+  commandStructure: CommandStructure;
   
   // Get a specific agent by name
   getAgent(name: string): BaseAgent | undefined;
@@ -43,9 +79,34 @@ interface AgentRegistry {
  * Registry of all agents in the system
  */
 export const agentRegistry: AgentRegistry = {
+  // Core agents from initial development
   dataQuality: dataQualityAgent,
   compliance: complianceAgent,
   costAnalysis: costAnalysisAgent as unknown as BaseAgent, // Type assertion until costAnalysisAgent is updated
+  
+  // Command structure from strategic guide
+  commandStructure: {
+    architectPrime: complianceAgent, // Using compliance agent as Architect Prime for now
+    integrationCoordinator: dataQualityAgent, // Using data quality agent as Integration Coordinator for now
+    componentLeads: {
+      BCBSCOSTApp: costAnalysisAgent as unknown as BaseAgent, // Using cost analysis agent as BCBS COST App lead
+    },
+    specialistAgents: {}, // Will be populated as specialist agents are developed
+    
+    // Assessment Calculation MCP
+    assessmentCalculation: {
+      inputProcessing: {},
+      calculationEngine: {},
+      outputGeneration: {}
+    },
+    
+    // Geospatial Integration MCP
+    geospatialIntegration: {
+      dataIngestion: {},
+      spatialAnalytics: {},
+      visualizationGeneration: {}
+    }
+  },
   
   /**
    * Get an agent by name
