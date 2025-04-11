@@ -27,12 +27,28 @@ def get_existing_property_ids(conn):
     cursor.execute("SELECT prop_id FROM properties")
     return [row[0] for row in cursor.fetchall()]
 
+def clean_value(value):
+    """Clean value to handle empty strings and convert to appropriate format"""
+    if value is None or value == '':
+        return None
+    return value
+
+
 def import_improvements(conn, file_path, existing_property_ids):
     """Import improvements from CSV file"""
     print(f"Importing improvements from {file_path}...")
     
+    # First, let's roll back any pending transactions
+    conn.rollback()
+    
     cursor = conn.cursor()
     count = 0
+    errors = 0
+    
+    # Get existing improvements to avoid duplicate inserts
+    cursor.execute("SELECT prop_id, imprv_id FROM improvements")
+    existing_improvements = [(row[0], row[1]) for row in cursor.fetchall()]
+    print(f"Found {len(existing_improvements)} existing improvement records")
     
     with open(file_path, 'r') as f:
         reader = csv.DictReader(f)
@@ -50,8 +66,33 @@ def import_improvements(conn, file_path, existing_property_ids):
             # Skip if property ID doesn't exist in database
             if int(prop_id) not in existing_property_ids:
                 continue
+                
+            # Skip if we already have a record for this property/improvement combo
+            prop_id_int = int(prop_id) if prop_id and prop_id.isdigit() else None 
+            imprv_id_int = int(imprv_id) if imprv_id and imprv_id.isdigit() else None
+            if (prop_id_int, imprv_id_int) in existing_improvements:
+                continue
             
             try:
+                # Clean values
+                imprv_desc = clean_value(row.get('imprv_desc', row.get('IMPRV_DESC', None)))
+                imprv_val = clean_value(row.get('imprv_val', row.get('IMPRV_VAL', None)))
+                living_area = clean_value(row.get('living_area', row.get('LIVING_AREA', None)))
+                primary_use_cd = clean_value(row.get('primary_use_cd', row.get('PRIMARY_USE_CD', None)))
+                stories = clean_value(row.get('stories', row.get('STORIES', None)))
+                actual_year_built_str = clean_value(row.get('actual_year_built', row.get('ACTUAL_YEAR_BUILT', None)))
+                
+                # Convert year to integer if not None
+                if actual_year_built_str is not None and actual_year_built_str.strip() != '':
+                    try:
+                        actual_year_built = int(float(actual_year_built_str))
+                    except (ValueError, TypeError):
+                        actual_year_built = None
+                else:
+                    actual_year_built = None
+                    
+                total_area = clean_value(row.get('total_area', row.get('TOTAL_AREA', None)))
+                
                 cursor.execute("""
                     INSERT INTO improvements (
                         imported_at,
@@ -68,19 +109,18 @@ def import_improvements(conn, file_path, existing_property_ids):
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
-                    ON CONFLICT (prop_id, imprv_id) DO NOTHING
                 """, (
                     now,
                     now,
-                    int(prop_id) if prop_id and prop_id.isdigit() else None,
-                    int(imprv_id) if imprv_id and imprv_id.isdigit() else None,
-                    row.get('imprv_desc', row.get('IMPRV_DESC', None)),
-                    row.get('imprv_val', row.get('IMPRV_VAL', None)),
-                    row.get('living_area', row.get('LIVING_AREA', None)),
-                    row.get('primary_use_cd', row.get('PRIMARY_USE_CD', None)),
-                    row.get('stories', row.get('STORIES', None)),
-                    row.get('actual_year_built', row.get('ACTUAL_YEAR_BUILT', None)),
-                    row.get('total_area', row.get('TOTAL_AREA', None))
+                    prop_id_int,
+                    imprv_id_int,
+                    imprv_desc,
+                    imprv_val,
+                    living_area,
+                    primary_use_cd,
+                    stories,
+                    actual_year_built,
+                    total_area
                 ))
                 count += 1
                 
@@ -90,20 +130,36 @@ def import_improvements(conn, file_path, existing_property_ids):
                     print(f"Committed {count} improvements")
                     
             except Exception as e:
+                # Rollback the transaction on error
+                conn.rollback()
                 print(f"Error importing improvement {imprv_id} for property {prop_id}: {e}")
+                errors += 1
+                if errors > 10:
+                    conn.rollback()
+                    print("Too many errors, aborting.")
+                    break
                 continue
     
     # Final commit
     conn.commit()
-    print(f"Imported {count} improvements")
+    print(f"Imported {count} improvements with {errors} errors")
     return count
 
 def import_improvement_details(conn, file_path, existing_property_ids):
     """Import improvement details from CSV file"""
     print(f"Importing improvement details from {file_path}...")
     
+    # First, let's roll back any pending transactions
+    conn.rollback()
+    
     cursor = conn.cursor()
     count = 0
+    errors = 0
+    
+    # Get existing improvement details to avoid duplicate inserts
+    cursor.execute("SELECT prop_id, imprv_id FROM improvement_details")
+    existing_imprv_details = [(row[0], row[1]) for row in cursor.fetchall()]
+    print(f"Found {len(existing_imprv_details)} existing improvement detail records")
     
     with open(file_path, 'r') as f:
         reader = csv.DictReader(f)
@@ -121,8 +177,27 @@ def import_improvement_details(conn, file_path, existing_property_ids):
             # Skip if property ID doesn't exist in database
             if int(prop_id) not in existing_property_ids:
                 continue
+                
+            # Skip if we already have a record for this property/improvement combo
+            prop_id_int = int(prop_id) if prop_id and prop_id.isdigit() else None 
+            imprv_id_int = int(imprv_id) if imprv_id and imprv_id.isdigit() else None
+            if (prop_id_int, imprv_id_int) in existing_imprv_details:
+                continue
             
             try:
+                # Clean values
+                living_area = clean_value(row.get('living_area', row.get('LIVING_AREA', None)))
+                below_grade_living_area = clean_value(row.get('below_grade_living_area', row.get('BELOW_GRADE_LIVING_AREA', None)))
+                condition_cd = clean_value(row.get('condition_cd', row.get('CONDITION_CD', None)))
+                imprv_det_sub_class_cd = clean_value(row.get('imprv_det_sub_class_cd', row.get('IMPRV_DET_SUB_CLASS_CD', None)))
+                yr_built = clean_value(row.get('yr_built', row.get('YR_BUILT', None)))
+                actual_age = clean_value(row.get('actual_age', row.get('ACTUAL_AGE', None)))
+                num_stories = clean_value(row.get('num_stories', row.get('NUM_STORIES', None)))
+                imprv_det_type_cd = clean_value(row.get('imprv_det_type_cd', row.get('IMPRV_DET_TYPE_CD', None)))
+                imprv_det_desc = clean_value(row.get('imprv_det_desc', row.get('IMPRV_DET_DESC', None)))
+                imprv_det_area = clean_value(row.get('imprv_det_area', row.get('IMPRV_DET_AREA', None)))
+                imprv_det_class_cd = clean_value(row.get('imprv_det_class_cd', row.get('IMPRV_DET_CLASS_CD', None)))
+                
                 cursor.execute("""
                     INSERT INTO improvement_details (
                         imported_at,
@@ -143,23 +218,22 @@ def import_improvement_details(conn, file_path, existing_property_ids):
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
-                    ON CONFLICT (prop_id, imprv_id) DO NOTHING
                 """, (
                     now,
                     now,
-                    int(prop_id) if prop_id and prop_id.isdigit() else None,
-                    int(imprv_id) if imprv_id and imprv_id.isdigit() else None,
-                    row.get('living_area', row.get('LIVING_AREA', None)),
-                    row.get('below_grade_living_area', row.get('BELOW_GRADE_LIVING_AREA', None)),
-                    row.get('condition_cd', row.get('CONDITION_CD', None)),
-                    row.get('imprv_det_sub_class_cd', row.get('IMPRV_DET_SUB_CLASS_CD', None)),
-                    row.get('yr_built', row.get('YR_BUILT', None)),
-                    row.get('actual_age', row.get('ACTUAL_AGE', None)),
-                    row.get('num_stories', row.get('NUM_STORIES', None)),
-                    row.get('imprv_det_type_cd', row.get('IMPRV_DET_TYPE_CD', None)),
-                    row.get('imprv_det_desc', row.get('IMPRV_DET_DESC', None)),
-                    row.get('imprv_det_area', row.get('IMPRV_DET_AREA', None)),
-                    row.get('imprv_det_class_cd', row.get('IMPRV_DET_CLASS_CD', None))
+                    prop_id_int,
+                    imprv_id_int,
+                    living_area,
+                    below_grade_living_area,
+                    condition_cd,
+                    imprv_det_sub_class_cd,
+                    yr_built,
+                    actual_age,
+                    num_stories,
+                    imprv_det_type_cd,
+                    imprv_det_desc,
+                    imprv_det_area,
+                    imprv_det_class_cd
                 ))
                 count += 1
                 
@@ -169,20 +243,36 @@ def import_improvement_details(conn, file_path, existing_property_ids):
                     print(f"Committed {count} improvement details")
                     
             except Exception as e:
+                # Rollback the transaction on error
+                conn.rollback()
                 print(f"Error importing improvement detail for {imprv_id}: {e}")
+                errors += 1
+                if errors > 10:
+                    conn.rollback()
+                    print("Too many errors, aborting.")
+                    break
                 continue
     
     # Final commit
     conn.commit()
-    print(f"Imported {count} improvement details")
+    print(f"Imported {count} improvement details with {errors} errors")
     return count
 
 def import_improvement_items(conn, file_path, existing_property_ids):
     """Import improvement items from CSV file"""
     print(f"Importing improvement items from {file_path}...")
     
+    # First, let's roll back any pending transactions
+    conn.rollback()
+    
     cursor = conn.cursor()
     count = 0
+    errors = 0
+    
+    # Get existing improvement items to avoid duplicate inserts
+    cursor.execute("SELECT prop_id, imprv_id FROM improvement_items")
+    existing_imprv_items = [(row[0], row[1]) for row in cursor.fetchall()]
+    print(f"Found {len(existing_imprv_items)} existing improvement item records")
     
     with open(file_path, 'r') as f:
         reader = csv.DictReader(f)
@@ -200,8 +290,26 @@ def import_improvement_items(conn, file_path, existing_property_ids):
             # Skip if property ID doesn't exist in database
             if int(prop_id) not in existing_property_ids:
                 continue
+                
+            # Skip if we already have a record for this property/improvement combo
+            prop_id_int = int(prop_id) if prop_id and prop_id.isdigit() else None 
+            imprv_id_int = int(imprv_id) if imprv_id and imprv_id.isdigit() else None
+            if (prop_id_int, imprv_id_int) in existing_imprv_items:
+                continue
             
             try:
+                # Clean values
+                bedrooms = clean_value(row.get('bedrooms', row.get('BEDROOMS', None)))
+                baths = clean_value(row.get('baths', row.get('BATHS', None)))
+                half_bath = clean_value(row.get('half_bath', row.get('HALF_BATH', None)))
+                foundation = clean_value(row.get('foundation', row.get('FOUNDATION', None)))
+                ext_wall = clean_value(row.get('ext_wall', row.get('EXT_WALL', None)))
+                roof = clean_value(row.get('roof', row.get('ROOF', None)))
+                heat = clean_value(row.get('heat', row.get('HEAT', None)))
+                ac = clean_value(row.get('ac', row.get('AC', None)))
+                fireplaces = clean_value(row.get('fireplaces', row.get('FIREPLACES', None)))
+                com_hvac = clean_value(row.get('com_hvac', row.get('COM_HVAC', None)))
+                
                 cursor.execute("""
                     INSERT INTO improvement_items (
                         imported_at,
@@ -221,22 +329,21 @@ def import_improvement_items(conn, file_path, existing_property_ids):
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
-                    ON CONFLICT (prop_id, imprv_id) DO NOTHING
                 """, (
                     now,
                     now,
-                    int(prop_id) if prop_id and prop_id.isdigit() else None,
-                    int(imprv_id) if imprv_id and imprv_id.isdigit() else None,
-                    row.get('bedrooms', row.get('BEDROOMS', None)),
-                    row.get('baths', row.get('BATHS', None)),
-                    row.get('half_bath', row.get('HALF_BATH', None)),
-                    row.get('foundation', row.get('FOUNDATION', None)),
-                    row.get('ext_wall', row.get('EXT_WALL', None)),
-                    row.get('roof', row.get('ROOF', None)),
-                    row.get('heat', row.get('HEAT', None)),
-                    row.get('ac', row.get('AC', None)),
-                    row.get('fireplaces', row.get('FIREPLACES', None)),
-                    row.get('com_hvac', row.get('COM_HVAC', None))
+                    prop_id_int,
+                    imprv_id_int,
+                    bedrooms,
+                    baths,
+                    half_bath,
+                    foundation,
+                    ext_wall,
+                    roof,
+                    heat,
+                    ac,
+                    fireplaces,
+                    com_hvac
                 ))
                 count += 1
                 
@@ -246,20 +353,36 @@ def import_improvement_items(conn, file_path, existing_property_ids):
                     print(f"Committed {count} improvement items")
                     
             except Exception as e:
+                # Rollback the transaction on error
+                conn.rollback()
                 print(f"Error importing improvement item for {imprv_id}: {e}")
+                errors += 1
+                if errors > 10:
+                    conn.rollback()
+                    print("Too many errors, aborting.")
+                    break
                 continue
     
     # Final commit
     conn.commit()
-    print(f"Imported {count} improvement items")
+    print(f"Imported {count} improvement items with {errors} errors")
     return count
 
 def import_land_details(conn, file_path, existing_property_ids):
     """Import land details from CSV file"""
     print(f"Importing land details from {file_path}...")
     
+    # First, let's roll back any pending transactions
+    conn.rollback()
+    
     cursor = conn.cursor()
     count = 0
+    errors = 0
+    
+    # Get existing land details to avoid duplicate inserts
+    cursor.execute("SELECT prop_id FROM land_details")
+    existing_land_prop_ids = [row[0] for row in cursor.fetchall()]
+    print(f"Found {len(existing_land_prop_ids)} existing land detail records")
     
     with open(file_path, 'r') as f:
         reader = csv.DictReader(f)
@@ -276,8 +399,21 @@ def import_land_details(conn, file_path, existing_property_ids):
             # Skip if property ID doesn't exist in database
             if int(prop_id) not in existing_property_ids:
                 continue
+                
+            # Skip if we already have a record for this property
+            if int(prop_id) in existing_land_prop_ids:
+                continue
             
             try:
+                # Clean values
+                prop_id_int = int(prop_id) if prop_id and prop_id.isdigit() else None
+                primary_use_cd = clean_value(row.get('primary_use_cd', row.get('PRIMARY_USE_CD', None)))
+                size_acres = clean_value(row.get('size_acres', row.get('SIZE_ACRES', None)))
+                size_square_feet = clean_value(row.get('size_square_feet', row.get('SIZE_SQUARE_FEET', None)))
+                land_type_cd = clean_value(row.get('land_type_cd', row.get('LAND_TYPE_CD', None)))
+                land_soil_code = clean_value(row.get('land_soil_code', row.get('LAND_SOIL_CODE', None)))
+                ag_use_cd = clean_value(row.get('ag_use_cd', row.get('AG_USE_CD', None)))
+                
                 cursor.execute("""
                     INSERT INTO land_details (
                         imported_at,
@@ -292,17 +428,16 @@ def import_land_details(conn, file_path, existing_property_ids):
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
-                    ON CONFLICT (prop_id) DO NOTHING
                 """, (
                     now,
                     now,
-                    int(prop_id) if prop_id and prop_id.isdigit() else None,
-                    row.get('primary_use_cd', row.get('PRIMARY_USE_CD', None)),
-                    row.get('size_acres', row.get('SIZE_ACRES', None)),
-                    row.get('size_square_feet', row.get('SIZE_SQUARE_FEET', None)),
-                    row.get('land_type_cd', row.get('LAND_TYPE_CD', None)),
-                    row.get('land_soil_code', row.get('LAND_SOIL_CODE', None)),
-                    row.get('ag_use_cd', row.get('AG_USE_CD', None))
+                    prop_id_int,
+                    primary_use_cd,
+                    size_acres,
+                    size_square_feet,
+                    land_type_cd,
+                    land_soil_code,
+                    ag_use_cd
                 ))
                 count += 1
                 
@@ -312,12 +447,19 @@ def import_land_details(conn, file_path, existing_property_ids):
                     print(f"Committed {count} land details")
                     
             except Exception as e:
+                # Rollback the transaction on error
+                conn.rollback()
                 print(f"Error importing land detail for property {prop_id}: {e}")
+                errors += 1
+                if errors > 10:
+                    conn.rollback()
+                    print("Too many errors, aborting.")
+                    break
                 continue
     
     # Final commit
     conn.commit()
-    print(f"Imported {count} land details")
+    print(f"Imported {count} land details with {errors} errors")
     return count
 
 def main():
