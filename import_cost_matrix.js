@@ -12,8 +12,18 @@
  */
 
 import fs from 'fs';
-import { db } from './server/db.js';
-import { costMatrix } from './shared/schema.js';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pkg from 'pg';
+const { Pool } = pkg;
+import * as schema from './shared/schema.js';
+
+// Create a PostgreSQL connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Create a drizzle instance using the PostgreSQL pool
+const db = drizzle(pool, { schema });
 
 /**
  * Import cost matrix data from a JSON file
@@ -69,7 +79,7 @@ async function importCostMatrix(jsonFilePath) {
         };
         
         // Insert into database
-        await db.insert(costMatrix).values(matrixEntry);
+        await db.insert(schema.costMatrix).values(matrixEntry);
         imported++;
         
         // Log progress periodically
