@@ -436,6 +436,13 @@ export default function Sidebar({ className }: SidebarProps) {
                 badge="New"
                 badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
               />
+              <SidebarItem
+                href="/properties"
+                title="Property Browser"
+                icon={<Building2 />}
+                badge="New"
+                badgeColor="bg-[#f0e6e6] text-[#8B3D3D]"
+              />
             </SidebarSection>
             
             {isAdmin && (
