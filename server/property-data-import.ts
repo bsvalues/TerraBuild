@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { Readable } from 'stream';
 import { parse } from 'csv-parse';
 import type { IStorage } from './storage';
 import { 
@@ -11,11 +10,11 @@ import {
 } from '@shared/property-schema';
 
 interface ImportOptions {
-  propertiesFile: string;
-  improvementsFile: string;
-  improvementDetailsFile: string;
-  improvementItemsFile: string;
-  landDetailsFile: string;
+  propertiesFile?: string | Buffer;
+  improvementsFile: string | Buffer;
+  improvementDetailsFile: string | Buffer;
+  improvementItemsFile: string | Buffer;
+  landDetailsFile: string | Buffer;
   batchSize?: number;
   userId: number;
 }
@@ -100,25 +99,42 @@ export async function importPropertyData(storage: IStorage, options: ImportOptio
 }
 
 /**
- * Import properties from CSV file
+ * Import properties from CSV file or buffer
  */
 async function importProperties(
-  filePath: string,
+  filePathOrBuffer: string | Buffer | undefined,
   batchSize: number,
   storage: IStorage, 
   results: ImportResults
 ): Promise<void> {
+  // If no file is provided, resolve immediately (properties are optional)
+  if (!filePathOrBuffer) {
+    console.log("No properties file provided, skipping properties import");
+    return Promise.resolve();
+  }
+
   return new Promise((resolve, reject) => {
     const properties: InsertProperty[] = [];
     let batch: InsertProperty[] = [];
     
-    // Create a readable stream for the CSV file
-    const parser = fs.createReadStream(filePath)
-      .pipe(parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true
-      }));
+    // Create a parser based on file path or buffer
+    let parser;
+    if (typeof filePathOrBuffer === 'string') {
+      parser = require('fs').createReadStream(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    } else {
+      // Use buffer directly
+      parser = Readable.from(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    }
     
     parser.on('data', async (record) => {
       try {
@@ -193,10 +209,10 @@ async function importProperties(
 }
 
 /**
- * Import improvements from CSV file
+ * Import improvements from CSV file or buffer
  */
 async function importImprovements(
-  filePath: string,
+  filePathOrBuffer: string | Buffer,
   batchSize: number,
   storage: IStorage, 
   results: ImportResults
@@ -205,13 +221,24 @@ async function importImprovements(
     const improvements: InsertImprovement[] = [];
     let batch: InsertImprovement[] = [];
     
-    // Create a readable stream for the CSV file
-    const parser = fs.createReadStream(filePath)
-      .pipe(parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true
-      }));
+    // Create a parser based on file path or buffer
+    let parser;
+    if (typeof filePathOrBuffer === 'string') {
+      parser = require('fs').createReadStream(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    } else {
+      // Use buffer directly
+      parser = Readable.from(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    }
     
     parser.on('data', async (record) => {
       try {
@@ -268,10 +295,10 @@ async function importImprovements(
 }
 
 /**
- * Import improvement details from CSV file
+ * Import improvement details from CSV file or buffer
  */
 async function importImprovementDetails(
-  filePath: string,
+  filePathOrBuffer: string | Buffer,
   batchSize: number,
   storage: IStorage, 
   results: ImportResults
@@ -280,13 +307,24 @@ async function importImprovementDetails(
     const details: InsertImprovementDetail[] = [];
     let batch: InsertImprovementDetail[] = [];
     
-    // Create a readable stream for the CSV file
-    const parser = fs.createReadStream(filePath)
-      .pipe(parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true
-      }));
+    // Create a parser based on file path or buffer
+    let parser;
+    if (typeof filePathOrBuffer === 'string') {
+      parser = require('fs').createReadStream(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    } else {
+      // Use buffer directly
+      parser = Readable.from(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    }
     
     parser.on('data', async (record) => {
       try {
@@ -347,10 +385,10 @@ async function importImprovementDetails(
 }
 
 /**
- * Import improvement items from CSV file
+ * Import improvement items from CSV file or buffer
  */
 async function importImprovementItems(
-  filePath: string,
+  filePathOrBuffer: string | Buffer,
   batchSize: number,
   storage: IStorage, 
   results: ImportResults
@@ -359,13 +397,24 @@ async function importImprovementItems(
     const items: InsertImprovementItem[] = [];
     let batch: InsertImprovementItem[] = [];
     
-    // Create a readable stream for the CSV file
-    const parser = fs.createReadStream(filePath)
-      .pipe(parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true
-      }));
+    // Create a parser based on file path or buffer
+    let parser;
+    if (typeof filePathOrBuffer === 'string') {
+      parser = require('fs').createReadStream(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    } else {
+      // Use buffer directly
+      parser = Readable.from(filePathOrBuffer)
+        .pipe(parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true
+        }));
+    }
     
     parser.on('data', async (record) => {
       try {
