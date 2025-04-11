@@ -64,21 +64,24 @@ async function testPropertyImport() {
     
     console.log('\nImport response:');
     console.log(`Status: ${response.status} ${response.statusText}`);
-    console.log('Data:', JSON.stringify(response.data, null, 2));
+    
+    // Print the entire response for debugging
+    console.log('\nComplete response data:');
+    console.log(JSON.stringify(response.data, null, 2));
     
     // Verify import results
-    if (response.data.success) {
+    if (response.data && response.data.success) {
       console.log('\nImport successful!');
       console.log('Summary:');
-      Object.entries(response.data.results).forEach(([key, result]) => {
+      Object.entries(response.data.results || {}).forEach(([key, result]) => {
         console.log(`- ${key}: ${result.success} of ${result.processed} records processed`);
-        if (result.errors.length > 0) {
+        if (result.errors && result.errors.length > 0) {
           console.log(`  Errors: ${result.errors.length}`);
           console.log(`  First error: ${JSON.stringify(result.errors[0])}`);
         }
       });
     } else {
-      console.error('\nImport failed:', response.data.error || 'Unknown error');
+      console.error('\nImport failed:', (response.data && response.data.error) ? response.data.error : 'Unknown error');
     }
     
   } catch (error) {
