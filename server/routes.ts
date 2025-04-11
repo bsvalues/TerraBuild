@@ -19,6 +19,7 @@ import {
   insertProjectMemberSchema,
   insertProjectItemSchema
 } from "@shared/schema";
+import { importPropertyData } from "./property-data-import";
 import { calculateBuildingCost, calculateMaterialCosts } from "./calculationEngine";
 import { z } from "zod";
 import { setupAuth } from "./auth";
