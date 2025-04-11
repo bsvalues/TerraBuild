@@ -1,5 +1,6 @@
 import { Express } from 'express';
 import mcpRouter from './routes';
+import { agentCoordinator } from './experience';
 
 export function initMCP(app: Express) {
   console.log('Initializing Model Content Protocol (MCP) framework...');
@@ -16,6 +17,11 @@ export function initMCP(app: Express) {
   } else {
     console.log('MCP initialized with Anthropic API key');
   }
+  
+  // Initialize agent coordinator
+  agentCoordinator.initialize().catch(error => {
+    console.error('Error initializing Agent Coordinator:', error);
+  });
   
   // Register MCP routes under /api/mcp path
   app.use('/api/mcp', mcpRouter);

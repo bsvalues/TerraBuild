@@ -1,261 +1,261 @@
-import { Router } from 'express';
-import { OpenAI } from 'openai';
-import { z } from 'zod';
-import anthropicService from './anthropic';
+/**
+ * MCP API Routes
+ * 
+ * This file defines the API routes for the Model Content Protocol framework.
+ */
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import express from 'express';
+import { agentCoordinator, TaskType } from './experience';
+import { agentRegistry } from './agents';
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const OPENAI_MODEL = "gpt-4o";
+const router = express.Router();
 
-// Available AI providers
-const AI_PROVIDERS = {
-  OPENAI: 'openai',
-  ANTHROPIC: 'anthropic'
-};
-
-// Create router
-const mcpRouter = Router();
-
-// Schema for the enhanced cost prediction request
-const enhancedPredictionRequestSchema = z.object({
-  buildingType: z.enum(['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL']),
-  region: z.string(),
-  squareFootage: z.number().positive(),
-  quality: z.enum(['ECONOMY', 'AVERAGE', 'GOOD', 'PREMIUM', 'LUXURY']),
-  buildingAge: z.number().nonnegative(),
-  yearBuilt: z.number(),
-  complexityFactor: z.number().min(0.5).max(1.5).default(1.0),
-  conditionFactor: z.number().min(0.5).max(1.5).default(1.0),
-  features: z.array(z.string()).default([]),
-  targetYear: z.number().optional(),
-  provider: z.enum([AI_PROVIDERS.OPENAI, AI_PROVIDERS.ANTHROPIC]).optional(),
-});
-
-// Define the enhanced prediction endpoint
-mcpRouter.post('/enhanced-predict-cost', async (req, res) => {
+// GET /api/mcp/status - Get overall MCP status
+router.get('/status', (req, res) => {
   try {
-    // Validate the request body
-    const validationResult = enhancedPredictionRequestSchema.safeParse(req.body);
+    // Get agent health statuses
+    const agentHealth = agentCoordinator.getAgentHealth() as Record<string, any>;
     
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid request data',
-        details: validationResult.error.format(),
-      });
-    }
+    // Get performance metrics
+    const metrics = agentCoordinator.getPerformanceMetrics();
     
-    const predictionData = validationResult.data;
-    
-    // Create the prompt for OpenAI
-    const prompt = `
-    You are an expert building cost estimator for Benton County, Washington. Based on the following information, provide a detailed cost prediction with explanation:
-    
-    Building Details:
-    - Type: ${predictionData.buildingType}
-    - Region: ${predictionData.region}
-    - Square Footage: ${predictionData.squareFootage}
-    - Quality Level: ${predictionData.quality}
-    - Year Built: ${predictionData.yearBuilt} (Age: ${predictionData.buildingAge} years)
-    - Complexity Factor: ${predictionData.complexityFactor}
-    - Condition Factor: ${predictionData.conditionFactor}
-    - Special Features: ${predictionData.features.join(', ')}
-    ${predictionData.targetYear ? `- Target Year for Prediction: ${predictionData.targetYear}` : ''}
-    
-    Use the following general cost guidelines:
-    - RESIDENTIAL buildings in Washington state typically cost $150-300 per square foot depending on quality.
-    - COMMERCIAL buildings typically cost $180-450 per square foot.
-    - INDUSTRIAL buildings typically cost $120-350 per square foot.
-    
-    Your prediction should include:
-    1. The total estimated cost
-    2. Cost per square foot
-    3. A list of key prediction factors with their impact (positive, negative, neutral) and relative importance (as a decimal from 0 to 1)
-    4. Short explanations for each factor's impact
-    5. Recommendations for 2-3 potential material substitutions that could optimize cost while minimizing quality impact (include potential savings and quality impact rating)
-    
-    Return the data in JSON format only. No introduction or explanatory text.
-    `;
-    
-    let responseText;
-    
-    try {
-      // Determine which AI provider to use
-      const selectedProvider = predictionData.provider || AI_PROVIDERS.OPENAI;
-      
-      if (selectedProvider === AI_PROVIDERS.ANTHROPIC && process.env.ANTHROPIC_API_KEY) {
-        // Use Anthropic Claude for prediction
-        try {
-          const claudePrediction = await anthropicService.generateBuildingCostPrediction(predictionData);
-          return res.json(claudePrediction);
-        } catch (claudeError) {
-          console.error('Anthropic API error:', claudeError);
-          // If Claude fails, try OpenAI as backup if available
-          if (process.env.OPENAI_API_KEY) {
-            console.log('Falling back to OpenAI after Anthropic failure');
-          } else {
-            // Both providers failed, use fallback
-            throw new Error('All AI providers failed');
-          }
-        }
-      }
-      
-      // If we're here, either OpenAI was selected or Anthropic failed
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OpenAI API key not available');
-      }
-      
-      // Call OpenAI API
-      const response = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        messages: [
-          { 
-            role: "system", 
-            content: "You are a building cost estimation AI specialized in Benton County, Washington construction projects. Provide detailed, accurate cost predictions based on building specifications and regional cost data."
-          },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.1,
-        response_format: { type: "json_object" },
-      });
-      
-      // Parse the response text as JSON
-      responseText = response.choices[0].message.content;
-    } catch (apiError) {
-      console.error('AI provider error:', apiError);
-      
-      // Generate fallback prediction without using AI
-      // This ensures the application works even when API limits are reached
-      const baseRates = {
-        RESIDENTIAL: { ECONOMY: 150, AVERAGE: 200, GOOD: 250, PREMIUM: 300, LUXURY: 350 },
-        COMMERCIAL: { ECONOMY: 180, AVERAGE: 250, GOOD: 300, PREMIUM: 375, LUXURY: 450 },
-        INDUSTRIAL: { ECONOMY: 120, AVERAGE: 175, GOOD: 225, PREMIUM: 275, LUXURY: 350 }
-      };
-      
-      // Calculate base rate
-      const baseRate = baseRates[predictionData.buildingType][predictionData.quality];
-      
-      // Apply adjustments
-      const ageAdjustment = 1 - (Math.min(predictionData.buildingAge, 30) * 0.01);
-      const regionAdjustment = predictionData.region.toLowerCase().includes('western') ? 1.15 : 1.0;
-      const adjustedRate = baseRate * predictionData.complexityFactor * predictionData.conditionFactor * ageAdjustment * regionAdjustment;
-      const totalCost = adjustedRate * predictionData.squareFootage;
-      
-      // Create fallback prediction
-      const fallbackPrediction = {
-        totalCost: Math.round(totalCost).toLocaleString(),
-        costPerSquareFoot: Math.round(adjustedRate),
-        predictionFactors: [
-          {
-            factor: "Building Type",
-            impact: "neutral",
-            importance: 0.8,
-            explanation: `Standard ${predictionData.buildingType.toLowerCase()} building rates applied.`
-          },
-          {
-            factor: "Quality Level",
-            impact: "neutral",
-            importance: 0.9,
-            explanation: `${predictionData.quality} quality level construction.`
-          },
-          {
-            factor: "Region",
-            impact: predictionData.region.toLowerCase().includes('western') ? "negative" : "neutral",
-            importance: 0.7,
-            explanation: predictionData.region.toLowerCase().includes('western') ? "Western regions typically have higher costs." : "Standard regional rates applied."
-          },
-          {
-            factor: "Age",
-            impact: predictionData.buildingAge > 20 ? "negative" : "neutral",
-            importance: 0.6,
-            explanation: `Building age of ${predictionData.buildingAge} years factored into valuation.`
-          }
-        ],
-        materialSubstitutions: [
-          {
-            originalMaterial: "Premium Flooring",
-            substituteMaterial: "Standard Hardwood",
-            potentialSavings: "$8,000 - $12,000",
-            qualityImpact: "Low"
-          },
-          {
-            originalMaterial: "Custom Lighting",
-            substituteMaterial: "Standard LED Fixtures",
-            potentialSavings: "$3,000 - $5,000",
-            qualityImpact: "Low"
-          }
-        ],
-        note: "This is a fallback prediction as the AI service is temporarily unavailable. For more detailed analysis, please try again later."
-      };
-      
-      return res.json({
-        success: true,
-        fallback: true,
-        ...fallbackPrediction
-      });
-    }
-    
-    if (!responseText) {
-      throw new Error('Failed to get a response from OpenAI');
-    }
-    
-    try {
-      const predictionResult = JSON.parse(responseText);
-      
-      // Return the prediction result
-      return res.json({
-        success: true,
-        ...predictionResult
-      });
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      console.log('Raw response:', responseText);
-      
-      // Attempt to extract useful information even if JSON parsing fails
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to parse prediction result',
-        rawResponse: responseText
-      });
-    }
+    res.json({
+      status: 'active',
+      agents: Object.keys(agentHealth).length,
+      agentHealth,
+      metrics,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Error in enhanced cost prediction:', error);
-    
-    return res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    console.error('Error fetching MCP status:', error);
+    res.status(500).json({
+      error: 'Error fetching MCP status',
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Endpoint to check available AI providers
-mcpRouter.get('/providers', (req, res) => {
-  const providers = [
-    {
-      id: AI_PROVIDERS.OPENAI,
-      name: 'OpenAI GPT-4o',
-      available: !!process.env.OPENAI_API_KEY,
-      capabilities: ['Cost Prediction', 'Material Substitution', 'What-If Analysis'],
-      default: true
-    },
-    {
-      id: AI_PROVIDERS.ANTHROPIC,
-      name: 'Anthropic Claude 3',
-      available: !!process.env.ANTHROPIC_API_KEY,
-      capabilities: ['Cost Prediction', 'Material Substitution'],
-      default: false
+// GET /api/mcp/agents - Get all agent information
+router.get('/agents', (req, res) => {
+  try {
+    const agents = [];
+    
+    // Get all registered agents
+    const agentIds = ['data-quality-agent', 'compliance-agent', 'cost-analysis-agent'];
+    
+    for (const agentId of agentIds) {
+      const agent = agentRegistry.getAgent(agentId);
+      if (!agent) continue;
+      
+      // Get agent definition
+      const definition = agent.getDefinition();
+      
+      // Get agent health
+      const health = agentCoordinator.getAgentHealth(agentId);
+      
+      agents.push({
+        id: definition.id,
+        name: definition.name,
+        description: definition.description,
+        capabilities: definition.capabilities,
+        status: health
+      });
     }
-  ];
-  
-  res.json({
-    success: true,
-    providers,
-    defaultProvider: AI_PROVIDERS.OPENAI
-  });
+    
+    res.json({
+      agents,
+      count: agents.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching agent information:', error);
+    res.status(500).json({
+      error: 'Error fetching agent information',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
-export default mcpRouter;
+// GET /api/mcp/agents/:agentId - Get specific agent information
+router.get('/agents/:agentId', (req, res) => {
+  try {
+    const agentId = req.params.agentId;
+    const agent = agentRegistry.getAgent(agentId);
+    
+    if (!agent) {
+      return res.status(404).json({
+        error: 'Agent not found',
+        message: `No agent found with ID: ${agentId}`
+      });
+    }
+    
+    // Get agent definition
+    const definition = agent.getDefinition();
+    
+    // Get agent state (exclude memory for brevity)
+    const state = agent.getState();
+    const { memory, ...stateWithoutMemory } = state;
+    
+    // Get agent health
+    const health = agentCoordinator.getAgentHealth(agentId);
+    
+    res.json({
+      agent: {
+        id: definition.id,
+        name: definition.name,
+        description: definition.description,
+        capabilities: definition.capabilities,
+        state: stateWithoutMemory,
+        status: health,
+        memorySize: memory?.length || 0
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`Error fetching agent ${req.params.agentId} information:`, error);
+    res.status(500).json({
+      error: 'Error fetching agent information',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/tasks - Create a new task
+router.post('/tasks', (req, res) => {
+  try {
+    const { type, parameters, priority, assignTo } = req.body;
+    
+    // Validate task type
+    if (!type || !Object.values(TaskType).includes(type)) {
+      return res.status(400).json({
+        error: 'Invalid task type',
+        message: `Task type must be one of: ${Object.values(TaskType).join(', ')}`
+      });
+    }
+    
+    // Validate parameters
+    if (!parameters || typeof parameters !== 'object') {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        message: 'Parameters must be a non-null object'
+      });
+    }
+    
+    // Create task
+    const task = agentCoordinator.createTask(
+      type,
+      parameters,
+      priority || 'MEDIUM',
+      assignTo
+    );
+    
+    res.status(201).json({
+      task,
+      message: 'Task created successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({
+      error: 'Error creating task',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// GET /api/mcp/tasks - Get all tasks
+router.get('/tasks', (req, res) => {
+  try {
+    const { status, agentId, limit } = req.query;
+    
+    // Apply filters
+    const tasks = agentCoordinator.getTasks(task => {
+      if (status && task.status !== status) {
+        return false;
+      }
+      if (agentId && task.assignedTo !== agentId) {
+        return false;
+      }
+      return true;
+    });
+    
+    // Apply limit
+    const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+    const limitedTasks = limitNum ? tasks.slice(0, limitNum) : tasks;
+    
+    res.json({
+      tasks: limitedTasks,
+      count: limitedTasks.length,
+      totalCount: tasks.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({
+      error: 'Error fetching tasks',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// GET /api/mcp/tasks/:taskId - Get specific task
+router.get('/tasks/:taskId', (req, res) => {
+  try {
+    const taskId = req.params.taskId;
+    const task = agentCoordinator.getTask(taskId);
+    
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        message: `No task found with ID: ${taskId}`
+      });
+    }
+    
+    res.json({
+      task,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`Error fetching task ${req.params.taskId}:`, error);
+    res.status(500).json({
+      error: 'Error fetching task',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/request-assistance - Request agent assistance
+router.post('/request-assistance', (req, res) => {
+  try {
+    const { agentId, issueType, context } = req.body;
+    
+    // Validate agent ID
+    if (!agentId) {
+      return res.status(400).json({
+        error: 'Missing agent ID',
+        message: 'Agent ID is required'
+      });
+    }
+    
+    // Request assistance
+    const taskId = agentCoordinator.requestAgentAssistance(
+      agentId,
+      issueType || 'performance_degradation',
+      context || {}
+    );
+    
+    res.status(200).json({
+      taskId,
+      message: `Assistance requested for agent ${agentId}`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error requesting assistance:', error);
+    res.status(500).json({
+      error: 'Error requesting assistance',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+export default router;
