@@ -33,6 +33,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 
 interface NavLinkProps {
   href: string;
@@ -363,6 +364,13 @@ export default function TopNavMenu() {
                 </DropdownSection>
               </div>
             </NavigationMenuContent>
+          </NavigationMenuItem>
+          
+          {/* Theme switcher */}
+          <NavigationMenuItem className="ml-auto">
+            <div className="flex items-center">
+              <ThemeSwitcher />
+            </div>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
