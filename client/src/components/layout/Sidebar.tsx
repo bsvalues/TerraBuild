@@ -445,6 +445,19 @@ export default function Sidebar({ className }: SidebarProps) {
               />
             </SidebarSection>
             
+            {/* Property Data Section - Adding an explicit section for Property Data */}
+            <SidebarSection 
+              title="Property Data" 
+              icon={<Building2 className="h-4 w-4" />}
+              isCollapsed={!isExpanded}
+            >
+              <SidebarItem
+                href="/properties"
+                title="Property Browser"
+                icon={<Building2 />}
+              />
+            </SidebarSection>
+            
             {isAdmin && (
               <>
                 <SidebarSection 
