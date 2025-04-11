@@ -384,6 +384,13 @@ export class MemStorage implements IStorage {
   private syncSchedules: Map<number, SyncSchedule>;
   private syncHistories: Map<number, SyncHistory>;
   
+  // Property data storage
+  private properties: Map<number, Property> = new Map();
+  private improvements: Map<number, Improvement> = new Map();
+  private improvementDetails: Map<number, ImprovementDetail> = new Map();
+  private improvementItems: Map<number, ImprovementItem> = new Map();
+  private landDetails: Map<number, LandDetail> = new Map();
+  
   private currentUserId: number;
   private currentEnvironmentId: number;
   private currentApiEndpointId: number;
@@ -494,6 +501,13 @@ export class MemStorage implements IStorage {
     this.currentSyncScheduleId = 1;
     this.currentSyncHistoryId = 1;
     this.currentFTPConnectionId = 1;
+    
+    // Property data IDs
+    this.currentPropertyId = 1;
+    this.currentImprovementId = 1;
+    this.currentImprovementDetailId = 1;
+    this.currentImprovementItemId = 1;
+    this.currentLandDetailId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -2425,6 +2439,13 @@ export class MemStorage implements IStorage {
   // FTP Connection methods
   private ftpConnections: Map<number, FTPConnection> = new Map();
   private currentFTPConnectionId: number = 1;
+  
+  // Property data ID counters
+  private currentPropertyId: number = 1;
+  private currentImprovementId: number = 1;
+  private currentImprovementDetailId: number = 1;
+  private currentImprovementItemId: number = 1;
+  private currentLandDetailId: number = 1;
 
   // Initialize FTP connections with default connection if environment variables exist
   private initializeFTPConnections() {
@@ -2567,6 +2588,377 @@ export class MemStorage implements IStorage {
     
     this.ftpConnections.set(id, updatedConnection);
     return updatedConnection;
+  }
+
+  // Property Data Methods
+  
+  // Properties
+  async getAllProperties(limit?: number, offset?: number): Promise<Property[]> {
+    let properties = Array.from(this.properties.values());
+    
+    // Apply offset and limit if provided
+    if (offset) {
+      properties = properties.slice(offset);
+    }
+    if (limit) {
+      properties = properties.slice(0, limit);
+    }
+    
+    return properties;
+  }
+  
+  async getProperty(id: number): Promise<Property | undefined> {
+    return this.properties.get(id);
+  }
+  
+  async getPropertyByPropId(propId: number): Promise<Property | undefined> {
+    return Array.from(this.properties.values()).find(property => property.propId === propId);
+  }
+  
+  async createProperty(property: InsertProperty): Promise<Property> {
+    const id = this.currentPropertyId++;
+    const importedAt = new Date();
+    const updatedAt = new Date();
+    
+    const newProperty: Property = {
+      ...property,
+      id,
+      importedAt,
+      updatedAt
+    };
+    
+    this.properties.set(id, newProperty);
+    return newProperty;
+  }
+  
+  async updateProperty(id: number, property: Partial<InsertProperty>): Promise<Property | undefined> {
+    const existingProperty = this.properties.get(id);
+    if (!existingProperty) return undefined;
+    
+    const updatedProperty: Property = {
+      ...existingProperty,
+      ...property,
+      updatedAt: new Date()
+    };
+    
+    this.properties.set(id, updatedProperty);
+    return updatedProperty;
+  }
+  
+  async deleteProperty(id: number): Promise<void> {
+    this.properties.delete(id);
+  }
+  
+  async bulkInsertProperties(properties: InsertProperty[]): Promise<{ count: number }> {
+    let count = 0;
+    
+    for (const property of properties) {
+      await this.createProperty(property);
+      count++;
+    }
+    
+    return { count };
+  }
+  
+  // Improvements
+  async getAllImprovements(limit?: number, offset?: number): Promise<Improvement[]> {
+    let improvements = Array.from(this.improvements.values());
+    
+    // Apply offset and limit if provided
+    if (offset) {
+      improvements = improvements.slice(offset);
+    }
+    if (limit) {
+      improvements = improvements.slice(0, limit);
+    }
+    
+    return improvements;
+  }
+  
+  async getImprovement(id: number): Promise<Improvement | undefined> {
+    return this.improvements.get(id);
+  }
+  
+  async getImprovementsByPropId(propId: number): Promise<Improvement[]> {
+    return Array.from(this.improvements.values()).filter(improvement => improvement.propId === propId);
+  }
+  
+  async createImprovement(improvement: InsertImprovement): Promise<Improvement> {
+    const id = this.currentImprovementId++;
+    const importedAt = new Date();
+    const updatedAt = new Date();
+    
+    const newImprovement: Improvement = {
+      ...improvement,
+      id,
+      importedAt,
+      updatedAt
+    };
+    
+    this.improvements.set(id, newImprovement);
+    return newImprovement;
+  }
+  
+  async updateImprovement(id: number, improvement: Partial<InsertImprovement>): Promise<Improvement | undefined> {
+    const existingImprovement = this.improvements.get(id);
+    if (!existingImprovement) return undefined;
+    
+    const updatedImprovement: Improvement = {
+      ...existingImprovement,
+      ...improvement,
+      updatedAt: new Date()
+    };
+    
+    this.improvements.set(id, updatedImprovement);
+    return updatedImprovement;
+  }
+  
+  async deleteImprovement(id: number): Promise<void> {
+    this.improvements.delete(id);
+  }
+  
+  async bulkInsertImprovements(improvements: InsertImprovement[]): Promise<{ count: number }> {
+    let count = 0;
+    
+    for (const improvement of improvements) {
+      await this.createImprovement(improvement);
+      count++;
+    }
+    
+    return { count };
+  }
+  
+  // Improvement Details
+  async getAllImprovementDetails(limit?: number, offset?: number): Promise<ImprovementDetail[]> {
+    let details = Array.from(this.improvementDetails.values());
+    
+    // Apply offset and limit if provided
+    if (offset) {
+      details = details.slice(offset);
+    }
+    if (limit) {
+      details = details.slice(0, limit);
+    }
+    
+    return details;
+  }
+  
+  async getImprovementDetail(id: number): Promise<ImprovementDetail | undefined> {
+    return this.improvementDetails.get(id);
+  }
+  
+  async getImprovementDetailsByPropId(propId: number): Promise<ImprovementDetail[]> {
+    return Array.from(this.improvementDetails.values()).filter(detail => detail.propId === propId);
+  }
+  
+  async getImprovementDetailsByImprvId(imprvId: number): Promise<ImprovementDetail[]> {
+    return Array.from(this.improvementDetails.values()).filter(detail => detail.imprvId === imprvId);
+  }
+  
+  async createImprovementDetail(detail: InsertImprovementDetail): Promise<ImprovementDetail> {
+    const id = this.currentImprovementDetailId++;
+    const importedAt = new Date();
+    const updatedAt = new Date();
+    
+    const newDetail: ImprovementDetail = {
+      ...detail,
+      id,
+      importedAt,
+      updatedAt
+    };
+    
+    this.improvementDetails.set(id, newDetail);
+    return newDetail;
+  }
+  
+  async updateImprovementDetail(id: number, detail: Partial<InsertImprovementDetail>): Promise<ImprovementDetail | undefined> {
+    const existingDetail = this.improvementDetails.get(id);
+    if (!existingDetail) return undefined;
+    
+    const updatedDetail: ImprovementDetail = {
+      ...existingDetail,
+      ...detail,
+      updatedAt: new Date()
+    };
+    
+    this.improvementDetails.set(id, updatedDetail);
+    return updatedDetail;
+  }
+  
+  async deleteImprovementDetail(id: number): Promise<void> {
+    this.improvementDetails.delete(id);
+  }
+  
+  async bulkInsertImprovementDetails(details: InsertImprovementDetail[]): Promise<{ count: number }> {
+    let count = 0;
+    
+    for (const detail of details) {
+      await this.createImprovementDetail(detail);
+      count++;
+    }
+    
+    return { count };
+  }
+  
+  // Improvement Items
+  async getAllImprovementItems(limit?: number, offset?: number): Promise<ImprovementItem[]> {
+    let items = Array.from(this.improvementItems.values());
+    
+    // Apply offset and limit if provided
+    if (offset) {
+      items = items.slice(offset);
+    }
+    if (limit) {
+      items = items.slice(0, limit);
+    }
+    
+    return items;
+  }
+  
+  async getImprovementItem(id: number): Promise<ImprovementItem | undefined> {
+    return this.improvementItems.get(id);
+  }
+  
+  async getImprovementItemsByPropId(propId: number): Promise<ImprovementItem[]> {
+    return Array.from(this.improvementItems.values()).filter(item => item.propId === propId);
+  }
+  
+  async getImprovementItemsByImprvId(imprvId: number): Promise<ImprovementItem[]> {
+    return Array.from(this.improvementItems.values()).filter(item => item.imprvId === imprvId);
+  }
+  
+  async createImprovementItem(item: InsertImprovementItem): Promise<ImprovementItem> {
+    const id = this.currentImprovementItemId++;
+    const importedAt = new Date();
+    const updatedAt = new Date();
+    
+    const newItem: ImprovementItem = {
+      ...item,
+      id,
+      importedAt,
+      updatedAt
+    };
+    
+    this.improvementItems.set(id, newItem);
+    return newItem;
+  }
+  
+  async updateImprovementItem(id: number, item: Partial<InsertImprovementItem>): Promise<ImprovementItem | undefined> {
+    const existingItem = this.improvementItems.get(id);
+    if (!existingItem) return undefined;
+    
+    const updatedItem: ImprovementItem = {
+      ...existingItem,
+      ...item,
+      updatedAt: new Date()
+    };
+    
+    this.improvementItems.set(id, updatedItem);
+    return updatedItem;
+  }
+  
+  async deleteImprovementItem(id: number): Promise<void> {
+    this.improvementItems.delete(id);
+  }
+  
+  async bulkInsertImprovementItems(items: InsertImprovementItem[]): Promise<{ count: number }> {
+    let count = 0;
+    
+    for (const item of items) {
+      await this.createImprovementItem(item);
+      count++;
+    }
+    
+    return { count };
+  }
+  
+  // Land Details
+  async getAllLandDetails(limit?: number, offset?: number): Promise<LandDetail[]> {
+    let details = Array.from(this.landDetails.values());
+    
+    // Apply offset and limit if provided
+    if (offset) {
+      details = details.slice(offset);
+    }
+    if (limit) {
+      details = details.slice(0, limit);
+    }
+    
+    return details;
+  }
+  
+  async getLandDetail(id: number): Promise<LandDetail | undefined> {
+    return this.landDetails.get(id);
+  }
+  
+  async getLandDetailsByPropId(propId: number): Promise<LandDetail[]> {
+    return Array.from(this.landDetails.values()).filter(detail => detail.propId === propId);
+  }
+  
+  async createLandDetail(detail: InsertLandDetail): Promise<LandDetail> {
+    const id = this.currentLandDetailId++;
+    const importedAt = new Date();
+    const updatedAt = new Date();
+    
+    const newDetail: LandDetail = {
+      ...detail,
+      id,
+      importedAt,
+      updatedAt
+    };
+    
+    this.landDetails.set(id, newDetail);
+    return newDetail;
+  }
+  
+  async updateLandDetail(id: number, detail: Partial<InsertLandDetail>): Promise<LandDetail | undefined> {
+    const existingDetail = this.landDetails.get(id);
+    if (!existingDetail) return undefined;
+    
+    const updatedDetail: LandDetail = {
+      ...existingDetail,
+      ...detail,
+      updatedAt: new Date()
+    };
+    
+    this.landDetails.set(id, updatedDetail);
+    return updatedDetail;
+  }
+  
+  async deleteLandDetail(id: number): Promise<void> {
+    this.landDetails.delete(id);
+  }
+  
+  async bulkInsertLandDetails(details: InsertLandDetail[]): Promise<{ count: number }> {
+    let count = 0;
+    
+    for (const detail of details) {
+      await this.createLandDetail(detail);
+      count++;
+    }
+    
+    return { count };
+  }
+  
+  // Property Data Import
+  async importPropertyData(options: {
+    propertiesFile: string;
+    improvementsFile: string;
+    improvementDetailsFile: string;
+    improvementItemsFile: string;
+    landDetailsFile: string;
+    batchSize?: number;
+    userId: number;
+  }): Promise<{
+    properties: { processed: number, success: number, errors: any[] },
+    improvements: { processed: number, success: number, errors: any[] },
+    improvementDetails: { processed: number, success: number, errors: any[] },
+    improvementItems: { processed: number, success: number, errors: any[] },
+    landDetails: { processed: number, success: number, errors: any[] }
+  }> {
+    // Import implementation is in the property-data-import.ts file
+    const { importPropertyData } = require('./property-data-import');
+    return importPropertyData(this, options);
   }
 }
 
