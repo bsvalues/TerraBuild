@@ -937,9 +937,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up multer for file uploads
   const upload = multer({
-    dest: 'uploads/',
+    storage: multer.memoryStorage(), // Store files in memory as buffer
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB file size limit
+      fileSize: 50 * 1024 * 1024, // 50MB file size limit
     },
     fileFilter: (req, file, cb) => {
       // Accept Excel and CSV files
@@ -947,12 +947,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         file.mimetype === 'application/vnd.ms-excel' ||
         file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
         file.mimetype === 'text/csv' ||
-        file.mimetype === 'application/csv'
+        file.mimetype === 'application/csv' ||
+        file.originalname.toLowerCase().endsWith('.csv') ||
+        file.originalname.toLowerCase().endsWith('.xlsx') ||
+        file.originalname.toLowerCase().endsWith('.xls')
       ) {
         cb(null, true);
       } else {
         cb(null, false);
-        cb(new Error('Only Excel and CSV files are allowed'));
+        return cb(new Error('Only Excel and CSV files are allowed'));
       }
     }
   });
@@ -1574,10 +1577,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'uploaded'
       });
       
+      // First, save file to disk
+      const filePath = path.join(uploadsDir, `${fileUpload.id}-${req.file.originalname}`);
+      // req.file.buffer might not exist depending on multer storage configuration
+      // Instead, multer may have already saved the file to disk at req.file.path
+      if (req.file.buffer) {
+        fs.writeFileSync(filePath, req.file.buffer);
+      } else if (req.file.path) {
+        // If the file is already saved by multer, just copy/move it
+        fs.copyFileSync(req.file.path, filePath);
+      }
+      
       await storage.createActivity({
         action: `Uploaded file: ${req.file.originalname}`,
         icon: "ri-file-upload-line",
-        iconColor: "primary"
+        iconColor: "primary",
+        details: null
       });
       
       res.status(201).json({ 
@@ -1586,7 +1601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "File uploaded successfully" 
       });
     } catch (error) {
-      res.status(500).json({ message: "Error uploading file" });
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Error uploading file", error: error.toString() });
     }
   });
   
