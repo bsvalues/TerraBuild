@@ -60,7 +60,7 @@ export class PropertyPostgresStorage extends PostgresStorage {
   }
   
   async deleteProperty(id: number): Promise<void> {
-    await db.delete(properties).where(eq(properties.id, id));
+    await db.delete(properties).where(eq(properties.id, id)).execute();
   }
   
   async bulkInsertProperties(props: InsertProperty[]): Promise<{ count: number }> {
@@ -105,7 +105,7 @@ export class PropertyPostgresStorage extends PostgresStorage {
   }
   
   async deleteImprovement(id: number): Promise<void> {
-    await db.delete(improvements).where(eq(improvements.id, id));
+    await db.delete(improvements).where(eq(improvements.id, id)).execute();
   }
   
   async bulkInsertImprovements(items: InsertImprovement[]): Promise<{ count: number }> {
@@ -124,11 +124,11 @@ export class PropertyPostgresStorage extends PostgresStorage {
   
   // Improvement Detail Methods
   async getImprovementDetailsByImprovementId(imprvId: number): Promise<ImprovementDetail[]> {
-    return await db.select().from(improvementDetails).where(eq(improvementDetails.imprvId, imprvId));
+    return await db.select().from(improvementDetails).where(eq(improvementDetails.imprvId, imprvId)).execute();
   }
   
   async getImprovementDetail(id: number): Promise<ImprovementDetail | undefined> {
-    const results = await db.select().from(improvementDetails).where(eq(improvementDetails.id, id));
+    const results = await db.select().from(improvementDetails).where(eq(improvementDetails.id, id)).execute();
     return results[0];
   }
   
@@ -150,7 +150,7 @@ export class PropertyPostgresStorage extends PostgresStorage {
   }
   
   async deleteImprovementDetail(id: number): Promise<void> {
-    await db.delete(improvementDetails).where(eq(improvementDetails.id, id));
+    await db.delete(improvementDetails).where(eq(improvementDetails.id, id)).execute();
   }
   
   async bulkInsertImprovementDetails(details: InsertImprovementDetail[]): Promise<{ count: number }> {
@@ -169,11 +169,11 @@ export class PropertyPostgresStorage extends PostgresStorage {
   
   // Improvement Item Methods
   async getImprovementItemsByImprovementId(imprvId: number): Promise<ImprovementItem[]> {
-    return await db.select().from(improvementItems).where(eq(improvementItems.imprvId, imprvId));
+    return await db.select().from(improvementItems).where(eq(improvementItems.imprvId, imprvId)).execute();
   }
   
   async getImprovementItem(id: number): Promise<ImprovementItem | undefined> {
-    const results = await db.select().from(improvementItems).where(eq(improvementItems.id, id));
+    const results = await db.select().from(improvementItems).where(eq(improvementItems.id, id)).execute();
     return results[0];
   }
   
@@ -195,7 +195,7 @@ export class PropertyPostgresStorage extends PostgresStorage {
   }
   
   async deleteImprovementItem(id: number): Promise<void> {
-    await db.delete(improvementItems).where(eq(improvementItems.id, id));
+    await db.delete(improvementItems).where(eq(improvementItems.id, id)).execute();
   }
   
   async bulkInsertImprovementItems(items: InsertImprovementItem[]): Promise<{ count: number }> {
@@ -214,11 +214,11 @@ export class PropertyPostgresStorage extends PostgresStorage {
   
   // Land Detail Methods
   async getLandDetailsByPropertyId(propId: number): Promise<LandDetail[]> {
-    return await db.select().from(landDetails).where(eq(landDetails.propId, propId));
+    return await db.select().from(landDetails).where(eq(landDetails.propId, propId)).execute();
   }
   
   async getLandDetail(id: number): Promise<LandDetail | undefined> {
-    const results = await db.select().from(landDetails).where(eq(landDetails.id, id));
+    const results = await db.select().from(landDetails).where(eq(landDetails.id, id)).execute();
     return results[0];
   }
   
@@ -240,7 +240,7 @@ export class PropertyPostgresStorage extends PostgresStorage {
   }
   
   async deleteLandDetail(id: number): Promise<void> {
-    await db.delete(landDetails).where(eq(landDetails.id, id));
+    await db.delete(landDetails).where(eq(landDetails.id, id)).execute();
   }
   
   async bulkInsertLandDetails(details: InsertLandDetail[]): Promise<{ count: number }> {
