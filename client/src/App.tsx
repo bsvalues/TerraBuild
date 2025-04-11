@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import MCPDashboard from "@/pages/Dashboard";
+import MCPDashboard from "@/pages/dashboard";
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
@@ -43,6 +43,7 @@ import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { useEffect } from "react";
 
 // Add link to Remix Icon for icons
@@ -121,18 +122,20 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CollaborationProvider projectId={0}>
-          <DevAutoLogin />
-          <RemixIconLink />
-          <SidebarProvider>
-            <WindowProvider>
-              <Router />
-              <Toaster />
-            </WindowProvider>
-          </SidebarProvider>
-        </CollaborationProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CollaborationProvider projectId={0}>
+            <DevAutoLogin />
+            <RemixIconLink />
+            <SidebarProvider>
+              <WindowProvider>
+                <Router />
+                <Toaster />
+              </WindowProvider>
+            </SidebarProvider>
+          </CollaborationProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
