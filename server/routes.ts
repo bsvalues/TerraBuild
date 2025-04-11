@@ -1595,15 +1595,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let fileUploads;
       
+      console.log("Fetching file uploads for user:", req.user?.id);
+      
       // If admin, get all files. Otherwise, only user's own files
       if (req.user?.role === "admin") {
+        console.log("User is admin, fetching all files");
         fileUploads = await storage.getAllFileUploads();
       } else {
+        console.log("User is not admin, fetching user's files");
         fileUploads = await storage.getUserFileUploads(req.user!.id);
       }
       
-      res.json(fileUploads);
+      console.log("File uploads retrieved successfully:", fileUploads?.length || 0);
+      res.json(fileUploads || []);
     } catch (error) {
+      console.error("Error fetching file uploads:", error);
       res.status(500).json({ message: "Error fetching file uploads" });
     }
   });
