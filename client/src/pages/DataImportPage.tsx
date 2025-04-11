@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import MainContent from '@/components/layout/MainContent';
+import PropertyDataImportHandler from '@/components/data/PropertyDataImportHandler';
 import { 
   Card, 
   CardContent, 
@@ -381,9 +382,12 @@ const DataImportPage = () => {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload">
-            <Upload className="h-4 w-4 mr-2" /> Upload Files
+            <Upload className="h-4 w-4 mr-2" /> Cost Matrix
+          </TabsTrigger>
+          <TabsTrigger value="property-data">
+            <FileText className="h-4 w-4 mr-2" /> Property Data
           </TabsTrigger>
           <TabsTrigger value="files">
             <FileSpreadsheet className="h-4 w-4 mr-2" /> Manage Files
@@ -508,6 +512,14 @@ const DataImportPage = () => {
               </Button>
             </CardFooter>
           </Card>
+        </TabsContent>
+        
+        {/* Property Data Tab */}
+        <TabsContent value="property-data">
+          <PropertyDataImportHandler 
+            title="Property Data Import" 
+            description="Upload and import Benton County property data CSV files"
+          />
         </TabsContent>
         
         {/* Files Tab */}
