@@ -31,8 +31,10 @@ const apiRequest = async <T>(
       ...options,
     });
     
-    console.log(`Response status: ${response.status}`);
+    const contentType = response.headers.get('Content-Type') || '';
+    console.log(`Response status: ${response.status}, Content-Type: ${contentType}`);
     
+    // Check for appropriate content type before processing
     if (!response.ok) {
       // Get response text first to see if it's HTML or JSON
       const responseText = await response.text();
@@ -47,11 +49,18 @@ const apiRequest = async <T>(
         // Handle case where response is HTML (e.g., auth redirect)
         if (responseText.includes("<!DOCTYPE html>")) {
           errorMessage = "Received HTML instead of JSON - possible authentication redirect";
+          console.error("Authentication error: API returned HTML instead of JSON. This might be due to requireAuth middleware redirecting to a login page.");
         } else {
           errorMessage = `API error (${response.status}): Not a valid JSON response`;
+          console.error("Non-JSON response received from API:", responseText.substring(0, 500));
         }
       }
       throw new Error(errorMessage);
+    }
+    
+    // Log potential issues even for successful responses
+    if (!contentType.includes('application/json')) {
+      console.warn(`Warning: Expected JSON response but received ${contentType}`);
     }
 
     // For DELETE operations that don't return content
@@ -114,6 +123,11 @@ export function useWhatIfScenarios() {
     useQuery<ScenarioVariation[]>({
       queryKey: ["/api/what-if-scenarios", scenarioId, "variations"],
       refetchOnWindowFocus: false,
+      // Skip invalid scenario IDs (like our -1 placeholder)
+      enabled: scenarioId > 0,
+      onError: (error) => {
+        console.error(`Error fetching variations for scenario ${scenarioId}:`, error);
+      }
     });
 
   // Get impact analysis for a scenario
@@ -121,6 +135,11 @@ export function useWhatIfScenarios() {
     useQuery<any>({
       queryKey: ["/api/what-if-scenarios", scenarioId, "impact"],
       refetchOnWindowFocus: false,
+      // Skip invalid scenario IDs (like our -1 placeholder)
+      enabled: scenarioId > 0,
+      onError: (error) => {
+        console.error(`Error fetching impact analysis for scenario ${scenarioId}:`, error);
+      }
     });
 
   // Create a new scenario
