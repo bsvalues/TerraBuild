@@ -19,7 +19,8 @@ import {
   HelpCircle,
   Settings,
   Menu,
-  X
+  X,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -171,6 +172,15 @@ export default function TopNavMenu() {
               icon={<Calculator className="h-4 w-4" />}
             />
           </NavigationMenuItem>
+          
+          <NavigationMenuItem>
+            <NavLink
+              href="/properties"
+              label="Property Browser"
+              icon={<Building2 className="h-4 w-4" />}
+              className="bg-[#f5e9e9] hover:bg-[#f0d6d6]"
+            />
+          </NavigationMenuItem>
 
           <NavigationMenuItem>
             <NavigationMenuTrigger className={cn(
@@ -229,6 +239,12 @@ export default function TopNavMenu() {
                     href="/data-import"
                     label="Data Import"
                     icon={<Database className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/properties"
+                    label="Property Browser"
+                    icon={<Building2 className="h-4 w-4" />}
+                    className="font-semibold text-[#47AD55]"
                   />
                   <NavLink
                     href="/data-exploration"
