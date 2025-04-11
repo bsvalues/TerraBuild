@@ -386,6 +386,18 @@ export default function Sidebar({ className }: SidebarProps) {
                 icon={<BrainCircuit />}
               />
               <SidebarItem
+                href="/mcp-overview"
+                title="MCP Framework"
+                icon={<BrainCircuit />}
+              />
+              <SidebarItem
+                href="/mcp-dashboard"
+                title="MCP Dashboard"
+                icon={<Activity />}
+                badge="New"
+                badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
+              />
+              <SidebarItem
                 href="/ar-visualization"
                 title="AR Visualization"
                 icon={<Glasses />}
