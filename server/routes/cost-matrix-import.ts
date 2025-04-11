@@ -47,7 +47,7 @@ const validationOptionsSchema = z.object({
   validBuildingTypes: z.array(z.string()).optional()
 });
 
-export function createCostMatrixImportRouter(storage: IStorage): Router {
+export function createCostMatrixImportRouter(storageImpl: IStorage): Router {
   const router = Router();
   
   /**
@@ -72,7 +72,7 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
       });
       
       // Create an import record
-      const importRecord = await storage.createImportRecord({
+      const importRecord = await storageImpl.createImportRecord({
         fileName: req.file.originalname,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
@@ -84,14 +84,14 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
       
       // Process the cost matrix file
       const results = await processCostMatrixFile(
-        storage,
+        storageImpl,
         req.file.buffer,
         100, // batch size
         options
       );
       
       // Update the import record with results
-      await storage.updateImportRecord(importRecord.id, {
+      await storageImpl.updateImportRecord(importRecord.id, {
         status: results.errors > 0 ? 'COMPLETED_WITH_ERRORS' : 'COMPLETED',
         processedItems: results.processed,
         errorCount: results.errors,
@@ -124,7 +124,7 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
    */
   router.get('/api/cost-matrix/imports', async (req: Request, res: Response) => {
     try {
-      const imports = await storage.getImportRecords();
+      const imports = await storageImpl.getImportRecords();
       return res.status(200).json(imports);
     } catch (error) {
       console.error('Error getting import records:', error);
@@ -141,7 +141,7 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
   router.get('/api/cost-matrix/imports/:id', async (req: Request, res: Response) => {
     try {
       const importId = parseInt(req.params.id);
-      const importRecord = await storage.getImportRecord(importId);
+      const importRecord = await storageImpl.getImportRecord(importId);
       
       if (!importRecord) {
         return res.status(404).json({
@@ -217,7 +217,7 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
   router.get('/api/cost-matrix/imports/:id/issues', async (req: Request, res: Response) => {
     try {
       const importId = parseInt(req.params.id);
-      const importRecord = await storage.getImportRecord(importId);
+      const importRecord = await storageImpl.getImportRecord(importId);
       
       if (!importRecord) {
         return res.status(404).json({
