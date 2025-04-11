@@ -4,16 +4,21 @@
  * This script imports property data from CSV files in the attached_assets folder
  * directly into the PostgreSQL database using the property-data-import functionality.
  */
-const fs = require('fs');
-const path = require('path');
-const { db } = require('./server/db');
-const { PostgreSQLStorage } = require('./server/pg-storage');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { db } from './server/db.js';
+import { PostgreSQLStorage } from './server/pg-storage.js';
+
+// Get current file directory with ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create a storage instance connected to the PostgreSQL database
 const storage = new PostgreSQLStorage(db);
 
 // Import function
-const { importPropertyData } = require('./server/property-data-import');
+import { importPropertyData } from './server/property-data-import.js';
 
 async function main() {
   try {
@@ -77,5 +82,12 @@ async function main() {
   }
 }
 
-// Run the import
-main();
+// Run the import as an async IIFE (Immediately Invoked Function Expression)
+(async () => {
+  try {
+    await main();
+  } catch (error) {
+    console.error('Unhandled error:', error);
+    process.exit(1);
+  }
+})();
