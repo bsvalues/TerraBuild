@@ -41,6 +41,7 @@ import {
 } from "recharts";
 import {
   ChevronLeft,
+  ChevronRight,
   Home,
   Building,
   Layers,
@@ -52,7 +53,12 @@ import {
   MapPin,
   DollarSign,
   BarChart2,
-  Calculator
+  Calculator,
+  CircleCheck,
+  Loader2,
+  XCircle,
+  ArrowDown,
+  ArrowRight
 } from "lucide-react";
 
 // Type definitions
@@ -249,6 +255,57 @@ const PropertyDetailsPage = () => {
   return (
     <LayoutWrapper>
       <MainContent title="Property Details">
+        {/* Data Flow Status Indicator */}
+        <div className="mb-4 px-4 py-2 bg-muted rounded-md text-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="font-medium">Data Status:</span>
+              {isFetching ? (
+                <span className="flex items-center text-amber-500">
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  Loading data...
+                </span>
+              ) : data ? (
+                <span className="flex items-center text-green-500">
+                  <CircleCheck className="h-3 w-3 mr-1" />
+                  Data loaded successfully
+                </span>
+              ) : (
+                <span className="flex items-center text-red-500">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  No data available
+                </span>
+              )}
+            </div>
+            
+            {data && dataUpdatedAt && (
+              <div className="text-xs text-muted-foreground">
+                <span className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Last fetched: {new Date(dataUpdatedAt).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          {data && (
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+              <div>
+                <span className="font-medium">API Endpoint:</span> 
+                <code className="ml-1 bg-background p-1 rounded">/api/properties/{propertyId}/details</code>
+              </div>
+              <div>
+                <span className="font-medium">Improvements:</span> 
+                <span className="ml-1">{data.improvements?.length || 0} items</span>
+              </div>
+              <div>
+                <span className="font-medium">Land Details:</span> 
+                <span className="ml-1">{data.landDetails?.length || 0} items</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-2 mb-6">
           <Link href="/properties">
             <Button variant="outline" size="sm">
@@ -625,6 +682,35 @@ const PropertyDetailsPage = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {/* Data Flow Diagram */}
+                    <div className="mb-6 p-3 border rounded-md bg-muted/30">
+                      <h3 className="text-sm font-medium mb-2">Cost Calculation Flow:</h3>
+                      <div className="flex items-center flex-wrap gap-2 text-xs">
+                        <div className="bg-background p-2 rounded-md border">
+                          Property Data
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="bg-background p-2 rounded-md border">
+                          Region Detection
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="bg-background p-2 rounded-md border">
+                          Building Type Classification  
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="bg-background p-2 rounded-md border">
+                          Quality & Age Factors
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="bg-primary/20 p-2 rounded-md border-primary/30 border-2">
+                          Cost Calculation
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        All calculations use the latest 2025 Benton County cost matrix data.
+                      </p>
+                    </div>
+                
                     {data.improvements && data.improvements.length > 0 ? (
                       <div className="space-y-6">
                         {data.improvements.map((improvement) => {
@@ -641,6 +727,16 @@ const PropertyDetailsPage = () => {
                           
                           const estimatedCost = squareFootage * baseCost * qualityFactor * ageFactor;
                           const assessedValue = improvement.imprvVal ? parseFloat(improvement.imprvVal) : 0;
+                          
+                          // Calculation tracking for data flow visibility
+                          const calculationSteps = [
+                            { step: 'Building Type', value: buildingType, source: `Primary Use Code: ${improvement.primaryUseCd || 'N/A'}` },
+                            { step: 'Region', value: region, source: `Neighborhood: ${data.property.neighborhood || 'N/A'}` },
+                            { step: 'Square Footage', value: `${squareFootage.toLocaleString()} sq ft`, source: 'Total Area' },
+                            { step: 'Base Cost', value: `$${baseCost.toFixed(2)}/sq ft`, source: '2025 Cost Matrix' },
+                            { step: 'Quality Factor', value: qualityFactor.toFixed(2), source: `Quality Code: ${improvement.details[0]?.qualityCd || 'Standard'}` },
+                            { step: 'Age Factor', value: ageFactor.toFixed(2), source: `Year Built: ${improvement.actualYearBuilt || 'Unknown'}` }
+                          ];
                           
                           const costDifference = assessedValue - estimatedCost;
                           const costDifferencePercent = assessedValue > 0 
@@ -706,7 +802,53 @@ const PropertyDetailsPage = () => {
                                 </div>
                               </div>
                               
-                              <div className="space-y-2">
+                              {/* Calculation Steps Visualization */}
+                              <div className="mt-6 border rounded-md p-4 bg-muted/30">
+                                <h4 className="text-sm font-medium mb-3">Calculation Process Details</h4>
+                                <div className="space-y-4">
+                                  {calculationSteps.map((step, index) => (
+                                    <div key={index} className="grid grid-cols-[auto,1fr] gap-2">
+                                      <div className="flex items-center justify-center">
+                                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                          {index + 1}
+                                        </div>
+                                        {index < calculationSteps.length - 1 && (
+                                          <div className="h-6 w-px bg-border mx-auto mt-1"></div>
+                                        )}
+                                      </div>
+                                      <div>
+                                        <div className="flex items-center">
+                                          <h5 className="font-medium">{step.step}</h5>
+                                          <ArrowRight className="h-4 w-4 mx-2 text-muted-foreground" />
+                                          <span className="font-bold">{step.value}</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Source: {step.source}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  
+                                  {/* Final Calculation Step */}
+                                  <div className="grid grid-cols-[auto,1fr] gap-2">
+                                    <div className="flex items-center justify-center">
+                                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                                        <Calculator className="h-4 w-4" />
+                                      </div>
+                                    </div>
+                                    <div className="p-3 border rounded-md bg-background">
+                                      <div className="text-sm">
+                                        <span className="font-medium">Final Calculation</span>
+                                        <div className="mt-1 p-2 bg-muted rounded text-xs font-mono">
+                                          ${squareFootage.toLocaleString()} sq ft × ${baseCost.toFixed(2)}/sq ft × {qualityFactor.toFixed(2)} × {ageFactor.toFixed(2)} = ${estimatedCost.toLocaleString(undefined, {maximumFractionDigits: 0})}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2 mt-6">
                                 <p className="text-sm font-medium mb-1">Cost vs. Assessment Comparison</p>
                                 <div className="h-6 bg-muted rounded-full overflow-hidden">
                                   <div 
