@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import MCPDashboard from "@/pages/dashboard";
+import MCPDashboard from "@/pages/Dashboard";
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
