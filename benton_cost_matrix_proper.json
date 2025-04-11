@@ -1,0 +1,686 @@
+[
+  {
+    "region": "Central Benton",
+    "buildingType": "R1",
+    "buildingTypeDescription": "R1 - Single Family Residential",
+    "baseCost": 52532.11,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3603,
+    "matrixDescription": "Benton County Central Benton - R1 - Single Family Residential",
+    "dataPoints": 19,
+    "minCost": 28000.0,
+    "maxCost": 69000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "R1",
+    "buildingTypeDescription": "R1 - Single Family Residential",
+    "baseCost": 49905.5,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3603,
+    "matrixDescription": "Benton County East Benton - R1 - Single Family Residential",
+    "dataPoints": 19,
+    "minCost": 28000.0,
+    "maxCost": 69000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "R1",
+    "buildingTypeDescription": "R1 - Single Family Residential",
+    "baseCost": 55158.72,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3603,
+    "matrixDescription": "Benton County West Benton - R1 - Single Family Residential",
+    "dataPoints": 19,
+    "minCost": 28000.0,
+    "maxCost": 69000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "R2",
+    "buildingTypeDescription": "R2 - Multi-Family Residential",
+    "baseCost": 27333.33,
+    "matrixYear": 2025,
+    "sourceMatrixId": 633,
+    "matrixDescription": "Benton County Central Benton - R2 - Multi-Family Residential",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "R2",
+    "buildingTypeDescription": "R2 - Multi-Family Residential",
+    "baseCost": 25966.66,
+    "matrixYear": 2025,
+    "sourceMatrixId": 633,
+    "matrixDescription": "Benton County East Benton - R2 - Multi-Family Residential",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "R2",
+    "buildingTypeDescription": "R2 - Multi-Family Residential",
+    "baseCost": 28700.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 633,
+    "matrixDescription": "Benton County West Benton - R2 - Multi-Family Residential",
+    "dataPoints": 9,
+    "minCost": 15000.0,
+    "maxCost": 42000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "R3",
+    "buildingTypeDescription": "R3 - Residential Manufactured Home",
+    "baseCost": 4500.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1117,
+    "matrixDescription": "Benton County Central Benton - R3 - Residential Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "R3",
+    "buildingTypeDescription": "R3 - Residential Manufactured Home",
+    "baseCost": 4275.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1117,
+    "matrixDescription": "Benton County East Benton - R3 - Residential Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "R3",
+    "buildingTypeDescription": "R3 - Residential Manufactured Home",
+    "baseCost": 4725.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1117,
+    "matrixDescription": "Benton County West Benton - R3 - Residential Manufactured Home",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "C1",
+    "buildingTypeDescription": "C1 - Central Commercial",
+    "baseCost": 3466.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1456,
+    "matrixDescription": "Benton County Central Benton - C1 - Central Commercial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 24000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "C1",
+    "buildingTypeDescription": "C1 - Central Commercial",
+    "baseCost": 3293.34,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1456,
+    "matrixDescription": "Benton County East Benton - C1 - Central Commercial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 24000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "C1",
+    "buildingTypeDescription": "C1 - Central Commercial",
+    "baseCost": 3640.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1456,
+    "matrixDescription": "Benton County West Benton - C1 - Central Commercial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 24000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "C2",
+    "buildingTypeDescription": "C2 - General Commercial",
+    "baseCost": 202.98,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3558,
+    "matrixDescription": "Benton County Central Benton - C2 - General Commercial",
+    "dataPoints": 42,
+    "minCost": 67.0,
+    "maxCost": 288.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "C2",
+    "buildingTypeDescription": "C2 - General Commercial",
+    "baseCost": 192.83,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3558,
+    "matrixDescription": "Benton County East Benton - C2 - General Commercial",
+    "dataPoints": 42,
+    "minCost": 67.0,
+    "maxCost": 288.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "C2",
+    "buildingTypeDescription": "C2 - General Commercial",
+    "baseCost": 213.13,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3558,
+    "matrixDescription": "Benton County West Benton - C2 - General Commercial",
+    "dataPoints": 42,
+    "minCost": 67.0,
+    "maxCost": 288.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "C4",
+    "buildingTypeDescription": "C4 - Office Building",
+    "baseCost": 26.83,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3605,
+    "matrixDescription": "Benton County Central Benton - C4 - Office Building",
+    "dataPoints": 7,
+    "minCost": 17.9,
+    "maxCost": 35.75,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "C4",
+    "buildingTypeDescription": "C4 - Office Building",
+    "baseCost": 25.49,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3605,
+    "matrixDescription": "Benton County East Benton - C4 - Office Building",
+    "dataPoints": 7,
+    "minCost": 17.9,
+    "maxCost": 35.75,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "C4",
+    "buildingTypeDescription": "C4 - Office Building",
+    "baseCost": 28.17,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3605,
+    "matrixDescription": "Benton County West Benton - C4 - Office Building",
+    "dataPoints": 7,
+    "minCost": 17.9,
+    "maxCost": 35.75,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "I1",
+    "buildingTypeDescription": "I1 - Light Industrial",
+    "baseCost": 6750.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1126,
+    "matrixDescription": "Benton County Central Benton - I1 - Light Industrial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "I1",
+    "buildingTypeDescription": "I1 - Light Industrial",
+    "baseCost": 6412.5,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1126,
+    "matrixDescription": "Benton County East Benton - I1 - Light Industrial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "I1",
+    "buildingTypeDescription": "I1 - Light Industrial",
+    "baseCost": 7087.5,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1126,
+    "matrixDescription": "Benton County West Benton - I1 - Light Industrial",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 11500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "I2",
+    "buildingTypeDescription": "I2 - Heavy Industrial",
+    "baseCost": 223837.71,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3696,
+    "matrixDescription": "Benton County Central Benton - I2 - Heavy Industrial",
+    "dataPoints": 35,
+    "minCost": 49000.0,
+    "maxCost": 360000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "I2",
+    "buildingTypeDescription": "I2 - Heavy Industrial",
+    "baseCost": 212645.82,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3696,
+    "matrixDescription": "Benton County East Benton - I2 - Heavy Industrial",
+    "dataPoints": 35,
+    "minCost": 49000.0,
+    "maxCost": 360000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "I2",
+    "buildingTypeDescription": "I2 - Heavy Industrial",
+    "baseCost": 235029.6,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3696,
+    "matrixDescription": "Benton County West Benton - I2 - Heavy Industrial",
+    "dataPoints": 35,
+    "minCost": 49000.0,
+    "maxCost": 360000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "A1",
+    "buildingTypeDescription": "A1 - Agricultural",
+    "baseCost": 25200.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1286,
+    "matrixDescription": "Benton County Central Benton - A1 - Agricultural",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "A1",
+    "buildingTypeDescription": "A1 - Agricultural",
+    "baseCost": 23940.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1286,
+    "matrixDescription": "Benton County East Benton - A1 - Agricultural",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "A1",
+    "buildingTypeDescription": "A1 - Agricultural",
+    "baseCost": 26460.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1286,
+    "matrixDescription": "Benton County West Benton - A1 - Agricultural",
+    "dataPoints": 9,
+    "minCost": 0.0,
+    "maxCost": 54000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "S1",
+    "buildingTypeDescription": "S1 - Storage",
+    "baseCost": 15244.45,
+    "matrixYear": 2025,
+    "sourceMatrixId": 588,
+    "matrixDescription": "Benton County Central Benton - S1 - Storage",
+    "dataPoints": 9,
+    "minCost": 10000.0,
+    "maxCost": 42500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "S1",
+    "buildingTypeDescription": "S1 - Storage",
+    "baseCost": 14482.22,
+    "matrixYear": 2025,
+    "sourceMatrixId": 588,
+    "matrixDescription": "Benton County East Benton - S1 - Storage",
+    "dataPoints": 9,
+    "minCost": 10000.0,
+    "maxCost": 42500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "S1",
+    "buildingTypeDescription": "S1 - Storage",
+    "baseCost": 16006.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 588,
+    "matrixDescription": "Benton County West Benton - S1 - Storage",
+    "dataPoints": 9,
+    "minCost": 10000.0,
+    "maxCost": 42500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "OS",
+    "buildingTypeDescription": "OS - Open Space",
+    "baseCost": 7909.09,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3305,
+    "matrixDescription": "Benton County Central Benton - OS - Open Space",
+    "dataPoints": 11,
+    "minCost": 2000.0,
+    "maxCost": 13500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "OS",
+    "buildingTypeDescription": "OS - Open Space",
+    "baseCost": 7513.64,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3305,
+    "matrixDescription": "Benton County East Benton - OS - Open Space",
+    "dataPoints": 11,
+    "minCost": 2000.0,
+    "maxCost": 13500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "OS",
+    "buildingTypeDescription": "OS - Open Space",
+    "baseCost": 8304.54,
+    "matrixYear": 2025,
+    "sourceMatrixId": 3305,
+    "matrixDescription": "Benton County West Benton - OS - Open Space",
+    "dataPoints": 11,
+    "minCost": 2000.0,
+    "maxCost": 13500.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "Central Benton",
+    "buildingType": "PF",
+    "buildingTypeDescription": "PF - Public Facility",
+    "baseCost": 40866.67,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1414,
+    "matrixDescription": "Benton County Central Benton - PF - Public Facility",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "East Benton",
+    "buildingType": "PF",
+    "buildingTypeDescription": "PF - Public Facility",
+    "baseCost": 38823.34,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1414,
+    "matrixDescription": "Benton County East Benton - PF - Public Facility",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  },
+  {
+    "region": "West Benton",
+    "buildingType": "PF",
+    "buildingTypeDescription": "PF - Public Facility",
+    "baseCost": 42910.0,
+    "matrixYear": 2025,
+    "sourceMatrixId": 1414,
+    "matrixDescription": "Benton County West Benton - PF - Public Facility",
+    "dataPoints": 9,
+    "minCost": 20000.0,
+    "maxCost": 80000.0,
+    "adjustmentFactors": {
+      "complexity": 1.0,
+      "quality": 1.0,
+      "condition": 1.0
+    },
+    "county": "Benton",
+    "state": "WA"
+  }
+]
