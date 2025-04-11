@@ -275,8 +275,11 @@ const Dashboard = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
+          <TabsTrigger value="command">Command Structure</TabsTrigger>
+          <TabsTrigger value="mcps">MCP Processes</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="training">Training</TabsTrigger>
+          <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -532,6 +535,302 @@ const Dashboard = () => {
                     <span className="text-sm font-medium">Average Completion Time</span>
                     <span className="text-sm font-medium">{data.taskMetrics.averageCompletionTimeMs}ms</span>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="command">
+          <div className="grid grid-cols-1 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Command Structure</CardTitle>
+                <CardDescription>
+                  ARCHITECT PRIME → INTEGRATION COORDINATOR → COMPONENT LEADS → SPECIALIST AGENTS
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  {/* Top Level: Architect Prime */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Architect Prime</h3>
+                    {data.commandStructure.architectPrime ? (
+                      <div className="bg-slate-50 p-4 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">{data.commandStructure.architectPrime.name}</div>
+                            <div className="text-sm text-gray-500">ID: {data.commandStructure.architectPrime.id}</div>
+                          </div>
+                          <div>
+                            {getStatusBadge(data.commandStructure.architectPrime.status)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Architect Prime assigned</div>
+                    )}
+                  </div>
+                  
+                  {/* Second Level: Integration Coordinator */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Integration Coordinator</h3>
+                    {data.commandStructure.integrationCoordinator ? (
+                      <div className="bg-slate-50 p-4 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">{data.commandStructure.integrationCoordinator.name}</div>
+                            <div className="text-sm text-gray-500">ID: {data.commandStructure.integrationCoordinator.id}</div>
+                          </div>
+                          <div>
+                            {getStatusBadge(data.commandStructure.integrationCoordinator.status)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Integration Coordinator assigned</div>
+                    )}
+                  </div>
+                  
+                  {/* Third Level: Component Leads */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Component Leads</h3>
+                    {Object.keys(data.commandStructure.componentLeads).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(data.commandStructure.componentLeads).map(([key, lead]) => (
+                          <div key={key} className="bg-slate-50 p-4 rounded-md">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">{lead.name}</div>
+                                <div className="text-xs text-gray-500">Component: {key}</div>
+                              </div>
+                              <div>
+                                {getStatusBadge(lead.status)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Component Leads assigned</div>
+                    )}
+                  </div>
+                  
+                  {/* Fourth Level: Specialist Agents */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Specialist Agents</h3>
+                    {Object.keys(data.commandStructure.specialistAgents).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(data.commandStructure.specialistAgents).map(([key, agent]) => (
+                          <div key={key} className="bg-slate-50 p-4 rounded-md">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">{agent.name}</div>
+                                <div className="text-xs text-gray-500">Specialty: {key}</div>
+                              </div>
+                              <div>
+                                {getStatusBadge(agent.status)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Specialist Agents assigned</div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="mcps">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Assessment Calculation MCP */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Assessment Calculation MCP</CardTitle>
+                <CardDescription>
+                  Input Processing → Calculation Engine → Output Generation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">Status</div>
+                    <div>{getStatusBadge(data.mcpMetrics.assessmentCalculation.status)}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="font-medium mb-2">Processing Stages</div>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Input Processing</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.activeAgents}/
+                            {data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.status)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Calculation Engine</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.activeAgents}/
+                            {data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.status)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Output Generation</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.activeAgents}/
+                            {data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.status)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Geospatial Integration MCP */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Geospatial Integration MCP</CardTitle>
+                <CardDescription>
+                  Data Ingestion → Spatial Analytics → Visualization Generation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">Status</div>
+                    <div>{getStatusBadge(data.mcpMetrics.geospatialIntegration.status)}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="font-medium mb-2">Processing Stages</div>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Data Ingestion</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.activeAgents}/
+                            {data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.status)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Spatial Analytics</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.activeAgents}/
+                            {data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.status)}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-slate-50 p-3 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium">Visualization Generation</div>
+                          <div className="text-sm">
+                            {data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.activeAgents}/
+                            {data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.totalAgents} agents
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.status)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="communication">
+          <div className="grid grid-cols-1 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Communication Metrics</CardTitle>
+                <CardDescription>
+                  Agent message exchange and communication patterns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-slate-50 p-4 rounded-md">
+                    <div className="text-2xl font-bold">
+                      {data.communicationMetrics.messageCount}
+                    </div>
+                    <div className="text-sm text-gray-500">Total messages exchanged</div>
+                  </div>
+                  
+                  <div className="bg-slate-50 p-4 rounded-md md:col-span-2">
+                    <div className="font-medium mb-2">Message Types</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(data.communicationMetrics.messagesByType).map(([type, count]) => (
+                        <div key={type} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                          {type}: {count}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="font-medium mb-2">Latest Messages</div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>From</TableHead>
+                        <TableHead>To</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.communicationMetrics.latestMessages.map((message) => (
+                        <TableRow key={message.id}>
+                          <TableCell className="font-medium">{message.from}</TableCell>
+                          <TableCell>{message.to}</TableCell>
+                          <TableCell>
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                              {message.type}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(message.timestamp)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>

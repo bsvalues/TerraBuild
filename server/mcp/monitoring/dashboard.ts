@@ -240,72 +240,96 @@ export function getDashboardMetrics(): DashboardMetrics {
   
   // Add Architect Prime if available
   if (agentRegistry.commandStructure?.architectPrime) {
-    const apAgent = agentRegistry.commandStructure.architectPrime;
-    const apId = apAgent.getDefinition().id;
-    const apHealth = agentHealthStatus[apId] || { 
-      status: 'UNKNOWN', 
-      lastHeartbeat: new Date() 
-    };
-    
-    commandStructureMetrics.architectPrime = {
-      id: apId,
-      name: apAgent.getDefinition().name,
-      status: apHealth.status,
-      lastHeartbeat: apHealth.lastHeartbeat.toISOString()
-    };
+    try {
+      const apAgent = agentRegistry.commandStructure.architectPrime;
+      const apId = apAgent.getDefinition().id;
+      const apHealth = agentHealthStatus[apId] || { 
+        status: 'UNKNOWN', 
+        lastHeartbeat: new Date() 
+      };
+      
+      commandStructureMetrics.architectPrime = {
+        id: apId,
+        name: apAgent.getDefinition().name,
+        status: apHealth.status,
+        lastHeartbeat: apHealth.lastHeartbeat.toISOString()
+      };
+    } catch (error) {
+      console.warn('Error getting Architect Prime metrics:', error);
+    }
   }
   
   // Add Integration Coordinator if available
   if (agentRegistry.commandStructure?.integrationCoordinator) {
-    const icAgent = agentRegistry.commandStructure.integrationCoordinator;
-    const icId = icAgent.getDefinition().id;
-    const icHealth = agentHealthStatus[icId] || { 
-      status: 'UNKNOWN', 
-      lastHeartbeat: new Date() 
-    };
-    
-    commandStructureMetrics.integrationCoordinator = {
-      id: icId,
-      name: icAgent.getDefinition().name,
-      status: icHealth.status,
-      lastHeartbeat: icHealth.lastHeartbeat.toISOString()
-    };
+    try {
+      const icAgent = agentRegistry.commandStructure.integrationCoordinator;
+      const icId = icAgent.getDefinition().id;
+      const icHealth = agentHealthStatus[icId] || { 
+        status: 'UNKNOWN', 
+        lastHeartbeat: new Date() 
+      };
+      
+      commandStructureMetrics.integrationCoordinator = {
+        id: icId,
+        name: icAgent.getDefinition().name,
+        status: icHealth.status,
+        lastHeartbeat: icHealth.lastHeartbeat.toISOString()
+      };
+    } catch (error) {
+      console.warn('Error getting Integration Coordinator metrics:', error);
+    }
   }
   
   // Add Component Leads
-  for (const [name, agent] of Object.entries(agentRegistry.commandStructure?.componentLeads || {})) {
-    if (!agent) continue;
-    
-    const id = agent.getDefinition().id;
-    const health = agentHealthStatus[id] || { 
-      status: 'UNKNOWN', 
-      lastHeartbeat: new Date() 
-    };
-    
-    commandStructureMetrics.componentLeads[name] = {
-      id,
-      name: agent.getDefinition().name,
-      status: health.status,
-      lastHeartbeat: health.lastHeartbeat.toISOString()
-    };
+  try {
+    const componentLeads = agentRegistry.commandStructure?.componentLeads || {};
+    for (const name in componentLeads) {
+      if (!Object.prototype.hasOwnProperty.call(componentLeads, name)) continue;
+      
+      const agent = componentLeads[name];
+      if (!agent) continue;
+      
+      const id = agent.getDefinition().id;
+      const health = agentHealthStatus[id] || { 
+        status: 'UNKNOWN', 
+        lastHeartbeat: new Date() 
+      };
+      
+      commandStructureMetrics.componentLeads[name] = {
+        id,
+        name: agent.getDefinition().name,
+        status: health.status,
+        lastHeartbeat: health.lastHeartbeat.toISOString()
+      };
+    }
+  } catch (error) {
+    console.warn('Error getting Component Leads metrics:', error);
   }
   
   // Add Specialist Agents
-  for (const [name, agent] of Object.entries(agentRegistry.commandStructure?.specialistAgents || {})) {
-    if (!agent) continue;
-    
-    const id = agent.getDefinition().id;
-    const health = agentHealthStatus[id] || { 
-      status: 'UNKNOWN', 
-      lastHeartbeat: new Date() 
-    };
-    
-    commandStructureMetrics.specialistAgents[name] = {
-      id,
-      name: agent.getDefinition().name,
-      status: health.status,
-      lastHeartbeat: health.lastHeartbeat.toISOString()
-    };
+  try {
+    const specialistAgents = agentRegistry.commandStructure?.specialistAgents || {};
+    for (const name in specialistAgents) {
+      if (!Object.prototype.hasOwnProperty.call(specialistAgents, name)) continue;
+      
+      const agent = specialistAgents[name];
+      if (!agent) continue;
+      
+      const id = agent.getDefinition().id;
+      const health = agentHealthStatus[id] || { 
+        status: 'UNKNOWN', 
+        lastHeartbeat: new Date() 
+      };
+      
+      commandStructureMetrics.specialistAgents[name] = {
+        id,
+        name: agent.getDefinition().name,
+        status: health.status,
+        lastHeartbeat: health.lastHeartbeat.toISOString()
+      };
+    }
+  } catch (error) {
+    console.warn('Error getting Specialist Agents metrics:', error);
   }
   
   // Process MCP metrics for Assessment Calculation
