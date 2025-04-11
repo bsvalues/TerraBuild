@@ -265,6 +265,17 @@ export default function TopNavMenu() {
                     icon={<BrainCircuit className="h-4 w-4" />}
                   />
                   <NavLink
+                    href="/mcp-overview"
+                    label="MCP Framework"
+                    icon={<BrainCircuit className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/mcp-dashboard"
+                    label="MCP Dashboard"
+                    icon={<Activity className="h-4 w-4" />}
+                    className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                  />
+                  <NavLink
                     href="/ar-visualization"
                     label="AR Visualization"
                     icon={<Glasses className="h-4 w-4" />}
