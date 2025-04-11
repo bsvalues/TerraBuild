@@ -185,7 +185,7 @@ export function createCostMatrixImportRouter(storageImpl: IStorage): Router {
       
       // Process the cost matrix file in validate-only mode
       const results = await processCostMatrixFile(
-        storage,
+        storageImpl,
         req.file.buffer,
         100, // batch size
         options
