@@ -76,13 +76,21 @@ def import_improvement_items(conn, file_path, existing_property_ids):
                 # Clean values
                 bedrooms = clean_value(row.get('bedrooms', row.get('BEDROOMS', None)))
                 baths = clean_value(row.get('baths', row.get('BATHS', None)))
-                half_bath = clean_value(row.get('half_bath', row.get('HALF_BATH', None)))
+                halfbath = clean_value(row.get('halfbath', row.get('HALFBATH', None)))
                 foundation = clean_value(row.get('foundation', row.get('FOUNDATION', None)))
-                ext_wall = clean_value(row.get('ext_wall', row.get('EXT_WALL', None)))
-                roof = clean_value(row.get('roof', row.get('ROOF', None)))
-                heat = clean_value(row.get('heat', row.get('HEAT', None)))
-                ac = clean_value(row.get('ac', row.get('AC', None)))
+                extwall_desc = clean_value(row.get('extwall_desc', row.get('EXTWALL_DESC', None)))
+                roofcover_desc = clean_value(row.get('roofcover_desc', row.get('ROOFCOVER_DESC', None)))
+                hvac_desc = clean_value(row.get('hvac_desc', row.get('HVAC_DESC', None)))
                 fireplaces = clean_value(row.get('fireplaces', row.get('FIREPLACES', None)))
+                sprinkler_val = clean_value(row.get('sprinkler', row.get('SPRINKLER', None)))
+                # Convert sprinkler to boolean if not None
+                sprinkler = None
+                if sprinkler_val is not None:
+                    if sprinkler_val.lower() in ('true', 't', 'yes', 'y', '1'):
+                        sprinkler = True
+                    elif sprinkler_val.lower() in ('false', 'f', 'no', 'n', '0'):
+                        sprinkler = False
+                framing_class = clean_value(row.get('framing_class', row.get('FRAMING_CLASS', None)))
                 com_hvac = clean_value(row.get('com_hvac', row.get('COM_HVAC', None)))
                 
                 cursor.execute("""
@@ -93,16 +101,17 @@ def import_improvement_items(conn, file_path, existing_property_ids):
                         imprv_id,
                         bedrooms,
                         baths,
-                        half_bath,
+                        halfbath,
                         foundation,
-                        ext_wall,
-                        roof,
-                        heat,
-                        ac,
+                        extwall_desc,
+                        roofcover_desc,
+                        hvac_desc,
                         fireplaces,
+                        sprinkler,
+                        framing_class,
                         com_hvac
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                 """, (
                     now,
@@ -111,13 +120,14 @@ def import_improvement_items(conn, file_path, existing_property_ids):
                     imprv_id_int,
                     bedrooms,
                     baths,
-                    half_bath,
+                    halfbath,
                     foundation,
-                    ext_wall,
-                    roof,
-                    heat,
-                    ac,
+                    extwall_desc,
+                    roofcover_desc,
+                    hvac_desc,
                     fireplaces,
+                    sprinkler,
+                    framing_class,
                     com_hvac
                 ))
                 count += 1
