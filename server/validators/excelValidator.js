@@ -11,12 +11,12 @@ import { spawnSync } from 'child_process';
 
 /**
  * Validate an Excel file to ensure it meets all requirements
- * @param {string} filePath - Path to the Excel file
+ * @param {string|Buffer|any} filePathOrBuffer - Path to the Excel file or file buffer
  * @param {Object} options - Validation options
  * @returns {Object} Validation result with isValid flag and any errors
  */
-async function validateExcelFile(filePath, options = {}) {
-  console.log(`Validating Excel file: ${filePath}`);
+async function validateExcelFile(filePathOrBuffer, options = {}) {
+  console.log(`Validating Excel file: ${typeof filePathOrBuffer === 'string' ? filePathOrBuffer : 'from buffer'}`);
   
   const result = {
     isValid: true,
@@ -25,8 +25,29 @@ async function validateExcelFile(filePath, options = {}) {
     info: {}
   };
   
+  let tempFilePath = null;
+  let filePath = filePathOrBuffer;
+  
+  // If buffer is provided, write it to a temporary file
+  if (Buffer.isBuffer(filePathOrBuffer)) {
+    try {
+      const tempDir = path.join(process.cwd(), 'temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      tempFilePath = path.join(tempDir, `temp-${Date.now()}.xlsx`);
+      fs.writeFileSync(tempFilePath, filePathOrBuffer);
+      filePath = tempFilePath;
+    } catch (error) {
+      result.isValid = false;
+      result.errors.push(`Failed to create temp file from buffer: ${error.message}`);
+      return result;
+    }
+  }
+  
   // Ensure file exists
-  if (!fs.existsSync(filePath)) {
+  if (typeof filePath === 'string' && !fs.existsSync(filePath)) {
     result.isValid = false;
     result.errors.push(`File not found: ${filePath}`);
     return result;
@@ -93,6 +114,15 @@ async function validateExcelFile(filePath, options = {}) {
   } catch (error) {
     result.isValid = false;
     result.errors.push(`Failed to parse validation result: ${error.message}`);
+  } finally {
+    // Clean up temporary file if we created one
+    if (tempFilePath) {
+      try {
+        fs.unlinkSync(tempFilePath);
+      } catch (cleanupError) {
+        console.error(`Error cleaning up temp file: ${cleanupError.message}`);
+      }
+    }
   }
   
   return result;

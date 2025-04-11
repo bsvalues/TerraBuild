@@ -967,20 +967,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
       
-      const filePath = req.file.path;
-      
-      // Validate Excel file
-      const validationResult = await validateExcelFile(filePath, {
+      // Validate Excel file using buffer
+      const validationResult = await validateExcelFile(req.file.buffer, {
         strictMode: req.body.strictMode === 'true',
         checkDataTypes: true
       });
       
-      // Clean up the uploaded file
-      fs.unlinkSync(filePath);
-      
       // Return validation result
       res.json(validationResult);
     } catch (error: any) {
+      console.error("Excel validation error:", error);
       res.status(500).json({ message: `Error validating Excel file: ${error.message}` });
     }
   });
@@ -994,7 +990,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No files uploaded" });
       }
       
-      const filePaths = files.map(file => file.path);
+      // Create temporary files from buffers
+      const tempDir = path.join(process.cwd(), 'temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const filePaths = [];
+      for (const file of files) {
+        const tempFilePath = path.join(tempDir, `temp-${Date.now()}-${file.originalname}`);
+        fs.writeFileSync(tempFilePath, file.buffer);
+        filePaths.push(tempFilePath);
+      }
       
       const options = {
         detectDuplicates: req.body.detectDuplicates === 'true',
@@ -1024,6 +1031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return import result
       res.json(importResult);
     } catch (error: any) {
+      console.error("Batch import error:", error);
       res.status(500).json({ message: `Error processing batch import: ${error.message}` });
     }
   });
