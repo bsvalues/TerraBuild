@@ -125,9 +125,10 @@ export function useWhatIfScenarios() {
       refetchOnWindowFocus: false,
       // Skip invalid scenario IDs (like our -1 placeholder)
       enabled: scenarioId > 0,
-      onError: (error) => {
-        console.error(`Error fetching variations for scenario ${scenarioId}:`, error);
-      }
+      // Handle errors gracefully
+      retry: 1,
+      // TanStack Query v5 doesn't have onError in options (it's in the result)
+      // Error handling happens in the component via .isError and .error
     });
 
   // Get impact analysis for a scenario
@@ -137,9 +138,10 @@ export function useWhatIfScenarios() {
       refetchOnWindowFocus: false,
       // Skip invalid scenario IDs (like our -1 placeholder)
       enabled: scenarioId > 0,
-      onError: (error) => {
-        console.error(`Error fetching impact analysis for scenario ${scenarioId}:`, error);
-      }
+      // Handle errors gracefully
+      retry: 1,
+      // TanStack Query v5 doesn't have onError in options (it's in the result)
+      // Error handling happens in the component via .isError and .error
     });
 
   // Create a new scenario

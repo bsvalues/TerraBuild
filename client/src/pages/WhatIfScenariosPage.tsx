@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -365,6 +366,17 @@ export default function WhatIfScenariosPage() {
   
   // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF6B6B'];
+  
+  // Add effect to log any errors with API calls
+  useEffect(() => {
+    if (scenarioVariationsQuery.isError) {
+      console.error('Error loading scenario variations:', scenarioVariationsQuery.error);
+    }
+    if (scenarioImpactQuery.isError) {
+      console.error('Error loading scenario impact analysis:', scenarioImpactQuery.error);
+    }
+  }, [scenarioVariationsQuery.isError, scenarioImpactQuery.isError, 
+      scenarioVariationsQuery.error, scenarioImpactQuery.error]);
   
   return (
     <LayoutWrapper>
