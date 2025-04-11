@@ -8,9 +8,10 @@
 
 import { FunctionResponse } from '../schemas/types';
 import { BaseAgent, AgentEventType } from './baseAgent';
-import { dataQualityFramework } from '../../data-quality/framework';
-import { propertyRules } from '../../data-quality/property-rules';
-import { costMatrixRules } from '../../data-quality/cost-matrix-rules';
+import { DataQualityValidator, allPropertyRules, costMatrixRules } from '../../data-quality';
+
+// Create a data quality validator instance
+const dataQualityFramework = new DataQualityValidator([...allPropertyRules, ...costMatrixRules]);
 
 // Types for data validation
 interface DataQualityValidationRequest {
@@ -147,7 +148,7 @@ export class DataQualityAgent extends BaseAgent {
       
       switch (request.entityType) {
         case 'property':
-          validationResults = await dataQualityFramework.validateEntity('property', request.data, propertyRules);
+          validationResults = await dataQualityFramework.validateEntity('property', request.data, allPropertyRules);
           break;
         case 'cost_matrix':
           validationResults = await dataQualityFramework.validateEntity('cost_matrix', request.data, costMatrixRules);
@@ -155,7 +156,7 @@ export class DataQualityAgent extends BaseAgent {
         case 'improvement':
         case 'land':
           // Use specialized rules or property rules as a fallback
-          validationResults = await dataQualityFramework.validateEntity(request.entityType, request.data, propertyRules);
+          validationResults = await dataQualityFramework.validateEntity(request.entityType, request.data, allPropertyRules);
           break;
         default:
           return {
@@ -276,7 +277,7 @@ export class DataQualityAgent extends BaseAgent {
       // Validate each record
       for (const record of dataSet.records) {
         // Determine rule set based on entity type
-        const ruleSet = dataSet.entityType === 'cost_matrix' ? costMatrixRules : propertyRules;
+        const ruleSet = dataSet.entityType === 'cost_matrix' ? costMatrixRules : allPropertyRules;
         
         // Validate the record
         const result = await dataQualityFramework.validateEntity(dataSet.entityType, record, ruleSet);
