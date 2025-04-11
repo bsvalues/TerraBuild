@@ -202,7 +202,7 @@ const PropertyDetailsPage = () => {
 
   return (
     <LayoutWrapper>
-      <MainContent>
+      <MainContent title="Property Details">
         <div className="flex items-center gap-2 mb-6">
           <Link href="/properties">
             <Button variant="outline" size="sm">

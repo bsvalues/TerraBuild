@@ -98,7 +98,7 @@ const PropertyBrowserPage = () => {
 
   return (
     <LayoutWrapper>
-      <MainContent>
+      <MainContent title="Property Browser">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Property Browser</h1>
