@@ -1,0 +1,151 @@
+Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+www.google-analytics.com/analytics.js:1 
+            
+            
+            Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+googleads.g.doubleclick.net/pagead/viewthroughconversion/11411994397/?random=1744330358921&cv=11&fst=1744330358921&bg=ffffff&guid=ON&async=1&gtm=45be5490v9171242957za200&gcd=13l3l3l3l1l1&dma=0&tag_exp=102509683~102788824~102803279~102813109~102887800~102926062~103021830~103027016~103047562~103050889~103051953&u_w=1920&u_h=1080&url=https%3A%2F%2Freplit.com%2Ft%2Fbenton-county-assessor%2Frepls%2FBCBSCostCalculator&ref=https%3A%2F%2Freplit.com%2Ft%2Fbenton-county-assessor%2Frepls&hn=www.googleadservices.com&frm=0&tiba=-%20Replit&npa=0&pscdl=noapi&auid=192533405.1737348619&fledge=1&data=event%3Dgtag.config&rfmt=3&fmt=4:1 
+            
+            
+            Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+BCBSCostCalculator:1  Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: div
+Ancestor with aria-hidden:  <div class=​" useView_view__C2mnv css-1gdmsm6 Surface_surfaceDefault__TcNI5" aria-hidden=​"true" style=​"--useView--gap:​ 4px;​ --borderColor:​ var(--outline-dimmer)​;​ --focusedBorderColor:​ var(--accent-primary-default)​;​ --hoverBorderColor:​ var(--accent-primary-default)​;​">​…​</div>​flex
+18Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+background.js:1  Uncaught SyntaxError: Invalid or unexpected token
+2_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+2_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//what-if-scenarios' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//visualizations' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//what-if-scenarios' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//tutorials' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//analytics' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+5_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+cf52961e-57b1-49f9-8….kirk.replit.dev/:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+cf52961e-57b1-49f9-8….kirk.replit.dev/:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/:1 
+            
+            
+            Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+cf52961e-57b1-49f9-8….kirk.replit.dev/:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+cf52961e-57b1-49f9-8….kirk.replit.dev/:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//calculator' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+_app-a5eb14e38d7cc79c.js:13  Invalid href 'https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev//what-if-scenarios' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-a5eb14e38d7cc79c.js:13
+cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/api/what-if-scenarios:1 
+            
+            
+            Failed to load resource: the server responded with a status of 400 (Bad Request)
+Console.js:61  API request failed: Error: [object Object]
+    at apiRequest (useWhatIfScenarios.ts:58:13)
+Mt.forEach.n.<computed> @ Console.js:61
+what-if-scenarios:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+what-if-scenarios:1  Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON

@@ -44,7 +44,22 @@ const apiRequest = async <T>(
       try {
         // Try to parse as JSON if possible
         const errorJson = JSON.parse(responseText);
-        errorMessage = errorJson.message || `API error: ${response.status}`;
+        
+        // Check for validation errors from Zod
+        if (Array.isArray(errorJson.message)) {
+          // This is a Zod validation error
+          const validationErrors = errorJson.message;
+          // Format error message to be more user-friendly
+          if (validationErrors.some(err => err.path.includes('userId'))) {
+            console.error("Authentication error: Missing userId. This might be due to running in dev mode.");
+            errorMessage = "Authentication error - please retry your operation";
+          } else {
+            errorMessage = "Validation error: " + validationErrors.map(err => 
+              `${err.path.join('.')}: ${err.message}`).join(', ');
+          }
+        } else {
+          errorMessage = errorJson.message || `API error: ${response.status}`;
+        }
       } catch (parseError) {
         // Handle case where response is HTML (e.g., auth redirect)
         if (responseText.includes("<!DOCTYPE html>")) {
@@ -146,11 +161,18 @@ export function useWhatIfScenarios() {
 
   // Create a new scenario
   const createScenario = useMutation({
-    mutationFn: (data: Omit<WhatIfScenario, "id" | "createdAt" | "updatedAt" | "userId" | "isSaved">) => 
-      apiRequest<WhatIfScenario>("/api/what-if-scenarios", {
+    mutationFn: (data: Omit<WhatIfScenario, "id" | "createdAt" | "updatedAt" | "userId" | "isSaved">) => {
+      // In development mode, add a mock userId (since authentication is disabled)
+      const payload = {
+        ...data,
+        userId: 1 // Using userId 1 for development as that's the mock admin user
+      };
+      
+      return apiRequest<WhatIfScenario>("/api/what-if-scenarios", {
         method: "POST",
-        body: JSON.stringify(data),
-      }),
+        body: JSON.stringify(payload),
+      });
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         predicate: (query) => 
