@@ -222,12 +222,12 @@ async function importImprovements(
           imprvId: parseInt(record.IMPRV_ID || '0'),
           propId: parseInt(record.PROP_ID || '0'),
           imprvDesc: record.IMPRV_DESC || null,
-          imprvVal: record.IMPRV_VAL ? parseFloat(record.IMPRV_VAL) : null,
-          livingArea: record.LIVING_AREA ? parseFloat(record.LIVING_AREA) : null,
+          imprvVal: record.IMPRV_VAL ? record.IMPRV_VAL.toString() : null,
+          livingArea: record.LIVING_AREA ? record.LIVING_AREA.toString() : null,
           primaryUseCd: record.PRIMARY_USE_CD || null,
-          stories: record.STORIES ? parseFloat(record.STORIES) : null,
+          stories: record.STORIES ? record.STORIES.toString() : null,
           actualYearBuilt: record.ACTUAL_YEAR_BUILT ? parseInt(record.ACTUAL_YEAR_BUILT) : null,
-          totalArea: record.TOTAL_AREA ? parseFloat(record.TOTAL_AREA) : null
+          totalArea: record.TOTAL_AREA ? record.TOTAL_AREA.toString() : null
         };
         
         batch.push(improvement);
@@ -296,16 +296,16 @@ async function importImprovementDetails(
         const detail: InsertImprovementDetail = {
           propId: parseInt(record.PROP_ID || '0'),
           imprvId: parseInt(record.IMPRV_ID || '0'),
-          livingArea: record.LIVING_AREA ? parseFloat(record.LIVING_AREA).toString() : null,
-          belowGradeLivingArea: record.BELOW_GRADE_LIVING_AREA ? parseFloat(record.BELOW_GRADE_LIVING_AREA).toString() : null,
+          livingArea: record.LIVING_AREA ? record.LIVING_AREA.toString() : null,
+          belowGradeLivingArea: record.BELOW_GRADE_LIVING_AREA ? record.BELOW_GRADE_LIVING_AREA.toString() : null,
           conditionCd: record.CONDITION_CD || null,
           imprvDetSubClassCd: record.IMPRV_DET_SUB_CLASS_CD || null,
           yrBuilt: record.YR_BUILT ? parseInt(record.YR_BUILT) : null,
           actualAge: record.ACTUAL_AGE ? parseInt(record.ACTUAL_AGE) : null,
-          numStories: record.NUM_STORIES ? parseFloat(record.NUM_STORIES).toString() : null,
+          numStories: record.NUM_STORIES ? record.NUM_STORIES.toString() : null,
           imprvDetTypeCd: record.IMPRV_DET_TYPE_CD || null,
           imprvDetDesc: record.IMPRV_DET_DESC || null,
-          imprvDetArea: record.IMPRV_DET_AREA ? parseFloat(record.IMPRV_DET_AREA).toString() : null,
+          imprvDetArea: record.IMPRV_DET_AREA ? record.IMPRV_DET_AREA.toString() : null,
           imprvDetClassCd: record.IMPRV_DET_CLASS_CD || null
         };
         
@@ -375,14 +375,14 @@ async function importImprovementItems(
         const item: InsertImprovementItem = {
           propId: parseInt(record.PROP_ID || '0'),
           imprvId: parseInt(record.IMPRV_ID || '0'),
-          bedrooms: record.BEDROOMS ? parseFloat(record.BEDROOMS).toString() : null,
-          baths: record.BATHS ? parseFloat(record.BATHS).toString() : null,
-          halfBath: record.HALFBATH ? parseFloat(record.HALFBATH).toString() : null,
+          bedrooms: record.BEDROOMS ? record.BEDROOMS.toString() : null,
+          baths: record.BATHS ? record.BATHS.toString() : null,
+          halfBath: record.HALFBATH ? record.HALFBATH.toString() : null,
           foundation: record.FOUNDATION || null,
           extwallDesc: record.EXTWALL_DESC || null,
           roofcoverDesc: record.ROOFCOVER_DESC || null,
           hvacDesc: record.HVAC_DESC || null,
-          fireplaces: record.FIREPLACES ? parseFloat(record.FIREPLACES).toString() : null,
+          fireplaces: record.FIREPLACES ? record.FIREPLACES.toString() : null,
           sprinkler: record.SPRINKLER === 'true' || record.SPRINKLER === '1',
           framingClass: record.FRAMING_CLASS || null,
           comHvac: record.COM_HVAC || null
@@ -453,8 +453,8 @@ async function importLandDetails(
         // Convert CSV record to land detail data model
         const detail: InsertLandDetail = {
           propId: parseInt(record.PROP_ID || '0'),
-          sizeAcres: record.SIZE_ACRES ? parseFloat(record.SIZE_ACRES).toString() : null,
-          sizeSquareFeet: record.SIZE_SQUARE_FEET ? parseFloat(record.SIZE_SQUARE_FEET).toString() : null,
+          sizeAcres: record.SIZE_ACRES ? record.SIZE_ACRES.toString() : null,
+          sizeSquareFeet: record.SIZE_SQUARE_FEET ? record.SIZE_SQUARE_FEET.toString() : null,
           landTypeCd: record.LAND_TYPE_CD || null,
           landSoilCode: record.LAND_SOIL_CODE || null,
           agUseCd: record.AG_USE_CD || null,
