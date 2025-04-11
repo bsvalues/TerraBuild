@@ -14,7 +14,7 @@ from datetime import datetime
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # Maximum number of records to import from each file
-MAX_RECORDS = 500
+MAX_RECORDS = 150
 
 def connect_to_db():
     """Connect to the PostgreSQL database"""
