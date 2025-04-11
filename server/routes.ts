@@ -44,6 +44,7 @@ import ftpRoutes from "./routes/ftpRoutes";
 import ftpConnectionRoutes from "./routes/ftpConnectionRoutes";
 import { initSchedulerRoutes } from "./routes/schedulerRoutes";
 import costCalculationRoutes from "./routes/costCalculationRoutes";
+import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1995,6 +1996,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.use('/api/ftp', ftpRoutes);
     app.use('/api/ftp-connections', ftpConnectionRoutes);
     app.use('/api/scheduler', initSchedulerRoutes(storage));
+    app.use('/', createCostMatrixImportRouter(storage));
     app.use('/api', costCalculationRoutes);
     
     // Log the new data connector APIs
@@ -2002,6 +2004,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       action: "Enhanced data connector APIs added (FTP, ArcGIS, SQL Server, FTP Sync)",
       icon: "plug",
       iconColor: "success"
+    });
+    
+    // Log the cost matrix import API
+    await storage.createActivity({
+      action: "Cost Matrix Import API with data quality validation added",
+      icon: "ri-database-2-line",
+      iconColor: "primary"
     });
     
     console.log('MCP framework initialized successfully');

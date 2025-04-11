@@ -6,17 +6,15 @@
  */
 
 import { 
-  Rule, 
   RuleType, 
   Severity, 
-  ValidationContext, 
-  ValidationResult,
-  ValidationReport,
   DataQualityValidator,
   createRule,
   createZodRule,
-  createBatchQualityReport
+  createBatchQualityReport,
+  ValidationReport
 } from './framework';
+import type { Rule, ValidationContext, ValidationResult } from './framework';
 
 import { 
   allPropertyRules,

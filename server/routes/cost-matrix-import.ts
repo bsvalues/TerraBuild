@@ -12,7 +12,7 @@ import { IStorage } from '../storage';
 import { Severity, RuleType, initializeDataQualityFramework } from '../data-quality';
 import { processCostMatrixFile } from '../cost-matrix-import-enhanced';
 import fs from 'fs';
-import { Json } from 'drizzle-orm/pg-core';
+import { json } from 'drizzle-orm/pg-core';
 
 // Initialize the data quality framework
 const validator = initializeDataQualityFramework();
@@ -95,7 +95,7 @@ export function createCostMatrixImportRouter(storage: IStorage): Router {
         status: results.errors > 0 ? 'COMPLETED_WITH_ERRORS' : 'COMPLETED',
         processedItems: results.processed,
         errorCount: results.errors,
-        errors: results.quality as Json
+        errors: results.quality as unknown
       });
       
       return res.status(200).json({
