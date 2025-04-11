@@ -50,11 +50,11 @@ const apiRequest = async <T>(
           // This is a Zod validation error
           const validationErrors = errorJson.message;
           // Format error message to be more user-friendly
-          if (validationErrors.some(err => err.path.includes('userId'))) {
+          if (validationErrors.some((err: { path: string[] }) => err.path.includes('userId'))) {
             console.error("Authentication error: Missing userId. This might be due to running in dev mode.");
             errorMessage = "Authentication error - please retry your operation";
           } else {
-            errorMessage = "Validation error: " + validationErrors.map(err => 
+            errorMessage = "Validation error: " + validationErrors.map((err: { path: string[]; message: string }) => 
               `${err.path.join('.')}: ${err.message}`).join(', ');
           }
         } else {

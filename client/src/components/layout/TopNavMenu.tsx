@@ -1,0 +1,328 @@
+import React, { useState, useEffect } from 'react';
+import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import bentonSeal from '@assets/BC.png';
+import {
+  Home,
+  Calculator,
+  BarChart3,
+  BarChart2,
+  BrainCircuit,
+  Glasses,
+  LineChart,
+  Activity,
+  Database,
+  Map,
+  Users,
+  Share2,
+  BookOpen,
+  HelpCircle,
+  Settings,
+  Menu,
+  X
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { useAuth } from "@/hooks/use-auth";
+
+interface NavLinkProps {
+  href: string;
+  label: string;
+  icon?: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+const NavLink = ({ href, label, icon, className, onClick }: NavLinkProps) => {
+  const [location] = useLocation();
+  const isActive = location === href;
+
+  return (
+    <div 
+      className={cn(
+        "flex items-center px-3 py-2 text-sm font-medium transition-colors rounded-md cursor-pointer",
+        isActive 
+          ? "bg-[#e6eef2] text-[#243E4D] transform-gpu" 
+          : "text-muted-foreground hover:text-primary hover:bg-accent/30",
+        className
+      )}
+      onClick={(e) => {
+        if (onClick) onClick();
+        // Use the wouter navigation mechanism
+        window.history.pushState({}, '', href);
+        // Dispatch a popstate event to notify wouter of the change
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }}
+    >
+      {icon && (
+        <span className={cn("mr-2", isActive ? "text-[#29B7D3]" : "")}>
+          {icon}
+        </span>
+      )}
+      {label}
+    </div>
+  );
+};
+
+interface DropdownSectionProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+const DropdownSection = ({ label, children }: DropdownSectionProps) => (
+  <div className="mb-4">
+    <h4 className="font-medium text-sm text-muted-foreground mb-2 px-3">{label}</h4>
+    <div className="space-y-1">
+      {children}
+    </div>
+  </div>
+);
+
+export default function TopNavMenu() {
+  const [location] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Check screen size for responsive design
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  // Close mobile menu when navigating
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  }, [location, mobileMenuOpen]);
+
+  // Monitor window resize events
+  useEffect(() => {
+    const handleResize = () => {
+      // If window gets bigger, close mobile menu
+      if (window.innerWidth >= 768 && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mobileMenuOpen]);
+
+  return (
+    <>
+      {/* Mobile menu toggle button - only visible on small screens */}
+      <div className="md:hidden">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mr-2"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
+
+      {/* Desktop navigation - hidden on mobile unless menu is open */}
+      <NavigationMenu className={cn(
+        "max-w-full justify-start",
+        isMobile && !mobileMenuOpen ? "hidden" : "",
+        isMobile && mobileMenuOpen ? "fixed inset-0 bg-white z-50 pt-16 px-4 overflow-auto flex flex-col" : ""
+      )}>
+        <NavigationMenuList className={cn(
+          "flex", 
+          isMobile ? "flex-col w-full" : "flex-row"
+        )}>
+          <NavigationMenuItem className="mr-0">
+            <div
+              className="flex items-center space-x-2 mr-6 cursor-pointer"
+              onClick={() => {
+                window.history.pushState({}, '', '/');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+            >
+              <img src={bentonSeal} alt="Benton County Seal" className="h-8 w-8" />
+              <span className="font-semibold text-xl text-[#243E4D]">BCBS</span>
+            </div>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavLink
+              href="/"
+              label="Dashboard"
+              icon={<Home className="h-4 w-4" />}
+            />
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavLink
+              href="/calculator"
+              label="Cost Calculator"
+              icon={<Calculator className="h-4 w-4" />}
+            />
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className={cn(
+              location.includes('visualizations') || location.includes('what-if-scenarios') 
+                ? "bg-[#e6eef2] text-[#243E4D]" 
+                : ""
+            )}>
+              <LineChart className="h-4 w-4 mr-2" /> Analytics
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="grid grid-cols-2 gap-2 p-4 w-[500px]">
+                <DropdownSection label="Analytics">
+                  <NavLink
+                    href="/analytics"
+                    label="Analytics Dashboard"
+                    icon={<BarChart3 className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/benchmarking"
+                    label="Cost Benchmarking"
+                    icon={<BarChart2 className="h-4 w-4" />}
+                  />
+                </DropdownSection>
+                
+                <DropdownSection label="Advanced Analysis">
+                  <NavLink
+                    href="/visualizations"
+                    label="Visualization Lab"
+                    icon={<LineChart className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/what-if-scenarios"
+                    label="What-If Scenarios"
+                    icon={<Activity className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/regional-cost-comparison"
+                    label="Regional Comparison"
+                    icon={<Map className="h-4 w-4" />}
+                  />
+                </DropdownSection>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className={cn(
+              location.includes('data-') ? "bg-[#e6eef2] text-[#243E4D]" : ""
+            )}>
+              <Database className="h-4 w-4 mr-2" /> Data
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="grid grid-cols-2 gap-2 p-4 w-[500px]">
+                <DropdownSection label="Data Management">
+                  <NavLink
+                    href="/data-import"
+                    label="Data Import"
+                    icon={<Database className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/data-exploration"
+                    label="Data Exploration"
+                    icon={<Map className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/contextual-data"
+                    label="Contextual Data"
+                    icon={<BarChart2 className="h-4 w-4" />}
+                  />
+                </DropdownSection>
+                
+                <DropdownSection label="AI & Visualization">
+                  <NavLink
+                    href="/ai-tools"
+                    label="AI Tools"
+                    icon={<BrainCircuit className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/ar-visualization"
+                    label="AR Visualization"
+                    icon={<Glasses className="h-4 w-4" />}
+                  />
+                </DropdownSection>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          {isAdmin && (
+            <NavigationMenuItem>
+              <NavigationMenuTrigger className={cn(
+                location.includes('users') || location.includes('shared-projects') 
+                  ? "bg-[#e6eef2] text-[#243E4D]" 
+                  : ""
+              )}>
+                <Settings className="h-4 w-4 mr-2" /> Admin
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="p-4 w-[240px]">
+                  <DropdownSection label="Administration">
+                    <NavLink
+                      href="/users"
+                      label="User Management"
+                      icon={<Users className="h-4 w-4" />}
+                    />
+                    <NavLink
+                      href="/shared-projects"
+                      label="Shared Projects"
+                      icon={<Share2 className="h-4 w-4" />}
+                    />
+                    <NavLink
+                      href="/data-connections"
+                      label="Data Connections"
+                      icon={<Database className="h-4 w-4" />}
+                    />
+                  </DropdownSection>
+                </div>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+          )}
+
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className={cn(
+              location.includes('documentation') || location.includes('tutorials') || location.includes('faq') 
+                ? "bg-[#e6eef2] text-[#243E4D]" 
+                : ""
+            )}>
+              <HelpCircle className="h-4 w-4 mr-2" /> Help
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="p-4 w-[240px]">
+                <DropdownSection label="Help & Support">
+                  <NavLink
+                    href="/documentation"
+                    label="Documentation"
+                    icon={<BookOpen className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/tutorials"
+                    label="Tutorials"
+                    icon={<BookOpen className="h-4 w-4" />}
+                  />
+                  <NavLink
+                    href="/faq"
+                    label="FAQ"
+                    icon={<HelpCircle className="h-4 w-4" />}
+                  />
+                </DropdownSection>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </>
+  );
+}

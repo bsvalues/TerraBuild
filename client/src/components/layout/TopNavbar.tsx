@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, Bell, User, X } from 'lucide-react';
-import bentonSeal from '@assets/BC.png';
+import { Bell, User } from 'lucide-react';
+import TopNavMenu from './TopNavMenu';
 
 interface TopNavbarProps {
-  toggleSidebar: () => void;
+  toggleSidebar?: () => void; // Made optional for backward compatibility
 }
 
 export default function TopNavbar({ toggleSidebar }: TopNavbarProps) {
@@ -15,23 +15,10 @@ export default function TopNavbar({ toggleSidebar }: TopNavbarProps) {
   };
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-10 shadow-sm">
+    <header className="bg-white border-b border-border sticky top-0 z-30 shadow-sm">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar}
-            className="mr-2 text-muted-foreground"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center">
-            <img src={bentonSeal} alt="Benton County Seal" className="h-8 w-8 mr-2" />
-            <h1 className="font-semibold text-xl text-[#243E4D]">
-              BCBS
-            </h1>
-          </div>
+        <div className="flex-1 flex items-center">
+          <TopNavMenu />
         </div>
         
         <div className="flex items-center space-x-2">
