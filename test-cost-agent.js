@@ -2,7 +2,7 @@
  * Simple test for the Cost Estimation Agent
  */
 
-import { costEstimationAgent } from './server/mcp/agents/costEstimationAgent.js';
+import { costEstimationAgent } from './server/mcp/agents/costEstimationAgent.ts';
 
 console.log('Testing Cost Estimation Agent functionality...');
 
