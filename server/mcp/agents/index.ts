@@ -17,12 +17,14 @@ export * from './eventBus';
 export { dataQualityAgent } from './dataQualityAgent';
 export { complianceAgent } from './complianceAgent';
 export { costAnalysisAgent } from './costAnalysisAgent';
+export { costEstimationAgent } from './costEstimationAgent';
 
 // Export an agent registry object for easy access to all agents
 import { BaseAgent } from './baseAgent';
 import { dataQualityAgent } from './dataQualityAgent';
 import { complianceAgent } from './complianceAgent';
 import { costAnalysisAgent } from './costAnalysisAgent';
+import { costEstimationAgent } from './costEstimationAgent';
 
 /**
  * Represents the command structure from the strategic guide:
@@ -68,6 +70,9 @@ interface AgentRegistry {
   // Get a specific agent by name
   getAgent(name: string): BaseAgent | undefined;
   
+  // Get all agent IDs
+  getAllAgentIds(): string[];
+  
   // Initialize all agents
   initializeAllAgents(): Promise<void>;
   
@@ -91,7 +96,9 @@ export const agentRegistry: AgentRegistry = {
     componentLeads: {
       BCBSCOSTApp: costAnalysisAgent as unknown as BaseAgent, // Using cost analysis agent as BCBS COST App lead
     },
-    specialistAgents: {}, // Will be populated as specialist agents are developed
+    specialistAgents: {
+      'cost-estimation-agent': costEstimationAgent as unknown as BaseAgent
+    }, // Specialist agents
     
     // Assessment Calculation MCP
     assessmentCalculation: {
@@ -132,6 +139,12 @@ export const agentRegistry: AgentRegistry = {
       case 'cost-analysis-agent':
         return this.costAnalysis;
         
+      case 'costestimation':
+      case 'cost-estimation':
+      case 'cost_estimation':
+      case 'cost-estimation-agent':
+        return this.commandStructure.specialistAgents['cost-estimation-agent'];
+        
       default:
         console.log(`Agent not found in registry: ${name}`);
         return undefined;
@@ -159,6 +172,24 @@ export const agentRegistry: AgentRegistry = {
       console.error('Error initializing MCP agents:', error);
       throw error;
     }
+  },
+  
+  /**
+   * Get all agent IDs
+   * 
+   * @returns Array of agent IDs
+   */
+  getAllAgentIds(): string[] {
+    const agentIds = [
+      'data-quality-agent',
+      'compliance-agent',
+      'cost-analysis-agent',
+      'development-agent',
+      'design-agent',
+      'data-analysis-agent'
+    ];
+    
+    return agentIds;
   },
   
   /**

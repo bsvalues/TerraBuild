@@ -157,6 +157,35 @@ export class AgentCoordinator {
   }
   
   /**
+   * Update the agent registry with current health status
+   * This method is called by the orchestrator after initializing all agents
+   */
+  public updateAgentRegistry(): void {
+    console.log('Updating agent registry with current health status');
+    
+    // Get all registered agents from the registry
+    const agentIds = agentRegistry.getAllAgentIds();
+    
+    // Update health status for each agent
+    for (const agentId of agentIds) {
+      if (!this.agentHealth.has(agentId)) {
+        // Initialize health status for new agents
+        this.agentHealth.set(agentId, {
+          agentId,
+          isActive: true,
+          lastHeartbeat: new Date(),
+          taskCount: 0,
+          errorCount: 0,
+          averageResponseTime: 0,
+          memoryUsage: 0,
+          status: 'HEALTHY'
+        });
+        console.log(`Initialized health monitoring for agent ${agentId}`);
+      }
+    }
+  }
+  
+  /**
    * Shutdown the agent coordinator
    */
   public async shutdown(): Promise<void> {
