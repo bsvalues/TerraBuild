@@ -178,6 +178,15 @@ export const agentRegistry: AgentRegistry = {
         await (costAnalysisAgent as unknown as BaseAgent).initialize();
       }
       
+      // Initialize specialist agents
+      if (this.commandStructure.specialistAgents['cost-estimation-agent']) {
+        await (this.commandStructure.specialistAgents['cost-estimation-agent']).initialize();
+      }
+      
+      if (this.commandStructure.specialistAgents['geospatial-analysis-agent']) {
+        await (this.commandStructure.specialistAgents['geospatial-analysis-agent']).initialize();
+      }
+      
       console.log('All MCP agents initialized successfully');
     } catch (error) {
       console.error('Error initializing MCP agents:', error);

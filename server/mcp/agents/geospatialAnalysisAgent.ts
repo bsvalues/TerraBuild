@@ -9,7 +9,17 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { CustomAgentBase, AgentMemoryItem } from './customAgentBase';
+import { CustomAgentBase } from './customAgentBase';
+
+// Define AgentMemoryItem interface
+interface AgentMemoryItem {
+  type: string;
+  timestamp: Date;
+  input?: any;
+  output?: any;
+  metadata?: Record<string, any>;
+  tags: string[];
+}
 
 /**
  * Interface for Geospatial Analysis Request
