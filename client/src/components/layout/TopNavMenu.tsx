@@ -288,6 +288,12 @@ export default function TopNavMenu() {
                 
                 <DropdownSection label="AI & Visualization">
                   <NavLink
+                    href="/geo-assessment"
+                    label="GeoAssessment"
+                    icon={<Map className="h-4 w-4" />}
+                    className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                  />
+                  <NavLink
                     href="/ai-tools"
                     label="AI Tools"
                     icon={<BrainCircuit className="h-4 w-4" />}

@@ -38,6 +38,7 @@ import FTPConnectionTestPage from "@/pages/FTPConnectionTestPage";
 import ContextualDataPage from "@/pages/contextual-data";
 import PropertyBrowserPage from "@/pages/PropertyBrowserPage";
 import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
+import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
@@ -108,6 +109,7 @@ function Router() {
       <ProtectedRoute path="/settings/ftp-sync" component={FTPSyncSchedulePage} />
       <ProtectedRoute path="/properties" component={PropertyBrowserPage} />
       <ProtectedRoute path="/properties/:id" component={PropertyDetailsPage} />
+      <ProtectedRoute path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
       <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
       <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
