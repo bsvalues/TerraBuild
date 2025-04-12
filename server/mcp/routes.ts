@@ -7,8 +7,8 @@
 import express from 'express';
 import { agentCoordinator, TaskType } from './experience';
 import { agentRegistry } from './agents';
-import { handleDashboardRequest, handleHtmlDashboardRequest } from './monitoring/dashboard';
 import { cacheMiddleware } from '../utils/cache';
+import { generateDashboardData, clearDashboardCache } from './monitoring/dashboard';
 
 const router = express.Router();
 
@@ -32,6 +32,40 @@ router.get('/status', (req, res) => {
     console.error('Error fetching MCP status:', error);
     res.status(500).json({
       error: 'Error fetching MCP status',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// GET /api/mcp/dashboard - Get dashboard data for MCP monitoring
+router.get('/dashboard', cacheMiddleware(30), (req, res) => {
+  try {
+    const dashboardData = generateDashboardData();
+    res.json(dashboardData);
+  } catch (error) {
+    console.error('Error generating MCP dashboard data:', error);
+    res.status(500).json({
+      error: 'Error generating MCP dashboard data',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/dashboard/refresh - Force refresh of dashboard data
+router.post('/dashboard/refresh', (req, res) => {
+  try {
+    clearDashboardCache();
+    const dashboardData = generateDashboardData();
+    res.json({
+      success: true,
+      message: 'Dashboard data refreshed successfully',
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error refreshing dashboard data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error refreshing dashboard data',
       message: error instanceof Error ? error.message : String(error)
     });
   }
@@ -260,10 +294,33 @@ router.post('/request-assistance', (req, res) => {
   }
 });
 
-// GET /api/mcp/dashboard - Get dashboard metrics
-router.get('/dashboard', cacheMiddleware(15), handleDashboardRequest); // Cache for 15 seconds
-
-// GET /api/mcp/dashboard/view - View HTML dashboard
-router.get('/dashboard/view', cacheMiddleware(30), handleHtmlDashboardRequest); // Cache for 30 seconds
+// GET /api/mcp/dashboard/html - View HTML dashboard (not implemented yet)
+router.get('/dashboard/html', cacheMiddleware(30), (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>MCP Dashboard</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          h1 { color: #0066cc; }
+          .card { border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 15px; }
+          .metrics { display: flex; flex-wrap: wrap; gap: 15px; }
+          .metric { background: #f5f5f5; padding: 10px; border-radius: 4px; min-width: 150px; }
+          .metric-title { font-weight: bold; margin-bottom: 5px; }
+          .positive { color: green; }
+          .negative { color: red; }
+        </style>
+      </head>
+      <body>
+        <h1>MCP Dashboard</h1>
+        <p>This is a simple HTML view of the MCP dashboard data. For a more interactive experience, use the React-based dashboard.</p>
+        <div class="card">
+          <h2>Visit the React Dashboard</h2>
+          <p>A more interactive version of this dashboard is available at: <a href="/mcp-visualizations">/mcp-visualizations</a></p>
+        </div>
+      </body>
+    </html>
+  `);
+});
 
 export default router;

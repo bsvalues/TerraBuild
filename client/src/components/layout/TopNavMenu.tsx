@@ -249,6 +249,12 @@ export default function TopNavMenu() {
                     icon={<Activity className="h-4 w-4" />}
                     className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
                   />
+                  <NavLink
+                    href="/mcp-visualizations"
+                    label="MCP Visualizations"
+                    icon={<LineChart className="h-4 w-4" />}
+                    className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                  />
                 </DropdownSection>
               </div>
             </NavigationMenuContent>
