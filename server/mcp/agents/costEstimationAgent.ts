@@ -146,7 +146,8 @@ export class CostEstimationAgent extends CustomAgentBase {
     console.log(`Cost Estimation Agent received request with ID: ${event.correlationId}`);
     
     try {
-      const request: CostEstimationRequest = event.payload.request;
+      // Support both payload (from AgentEventBus) and data (from tests) formats
+      const request: CostEstimationRequest = event.payload?.request || event.data?.request;
       
       if (!request || !request.buildingType || !request.squareFeet || !request.region) {
         throw new Error('Invalid cost estimation request. Missing required parameters.');
@@ -164,11 +165,11 @@ export class CostEstimationAgent extends CustomAgentBase {
         timestamp: new Date(),
         data: {
           sourceAgentId: this.agentId,
-          targetAgentId: event.source,
+          targetAgentId: event.source || event.sourceAgentId,
           correlationId: event.correlationId,
           estimation,
           success: true,
-          requestId: event.data?.requestId || uuidv4()
+          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
         }
       });
       
@@ -191,10 +192,10 @@ export class CostEstimationAgent extends CustomAgentBase {
         timestamp: new Date(),
         data: {
           sourceAgentId: this.agentId,
-          targetAgentId: event.source,
+          targetAgentId: event.source || event.sourceAgentId,
           correlationId: event.correlationId,
           errorMessage: error instanceof Error ? error.message : String(error),
-          requestId: event.data?.requestId || uuidv4()
+          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
         }
       });
       
@@ -202,7 +203,7 @@ export class CostEstimationAgent extends CustomAgentBase {
       this.recordMemory({
         type: 'cost_estimation_failure',
         timestamp: new Date(),
-        input: event.data?.request,
+        input: event.data?.request || event.payload?.request,
         metadata: {
           error: error instanceof Error ? error.message : String(error)
         },
@@ -236,7 +237,7 @@ export class CostEstimationAgent extends CustomAgentBase {
         timestamp: new Date(),
         data: {
           sourceAgentId: this.agentId,
-          targetAgentId: event.source,
+          targetAgentId: event.source || event.sourceAgentId,
           correlationId: event.correlationId,
           success: true,
           message: 'Cost matrix updated successfully'
@@ -264,7 +265,7 @@ export class CostEstimationAgent extends CustomAgentBase {
         timestamp: new Date(),
         data: {
           sourceAgentId: this.agentId,
-          targetAgentId: event.source,
+          targetAgentId: event.source || event.sourceAgentId,
           correlationId: event.correlationId,
           errorMessage: error instanceof Error ? error.message : String(error)
         }

@@ -47,6 +47,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/file-saver": "^2.0.7",
+    "@types/jest": "^29.5.14",
     "@types/minimatch": "^5.1.2",
     "@types/mssql": "^9.1.7",
     "@types/multer": "^1.4.12",
