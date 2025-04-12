@@ -191,8 +191,8 @@ export default function TopNavMenu() {
             )}>
               <LineChart className="h-4 w-4 mr-2" /> Analytics
             </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <div className="grid grid-cols-2 gap-2 p-4 w-[500px]">
+            <NavigationMenuContent className="absolute left-0 top-full w-[500px]">
+              <div className="grid grid-cols-2 gap-2 p-4 w-full">
                 <DropdownSection label="Analytics">
                   <NavLink
                     href="/analytics"
@@ -235,8 +235,8 @@ export default function TopNavMenu() {
             )}>
               <BrainCircuit className="h-4 w-4 mr-2" /> MCP Framework
             </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <div className="p-4 w-[300px]">
+            <NavigationMenuContent className="absolute left-0 top-full w-[300px]">
+              <div className="p-4 w-full">
                 <DropdownSection label="Model Content Protocol">
                   <NavLink
                     href="/mcp-overview"
@@ -266,8 +266,8 @@ export default function TopNavMenu() {
             )}>
               <Database className="h-4 w-4 mr-2" /> Data
             </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <div className="grid grid-cols-2 gap-2 p-4 w-[500px]">
+            <NavigationMenuContent className="absolute left-0 top-full w-[500px]">
+              <div className="grid grid-cols-2 gap-2 p-4 w-full">
                 <DropdownSection label="Data Management">
                   <NavLink
                     href="/data-import"
@@ -323,8 +323,8 @@ export default function TopNavMenu() {
               )}>
                 <Settings className="h-4 w-4 mr-2" /> Admin
               </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <div className="p-4 w-[240px]">
+              <NavigationMenuContent className="absolute left-0 top-full w-[240px]">
+                <div className="p-4 w-full">
                   <DropdownSection label="Administration">
                     <NavLink
                       href="/users"
@@ -361,8 +361,8 @@ export default function TopNavMenu() {
             )}>
               <HelpCircle className="h-4 w-4 mr-2" /> Help
             </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <div className="p-4 w-[240px]">
+            <NavigationMenuContent className="absolute left-0 top-full w-[240px]">
+              <div className="p-4 w-full">
                 <DropdownSection label="Help & Support">
                   <NavLink
                     href="/documentation"
