@@ -38,7 +38,6 @@ import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
-import supabaseTestRouter from "./routes/supabase-test";
 import exportRoutes from "./routes/exportRoutes";
 import { initFTPSyncRoutes } from "./routes/ftpSyncRoutes";
 import ftpRoutes from "./routes/ftpRoutes";
@@ -47,7 +46,7 @@ import { initSchedulerRoutes } from "./routes/schedulerRoutes";
 import costCalculationRoutes from "./routes/costCalculationRoutes";
 import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import supabaseRoutes from "./routes/supabaseRoutes";
-import supabaseTestRoutes from "./routes/supabase-test";
+import supabaseTestRouter from "./routes/supabase-test";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2924,7 +2923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/supabase', supabaseRoutes);
   
   // Register Supabase test routes for development and debugging
-  app.use('/api/supabase-test', supabaseTestRoutes);
+  app.use('/api/supabase-test', supabaseTestRouter);
   
   // Log Supabase integration
   await storage.createActivity({
