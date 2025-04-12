@@ -7,12 +7,11 @@
  * on high-level requirements.
  */
 
-import { BaseAgent, AgentEvent } from './baseAgent';
+import { CustomAgentBase, AgentEvent } from './customAgentBase';
 import { agentEventBus } from './eventBus';
-import { agentCoordinator } from '../experience/agentCoordinator';
 import fs from 'fs';
 import path from 'path';
-import { generateUniqueId } from '../../utils/idGenerator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CodeGenerationRequest {
   type: 'component' | 'function' | 'api' | 'test';
@@ -37,7 +36,7 @@ interface CodeAnalysisRequest {
  * Development Agent
  * Assists in code generation, refactoring, and development tasks
  */
-export class DevelopmentAgent extends BaseAgent {
+export class DevelopmentAgent extends CustomAgentBase {
   private codeScanResults: Map<string, any> = new Map();
   private codeStatistics: any = {};
   private pendingRequests: Map<string, any> = new Map();
@@ -61,17 +60,13 @@ export class DevelopmentAgent extends BaseAgent {
     await super.initialize();
     
     // Subscribe to code-related events
-    agentEventBus.subscribe('code:request:generate', this.agentId, this.handleCodeGenerationRequest.bind(this));
-    agentEventBus.subscribe('code:request:refactor', this.agentId, this.handleRefactoringRequest.bind(this));
-    agentEventBus.subscribe('code:request:analyze', this.agentId, this.handleCodeAnalysisRequest.bind(this));
-    
-    // Register with the agent coordinator
-    agentCoordinator.registerAgent(this);
+    this.registerEventHandler('code:request:generate', this.handleCodeGenerationRequest.bind(this));
+    this.registerEventHandler('code:request:refactor', this.handleRefactoringRequest.bind(this));
+    this.registerEventHandler('code:request:analyze', this.handleCodeAnalysisRequest.bind(this));
     
     // Initialize code statistics
     await this.initializeCodeStatistics();
     
-    console.log(`Agent ${this.name} (${this.agentId}) initialized`);
     return true;
   }
   
@@ -128,7 +123,7 @@ export class DevelopmentAgent extends BaseAgent {
    */
   private async handleCodeGenerationRequest(event: AgentEvent): Promise<void> {
     const request = event.data as CodeGenerationRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling code generation request: ${request.type} - ${request.name}`);
     
@@ -220,7 +215,7 @@ export class DevelopmentAgent extends BaseAgent {
    */
   private async handleRefactoringRequest(event: AgentEvent): Promise<void> {
     const request = event.data as RefactoringRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling refactoring request for ${request.filePath}`);
     
@@ -292,7 +287,7 @@ export class DevelopmentAgent extends BaseAgent {
    */
   private async handleCodeAnalysisRequest(event: AgentEvent): Promise<void> {
     const request = event.data as CodeAnalysisRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     const filePaths = Array.isArray(request.filePath) ? request.filePath : [request.filePath];
     console.log(`Handling code analysis request for ${filePaths.length} files`);
