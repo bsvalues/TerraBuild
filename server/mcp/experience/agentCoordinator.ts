@@ -108,6 +108,7 @@ export class AgentCoordinator {
     content?: any;
   }> = [];
   private messageTypeCounts: Record<string, number> = {};
+  private initialized: boolean = false;
   
   /**
    * Private constructor for singleton pattern
@@ -141,7 +142,18 @@ export class AgentCoordinator {
     // Start automated training (once per hour)
     trainingCoordinator.startAutomatedTraining();
     
+    // Mark as initialized
+    this.initialized = true;
+    
     console.log('Agent Coordinator initialized successfully');
+  }
+  
+  /**
+   * Check if the agent coordinator is initialized
+   * @returns True if initialized, false otherwise
+   */
+  public isInitialized(): boolean {
+    return this.initialized;
   }
   
   /**
