@@ -89,25 +89,34 @@ export default function GeoAssessmentPage() {
               </div>
             </div>
             
-            <Tabs defaultValue={activeView} onValueChange={setActiveView}>
-              <TabsList>
-                <TabsTrigger value="map">
-                  <Map className="mr-2 h-4 w-4" />
-                  Map View
-                </TabsTrigger>
-                <TabsTrigger value="table">
-                  <Table className="mr-2 h-4 w-4" />
-                  Table View
-                </TabsTrigger>
-                <TabsTrigger value="analytics">
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  Analytics
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center">
+              <Button
+                variant={activeView === 'map' ? 'default' : 'outline'}
+                className="mr-2"
+                onClick={() => setActiveView('map')}
+              >
+                <Map className="mr-2 h-4 w-4" />
+                Map View
+              </Button>
+              <Button
+                variant={activeView === 'table' ? 'default' : 'outline'}
+                className="mr-2"
+                onClick={() => setActiveView('table')}
+              >
+                <Table className="mr-2 h-4 w-4" />
+                Table View
+              </Button>
+              <Button
+                variant={activeView === 'analytics' ? 'default' : 'outline'}
+                onClick={() => setActiveView('analytics')}
+              >
+                <BarChart2 className="mr-2 h-4 w-4" />
+                Analytics
+              </Button>
+            </div>
           </div>
           
-          <TabsContent value="map" className="mt-0">
+          {activeView === 'map' && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>Geographic Property Assessment</CardTitle>
@@ -123,9 +132,9 @@ export default function GeoAssessmentPage() {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
           
-          <TabsContent value="table" className="mt-0">
+          {activeView === 'table' && (
             <Card>
               <CardHeader>
                 <CardTitle>Property Data Table</CardTitle>
@@ -149,9 +158,9 @@ export default function GeoAssessmentPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
           
-          <TabsContent value="analytics" className="mt-0">
+          {activeView === 'analytics' && (
             <Card>
               <CardHeader>
                 <CardTitle>Assessment Analytics</CardTitle>
@@ -175,7 +184,7 @@ export default function GeoAssessmentPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
           
           {selectedProperty && (
             <Card className="mt-4">

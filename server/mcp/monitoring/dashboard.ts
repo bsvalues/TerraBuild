@@ -249,7 +249,8 @@ export function resetMetricHistory(): void {
 }
 
 // Subscribe to agent events to update dashboard data
-eventBus.subscribe('agent:*', 'dashboard-cache-clearer', () => {
+const dashboardSubscriptionId = "dashboard-cache-clearer";
+eventBus.subscribe('agent:*', dashboardSubscriptionId, async (event) => {
   // Clear cache whenever there's agent activity
   clearDashboardCache();
 });

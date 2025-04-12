@@ -211,7 +211,7 @@ export function GeoAssessment({
   
   // Property type options from data
   const propertyTypes = properties ? 
-    [...new Set(properties.map(p => p.propertyType))].filter(Boolean) : 
+    Array.from(new Set(properties.map(p => p.propertyType || ''))).filter(Boolean) : 
     ['Residential', 'Commercial', 'Agricultural', 'Industrial'];
   
   // Mock map placeholder (in a real implementation, this would be a map library)
