@@ -19,6 +19,7 @@ export { complianceAgent } from './complianceAgent';
 export { costAnalysisAgent } from './costAnalysisAgent';
 export { costEstimationAgent } from './costEstimationAgent';
 export { geospatialAnalysisAgent } from './geospatialAnalysisAgent';
+export { documentProcessingAgent } from './documentProcessingAgent';
 
 // Export an agent registry object for easy access to all agents
 import { BaseAgent } from './baseAgent';
@@ -27,6 +28,7 @@ import { complianceAgent } from './complianceAgent';
 import { costAnalysisAgent } from './costAnalysisAgent';
 import { costEstimationAgent } from './costEstimationAgent';
 import { geospatialAnalysisAgent } from './geospatialAnalysisAgent';
+import { documentProcessingAgent } from './documentProcessingAgent';
 
 /**
  * Represents the command structure from the strategic guide:
@@ -100,12 +102,15 @@ export const agentRegistry: AgentRegistry = {
     },
     specialistAgents: {
       'cost-estimation-agent': costEstimationAgent as unknown as BaseAgent,
-      'geospatial-analysis-agent': geospatialAnalysisAgent as unknown as BaseAgent
+      'geospatial-analysis-agent': geospatialAnalysisAgent as unknown as BaseAgent,
+      'document-processing-agent': documentProcessingAgent as unknown as BaseAgent
     }, // Specialist agents
     
     // Assessment Calculation MCP
     assessmentCalculation: {
-      inputProcessing: {},
+      inputProcessing: {
+        'document-processing-agent': documentProcessingAgent as unknown as BaseAgent
+      },
       calculationEngine: {},
       outputGeneration: {}
     },
@@ -155,6 +160,12 @@ export const agentRegistry: AgentRegistry = {
       case 'geospatial_analysis':
       case 'geospatial-analysis-agent':
         return this.commandStructure.specialistAgents['geospatial-analysis-agent'];
+      
+      case 'documentprocessing':
+      case 'document-processing':
+      case 'document_processing':
+      case 'document-processing-agent':
+        return this.commandStructure.specialistAgents['document-processing-agent'];
         
       default:
         console.log(`Agent not found in registry: ${name}`);
@@ -187,6 +198,10 @@ export const agentRegistry: AgentRegistry = {
         await (this.commandStructure.specialistAgents['geospatial-analysis-agent']).initialize();
       }
       
+      if (this.commandStructure.specialistAgents['document-processing-agent']) {
+        await (this.commandStructure.specialistAgents['document-processing-agent']).initialize();
+      }
+      
       console.log('All MCP agents initialized successfully');
     } catch (error) {
       console.error('Error initializing MCP agents:', error);
@@ -207,7 +222,8 @@ export const agentRegistry: AgentRegistry = {
       'development-agent',
       'design-agent',
       'data-analysis-agent',
-      'geospatial-analysis-agent'
+      'geospatial-analysis-agent',
+      'document-processing-agent'
     ];
     
     return agentIds;
@@ -227,6 +243,13 @@ export const agentRegistry: AgentRegistry = {
       // The cost analysis agent doesn't extend BaseAgent yet, so handle separately
       if ((this.costAnalysis as any).shutdown) {
         await this.costAnalysis.shutdown();
+      }
+      
+      // Shutdown specialist agents
+      for (const agentId in this.commandStructure.specialistAgents) {
+        if (this.commandStructure.specialistAgents[agentId]) {
+          await this.commandStructure.specialistAgents[agentId].shutdown();
+        }
       }
       
       console.log('All MCP agents shut down successfully');
