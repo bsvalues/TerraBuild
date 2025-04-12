@@ -1,19 +1,6 @@
 {
   "variant": "professional",
-  "primary": "#33A4CB", 
-  "appearance": "light",
-  "radius": 0.5,
-  "colors": {
-    "primary": "#33A4CB",
-    "secondary": "#47AD55",
-    "accent": "#243E4D",
-    "background": "#FFFFFF",
-    "text": "#243E4D",
-    "muted": "#6B7280",
-    "border": "#E5E7EB",
-    "destructive": "#EF4444",
-    "success": "#47AD55",
-    "warning": "#F59E0B",
-    "highlight": "#FFD23F"
-  }
+  "primary": "#33A4CB",
+  "appearance": "system",
+  "radius": 0.5
 }
