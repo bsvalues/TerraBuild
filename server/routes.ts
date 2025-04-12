@@ -38,6 +38,7 @@ import { registerCollaborationRoutes } from "./routes/collaborationRoutes";
 import { registerCommentRoutes } from "./routes/commentRoutes";
 import { registerSharedLinksRoutes } from "./routes/sharedLinksRoutes";
 import { registerProjectActivitiesRoutes } from "./routes/projectActivitiesRoutes";
+import supabaseTestRouter from "./routes/supabase-test";
 import exportRoutes from "./routes/exportRoutes";
 import { initFTPSyncRoutes } from "./routes/ftpSyncRoutes";
 import ftpRoutes from "./routes/ftpRoutes";

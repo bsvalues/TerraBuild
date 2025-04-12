@@ -40,6 +40,7 @@ import PropertyBrowserPage from "@/pages/PropertyBrowserPage";
 import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
 import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
+import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
@@ -82,6 +83,9 @@ function Router() {
       <Route path="/documentation" component={DocumentationPage} />
       <Route path="/tutorials" component={TutorialsPage} />
       <Route path="/faq" component={FAQPage} />
+      
+      {/* Supabase test route - without protection for easier testing */}
+      <Route path="/supabase-test" component={SupabaseTestPage} />
       
       {/* Protected routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
