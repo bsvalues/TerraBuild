@@ -8,7 +8,7 @@
  * - Suggesting optimal valuation methods
  */
 
-import { AgentEventType } from './baseAgent';
+import { AgentEventType, AgentMemoryItem } from './baseAgent';
 import { CustomAgentBase } from './customAgentBase';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -32,7 +32,7 @@ enum BuildingCondition {
 }
 
 // Region cost factors
-const REGION_FACTORS = {
+const REGION_FACTORS: Record<string, number> = {
   'EASTERN': 0.95,
   'CENTRAL': 1.0,
   'WESTERN': 1.05
@@ -136,7 +136,13 @@ export class CostEstimationAgent extends CustomAgentBase {
    * 
    * @param event The event containing the cost estimation request
    */
-  private async handleCostEstimationRequest(event: any): Promise<void> {
+  // Add a memory item to the agent's memory
+  private recordMemory(item: AgentMemoryItem) {
+    // For now just log the memory item
+    console.log(`Memory recorded: ${item.type}`);
+  }
+  
+  private async handleCostEstimationRequest(event: any, context: any): Promise<void> {
     console.log(`Cost Estimation Agent received request with ID: ${event.correlationId}`);
     
     try {
@@ -153,51 +159,54 @@ export class CostEstimationAgent extends CustomAgentBase {
       const estimation = await this.calculateCostEstimation(standardizedRequest);
       
       // Emit the result
-      this.emitEvent({
-        type: AgentEventType.TASK_COMPLETED,
-        sourceAgentId: this.agentId,
-        targetAgentId: event.sourceAgentId,
-        correlationId: event.correlationId,
+      this.emitEvent('cost:estimate:completed', {
+        source: this.agentId,
         timestamp: new Date(),
-        payload: {
+        data: {
+          sourceAgentId: this.agentId,
+          targetAgentId: event.source,
+          correlationId: event.correlationId,
           estimation,
           success: true,
-          requestId: event.payload.requestId || uuidv4()
+          requestId: event.data?.requestId || uuidv4()
         }
       });
       
       console.log(`Cost estimation completed for request ID: ${event.correlationId}`);
       
       // Record this interaction in the agent's memory
-      this.recordToMemory({
+      this.recordMemory({
         type: 'cost_estimation',
-        request: standardizedRequest,
-        result: estimation,
         timestamp: new Date(),
-        success: true
+        input: standardizedRequest,
+        output: estimation,
+        tags: ['estimation', 'success']
       });
     } catch (error) {
       console.error('Error in cost estimation:', error instanceof Error ? error.message : String(error));
       
       // Emit error event
-      this.emitEvent({
-        type: AgentEventType.TASK_FAILED,
-        sourceAgentId: this.agentId,
-        targetAgentId: event.sourceAgentId,
-        correlationId: event.correlationId,
+      this.emitEvent('cost:estimate:error', {
+        source: this.agentId,
         timestamp: new Date(),
-        payload: {
+        data: {
+          sourceAgentId: this.agentId,
+          targetAgentId: event.source,
+          correlationId: event.correlationId,
           errorMessage: error instanceof Error ? error.message : String(error),
-          requestId: event.payload.requestId || uuidv4()
+          requestId: event.data?.requestId || uuidv4()
         }
       });
       
       // Record the failure in memory
-      this.recordToMemory({
+      this.recordMemory({
         type: 'cost_estimation_failure',
-        request: event.payload.request,
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date()
+        timestamp: new Date(),
+        input: event.data?.request,
+        metadata: {
+          error: error instanceof Error ? error.message : String(error)
+        },
+        tags: ['estimation', 'error']
       });
     }
   }
@@ -206,12 +215,13 @@ export class CostEstimationAgent extends CustomAgentBase {
    * Handle a cost matrix update
    * 
    * @param event The event containing the updated cost matrix
+   * @param context Additional context for event handling
    */
-  private async handleCostMatrixUpdate(event: any): Promise<void> {
+  private async handleCostMatrixUpdate(event: any, context: any): Promise<void> {
     console.log(`Cost Estimation Agent received matrix update with ID: ${event.correlationId}`);
     
     try {
-      const matrix = event.payload.matrix;
+      const matrix = event.payload?.matrix || event.data?.matrix;
       
       if (!matrix) {
         throw new Error('Invalid cost matrix update event. Missing matrix data.');
@@ -221,13 +231,13 @@ export class CostEstimationAgent extends CustomAgentBase {
       this.updateBaseRates(matrix);
       
       // Emit acknowledgment
-      this.emitEvent({
-        type: AgentEventType.TASK_COMPLETED,
-        sourceAgentId: this.agentId,
-        targetAgentId: event.sourceAgentId,
-        correlationId: event.correlationId,
+      this.emitEvent('cost:matrix:updated', {
+        source: this.agentId,
         timestamp: new Date(),
-        payload: {
+        data: {
+          sourceAgentId: this.agentId,
+          targetAgentId: event.source,
+          correlationId: event.correlationId,
           success: true,
           message: 'Cost matrix updated successfully'
         }
@@ -236,32 +246,38 @@ export class CostEstimationAgent extends CustomAgentBase {
       console.log('Cost matrix updated successfully');
       
       // Record this interaction in the agent's memory
-      this.recordToMemory({
+      this.recordMemory({
         type: 'cost_matrix_update',
-        matrixId: matrix.id || 'unknown',
         timestamp: new Date(),
-        success: true
+        input: matrix,
+        metadata: {
+          matrixId: matrix.id || 'unknown'
+        },
+        tags: ['matrix', 'update', 'success']
       });
     } catch (error) {
       console.error('Error updating cost matrix:', error instanceof Error ? error.message : String(error));
       
       // Emit error event
-      this.emitEvent({
-        type: AgentEventType.TASK_FAILED,
-        sourceAgentId: this.agentId,
-        targetAgentId: event.sourceAgentId,
-        correlationId: event.correlationId,
+      this.emitEvent('cost:matrix:error', {
+        source: this.agentId,
         timestamp: new Date(),
-        payload: {
+        data: {
+          sourceAgentId: this.agentId,
+          targetAgentId: event.source,
+          correlationId: event.correlationId,
           errorMessage: error instanceof Error ? error.message : String(error)
         }
       });
       
       // Record the failure in memory
-      this.recordToMemory({
+      this.recordMemory({
         type: 'cost_matrix_update_failure',
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date()
+        timestamp: new Date(),
+        metadata: {
+          error: error instanceof Error ? error.message : String(error)
+        },
+        tags: ['matrix', 'update', 'error']
       });
     }
   }
