@@ -341,6 +341,12 @@ export default function TopNavMenu() {
                       label="Data Connections"
                       icon={<Database className="h-4 w-4" />}
                     />
+                    <NavLink
+                      href="/supabase-test"
+                      label="Supabase Test"
+                      icon={<Database className="h-4 w-4" />}
+                      className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                    />
                   </DropdownSection>
                 </div>
               </NavigationMenuContent>
