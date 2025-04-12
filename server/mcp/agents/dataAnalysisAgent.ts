@@ -67,12 +67,9 @@ export class DataAnalysisAgent extends CustomAgentBase {
     await super.initialize();
     
     // Subscribe to data-related events
-    agentEventBus.subscribe('data:query:generate', this.agentId, this.handleQueryGenerationRequest.bind(this));
-    agentEventBus.subscribe('data:analyze', this.agentId, this.handleDataAnalysisRequest.bind(this));
-    agentEventBus.subscribe('data:schema:optimize', this.agentId, this.handleSchemaOptimizationRequest.bind(this));
-    
-    // Register with the agent coordinator
-    agentCoordinator.registerAgent(this);
+    this.registerEventHandler('data:query:generate', this.handleQueryGenerationRequest.bind(this));
+    this.registerEventHandler('data:analyze', this.handleDataAnalysisRequest.bind(this));
+    this.registerEventHandler('data:schema:optimize', this.handleSchemaOptimizationRequest.bind(this));
     
     // Initialize query performance data
     this.initializeQueryPerformanceData();
@@ -165,7 +162,7 @@ export class DataAnalysisAgent extends CustomAgentBase {
    */
   private async handleQueryGenerationRequest(event: AgentEvent): Promise<void> {
     const request = event.data as QueryGenerationRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling query generation request for tables: ${request.tables.join(', ')}`);
     
@@ -234,7 +231,7 @@ export class DataAnalysisAgent extends CustomAgentBase {
    */
   private async handleDataAnalysisRequest(event: AgentEvent): Promise<void> {
     const request = event.data as DataAnalysisRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling data analysis request for ${request.dataSource} (${request.analysisType})`);
     
@@ -300,7 +297,7 @@ export class DataAnalysisAgent extends CustomAgentBase {
    */
   private async handleSchemaOptimizationRequest(event: AgentEvent): Promise<void> {
     const request = event.data as SchemaOptimizationRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling schema optimization request for table: ${request.tableName}`);
     
