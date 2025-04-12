@@ -7,7 +7,8 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Database } from './supabaseTypes';
+// Using any for Database type until full database schema is defined
+type Database = any;
 
 // Keep track of the singleton client instance
 let supabaseClient: SupabaseClient<Database> | null = null;

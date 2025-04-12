@@ -46,6 +46,7 @@ import { initSchedulerRoutes } from "./routes/schedulerRoutes";
 import costCalculationRoutes from "./routes/costCalculationRoutes";
 import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import supabaseRoutes from "./routes/supabaseRoutes";
+import supabaseTestRoutes from "./routes/supabase-test";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2920,6 +2921,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Supabase integration routes
   app.use('/api/supabase', supabaseRoutes);
+  
+  // Register Supabase test routes for development and debugging
+  app.use('/api/supabase-test', supabaseTestRoutes);
   
   // Log Supabase integration
   await storage.createActivity({
