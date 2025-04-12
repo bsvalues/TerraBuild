@@ -45,6 +45,7 @@ import ftpConnectionRoutes from "./routes/ftpConnectionRoutes";
 import { initSchedulerRoutes } from "./routes/schedulerRoutes";
 import costCalculationRoutes from "./routes/costCalculationRoutes";
 import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
+import supabaseRoutes from "./routes/supabaseRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2915,6 +2916,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     action: "Enhanced analytics and reporting APIs added",
     icon: "ri-bar-chart-2-line",
     iconColor: "success"
+  });
+
+  // Register Supabase integration routes
+  app.use('/api/supabase', supabaseRoutes);
+  
+  // Log Supabase integration
+  await storage.createActivity({
+    action: "Supabase integration added",
+    icon: "ri-database-2-line",
+    iconColor: "primary"
   });
 
   const httpServer = createServer(app);

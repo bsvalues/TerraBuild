@@ -6,32 +6,12 @@
  */
 
 import express from 'express';
-import { getSupabaseClient, testSupabaseConnection, isSupabaseConfigured } from '../utils/supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabaseClient';
 
 const router = express.Router();
 
-// GET /api/supabase-test/status - Get Supabase connection status
-router.get('/status', async (req, res) => {
-  try {
-    const connectionStatus = await testSupabaseConnection();
-    
-    res.json({
-      configured: isSupabaseConfigured(),
-      connection: connectionStatus,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error checking Supabase status:', error);
-    res.status(500).json({
-      error: 'Failed to check Supabase connection',
-      message: error instanceof Error ? error.message : String(error),
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// GET /api/supabase-test/tables - List tables in the Supabase database
-router.get('/tables', async (req, res) => {
+// Test Supabase connection
+router.get('/test-connection', async (req, res) => {
   try {
     if (!isSupabaseConfigured()) {
       return res.status(500).json({
@@ -43,25 +23,52 @@ router.get('/tables', async (req, res) => {
     
     const supabase = getSupabaseClient();
     
-    // Query the system schema for all tables
-    const { data, error } = await supabase.rpc('get_tables');
+    // Try a simple query to test the connection
+    const { data, error } = await supabase.from('scenarios').select('count');
     
     if (error) {
-      throw error;
+      return res.status(500).json({
+        error: 'Supabase connection failed',
+        message: error.message,
+        code: error.code,
+        timestamp: new Date().toISOString()
+      });
     }
     
     res.json({
-      tables: data,
-      timestamp: new Date().toISOString()
+      status: 'connected',
+      message: 'Successfully connected to Supabase',
+      data,
+      timestamp: new Date().toISOString(),
+      environment: {
+        url: process.env.SUPABASE_URL ? 'configured' : 'missing',
+        anonKey: process.env.SUPABASE_ANON_KEY ? 'configured' : 'missing',
+        serviceKey: process.env.SUPABASE_SERVICE_KEY ? 'configured' : 'missing'
+      }
     });
   } catch (error) {
-    console.error('Error listing Supabase tables:', error);
+    console.error('Error testing Supabase connection:', error);
     res.status(500).json({
-      error: 'Failed to list Supabase tables',
+      error: 'Failed to test Supabase connection',
       message: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     });
   }
+});
+
+// Get Supabase configuration status
+router.get('/config-status', (req, res) => {
+  const isConfigured = isSupabaseConfigured();
+  
+  res.json({
+    configured: isConfigured,
+    timestamp: new Date().toISOString(),
+    environment: {
+      url: process.env.SUPABASE_URL ? 'configured' : 'missing',
+      anonKey: process.env.SUPABASE_ANON_KEY ? 'configured' : 'missing',
+      serviceKey: process.env.SUPABASE_SERVICE_KEY ? 'configured' : 'missing'
+    }
+  });
 });
 
 export default router;
