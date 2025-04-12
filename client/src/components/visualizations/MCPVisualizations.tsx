@@ -1,309 +1,405 @@
 /**
- * MCP Visualizations
+ * MCP Visualizations Component
  * 
- * This component demonstrates the use of the MCP Visualization Controller
- * with different visualization types that follow the Model Content Protocol.
+ * Provides real-time visualization of MCP agent activities, metrics, and status
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import RealTimeChart, { DataPoint } from './RealTimeChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MCPVisualizationController, useMCPVisualization } from './MCPVisualizationController';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Download, BarChart, Map, Network, TrendingUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Brain,
+  Activity,
+  CheckSquare,
+  AlertCircle,
+  BarChart2,
+  Gauge,
+  MessageSquare,
+} from 'lucide-react';
 
-// Sample Building Types for the dropdown
-const buildingTypes = [
-  { value: 'residential', label: 'Residential' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'agricultural', label: 'Agricultural' },
-  { value: 'mixed_use', label: 'Mixed Use' }
-];
+// Types for MCP dashboard data
+interface AgentHealth {
+  status: string;
+  lastHeartbeat: string;
+  responseTime: number;
+  errorRate: number;
+  memoryUsage: number;
+  activeTaskCount: number;
+}
 
-// Component that uses the MCP context
-function VisualizationContent() {
-  const [activeTab, setActiveTab] = useState('regional');
-  const { 
-    filters, 
-    setFilters, 
-    regionalCostsQuery, 
-    hierarchicalCostsQuery, 
-    statisticalDataQuery,
-    isProcessing,
-    exportData
-  } = useMCPVisualization();
+interface PerformanceMetric {
+  name: string;
+  value: number;
+  change: number;
+}
 
-  const handleExport = async (format: string) => {
-    await exportData(format);
+interface MCPDashboardData {
+  status: string;
+  agents: number;
+  agentHealth: Record<string, AgentHealth>;
+  metrics: PerformanceMetric[];
+  timestamp: string;
+}
+
+export function MCPVisualizations() {
+  const { toast } = useToast();
+  const [selectedView, setSelectedView] = useState('real-time');
+  
+  // Fetch MCP dashboard data
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['/api/mcp/dashboard'],
+    queryFn: async () => {
+      const response = await fetch('/api/mcp/dashboard');
+      if (!response.ok) {
+        throw new Error('Failed to fetch MCP dashboard data');
+      }
+      return response.json() as Promise<MCPDashboardData>;
+    },
+    refetchInterval: 15000, // Refetch every 15 seconds
+  });
+  
+  // Show error toast on fetch failure
+  useEffect(() => {
+    if (isError) {
+      toast({
+        title: "Error",
+        description: "Failed to load MCP metrics. Using simulated data instead.",
+        variant: "destructive",
+      });
+    }
+  }, [isError, toast]);
+  
+  // Transform data for response time chart
+  const getResponseTimeData = (): DataPoint[] => {
+    if (!data || !data.agentHealth) {
+      return generateMockTimeSeriesData(20, 'Response Time');
+    }
+    
+    return Object.entries(data.agentHealth).map(([agentId, health]) => ({
+      timestamp: new Date(health.lastHeartbeat).toLocaleTimeString(),
+      value: health.responseTime,
+      agent: agentId
+    }));
   };
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Visualization Controls</CardTitle>
-          <CardDescription>Configure the visualization parameters</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Building Type</label>
-              <Select
-                value={filters.buildingType}
-                onValueChange={(value) => setFilters({ buildingType: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Building Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildingTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Year Range</label>
-              <div className="flex gap-2">
-                <Select
-                  value={filters.startYear.toString()}
-                  onValueChange={(value) => setFilters({ startYear: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Start Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2020, 2021, 2022, 2023, 2024, 2025].map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select
-                  value={filters.endYear.toString()}
-                  onValueChange={(value) => setFilters({ endYear: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="End Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2020, 2021, 2022, 2023, 2024, 2025].map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="col-span-1 md:col-span-2 flex items-end">
-              <div className="flex gap-2 w-full">
-                <Button 
-                  className="flex-1"
-                  onClick={() => setFilters(defaultFilters)}
-                  variant="outline"
-                >
-                  Reset Filters
-                </Button>
-                
-                <Button 
-                  className="flex-1"
-                  onClick={() => handleExport('csv')}
-                  variant="outline"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Data
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  
+  // Transform data for error rate chart
+  const getErrorRateData = (): DataPoint[] => {
+    if (!data || !data.agentHealth) {
+      return generateMockTimeSeriesData(20, 'Error Rate');
+    }
+    
+    return Object.entries(data.agentHealth).map(([agentId, health]) => ({
+      timestamp: new Date(health.lastHeartbeat).toLocaleTimeString(),
+      value: health.errorRate * 100, // Convert to percentage
+      agent: agentId
+    }));
+  };
+  
+  // Transform data for memory usage chart
+  const getMemoryUsageData = (): DataPoint[] => {
+    if (!data || !data.agentHealth) {
+      return generateMockTimeSeriesData(20, 'Memory Usage');
+    }
+    
+    return Object.entries(data.agentHealth).map(([agentId, health]) => ({
+      timestamp: new Date(health.lastHeartbeat).toLocaleTimeString(),
+      value: health.memoryUsage,
+      agent: agentId
+    }));
+  };
+  
+  // Transform data for task count chart
+  const getTaskCountData = (): DataPoint[] => {
+    if (!data || !data.agentHealth) {
+      return generateMockTimeSeriesData(20, 'Task Count');
+    }
+    
+    return Object.entries(data.agentHealth).map(([agentId, health]) => ({
+      timestamp: new Date(health.lastHeartbeat).toLocaleTimeString(),
+      value: health.activeTaskCount,
+      agent: agentId
+    }));
+  };
+  
+  // Generate mock time series data for demonstration
+  const generateMockTimeSeriesData = (
+    count: number, 
+    metricName: string
+  ): DataPoint[] => {
+    let baseValue = 50;
+    const variance = 15;
+    const result: DataPoint[] = [];
+    const now = new Date();
+    
+    for (let i = 0; i < count; i++) {
+      const time = new Date(now.getTime() - (count - i - 1) * 1000);
       
-      {isProcessing && (
+      // Add some randomness based on metric type
+      let value = baseValue + (Math.random() * variance * 2 - variance);
+      if (metricName === 'Error Rate') {
+        value = Math.abs(value) % 10; // Keep error rates lower
+      } else if (metricName === 'Memory Usage') {
+        value = Math.abs(value) % 100; // Keep memory usage between 0-100
+      } else if (metricName === 'Task Count') {
+        value = Math.floor(Math.abs(value) % 20); // Task count as integers
+      }
+      
+      result.push({
+        timestamp: time.toLocaleTimeString(),
+        value,
+        metric: metricName
+      });
+      
+      // Adjust base value for next point to create trends
+      baseValue += (Math.random() * 10 - 5);
+      if (baseValue < 10) baseValue = 10;
+      if (baseValue > 90) baseValue = 90;
+    }
+    
+    return result;
+  };
+  
+  // Simulate fetching new data
+  const fetchNewResponseTimeData = async (): Promise<DataPoint[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return generateMockTimeSeriesData(20, 'Response Time');
+  };
+  
+  const fetchNewErrorRateData = async (): Promise<DataPoint[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return generateMockTimeSeriesData(20, 'Error Rate');
+  };
+  
+  const fetchNewMemoryUsageData = async (): Promise<DataPoint[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return generateMockTimeSeriesData(20, 'Memory Usage');
+  };
+  
+  const fetchNewTaskCountData = async (): Promise<DataPoint[]> => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    return generateMockTimeSeriesData(20, 'Task Count');
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">MCP Visualizations</h2>
+          <p className="text-muted-foreground">Real-time monitoring of Model Content Protocol agents</p>
+        </div>
+        
+        <Tabs defaultValue={selectedView} onValueChange={setSelectedView}>
+          <TabsList>
+            <TabsTrigger value="real-time">
+              <Activity className="mr-2 h-4 w-4" />
+              Real-time
+            </TabsTrigger>
+            <TabsTrigger value="historical">
+              <BarChart2 className="mr-2 h-4 w-4" />
+              Historical
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+      
+      <TabsContent value="real-time" className="mt-0 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <RealTimeChart
+            title="Agent Response Times"
+            description="Response time in milliseconds per agent"
+            data={getResponseTimeData()}
+            dataKey="value"
+            valueLabel="Response Time (ms)"
+            chartType="line"
+            color="#8884d8"
+            height={300}
+            isRealTime={true}
+            updateInterval={3000}
+            fetchNewData={fetchNewResponseTimeData}
+          />
+          
+          <RealTimeChart
+            title="Error Rates"
+            description="Percentage of requests resulting in errors"
+            data={getErrorRateData()}
+            dataKey="value"
+            valueLabel="Error Rate (%)"
+            chartType="area"
+            color="#FF6B6B"
+            height={300}
+            isRealTime={true}
+            updateInterval={5000}
+            fetchNewData={fetchNewErrorRateData}
+          />
+          
+          <RealTimeChart
+            title="Memory Usage"
+            description="Agent memory consumption"
+            data={getMemoryUsageData()}
+            dataKey="value"
+            valueLabel="Memory Usage (MB)"
+            chartType="area"
+            color="#82ca9d"
+            height={300}
+            isRealTime={true}
+            updateInterval={7000}
+            fetchNewData={fetchNewMemoryUsageData}
+          />
+          
+          <RealTimeChart
+            title="Active Tasks"
+            description="Number of tasks being processed by agents"
+            data={getTaskCountData()}
+            dataKey="value"
+            valueLabel="Task Count"
+            chartType="bar"
+            color="#8884d8"
+            height={300}
+            isRealTime={true}
+            updateInterval={4000}
+            fetchNewData={fetchNewTaskCountData}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Brain className="mr-2 h-5 w-5 text-primary" />
+                Agent Status
+              </CardTitle>
+              <CardDescription>Health status of all MCP agents</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-3 w-3 rounded-full bg-green-500 mr-2" />
+                    <span className="text-sm">Healthy</span>
+                  </div>
+                  <span className="font-medium">3</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-3 w-3 rounded-full bg-yellow-500 mr-2" />
+                    <span className="text-sm">Warning</span>
+                  </div>
+                  <span className="font-medium">1</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-3 w-3 rounded-full bg-red-500 mr-2" />
+                    <span className="text-sm">Critical</span>
+                  </div>
+                  <span className="font-medium">0</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-3 w-3 rounded-full bg-gray-300 mr-2" />
+                    <span className="text-sm">Inactive</span>
+                  </div>
+                  <span className="font-medium">1</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <CheckSquare className="mr-2 h-5 w-5 text-primary" />
+                Task Completion
+              </CardTitle>
+              <CardDescription>Task completion metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Completed Today</span>
+                  <span className="font-medium">127</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Failed</span>
+                  <span className="font-medium">12</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Success Rate</span>
+                  <span className="font-medium">91.3%</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Avg. Completion Time</span>
+                  <span className="font-medium">1.3s</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Gauge className="mr-2 h-5 w-5 text-primary" />
+                System Performance
+              </CardTitle>
+              <CardDescription>Overall system metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">API Requests/min</span>
+                  <span className="font-medium">347</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Avg. Response Time</span>
+                  <span className="font-medium">0.8s</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Error Rate</span>
+                  <span className="font-medium">2.4%</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Uptime</span>
+                  <span className="font-medium">99.95%</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="historical" className="mt-0">
         <Card>
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="flex flex-col items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-2 text-sm text-muted-foreground">Processing visualization data...</p>
+          <CardHeader>
+            <CardTitle>Historical Data</CardTitle>
+            <CardDescription>
+              Long-term trend analysis and historical performance metrics
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Historical data visualization will be available in a future update
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-6">
-          <TabsTrigger value="regional" className="flex items-center gap-2">
-            <Map className="h-4 w-4" />
-            <span>Regional Analysis</span>
-          </TabsTrigger>
-          <TabsTrigger value="hierarchical" className="flex items-center gap-2">
-            <Network className="h-4 w-4" />
-            <span>Hierarchical Analysis</span>
-          </TabsTrigger>
-          <TabsTrigger value="statistical" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            <span>Statistical Analysis</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="regional">
-          <Card>
-            <CardHeader>
-              <CardTitle>Regional Cost Analysis</CardTitle>
-              <CardDescription>
-                Cost comparison across different regions for {findBuildingTypeLabel(filters.buildingType)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {regionalCostsQuery.isLoading ? (
-                <div className="flex items-center justify-center p-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : regionalCostsQuery.isError ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    {(regionalCostsQuery.error as Error).message || 'Failed to load regional cost data'}
-                  </AlertDescription>
-                </Alert>
-              ) : !regionalCostsQuery.data ? (
-                <div className="text-center p-6 text-muted-foreground">
-                  Select regions, counties, or states to view regional cost analysis
-                </div>
-              ) : (
-                <div className="h-80 w-full">
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <BarChart className="h-16 w-16 text-primary mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        Regional cost visualization will be displayed here
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="hierarchical">
-          <Card>
-            <CardHeader>
-              <CardTitle>Hierarchical Cost Analysis</CardTitle>
-              <CardDescription>
-                Hierarchical breakdown of costs for {findBuildingTypeLabel(filters.buildingType)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {hierarchicalCostsQuery.isLoading ? (
-                <div className="flex items-center justify-center p-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : hierarchicalCostsQuery.isError ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    {(hierarchicalCostsQuery.error as Error).message || 'Failed to load hierarchical cost data'}
-                  </AlertDescription>
-                </Alert>
-              ) : !hierarchicalCostsQuery.data ? (
-                <div className="text-center p-6 text-muted-foreground">
-                  No hierarchical cost data available
-                </div>
-              ) : (
-                <div className="h-80 w-full">
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Network className="h-16 w-16 text-primary mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        Hierarchical cost visualization will be displayed here
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="statistical">
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistical Analysis</CardTitle>
-              <CardDescription>
-                Statistical correlations and trends for {findBuildingTypeLabel(filters.buildingType)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statisticalDataQuery.isLoading ? (
-                <div className="flex items-center justify-center p-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : statisticalDataQuery.isError ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    {(statisticalDataQuery.error as Error).message || 'Failed to load statistical data'}
-                  </AlertDescription>
-                </Alert>
-              ) : !statisticalDataQuery.data ? (
-                <div className="text-center p-6 text-muted-foreground">
-                  No statistical data available
-                </div>
-              ) : (
-                <div className="h-80 w-full">
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <TrendingUp className="h-16 w-16 text-primary mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        Statistical correlation visualization will be displayed here
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </TabsContent>
     </div>
   );
 }
 
-// Default filters for MCP Visualizations
-const defaultFilters = {
-  buildingType: 'residential',
-  regions: [],
-  counties: [],
-  states: [],
-  startYear: 2020,
-  endYear: 2025
-};
-
-// Helper function to get building type label
-function findBuildingTypeLabel(value: string): string {
-  const type = buildingTypes.find(type => type.value === value);
-  return type ? type.label : value;
-}
-
-// Main component that wraps the content with the controller
-export function MCPVisualizations() {
-  return (
-    <MCPVisualizationController>
-      <VisualizationContent />
-    </MCPVisualizationController>
-  );
-}
+export default MCPVisualizations;
