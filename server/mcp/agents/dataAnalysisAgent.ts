@@ -6,10 +6,9 @@
  * data-related aspects of the application.
  */
 
-import { BaseAgent, AgentEvent } from './baseAgent';
+import { CustomAgentBase, AgentEvent } from './customAgentBase';
 import { agentEventBus } from './eventBus';
-import { agentCoordinator } from '../experience/agentCoordinator';
-import { generateUniqueId } from '../../utils/idGenerator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface QueryGenerationRequest {
   purpose: string;
@@ -43,7 +42,7 @@ interface SchemaOptimizationRequest {
  * Data Analysis Agent
  * Assists in data-related operations, optimizations, and insights
  */
-export class DataAnalysisAgent extends BaseAgent {
+export class DataAnalysisAgent extends CustomAgentBase {
   private generatedQueries: Map<string, any> = new Map();
   private dataInsights: Map<string, any> = new Map();
   private schemaOptimizations: Map<string, any> = new Map();

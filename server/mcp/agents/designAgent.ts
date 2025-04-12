@@ -5,10 +5,9 @@
  * theme recommendations, and accessibility improvements.
  */
 
-import { BaseAgent, AgentEvent } from './baseAgent';
+import { CustomAgentBase, AgentEvent } from './customAgentBase';
 import { agentEventBus } from './eventBus';
-import { agentCoordinator } from '../experience/agentCoordinator';
-import { generateUniqueId } from '../../utils/idGenerator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface DesignRequest {
   type: 'component' | 'page' | 'theme' | 'icon' | 'layout';
@@ -27,7 +26,7 @@ interface AccessibilityRequest {
  * Design Agent
  * Assists in UI/UX design, component styling, and accessibility
  */
-export class DesignAgent extends BaseAgent {
+export class DesignAgent extends CustomAgentBase {
   private designSuggestions: Map<string, any> = new Map();
   private accessibilityReports: Map<string, any> = new Map();
   private pendingRequests: Map<string, any> = new Map();
@@ -51,11 +50,8 @@ export class DesignAgent extends BaseAgent {
     await super.initialize();
     
     // Subscribe to design-related events
-    agentEventBus.subscribe('design:request', this.agentId, this.handleDesignRequest.bind(this));
-    agentEventBus.subscribe('accessibility:request', this.agentId, this.handleAccessibilityRequest.bind(this));
-    
-    // Register with the agent coordinator
-    agentCoordinator.registerAgent(this);
+    this.registerEventHandler('design:request', this.handleDesignRequest.bind(this));
+    this.registerEventHandler('accessibility:request', this.handleAccessibilityRequest.bind(this));
     
     // Initialize design library
     this.initializeDesignLibrary();
@@ -179,7 +175,7 @@ export class DesignAgent extends BaseAgent {
    */
   private async handleDesignRequest(event: AgentEvent): Promise<void> {
     const request = event.data as DesignRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling design request: ${request.type} - ${request.name}`);
     
@@ -262,7 +258,7 @@ export class DesignAgent extends BaseAgent {
    */
   private async handleAccessibilityRequest(event: AgentEvent): Promise<void> {
     const request = event.data as AccessibilityRequest;
-    const requestId = generateUniqueId();
+    const requestId = uuidv4();
     
     console.log(`Handling accessibility request for ${request.componentPath}`);
     
