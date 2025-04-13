@@ -47,6 +47,7 @@ import costCalculationRoutes from "./routes/costCalculationRoutes";
 import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import supabaseRoutes from "./routes/supabaseRoutes";
 import supabaseTestRouter from "./routes/supabase-test";
+import supabaseProxyRouter from "./routes/supabaseProxy";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2924,6 +2925,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register Supabase test routes for development and debugging
   app.use('/api/supabase-test', supabaseTestRouter);
+  
+  // Register Supabase proxy routes to bypass CORS issues
+  app.use('/api/supabase-proxy', supabaseProxyRouter);
   
   // Log Supabase integration
   await storage.createActivity({
