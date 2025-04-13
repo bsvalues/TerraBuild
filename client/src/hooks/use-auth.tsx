@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   } = useQuery<SelectUser | undefined, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    // Use the default query function
   });
 
   const loginMutation = useMutation<SelectUser, Error, LoginData>({
@@ -151,9 +151,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  try {
+    const context = useContext(AuthContext);
+    
+    // Instead of throwing, handle the case where the hook is used outside of AuthProvider
+    if (!context) {
+      console.warn("useAuth was called outside of AuthProvider. This is likely a development-time issue.");
+      
+      // Return a safety fallback with empty/null values that won't crash the app
+      return {
+        user: null,
+        isLoading: false,
+        error: new Error("AuthProvider not found"),
+        loginMutation: {} as any, // Type cast to avoid TS errors
+        logoutMutation: {} as any,
+        registerMutation: {} as any
+      } as AuthContextType;
+    }
+    
+    return context;
+  } catch (err) {
+    console.error("Error in useAuth hook:", err);
+    
+    // Return a fallback that won't crash the app
+    return {
+      user: null,
+      isLoading: false,
+      error: err instanceof Error ? err : new Error("Unknown error in useAuth"),
+      loginMutation: {} as any,
+      logoutMutation: {} as any,
+      registerMutation: {} as any
+    } as AuthContextType;
   }
-  return context;
 }

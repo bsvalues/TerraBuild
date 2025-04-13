@@ -10,33 +10,54 @@ import { queryClient } from "@/lib/queryClient";
  */
 export function useAutoLoginClient() {
   // Keep the same hooks and order as the original implementation
-  const { user, isLoading } = useAuth();
+  const auth = useAuth();
   const [autoLoginChecked, setAutoLoginChecked] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Skip if we're already logged in or still loading auth status
-    if (user || isLoading || autoLoginChecked) {
+    // Safely access auth properties
+    if (!auth) {
       return;
     }
     
-    // Use the same mock admin user as on the server
-    const adminUser = {
-      id: 1,
-      username: "admin",
-      password: "password", // Not actual password, just for display
-      role: "admin",
-      name: "Admin User",
-      isActive: true
+    const { user, isLoading } = auth;
+    
+    // Function to handle auto-login
+    const handleAutoLogin = () => {
+      try {
+        // Skip if we're already logged in or still loading auth status
+        if (user || isLoading || autoLoginChecked) {
+          return;
+        }
+        
+        // Use the same mock admin user as on the server
+        const adminUser = {
+          id: 1,
+          username: "admin",
+          password: "password", // Not actual password, just for display
+          role: "admin",
+          name: "Admin User",
+          isActive: true
+        };
+        
+        // Set the user data directly in the query cache
+        queryClient.setQueryData(["/api/user"], adminUser);
+        
+        console.log("DEVELOPMENT MODE: Auto-login complete with mock admin user");
+        
+        // Mark as checked to prevent further attempts
+        setAutoLoginChecked(true);
+      } catch (err) {
+        // Handle any errors that might occur
+        console.error("Error in auto-login:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
     };
     
-    // Set the user data directly in the query cache
-    queryClient.setQueryData(["/api/user"], adminUser);
+    // Execute auto-login with error handling
+    handleAutoLogin();
     
-    console.log("DEVELOPMENT MODE: Auto-login complete with mock admin user");
-    
-    // Mark as checked to prevent further attempts
-    setAutoLoginChecked(true);
-  }, [user, isLoading, autoLoginChecked]);
+  }, [auth, autoLoginChecked]);
 
-  return { autoLoginChecked };
+  return { autoLoginChecked, error };
 }

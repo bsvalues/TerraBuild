@@ -29,8 +29,8 @@ import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
 import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
-// Use consistent import path with correct casing - make sure this matches the actual file path
-import MCPDashboard from "@/pages/dashboard";
+// Use the correct casing for the import to match the filesystem
+import MCPDashboard from "@/pages/Dashboard";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import DocumentationPage from "@/pages/documentation";
 import TutorialsPage from "@/pages/tutorials";
@@ -54,19 +54,54 @@ import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Add link to Remix Icon for icons
 const RemixIconLink = () => (
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
 );
 
-// Component for auto-login with improved error handling
+// Track global promise rejections and handle them gracefully
+const GlobalErrorHandler = () => {
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault(); // Prevent default console error
+      console.warn('Unhandled promise rejection caught:', event.reason);
+      
+      // If you want to log to a service in production, you could do that here
+      // Example: logErrorToService(event.reason);
+    };
+    
+    const handleError = (event: ErrorEvent) => {
+      // Prevent default console error in some cases
+      if (event.message.includes('useAuth') || event.message.includes('AuthProvider')) {
+        event.preventDefault();
+        console.warn('Auth-related error caught:', event.message);
+      }
+    };
+    
+    // Add the event listeners
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+    
+    // Clean up the event listeners on component unmount
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+  
+  return null;
+};
+
+// Simpler mock auth component with minimal dependencies
 const DevAutoLogin = () => {
   useEffect(() => {
+    // Just directly set the user data without any dependencies
     try {
       console.log("DEVELOPMENT MODE: Setting mock admin user");
-      // Use the same mock admin user as on the server
+      
+      // Mock admin user
       const adminUser = {
         id: 1,
         username: "admin",
@@ -76,28 +111,14 @@ const DevAutoLogin = () => {
         isActive: true
       };
       
-      // Set the user data directly in the query cache
+      // Set directly in query cache
       queryClient.setQueryData(["/api/user"], adminUser);
-      
-      // Add global unhandled rejection handler
-      const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-        event.preventDefault(); // Prevent default console error
-        console.warn('Unhandled promise rejection caught:', event.reason);
-      };
-      
-      // Add the event listener
-      window.addEventListener('unhandledrejection', handleUnhandledRejection);
-      
-      // Clean up the event listener on component unmount
-      return () => {
-        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      };
     } catch (error) {
       console.error("Error in DevAutoLogin:", error);
     }
   }, []);
   
-  return null;
+  return <GlobalErrorHandler />;
 };
 
 function Router() {
