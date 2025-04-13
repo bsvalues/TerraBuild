@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import bentonSeal from '@assets/BC.png';
@@ -93,6 +93,8 @@ export default function TopNavMenu() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Check screen size for responsive design
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -116,6 +118,18 @@ export default function TopNavMenu() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileMenuOpen]);
+  
+  // Handle outside clicks to close dropdown menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -136,7 +150,7 @@ export default function TopNavMenu() {
       </div>
 
       {/* Desktop navigation - hidden on mobile unless menu is open */}
-      <NavigationMenu className={cn(
+      <NavigationMenu ref={menuRef} className={cn(
         "max-w-full justify-start",
         isMobile && !mobileMenuOpen ? "hidden" : "",
         isMobile && mobileMenuOpen ? "fixed inset-0 bg-white z-50 pt-16 px-4 overflow-auto flex flex-col" : ""
@@ -184,14 +198,22 @@ export default function TopNavMenu() {
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuTrigger className={cn(
-              location.includes('visualizations') || location.includes('what-if-scenarios') 
-                ? "bg-[#e6eef2] text-[#243E4D]" 
-                : ""
-            )}>
+            <NavigationMenuTrigger 
+              onClick={() => setActiveMenu(activeMenu === 'analytics' ? null : 'analytics')}
+              className={cn(
+                location.includes('visualizations') || location.includes('what-if-scenarios') 
+                  ? "bg-[#e6eef2] text-[#243E4D]" 
+                  : ""
+              )}
+            >
               <LineChart className="h-4 w-4 mr-2" /> Analytics
             </NavigationMenuTrigger>
-            <NavigationMenuContent forceMount={true} className="fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]">
+            <NavigationMenuContent 
+              forceMount={true} 
+              className={cn(
+                "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]",
+                activeMenu === 'analytics' ? 'block' : 'hidden'
+              )}>
               <div className="grid grid-cols-2 gap-2 p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Analytics">
                   <NavLink
@@ -228,14 +250,22 @@ export default function TopNavMenu() {
           </NavigationMenuItem>
           
           <NavigationMenuItem>
-            <NavigationMenuTrigger className={cn(
-              location.includes('mcp-') 
-                ? "bg-[#e6eef2] text-[#243E4D]" 
-                : ""
-            )}>
+            <NavigationMenuTrigger 
+              onClick={() => setActiveMenu(activeMenu === 'mcp' ? null : 'mcp')}
+              className={cn(
+                location.includes('mcp-') 
+                  ? "bg-[#e6eef2] text-[#243E4D]" 
+                  : ""
+              )}
+            >
               <BrainCircuit className="h-4 w-4 mr-2" /> MCP Framework
             </NavigationMenuTrigger>
-            <NavigationMenuContent forceMount={true} className="fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[300px]">
+            <NavigationMenuContent 
+              forceMount={true} 
+              className={cn(
+                "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[300px]",
+                activeMenu === 'mcp' ? 'block' : 'hidden'
+              )}>
               <div className="p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Model Content Protocol">
                   <NavLink
@@ -261,12 +291,20 @@ export default function TopNavMenu() {
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuTrigger className={cn(
-              location.includes('data-') ? "bg-[#e6eef2] text-[#243E4D]" : ""
-            )}>
+            <NavigationMenuTrigger 
+              onClick={() => setActiveMenu(activeMenu === 'data' ? null : 'data')}
+              className={cn(
+                location.includes('data-') ? "bg-[#e6eef2] text-[#243E4D]" : ""
+              )}
+            >
               <Database className="h-4 w-4 mr-2" /> Data
             </NavigationMenuTrigger>
-            <NavigationMenuContent forceMount={true} className="fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]">
+            <NavigationMenuContent 
+              forceMount={true} 
+              className={cn(
+                "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]",
+                activeMenu === 'data' ? 'block' : 'hidden'
+              )}>
               <div className="grid grid-cols-2 gap-2 p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Data Management">
                   <NavLink
@@ -316,14 +354,21 @@ export default function TopNavMenu() {
 
           {isAdmin && (
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={cn(
-                location.includes('users') || location.includes('shared-projects') 
-                  ? "bg-[#e6eef2] text-[#243E4D]" 
-                  : ""
-              )}>
+              <NavigationMenuTrigger 
+                onClick={() => setActiveMenu(activeMenu === 'admin' ? null : 'admin')}
+                className={cn(
+                  location.includes('users') || location.includes('shared-projects') 
+                    ? "bg-[#e6eef2] text-[#243E4D]" 
+                    : ""
+                )}
+              >
                 <Settings className="h-4 w-4 mr-2" /> Admin
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]">
+              <NavigationMenuContent 
+                className={cn(
+                  "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]",
+                  activeMenu === 'admin' ? 'block' : 'hidden'
+                )}>
                 <div className="p-4 w-full bg-white rounded-md">
                   <DropdownSection label="Administration">
                     <NavLink
