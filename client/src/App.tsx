@@ -3,7 +3,11 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import MCPDashboard from "@/pages/Dashboard";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+
+// Import all page components
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
@@ -25,6 +29,8 @@ import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
 import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
+// Use consistent import path with correct casing - make sure this matches the actual file path
+import MCPDashboard from "@/pages/dashboard";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import DocumentationPage from "@/pages/documentation";
 import TutorialsPage from "@/pages/tutorials";
@@ -55,22 +61,40 @@ const RemixIconLink = () => (
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
 );
 
-// Component for auto-login
+// Component for auto-login with improved error handling
 const DevAutoLogin = () => {
   useEffect(() => {
-    console.log("DEVELOPMENT MODE: Setting mock admin user");
-    // Use the same mock admin user as on the server
-    const adminUser = {
-      id: 1,
-      username: "admin",
-      password: "password", // Not actual password, just for display
-      role: "admin",
-      name: "Admin User",
-      isActive: true
-    };
-    
-    // Set the user data directly in the query cache
-    queryClient.setQueryData(["/api/user"], adminUser);
+    try {
+      console.log("DEVELOPMENT MODE: Setting mock admin user");
+      // Use the same mock admin user as on the server
+      const adminUser = {
+        id: 1,
+        username: "admin",
+        password: "password", // Not actual password, just for display
+        role: "admin",
+        name: "Admin User",
+        isActive: true
+      };
+      
+      // Set the user data directly in the query cache
+      queryClient.setQueryData(["/api/user"], adminUser);
+      
+      // Add global unhandled rejection handler
+      const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+        event.preventDefault(); // Prevent default console error
+        console.warn('Unhandled promise rejection caught:', event.reason);
+      };
+      
+      // Add the event listener
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+      
+      // Clean up the event listener on component unmount
+      return () => {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      };
+    } catch (error) {
+      console.error("Error in DevAutoLogin:", error);
+    }
   }, []);
   
   return null;
@@ -129,25 +153,48 @@ function Router() {
 }
 
 function App() {
+  // Global error fallback UI
+  const globalErrorFallback = (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+      <div className="w-full max-w-md p-6 space-y-4 bg-card rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold">Something went wrong</h1>
+        <p className="text-muted-foreground">
+          The application encountered an unexpected error. Please try refreshing the page.
+        </p>
+        <Button 
+          onClick={() => window.location.reload()}
+          className="w-full mt-4"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Reload Application
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <SupabaseProvider>
-          <AuthProvider>
-            <CollaborationProvider projectId={0}>
-              <DevAutoLogin />
-              <RemixIconLink />
-              <SidebarProvider>
-                <WindowProvider>
-                  <Router />
-                  <Toaster />
-                </WindowProvider>
-              </SidebarProvider>
-            </CollaborationProvider>
-          </AuthProvider>
-        </SupabaseProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary fallback={globalErrorFallback}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <SupabaseProvider>
+            <AuthProvider>
+              <CollaborationProvider projectId={0}>
+                <DevAutoLogin />
+                <RemixIconLink />
+                <SidebarProvider>
+                  <WindowProvider>
+                    <ErrorBoundary>
+                      <Router />
+                    </ErrorBoundary>
+                    <Toaster />
+                  </WindowProvider>
+                </SidebarProvider>
+              </CollaborationProvider>
+            </AuthProvider>
+          </SupabaseProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
