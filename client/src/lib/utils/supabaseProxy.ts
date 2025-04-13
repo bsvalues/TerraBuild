@@ -6,6 +6,7 @@
  */
 
 import { apiRequest } from "@/lib/queryClient";
+import axios from "axios";
 
 export interface ProxyResponse<T = any> {
   success: boolean;
@@ -28,17 +29,16 @@ export async function queryTable<T = any>(
     limit?: number;
   } = {}
 ): Promise<T[]> {
-  const response = await apiRequest<ProxyResponse<T[]>>({
-    url: `/api/supabase-proxy/query/${tableName}`,
-    method: "POST",
-    data: options,
-  });
+  const response = await axios.post<ProxyResponse<T[]>>(
+    `/api/supabase-proxy/query/${tableName}`,
+    options
+  );
 
-  if (!response.success) {
-    throw new Error(response.message || "Failed to query table");
+  if (!response.data.success) {
+    throw new Error(response.data.message || "Failed to query table");
   }
 
-  return response.data || [];
+  return response.data.data || [];
 }
 
 /**
@@ -67,10 +67,8 @@ export async function getRecordById<T = any>(
  * @returns Promise resolving to connection status information
  */
 export async function checkConnection(): Promise<ProxyResponse> {
-  return apiRequest<ProxyResponse>({
-    url: "/api/supabase-proxy/test-connection",
-    method: "GET",
-  });
+  const response = await axios.get<ProxyResponse>("/api/supabase-proxy/test-connection");
+  return response.data;
 }
 
 /**
@@ -78,10 +76,8 @@ export async function checkConnection(): Promise<ProxyResponse> {
  * @returns Promise resolving to configuration status information
  */
 export async function getConfigStatus(): Promise<ProxyResponse> {
-  return apiRequest<ProxyResponse>({
-    url: "/api/supabase-proxy/config-status",
-    method: "GET",
-  });
+  const response = await axios.get<ProxyResponse>("/api/supabase-proxy/config-status");
+  return response.data;
 }
 
 const supabaseProxy = {

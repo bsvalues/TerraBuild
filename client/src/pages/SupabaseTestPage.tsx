@@ -129,7 +129,7 @@ const SupabaseTestPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               {connectionResult && (
-                <Alert variant={connectionResult.success ? "default" : "danger"} className="mb-4">
+                <Alert variant={connectionResult.success ? "default" : "destructive"} className="mb-4">
                   <div className="flex items-center">
                     {connectionResult.success ? <CheckCircle className="h-5 w-5 mr-2" /> : <XCircle className="h-5 w-5 mr-2" />}
                     <AlertTitle>{connectionResult.success ? 'Success' : 'Error'}</AlertTitle>
@@ -172,7 +172,7 @@ const SupabaseTestPage: React.FC = () => {
                     </div>
                     
                     {tableResults[tableName] && (
-                      <Alert variant={tableResults[tableName].success ? "default" : "danger"} className="mb-3">
+                      <Alert variant={tableResults[tableName].success ? "default" : "destructive"} className="mb-3">
                         <AlertDescription>{tableResults[tableName].message}</AlertDescription>
                       </Alert>
                     )}
@@ -217,7 +217,7 @@ const SupabaseTestPage: React.FC = () => {
                     {testResults.map((result, index) => (
                       <Alert 
                         key={index} 
-                        variant={result.success ? "default" : "danger"}
+                        variant={result.success ? "default" : "destructive"}
                       >
                         <div className="flex items-center">
                           {result.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
@@ -296,7 +296,7 @@ const SupabaseTestPage: React.FC = () => {
                 </div>
                 
                 {diagnosticInfo.error && (
-                  <Alert variant="danger">
+                  <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4 mr-2" />
                     <AlertTitle>Error Retrieving Diagnostic Info</AlertTitle>
                     <AlertDescription>{diagnosticInfo.error}</AlertDescription>
