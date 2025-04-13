@@ -2,13 +2,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import type { WhatIfScenario, ScenarioVariation, ScenarioImpact } from "@shared/schema";
 import { createClient } from '@supabase/supabase-js';
+import { Database } from "@/lib/types/supabase";
+import { 
+  mapSupabaseScenarioToAppScenario,
+  mapAppScenarioToSupabaseScenario,
+  mapSupabaseVariationToAppVariation,
+  mapSupabaseImpactToAppImpact,
+  mapToTypedScenario,
+  mapToTypedScenarios
+} from "@/lib/utils/supabaseMappers";
 
 // Get Supabase URL and key from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-// Create a Supabase client
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Create a Supabase client with strong typing
+const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // ScenarioParameters type for strong typing
 export interface ScenarioParameters {
@@ -24,9 +33,9 @@ export interface TypedWhatIfScenario extends Omit<WhatIfScenario, 'parameters'> 
   parameters: ScenarioParameters;
 }
 
-// Helper function for Supabase API requests
+// Helper function for Supabase API requests with improved typing
 const supabaseRequest = async <T>(
-  tableName: string,
+  tableName: keyof Database['public']['Tables'],
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   data?: any,
   options?: {
@@ -104,26 +113,34 @@ const supabaseRequest = async <T>(
       return {} as T;
     }
     
-    // For single item responses
-    if (method === 'GET' && options?.id) {
-      return response.data as T;
+    // Transform the data based on the table name
+    if (tableName === 'scenarios') {
+      if (Array.isArray(response.data)) {
+        return response.data.map(mapSupabaseScenarioToAppScenario) as unknown as T;
+      } else {
+        return mapSupabaseScenarioToAppScenario(response.data) as unknown as T;
+      }
+    } else if (tableName === 'variations') {
+      if (Array.isArray(response.data)) {
+        return response.data.map(mapSupabaseVariationToAppVariation) as unknown as T;
+      } else {
+        return mapSupabaseVariationToAppVariation(response.data) as unknown as T;
+      }
+    } else if (tableName === 'impacts') {
+      if (Array.isArray(response.data)) {
+        return response.data.map(mapSupabaseImpactToAppImpact) as unknown as T;
+      } else {
+        return mapSupabaseImpactToAppImpact(response.data) as unknown as T;
+      }
     }
     
-    // For collection responses
-    return (method === 'POST' ? response.data[0] : response.data) as T;
+    // For other tables, return data as is
+    return (method === 'POST' && Array.isArray(response.data) ? response.data[0] : response.data) as T;
     
   } catch (error) {
     console.error("Supabase request failed:", error);
     throw error;
   }
-};
-
-// Helper to convert WhatIfScenario to TypedWhatIfScenario
-export const asTypedScenario = (scenario: WhatIfScenario): TypedWhatIfScenario => {
-  return {
-    ...scenario,
-    parameters: scenario.parameters as ScenarioParameters
-  };
 };
 
 export function useSupabaseScenarios() {
@@ -135,7 +152,7 @@ export function useSupabaseScenarios() {
       queryKey: ["/api/supabase/scenarios"],
       queryFn: () => supabaseRequest<WhatIfScenario[]>('scenarios', 'GET'),
       refetchOnWindowFocus: false,
-      select: (data) => data.map(scenario => asTypedScenario(scenario)),
+      select: (data) => mapToTypedScenarios(data),
     });
 
   // Get user's scenarios
@@ -146,7 +163,7 @@ export function useSupabaseScenarios() {
         filters: { user_id: userId }
       }),
       refetchOnWindowFocus: false,
-      select: (data) => data.map(scenario => asTypedScenario(scenario)),
+      select: (data) => mapToTypedScenarios(data),
     });
 
   // Get a specific scenario by ID
@@ -155,7 +172,7 @@ export function useSupabaseScenarios() {
       queryKey: ["/api/supabase/scenarios", scenarioId],
       queryFn: () => supabaseRequest<WhatIfScenario>('scenarios', 'GET', undefined, { id: scenarioId }),
       refetchOnWindowFocus: false,
-      select: (data) => asTypedScenario(data),
+      select: (data) => mapToTypedScenario(data),
     });
 
   // Get variations for a scenario
@@ -211,7 +228,7 @@ export function useSupabaseScenarios() {
         description: "Your scenario has been created successfully",
         variant: "default",
       });
-      return asTypedScenario(data);
+      return mapToTypedScenario(data);
     },
     onError: (error) => {
       toast({
@@ -239,7 +256,7 @@ export function useSupabaseScenarios() {
           query.queryKey[0] === "/api/supabase/scenarios" || 
           (query.queryKey[0] === "/api/supabase/scenarios" && query.queryKey[1] === variables.id)
       });
-      return asTypedScenario(data);
+      return mapToTypedScenario(data);
     },
     onError: (error) => {
       toast({
@@ -265,7 +282,7 @@ export function useSupabaseScenarios() {
         description: "Your scenario has been saved successfully",
         variant: "default",
       });
-      return asTypedScenario(data);
+      return mapToTypedScenario(data);
     },
     onError: (error) => {
       toast({
