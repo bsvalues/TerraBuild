@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { testConnection, testTableAccess, runComprehensiveTest, getDiagnosticInfo, TestResult } from '@/lib/utils/supabaseConnectionTest';
 import supabaseProxy from '@/lib/utils/supabaseProxy';
-import { CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, Database } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 const SupabaseTestPage: React.FC = () => {
   const [connectionResult, setConnectionResult] = useState<TestResult | null>(null);
@@ -129,7 +129,7 @@ const SupabaseTestPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               {connectionResult && (
-                <Alert variant={connectionResult.success ? "default" : "destructive"} className="mb-4">
+                <Alert variant={connectionResult.success ? "default" : "danger"} className="mb-4">
                   <div className="flex items-center">
                     {connectionResult.success ? <CheckCircle className="h-5 w-5 mr-2" /> : <XCircle className="h-5 w-5 mr-2" />}
                     <AlertTitle>{connectionResult.success ? 'Success' : 'Error'}</AlertTitle>
@@ -165,14 +165,14 @@ const SupabaseTestPage: React.FC = () => {
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="text-lg font-medium">{tableName}</h3>
                       {tableResults[tableName] && (
-                        <Badge variant={tableResults[tableName]?.success ? "outline" : "destructive"}>
+                        <Badge variant={tableResults[tableName]?.success ? "outline" : "danger"}>
                           {tableResults[tableName]?.success ? 'Success' : 'Failed'}
                         </Badge>
                       )}
                     </div>
                     
                     {tableResults[tableName] && (
-                      <Alert variant={tableResults[tableName].success ? "default" : "destructive"} className="mb-3">
+                      <Alert variant={tableResults[tableName].success ? "default" : "danger"} className="mb-3">
                         <AlertDescription>{tableResults[tableName].message}</AlertDescription>
                       </Alert>
                     )}
@@ -217,7 +217,7 @@ const SupabaseTestPage: React.FC = () => {
                     {testResults.map((result, index) => (
                       <Alert 
                         key={index} 
-                        variant={result.success ? "default" : "destructive"}
+                        variant={result.success ? "default" : "danger"}
                       >
                         <div className="flex items-center">
                           {result.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
@@ -296,7 +296,7 @@ const SupabaseTestPage: React.FC = () => {
                 </div>
                 
                 {diagnosticInfo.error && (
-                  <Alert variant="destructive">
+                  <Alert variant="danger">
                     <AlertCircle className="h-4 w-4 mr-2" />
                     <AlertTitle>Error Retrieving Diagnostic Info</AlertTitle>
                     <AlertDescription>{diagnosticInfo.error}</AlertDescription>

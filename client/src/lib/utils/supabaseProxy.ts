@@ -5,9 +5,8 @@
  * It sends requests through our server proxy to avoid CORS issues in Replit.
  */
 
-import axios from 'axios';
+import { apiRequest } from "@/lib/queryClient";
 
-// Define types for the responses from our proxy endpoints
 export interface ProxyResponse<T = any> {
   success: boolean;
   data?: T;
@@ -22,29 +21,24 @@ export interface ProxyResponse<T = any> {
  * @returns Promise resolving to the query results
  */
 export async function queryTable<T = any>(
-  tableName: string, 
+  tableName: string,
   options: {
     select?: string;
     filters?: Record<string, any>;
     limit?: number;
   } = {}
 ): Promise<T[]> {
-  try {
-    const response = await axios.post<ProxyResponse<T[]>>(
-      `/api/supabase-proxy/query/${tableName}`,
-      options
-    );
-    
-    if (response.data.success) {
-      return response.data.data || [];
-    } else {
-      console.error('Supabase proxy query error:', response.data.message);
-      throw new Error(response.data.message || 'Error querying table');
-    }
-  } catch (error: any) {
-    console.error('Supabase proxy error:', error);
-    throw error;
+  const response = await apiRequest<ProxyResponse<T[]>>({
+    url: `/api/supabase-proxy/query/${tableName}`,
+    method: "POST",
+    data: options,
+  });
+
+  if (!response.success) {
+    throw new Error(response.message || "Failed to query table");
   }
+
+  return response.data || [];
 }
 
 /**
@@ -59,18 +53,13 @@ export async function getRecordById<T = any>(
   id: number | string,
   select?: string
 ): Promise<T | null> {
-  try {
-    const response = await queryTable<T>(tableName, {
-      select,
-      filters: { id },
-      limit: 1
-    });
-    
-    return response && response.length > 0 ? response[0] : null;
-  } catch (error) {
-    console.error(`Error getting record from ${tableName} by ID ${id}:`, error);
-    throw error;
-  }
+  const response = await queryTable<T>(tableName, {
+    select,
+    filters: { id },
+    limit: 1,
+  });
+
+  return response.length > 0 ? response[0] : null;
 }
 
 /**
@@ -78,17 +67,10 @@ export async function getRecordById<T = any>(
  * @returns Promise resolving to connection status information
  */
 export async function checkConnection(): Promise<ProxyResponse> {
-  try {
-    const response = await axios.get<ProxyResponse>('/api/supabase-proxy/test-connection');
-    return response.data;
-  } catch (error: any) {
-    console.error('Error checking Supabase connection:', error);
-    return {
-      success: false,
-      message: error.message || 'Failed to check connection',
-      error
-    };
-  }
+  return apiRequest<ProxyResponse>({
+    url: "/api/supabase-proxy/test-connection",
+    method: "GET",
+  });
 }
 
 /**
@@ -96,23 +78,17 @@ export async function checkConnection(): Promise<ProxyResponse> {
  * @returns Promise resolving to configuration status information
  */
 export async function getConfigStatus(): Promise<ProxyResponse> {
-  try {
-    const response = await axios.get<ProxyResponse>('/api/supabase-proxy/config-status');
-    return response.data;
-  } catch (error: any) {
-    console.error('Error getting Supabase config status:', error);
-    return {
-      success: false,
-      message: error.message || 'Failed to get configuration status',
-      error
-    };
-  }
+  return apiRequest<ProxyResponse>({
+    url: "/api/supabase-proxy/config-status",
+    method: "GET",
+  });
 }
 
-// Export default as a service object for convenient imports
-export default {
+const supabaseProxy = {
   queryTable,
   getRecordById,
   checkConnection,
-  getConfigStatus
+  getConfigStatus,
 };
+
+export default supabaseProxy;
