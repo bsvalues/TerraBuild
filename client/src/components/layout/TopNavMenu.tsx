@@ -323,7 +323,7 @@ export default function TopNavMenu() {
               )}>
                 <Settings className="h-4 w-4 mr-2" /> Admin
               </NavigationMenuTrigger>
-              <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]">
+              <NavigationMenuContent className="w-[240px]">
                 <div className="p-4 w-full bg-white rounded-md">
                   <DropdownSection label="Administration">
                     <NavLink
