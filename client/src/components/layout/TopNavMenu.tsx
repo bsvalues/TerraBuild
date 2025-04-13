@@ -191,7 +191,7 @@ export default function TopNavMenu() {
             )}>
               <LineChart className="h-4 w-4 mr-2" /> Analytics
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="absolute left-0 top-full w-[500px]">
+            <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]">
               <div className="grid grid-cols-2 gap-2 p-4 w-full">
                 <DropdownSection label="Analytics">
                   <NavLink
@@ -235,8 +235,8 @@ export default function TopNavMenu() {
             )}>
               <BrainCircuit className="h-4 w-4 mr-2" /> MCP Framework
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="absolute left-0 top-full w-[300px]">
-              <div className="p-4 w-full">
+            <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[300px]">
+              <div className="p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Model Content Protocol">
                   <NavLink
                     href="/mcp-overview"
@@ -266,7 +266,7 @@ export default function TopNavMenu() {
             )}>
               <Database className="h-4 w-4 mr-2" /> Data
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="absolute left-0 top-full w-[500px]">
+            <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]">
               <div className="grid grid-cols-2 gap-2 p-4 w-full">
                 <DropdownSection label="Data Management">
                   <NavLink
@@ -323,8 +323,8 @@ export default function TopNavMenu() {
               )}>
                 <Settings className="h-4 w-4 mr-2" /> Admin
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="absolute left-0 top-full w-[240px]">
-                <div className="p-4 w-full">
+              <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]">
+                <div className="p-4 w-full bg-white rounded-md">
                   <DropdownSection label="Administration">
                     <NavLink
                       href="/users"
@@ -361,8 +361,8 @@ export default function TopNavMenu() {
             )}>
               <HelpCircle className="h-4 w-4 mr-2" /> Help
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="absolute left-0 top-full w-[240px]">
-              <div className="p-4 w-full">
+            <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]">
+              <div className="p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Help & Support">
                   <NavLink
                     href="/documentation"
