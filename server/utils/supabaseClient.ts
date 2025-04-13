@@ -18,7 +18,7 @@ let supabaseClient: SupabaseClient<Database> | null = null;
  * @returns The Supabase URL or null if not configured
  */
 export function getSupabaseUrl(): string | null {
-  return process.env.SUPABASE_URL || null;
+  return process.env.SUPABASE_URL || 'https://romjfbwktyxljvgcthmk.supabase.co';
 }
 
 /**
@@ -26,7 +26,7 @@ export function getSupabaseUrl(): string | null {
  * @returns The Supabase anonymous key or null if not configured
  */
 export function getSupabaseAnonKey(): string | null {
-  return process.env.SUPABASE_ANON_KEY || null;
+  return process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvbWpmYndrdHl4bGp2Z2N0aG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0OTM3ODksImV4cCI6MjA2MDA2OTc4OX0.-WNRs4iaAF0cYeseSbXYbhPICZ--dZQuJZqCb7pF7EM';
 }
 
 /**
@@ -34,7 +34,8 @@ export function getSupabaseAnonKey(): string | null {
  * @returns The Supabase service key or null if not configured
  */
 export function getSupabaseServiceKey(): string | null {
-  return process.env.SUPABASE_SERVICE_KEY || null;
+  // If we get a service key from environment, use it, otherwise use anon key
+  return process.env.SUPABASE_SERVICE_KEY || getSupabaseAnonKey();
 }
 
 /**
