@@ -1,301 +1,321 @@
-/**
- * Supabase Test Page
- * 
- * This page provides a simple interface to test the Supabase integration.
- * It demonstrates how to use the Supabase context and hooks for data access.
- */
-
-import React, { useState } from 'react';
-import { useSupabase } from '@/components/supabase/SupabaseProvider';
-import { useSupabaseScenarios } from '@/lib/hooks/useSupabaseScenarios';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { toast } from '@/hooks/use-toast';
-import { AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react';
-import { DatabaseSetup } from '@/components/supabase/DatabaseSetup';
+import { testConnection, testTableAccess, runComprehensiveTest, getDiagnosticInfo, TestResult } from '@/lib/utils/supabaseConnectionTest';
+import supabaseProxy from '@/lib/utils/supabaseProxy';
+import { CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, Database } from 'lucide-react';
 
 const SupabaseTestPage: React.FC = () => {
-  const { user, isLoading: authLoading, connectionStatus, isConfigured } = useSupabase();
-  const { getAllScenarios, createScenario } = useSupabaseScenarios();
+  const [connectionResult, setConnectionResult] = useState<TestResult | null>(null);
+  const [tableResults, setTableResults] = useState<Record<string, TestResult>>({});
+  const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('connection');
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
 
-  // State for new scenario form
-  const [newScenario, setNewScenario] = useState({
-    name: 'Test Scenario',
-    description: 'This is a test scenario created from the Supabase test page',
-    parameters: {
-      baseCost: 100000,
-      squareFootage: 2000,
-      complexity: 1.2,
-      region: 'East',
-      buildingType: 'residential'
-    }
-  });
+  useEffect(() => {
+    // Initialize diagnostic info on mount
+    setDiagnosticInfo(getDiagnosticInfo());
+  }, []);
 
-  // Get all scenarios query with proper enabling based on connection status
-  const { 
-    data: scenarios, 
-    isLoading, 
-    isError, 
-    error,
-    refetch: refetchScenarios 
-  } = getAllScenarios({
-    enabled: connectionStatus === 'connected' && isConfigured
-  });
-
-  // Create a test scenario
-  const handleCreateScenario = async () => {
-    if (!isConfigured || connectionStatus !== 'connected') {
-      toast({
-        title: 'Connection Required',
-        description: 'Please configure and connect to Supabase before creating scenarios',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleConnectionTest = async () => {
+    setIsLoading(true);
     try {
-      await createScenario.mutateAsync({
-        name: newScenario.name,
-        description: newScenario.description,
-        parameters: newScenario.parameters,
-        baseCalculationId: null,
-        results: null
-      });
+      // First try with our direct proxy
+      const proxyResult = await supabaseProxy.checkConnection();
       
-      toast({
-        title: 'Success',
-        description: 'Scenario created successfully',
-        variant: 'default',
-      });
-      
-      // Refresh the scenarios list
-      refetchScenarios();
-      
+      if (proxyResult.success) {
+        setConnectionResult({
+          success: true,
+          message: 'Successfully connected to Supabase via direct proxy',
+          details: proxyResult
+        });
+      } else {
+        // If direct proxy fails, try the regular test
+        const result = await testConnection();
+        setConnectionResult(result);
+      }
     } catch (error) {
-      console.error('Failed to create scenario:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: 'destructive',
+      console.error('Error in connection test:', error);
+      setConnectionResult({
+        success: false,
+        message: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Display connection status
-  const renderConnectionStatus = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return <span className="text-green-600 font-medium">Connected</span>;
-      case 'connecting':
-        return (
-          <div className="flex items-center">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span>Connecting...</span>
-          </div>
-        );
-      case 'error':
-        return <span className="text-red-600 font-medium">Connection Error</span>;
-      case 'unconfigured':
-        return <span className="text-amber-600 font-medium">Not Configured</span>;
-      default:
-        return <span className="text-gray-600 font-medium">Unknown</span>;
+  const handleTableTest = async (tableName: string) => {
+    setIsLoading(true);
+    try {
+      // Try to query using the proxy first
+      try {
+        const data = await supabaseProxy.queryTable(tableName, { limit: 5 });
+        setTableResults(prev => ({ 
+          ...prev, 
+          [tableName]: {
+            success: true,
+            message: `Successfully accessed table '${tableName}' (${data.length} records via proxy)`,
+            details: data
+          }
+        }));
+      } catch (proxyError) {
+        // If proxy fails, try the regular test
+        console.error(`Proxy table access failed for ${tableName}:`, proxyError);
+        const result = await testTableAccess(tableName);
+        setTableResults(prev => ({ ...prev, [tableName]: result }));
+      }
+    } catch (error) {
+      console.error(`Error in table test for ${tableName}:`, error);
+      setTableResults(prev => ({
+        ...prev,
+        [tableName]: {
+          success: false,
+          message: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }
+      }));
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleComprehensiveTest = async () => {
+    setIsLoading(true);
+    try {
+      const results = await runComprehensiveTest();
+      setTestResults(results);
+    } catch (error) {
+      console.error('Error in comprehensive test:', error);
+      setTestResults([{
+        success: false,
+        message: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshDiagnosticInfo = () => {
+    setDiagnosticInfo(getDiagnosticInfo());
   };
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Supabase Integration Test</h1>
+      <h1 className="text-3xl font-bold mb-6 flex items-center">
+        <Database className="mr-2" />
+        Supabase Connection Test
+      </h1>
       
-      <Tabs defaultValue="setup">
+      <Tabs defaultValue="connection" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="setup">Setup & Configuration</TabsTrigger>
-          <TabsTrigger value="connection">Connection Status</TabsTrigger>
-          <TabsTrigger value="scenarios" disabled={!isConfigured || connectionStatus !== 'connected'}>Scenarios</TabsTrigger>
-          <TabsTrigger value="create" disabled={!isConfigured || connectionStatus !== 'connected'}>Create Scenario</TabsTrigger>
+          <TabsTrigger value="connection">Connection Test</TabsTrigger>
+          <TabsTrigger value="tables">Table Access</TabsTrigger>
+          <TabsTrigger value="comprehensive">Comprehensive Test</TabsTrigger>
+          <TabsTrigger value="diagnostic">Diagnostic Info</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="setup">
-          <DatabaseSetup />
-        </TabsContent>
         
         <TabsContent value="connection">
           <Card>
             <CardHeader>
-              <CardTitle>Supabase Connection</CardTitle>
-              <CardDescription>Check if the Supabase connection is working</CardDescription>
+              <CardTitle>Basic Connection Test</CardTitle>
+              <CardDescription>
+                Test the basic connection to Supabase through our server-side proxy
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <span className="font-medium mr-2">Connection Status:</span>
-                  {renderConnectionStatus()}
-                </div>
-                
-                <div>
-                  <span className="font-medium mr-2">User Authentication:</span>
-                  {authLoading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>Loading user...</span>
-                    </div>
-                  ) : user ? (
-                    <span className="text-green-600 font-medium">Authenticated as {user.email}</span>
-                  ) : (
-                    <span className="text-amber-600 font-medium">Not authenticated (Development Mode)</span>
-                  )}
-                </div>
-                
-                <div>
-                  <span className="font-medium mr-2">Configuration Status:</span>
-                  {isConfigured ? (
-                    <span className="text-green-600 font-medium">Configured</span>
-                  ) : (
-                    <span className="text-amber-600 font-medium">Not Configured</span>
-                  )}
-                </div>
-
-                {!isConfigured && (
-                  <Alert variant="warning" className="mt-4">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Configuration Required</AlertTitle>
-                    <AlertDescription>
-                      Please set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_SUPABASE_SERVICE_KEY in your environment variables.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                {connectionStatus === 'error' && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Connection Error</AlertTitle>
-                    <AlertDescription>
-                      Failed to connect to Supabase. Please check your credentials and network connection.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                {connectionStatus === 'connected' && (
-                  <Alert variant="success" className="mt-4">
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertTitle>Connected</AlertTitle>
-                    <AlertDescription>
-                      Successfully connected to Supabase!
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="scenarios">
-          <Card>
-            <CardHeader>
-              <CardTitle>Scenarios</CardTitle>
-              <CardDescription>List of scenarios from Supabase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin mr-2" />
-                  <span>Loading scenarios...</span>
-                </div>
-              ) : isError ? (
-                <div className="bg-red-50 text-red-600 p-4 rounded-md">
-                  <p className="font-medium">Error loading scenarios</p>
-                  <p className="text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
-                </div>
-              ) : scenarios && scenarios.length > 0 ? (
-                <div className="space-y-4">
-                  {scenarios.map((scenario) => (
-                    <div key={scenario.id} className="border p-4 rounded-md">
-                      <h3 className="font-medium text-lg">{scenario.name}</h3>
-                      <p className="text-gray-600">{scenario.description}</p>
-                      <Separator className="my-2" />
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <span className="font-medium">Base Cost:</span> ${scenario.parameters.baseCost}
-                        </div>
-                        <div>
-                          <span className="font-medium">Square Footage:</span> {scenario.parameters.squareFootage} sq ft
-                        </div>
-                        <div>
-                          <span className="font-medium">Region:</span> {scenario.parameters.region}
-                        </div>
-                        <div>
-                          <span className="font-medium">Complexity:</span> {scenario.parameters.complexity}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center p-8 text-gray-500">
-                  <p>No scenarios found</p>
-                  <p className="text-sm">Try creating a new scenario</p>
-                </div>
+              {connectionResult && (
+                <Alert variant={connectionResult.success ? "default" : "destructive"} className="mb-4">
+                  <div className="flex items-center">
+                    {connectionResult.success ? <CheckCircle className="h-5 w-5 mr-2" /> : <XCircle className="h-5 w-5 mr-2" />}
+                    <AlertTitle>{connectionResult.success ? 'Success' : 'Error'}</AlertTitle>
+                  </div>
+                  <AlertDescription>{connectionResult.message}</AlertDescription>
+                </Alert>
               )}
               
-              <div className="mt-4">
-                <Button 
-                  onClick={() => refetchScenarios()} 
-                  disabled={isLoading || !isConfigured || connectionStatus !== 'connected'}
-                  variant="outline"
-                >
-                  {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Refresh Scenarios
-                </Button>
+              <Button 
+                onClick={handleConnectionTest} 
+                disabled={isLoading}
+                className="mt-2"
+              >
+                {isLoading ? 'Testing...' : 'Test Connection'}
+                {isLoading && <RefreshCw className="ml-2 h-4 w-4 animate-spin" />}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="tables">
+          <Card>
+            <CardHeader>
+              <CardTitle>Table Access Tests</CardTitle>
+              <CardDescription>
+                Test access to specific tables in your Supabase database
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {['scenarios', 'users', 'properties', 'projects'].map(tableName => (
+                  <div key={tableName} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-medium">{tableName}</h3>
+                      {tableResults[tableName] && (
+                        <Badge variant={tableResults[tableName]?.success ? "outline" : "destructive"}>
+                          {tableResults[tableName]?.success ? 'Success' : 'Failed'}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {tableResults[tableName] && (
+                      <Alert variant={tableResults[tableName].success ? "default" : "destructive"} className="mb-3">
+                        <AlertDescription>{tableResults[tableName].message}</AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <Button 
+                      onClick={() => handleTableTest(tableName)} 
+                      disabled={isLoading}
+                      size="sm"
+                    >
+                      {isLoading ? 'Testing...' : 'Test Access'}
+                      {isLoading && <RefreshCw className="ml-2 h-3 w-3 animate-spin" />}
+                    </Button>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="create">
+        <TabsContent value="comprehensive">
           <Card>
             <CardHeader>
-              <CardTitle>Create Test Scenario</CardTitle>
-              <CardDescription>Create a sample scenario to test Supabase integration</CardDescription>
+              <CardTitle>Comprehensive Test</CardTitle>
+              <CardDescription>
+                Run all tests to check the full Supabase connection and capabilities
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    This will create a test scenario with the following data:
-                  </p>
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <pre className="text-xs overflow-auto">
-                      {JSON.stringify(newScenario, null, 2)}
-                    </pre>
+              <Button 
+                onClick={handleComprehensiveTest} 
+                disabled={isLoading}
+                className="mb-4"
+              >
+                {isLoading ? 'Running Tests...' : 'Run All Tests'}
+                {isLoading && <RefreshCw className="ml-2 h-4 w-4 animate-spin" />}
+              </Button>
+              
+              {testResults.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-medium mb-2">Test Results</h3>
+                  <div className="space-y-3">
+                    {testResults.map((result, index) => (
+                      <Alert 
+                        key={index} 
+                        variant={result.success ? "default" : "destructive"}
+                      >
+                        <div className="flex items-center">
+                          {result.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                          <AlertTitle className="text-sm font-medium">{result.message}</AlertTitle>
+                        </div>
+                        {result.details && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-sm">View Details</summary>
+                            <pre className="mt-2 bg-muted p-2 rounded text-xs overflow-auto max-h-60">
+                              {JSON.stringify(result.details, null, 2)}
+                            </pre>
+                          </details>
+                        )}
+                      </Alert>
+                    ))}
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="diagnostic">
+          <Card>
+            <CardHeader>
+              <CardTitle>Diagnostic Information</CardTitle>
+              <CardDescription>
+                View configuration and environment details for your Supabase connection
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={refreshDiagnosticInfo} 
+                variant="outline" 
+                size="sm" 
+                className="mb-4"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh Info
+              </Button>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-2">Client Configuration</h3>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="text-sm font-medium">Supabase Client Configured</div>
+                  <div>
+                    {diagnosticInfo.configured ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Yes
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                        <XCircle className="h-3 w-3 mr-1" /> No
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="text-sm font-medium">Auth Configured</div>
+                  <div>
+                    {diagnosticInfo.authConfigured ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Yes
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
+                        <AlertTriangle className="h-3 w-3 mr-1" /> No
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="text-sm font-medium">Client Version</div>
+                  <div className="text-sm">{diagnosticInfo.clientVersion || 'N/A'}</div>
+                  
+                  <div className="text-sm font-medium">Timestamp</div>
+                  <div className="text-sm">{diagnosticInfo.timestamp || 'N/A'}</div>
+                </div>
                 
-                {(!isConfigured || connectionStatus !== 'connected') && (
-                  <Alert variant="warning" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Connection Required</AlertTitle>
-                    <AlertDescription>
-                      Please ensure Supabase is configured and connected before creating scenarios.
-                    </AlertDescription>
+                {diagnosticInfo.error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    <AlertTitle>Error Retrieving Diagnostic Info</AlertTitle>
+                    <AlertDescription>{diagnosticInfo.error}</AlertDescription>
                   </Alert>
                 )}
               </div>
+              
+              <Separator className="my-4" />
+              
+              <Alert variant="default" className="mt-4">
+                <Info className="h-4 w-4 mr-2" />
+                <AlertTitle>Important Note</AlertTitle>
+                <AlertDescription>
+                  The Supabase connection is being tested via our server-side proxy to bypass CORS
+                  issues in the Replit environment. Direct connections from the browser client to
+                  Supabase may still fail.
+                </AlertDescription>
+              </Alert>
             </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleCreateScenario} 
-                disabled={createScenario.isPending || !isConfigured || connectionStatus !== 'connected'}
-              >
-                {createScenario.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Create Test Scenario
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

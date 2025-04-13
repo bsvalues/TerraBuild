@@ -5,7 +5,8 @@
  * and diagnose any issues with connectivity or authentication.
  */
 
-import supabase from './supabaseClient';
+import axios from 'axios';
+import { supabase } from './supabaseClient';
 
 export interface TestResult {
   success: boolean;
@@ -19,31 +20,28 @@ export interface TestResult {
  */
 export async function testConnection(): Promise<TestResult> {
   try {
-    // Attempt to query a simple table to verify connectivity
-    const { data, error } = await supabase
-      .from('scenarios')
-      .select('id')
-      .limit(1);
+    // Use proxy endpoint instead of direct Supabase connection
+    const response = await axios.get('/api/supabase-proxy/test-connection');
     
-    if (error) {
+    if (response.data.success) {
+      return {
+        success: true,
+        message: 'Successfully connected to Supabase through proxy',
+        details: response.data
+      };
+    } else {
       return {
         success: false,
-        message: `Connection failed: ${error.message}`,
-        details: error
+        message: `Connection error: ${response.data.message}`,
+        details: response.data
       };
     }
-    
-    return {
-      success: true,
-      message: `Connection successful. Database is accessible.`,
-      details: { data }
-    };
   } catch (error: any) {
-    console.error("Supabase connection test error:", error);
+    console.error('Supabase connection test error:', error);
     return {
       success: false,
-      message: `Connection test threw an error: ${error.message || 'Unknown error'}`,
-      details: error
+      message: `Connection failed: ${error.message || 'Unknown error'}`,
+      details: error.response?.data || error
     };
   }
 }
@@ -55,37 +53,27 @@ export async function testConnection(): Promise<TestResult> {
  */
 export async function testTableAccess(tableName: string): Promise<TestResult> {
   try {
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .limit(5);
+    // Use proxy endpoint instead of direct Supabase connection
+    const response = await axios.get(`/api/supabase-proxy/test-table/${tableName}`);
     
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return {
-          success: false,
-          message: `Table '${tableName}' does not exist or you don't have access to it.`,
-          details: error
-        };
-      }
-      
+    if (response.data.success) {
+      return {
+        success: true,
+        message: `Successfully accessed table '${tableName}' (${response.data.count} records)`,
+        details: response.data
+      };
+    } else {
       return {
         success: false,
-        message: `Failed to access table '${tableName}': ${error.message}`,
-        details: error
+        message: `Table access error: ${response.data.message}`,
+        details: response.data
       };
     }
-    
-    return {
-      success: true,
-      message: `Successfully accessed table '${tableName}'. Retrieved ${data?.length || 0} rows.`,
-      details: { data }
-    };
   } catch (error: any) {
     return {
       success: false,
-      message: `Error accessing table '${tableName}': ${error.message || 'Unknown error'}`,
-      details: error
+      message: `Table access failed: ${error.message || 'Unknown error'}`,
+      details: error.response?.data || error
     };
   }
 }
@@ -98,12 +86,34 @@ export async function runComprehensiveTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   
   // Test basic connection
-  results.push(await testConnection());
+  const connectionTest = await testConnection();
+  results.push(connectionTest);
   
-  // Test access to known tables
-  const tables = ['scenarios', 'properties', 'improvements'];
-  for (const table of tables) {
-    results.push(await testTableAccess(table));
+  // If connection is successful, test some key tables
+  if (connectionTest.success) {
+    const tableTests = await Promise.all([
+      testTableAccess('scenarios'),
+      testTableAccess('users'),
+      testTableAccess('projects')
+    ]);
+    
+    results.push(...tableTests);
+  }
+  
+  // Test configuration
+  try {
+    const configResponse = await axios.get('/api/supabase-proxy/config-status');
+    results.push({
+      success: true,
+      message: 'Retrieved Supabase configuration',
+      details: configResponse.data
+    });
+  } catch (error: any) {
+    results.push({
+      success: false,
+      message: `Configuration check failed: ${error.message}`,
+      details: error.response?.data || error
+    });
   }
   
   return results;
@@ -114,22 +124,23 @@ export async function runComprehensiveTest(): Promise<TestResult[]> {
  * @returns Object with diagnostic information
  */
 export function getDiagnosticInfo() {
-  const url = supabase.supabaseUrl;
-  // Safely check if auth is defined before accessing properties
-  const authSession = supabase.auth && supabase.auth.session && supabase.auth.session();
+  const diagnosticInfo: Record<string, any> = {};
   
-  return {
-    url,
-    isAuthConfigured: !!supabase.auth,
-    hasActiveSession: !!authSession,
-    clientType: 'Supabase JS Client',
-    clientVersion: 'Latest'
-  };
+  try {
+    // Get client-side information only, without exposing sensitive data
+    // We can't directly access supabase.supabaseUrl due to it being protected
+    diagnosticInfo.configured = supabase && true;
+    
+    // We don't want to expose actual key values, just check if they exist
+    const hasAuthSession = supabase.auth && true;
+    diagnosticInfo.authConfigured = hasAuthSession;
+    
+    // API version information
+    diagnosticInfo.clientVersion = '@supabase/supabase-js client';
+    diagnosticInfo.timestamp = new Date().toISOString();
+  } catch (error: any) {
+    diagnosticInfo.error = error.message;
+  }
+  
+  return diagnosticInfo;
 }
-
-export default {
-  testConnection,
-  testTableAccess,
-  runComprehensiveTest,
-  getDiagnosticInfo
-};
