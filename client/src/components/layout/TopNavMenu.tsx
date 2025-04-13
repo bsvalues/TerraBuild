@@ -130,6 +130,11 @@ export default function TopNavMenu() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  // Fix menu handling to ensure it's properly updated
+  const toggleMenu = (menuName: string) => {
+    setActiveMenu(prevMenu => prevMenu === menuName ? null : menuName);
+  };
 
   return (
     <>
@@ -199,7 +204,7 @@ export default function TopNavMenu() {
 
           <NavigationMenuItem>
             <NavigationMenuTrigger 
-              onClick={() => setActiveMenu(activeMenu === 'analytics' ? null : 'analytics')}
+              onClick={() => toggleMenu('analytics')}
               className={cn(
                 location.includes('visualizations') || location.includes('what-if-scenarios') 
                   ? "bg-[#e6eef2] text-[#243E4D]" 
@@ -251,7 +256,7 @@ export default function TopNavMenu() {
           
           <NavigationMenuItem>
             <NavigationMenuTrigger 
-              onClick={() => setActiveMenu(activeMenu === 'mcp' ? null : 'mcp')}
+              onClick={() => toggleMenu('mcp')}
               className={cn(
                 location.includes('mcp-') 
                   ? "bg-[#e6eef2] text-[#243E4D]" 
@@ -292,7 +297,7 @@ export default function TopNavMenu() {
 
           <NavigationMenuItem>
             <NavigationMenuTrigger 
-              onClick={() => setActiveMenu(activeMenu === 'data' ? null : 'data')}
+              onClick={() => toggleMenu('data')}
               className={cn(
                 location.includes('data-') ? "bg-[#e6eef2] text-[#243E4D]" : ""
               )}
@@ -365,6 +370,7 @@ export default function TopNavMenu() {
                 <Settings className="h-4 w-4 mr-2" /> Admin
               </NavigationMenuTrigger>
               <NavigationMenuContent 
+                forceMount={true}
                 className={cn(
                   "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]",
                   activeMenu === 'admin' ? 'block' : 'hidden'
