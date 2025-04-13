@@ -1,0 +1,93 @@
+Benton County Seal
+Benton County Washington Building Cost Assessment System
+The official Building Cost Estimation System for Benton County, Washington
+
+Launch Calculator
+Import Data
+Powerful Features
+Our comprehensive building cost system provides a suite of tools to help you accurately estimate and analyze construction costs.
+
+Cost Calculator
+Accurately calculate building costs based on structure type, size, and region.
+
+Data Visualization
+Advanced charts and graphs to help interpret complex cost data at a glance.
+
+Learn more
+Regional Analysis
+Compare construction costs across different regions in Benton County.
+
+Data Import/Export
+Easily import and export cost data in various formats, including Excel and PDF.
+
+What-If Scenarios
+Model different building scenarios and see how they affect overall costs.
+
+Cost Matrix Management
+Maintain and update cost matrices for different building types and regions.
+
+System Impact
+Our building cost system continues to grow in both data and usage across Benton County.
+
+3,500+
+Building Cost Records
+25+
+Building Types
+15+
+County Regions
+97%
+Estimation Accuracy
+Benton County Showcase
+Discover the beauty and diversity of Benton County, Washington
+
+Benton County Sunset
+Sunset at Red Mountain
+Scenic Landscapes
+Breathtaking views across Benton County's diverse geography, from rolling hills to river valleys.
+
+Benton County Vineyards
+Wine Country
+Thriving Agriculture
+Benton County's renowned vineyards and farms produce some of Washington's finest crops and wines.
+
+Benton County Development
+Prosser Downtown
+Modern Development
+Growing communities and sustainable infrastructure support the county's expanding economic activity.
+
+View County Map
+About The System
+The Benton County Building Cost System (BCBS) is the official tool used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington.
+
+Our system leverages advanced data analytics and machine learning to provide the most accurate building cost estimations based on real construction data collected over many years.
+
+Updated annually with the latest cost data
+Integrated with county assessment systems
+Continuously improved through user feedback
+Explore Data
+View Benchmarks
+Benton County Building
+Benton County Seal
+Benton County
+Washington State
+The official building cost estimation system for Benton County's property assessment and construction planning.
+
+Tools
+Calculator
+Visualizations
+Data Import
+Resources
+Documentation
+Tutorials
+FAQ
+Contact
+County Website
+Email Support
+(509) 736-3086
+© 2025 Benton County. All rights reserved.
+Privacy Policy
+Terms of Use
+Accessibility
+[plugin:runtime-error-plugin] Failed to fetch
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.

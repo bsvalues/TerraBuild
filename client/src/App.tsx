@@ -12,7 +12,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
-import LandingPage from "@/pages/LandingPage";
+import LandingPageSimple from "@/pages/LandingPageSimple";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -126,7 +126,7 @@ function Router() {
   return (
     <Switch>
       {/* Use LandingPage as the root route without authentication */}
-      <Route path="/" component={LandingPage} />
+      <Route path="/" component={LandingPageSimple} />
       <Route path="/documentation" component={DocumentationPage} />
       <Route path="/tutorials" component={TutorialsPage} />
       <Route path="/faq" component={FAQPage} />
