@@ -399,14 +399,22 @@ export default function TopNavMenu() {
           )}
 
           <NavigationMenuItem>
-            <NavigationMenuTrigger className={cn(
-              location.includes('documentation') || location.includes('tutorials') || location.includes('faq') 
-                ? "bg-[#e6eef2] text-[#243E4D]" 
-                : ""
-            )}>
+            <NavigationMenuTrigger 
+              onClick={() => setActiveMenu(activeMenu === 'help' ? null : 'help')}
+              className={cn(
+                location.includes('documentation') || location.includes('tutorials') || location.includes('faq') 
+                  ? "bg-[#e6eef2] text-[#243E4D]" 
+                  : ""
+              )}
+            >
               <HelpCircle className="h-4 w-4 mr-2" /> Help
             </NavigationMenuTrigger>
-            <NavigationMenuContent forceMount={true} className="fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]">
+            <NavigationMenuContent 
+              forceMount={true} 
+              className={cn(
+                "fixed top-[42px] left-auto z-50 rounded-md shadow-md border border-gray-200 mt-1 w-[240px]",
+                activeMenu === 'help' ? 'block' : 'hidden'
+              )}>
               <div className="p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Help & Support">
                   <NavLink
