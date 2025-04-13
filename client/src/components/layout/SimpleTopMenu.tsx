@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
 import { Menu, X } from 'lucide-react';
-import Logo from '@/components/ui/logo';
+import { Logo } from '../../components/ui/logo';
 
 interface MenuItem {
   label: string;
@@ -190,18 +190,19 @@ export function SimpleTopMenu() {
                 }
                 return (
                   <li key={childIndex}>
-                    <Link href={child.href}>
-                      <a
-                        className={`block px-3 py-2 text-sm transition-colors ${
-                          isActive(child.href)
-                            ? 'text-primary'
-                            : 'text-foreground hover:text-primary'
-                        } ${isMobile ? '' : 'rounded-sm'}`}
-                        onClick={closeAllDropdowns}
-                      >
-                        {child.label}
-                      </a>
-                    </Link>
+                    <div 
+                      className={`block px-3 py-2 text-sm transition-colors ${
+                        isActive(child.href)
+                          ? 'text-primary'
+                          : 'text-foreground hover:text-primary'
+                      } ${isMobile ? '' : 'rounded-sm'} cursor-pointer`}
+                      onClick={() => {
+                        closeAllDropdowns();
+                        window.location.href = child.href;
+                      }}
+                    >
+                      {child.label}
+                    </div>
                   </li>
                 );
               })}
@@ -213,16 +214,17 @@ export function SimpleTopMenu() {
     
     return (
       <li key={index} className={isMobile ? 'w-full' : ''}>
-        <Link href={item.href}>
-          <a
-            className={`block px-3 py-2 text-sm font-medium transition-colors ${
-              isActive(item.href) ? 'text-primary' : 'text-foreground hover:text-primary'
-            }`}
-            onClick={closeAllDropdowns}
-          >
-            {item.label}
-          </a>
-        </Link>
+        <div
+          className={`block px-3 py-2 text-sm font-medium transition-colors ${
+            isActive(item.href) ? 'text-primary' : 'text-foreground hover:text-primary'
+          } cursor-pointer`}
+          onClick={() => {
+            closeAllDropdowns();
+            window.location.href = item.href;
+          }}
+        >
+          {item.label}
+        </div>
       </li>
     );
   };
@@ -231,12 +233,13 @@ export function SimpleTopMenu() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
-          <Link href="/">
-            <a className="flex items-center space-x-2">
-              <Logo className="h-6 w-6" />
-              <span className="font-bold">BCBS</span>
-            </a>
-          </Link>
+          <div 
+            className="flex items-center space-x-2 cursor-pointer" 
+            onClick={() => window.location.href = '/'}
+          >
+            <Logo className="h-6 w-6" />
+            <span className="font-bold">BCBS</span>
+          </div>
         </div>
         
         {/* Desktop Menu */}
