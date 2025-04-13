@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bell, User } from 'lucide-react';
-import TopNavMenu from './TopNavMenuUpdated';
+import SimpleTopMenu from './SimpleTopMenu';
 
 interface TopNavbarProps {
   toggleSidebar?: () => void; // Made optional for backward compatibility
@@ -18,7 +18,7 @@ export default function TopNavbar({ toggleSidebar }: TopNavbarProps) {
     <header className="bg-white border-b border-border sticky top-0 z-30 shadow-sm">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex-1 flex items-center">
-          <TopNavMenu />
+          <SimpleTopMenu />
         </div>
         
         <div className="flex items-center space-x-2">
