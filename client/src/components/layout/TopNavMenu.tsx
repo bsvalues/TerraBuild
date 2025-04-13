@@ -267,7 +267,7 @@ export default function TopNavMenu() {
               <Database className="h-4 w-4 mr-2" /> Data
             </NavigationMenuTrigger>
             <NavigationMenuContent forceMount={true} className="relative z-40 rounded-md shadow-md border border-gray-200 mt-1 w-[500px]">
-              <div className="grid grid-cols-2 gap-2 p-4 w-full">
+              <div className="grid grid-cols-2 gap-2 p-4 w-full bg-white rounded-md">
                 <DropdownSection label="Data Management">
                   <NavLink
                     href="/data-import"
