@@ -165,7 +165,7 @@ const SupabaseTestPage: React.FC = () => {
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="text-lg font-medium">{tableName}</h3>
                       {tableResults[tableName] && (
-                        <Badge variant={tableResults[tableName]?.success ? "outline" : "danger"}>
+                        <Badge variant={tableResults[tableName]?.success ? "outline" : "destructive"}>
                           {tableResults[tableName]?.success ? 'Success' : 'Failed'}
                         </Badge>
                       )}
