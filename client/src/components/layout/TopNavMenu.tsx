@@ -58,18 +58,26 @@ const NavLink = ({ href, label, icon, className, onClick }: NavLinkProps) => {
       )}
       onClick={(e) => {
         if (onClick) onClick();
-        // Close any open menu when a link is clicked
-        if (typeof window !== 'undefined') {
-          // This will trigger the click outside handler
-          document.dispatchEvent(new MouseEvent('mousedown', {
-            bubbles: true,
-            cancelable: true
-          }));
-        }
+        
+        // Explicitly call closeAllMenus to guarantee menu closure
+        closeAllMenus();
+        
         // Use the wouter navigation mechanism
         window.history.pushState({}, '', href);
         // Dispatch a popstate event to notify wouter of the change
         window.dispatchEvent(new PopStateEvent('popstate'));
+        
+        // Add a slight delay before dispatching an additional mousedown event
+        // This ensures any click handlers have finished processing
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            // This will trigger the click outside handler as a backup
+            document.dispatchEvent(new MouseEvent('mousedown', {
+              bubbles: true,
+              cancelable: true
+            }));
+          }
+        }, 50);
       }}
     >
       {icon && (
@@ -139,9 +147,19 @@ export default function TopNavMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Fix menu handling to ensure it's properly updated
+  // Enhanced menu handling system
   const toggleMenu = (menuName: string) => {
     setActiveMenu(prevMenu => prevMenu === menuName ? null : menuName);
+  };
+  
+  // Directly set active menu (for direct navigation)
+  const setMenu = (menuName: string | null) => {
+    setActiveMenu(menuName);
+  };
+  
+  // Close all menus
+  const closeAllMenus = () => {
+    setActiveMenu(null);
   };
 
   return (
