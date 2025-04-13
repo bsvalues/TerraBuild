@@ -47,6 +47,7 @@ import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { useEffect } from "react";
 
 // Add link to Remix Icon for icons
@@ -131,18 +132,20 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <CollaborationProvider projectId={0}>
-            <DevAutoLogin />
-            <RemixIconLink />
-            <SidebarProvider>
-              <WindowProvider>
-                <Router />
-                <Toaster />
-              </WindowProvider>
-            </SidebarProvider>
-          </CollaborationProvider>
-        </AuthProvider>
+        <SupabaseProvider>
+          <AuthProvider>
+            <CollaborationProvider projectId={0}>
+              <DevAutoLogin />
+              <RemixIconLink />
+              <SidebarProvider>
+                <WindowProvider>
+                  <Router />
+                  <Toaster />
+                </WindowProvider>
+              </SidebarProvider>
+            </CollaborationProvider>
+          </AuthProvider>
+        </SupabaseProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

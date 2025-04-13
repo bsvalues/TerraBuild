@@ -1,112 +1,155 @@
+/**
+ * Supabase Provider Component
+ * 
+ * This component provides the Supabase client and related authentication
+ * state to the entire application through React Context.
+ */
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { Session, User } from '@supabase/supabase-js';
+import { toast } from '@/hooks/use-toast';
+import supabase from '@/lib/utils/supabaseClient';
 
-// Define the context for Supabase
-type SupabaseContextType = {
-  supabase: SupabaseClient | null;
+// Define the context shape
+interface SupabaseContextType {
+  supabase: typeof supabase;
+  user: User | null;
+  session: Session | null;
   isLoading: boolean;
+  error: Error | null;
   isConfigured: boolean;
-  error: string | null;
-};
+  connectionStatus: 'connected' | 'error' | 'unconfigured' | 'connecting';
+}
 
+// Create context with default values
 const SupabaseContext = createContext<SupabaseContextType>({
-  supabase: null,
+  supabase,
+  user: null,
+  session: null,
   isLoading: true,
-  isConfigured: false,
   error: null,
+  isConfigured: false,
+  connectionStatus: 'connecting',
 });
 
-// Define provider props
+/**
+ * Custom hook to access the Supabase context
+ * @returns The Supabase context
+ */
+export const useSupabase = () => useContext(SupabaseContext);
+
 interface SupabaseProviderProps {
   children: React.ReactNode;
 }
 
-// Provider component
+/**
+ * Supabase Provider component that wraps the application
+ * @param children React children components
+ */
 export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
-  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error' | 'unconfigured' | 'connecting'>('connecting');
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
 
+  // Initialize and set up auth state listener
   useEffect(() => {
+    // Check if Supabase is properly configured with environment variables
+    const checkSupabaseConfig = () => {
+      const configStatus = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+      setIsConfigured(configStatus);
+      return configStatus;
+    };
+
+    let authUnsubscribe: (() => void) | null = null;
+    
+    // Get the initial session
     const initializeSupabase = async () => {
       try {
-        // Check if Supabase URL and key are available
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-        if (!supabaseUrl || !supabaseKey) {
-          setError('Supabase environment variables are not configured');
-          setIsLoading(false);
+        setIsLoading(true);
+        setConnectionStatus('connecting');
+        
+        // First check if Supabase is configured
+        if (!checkSupabaseConfig()) {
+          setConnectionStatus('unconfigured');
           return;
         }
-
-        // Create Supabase client
-        const client = createClient(supabaseUrl, supabaseKey);
-        setSupabase(client);
-
-        // Test connection by making a simple request
-        const { error } = await client.from('scenarios').select('count');
+        
+        // Try a simple ping to Supabase
+        try {
+          // Attempt a simple operation to check connectivity
+          await supabase.from('scenarios').select('count', { count: 'exact', head: true });
+          setConnectionStatus('connected');
+        } catch (pingError) {
+          setConnectionStatus('error');
+          throw new Error('Could not connect to Supabase. Please check your network connection and Supabase credentials.');
+        }
+        
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          // If the error is about the table not existing, we still consider it configured
-          if (error.code === '42P01') { // PostgreSQL error code for "relation does not exist"
-            console.warn('Supabase tables not yet created, but connection is working');
-            setIsConfigured(true);
-          } else {
-            console.error('Supabase connection error:', error);
-            setError(`Supabase connection error: ${error.message}`);
-          }
-        } else {
-          setIsConfigured(true);
+          throw error;
         }
-      } catch (err) {
-        console.error('Error initializing Supabase:', err);
-        setError(`Error initializing Supabase: ${err instanceof Error ? err.message : String(err)}`);
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        // Listen for auth changes
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+          (_event, session) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
+        );
+
+        // Store cleanup function
+        authUnsubscribe = () => {
+          authListener?.subscription?.unsubscribe();
+        };
+      } catch (error) {
+        setConnectionStatus('error');
+        if (error instanceof Error) {
+          setError(error);
+          toast({
+            title: "Supabase Connection Error",
+            description: error.message || "Failed to initialize Supabase connection",
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Initialize
     initializeSupabase();
+
+    // Cleanup
+    return () => {
+      if (authUnsubscribe) {
+        authUnsubscribe();
+      }
+    };
   }, []);
 
+  const value = {
+    supabase,
+    user,
+    session,
+    isLoading,
+    error,
+    isConfigured,
+    connectionStatus,
+  };
+
   return (
-    <SupabaseContext.Provider value={{ supabase, isLoading, isConfigured, error }}>
-      {isLoading ? (
-        <div className="flex items-center justify-center p-4">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Connecting to Supabase...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Supabase Connection Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : !isConfigured ? (
-        <Alert variant="warning" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Supabase Not Configured</AlertTitle>
-          <AlertDescription>
-            Supabase is not properly configured. Some features may not work correctly.
-          </AlertDescription>
-        </Alert>
-      ) : null}
+    <SupabaseContext.Provider value={value}>
       {children}
     </SupabaseContext.Provider>
   );
 };
 
-// Custom hook to use the Supabase context
-export const useSupabase = () => {
-  const context = useContext(SupabaseContext);
-  if (context === undefined) {
-    throw new Error('useSupabase must be used within a SupabaseProvider');
-  }
-  return context;
-};
+export default SupabaseProvider;

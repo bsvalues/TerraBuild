@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import type { WhatIfScenario, ScenarioVariation, ScenarioImpact } from "@shared/schema";
-import { createClient } from '@supabase/supabase-js';
 import { Database } from "@/lib/types/supabase";
 import { 
   mapSupabaseScenarioToAppScenario,
@@ -11,13 +10,7 @@ import {
   mapToTypedScenario,
   mapToTypedScenarios
 } from "@/lib/utils/supabaseMappers";
-
-// Get Supabase URL and key from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-// Create a Supabase client with strong typing
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import supabase from "@/lib/utils/supabaseClient";
 
 // ScenarioParameters type for strong typing
 export interface ScenarioParameters {
@@ -397,6 +390,6 @@ export function useSupabaseScenarios() {
     deleteScenario,
     addVariation,
     deleteVariation,
-    asTypedScenario
+    mapToTypedScenario
   };
 }

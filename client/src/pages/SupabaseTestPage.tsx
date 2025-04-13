@@ -1,293 +1,197 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+/**
+ * Supabase Test Page
+ * 
+ * This page provides a simple interface to test the Supabase integration.
+ * It demonstrates how to use the Supabase context and hooks for data access.
+ */
+
+import React, { useState } from 'react';
+import { useSupabase } from '@/components/supabase/SupabaseProvider';
+import { useSupabaseScenarios } from '@/lib/hooks/useSupabaseScenarios';
 import { Button } from '@/components/ui/button';
-import { SupabaseProvider, useSupabase } from '@/components/supabase/SupabaseProvider';
-import DatabaseSetup from '@/components/supabase/DatabaseSetup';
-import { AlertCircle, Database, Server, CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-// Component to test the Supabase connection
-const ConnectionTest: React.FC = () => {
-  const { supabase, isLoading, isConfigured, error } = useSupabase();
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [isTesting, setIsTesting] = useState(false);
-  
-  const testConnection = async () => {
-    if (!supabase) {
-      setTestResult({
-        success: false,
-        message: 'Supabase client is not available'
-      });
-      return;
-    }
-    
-    setIsTesting(true);
-    setTestResult(null);
-    
-    try {
-      // Make a request to the test endpoint
-      const response = await fetch('/api/supabase-test/config-status');
-      const data = await response.json();
-      
-      setTestResult({
-        success: data.configured,
-        message: data.configured 
-          ? 'Successfully connected to Supabase' 
-          : `Connection failed: ${data.message || 'Unknown error'}`
-      });
-    } catch (err) {
-      setTestResult({
-        success: false,
-        message: `Test failed: ${err instanceof Error ? err.message : String(err)}`
-      });
-    } finally {
-      setIsTesting(false);
-    }
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Server className="h-5 w-5" />
-          Connection Test
-        </CardTitle>
-        <CardDescription>
-          Test the connection to your Supabase database.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <div className="animate-spin h-4 w-4 border-2 border-primary rounded-full border-t-transparent"></div>
-            <p>Checking Supabase connection...</p>
-          </div>
-        ) : error ? (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Connection Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : !isConfigured ? (
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Not Configured</AlertTitle>
-            <AlertDescription>
-              Supabase is not properly configured. Make sure you have set the environment variables.
-            </AlertDescription>
-          </Alert>
-        ) : testResult ? (
-          <Alert variant={testResult.success ? "default" : "destructive"}>
-            {testResult.success ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertTitle>{testResult.success ? 'Success' : 'Error'}</AlertTitle>
-            <AlertDescription>{testResult.message}</AlertDescription>
-          </Alert>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Click the button below to test the connection to your Supabase database.
-          </p>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={testConnection} 
-          disabled={isLoading || isTesting || !isConfigured}
-        >
-          {isTesting ? (
-            <>
-              <span className="mr-2 h-4 w-4 animate-spin border-2 border-primary rounded-full border-t-transparent"></span>
-              Testing...
-            </>
-          ) : (
-            'Test Connection'
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-};
-
-// Component to display environment variable status
-const EnvironmentStatus: React.FC = () => {
-  const [envVars, setEnvVars] = useState<{[key: string]: string | null}>({
-    SUPABASE_URL: null,
-    SUPABASE_ANON_KEY: null,
-    SUPABASE_SERVICE_KEY: null
-  });
-  
-  useEffect(() => {
-    // Check if environment variables are set in Vite
-    setEnvVars({
-      SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL as string || null,
-      SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY as string || null,
-      SUPABASE_SERVICE_KEY: import.meta.env.VITE_SUPABASE_SERVICE_KEY as string || null
-    });
-  }, []);
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Database className="h-5 w-5" />
-          Environment Variables
-        </CardTitle>
-        <CardDescription>
-          Status of required Supabase environment variables.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {Object.entries(envVars).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <div className="font-mono text-sm">{key}</div>
-              <div className="flex items-center">
-                {value ? (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm text-green-600">Set</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
-                    <span className="text-sm text-red-600">Not Set</span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <p className="text-xs text-muted-foreground">
-          These environment variables are required for the Supabase integration to work properly.
-        </p>
-      </CardFooter>
-    </Card>
-  );
-};
-
-// Component to display API endpoint status
-const ApiStatus: React.FC = () => {
-  const [endpoints, setEndpoints] = useState<{[key: string]: boolean | null}>({
-    '/api/supabase-test/config-status': null,
-    '/api/supabase-test/test-connection': null,
-    '/api/supabase/scenarios': null
-  });
-  const [isChecking, setIsChecking] = useState(false);
-  
-  const checkEndpoints = async () => {
-    setIsChecking(true);
-    
-    const results: {[key: string]: boolean} = {};
-    
-    for (const endpoint of Object.keys(endpoints)) {
-      try {
-        const response = await fetch(endpoint);
-        results[endpoint] = response.ok;
-      } catch (err) {
-        results[endpoint] = false;
-      }
-    }
-    
-    setEndpoints(results);
-    setIsChecking(false);
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Server className="h-5 w-5" />
-          API Endpoints
-        </CardTitle>
-        <CardDescription>
-          Status of Supabase API endpoints.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {Object.entries(endpoints).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <div className="font-mono text-sm">{key}</div>
-              <div className="flex items-center">
-                {value === null ? (
-                  <span className="text-sm text-gray-400">Not checked</span>
-                ) : value ? (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm text-green-600">Available</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
-                    <span className="text-sm text-red-600">Unavailable</span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={checkEndpoints} 
-          disabled={isChecking}
-        >
-          {isChecking ? (
-            <>
-              <span className="mr-2 h-4 w-4 animate-spin border-2 border-primary rounded-full border-t-transparent"></span>
-              Checking...
-            </>
-          ) : (
-            'Check Endpoints'
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-};
-
-// Main Supabase test page
 const SupabaseTestPage: React.FC = () => {
+  const { user, isLoading: authLoading } = useSupabase();
+  const { getAllScenarios, createScenario } = useSupabaseScenarios();
+
+  // Mock user ID for testing (normally would come from auth)
+  const userId = 1;
+
+  // Get all scenarios query
+  const { data: scenarios, isLoading, isError, error } = getAllScenarios();
+
+  // State for new scenario form
+  const [newScenario, setNewScenario] = useState({
+    name: 'Test Scenario',
+    description: 'This is a test scenario created from the Supabase test page',
+    parameters: {
+      baseCost: 100000,
+      squareFootage: 2000,
+      complexity: 1.2,
+      region: 'East',
+      buildingType: 'residential'
+    }
+  });
+
+  // Create a test scenario
+  const handleCreateScenario = async () => {
+    try {
+      await createScenario.mutateAsync({
+        name: newScenario.name,
+        description: newScenario.description,
+        parameters: newScenario.parameters,
+        baseCalculationId: null,
+        results: null
+      });
+    } catch (error) {
+      console.error('Failed to create scenario:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <div className="container py-10">
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Supabase Integration Test</h1>
-          <p className="text-muted-foreground mt-2">
-            Test and configure the Supabase integration for BCBS application.
-          </p>
-        </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Supabase Integration Test</h1>
+      
+      <Tabs defaultValue="connection">
+        <TabsList className="mb-4">
+          <TabsTrigger value="connection">Connection Status</TabsTrigger>
+          <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
+          <TabsTrigger value="create">Create Scenario</TabsTrigger>
+        </TabsList>
         
-        <SupabaseProvider>
-          <Tabs defaultValue="connection" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="connection">Connection</TabsTrigger>
-              <TabsTrigger value="setup">Database Setup</TabsTrigger>
-              <TabsTrigger value="status">Status</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="connection" className="mt-4">
-              <ConnectionTest />
-            </TabsContent>
-            
-            <TabsContent value="setup" className="mt-4">
-              <DatabaseSetup />
-            </TabsContent>
-            
-            <TabsContent value="status" className="mt-4 space-y-6">
-              <EnvironmentStatus />
-              <ApiStatus />
-            </TabsContent>
-          </Tabs>
-        </SupabaseProvider>
-      </div>
+        <TabsContent value="connection">
+          <Card>
+            <CardHeader>
+              <CardTitle>Supabase Connection</CardTitle>
+              <CardDescription>Check if the Supabase connection is working</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <span className="font-medium mr-2">Connection Status:</span>
+                  {authLoading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Checking connection...</span>
+                    </div>
+                  ) : (
+                    <span className="text-green-600 font-medium">Connected</span>
+                  )}
+                </div>
+                
+                <div>
+                  <span className="font-medium mr-2">User Authentication:</span>
+                  {authLoading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Loading user...</span>
+                    </div>
+                  ) : user ? (
+                    <span className="text-green-600 font-medium">Authenticated as {user.email}</span>
+                  ) : (
+                    <span className="text-amber-600 font-medium">Not authenticated (Development Mode)</span>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="scenarios">
+          <Card>
+            <CardHeader>
+              <CardTitle>Scenarios</CardTitle>
+              <CardDescription>List of scenarios from Supabase</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                  <span>Loading scenarios...</span>
+                </div>
+              ) : isError ? (
+                <div className="bg-red-50 text-red-600 p-4 rounded-md">
+                  <p className="font-medium">Error loading scenarios</p>
+                  <p className="text-sm">{error?.message || 'Unknown error'}</p>
+                </div>
+              ) : scenarios && scenarios.length > 0 ? (
+                <div className="space-y-4">
+                  {scenarios.map((scenario) => (
+                    <div key={scenario.id} className="border p-4 rounded-md">
+                      <h3 className="font-medium text-lg">{scenario.name}</h3>
+                      <p className="text-gray-600">{scenario.description}</p>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">Base Cost:</span> ${scenario.parameters.baseCost}
+                        </div>
+                        <div>
+                          <span className="font-medium">Square Footage:</span> {scenario.parameters.squareFootage} sq ft
+                        </div>
+                        <div>
+                          <span className="font-medium">Region:</span> {scenario.parameters.region}
+                        </div>
+                        <div>
+                          <span className="font-medium">Complexity:</span> {scenario.parameters.complexity}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-8 text-gray-500">
+                  <p>No scenarios found</p>
+                  <p className="text-sm">Try creating a new scenario</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Test Scenario</CardTitle>
+              <CardDescription>Create a sample scenario to test Supabase integration</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-4">
+                    This will create a test scenario with the following data:
+                  </p>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <pre className="text-xs overflow-auto">
+                      {JSON.stringify(newScenario, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleCreateScenario} 
+                disabled={createScenario.isPending}
+              >
+                {createScenario.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Create Test Scenario
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
