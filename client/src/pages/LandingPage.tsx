@@ -9,7 +9,7 @@ import ogimage from '@assets/ogimage.jpg';
 import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building } from 'lucide-react';
 
 export default function LandingPage() {
-  const [_, setLocation] = useLocation();
+  const [_, navigate] = useLocation();
 
   return (
     <div className="min-h-screen bg-white">
