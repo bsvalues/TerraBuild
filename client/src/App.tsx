@@ -53,7 +53,7 @@ import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { NavigationMenuProvider } from "./hooks/use-navigation-menu";
+// Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { useEffect, useState } from "react";
 
@@ -205,12 +205,10 @@ function App() {
                 <RemixIconLink />
                 <SidebarProvider>
                   <WindowProvider>
-                    <NavigationMenuProvider>
-                      <ErrorBoundary>
-                        <Router />
-                      </ErrorBoundary>
-                      <Toaster />
-                    </NavigationMenuProvider>
+                    <ErrorBoundary>
+                      <Router />
+                    </ErrorBoundary>
+                    <Toaster />
                   </WindowProvider>
                 </SidebarProvider>
               </CollaborationProvider>

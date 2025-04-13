@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useLocation } from 'wouter';
 
 interface NavigationMenuContextType {
@@ -6,45 +6,34 @@ interface NavigationMenuContextType {
   toggleMenu: (menuName: string) => void;
   setMenu: (menuName: string | null) => void;
   closeAllMenus: () => void;
+  isMenuOpen: (menuName: string) => boolean;
 }
 
 const NavigationMenuContext = createContext<NavigationMenuContextType | undefined>(undefined);
 
 export function NavigationMenuProvider({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [location] = useLocation();
 
-  // Close menu when location changes
+  // Close menus on navigation
   useEffect(() => {
     closeAllMenus();
   }, [location]);
 
-  // Handle outside clicks to close dropdown menus
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setActiveMenu(null);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Toggle a menu open/closed
   const toggleMenu = (menuName: string) => {
     setActiveMenu(prevMenu => prevMenu === menuName ? null : menuName);
   };
-  
-  // Directly set active menu (for direct navigation)
+
   const setMenu = (menuName: string | null) => {
     setActiveMenu(menuName);
   };
-  
-  // Close all menus
+
   const closeAllMenus = () => {
     setActiveMenu(null);
+  };
+
+  const isMenuOpen = (menuName: string) => {
+    return activeMenu === menuName;
   };
 
   return (
@@ -52,11 +41,10 @@ export function NavigationMenuProvider({ children }: { children: ReactNode }) {
       activeMenu, 
       toggleMenu, 
       setMenu, 
-      closeAllMenus 
+      closeAllMenus,
+      isMenuOpen 
     }}>
-      <div ref={menuRef}>
-        {children}
-      </div>
+      {children}
     </NavigationMenuContext.Provider>
   );
 }

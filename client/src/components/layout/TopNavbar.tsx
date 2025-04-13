@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bell, User } from 'lucide-react';
-import TopNavMenu from './TopNavMenu';
+import TopNavMenu from './TopNavMenuUpdated';
 
 interface TopNavbarProps {
   toggleSidebar?: () => void; // Made optional for backward compatibility

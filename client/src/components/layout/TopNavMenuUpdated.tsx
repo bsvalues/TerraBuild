@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import bentonSeal from '@assets/BC.png';
-import { useNavigationMenu } from "@/hooks/use-navigation-menu";
 import {
   Home,
   Calculator,
@@ -95,7 +94,7 @@ export default function TopNavMenu() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { activeMenu, toggleMenu, closeAllMenus } = useNavigationMenu();
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Check screen size for responsive design
@@ -106,6 +105,9 @@ export default function TopNavMenu() {
     if (mobileMenuOpen) {
       setMobileMenuOpen(false);
     }
+    
+    // Also close any open menus when navigation occurs
+    setActiveMenu(null);
   }, [location, mobileMenuOpen]);
 
   // Monitor window resize events
@@ -129,16 +131,22 @@ export default function TopNavMenu() {
         (menuRef.current && !menuRef.current.contains(event.target as Node)) ||
         (event.target as HTMLElement).closest('a, [role="link"], [role="button"], .cursor-pointer')
       ) {
-        closeAllMenus();
+        setActiveMenu(null);
       }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [closeAllMenus]);
+  }, []);
 
-  // We no longer need these local functions since we're using the hook
-  // All menu logic is now handled by useNavigationMenu()
+  // Menu handling functions
+  const toggleMenu = (menuName: string) => {
+    setActiveMenu(prevMenu => prevMenu === menuName ? null : menuName);
+  };
+  
+  const closeAllMenus = () => {
+    setActiveMenu(null);
+  };
 
   return (
     <>
@@ -229,12 +237,13 @@ export default function TopNavMenu() {
                     href="/analytics"
                     label="Analytics Dashboard"
                     icon={<BarChart3 className="h-4 w-4" />}
-                    onClick={() => setActiveMenu(null)}
+                    onClick={closeAllMenus}
                   />
                   <NavLink
                     href="/benchmarking"
                     label="Cost Benchmarking"
                     icon={<BarChart2 className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
                 
@@ -243,16 +252,19 @@ export default function TopNavMenu() {
                     href="/visualizations"
                     label="Visualization Lab"
                     icon={<LineChart className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/what-if-scenarios"
                     label="What-If Scenarios"
                     icon={<Activity className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/regional-cost-comparison"
                     label="Regional Comparison"
                     icon={<Map className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
               </div>
@@ -282,18 +294,21 @@ export default function TopNavMenu() {
                     href="/mcp-overview"
                     label="MCP Overview"
                     icon={<BrainCircuit className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/mcp-dashboard"
                     label="MCP Dashboard"
                     icon={<Activity className="h-4 w-4" />}
                     className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/mcp-visualizations"
                     label="MCP Visualizations"
                     icon={<LineChart className="h-4 w-4" />}
                     className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
               </div>
@@ -321,22 +336,26 @@ export default function TopNavMenu() {
                     href="/data-import"
                     label="Data Import"
                     icon={<Database className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/properties"
                     label="Property Browser"
                     icon={<Building2 className="h-4 w-4" />}
                     className="font-semibold text-[#47AD55]"
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/data-exploration"
                     label="Data Exploration"
                     icon={<Map className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/contextual-data"
                     label="Contextual Data"
                     icon={<BarChart2 className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
                 
@@ -346,16 +365,19 @@ export default function TopNavMenu() {
                     label="GeoAssessment"
                     icon={<Map className="h-4 w-4" />}
                     className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/ai-tools"
                     label="AI Tools"
                     icon={<BrainCircuit className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/ar-visualization"
                     label="AR Visualization"
                     icon={<Glasses className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
               </div>
@@ -386,22 +408,26 @@ export default function TopNavMenu() {
                       href="/users"
                       label="User Management"
                       icon={<Users className="h-4 w-4" />}
+                      onClick={() => closeAllMenus()}
                     />
                     <NavLink
                       href="/shared-projects"
                       label="Shared Projects"
                       icon={<Share2 className="h-4 w-4" />}
+                      onClick={() => closeAllMenus()}
                     />
                     <NavLink
                       href="/data-connections"
                       label="Data Connections"
                       icon={<Database className="h-4 w-4" />}
+                      onClick={() => closeAllMenus()}
                     />
                     <NavLink
                       href="/supabase-test"
                       label="Supabase Test"
                       icon={<Database className="h-4 w-4" />}
                       className="bg-[#e8f8fb]/50 font-medium text-[#243E4D]"
+                      onClick={() => closeAllMenus()}
                     />
                   </DropdownSection>
                 </div>
@@ -432,16 +458,19 @@ export default function TopNavMenu() {
                     href="/documentation"
                     label="Documentation"
                     icon={<BookOpen className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/tutorials"
                     label="Tutorials"
                     icon={<BookOpen className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/faq"
                     label="FAQ"
                     icon={<HelpCircle className="h-4 w-4" />}
+                    onClick={() => closeAllMenus()}
                   />
                 </DropdownSection>
               </div>
