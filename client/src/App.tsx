@@ -29,8 +29,8 @@ import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
 import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
-// Use the correct casing for the import to match the filesystem
-import MCPDashboard from "@/pages/Dashboard";
+// Use the newly renamed file to avoid casing conflicts
+import MCPDashboard from "@/pages/MainDashboard";
 import CreateProjectPage from "@/pages/CreateProjectPage";
 import DocumentationPage from "@/pages/documentation";
 import TutorialsPage from "@/pages/tutorials";

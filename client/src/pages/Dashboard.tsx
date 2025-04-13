@@ -19,6 +19,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, AlertCircle, AlertTriangle, Clock } from "lucide-react";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import { ErrorDisplay } from "@/components/ui/error-display";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -200,37 +202,19 @@ const Dashboard = () => {
   }, [refetch]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">MCP Monitoring Dashboard</h1>
-        <div className="grid gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center h-32">
-                <p>Loading dashboard data...</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    // Use the new skeleton component for a better loading experience
+    return <DashboardSkeleton />;
   }
 
   if (error) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">MCP Monitoring Dashboard</h1>
-        <Card className="bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center text-red-600">
-              <AlertCircle className="mr-2" />
-              <span>Error loading dashboard data</span>
-            </div>
-            <p className="mt-2 text-sm">
-              {error instanceof Error ? error.message : 'Unknown error'}
-            </p>
-          </CardContent>
-        </Card>
+        <ErrorDisplay 
+          title="Error Loading Dashboard" 
+          error={error} 
+          onRetry={() => refetch()} 
+        />
       </div>
     );
   }
