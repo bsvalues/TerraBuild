@@ -50,7 +50,7 @@ export function DatabaseSetup() {
     switch (connectionStatus) {
       case 'connected':
         return (
-          <Alert variant="success" className="mb-4">
+          <Alert className="mb-4 bg-green-50 text-green-700 border-green-200">
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>Connected</AlertTitle>
             <AlertDescription>
@@ -60,7 +60,7 @@ export function DatabaseSetup() {
         );
       case 'connecting':
         return (
-          <Alert variant="default" className="mb-4">
+          <Alert className="mb-4">
             <Info className="h-4 w-4" />
             <AlertTitle>Connecting...</AlertTitle>
             <AlertDescription className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export function DatabaseSetup() {
         );
       case 'unconfigured':
         return (
-          <Alert variant="warning" className="mb-4">
+          <Alert className="mb-4 bg-amber-50 text-amber-700 border-amber-200">
             <XCircle className="h-4 w-4" />
             <AlertTitle>Not Configured</AlertTitle>
             <AlertDescription>
@@ -97,7 +97,7 @@ export function DatabaseSetup() {
     if (!testResult) return null;
 
     return (
-      <Alert variant={testResult.success ? "success" : "destructive"} className="mt-4">
+      <Alert className={`mt-4 ${testResult.success ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
         {testResult.success ? (
           <CheckCircle className="h-4 w-4" />
         ) : (
@@ -152,7 +152,7 @@ export function DatabaseSetup() {
           {renderTestResult()}
 
           {!isConfigured && (
-            <Alert variant="warning" className="mt-4">
+            <Alert className="mt-4 bg-amber-50 text-amber-700 border-amber-200">
               <Info className="h-4 w-4" />
               <AlertTitle>Configuration Required</AlertTitle>
               <AlertDescription>
