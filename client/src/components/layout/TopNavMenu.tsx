@@ -59,25 +59,10 @@ const NavLink = ({ href, label, icon, className, onClick }: NavLinkProps) => {
       onClick={(e) => {
         if (onClick) onClick();
         
-        // Explicitly call closeAllMenus to guarantee menu closure
-        closeAllMenus();
-        
         // Use the wouter navigation mechanism
         window.history.pushState({}, '', href);
         // Dispatch a popstate event to notify wouter of the change
         window.dispatchEvent(new PopStateEvent('popstate'));
-        
-        // Add a slight delay before dispatching an additional mousedown event
-        // This ensures any click handlers have finished processing
-        setTimeout(() => {
-          if (typeof window !== 'undefined') {
-            // This will trigger the click outside handler as a backup
-            document.dispatchEvent(new MouseEvent('mousedown', {
-              bubbles: true,
-              cancelable: true
-            }));
-          }
-        }, 50);
       }}
     >
       {icon && (
@@ -138,7 +123,11 @@ export default function TopNavMenu() {
   // Handle outside clicks to close dropdown menus
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      // Close menus when clicking outside or on navigation items
+      if (
+        (menuRef.current && !menuRef.current.contains(event.target as Node)) ||
+        (event.target as HTMLElement).closest('a, [role="link"], [role="button"], .cursor-pointer')
+      ) {
         setActiveMenu(null);
       }
     };
@@ -146,6 +135,11 @@ export default function TopNavMenu() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close menus on navigation
+  useEffect(() => {
+    setActiveMenu(null);
+  }, [location]);
   
   // Enhanced menu handling system
   const toggleMenu = (menuName: string) => {
@@ -251,6 +245,7 @@ export default function TopNavMenu() {
                     href="/analytics"
                     label="Analytics Dashboard"
                     icon={<BarChart3 className="h-4 w-4" />}
+                    onClick={() => setActiveMenu(null)}
                   />
                   <NavLink
                     href="/benchmarking"
