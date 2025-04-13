@@ -229,7 +229,7 @@ export default function TopNavMenu() {
                     href="/analytics"
                     label="Analytics Dashboard"
                     icon={<BarChart3 className="h-4 w-4" />}
-                    onClick={() => setActiveMenu(null)}
+                    onClick={() => closeAllMenus()}
                   />
                   <NavLink
                     href="/benchmarking"

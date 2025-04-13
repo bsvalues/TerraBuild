@@ -1,262 +1,168 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import bentonSeal from '@assets/BC.png';
-import arizonaSunset from '@assets/Arizona-sunset.jpg';
-import { Calculator, Database, LineChart, Map, Upload, BarChart3 } from 'lucide-react';
+import { SimpleTopMenu } from '@/components/layout/SimpleTopMenu';
+import { ArrowRight, BarChart2, Building, Calculator, Database, MapPin } from 'lucide-react';
 
 export default function LandingPageSimple() {
-  const [_, setLocation] = useLocation();
-
-  // Navigation function using wouter's setLocation
-  const navigateTo = (path: string) => {
-    setLocation(path);
-  };
-
+  const [_, navigate] = useLocation();
+  
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero section */}
-      <section className="relative bg-gradient-to-r from-[#1a3b5c] to-[#235789] text-white py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mx-auto mb-6" />
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Benton County Building Cost Assessment System
-          </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto">
-            The official Building Cost Estimation System for Benton County, Washington
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-              onClick={() => navigateTo('/calculator')}
-            >
-              <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-transparent border-white text-white hover:bg-white/10"
-              onClick={() => navigateTo('/data-import')}
-            >
-              <Upload className="mr-2 h-5 w-5" /> Import Data
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features section */}
-      <section className="py-16 bg-[#f8f9fa]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-6 text-[#243E4D]">Powerful Features</h2>
-          <p className="text-center text-lg text-muted-foreground mb-10 max-w-3xl mx-auto">
-            Our comprehensive building cost system provides a suite of tools to help you accurately estimate and analyze construction costs.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="shadow-md">
-              <CardHeader>
-                <div className="bg-[#e6f7fb] p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <Calculator className="h-6 w-6 text-[#29B7D3]" />
+    <div className="flex min-h-screen flex-col">
+      <SimpleTopMenu />
+      
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                    Benton County Building Cost Assessment System
+                  </h1>
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                    Advanced property assessment with AI-powered cost calculations, 
+                    regional analysis, and comprehensive building assessment tools.
+                  </p>
                 </div>
-                <CardTitle>Cost Calculator</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Accurately calculate building costs based on structure type, size, and region.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigateTo('/calculator')}
-                  className="px-0 hover:bg-transparent"
-                >
-                  Learn more &rarr;
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card className="shadow-md">
-              <CardHeader>
-                <div className="bg-[#e9f7eb] p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-[#47AD55]" />
-                </div>
-                <CardTitle>Data Visualization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Advanced charts and graphs to help interpret complex cost data at a glance.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigateTo('/visualizations')}
-                  className="px-0 hover:bg-transparent"
-                >
-                  Learn more &rarr;
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card className="shadow-md">
-              <CardHeader>
-                <div className="bg-[#f0ebf7] p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <Map className="h-6 w-6 text-[#7C5295]" />
-                </div>
-                <CardTitle>Regional Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Compare construction costs across different regions in Benton County.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigateTo('/regional-cost-comparison')}
-                  className="px-0 hover:bg-transparent"
-                >
-                  Learn more &rarr;
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats section */}
-      <section className="py-16 bg-[#243E4D] text-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">System Impact</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#29B7D3] mb-2">3,500+</div>
-              <div className="text-lg text-gray-200">Building Cost Records</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#29B7D3] mb-2">25+</div>
-              <div className="text-lg text-gray-200">Building Types</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#29B7D3] mb-2">15+</div>
-              <div className="text-lg text-gray-200">County Regions</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#29B7D3] mb-2">97%</div>
-              <div className="text-lg text-gray-200">Estimation Accuracy</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Showcase section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4 text-[#243E4D]">Benton County Showcase</h2>
-          <p className="text-center text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
-            Discover the beauty and diversity of Benton County, Washington
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-64">
-                <img 
-                  src={arizonaSunset}
-                  alt="Sunset at Red Mountain" 
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <div className="text-white">
-                    <h3 className="font-bold text-xl">Scenic Landscapes</h3>
-                    <p className="text-sm">Breathtaking views across Benton County's diverse geography.</p>
-                  </div>
+                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                  <Button onClick={() => navigate('/calculator')} className="inline-flex h-10 items-center">
+                    Start Calculating
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/documentation')}>
+                    Learn More
+                  </Button>
                 </div>
               </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-64">
-                <img 
-                  src={bentonSeal}
-                  alt="Benton County Development" 
-                  className="absolute inset-0 w-full h-full object-cover bg-slate-200 p-8"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <div className="text-white">
-                    <h3 className="font-bold text-xl">Modern Development</h3>
-                    <p className="text-sm">Growing communities and sustainable infrastructure.</p>
+              <div className="flex items-center justify-center">
+                <div className="bg-foreground/5 border rounded-lg p-8 shadow-lg">
+                  <div className="aspect-video w-full max-w-[500px] overflow-hidden rounded-lg">
+                    <img
+                      src="https://images.unsplash.com/photo-1613977257365-aaae5a9817ff?q=80&w=1074&auto=format&fit=crop"
+                      alt="Benton County Vineyard"
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="mt-12 text-center">
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-[#243E4D] text-[#243E4D]"
-              onClick={() => navigateTo('/geo-assessment')}
-            >
-              <Map className="mr-2 h-5 w-5" /> View County Map
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* About section */}
-      <section className="py-16 bg-[#f8f9fa]">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-6 text-[#243E4D] text-center">About The System</h2>
-            <p className="text-lg text-muted-foreground mb-6 text-center">
-              The Benton County Building Cost System (BCBS) is the official tool used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington.
-            </p>
-            
-            <div className="flex flex-wrap justify-center gap-6 mt-10">
-              <Button 
-                className="bg-[#243E4D] hover:bg-[#1a2c38] text-white"
-                onClick={() => navigateTo('/data-exploration')}
-              >
-                <Database className="mr-2 h-5 w-5" /> Explore Data
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-[#243E4D] text-[#243E4D]"
-                onClick={() => navigateTo('/benchmarking')}
-              >
-                <BarChart3 className="mr-2 h-5 w-5" /> View Benchmarks
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#243E4D] text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <img src={bentonSeal} alt="Benton County Seal" className="w-10 h-10 mr-3" />
-              <div>
-                <h3 className="font-semibold">Benton County</h3>
-                <p className="text-sm text-gray-300">Washington State</p>
+        </section>
+        
+        {/* Features Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
+                  Features
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
+                  Comprehensive Assessment Tools
+                </h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl">
+                  Our platform offers a suite of powerful tools for property assessment professionals.
+                </p>
               </div>
             </div>
-            
-            <div className="text-center md:text-right">
-              <p className="text-sm text-gray-300">© 2025 Benton County. All rights reserved.</p>
-              <div className="flex gap-4 mt-2 justify-center md:justify-end">
-                <a href="#" className="text-xs text-gray-300 hover:text-white">Privacy Policy</a>
-                <a href="#" className="text-xs text-gray-300 hover:text-white">Terms of Use</a>
-                <a href="#" className="text-xs text-gray-300 hover:text-white">Accessibility</a>
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <Calculator className="h-12 w-12 text-primary" />
+                <h3 className="text-xl font-bold">Cost Calculator</h3>
+                <p className="text-center text-muted-foreground">
+                  Precise building cost calculations with regional adjustments and material breakdowns.
+                </p>
+              </div>
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <MapPin className="h-12 w-12 text-primary" />
+                <h3 className="text-xl font-bold">Geo Assessment</h3>
+                <p className="text-center text-muted-foreground">
+                  Location-based property analysis with geographical context and regional comparisons.
+                </p>
+              </div>
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <Building className="h-12 w-12 text-primary" />
+                <h3 className="text-xl font-bold">Property Analysis</h3>
+                <p className="text-center text-muted-foreground">
+                  Detailed property records with improvement tracking and historical data.
+                </p>
+              </div>
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <Database className="h-12 w-12 text-primary" />
+                <h3 className="text-xl font-bold">Data Import</h3>
+                <p className="text-center text-muted-foreground">
+                  Seamless import of property data and cost matrices from Excel and other formats.
+                </p>
+              </div>
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <BarChart2 className="h-12 w-12 text-primary" />
+                <h3 className="text-xl font-bold">Analytics</h3>
+                <p className="text-center text-muted-foreground">
+                  Advanced visualizations and data analysis for cost trends and regional comparisons.
+                </p>
+              </div>
+              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-12 w-12 text-primary"
+                >
+                  <path d="M12 2v8"></path>
+                  <path d="m4.93 10.93 1.41 1.41"></path>
+                  <path d="M2 18h2"></path>
+                  <path d="M20 18h2"></path>
+                  <path d="m19.07 10.93-1.41 1.41"></path>
+                  <path d="M22 22H2"></path>
+                  <path d="m16 6-4 4-4-4"></path>
+                  <path d="M16 18a4 4 0 0 0-8 0"></path>
+                </svg>
+                <h3 className="text-xl font-bold">AI Tools</h3>
+                <p className="text-center text-muted-foreground">
+                  AI-powered cost wizards, what-if scenarios, and predictive analysis tools.
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        </section>
+        
+        {/* CTA Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                  Ready to get started?
+                </h2>
+                <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                  Access the most advanced building cost assessment tools available for Benton County.
+                </p>
+              </div>
+              <div className="w-full max-w-sm space-y-2">
+                <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
+                  <Button onClick={() => navigate('/dashboard')} size="lg">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t justify-center items-center">
+        <p className="text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Benton County Building Cost System. All rights reserved.
+        </p>
       </footer>
     </div>
   );
