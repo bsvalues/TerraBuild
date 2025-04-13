@@ -58,6 +58,14 @@ const NavLink = ({ href, label, icon, className, onClick }: NavLinkProps) => {
       )}
       onClick={(e) => {
         if (onClick) onClick();
+        // Close any open menu when a link is clicked
+        if (typeof window !== 'undefined') {
+          // This will trigger the click outside handler
+          document.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true
+          }));
+        }
         // Use the wouter navigation mechanism
         window.history.pushState({}, '', href);
         // Dispatch a popstate event to notify wouter of the change
@@ -360,7 +368,7 @@ export default function TopNavMenu() {
           {isAdmin && (
             <NavigationMenuItem>
               <NavigationMenuTrigger 
-                onClick={() => setActiveMenu(activeMenu === 'admin' ? null : 'admin')}
+                onClick={() => toggleMenu('admin')}
                 className={cn(
                   location.includes('users') || location.includes('shared-projects') 
                     ? "bg-[#e6eef2] text-[#243E4D]" 
@@ -406,7 +414,7 @@ export default function TopNavMenu() {
 
           <NavigationMenuItem>
             <NavigationMenuTrigger 
-              onClick={() => setActiveMenu(activeMenu === 'help' ? null : 'help')}
+              onClick={() => toggleMenu('help')}
               className={cn(
                 location.includes('documentation') || location.includes('tutorials') || location.includes('faq') 
                   ? "bg-[#e6eef2] text-[#243E4D]" 
