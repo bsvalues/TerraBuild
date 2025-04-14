@@ -1,0 +1,65 @@
+Failed to load resource: net::ERR_CONNECTION_RESET
+react-dom.development.js:86  Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
+    at div
+    at Skeleton (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/skeleton.tsx:19:3)
+    at p
+    at _c7 (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/card.tsx:92:12)
+    at div
+    at _c3 (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/card.tsx:45:12)
+    at div
+    at _c (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at BenchmarkingVisualization (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/visualizations/BenchmarkingVisualization.tsx:36:3)
+    at div
+    at div
+    at div
+    at BenchmarkingPage (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/pages/BenchmarkingPage.tsx:29:37)
+    at ProtectedComponent (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/lib/protected-route.tsx:31:11)
+    at Route (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3250a75c:323:16)
+    at ProtectedRoute (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3250a75c:379:17)
+    at Router
+    at WindowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at SidebarProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/SidebarContext.tsx:38:35)
+    at AuthProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/AuthContext.tsx:31:32)
+    at SupabaseProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/supabase/SupabaseProvider.tsx?t=1744596956011:35:36)
+    at ThemeProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/ThemeContext.tsx:30:33)
+    at QueryClientProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3250a75c:2805:3)
+    at ErrorBoundary (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at App
+printWarning @ react-dom.development.js:86
+api/regions:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/analytics/benchmark?buildingType=residential&region=northwest&year=2025&squareFootage=2500:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/analytics/benchmark?buildingType=residential&region=northwest&year=2025&squareFootage=2500:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/regions:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/analytics/benchmark?buildingType=residential&region=northeast&year=2025&squareFootage=2500:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/analytics/benchmark?buildingType=residential&region=northeast&year=2025&squareFootage=2500:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+romjfbwktyxljvgcthmk.supabase.co/rest/v1/scenarios?select=count:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+api/cost-matrix:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/cost-matrix:1 
+            
+            
+            Failed to load resource: the server responded with a status of 500 (Internal Server Error)

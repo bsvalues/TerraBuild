@@ -15,6 +15,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number // Add duration property
 }
 
 const actionTypes = {
@@ -84,10 +85,11 @@ const reducer = (state: State, action: Action): State => {
           toastTimeouts.delete(toastId)
         }
       } else {
-        for (const [id, timeout] of toastTimeouts.entries()) {
+        // Fix the Map iteration issue by converting entries to Array first
+        Array.from(toastTimeouts.entries()).forEach(([id, timeout]) => {
           clearTimeout(timeout)
           toastTimeouts.delete(id)
-        }
+        })
       }
 
       return {
@@ -127,34 +129,67 @@ function dispatch(action: Action) {
   })
 }
 
-interface Toast extends Omit<ToasterToast, "id"> {}
+interface Toast extends Omit<ToasterToast, "id"> {
+  duration?: number; // Add duration property to Toast interface
+}
 
 function toast(props: Toast) {
-  const id = genId()
+  try {
+    const id = genId()
 
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: actionTypes.UPDATE_TOAST,
-      toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
-
-  dispatch({
-    type: actionTypes.ADD_TOAST,
-    toast: {
+    // Safety check for props to prevent undefined errors
+    const safeProps: Toast = {
       ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
+      title: props.title || "Notification",
+      description: props.description || "",
+      variant: props.variant || "default",
+      duration: props.duration ?? 5000
+    }
 
-  return {
-    id: id,
-    dismiss,
-    update,
+    const update = (props: ToasterToast) => {
+      try {
+        dispatch({
+          type: actionTypes.UPDATE_TOAST,
+          toast: { ...props, id },
+        })
+      } catch (error) {
+        console.error("Error updating toast:", error)
+      }
+    }
+    
+    const dismiss = () => {
+      try {
+        dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+      } catch (error) {
+        console.error("Error dismissing toast:", error)
+      }
+    }
+
+    dispatch({
+      type: actionTypes.ADD_TOAST,
+      toast: {
+        ...safeProps,
+        id,
+        open: true,
+        onOpenChange: (open) => {
+          if (!open) dismiss()
+        },
+      },
+    })
+
+    return {
+      id: id,
+      dismiss,
+      update,
+    }
+  } catch (error) {
+    console.error("Error creating toast:", error)
+    // Return a dummy toast object to prevent errors when methods are called
+    return {
+      id: "-1",
+      dismiss: () => {},
+      update: () => {},
+    }
   }
 }
 

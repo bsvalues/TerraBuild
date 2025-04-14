@@ -69,15 +69,60 @@ const GlobalErrorHandler = () => {
       event.preventDefault(); // Prevent default console error
       console.warn('Unhandled promise rejection caught:', event.reason);
       
-      // If you want to log to a service in production, you could do that here
-      // Example: logErrorToService(event.reason);
+      try {
+        // Log error details to help with debugging
+        const errorSource = event.reason?.stack?.split('\n')?.[1] || 'Unknown source';
+        const errorMessage = event.reason?.message || 'Unknown error';
+        
+        // Determine if this is an API or auth-related error
+        const isApiError = errorMessage.includes('fetch') || 
+                           errorMessage.includes('network') || 
+                           errorMessage.includes('API') || 
+                           errorMessage.includes('/api/');
+        
+        const isAuthError = errorMessage.includes('auth') || 
+                            errorMessage.includes('login') || 
+                            errorMessage.includes('token') || 
+                            errorSource.includes('AuthContext') ||
+                            errorSource.includes('useAuth');
+        
+        if (process.env.NODE_ENV === 'development') {
+          // In development, show detailed error information
+          console.group('Error Details:');
+          console.error('Error:', errorMessage);
+          console.error('Source:', errorSource);
+          console.error('Stack:', event.reason?.stack);
+          console.groupEnd();
+        }
+        
+        // For production, we could send errors to a monitoring service
+        // logErrorToService({ message: errorMessage, source: errorSource, stack: event.reason?.stack });
+      } catch (handlingError) {
+        // Ensure our error handling doesn't itself cause errors
+        console.error('Error while handling unhandled rejection:', handlingError);
+      }
     };
     
     const handleError = (event: ErrorEvent) => {
-      // Prevent default console error in some cases
-      if (event.message.includes('useAuth') || event.message.includes('AuthProvider')) {
-        event.preventDefault();
+      // Handle specific error types more gracefully
+      if (
+        event.message.includes('useAuth') || 
+        event.message.includes('AuthProvider') ||
+        event.message.includes('Authentication') ||
+        event.message.includes('token') ||
+        event.message.includes('login')
+      ) {
+        // Don't prevent default for auth errors, but log them specially
         console.warn('Auth-related error caught:', event.message);
+      }
+      
+      // Log all errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.group('Global Error:');
+        console.error('Message:', event.message);
+        console.error('Source:', event.filename, 'Line:', event.lineno, 'Col:', event.colno);
+        console.error('Error object:', event.error);
+        console.groupEnd();
       }
     };
     
