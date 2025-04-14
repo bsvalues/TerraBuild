@@ -108,8 +108,26 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Global error handler wrapper component
+// Global error handler wrapper component to handle unhandled rejections and errors
 const ErrorHandlerWrapper = () => {
+  // For development mode, set mock admin user directly in the query cache
+  useEffect(() => {
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Setting up mock admin user for development");
+        queryClient.setQueryData(["/api/user"], {
+          id: 1,
+          username: "admin",
+          name: "Admin User",
+          role: "admin",
+          isActive: true
+        });
+      }
+    } catch (error) {
+      console.error("Error setting up mock user:", error);
+    }
+  }, []);
+  
   return <GlobalErrorHandler />;
 };
 
