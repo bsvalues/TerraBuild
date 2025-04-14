@@ -359,9 +359,9 @@ const ProjectActivitiesLog: React.FC<ProjectActivitiesLogProps> = ({
       case 'connected_database':
         return `connected to database "${data?.databaseName || 'Unnamed database'}"`;
       case 'ftp_upload':
-        return `uploaded file "${data?.fileName || 'a file'}" via FTP`;
+        return `uploaded file "${data?.filename || 'a file'}" via FTP`;
       case 'ftp_download':
-        return `downloaded file "${data?.fileName || 'a file'}" via FTP`;
+        return `downloaded file "${data?.filename || 'a file'}" via FTP`;
       case 'ftp_sync_started':
         return `started FTP sync job "${data?.jobName || 'Unnamed job'}"`;
       case 'ftp_sync_completed':

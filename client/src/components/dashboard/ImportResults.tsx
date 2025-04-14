@@ -81,10 +81,10 @@ const ImportResults: React.FC<ImportResultsProps> = ({ results, onClose }) => {
   const [activeTab, setActiveTab] = useState<string>('summary');
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
   
-  const toggleDetail = (fileName: string) => {
+  const toggleDetail = (filename: string) => {
     setExpandedDetails(prev => ({
       ...prev,
-      [fileName]: !prev[fileName]
+      [filename]: !prev[filename]
     }));
   };
   
