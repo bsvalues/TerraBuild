@@ -15,6 +15,7 @@ import {
   BuildingCostMaterial, InsertBuildingCostMaterial,
   CalculationHistory, InsertCalculationHistory,
   CostMatrix, InsertCostMatrix,
+  CostMatrixEntry, InsertCostMatrixEntry,
   CostFactorPreset, InsertCostFactorPreset,
   FileUpload, InsertFileUpload,
   WhatIfScenario, InsertWhatIfScenario,
@@ -33,7 +34,7 @@ import {
   ImportRecord, InsertImportRecord,
   users, environments, apiEndpoints, settings, activities, repositoryStatus,
   buildingCosts, costFactors, materialTypes, materialCosts, buildingCostMaterials,
-  calculationHistory, costMatrix, costFactorPresets, fileUploads, 
+  calculationHistory, costMatrix, costMatrixEntry, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
   comments, sharedLinks, connectionHistory, syncSchedules, syncHistory, ftpConnections,
   importRecords, projectActivities
@@ -1181,6 +1182,7 @@ export class PostgresStorage implements IStorage {
   // Cost Matrix
   async getAllCostMatrix(): Promise<CostMatrix[]> {
     try {
+      // Select from costMatrix table, not costMatrixEntry
       return await db.select().from(costMatrix);
     } catch (error) {
       console.error("Error in getAllCostMatrix:", error);
