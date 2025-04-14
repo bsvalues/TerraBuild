@@ -342,7 +342,7 @@ export interface IStorage {
   
   // Import Records for Data Import Tracking
   createImportRecord(data: { 
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -353,7 +353,7 @@ export interface IStorage {
     errorCount?: number;
   }): Promise<{ 
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -368,7 +368,7 @@ export interface IStorage {
   
   getImportRecord(id: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -383,7 +383,7 @@ export interface IStorage {
   
   getImportRecords(limit?: number, offset?: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -397,7 +397,7 @@ export interface IStorage {
   }[]>;
   
   updateImportRecord(id: number, data: Partial<{
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -408,7 +408,7 @@ export interface IStorage {
     errorCount: number;
   }>): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -563,7 +563,7 @@ export class MemStorage implements IStorage {
   
   async getImportRecord(id: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -575,12 +575,29 @@ export class MemStorage implements IStorage {
     createdAt: Date;
     updatedAt: Date;
   } | undefined> {
-    return this.importRecords.get(id);
+    const record = this.importRecords.get(id);
+    if (!record) return undefined;
+    
+    // Convert fileName to filename in the return value
+    return {
+      id: record.id,
+      filename: record.fileName, // Convert fileName to filename
+      fileType: record.fileType,
+      fileSize: record.fileSize,
+      uploadedBy: record.uploadedBy,
+      status: record.status,
+      errors: record.errors,
+      processedItems: record.processedItems,
+      totalItems: record.totalItems,
+      errorCount: record.errorCount,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt
+    };
   }
   
   async getImportRecords(limit?: number, offset?: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -607,11 +624,25 @@ export class MemStorage implements IStorage {
       records = records.slice(0, limit);
     }
     
-    return records;
+    // Convert from the old fileName property to the new filename property
+    return records.map(record => ({
+      id: record.id,
+      filename: record.fileName, // Convert fileName to filename
+      fileType: record.fileType,
+      fileSize: record.fileSize,
+      uploadedBy: record.uploadedBy,
+      status: record.status,
+      errors: record.errors,
+      processedItems: record.processedItems,
+      totalItems: record.totalItems,
+      errorCount: record.errorCount,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt
+    }));
   }
   
   async updateImportRecord(id: number, data: Partial<{
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -622,7 +653,7 @@ export class MemStorage implements IStorage {
     errorCount: number;
   }>): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -637,14 +668,38 @@ export class MemStorage implements IStorage {
     const record = this.importRecords.get(id);
     if (!record) return undefined;
     
+    // Handle property name conversion between old fileName and new filename
+    const updatedData = { ...data };
+    if ('filename' in data && record.fileName) {
+      // @ts-ignore - ignoring to handle property name change
+      updatedData.fileName = data.filename;
+      // @ts-ignore - removing to prevent duplicate property
+      delete updatedData.filename;
+    }
+    
     const updatedRecord = { 
       ...record, 
-      ...data,
+      ...updatedData,
       updatedAt: new Date()
     };
     
     this.importRecords.set(id, updatedRecord);
-    return updatedRecord;
+    
+    // Convert to expected return format
+    return {
+      id: updatedRecord.id,
+      filename: updatedRecord.fileName, // Convert fileName to filename in the return value
+      fileType: updatedRecord.fileType,
+      fileSize: updatedRecord.fileSize,
+      uploadedBy: updatedRecord.uploadedBy,
+      status: updatedRecord.status,
+      errors: updatedRecord.errors,
+      processedItems: updatedRecord.processedItems, 
+      totalItems: updatedRecord.totalItems,
+      errorCount: updatedRecord.errorCount,
+      createdAt: updatedRecord.createdAt,
+      updatedAt: updatedRecord.updatedAt
+    };
   }
   
   async deleteImportRecord(id: number): Promise<void> {
