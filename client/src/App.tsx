@@ -57,6 +57,13 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { useEffect, useState } from "react";
 
+// Add TypeScript declaration for our custom window property
+declare global {
+  interface Window {
+    lastSupabaseErrorTime?: number;
+  }
+}
+
 // Add link to Remix Icon for icons
 const RemixIconLink = () => (
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
@@ -74,7 +81,7 @@ const GlobalErrorHandler = () => {
         const errorSource = event.reason?.stack?.split('\n')?.[1] || 'Unknown source';
         const errorMessage = event.reason?.message || 'Unknown error';
         
-        // Determine if this is an API or auth-related error
+        // Determine the error type for more specific handling
         const isApiError = errorMessage.includes('fetch') || 
                            errorMessage.includes('network') || 
                            errorMessage.includes('API') || 
@@ -85,6 +92,28 @@ const GlobalErrorHandler = () => {
                             errorMessage.includes('token') || 
                             errorSource.includes('AuthContext') ||
                             errorSource.includes('useAuth');
+        
+        const isSupabaseError = errorMessage.includes('Supabase') ||
+                                errorSource.includes('supabase') || 
+                                errorSource.includes('Supabase') ||
+                                errorMessage.includes('Failed to fetch');
+        
+        // Handling specific error types
+        if (isSupabaseError) {
+          // Handle Supabase connection errors more gracefully
+          // Avoid flooding the console with repeated errors
+          const timeSinceLastSupabaseError = Date.now() - (window.lastSupabaseErrorTime || 0);
+          if (timeSinceLastSupabaseError > 5000) { // Throttle to once every 5 seconds
+            window.lastSupabaseErrorTime = Date.now();
+            console.group('Supabase Connection Issue:');
+            console.warn('The application is having trouble connecting to Supabase. This is expected in development mode.');
+            console.warn('If using this in production, check your Supabase credentials and network connection.');
+            console.groupEnd();
+          }
+          
+          // Don't log detailed errors for Supabase in dev mode to reduce console noise
+          return;
+        }
         
         if (process.env.NODE_ENV === 'development') {
           // In development, show detailed error information
@@ -104,19 +133,41 @@ const GlobalErrorHandler = () => {
     };
     
     const handleError = (event: ErrorEvent) => {
-      // Handle specific error types more gracefully
-      if (
+      // Determine the type of error
+      const isAuthError = 
         event.message.includes('useAuth') || 
         event.message.includes('AuthProvider') ||
         event.message.includes('Authentication') ||
         event.message.includes('token') ||
-        event.message.includes('login')
-      ) {
+        event.message.includes('login');
+        
+      const isSupabaseError = 
+        event.message.includes('Supabase') ||
+        event.message.includes('supabase') ||
+        (event.filename && event.filename.includes('supabase')) ||
+        event.message.includes('Failed to fetch');
+      
+      // Handle specific error types more gracefully
+      if (isAuthError) {
         // Don't prevent default for auth errors, but log them specially
         console.warn('Auth-related error caught:', event.message);
       }
       
-      // Log all errors in development
+      // Handle Supabase connection errors more gracefully
+      if (isSupabaseError) {
+        // Throttle Supabase error messages to reduce console noise
+        const timeSinceLastSupabaseError = Date.now() - (window.lastSupabaseErrorTime || 0);
+        if (timeSinceLastSupabaseError > 5000) { // Throttle to once every 5 seconds
+          window.lastSupabaseErrorTime = Date.now();
+          console.group('Supabase Connection Issue:');
+          console.warn('The application is having trouble connecting to Supabase. This is expected in development mode.');
+          console.warn('If using this in production, check your Supabase credentials and network connection.');
+          console.groupEnd();
+        }
+        return; // Skip further logging for Supabase errors
+      }
+      
+      // Log all other errors in development
       if (process.env.NODE_ENV === 'development') {
         console.group('Global Error:');
         console.error('Message:', event.message);

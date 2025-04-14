@@ -8,7 +8,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from '@/hooks/use-toast';
-import supabase from '@/lib/utils/supabaseClient';
+import supabase, { checkSupabaseConnection } from '@/lib/utils/supabaseClient';
 
 // Define the context shape
 interface SupabaseContextType {
@@ -19,6 +19,7 @@ interface SupabaseContextType {
   error: Error | null;
   isConfigured: boolean;
   connectionStatus: 'connected' | 'error' | 'unconfigured' | 'connecting';
+  checkConnection: () => Promise<boolean>;
 }
 
 // Create context with default values
@@ -30,6 +31,7 @@ const SupabaseContext = createContext<SupabaseContextType>({
   error: null,
   isConfigured: false,
   connectionStatus: 'connecting',
+  checkConnection: async () => false,
 });
 
 /**
@@ -53,17 +55,40 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
   const [error, setError] = useState<Error | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error' | 'unconfigured' | 'connecting'>('connecting');
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+
+  // Check if Supabase is properly configured with environment variables
+  const checkSupabaseConfig = () => {
+    const configStatus = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+    setIsConfigured(configStatus);
+    return configStatus;
+  };
+
+  // Function to check Supabase connection that can be called from consumers
+  const checkConnection = async (): Promise<boolean> => {
+    try {
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected ? 'connected' : 'error');
+      return isConnected;
+    } catch (error) {
+      setConnectionStatus('error');
+      if (error instanceof Error) {
+        setError(error);
+        toast({
+          title: "Supabase Connection Check Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+      return false;
+    }
+  };
 
   // Initialize and set up auth state listener
   useEffect(() => {
-    // Check if Supabase is properly configured with environment variables
-    const checkSupabaseConfig = () => {
-      const configStatus = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-      setIsConfigured(configStatus);
-      return configStatus;
-    };
-
     let authUnsubscribe: (() => void) | null = null;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
     
     // Get the initial session
     const initializeSupabase = async () => {
@@ -74,24 +99,34 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
         // First check if Supabase is configured
         if (!checkSupabaseConfig()) {
           setConnectionStatus('unconfigured');
+          setIsLoading(false);
           return;
         }
         
         // Try a simple ping to Supabase
-        try {
-          // Attempt a simple operation to check connectivity
-          await supabase.from('scenarios').select('count', { count: 'exact', head: true });
-          setConnectionStatus('connected');
-        } catch (pingError) {
-          setConnectionStatus('error');
-          throw new Error('Could not connect to Supabase. Please check your network connection and Supabase credentials.');
+        const isConnected = await checkConnection();
+        if (!isConnected) {
+          // If we've reached max retries, don't attempt again
+          if (retryCount >= MAX_RETRIES) {
+            setIsLoading(false);
+            return;
+          }
+          
+          // Set a retry timeout with exponential backoff
+          const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+          retryTimeout = setTimeout(() => {
+            setRetryCount(prevCount => prevCount + 1);
+            initializeSupabase();
+          }, retryDelay);
+          
+          return;
         }
         
         // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
+        if (sessionError) {
+          throw sessionError;
         }
         
         setSession(session);
@@ -117,6 +152,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
             title: "Supabase Connection Error",
             description: error.message || "Failed to initialize Supabase connection",
             variant: "destructive",
+            duration: 8000, // Show for longer since this is an important error
           });
         }
       } finally {
@@ -132,8 +168,11 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
       if (authUnsubscribe) {
         authUnsubscribe();
       }
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
     };
-  }, []);
+  }, [retryCount]);
 
   const value = {
     supabase,
@@ -143,6 +182,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
     error,
     isConfigured,
     connectionStatus,
+    checkConnection,
   };
 
   return (
