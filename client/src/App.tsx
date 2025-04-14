@@ -95,29 +95,21 @@ const GlobalErrorHandler = () => {
   return null;
 };
 
-// Dev auto login component without Promise usage to avoid unhandled rejections
-const DevAutoLogin = () => {
-  // Only set up the mock user once
-  useEffect(() => {
-    try {
-      console.log("DEVELOPMENT MODE: Setting mock admin user");
-      
-      // Mock admin user - must match the User interface in auth.ts
-      const adminUser = {
-        id: 1,
-        username: "admin",
-        name: "Admin User",
-        role: "admin",
-        isActive: true
-      };
-      
-      // Set the query data directly
-      queryClient.setQueryData(["/api/user"], adminUser);
-    } catch (error) {
-      console.error("Error in DevAutoLogin:", error);
-    }
-  }, []);
-  
+// Development mode setup - avoid Promise usage to prevent unhandled rejections
+// This is only run once at app startup to set the mock user data
+if (process.env.NODE_ENV === 'development') {
+  // Set mock admin user directly in the query cache
+  queryClient.setQueryData(["/api/user"], {
+    id: 1,
+    username: "admin",
+    name: "Admin User",
+    role: "admin",
+    isActive: true
+  });
+}
+
+// Global error handler wrapper component
+const ErrorHandlerWrapper = () => {
   return <GlobalErrorHandler />;
 };
 
@@ -214,7 +206,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <RemixIconLink />
-          <DevAutoLogin />
+          <ErrorHandlerWrapper />
           <SupabaseProvider>
             <AuthProvider>
               <SidebarProvider>
