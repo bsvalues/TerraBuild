@@ -434,7 +434,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       queryClient.invalidateQueries({ queryKey: ['project-invitations', projectId] });
       toast({
         title: 'Invitation sent',
-        description: 'User has been invited to the project.',
+        description: 'User has been invited to the project.'
       });
     },
   });
@@ -491,7 +491,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       queryClient.invalidateQueries({ queryKey: ['project-items', projectId] });
       toast({
         title: 'Resource added',
-        description: 'Resource has been added to the project.',
+        description: 'Resource has been added to the project.'
       });
     },
   });
@@ -535,7 +535,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
         title: variables.isPublic ? 'Project is now public' : 'Project is now private',
         description: variables.isPublic 
           ? 'Anyone with the link can now view this project'
-          : 'Only invited members can access this project',
+          : 'Only invited members can access this project'
       });
       queryClient.invalidateQueries({ queryKey: ['public-projects'] });
       if (currentProject) {
@@ -664,7 +664,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       toast({
         title: 'Project created',
-        description: 'Your new project has been created.',
+        description: 'Your new project has been created.'
       });
     },
   });
@@ -681,7 +681,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       queryClient.invalidateQueries({ queryKey: ['public-projects'] });
       toast({
         title: 'Project deleted',
-        description: 'The project has been deleted.',
+        description: 'The project has been deleted.'
       });
       if (currentProject?.id === projectId) {
         setCurrentProject(null);

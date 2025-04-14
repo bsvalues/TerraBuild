@@ -55,14 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name || user.username}!`,
-        variant: "default",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Login failed",
         description: error.message || "Invalid username or password",
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });
@@ -91,14 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Registration successful",
         description: "Your account has been created successfully.",
-        variant: "default",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Registration failed",
         description: error.message || "Could not create account",
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });
@@ -122,14 +122,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
-        variant: "default",
+        variant: "default"
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Logout failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });

@@ -34,8 +34,12 @@ export function useAutoLogin() {
     const newValue = checked !== undefined ? checked : !autoLoginEnabled;
     
     try {
-      await apiRequest("PATCH", `/api/settings/DEV_AUTO_LOGIN_ENABLED`, {
-        value: newValue.toString(),
+      await apiRequest(`/api/settings/DEV_AUTO_LOGIN_ENABLED`, {
+        method: "PATCH",
+        body: JSON.stringify({ value: newValue.toString() }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -58,8 +62,12 @@ export function useAutoLogin() {
   // Update a setting
   const updateSetting = useMutation({
     mutationFn: async (input: UpdateSettingInput) => {
-      const res = await apiRequest("PATCH", `/api/settings/${input.key}`, {
-        value: input.value,
+      const res = await apiRequest(`/api/settings/${input.key}`, {
+        method: "PATCH",
+        body: JSON.stringify({ value: input.value }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       return await res.json();
     },
