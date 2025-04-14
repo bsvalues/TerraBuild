@@ -1566,8 +1566,7 @@ export class PostgresStorage implements IStorage {
     const [newFileUpload] = await db.insert(fileUploads)
       .values({
         ...fileUpload,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        uploadedAt: new Date()
       })
       .returning();
     return newFileUpload;
@@ -1581,13 +1580,13 @@ export class PostgresStorage implements IStorage {
   
   async getAllFileUploads(): Promise<FileUpload[]> {
     return await db.select().from(fileUploads)
-      .orderBy(desc(fileUploads.createdAt));
+      .orderBy(desc(fileUploads.uploadedAt));
   }
   
   async getUserFileUploads(userId: number): Promise<FileUpload[]> {
     return await db.select().from(fileUploads)
       .where(eq(fileUploads.uploadedBy, userId))
-      .orderBy(desc(fileUploads.createdAt));
+      .orderBy(desc(fileUploads.uploadedAt));
   }
   
   async updateFileUploadStatus(
@@ -1597,10 +1596,8 @@ export class PostgresStorage implements IStorage {
     totalItems?: number, 
     errors?: any[]
   ): Promise<FileUpload | undefined> {
-    const updateData: Partial<FileUpload> = { 
-      status,
-      updatedAt: new Date()
-    };
+    // Define a typed update object with only fields that exist in the schema
+    const updateData: any = { status };
     
     if (processedItems !== undefined) {
       updateData.processedItems = processedItems;
