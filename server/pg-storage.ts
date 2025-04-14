@@ -600,10 +600,10 @@ export class PostgresStorage implements IStorage {
   async createFTPConnection(connection: InsertFTPConnection): Promise<FTPConnection> {
     try {
       // If this is marked as default, unmark any existing defaults
-      if (connection.isDefault) {
+      if (connection.is_default) {
         await this.db.update(ftpConnections)
-          .set({ isDefault: false })
-          .where(eq(ftpConnections.isDefault, true));
+          .set({ is_default: false })
+          .where(eq(ftpConnections.is_default, true));
       }
       
       const result = await this.db.insert(ftpConnections).values({
@@ -625,11 +625,11 @@ export class PostgresStorage implements IStorage {
   async updateFTPConnection(id: number, connection: Partial<InsertFTPConnection>): Promise<FTPConnection | undefined> {
     try {
       // If this connection is being set as default, unmark any existing defaults
-      if (connection.isDefault) {
+      if (connection.is_default) {
         await this.db.update(ftpConnections)
-          .set({ isDefault: false })
+          .set({ is_default: false })
           .where(and(
-            eq(ftpConnections.isDefault, true),
+            eq(ftpConnections.is_default, true),
             ne(ftpConnections.id, id)
           ));
       }
@@ -653,7 +653,7 @@ export class PostgresStorage implements IStorage {
     try {
       const updates: any = {
         status,
-        updatedAt: new Date()
+        updated_at: new Date()
       };
       
       if (lastConnected) {
@@ -676,14 +676,14 @@ export class PostgresStorage implements IStorage {
     try {
       // Unset any existing default connections
       await this.db.update(ftpConnections)
-        .set({ isDefault: false })
-        .where(eq(ftpConnections.isDefault, true));
+        .set({ is_default: false })
+        .where(eq(ftpConnections.is_default, true));
       
       // Set this connection as default
       const result = await this.db.update(ftpConnections)
         .set({
-          isDefault: true,
-          updatedAt: new Date()
+          is_default: true,
+          updated_at: new Date()
         })
         .where(eq(ftpConnections.id, id))
         .returning();
@@ -763,7 +763,7 @@ export class PostgresStorage implements IStorage {
       });
       
       // If this was the default connection, set a new default if one exists
-      if (connection.isDefault) {
+      if (connection.is_default) {
         const connections = await this.getAllFTPConnections();
         if (connections.length > 0) {
           await this.setDefaultFTPConnection(connections[0].id);
