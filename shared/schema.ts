@@ -212,6 +212,8 @@ export const costMatrixEntry = pgTable("cost_matrix_entry", {
   building_type: varchar("building_type", { length: 50 }).notNull(),
   region: varchar("region", { length: 50 }).notNull(),
   base_cost: varchar("base_cost", { length: 20 }).notNull(),
+  county: varchar("county", { length: 50 }),
+  state: varchar("state", { length: 50 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 

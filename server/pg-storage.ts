@@ -1299,7 +1299,7 @@ export class PostgresStorage implements IStorage {
       .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
       .where(and(
         eq(costMatrixEntry.county, county),
-        eq(costMatrix.isActive, true)
+        eq(costMatrix.is_active, true)
       ));
       
       // Transform the results to match the expected CostMatrix type
@@ -1324,7 +1324,7 @@ export class PostgresStorage implements IStorage {
       .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
       .where(and(
         eq(costMatrixEntry.state, state),
-        eq(costMatrix.isActive, true)
+        eq(costMatrix.is_active, true)
       ));
       
       // Transform the results to match the expected CostMatrix type
@@ -1346,7 +1346,7 @@ export class PostgresStorage implements IStorage {
         .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
         .where(and(
           isNotNull(costMatrixEntry.county),
-          eq(costMatrix.isActive, true)
+          eq(costMatrix.is_active, true)
         ))
         .groupBy(costMatrixEntry.county);
       
@@ -1364,7 +1364,7 @@ export class PostgresStorage implements IStorage {
         .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
         .where(and(
           isNotNull(costMatrixEntry.state),
-          eq(costMatrix.isActive, true)
+          eq(costMatrix.is_active, true)
         ))
         .groupBy(costMatrixEntry.state);
       
@@ -1376,7 +1376,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]> {
-    let query = db.select().from(costMatrix).where(eq(costMatrix.isActive, true));
+    let query = db.select().from(costMatrix).where(eq(costMatrix.is_active, true));
     
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && key in costMatrix) {
@@ -1389,14 +1389,14 @@ export class PostgresStorage implements IStorage {
 
   async getBuildingTypesByCounty(county: string): Promise<string[]> {
     try {
-      const results = await db.select({ buildingType: costMatrixEntry.buildingType })
+      const results = await db.select({ buildingType: costMatrixEntry.building_type })
         .from(costMatrixEntry)
         .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
         .where(and(
           eq(costMatrixEntry.county, county),
-          eq(costMatrix.isActive, true)
+          eq(costMatrix.is_active, true)
         ))
-        .groupBy(costMatrixEntry.buildingType);
+        .groupBy(costMatrixEntry.building_type);
       
       return results.map(r => r.buildingType);
     } catch (error) {
@@ -1407,14 +1407,14 @@ export class PostgresStorage implements IStorage {
 
   async getBuildingTypesByState(state: string): Promise<string[]> {
     try {
-      const results = await db.select({ buildingType: costMatrixEntry.buildingType })
+      const results = await db.select({ buildingType: costMatrixEntry.building_type })
         .from(costMatrixEntry)
         .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
         .where(and(
           eq(costMatrixEntry.state, state),
-          eq(costMatrix.isActive, true)
+          eq(costMatrix.is_active, true)
         ))
-        .groupBy(costMatrixEntry.buildingType);
+        .groupBy(costMatrixEntry.building_type);
       
       return results.map(r => r.buildingType);
     } catch (error) {
