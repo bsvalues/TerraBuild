@@ -17,7 +17,13 @@ import {
   insertScenarioVariationSchema,
   insertSharedProjectSchema,
   insertProjectMemberSchema,
-  insertProjectItemSchema
+  insertProjectItemSchema,
+  insertProjectInvitationSchema,
+  insertCommentSchema,
+  insertSharedLinkSchema,
+  insertProjectActivitySchema,
+  insertConnectionHistorySchema,
+  insertFTPConnectionSchema
 } from "@shared/schema";
 import { importPropertyData } from "./property-data-import";
 import { importPropertyDataEnhanced } from "./property-data-import-enhanced";

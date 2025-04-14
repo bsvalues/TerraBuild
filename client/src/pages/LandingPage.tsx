@@ -397,18 +397,62 @@ export default function LandingPage() {
               <div>
                 <h4 className="font-semibold text-lg mb-4">Tools</h4>
                 <ul className="space-y-2">
-                  <li><a href="/calculator" className="text-gray-300 hover:text-white transition-colors">Calculator</a></li>
-                  <li><a href="/visualizations" className="text-gray-300 hover:text-white transition-colors">Visualizations</a></li>
-                  <li><a href="/data-import" className="text-gray-300 hover:text-white transition-colors">Data Import</a></li>
+                  <li>
+                    <button onClick={() => navigate('/calculator')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      Calculator
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/visualizations')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      Visualizations
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/data-import')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      Data Import
+                    </button>
+                  </li>
                 </ul>
               </div>
               
               <div>
                 <h4 className="font-semibold text-lg mb-4">Resources</h4>
                 <ul className="space-y-2">
-                  <li><a href="/documentation" className="text-gray-300 hover:text-white transition-colors">Documentation</a></li>
-                  <li><a href="/tutorials" className="text-gray-300 hover:text-white transition-colors">Tutorials</a></li>
-                  <li><a href="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+                  <li>
+                    <button onClick={() => navigate('/documentation')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      Documentation
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/tutorials')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      Tutorials
+                    </button>
+                  </li>
+                  <li>
+                    <button onClick={() => navigate('/faq')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                      FAQ
+                    </button>
+                  </li>
+                  {isAuthenticated ? (
+                    <>
+                      <li>
+                        <button onClick={() => navigate('/dashboard')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                          My Dashboard
+                        </button>
+                      </li>
+                      <li>
+                        <button onClick={() => navigate('/account')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                          Account Settings
+                        </button>
+                      </li>
+                    </>
+                  ) : (
+                    <li>
+                      <button onClick={() => navigate('/auth')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
+                        Sign In
+                      </button>
+                    </li>
+                  )}
                 </ul>
               </div>
               
@@ -426,9 +470,26 @@ export default function LandingPage() {
           <div className="border-t border-gray-700 pt-6 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">© 2025 Benton County. All rights reserved.</p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors">Terms of Use</a>
-              <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors">Accessibility</a>
+              <button onClick={() => navigate('/privacy')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
+                Privacy Policy
+              </button>
+              <button onClick={() => navigate('/terms')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
+                Terms of Use
+              </button>
+              <button onClick={() => navigate('/accessibility')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
+                Accessibility
+              </button>
+              {isAuthenticated && (
+                <button 
+                  onClick={() => {
+                    // This will trigger logout when implemented in auth context
+                    navigate('/');
+                  }} 
+                  className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
           </div>
         </div>

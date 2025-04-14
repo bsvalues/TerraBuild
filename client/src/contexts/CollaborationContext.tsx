@@ -1,8 +1,8 @@
 import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 // Context related types
 interface ProjectMember {
@@ -222,6 +222,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
   projectId,
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // State for the current project
@@ -431,7 +432,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-invitations', projectId] });
-      toast({
+      toast.toast({
         title: 'Invitation sent',
         description: 'User has been invited to the project.',
       });
@@ -488,7 +489,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-items', projectId] });
-      toast({
+      toast.toast({
         title: 'Resource added',
         description: 'Resource has been added to the project.',
       });
@@ -530,7 +531,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       });
     },
     onSuccess: (_, variables) => {
-      toast({
+      toast.toast({
         title: variables.isPublic ? 'Project is now public' : 'Project is now private',
         description: variables.isPublic 
           ? 'Anyone with the link can now view this project'
@@ -661,7 +662,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
-      toast({
+      toast.toast({
         title: 'Project created',
         description: 'Your new project has been created.',
       });
@@ -678,7 +679,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-projects'] });
       queryClient.invalidateQueries({ queryKey: ['public-projects'] });
-      toast({
+      toast.toast({
         title: 'Project deleted',
         description: 'The project has been deleted.',
       });

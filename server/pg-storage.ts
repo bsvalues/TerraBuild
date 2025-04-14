@@ -36,7 +36,7 @@ import {
   calculationHistory, costMatrix, costFactorPresets, fileUploads, 
   whatIfScenarios, scenarioVariations, sharedProjects, projectMembers, projectItems,
   comments, sharedLinks, connectionHistory, syncSchedules, syncHistory, ftpConnections,
-  importRecords
+  importRecords, projectActivities
 } from '@shared/schema';
 
 export class PostgresStorage implements IStorage {
