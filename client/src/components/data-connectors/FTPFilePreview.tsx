@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface FTPFilePreviewProps {
   connectionId: number;
   filePath: string;
-  fileName: string;
+  filename: string;
   fileType?: string;
   onDownload?: () => void;
 }
@@ -19,7 +19,7 @@ interface FTPFilePreviewProps {
 const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
   connectionId,
   filePath,
-  fileName,
+  filename,
   fileType,
   onDownload
 }) => {
@@ -64,7 +64,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
     }
   };
 
-  const determinedFileType = fileType || getFileTypeFromName(fileName);
+  const determinedFileType = fileType || getFileTypeFromName(filename);
 
   const fetchFilePreview = async () => {
     try {
@@ -75,7 +75,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
         params: {
           connectionId,
           path: filePath,
-          fileName
+          filename
         }
       });
 

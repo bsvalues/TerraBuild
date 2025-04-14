@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 // Extended schema with validation
 const fileUploadSchema = insertFileUploadSchema.extend({
-  fileName: z.string().min(1, "File name is required"),
+  filename: z.string().min(1, "File name is required"),
   fileType: z.string().min(1, "File type is required"),
   fileSize: z.number().min(1, "File size is required"),
   status: z.string().min(1, "Status is required"),

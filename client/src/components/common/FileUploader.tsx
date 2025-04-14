@@ -106,7 +106,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       
       // Create a file upload record
       await create.mutateAsync({
-        fileName: file.name,
+        filename: file.name,
         fileType: file.type,
         fileSize: file.size,
         status: 'uploaded',
