@@ -56,7 +56,10 @@ const BenchmarkingVisualization: React.FC<BenchmarkingVisualizationProps> = ({
       <Card className="w-full h-full">
         <CardHeader>
           <CardTitle><Skeleton className="h-8 w-3/4" /></CardTitle>
-          <CardDescription><Skeleton className="h-4 w-1/2" /></CardDescription>
+          {/* Fix for DOM nesting error - remove Skeleton from inside CardDescription (p tag) */}
+          <div className="text-sm text-muted-foreground mt-1">
+            <Skeleton className="h-4 w-1/2" />
+          </div>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[300px] w-full" />
