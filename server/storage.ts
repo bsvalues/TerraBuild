@@ -517,7 +517,7 @@ export class MemStorage implements IStorage {
   
   // Import Records
   async createImportRecord(data: { 
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -528,7 +528,7 @@ export class MemStorage implements IStorage {
     errorCount?: number;
   }): Promise<{ 
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -542,9 +542,11 @@ export class MemStorage implements IStorage {
   }> {
     const id = this.currentImportRecordId++;
     const now = new Date();
-    const record = {
+    
+    // Store internally using the old property name to maintain compatibility
+    const internalRecord = {
       id,
-      fileName: data.fileName,
+      fileName: data.filename, // Store as 'fileName' internally
       fileType: data.fileType,
       fileSize: data.fileSize,
       uploadedBy: data.uploadedBy,
@@ -557,8 +559,23 @@ export class MemStorage implements IStorage {
       updatedAt: now
     };
     
-    this.importRecords.set(id, record);
-    return record;
+    this.importRecords.set(id, internalRecord);
+    
+    // Return using the new property name convention
+    return {
+      id: internalRecord.id,
+      filename: internalRecord.fileName, // Convert to 'filename' in the response
+      fileType: internalRecord.fileType,
+      fileSize: internalRecord.fileSize,
+      uploadedBy: internalRecord.uploadedBy,
+      status: internalRecord.status,
+      errors: internalRecord.errors,
+      processedItems: internalRecord.processedItems,
+      totalItems: internalRecord.totalItems,
+      errorCount: internalRecord.errorCount,
+      createdAt: internalRecord.createdAt,
+      updatedAt: internalRecord.updatedAt
+    };
   }
   
   async getImportRecord(id: number): Promise<{
