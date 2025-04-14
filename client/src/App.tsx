@@ -48,7 +48,7 @@ import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider } from "./hooks/use-auth";
+import { AuthProvider } from "./contexts/AuthContext";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
@@ -198,20 +198,20 @@ function App() {
     <ErrorBoundary fallback={globalErrorFallback}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <DevAutoLogin />
+          <RemixIconLink />
           <SupabaseProvider>
             <AuthProvider>
-              <CollaborationProvider projectId={0}>
-                <DevAutoLogin />
-                <RemixIconLink />
-                <SidebarProvider>
-                  <WindowProvider>
+              <SidebarProvider>
+                <WindowProvider>
+                  <CollaborationProvider projectId={0}>
                     <ErrorBoundary>
                       <Router />
                     </ErrorBoundary>
                     <Toaster />
-                  </WindowProvider>
-                </SidebarProvider>
-              </CollaborationProvider>
+                  </CollaborationProvider>
+                </WindowProvider>
+              </SidebarProvider>
             </AuthProvider>
           </SupabaseProvider>
         </ThemeProvider>

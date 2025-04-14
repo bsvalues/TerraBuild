@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
 import { Menu, X } from 'lucide-react';
-import { Logo } from '../../components/ui/logo';
+import { Logo } from '../ui/logo';
 
 interface MenuItem {
   label: string;
