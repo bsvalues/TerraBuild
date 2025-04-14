@@ -44,13 +44,13 @@ export function useAutoLogin() {
         title: newValue ? "Auto-login enabled" : "Auto-login disabled",
         description: newValue 
           ? "You will be automatically logged in during development."
-          : "You will need to log in manually during development.",
+          : "You will need to log in manually during development."
       });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to toggle auto-login setting.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
