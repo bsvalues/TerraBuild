@@ -133,8 +133,29 @@ function Router() {
       
       {/* Supabase test route - without protection for easier testing */}
       <Route path="/supabase-test" component={SupabaseTestPage} />
+      <Route path="/auth" component={AuthPage} />
       
-      {/* Protected routes */}
+      {/* Collaborative routes wrapped with CollaborationProvider */}
+      <Route path="/shared-projects">
+        <CollaborationProvider projectId={0}>
+          <Switch>
+            <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
+            <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
+            <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
+            <ProtectedRoute path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
+          </Switch>
+        </CollaborationProvider>
+      </Route>
+      
+      <Route path="/projects">
+        <CollaborationProvider projectId={0}>
+          <Switch>
+            <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
+          </Switch>
+        </CollaborationProvider>
+      </Route>
+      
+      {/* Other protected routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/calculator" component={CalculatorPage} />
       <ProtectedRoute path="/analytics" component={AnalyticsPage} />
@@ -163,12 +184,7 @@ function Router() {
       <ProtectedRoute path="/properties/:id" component={PropertyDetailsPage} />
       <ProtectedRoute path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRoute path="/mcp-visualizations" component={MCPVisualizationsPage} />
-      <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
-      <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
-      <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
-      <ProtectedRoute path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
-      <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
-      <Route path="/auth" component={AuthPage} />
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -198,18 +214,14 @@ function App() {
     <ErrorBoundary fallback={globalErrorFallback}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <DevAutoLogin />
           <RemixIconLink />
+          <DevAutoLogin />
           <SupabaseProvider>
             <AuthProvider>
               <SidebarProvider>
                 <WindowProvider>
-                  <CollaborationProvider projectId={0}>
-                    <ErrorBoundary>
-                      <Router />
-                    </ErrorBoundary>
-                    <Toaster />
-                  </CollaborationProvider>
+                  <Router />
+                  <Toaster />
                 </WindowProvider>
               </SidebarProvider>
             </AuthProvider>
