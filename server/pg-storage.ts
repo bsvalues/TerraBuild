@@ -1180,7 +1180,12 @@ export class PostgresStorage implements IStorage {
   
   // Cost Matrix
   async getAllCostMatrix(): Promise<CostMatrix[]> {
-    return await db.select().from(costMatrix).orderBy(costMatrix.region, costMatrix.buildingType);
+    try {
+      return await db.select().from(costMatrix);
+    } catch (error) {
+      console.error("Error in getAllCostMatrix:", error);
+      return [];
+    }
   }
   
   async getCostMatrix(id: number): Promise<CostMatrix | undefined> {
@@ -1189,25 +1194,69 @@ export class PostgresStorage implements IStorage {
   }
   
   async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {
-    return await db.select().from(costMatrix)
-      .where(eq(costMatrix.region, region))
-      .orderBy(costMatrix.buildingType);
+    try {
+      // Join with costMatrixEntry to get entries for the specified region
+      const results = await db.select({
+        costMatrix: costMatrix,
+        entry: costMatrixEntry
+      })
+      .from(costMatrix)
+      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
+      .where(eq(costMatrixEntry.region, region));
+    
+      // Transform the results to match the expected CostMatrix type
+      return results.map(r => ({
+        ...r.costMatrix
+      }));
+    } catch (error) {
+      console.error("Error in getCostMatrixByRegion:", error);
+      return [];
+    }
   }
   
   async getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]> {
-    return await db.select().from(costMatrix)
-      .where(eq(costMatrix.buildingType, buildingType))
-      .orderBy(costMatrix.region);
+    try {
+      // Join with costMatrixEntry to get entries for the specified building type
+      const results = await db.select({
+        costMatrix: costMatrix,
+        entry: costMatrixEntry
+      })
+      .from(costMatrix)
+      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
+      .where(eq(costMatrixEntry.building_type, buildingType));
+    
+      // Transform the results to match the expected CostMatrix type
+      return results.map(r => ({
+        ...r.costMatrix
+      }));
+    } catch (error) {
+      console.error("Error in getCostMatrixByBuildingType:", error);
+      return [];
+    }
   }
   
   async getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined> {
-    const results = await db.select().from(costMatrix)
+    try {
+      const results = await db.select({
+        costMatrix: costMatrix,
+        entry: costMatrixEntry
+      })
+      .from(costMatrix)
+      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
       .where(and(
-        eq(costMatrix.region, region),
-        eq(costMatrix.buildingType, buildingType)
+        eq(costMatrixEntry.region, region),
+        eq(costMatrixEntry.building_type, buildingType)
       ));
-    
-    return results[0];
+      
+      if (results.length === 0) {
+        return undefined;
+      }
+      
+      return results[0].costMatrix;
+    } catch (error) {
+      console.error("Error in getCostMatrixByRegionAndBuildingType:", error);
+      return undefined;
+    }
   }
   
   async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
