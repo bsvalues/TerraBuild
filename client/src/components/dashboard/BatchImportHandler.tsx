@@ -89,7 +89,7 @@ const BatchImportHandler: React.FC<BatchImportHandlerProps> = ({
             <div className="flex items-center">
               <FileSpreadsheet className="h-8 w-8 mr-3 text-blue-500" />
               <div>
-                <h3 className="font-medium">{selectedFile.fileName}</h3>
+                <h3 className="font-medium">{selectedFile.filename}</h3>
                 <p className="text-sm text-muted-foreground">
                   {(selectedFile.fileSize / 1024).toFixed(1)} KB • Uploaded {new Date(selectedFile.createdAt).toLocaleDateString()}
                 </p>
@@ -196,7 +196,7 @@ const BatchImportHandler: React.FC<BatchImportHandlerProps> = ({
                   <div className="flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-blue-500" />
                     <div>
-                      <p className="font-medium">{file.fileName}</p>
+                      <p className="font-medium">{file.filename}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(file.createdAt).toLocaleString()}
                       </p>

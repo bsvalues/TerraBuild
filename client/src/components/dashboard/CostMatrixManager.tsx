@@ -56,7 +56,7 @@ export const CostMatrixManager: React.FC = () => {
     try {
       // First, create a file upload record
       const fileRecord = await createFileUpload.mutateAsync({
-        fileName: selectedFile.name,
+        filename: selectedFile.name,
         fileType: selectedFile.type,
         fileSize: selectedFile.size,
         status: "pending",
@@ -224,8 +224,8 @@ export const CostMatrixManager: React.FC = () => {
                       {fileUploads.map((file: FileUpload) => (
                         <TableRow key={file.id}>
                           <TableCell className="font-medium flex items-center gap-2">
-                            {getFileIcon(file.fileName)}
-                            {file.fileName}
+                            {getFileIcon(file.filename)}
+                            {file.filename}
                           </TableCell>
                           <TableCell>
                             {format(new Date(file.createdAt), 'MMM d, yyyy h:mm a')}

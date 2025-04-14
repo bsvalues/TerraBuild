@@ -341,9 +341,9 @@ const ProjectActivitiesLog: React.FC<ProjectActivitiesLogProps> = ({
       case 'synced_data':
         return `synced data with ${data?.source || 'external system'}`;
       case 'uploaded_file':
-        return `uploaded file "${data?.fileName || 'a file'}"`;
+        return `uploaded file "${data?.filename || 'a file'}"`;
       case 'downloaded_file':
-        return `downloaded file "${data?.fileName || 'a file'}"`;
+        return `downloaded file "${data?.filename || 'a file'}"`;
       case 'shared_link':
         return `shared a link to the project`;
       case 'added_comment':
