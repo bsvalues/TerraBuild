@@ -1197,21 +1197,12 @@ export class PostgresStorage implements IStorage {
   
   async getCostMatrixByRegion(region: string): Promise<CostMatrix[]> {
     try {
-      // Join with costMatrixEntry to get entries for the specified region
-      const results = await db.select({
-        costMatrix: costMatrix,
-        entry: costMatrixEntry
-      })
-      .from(costMatrix)
-      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
-      .where(eq(costMatrixEntry.region, region));
-    
-      // Transform the results to match the expected CostMatrix type
-      // Use a Map to deduplicate matrices by ID
-      const uniqueMatrices = new Map();
-      results.forEach(r => uniqueMatrices.set(r.costMatrix.id, r.costMatrix));
+      // Select directly from costMatrix table by region
+      const results = await db.select()
+        .from(costMatrix)
+        .where(eq(costMatrix.region, region));
       
-      return Array.from(uniqueMatrices.values());
+      return results;
     } catch (error) {
       console.error("Error in getCostMatrixByRegion:", error);
       return [];
@@ -1220,21 +1211,12 @@ export class PostgresStorage implements IStorage {
   
   async getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]> {
     try {
-      // Join with costMatrixEntry to get entries for the specified building type
-      const results = await db.select({
-        costMatrix: costMatrix,
-        entry: costMatrixEntry
-      })
-      .from(costMatrix)
-      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
-      .where(eq(costMatrixEntry.building_type, buildingType));
-    
-      // Transform the results to match the expected CostMatrix type
-      // Use a Map to deduplicate matrices by ID
-      const uniqueMatrices = new Map();
-      results.forEach(r => uniqueMatrices.set(r.costMatrix.id, r.costMatrix));
+      // Select directly from costMatrix table by building_type
+      const results = await db.select()
+        .from(costMatrix)
+        .where(eq(costMatrix.building_type, buildingType));
       
-      return Array.from(uniqueMatrices.values());
+      return results;
     } catch (error) {
       console.error("Error in getCostMatrixByBuildingType:", error);
       return [];
@@ -1243,16 +1225,13 @@ export class PostgresStorage implements IStorage {
   
   async getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined> {
     try {
-      const results = await db.select({
-        costMatrix: costMatrix,
-        entry: costMatrixEntry
-      })
-      .from(costMatrix)
-      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
-      .where(and(
-        eq(costMatrixEntry.region, region),
-        eq(costMatrixEntry.building_type, buildingType)
-      ));
+      // Select directly from costMatrix where region and building_type match
+      const results = await db.select()
+        .from(costMatrix)
+        .where(and(
+          eq(costMatrix.region, region),
+          eq(costMatrix.building_type, buildingType)
+        ));
       
       if (results.length === 0) {
         return undefined;
@@ -1261,10 +1240,10 @@ export class PostgresStorage implements IStorage {
       // Handle potential duplicates by prioritizing the most recent matrix
       const sorted = results.sort((a, b) => {
         // Sort by created_at in descending order (most recent first)
-        return new Date(b.costMatrix.created_at).getTime() - new Date(a.costMatrix.created_at).getTime();
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
-      return sorted[0].costMatrix;
+      return sorted[0];
     } catch (error) {
       console.error("Error in getCostMatrixByRegionAndBuildingType:", error);
       return undefined;
@@ -1293,23 +1272,17 @@ export class PostgresStorage implements IStorage {
   // Benchmarking methods
   async getCostMatrixByCounty(county: string): Promise<CostMatrix[]> {
     try {
-      const results = await db.select({
-        costMatrix: costMatrix,
-        entry: costMatrixEntry
-      })
-      .from(costMatrix)
-      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
-      .where(and(
-        eq(costMatrixEntry.county, county),
-        eq(costMatrix.is_active, true)
-      ));
+      // Select directly from costMatrix where county matches
+      // Note: In the refactored schema, county is stored on the costMatrix table 
+      // instead of a separate entry table
+      const results = await db.select()
+        .from(costMatrix)
+        .where(and(
+          eq(costMatrix.county, county),
+          eq(costMatrix.is_active, true)
+        ));
       
-      // Transform the results to match the expected CostMatrix type
-      // Use a Map to deduplicate matrices by ID
-      const uniqueMatrices = new Map();
-      results.forEach(r => uniqueMatrices.set(r.costMatrix.id, r.costMatrix));
-      
-      return Array.from(uniqueMatrices.values());
+      return results;
     } catch (error) {
       console.error("Error in getCostMatrixByCounty:", error);
       return [];
@@ -1318,23 +1291,17 @@ export class PostgresStorage implements IStorage {
 
   async getCostMatrixByState(state: string): Promise<CostMatrix[]> {
     try {
-      const results = await db.select({
-        costMatrix: costMatrix,
-        entry: costMatrixEntry
-      })
-      .from(costMatrix)
-      .innerJoin(costMatrixEntry, eq(costMatrix.matrix_id, costMatrixEntry.matrix_id))
-      .where(and(
-        eq(costMatrixEntry.state, state),
-        eq(costMatrix.is_active, true)
-      ));
+      // Select directly from costMatrix where state matches
+      // Note: In the refactored schema, state is stored on the costMatrix table 
+      // instead of a separate entry table
+      const results = await db.select()
+        .from(costMatrix)
+        .where(and(
+          eq(costMatrix.state, state),
+          eq(costMatrix.is_active, true)
+        ));
       
-      // Transform the results to match the expected CostMatrix type
-      // Use a Map to deduplicate matrices by ID
-      const uniqueMatrices = new Map();
-      results.forEach(r => uniqueMatrices.set(r.costMatrix.id, r.costMatrix));
-      
-      return Array.from(uniqueMatrices.values());
+      return results;
     } catch (error) {
       console.error("Error in getCostMatrixByState:", error);
       return [];
@@ -1343,15 +1310,14 @@ export class PostgresStorage implements IStorage {
 
   async getAllCounties(): Promise<string[]> {
     try {
-      // Using proper table imports to define table structure for type safety
-      const results = await db.select({ county: costMatrixEntry.county })
-        .from(costMatrixEntry)
-        .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
+      // Select directly from costMatrix to get all unique counties
+      const results = await db.select({ county: costMatrix.county })
+        .from(costMatrix)
         .where(and(
-          isNotNull(costMatrixEntry.county),
+          isNotNull(costMatrix.county),
           eq(costMatrix.is_active, true)
         ))
-        .groupBy(costMatrixEntry.county);
+        .groupBy(costMatrix.county);
       
       return results.map(r => r.county).filter((county): county is string => county !== null);
     } catch (error) {
@@ -1362,14 +1328,14 @@ export class PostgresStorage implements IStorage {
 
   async getAllStates(): Promise<string[]> {
     try {
-      const results = await db.select({ state: costMatrixEntry.state })
-        .from(costMatrixEntry)
-        .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
+      // Select directly from costMatrix to get all unique states
+      const results = await db.select({ state: costMatrix.state })
+        .from(costMatrix)
         .where(and(
-          isNotNull(costMatrixEntry.state),
+          isNotNull(costMatrix.state),
           eq(costMatrix.is_active, true)
         ))
-        .groupBy(costMatrixEntry.state);
+        .groupBy(costMatrix.state);
       
       return results.map(r => r.state).filter((state): state is string => state !== null);
     } catch (error) {
