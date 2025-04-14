@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/data/constants";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 import {
   BarChart3,

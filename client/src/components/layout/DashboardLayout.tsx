@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import TopNavbar from "./TopNavbar";
 import Footer from "./Footer";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { BentonColors } from '@/components/BentonBranding';
 import { SidebarProvider } from '@/contexts/SidebarContext';

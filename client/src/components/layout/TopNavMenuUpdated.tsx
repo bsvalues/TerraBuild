@@ -32,7 +32,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 
 interface NavLinkProps {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";

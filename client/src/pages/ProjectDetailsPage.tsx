@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
 import { useCollaboration } from '@/contexts/CollaborationContext';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';

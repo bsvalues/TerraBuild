@@ -6,10 +6,12 @@ import bentonSeal from '@assets/BC.png';
 import arizonaSunset from '@assets/Arizona-sunset.jpg';
 import vineyardHeader from '@assets/Header-Vineyard-BC.png';
 import ogimage from '@assets/ogimage.jpg';
-import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building } from 'lucide-react';
+import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building, LogIn, User } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LandingPage() {
   const [_, navigate] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   return (
     <div className="min-h-screen bg-white">
@@ -24,22 +26,58 @@ export default function LandingPage() {
             The official Building Cost Estimation System for Benton County, Washington
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-              onClick={() => navigate('/calculator')}
-            >
-              <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-transparent border-white text-white hover:bg-white/10"
-              onClick={() => navigate('/data-import')}
-            >
-              <Upload className="mr-2 h-5 w-5" /> Import Data
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button 
+                  size="lg" 
+                  className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="bg-transparent border-white text-white hover:bg-white/10"
+                  onClick={() => navigate('/calculator')}
+                >
+                  <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="bg-transparent border-white text-white hover:bg-white/10"
+                  onClick={() => navigate('/data-import')}
+                >
+                  <Upload className="mr-2 h-5 w-5" /> Import Data
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  size="lg" 
+                  className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                  onClick={() => navigate('/auth')}
+                >
+                  <LogIn className="mr-2 h-5 w-5" /> Sign In
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="bg-transparent border-white text-white hover:bg-white/10"
+                  onClick={() => navigate('/calculator')}
+                >
+                  <Calculator className="mr-2 h-5 w-5" /> Try Calculator
+                </Button>
+              </>
+            )}
           </div>
+          {isAuthenticated && user && (
+            <div className="mt-4 bg-white/10 px-4 py-2 rounded-full flex items-center">
+              <User className="h-4 w-4 mr-2 text-white/80" />
+              <span className="text-white/80 text-sm">Welcome, {user.name || user.username}</span>
+            </div>
+          )}
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/10 to-transparent"></div>
       </section>
