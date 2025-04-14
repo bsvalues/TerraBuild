@@ -95,7 +95,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
         params: {
           connectionId,
           path: filePath,
-          fileName
+          filename
         },
         responseType: 'blob'
       });
@@ -104,14 +104,14 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', fileName);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       
       toast({
         title: "Download Complete",
-        description: `File "${fileName}" has been downloaded successfully.`
+        description: `File "${filename}" has been downloaded successfully.`
       });
       
       if (onDownload) {
@@ -125,7 +125,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
       
       toast({
         title: "Download Error",
-        description: `Failed to download "${fileName}". ${err.response?.data?.error || err.message || ''}`,
+        description: `Failed to download "${filename}". ${err.response?.data?.error || err.message || ''}`,
         variant: "destructive"
       });
     }
@@ -135,7 +135,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
     if (determinedFileType === 'text' || determinedFileType === 'json' || determinedFileType === 'xml' || determinedFileType === 'html') {
       fetchFilePreview();
     }
-  }, [connectionId, filePath, fileName, determinedFileType]);
+  }, [connectionId, filePath, filename, determinedFileType]);
 
   const renderFilePreview = () => {
     if (loading) {
@@ -173,8 +173,8 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
         return (
           <div className="flex justify-center items-center p-4">
             <img 
-              src={`/api/data-connectors/ftp/preview?connectionId=${connectionId}&path=${encodeURIComponent(filePath)}&fileName=${encodeURIComponent(fileName)}&raw=true`} 
-              alt={fileName}
+              src={`/api/data-connectors/ftp/preview?connectionId=${connectionId}&path=${encodeURIComponent(filePath)}&filename=${encodeURIComponent(filename)}&raw=true`} 
+              alt={filename}
               className="max-w-full max-h-[500px] object-contain"
             />
           </div>
@@ -234,7 +234,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm font-medium">File Name:</p>
-            <p className="text-sm text-muted-foreground">{fileName}</p>
+            <p className="text-sm text-muted-foreground">{filename}</p>
           </div>
           <div>
             <p className="text-sm font-medium">File Type:</p>
@@ -258,7 +258,7 @@ const FTPFilePreview: React.FC<FTPFilePreviewProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center">
           <File className="mr-2 h-5 w-5" />
-          {fileName}
+          {filename}
         </CardTitle>
         <CardDescription>
           File preview from FTP connection
