@@ -95,40 +95,28 @@ const GlobalErrorHandler = () => {
   return null;
 };
 
-// Simpler mock auth component with minimal dependencies
+// Dev auto login component without Promise usage to avoid unhandled rejections
 const DevAutoLogin = () => {
-  const [setupCompleted, setSetupCompleted] = useState(false);
-
+  // Only set up the mock user once
   useEffect(() => {
-    // Wrap in async function to properly handle promises
-    const setupMockUser = async () => {
-      try {
-        console.log("DEVELOPMENT MODE: Setting mock admin user");
-        
-        // Mock admin user
-        const adminUser = {
-          id: 1,
-          username: "admin",
-          password: "password", // Not actual password, just for display
-          role: "admin",
-          name: "Admin User",
-          isActive: true
-        };
-        
-        // Need to wrap this in Promise.resolve to properly handle any rejection
-        await Promise.resolve(queryClient.setQueryData(["/api/user"], adminUser));
-        setSetupCompleted(true);
-      } catch (error) {
-        console.error("Error in DevAutoLogin:", error);
-        // Set completed anyway to avoid retries
-        setSetupCompleted(true);
-      }
-    };
-    
-    if (!setupCompleted) {
-      setupMockUser();
+    try {
+      console.log("DEVELOPMENT MODE: Setting mock admin user");
+      
+      // Mock admin user - must match the User interface in auth.ts
+      const adminUser = {
+        id: 1,
+        username: "admin",
+        name: "Admin User",
+        role: "admin",
+        isActive: true
+      };
+      
+      // Set the query data directly
+      queryClient.setQueryData(["/api/user"], adminUser);
+    } catch (error) {
+      console.error("Error in DevAutoLogin:", error);
     }
-  }, [setupCompleted]);
+  }, []);
   
   return <GlobalErrorHandler />;
 };
