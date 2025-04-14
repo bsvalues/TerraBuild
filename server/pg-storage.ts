@@ -1341,6 +1341,7 @@ export class PostgresStorage implements IStorage {
 
   async getAllCounties(): Promise<string[]> {
     try {
+      // Using proper table imports to define table structure for type safety
       const results = await db.select({ county: costMatrixEntry.county })
         .from(costMatrixEntry)
         .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
@@ -1492,7 +1493,7 @@ export class PostgresStorage implements IStorage {
           
           const matrixEntry: InsertCostMatrix = {
             region: item.region,
-            buildingType: item.buildingType,
+            building_type: item.buildingType, // Use snake_case to match the schema
             buildingTypeDescription: item.buildingTypeDescription,
             baseCost: item.baseCost.toString(),
             matrixYear: item.matrixYear,
@@ -1504,7 +1505,7 @@ export class PostgresStorage implements IStorage {
             complexityFactorBase: complexityFactorBase.toString(),
             qualityFactorBase: qualityFactorBase.toString(),
             conditionFactorBase: conditionFactorBase.toString(),
-            isActive: true
+            is_active: true // Use snake_case to match the schema
           };
           
           if (existing) {
