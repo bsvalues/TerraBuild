@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertSettingSchema, Setting } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
+import { insertSettingSchema, Setting } from "../../../shared/schema";
+import { useToast } from "./use-toast";
 import { z } from "zod";
 
 interface AutoLoginData {
