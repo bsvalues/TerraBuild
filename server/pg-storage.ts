@@ -1358,16 +1358,20 @@ export class PostgresStorage implements IStorage {
 
   async getBuildingTypesByCounty(county: string): Promise<string[]> {
     try {
-      const results = await db.select({ buildingType: costMatrixEntry.building_type })
-        .from(costMatrixEntry)
-        .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
+      // Select directly from costMatrix to get all building types for a county
+      const results = await db.select({ buildingType: costMatrix.building_type })
+        .from(costMatrix)
         .where(and(
-          eq(costMatrixEntry.county, county),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.county, county),
+          eq(costMatrix.is_active, true),
+          isNotNull(costMatrix.building_type)
         ))
-        .groupBy(costMatrixEntry.building_type);
+        .groupBy(costMatrix.building_type);
       
-      return results.map(r => r.buildingType);
+      // Map results and filter out nulls
+      return results
+        .map(r => r.buildingType)
+        .filter((buildingType): buildingType is string => buildingType !== null);
     } catch (error) {
       console.error("Error in getBuildingTypesByCounty:", error);
       return [];
@@ -1376,16 +1380,20 @@ export class PostgresStorage implements IStorage {
 
   async getBuildingTypesByState(state: string): Promise<string[]> {
     try {
-      const results = await db.select({ buildingType: costMatrixEntry.building_type })
-        .from(costMatrixEntry)
-        .innerJoin(costMatrix, eq(costMatrixEntry.matrix_id, costMatrix.matrix_id))
+      // Select directly from costMatrix table to get all building types for a state
+      const results = await db.select({ buildingType: costMatrix.building_type })
+        .from(costMatrix)
         .where(and(
-          eq(costMatrixEntry.state, state),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.state, state),
+          eq(costMatrix.is_active, true),
+          isNotNull(costMatrix.building_type)
         ))
-        .groupBy(costMatrixEntry.building_type);
+        .groupBy(costMatrix.building_type);
       
-      return results.map(r => r.buildingType);
+      // Map results and filter out nulls
+      return results
+        .map(r => r.buildingType)
+        .filter((buildingType): buildingType is string => buildingType !== null);
     } catch (error) {
       console.error("Error in getBuildingTypesByState:", error);
       return [];
@@ -1409,15 +1417,23 @@ export class PostgresStorage implements IStorage {
       };
     }
     
-    const costs = countyData.map(m => Number(m.baseCost));
-    const minCost = Math.min(...costs);
-    const maxCost = Math.max(...costs);
-    const avgCost = costs.reduce((sum: number, cost: number) => sum + cost, 0) / costs.length;
+    // Convert string costs to numbers, handling nulls
+    const costs = countyData.map(m => {
+      const baseCostStr = m.base_cost || '0';
+      return Number(baseCostStr);
+    }).filter(cost => !isNaN(cost));
     
-    // Count unique building types
+    const minCost = costs.length > 0 ? Math.min(...costs) : 0;
+    const maxCost = costs.length > 0 ? Math.max(...costs) : 0;
+    const avgCost = costs.length > 0 ? 
+      costs.reduce((sum: number, cost: number) => sum + cost, 0) / costs.length : 0;
+    
+    // Count unique building types, handling nulls
     const buildingTypes = new Set<string>();
     for (const matrix of countyData) {
-      buildingTypes.add(matrix.buildingType);
+      if (matrix.building_type) {
+        buildingTypes.add(matrix.building_type);
+      }
     }
     
     return {
@@ -1441,6 +1457,7 @@ export class PostgresStorage implements IStorage {
       
       for (const item of data) {
         try {
+          // Validate required fields (using the API property names)
           if (!item.region || !item.buildingType || !item.buildingTypeDescription || 
               !item.baseCost || !item.matrixYear || !item.matrixId || 
               !item.matrixDescription) {
@@ -1459,23 +1476,28 @@ export class PostgresStorage implements IStorage {
           const qualityFactorBase = item.adjustmentFactors?.quality || 1.0;
           const conditionFactorBase = item.adjustmentFactors?.condition || 1.0;
           
+          // Map API properties to database columns (using snake_case for DB columns)
           const matrixEntry: InsertCostMatrix = {
             region: item.region,
-            building_type: item.buildingType, // Use snake_case to match the schema
-            buildingTypeDescription: item.buildingTypeDescription,
-            baseCost: item.baseCost.toString(),
-            matrixYear: item.matrixYear,
-            sourceMatrixId: item.matrixId,
-            matrixDescription: item.matrixDescription || "",
-            dataPoints: item.dataPoints || 0,
-            minCost: item.minCost?.toString(),
-            maxCost: item.maxCost?.toString(),
-            complexityFactorBase: complexityFactorBase.toString(),
-            qualityFactorBase: qualityFactorBase.toString(),
-            conditionFactorBase: conditionFactorBase.toString(),
-            is_active: true // Use snake_case to match the schema
+            building_type: item.buildingType,
+            building_type_description: item.buildingTypeDescription,
+            base_cost: item.baseCost.toString(),
+            matrix_year: item.matrixYear,
+            source_matrix_id: item.matrixId,
+            matrix_description: item.matrixDescription || "",
+            data_points: item.dataPoints || 0,
+            min_cost: item.minCost?.toString(),
+            max_cost: item.maxCost?.toString(),
+            complexity_factor_base: complexityFactorBase.toString(),
+            quality_factor_base: qualityFactorBase.toString(),
+            condition_factor_base: conditionFactorBase.toString(),
+            is_active: true,
+            // Add optional fields if they exist
+            county: item.county || null,
+            state: item.state || null
           };
           
+          // Update existing or create new entry
           if (existing) {
             await this.updateCostMatrix(existing.id, matrixEntry);
             updated++;
@@ -1658,7 +1680,7 @@ export class PostgresStorage implements IStorage {
       
       // Log the activity
       await this.createActivity({
-        action: `Imported ${imported} cost matrix entries from Excel (${fileUpload.fileName})`,
+        action: `Imported ${imported} cost matrix entries from Excel (${fileUpload.filename})`,
         icon: "ri-file-excel-line",
         iconColor: "success",
         userId
@@ -1671,7 +1693,7 @@ export class PostgresStorage implements IStorage {
       
       // Log the error
       await this.createActivity({
-        action: `Failed to import cost matrix from Excel (${fileUpload.fileName})`,
+        action: `Failed to import cost matrix from Excel (${fileUpload.filename})`,
         icon: "ri-file-excel-line",
         iconColor: "error",
         userId

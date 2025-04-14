@@ -1591,7 +1591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create file upload record
       const fileUpload = await storage.createFileUpload({
-        fileName: req.file.originalname,
+        filename: req.file.originalname,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         uploadedBy: req.user?.id || 1, // Use admin user (ID 1) if no user is logged in
@@ -1613,7 +1613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json({ 
         fileId: fileUpload.id,
-        fileName: fileUpload.fileName,
+        fileName: fileUpload.filename,
         message: "File uploaded successfully" 
       });
     } catch (error) {
@@ -1673,7 +1673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileUpload = await storage.createFileUpload(fileUploadData);
       
       await storage.createActivity({
-        action: `Uploaded file: ${fileUpload.fileName}`,
+        action: `Uploaded file: ${fileUpload.filename}`,
         icon: "ri-file-upload-line",
         iconColor: "primary"
       });
@@ -1758,7 +1758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "File upload not found" });
       }
       
-      console.log(`Found file upload: ${fileUpload.fileName}, type: ${fileUpload.fileType}`);
+      console.log(`Found file upload: ${fileUpload.filename}, type: ${fileUpload.mimeType}`);
       
       // Check if file exists on disk
       const fs = require('fs');
