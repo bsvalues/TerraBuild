@@ -719,7 +719,7 @@ const FTPManagement: React.FC = () => {
                     <div key={index} className="grid grid-cols-12 gap-2 p-2 hover:bg-muted/50 border-b last:border-b-0">
                       <div className="col-span-1 flex items-center">
                         <FileTypeIcon 
-                          fileName={file.name} 
+                          filename={file.name} 
                           type={file.type} 
                           className="h-5 w-5 text-primary" 
                         />

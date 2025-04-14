@@ -57,12 +57,12 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
   
   // Filter CSV files only
   const csvFiles = (fileUploads || []).filter(file => 
-    file.fileName.toLowerCase().endsWith('.csv')
+    file.filename.toLowerCase().endsWith('.csv')
   );
   
   // Sort files by most recent first
   const sortedFiles = [...csvFiles].sort((a, b) => {
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
   });
   
   const handleFileUploadComplete = (fileId: number) => {
@@ -170,7 +170,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       <SelectContent>
                         {sortedFiles.map(file => (
                           <SelectItem key={`improvements-${file.id}`} value={file.id.toString()}>
-                            {file.fileName}
+                            {file.filename}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -192,7 +192,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       <SelectContent>
                         {sortedFiles.map(file => (
                           <SelectItem key={`details-${file.id}`} value={file.id.toString()}>
-                            {file.fileName}
+                            {file.filename}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -214,7 +214,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       <SelectContent>
                         {sortedFiles.map(file => (
                           <SelectItem key={`items-${file.id}`} value={file.id.toString()}>
-                            {file.fileName}
+                            {file.filename}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -236,7 +236,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       <SelectContent>
                         {sortedFiles.map(file => (
                           <SelectItem key={`land-${file.id}`} value={file.id.toString()}>
-                            {file.fileName}
+                            {file.filename}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -259,7 +259,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                         <SelectItem value="">None</SelectItem>
                         {sortedFiles.map(file => (
                           <SelectItem key={`properties-${file.id}`} value={file.id.toString()}>
-                            {file.fileName}
+                            {file.filename}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -334,14 +334,14 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 mr-2 text-blue-500" />
                         <div>
-                          <p className="font-medium">{file.fileName}</p>
+                          <p className="font-medium">{file.filename}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(file.createdAt).toLocaleString()}
+                            {new Date(file.uploadedAt).toLocaleString()}
                           </p>
                         </div>
                       </div>
-                      <Badge className={statusColors[file.status] || 'bg-gray-500'}>
-                        {file.status}
+                      <Badge className="bg-green-500">
+                        Uploaded
                       </Badge>
                     </div>
                   ))}

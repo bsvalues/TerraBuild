@@ -15,13 +15,13 @@ import {
 } from 'lucide-react';
 
 interface FileTypeIconProps {
-  fileName: string;
+  filename: string;
   type: 'file' | 'directory';
   className?: string;
 }
 
 const FileTypeIcon: React.FC<FileTypeIconProps> = ({ 
-  fileName, 
+  filename, 
   type, 
   className = "h-4 w-4" 
 }) => {
@@ -30,7 +30,7 @@ const FileTypeIcon: React.FC<FileTypeIconProps> = ({
   }
   
   // Extract file extension
-  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
   
   // Map extensions to icons
   switch (extension) {
