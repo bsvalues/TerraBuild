@@ -28,7 +28,7 @@ const upload = multer({
 
 // Schema for import metadata
 const importMetadataSchema = z.object({
-  fileName: z.string(),
+  filename: z.string(),
   fileType: z.string(),
   fileSize: z.number(),
   uploadedBy: z.number(),
@@ -73,7 +73,7 @@ export function createCostMatrixImportRouter(storageImpl: IStorage): Router {
       
       // Create an import record
       const importRecord = await storageImpl.createImportRecord({
-        fileName: req.file.originalname,
+        filename: req.file.originalname,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         uploadedBy: req.body.userId ? parseInt(req.body.userId) : 1,
@@ -252,7 +252,7 @@ export function createCostMatrixImportRouter(storageImpl: IStorage): Router {
       
       // Create an import record
       const importRecord = await storageImpl.createImportRecord({
-        fileName: fileName || 'test.xlsx',
+        filename: fileName || 'test.xlsx',
         fileType: fileType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         fileSize: fileSize || 1000,
         uploadedBy: uploadedBy || 1,
