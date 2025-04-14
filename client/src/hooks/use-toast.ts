@@ -1,4 +1,4 @@
-import { useToast as useToastOriginal } from "@/components/ui/toast";
+// Re-export the useToast hook from the tsx implementation
+import { useToast, toast } from "./use-toast.tsx";
 
-// Re-export the useToast hook to maintain consistent imports
-export const useToast = useToastOriginal;
+export { useToast, toast };

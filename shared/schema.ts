@@ -36,13 +36,14 @@ export type LoginUser = z.infer<typeof loginUserSchema>;
 // Activities for tracking user actions
 export const activities = pgTable("activities", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => users.id),
-  type: varchar("type", { length: 100 }).notNull(),
+  action: text("action").notNull(),
+  icon: varchar("icon", { length: 50 }),
+  iconColor: varchar("icon_color", { length: 50 }),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
   details: json("details"),
-  created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, created_at: true });
+export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, timestamp: true });
 
 // Environment settings
 export const environments = pgTable("environments", {
@@ -74,6 +75,8 @@ export const settings = pgTable("settings", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const insertSettingSchema = createInsertSchema(settings).omit({ id: true, created_at: true, updated_at: true });
+
 // Repository status for version control
 export const repositoryStatus = pgTable("repository_status", {
   id: serial("id").primaryKey(),
@@ -95,6 +98,7 @@ export type InsertApiEndpoint = typeof apiEndpoints.$inferInsert;
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = typeof settings.$inferInsert;
+export type InsertSettingType = z.infer<typeof insertSettingSchema>;
 
 export type RepositoryStatus = typeof repositoryStatus.$inferSelect;
 export type InsertRepositoryStatus = typeof repositoryStatus.$inferInsert;
@@ -167,11 +171,6 @@ export const insertConnectionHistorySchema = createInsertSchema(connectionHistor
 
 export type FTPConnection = typeof ftpConnections.$inferSelect;
 export type InsertFTPConnection = z.infer<typeof insertFTPConnectionSchema>;
-
-export type ConnectionHistory = typeof connectionHistory.$inferSelect;
-export type InsertConnectionHistory = z.infer<typeof insertConnectionHistorySchema>;
-
-export const insertConnectionHistorySchema = createInsertSchema(connectionHistory).omit({ id: true, timestamp: true });
 
 export type ConnectionHistory = typeof connectionHistory.$inferSelect;
 export type InsertConnectionHistory = z.infer<typeof insertConnectionHistorySchema>;
