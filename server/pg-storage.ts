@@ -2532,7 +2532,7 @@ export class PostgresStorage implements IStorage {
   
   // Import Records
   async createImportRecord(data: { 
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -2543,7 +2543,7 @@ export class PostgresStorage implements IStorage {
     errorCount?: number;
   }): Promise<{ 
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -2564,7 +2564,7 @@ export class PostgresStorage implements IStorage {
       
       const now = new Date();
       const result = await db.insert(importRecords).values({
-        fileName: data.fileName,
+        filename: data.filename,
         fileType: data.fileType,
         fileSize: data.fileSize,
         uploadedBy: data.uploadedBy,
@@ -2586,7 +2586,7 @@ export class PostgresStorage implements IStorage {
   
   async getImportRecord(id: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -2615,7 +2615,7 @@ export class PostgresStorage implements IStorage {
   
   async getImportRecords(limit?: number, offset?: number): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;
@@ -2660,7 +2660,7 @@ export class PostgresStorage implements IStorage {
     errorCount: number;
   }>): Promise<{
     id: number;
-    fileName: string;
+    filename: string;
     fileType: string;
     fileSize: number;
     uploadedBy: number;

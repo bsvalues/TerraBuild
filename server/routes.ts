@@ -1763,7 +1763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if file exists on disk
       const fs = require('fs');
       const path = require('path');
-      const filePath = path.join(process.cwd(), 'uploads', `${fileUpload.id}-${fileUpload.fileName}`);
+      const filePath = path.join(process.cwd(), 'uploads', `${fileUpload.id}-${fileUpload.filename}`);
       
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: "File not found on disk" });
@@ -1775,7 +1775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!fileUpload.fileType.includes('spreadsheet') && 
           !fileUpload.fileType.includes('excel') && 
           !fileUpload.fileType.includes('csv') &&
-          !fileUpload.fileName.endsWith('.csv')) {
+          !fileUpload.filename.endsWith('.csv')) {
         return res.status(400).json({ 
           message: "Invalid file type. Excel or CSV file required.",
           fileType: fileUpload.fileType
@@ -2437,7 +2437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Create file upload record
           const fileUpload = await storage.createFileUpload({
-            fileName: file.originalname,
+            filename: file.originalname,
             fileType: file.mimetype,
             fileSize: file.size,
             uploadedBy: req.user?.id || 1, // Use admin user (ID 1) if no user is logged in
