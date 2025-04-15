@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redirect } from 'wouter';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {

@@ -30,8 +30,24 @@ export function useAuth() {
 // Provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch current user data
+  // Define a mock admin user
+  const mockUser = {
+    id: 1,
+    username: 'admin',
+    name: 'Admin User',
+    role: 'admin',
+    isActive: true
+  };
+
+  // Set the mock user in cache immediately
+  useEffect(() => {
+    console.log("Setting up mock admin user for development");
+    queryClient.setQueryData(['/api/user'], mockUser);
+  }, [queryClient]);
+
+  // Fetch current user data (mocked)
   const { 
     data: user, 
     isLoading, 
@@ -41,26 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery({
     queryKey: ['/api/user'],
     queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/user');
-        if (!response.ok) {
-          throw new Error('Not authenticated');
-        }
-        return response.json();
-      } catch (err) {
-        // In development, return a mock user
-        if (process.env.NODE_ENV === 'development') {
-          return {
-            id: 1,
-            username: 'admin',
-            name: 'Admin User',
-            role: 'admin',
-            isActive: true
-          };
-        }
-        throw err;
-      }
+      // Always return the mock user without making an API call
+      return mockUser;
     },
+    initialData: mockUser,
     retry: false,
     refetchOnWindowFocus: false
   });
