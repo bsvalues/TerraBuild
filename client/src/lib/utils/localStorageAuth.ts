@@ -1,278 +1,343 @@
 /**
- * Local Storage Authentication Manager
+ * Local Storage Authentication
  * 
- * This module provides a fallback authentication system using localStorage
- * when Supabase connection is not available. It implements similar methods
- * to the Supabase auth API to make switching between them seamless.
+ * This module provides authentication services when Supabase auth is unavailable.
+ * It stores and manages user sessions in local storage for offline access.
  */
 
-import { User, Session } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
-// Keys for localStorage
-const AUTH_USER_KEY = 'bcbs-local-auth-user';
-const AUTH_SESSION_KEY = 'bcbs-local-auth-session';
-const AUTH_EXPIRES_KEY = 'bcbs-local-auth-expires';
+// Storage key for local auth
+const LOCAL_AUTH_KEY = 'bcbs_local_auth';
 
-// Event for auth state changes
-export const LOCAL_AUTH_CHANGE_EVENT = 'bcbs-local-auth-change';
+// Event names for auth changes
+export type AuthChangeEvent = 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'TOKEN_REFRESHED';
 
-// Interface matching Supabase auth response
-export interface LocalAuthResponse<T> {
-  data: T;
-  error: Error | null;
-}
-
-// Create a user session similar to Supabase
+// Local session data for offline authentication
 export interface LocalSession {
   access_token: string;
   refresh_token: string;
+  created_at: number;
   expires_at: number;
   user: LocalUser;
 }
 
-// User structure similar to Supabase
+// Local user data structure
 export interface LocalUser {
   id: string;
-  email?: string;
-  user_metadata: {
-    full_name?: string;
-    avatar_url?: string;
-    name?: string;
-    role?: string;
-  };
+  email: string;
+  role: string;
   app_metadata: {
     role?: string;
     permissions?: string[];
   };
+  user_metadata: Record<string, any>;
+  aud: string;
   created_at: string;
 }
 
-/**
- * Convert a Supabase User to a LocalUser
- */
-const convertToLocalUser = (user: User): LocalUser => {
-  return {
-    id: user.id,
-    email: user.email,
-    user_metadata: user.user_metadata || {},
-    app_metadata: user.app_metadata || {},
-    created_at: user.created_at || new Date().toISOString()
-  };
-};
+// Subscription object for auth state changes
+export interface Subscription {
+  unsubscribe: () => void;
+}
+
+// Event listener
+interface EventListener {
+  event: AuthChangeEvent;
+  callback: (event: AuthChangeEvent, session: LocalSession | null) => void;
+}
 
 /**
- * Convert a Supabase Session to a LocalSession
+ * Local Storage Auth Service
  */
-const convertToLocalSession = (session: Session): LocalSession => {
-  return {
-    access_token: session.access_token,
-    refresh_token: session.refresh_token || '',
-    expires_at: new Date(session.expires_at || '').getTime(),
-    user: convertToLocalUser(session.user)
-  };
-};
-
-/**
- * Dispatch an auth change event
- */
-const dispatchAuthChangeEvent = (eventType: 'SIGNED_IN' | 'SIGNED_OUT' | 'TOKEN_REFRESHED', session: LocalSession | null) => {
-  const event = new CustomEvent(LOCAL_AUTH_CHANGE_EVENT, {
-    detail: { event: eventType, session }
-  });
-  window.dispatchEvent(event);
-};
-
-/**
- * Get the current local session
- */
-export const getLocalSession = (): LocalAuthResponse<{ session: LocalSession | null }> => {
-  try {
-    const sessionJson = localStorage.getItem(AUTH_SESSION_KEY);
-    const expiresAt = localStorage.getItem(AUTH_EXPIRES_KEY);
-    
-    if (!sessionJson || !expiresAt) {
-      return { data: { session: null }, error: null };
-    }
-    
-    const session = JSON.parse(sessionJson) as LocalSession;
-    const expiresAtTime = parseInt(expiresAt, 10);
-    
-    // Check if session is expired
-    if (expiresAtTime < Date.now()) {
-      // Clear expired session
-      localStorage.removeItem(AUTH_SESSION_KEY);
-      localStorage.removeItem(AUTH_USER_KEY);
-      localStorage.removeItem(AUTH_EXPIRES_KEY);
-      return { data: { session: null }, error: null };
-    }
-    
-    return { data: { session }, error: null };
-  } catch (error) {
-    return { 
-      data: { session: null }, 
-      error: error instanceof Error 
-        ? error 
-        : new Error('Failed to get local session')
-    };
-  }
-};
-
-/**
- * Sign in with email and password (local storage version)
- */
-export const signInWithPassword = (
-  email: string, 
-  password: string
-): LocalAuthResponse<{ user: LocalUser; session: LocalSession }> => {
-  try {
-    // Generate a mock user and session
-    const user: LocalUser = {
-      id: `local-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      email,
-      user_metadata: {
-        full_name: email.split('@')[0], // Extract name from email
-      },
-      app_metadata: {
-        role: 'user',
-      },
-      created_at: new Date().toISOString()
-    };
-    
-    // Create a session that expires in 24 hours
-    const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
-    const session: LocalSession = {
-      access_token: `local-token-${Math.random().toString(36).substring(2, 15)}`,
-      refresh_token: `local-refresh-${Math.random().toString(36).substring(2, 15)}`,
-      expires_at: expiresAt,
-      user
-    };
-    
-    // Store in localStorage
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
-    localStorage.setItem(AUTH_EXPIRES_KEY, expiresAt.toString());
-    
-    // Emit auth change event
-    dispatchAuthChangeEvent('SIGNED_IN', session);
-    
-    return { data: { user, session }, error: null };
-  } catch (error) {
-    return { 
-      data: { user: null as any, session: null as any }, 
-      error: error instanceof Error 
-        ? error 
-        : new Error('Failed to sign in locally') 
-    };
-  }
-};
-
-/**
- * Sign out from the local session
- */
-export const signOut = (): LocalAuthResponse<{}> => {
-  try {
-    // Clear localStorage
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-    localStorage.removeItem(AUTH_EXPIRES_KEY);
-    
-    // Emit auth change event
-    dispatchAuthChangeEvent('SIGNED_OUT', null);
-    
-    return { data: {}, error: null };
-  } catch (error) {
-    return { 
-      data: {}, 
-      error: error instanceof Error 
-        ? error 
-        : new Error('Failed to sign out locally') 
-    };
-  }
-};
-
-/**
- * Get the current user
- */
-export const getUser = (): LocalAuthResponse<{ user: LocalUser | null }> => {
-  try {
-    const userJson = localStorage.getItem(AUTH_USER_KEY);
-    
-    if (!userJson) {
-      return { data: { user: null }, error: null };
-    }
-    
-    const user = JSON.parse(userJson) as LocalUser;
-    return { data: { user }, error: null };
-  } catch (error) {
-    return { 
-      data: { user: null }, 
-      error: error instanceof Error 
-        ? error 
-        : new Error('Failed to get local user') 
-    };
-  }
-};
-
-/**
- * Set up a listener for auth state changes
- */
-export const onAuthStateChange = (
-  callback: (event: 'SIGNED_IN' | 'SIGNED_OUT' | 'TOKEN_REFRESHED', session: LocalSession | null) => void
-) => {
-  const listener = (event: Event) => {
-    const customEvent = event as CustomEvent;
-    callback(customEvent.detail.event, customEvent.detail.session);
-  };
+class LocalStorageAuth {
+  private listeners: EventListener[] = [];
   
-  window.addEventListener(LOCAL_AUTH_CHANGE_EVENT, listener);
+  /**
+   * Get current session from local storage
+   */
+  async getSession(): Promise<{ 
+    data: { session: LocalSession | null }, 
+    error: Error | null 
+  }> {
+    try {
+      const sessionData = localStorage.getItem(LOCAL_AUTH_KEY);
+      
+      if (!sessionData) {
+        return { data: { session: null }, error: null };
+      }
+      
+      const session = JSON.parse(sessionData) as LocalSession;
+      
+      // Check if session has expired
+      if (session.expires_at < Date.now()) {
+        // Session expired, clear it
+        await this.signOut();
+        return { 
+          data: { session: null }, 
+          error: new Error('Session expired')
+        };
+      }
+      
+      return { data: { session }, error: null };
+    } catch (error) {
+      console.error('Error getting local session:', error);
+      return { 
+        data: { session: null }, 
+        error: error instanceof Error ? error : new Error('Unknown error getting session')
+      };
+    }
+  }
   
-  // Return a function to unsubscribe
-  return {
-    data: {
-      subscription: {
-        unsubscribe: () => {
-          window.removeEventListener(LOCAL_AUTH_CHANGE_EVENT, listener);
+  /**
+   * Get current user from local storage
+   */
+  async getUser(): Promise<{
+    data: { user: LocalUser | null },
+    error: Error | null
+  }> {
+    try {
+      const { data, error } = await this.getSession();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return {
+        data: { user: data.session?.user || null },
+        error: null
+      };
+    } catch (error) {
+      console.error('Error getting local user:', error);
+      return {
+        data: { user: null },
+        error: error instanceof Error ? error : new Error('Unknown error getting user')
+      };
+    }
+  }
+  
+  /**
+   * Sign in with email and password (mock)
+   * 
+   * This is a mock implementation that simulates authentication
+   * for use when Supabase is unavailable.
+   */
+  async signInWithPassword(credentials: { 
+    email: string; 
+    password: string;
+  }): Promise<{
+    data: { session: LocalSession | null; user: LocalUser | null },
+    error: Error | null
+  }> {
+    try {
+      // In a real implementation, we would validate credentials against
+      // some locally cached data. For now, we'll accept any credentials
+      // and assign a default role.
+      
+      // Create a session expiry (24 hours from now)
+      const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
+      
+      // Create a user
+      const user: LocalUser = {
+        id: uuidv4(),
+        email: credentials.email,
+        role: 'authenticated',
+        app_metadata: {
+          role: 'authenticated',
+          permissions: ['read:data']
+        },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      };
+      
+      // Create a session
+      const session: LocalSession = {
+        access_token: uuidv4(),
+        refresh_token: uuidv4(),
+        created_at: Date.now(),
+        expires_at: expiresAt,
+        user
+      };
+      
+      // Store in local storage
+      localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(session));
+      
+      // Emit auth change event
+      this.notifyAllListeners('SIGNED_IN', session);
+      
+      return {
+        data: { session, user },
+        error: null
+      };
+    } catch (error) {
+      console.error('Error signing in locally:', error);
+      return {
+        data: { session: null, user: null },
+        error: error instanceof Error ? error : new Error('Unknown error signing in')
+      };
+    }
+  }
+  
+  /**
+   * Sign out
+   */
+  async signOut(): Promise<{ error: Error | null }> {
+    try {
+      // Remove from local storage
+      localStorage.removeItem(LOCAL_AUTH_KEY);
+      
+      // Emit auth change event
+      this.notifyAllListeners('SIGNED_OUT', null);
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error signing out locally:', error);
+      return {
+        error: error instanceof Error ? error : new Error('Unknown error signing out')
+      };
+    }
+  }
+  
+  /**
+   * Update user data
+   */
+  async updateUser(attributes: { 
+    email?: string;
+    password?: string;
+    data?: Record<string, any>;
+  }): Promise<{
+    data: { user: LocalUser | null },
+    error: Error | null
+  }> {
+    try {
+      // Get current session
+      const { data: sessionData, error: sessionError } = await this.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+      
+      if (!sessionData.session) {
+        return {
+          data: { user: null },
+          error: new Error('No active session')
+        };
+      }
+      
+      // Update user data
+      const updatedUser: LocalUser = {
+        ...sessionData.session.user,
+        email: attributes.email || sessionData.session.user.email,
+        user_metadata: {
+          ...sessionData.session.user.user_metadata,
+          ...(attributes.data || {})
+        }
+      };
+      
+      // Update session
+      const updatedSession: LocalSession = {
+        ...sessionData.session,
+        user: updatedUser
+      };
+      
+      // Store in local storage
+      localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updatedSession));
+      
+      // Emit auth change event
+      this.notifyAllListeners('USER_UPDATED', updatedSession);
+      
+      return {
+        data: { user: updatedUser },
+        error: null
+      };
+    } catch (error) {
+      console.error('Error updating user locally:', error);
+      return {
+        data: { user: null },
+        error: error instanceof Error ? error : new Error('Unknown error updating user')
+      };
+    }
+  }
+  
+  /**
+   * Import Supabase session for offline use
+   */
+  importSupabaseSession(session: any): void {
+    try {
+      if (!session || !session.user) {
+        return;
+      }
+      
+      // Convert Supabase session to local format
+      const localSession: LocalSession = {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token || uuidv4(),
+        created_at: new Date(session.created_at || Date.now()).getTime(),
+        expires_at: new Date(session.expires_at || Date.now() + (24 * 60 * 60 * 1000)).getTime(),
+        user: {
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.role || 'authenticated',
+          app_metadata: session.user.app_metadata || { role: 'authenticated' },
+          user_metadata: session.user.user_metadata || {},
+          aud: session.user.aud || 'authenticated',
+          created_at: session.user.created_at || new Date().toISOString()
+        }
+      };
+      
+      // Store in local storage
+      localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(localSession));
+      
+      // No need to emit event as this is just a backup
+    } catch (error) {
+      console.error('Error importing Supabase session:', error);
+    }
+  }
+  
+  /**
+   * Listen for auth state changes
+   */
+  onAuthStateChange(
+    callback: (event: AuthChangeEvent, session: LocalSession | null) => void
+  ): { data: { subscription: Subscription } } {
+    // Create a unique event listener for any event
+    const listener: EventListener = {
+      event: 'SIGNED_IN', // this is a placeholder, we'll listen to all events
+      callback
+    };
+    
+    // Add to listeners
+    this.listeners.push(listener);
+    
+    // Return subscription object
+    return {
+      data: {
+        subscription: {
+          unsubscribe: () => {
+            this.listeners = this.listeners.filter(l => l !== listener);
+          }
         }
       }
-    }
-  };
-};
-
-/**
- * Import a Supabase session into local storage
- */
-export const importSupabaseSession = (supabaseSession: Session): LocalAuthResponse<{}> => {
-  try {
-    if (!supabaseSession || !supabaseSession.user) {
-      return { data: {}, error: new Error('Invalid Supabase session') };
-    }
-    
-    const localUser = convertToLocalUser(supabaseSession.user);
-    const localSession = convertToLocalSession(supabaseSession);
-    
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(localUser));
-    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(localSession));
-    localStorage.setItem(AUTH_EXPIRES_KEY, localSession.expires_at.toString());
-    
-    return { data: {}, error: null };
-  } catch (error) {
-    return { 
-      data: {}, 
-      error: error instanceof Error 
-        ? error 
-        : new Error('Failed to import Supabase session') 
     };
   }
-};
+  
+  /**
+   * Notify listeners of auth state changes
+   */
+  private notifyAllListeners(event: AuthChangeEvent, session: LocalSession | null): void {
+    // Notify all listeners
+    this.listeners.forEach(listener => {
+      try {
+        listener.callback(event, session);
+      } catch (error) {
+        console.error('Error in auth state change listener:', error);
+      }
+    });
+  }
+}
 
-// LocalAuth API wrapper for easier integration
-export const localAuth = {
-  getSession: getLocalSession,
-  getUser,
-  signInWithPassword,
-  signOut,
-  onAuthStateChange,
-  importSupabaseSession
-};
+// Create and export singleton instance
+export const localAuth = new LocalStorageAuth();
 
 export default localAuth;

@@ -102,7 +102,7 @@ const SupabaseTestPage: React.FC = () => {
     let title: string = '';
     let description: string = '';
     let icon: React.ReactNode = null;
-    let variant: 'default' | 'destructive' | 'warning' = 'default';
+    let variant: 'default' | 'destructive' | 'warning' | string = 'default';
     
     switch (connectionStatus) {
       case 'connected':
@@ -144,7 +144,7 @@ const SupabaseTestPage: React.FC = () => {
     }
     
     return (
-      <Alert variant={variant}>
+      <Alert className={variant === 'warning' ? 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800' : undefined}>
         <div className="flex items-center">
           {icon}
           <div>
