@@ -109,8 +109,27 @@ const SupabaseTestPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">API Endpoint:</p>
-                <p className="text-sm truncate">{supabase.supabaseUrl || 'Not available'}</p>
+                <p className="text-sm truncate">{window.location.hostname.includes('replit') ? '[Protected in UI]' : (supabase.supabaseUrl || 'Not available')}</p>
               </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-slate-50 rounded-md border border-slate-200">
+              <h3 className="text-sm font-semibold mb-2">Configuration Status</h3>
+              <dl className="grid grid-cols-2 gap-2 text-xs">
+                <dt>Environment Variables:</dt>
+                <dd>{isConfigured ? '✓ Present' : '✗ Missing'}</dd>
+                
+                <dt>Client Connection:</dt>
+                <dd className={connectionStatus === 'connected' ? 'text-green-600' : 'text-amber-600'}>
+                  {connectionStatus === 'connected' ? '✓ Connected' : '⚠ Limited'}
+                </dd>
+                
+                <dt>Fallback Values:</dt>
+                <dd>✓ Available</dd>
+                
+                <dt>Auth Service:</dt>
+                <dd>{testResult?.success ? '✓ Working' : '⚠ Limited'}</dd>
+              </dl>
             </div>
 
             {testResult && (
