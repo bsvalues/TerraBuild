@@ -86,7 +86,7 @@ export default function LandingPage() {
       {/* Features section */}
       <section className="py-16 bg-[#f8f9fa]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#243E4D]">Powerful Features</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#243E4D]">Essential Assessment Tools</h2>
           <p className="text-center text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
             Our comprehensive building cost system provides a suite of tools to help you accurately estimate and analyze construction costs.
           </p>
@@ -104,6 +104,15 @@ export default function LandingPage() {
                   Accurately calculate building costs based on structure type, size, and region.
                 </p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#29B7D3] px-0 hover:bg-transparent hover:text-[#29B7D3]/80"
+                  onClick={() => navigate('/calculator')}
+                >
+                  Learn more
+                </Button>
+              </CardFooter>
             </Card>
             
             <Card className="border-t-4 border-t-[#47AD55]">
@@ -141,6 +150,15 @@ export default function LandingPage() {
                   Compare construction costs across different regions in Benton County.
                 </p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#7C5295] px-0 hover:bg-transparent hover:text-[#7C5295]/80"
+                  onClick={() => navigate('/regional-cost-comparison')}
+                >
+                  Learn more
+                </Button>
+              </CardFooter>
             </Card>
             
             <Card className="border-t-4 border-t-[#EA7317]">
@@ -158,6 +176,15 @@ export default function LandingPage() {
                   Easily import and export cost data in various formats, including Excel and PDF.
                 </p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#EA7317] px-0 hover:bg-transparent hover:text-[#EA7317]/80"
+                  onClick={() => navigate('/data-import')}
+                >
+                  Learn more
+                </Button>
+              </CardFooter>
             </Card>
             
             <Card className="border-t-4 border-t-[#5C7AEA]">
@@ -172,6 +199,15 @@ export default function LandingPage() {
                   Model different building scenarios and see how they affect overall costs.
                 </p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#5C7AEA] px-0 hover:bg-transparent hover:text-[#5C7AEA]/80"
+                  onClick={() => navigate('/what-if-scenarios')}
+                >
+                  Learn more
+                </Button>
+              </CardFooter>
             </Card>
             
             <Card className="border-t-4 border-t-[#E63946]">
@@ -186,6 +222,15 @@ export default function LandingPage() {
                   Maintain and update cost matrices for different building types and regions.
                 </p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="ghost" 
+                  className="text-[#E63946] px-0 hover:bg-transparent hover:text-[#E63946]/80"
+                  onClick={() => navigate('/data-import')}
+                >
+                  Learn more
+                </Button>
+              </CardFooter>
             </Card>
           </div>
         </div>
