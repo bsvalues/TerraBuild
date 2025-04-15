@@ -243,7 +243,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db.update(syncSchedules)
         .set({
           ...schedule,
-          updated_at: new Date(),
+          updatedAt: new Date(),
           ...(nextRun && { nextRun })
         })
         .where(eq(syncSchedules.id, id))
@@ -600,16 +600,16 @@ export class PostgresStorage implements IStorage {
   async createFTPConnection(connection: InsertFTPConnection): Promise<FTPConnection> {
     try {
       // If this is marked as default, unmark any existing defaults
-      if (connection.is_default) {
+      if (connection.isDefault) {
         await this.db.update(ftpConnections)
-          .set({ is_default: false })
-          .where(eq(ftpConnections.is_default, true));
+          .set({ isDefault: false })
+          .where(eq(ftpConnections.isDefault, true));
       }
       
       const result = await this.db.insert(ftpConnections).values({
         ...connection,
-        created_at: new Date(),
-        updated_at: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         lastConnected: null,
         status: 'new'
       }).returning();
@@ -625,11 +625,11 @@ export class PostgresStorage implements IStorage {
   async updateFTPConnection(id: number, connection: Partial<InsertFTPConnection>): Promise<FTPConnection | undefined> {
     try {
       // If this connection is being set as default, unmark any existing defaults
-      if (connection.is_default) {
+      if (connection.isDefault) {
         await this.db.update(ftpConnections)
-          .set({ is_default: false })
+          .set({ isDefault: false })
           .where(and(
-            eq(ftpConnections.is_default, true),
+            eq(ftpConnections.isDefault, true),
             ne(ftpConnections.id, id)
           ));
       }
@@ -637,7 +637,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db.update(ftpConnections)
         .set({
           ...connection,
-          updated_at: new Date()
+          updatedAt: new Date()
         })
         .where(eq(ftpConnections.id, id))
         .returning();
@@ -653,7 +653,7 @@ export class PostgresStorage implements IStorage {
     try {
       const updates: any = {
         status,
-        updated_at: new Date()
+        updatedAt: new Date()
       };
       
       if (lastConnected) {
@@ -676,14 +676,14 @@ export class PostgresStorage implements IStorage {
     try {
       // Unset any existing default connections
       await this.db.update(ftpConnections)
-        .set({ is_default: false })
-        .where(eq(ftpConnections.is_default, true));
+        .set({ isDefault: false })
+        .where(eq(ftpConnections.isDefault, true));
       
       // Set this connection as default
       const result = await this.db.update(ftpConnections)
         .set({
-          is_default: true,
-          updated_at: new Date()
+          isDefault: true,
+          updatedAt: new Date()
         })
         .where(eq(ftpConnections.id, id))
         .returning();
@@ -763,7 +763,7 @@ export class PostgresStorage implements IStorage {
       });
       
       // If this was the default connection, set a new default if one exists
-      if (connection.is_default) {
+      if (connection.isDefault) {
         const connections = await this.getAllFTPConnections();
         if (connections.length > 0) {
           await this.setDefaultFTPConnection(connections[0].id);
@@ -1541,7 +1541,7 @@ export class PostgresStorage implements IStorage {
   async createCostFactorPreset(preset: InsertCostFactorPreset): Promise<CostFactorPreset> {
     const result = await db.insert(costFactorPresets).values({
       ...preset,
-      updated_at: new Date()
+      updatedAt: new Date()
     }).returning();
     return result[0];
   }
@@ -1550,7 +1550,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(costFactorPresets)
       .set({
         ...preset,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(costFactorPresets.id, id))
       .returning();
@@ -1722,7 +1722,7 @@ export class PostgresStorage implements IStorage {
   async createWhatIfScenario(scenario: InsertWhatIfScenario): Promise<WhatIfScenario> {
     const result = await db.insert(whatIfScenarios).values({
       ...scenario,
-      updated_at: new Date()
+      updatedAt: new Date()
     }).returning();
     return result[0];
   }
@@ -1731,7 +1731,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(whatIfScenarios)
       .set({
         ...scenario,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(whatIfScenarios.id, id))
       .returning();
@@ -1752,7 +1752,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(whatIfScenarios)
       .set({ 
         isSaved: true,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(whatIfScenarios.id, id))
       .returning();
@@ -1878,8 +1878,8 @@ export class PostgresStorage implements IStorage {
   async createSharedProject(project: InsertSharedProject): Promise<SharedProject> {
     const result = await db.insert(sharedProjects).values({
       ...project,
-      created_at: new Date(),
-      updated_at: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date()
     }).returning();
     return result[0];
   }
@@ -1888,7 +1888,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(sharedProjects)
       .set({
         ...project,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(sharedProjects.id, id))
       .returning();
@@ -2019,8 +2019,8 @@ export class PostgresStorage implements IStorage {
     // If it's undefined or null, explicitly set it to SQL NULL
     const commentData = {
       ...comment,
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       isEdited: false
     };
     
@@ -2036,7 +2036,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(comments)
       .set({
         ...data,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(comments.id, id))
       .returning();
