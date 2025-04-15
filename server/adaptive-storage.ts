@@ -600,7 +600,112 @@ export class AdaptiveStorage implements IStorage {
     }, 'createActivity');
   }
 
-  // Add more methods from the IStorage interface as needed...
+  // Sync Schedule methods
+  async getAllSyncSchedules(): Promise<any[]> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getAllSyncSchedules()
+        : await this.postgresStorage.getAllSyncSchedules();
+    }, 'getAllSyncSchedules');
+  }
+
+  async getSyncSchedulesByConnection(connectionId: number): Promise<any[]> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getSyncSchedulesByConnection(connectionId)
+        : await this.postgresStorage.getSyncSchedulesByConnection(connectionId);
+    }, 'getSyncSchedulesByConnection');
+  }
+
+  async getSyncScheduleByName(connectionId: number, name: string): Promise<any | undefined> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getSyncScheduleByName(connectionId, name)
+        : await this.postgresStorage.getSyncScheduleByName(connectionId, name);
+    }, 'getSyncScheduleByName');
+  }
+
+  async getEnabledSyncSchedules(): Promise<any[]> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getEnabledSyncSchedules()
+        : await this.postgresStorage.getEnabledSyncSchedules();
+    }, 'getEnabledSyncSchedules');
+  }
+
+  async getSyncSchedule(id: number): Promise<any | undefined> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getSyncSchedule(id)
+        : await this.postgresStorage.getSyncSchedule(id);
+    }, 'getSyncSchedule');
+  }
+
+  async createSyncSchedule(schedule: any): Promise<any> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.createSyncSchedule(schedule)
+        : await this.postgresStorage.createSyncSchedule(schedule);
+    }, 'createSyncSchedule');
+  }
+
+  async updateSyncSchedule(id: number, schedule: any): Promise<any | undefined> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.updateSyncSchedule(id, schedule)
+        : await this.postgresStorage.updateSyncSchedule(id, schedule);
+    }, 'updateSyncSchedule');
+  }
+
+  async deleteSyncSchedule(id: number): Promise<void> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.deleteSyncSchedule(id)
+        : await this.postgresStorage.deleteSyncSchedule(id);
+    }, 'deleteSyncSchedule');
+  }
+
+  // Sync History methods
+  async getSyncHistoryBySchedule(scheduleId: number, limit?: number, offset?: number): Promise<any[]> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getSyncHistoryBySchedule(scheduleId, limit, offset)
+        : await this.postgresStorage.getSyncHistoryBySchedule(scheduleId, limit, offset);
+    }, 'getSyncHistoryBySchedule');
+  }
+
+  async getSyncHistoryByConnection(connectionId: number, limit?: number, offset?: number): Promise<any[]> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getSyncHistoryByConnection(connectionId, limit, offset)
+        : await this.postgresStorage.getSyncHistoryByConnection(connectionId, limit, offset);
+    }, 'getSyncHistoryByConnection');
+  }
+
+  async createSyncHistory(history: any): Promise<any> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.createSyncHistory(history)
+        : await this.postgresStorage.createSyncHistory(history);
+    }, 'createSyncHistory');
+  }
+
+  async updateSyncHistory(id: number, history: any): Promise<any | undefined> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.updateSyncHistory(id, history)
+        : await this.postgresStorage.updateSyncHistory(id, history);
+    }, 'updateSyncHistory');
+  }
+
+  // FTP Connection methods
+  async getFTPConnection(id: number): Promise<any | undefined> {
+    return this.executeWithFailover(async (provider) => {
+      return provider === 'supabase' 
+        ? await this.supabaseStorage!.getFTPConnection(id)
+        : await this.postgresStorage.getFTPConnection(id);
+    }, 'getFTPConnection');
+  }
 }
 
 // Create a singleton instance for the app to use
