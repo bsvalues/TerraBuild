@@ -45,7 +45,7 @@ enum WizardStep {
 const STEP_GUIDANCE = {
   [WizardStep.WELCOME]: {
     title: 'Welcome to the Cost Estimation Wizard',
-    icon: <Info className="h-5 w-5 text-primary" />,
+    icon: <InfoIcon className="h-5 w-5 text-primary" />,
     description: 'This wizard will guide you through creating a detailed building cost estimate step by step.',
     tips: [
       'Take your time to enter accurate information for the best results',

@@ -58,6 +58,7 @@ import {
 } from 'lucide-react';
 import { useEnhancedSupabase } from '@/components/supabase/EnhancedSupabaseProvider';
 import { localDB } from '@/lib/utils/localDatabase';
+import StepGuidancePanel from './StepGuidancePanel';
 
 // Building types with explanations
 const BUILDING_TYPES = [
@@ -1642,76 +1643,86 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
   );
   
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <BarChart className="h-6 w-6 text-primary" />
-            <CardTitle>Building Cost Estimation Wizard</CardTitle>
-          </div>
-        </div>
-        <CardDescription>
-          Step {currentStep + 1} of {Object.keys(WizardStep).length / 2}
-        </CardDescription>
-        <Progress value={calculateProgress()} className="h-2 mt-2" />
-      </CardHeader>
-      
-      <CardContent>
-        {renderStep()}
-      </CardContent>
-      
-      <CardFooter className="flex justify-between border-t pt-6">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === WizardStep.WELCOME}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex space-x-1">
-                {Array.from({ length: Object.keys(WizardStep).length / 2 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      index === currentStep 
-                        ? 'bg-primary' 
-                        : index < currentStep
-                          ? 'bg-primary/40'
-                          : 'bg-muted'
-                    }`}
-                  />
-                ))}
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main wizard card - takes up 2/3 of the width on larger screens */}
+        <Card className="w-full lg:col-span-2">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <BarChart className="h-6 w-6 text-primary" />
+                <CardTitle>Building Cost Estimation Wizard</CardTitle>
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
+            </div>
+            <CardDescription>
               Step {currentStep + 1} of {Object.keys(WizardStep).length / 2}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </CardDescription>
+            <Progress value={calculateProgress()} className="h-2 mt-2" />
+          </CardHeader>
+          
+          <CardContent>
+            {renderStep()}
+          </CardContent>
+      
+          <CardFooter className="flex justify-between border-t pt-6">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === WizardStep.WELCOME}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: Object.keys(WizardStep).length / 2 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className={`h-2 w-2 rounded-full transition-colors ${
+                          index === currentStep 
+                            ? 'bg-primary' 
+                            : index < currentStep
+                              ? 'bg-primary/40'
+                              : 'bg-muted'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Step {currentStep + 1} of {Object.keys(WizardStep).length / 2}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <Button
+              onClick={nextStep}
+              disabled={currentStep === WizardStep.SAVE}
+            >
+              {currentStep === WizardStep.RESULTS ? (
+                <>
+                  Save Estimate
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
         
-        <Button
-          onClick={nextStep}
-          disabled={currentStep === WizardStep.SAVE}
-        >
-          {currentStep === WizardStep.RESULTS ? (
-            <>
-              Save Estimate
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </>
-          ) : (
-            <>
-              Next
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+        {/* Step guidance panel - takes up 1/3 of the width on larger screens */}
+        <div className="lg:block">
+          <StepGuidancePanel currentStep={currentStep} />
+        </div>
+      </div>
+    </div>
   );
 };
 
