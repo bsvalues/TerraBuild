@@ -205,10 +205,10 @@ export async function getRegionalComparison(req: Request, res: Response) {
     
     // Calculate cost for each region based on square footage
     const regions = data.map((item: any) => item.region);
-    const regionDescriptions = data.map((item: any) => item.regionDescription || item.region);
-    const baseCosts = data.map((item: any) => parseFloat(item.baseCost));
+    const regionDescriptions = data.map((item: any) => item.description || item.region);
+    const baseCosts = data.map((item: any) => parseFloat(item.base_rate));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseCost) * sqftFloat;
+      const cost = parseFloat(item.base_rate) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
     
@@ -220,7 +220,7 @@ export async function getRegionalComparison(req: Request, res: Response) {
       baseCosts,
       metadata: {
         buildingType,
-        buildingTypeDescription: data[0]?.buildingTypeDescription || buildingType,
+        buildingTypeDescription: data[0]?.description || buildingType,
         year: yearInt,
         squareFootage: sqftFloat
       }
@@ -269,10 +269,11 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     const data = allMatrixData.filter((item: any) => {
       return (
         item.region === region &&
-        item.matrixYear === yearInt
+        item.matrix_year === yearInt &&
+        item.is_active === true
       );
     })
-    .sort((a: any, b: any) => a.buildingType.localeCompare(b.buildingType));
+    .sort((a: any, b: any) => a.building_type.localeCompare(b.building_type));
     
     // If no data is found, return empty result
     if (data.length === 0) {
@@ -285,18 +286,18 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     }
     
     // Calculate cost for each building type based on square footage
-    const buildingTypes = data.map((item: any) => item.buildingType);
+    const buildingTypes = data.map((item: any) => item.building_type);
     const buildingTypeLabels = data.map((item: any) => 
-      item.buildingTypeDescription || `Building Type ${item.buildingType}`
+      item.description || `Building Type ${item.building_type}`
     );
-    const baseCosts = data.map((item: any) => parseFloat(item.baseCost));
+    const baseCosts = data.map((item: any) => parseFloat(item.base_rate));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseCost) * sqftFloat;
+      const cost = parseFloat(item.base_rate) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
     
     // Calculate cost per square foot for each building type
-    const costPerSqft = data.map((item: any) => parseFloat(item.baseCost));
+    const costPerSqft = data.map((item: any) => parseFloat(item.base_rate));
     
     return res.status(200).json({ 
       buildingTypes, 
@@ -306,7 +307,7 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
       costPerSqft,
       metadata: {
         region,
-        regionDescription: data[0]?.regionDescription || region,
+        regionDescription: data[0]?.description || region,
         year: yearInt,
         squareFootage: sqftFloat
       }
@@ -347,7 +348,7 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Ensure totalCost is a valid number
-    const totalCost = parseFloat(calc.totalCost as any);
+    const totalCost = parseFloat(calc.total_cost as any || calc.base_rate as any);
     if (isNaN(totalCost)) {
       return res.status(500).json({ error: 'Invalid total cost value in calculation' });
     }
@@ -360,12 +361,12 @@ export async function getCostBreakdown(req: Request, res: Response) {
     let otherPct = 0.05;     // Default 5% other costs
     
     // Adjust percentages based on building type (simple example adjustment)
-    if (calc.buildingType === 'commercial') {
+    if (calc.building_type === 'commercial') {
       materialsPct = 0.60;
       laborPct = 0.25;
       permitsPct = 0.08;
       otherPct = 0.07;
-    } else if (calc.buildingType === 'industrial') {
+    } else if (calc.building_type === 'industrial') {
       materialsPct = 0.70;
       laborPct = 0.20;
       permitsPct = 0.05;
@@ -373,11 +374,11 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Further adjust based on complexity factor
-    if (calc.complexityFactor === 'complex') {
+    if (calc.complexity_factor === 'complex') {
       // Complex buildings have higher labor costs
       materialsPct -= 0.05;
       laborPct += 0.05;
-    } else if (calc.complexityFactor === 'simple') {
+    } else if (calc.complexity_factor === 'simple') {
       // Simple buildings have lower labor costs
       materialsPct += 0.05;
       laborPct -= 0.05;
@@ -409,13 +410,13 @@ export async function getCostBreakdown(req: Request, res: Response) {
     // Add calculation details for reference
     const calculationDetails = {
       id: calc.id,
-      name: calc.name,
-      buildingType: calc.buildingType,
+      name: calc.name || calc.calculation_id,
+      buildingType: calc.building_type,
       region: calc.region,
-      squareFootage: calc.squareFootage,
-      complexityFactor: calc.complexityFactor,
-      conditionFactor: calc.conditionFactor || 'average',
-      createdAt: calc.createdAt
+      squareFootage: calc.square_footage,
+      complexityFactor: calc.complexity_factor,
+      conditionFactor: calc.condition_factor || 'average',
+      createdAt: calc.created_at
     };
     
     return res.status(200).json({
