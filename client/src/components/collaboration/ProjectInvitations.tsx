@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCollaboration } from '@/contexts/CollaborationContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import {
   Card,
   CardContent,
