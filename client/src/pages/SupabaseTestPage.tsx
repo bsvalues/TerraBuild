@@ -3,14 +3,32 @@ import { useSupabase } from '@/components/supabase/SupabaseProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, RefreshCw, Database } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Database, Server, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+interface TestResult {
+  success: boolean;
+  message: string;
+  details?: Record<string, any>;
+}
+
+interface RpcResult {
+  name: string;
+  success: boolean;
+  error?: string;
+  responsePreview?: string;
+}
 
 const SupabaseTestPage: React.FC = () => {
   const { supabase, isConfigured, checkConnection, connectionStatus } = useSupabase();
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [tables, setTables] = useState<string[]>([]);
+  const [rpcResults, setRpcResults] = useState<RpcResult[]>([]);
+  const [activeTab, setActiveTab] = useState('connection');
+  const [tableDetails, setTableDetails] = useState<Record<string, any>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,6 +40,8 @@ const SupabaseTestPage: React.FC = () => {
     setLoading(true);
     setTestResult(null);
     setTables([]);
+    setRpcResults([]);
+    setTableDetails({});
     
     try {
       // First check if we can ping Supabase
@@ -53,6 +73,12 @@ const SupabaseTestPage: React.FC = () => {
           
           // Try to get more tables to populate the list
           await getAvailableTables();
+          
+          // Test RPC functions if connection succeeded
+          await testRpcFunctions();
+          
+          // Get table details
+          await getTableDetails();
         } else {
           // Fallback to basic connection test
           await testBasicConnection();
@@ -72,12 +98,115 @@ const SupabaseTestPage: React.FC = () => {
     }
   };
 
+  const testRpcFunctions = async () => {
+    try {
+      // List of common RPC functions to test
+      const rpcFunctions = [
+        'get_cost_factors',
+        'get_properties',
+        'get_building_types',
+        'get_regions',
+        'get_cost_matrix',
+        'get_user_settings'
+      ];
+      
+      const results: RpcResult[] = [];
+      
+      for (const funcName of rpcFunctions) {
+        try {
+          const { data, error } = await supabase.rpc(funcName);
+          
+          if (!error) {
+            // We found a working RPC function
+            results.push({
+              name: funcName,
+              success: true,
+              responsePreview: JSON.stringify(data).substring(0, 100) + '...'
+            });
+          } else {
+            results.push({
+              name: funcName,
+              success: false,
+              error: error.message
+            });
+          }
+        } catch (funcError) {
+          results.push({
+            name: funcName,
+            success: false,
+            error: funcError instanceof Error ? funcError.message : String(funcError)
+          });
+        }
+      }
+      
+      setRpcResults(results);
+      
+      // Update the overall test result if we have successful RPC calls
+      const successfulRpcs = results.filter(r => r.success);
+      if (successfulRpcs.length > 0) {
+        setTestResult(prev => {
+          if (!prev) return { 
+            success: true, 
+            message: `Successfully called ${successfulRpcs.length} of ${rpcFunctions.length} RPC functions.`
+          };
+          return { 
+            success: true, 
+            message: `${prev.message}\nSuccessfully called ${successfulRpcs.length} of ${rpcFunctions.length} RPC functions.`
+          };
+        });
+      }
+    } catch (err) {
+      console.error('RPC test error:', err);
+    }
+  };
+
+  const getTableDetails = async () => {
+    const details: Record<string, any> = {};
+    
+    // Get row counts for each table
+    for (const table of tables) {
+      try {
+        const { data, error, count } = await supabase
+          .from(table)
+          .select('*', { count: 'exact', head: true });
+          
+        if (!error) {
+          details[table] = { count, error: null };
+          
+          // Get first 2 rows for sample data if available
+          try {
+            const { data: sampleData, error: sampleError } = await supabase
+              .from(table)
+              .select('*')
+              .limit(2);
+              
+            if (!sampleError && sampleData && sampleData.length > 0) {
+              details[table].sample = sampleData;
+            }
+          } catch (sampleErr) {
+            console.warn(`Error getting sample data for ${table}:`, sampleErr);
+          }
+        } else {
+          details[table] = { count: 0, error: error.message };
+        }
+      } catch (err) {
+        details[table] = { 
+          count: 0, 
+          error: err instanceof Error ? err.message : String(err) 
+        };
+      }
+    }
+    
+    setTableDetails(details);
+  };
+
   // Try to get a list of available tables in the database
   const getAvailableTables = async () => {
     try {
       // Common tables that might exist in our application
       const commonTables = ['cost_matrix', 'users', 'properties', 'projects', 'settings', 
-                           'cost_factors', 'improvements', 'material_types', 'material_costs'];
+                           'cost_factors', 'improvements', 'material_types', 'material_costs',
+                           'building_types', 'regions', 'calculation_history', 'documents'];
       
       const foundTables = [];
       
@@ -122,6 +251,10 @@ const SupabaseTestPage: React.FC = () => {
           });
           setTables(['users']);
           await getAvailableTables();
+          
+          // Test RPC functions if we got this far
+          await testRpcFunctions();
+          await getTableDetails();
           return;
         } else {
           // Both queries failed, try properties table as last resort
@@ -136,6 +269,10 @@ const SupabaseTestPage: React.FC = () => {
             });
             setTables(['properties']);
             await getAvailableTables();
+            
+            // Test RPC functions if we got this far
+            await testRpcFunctions();
+            await getTableDetails();
             return;
           } else {
             // All queries failed
@@ -154,6 +291,10 @@ const SupabaseTestPage: React.FC = () => {
         });
         setTables(['cost_matrix']);
         await getAvailableTables();
+        
+        // Test RPC functions if we got this far
+        await testRpcFunctions();
+        await getTableDetails();
         return;
       }
     } catch (err) {
@@ -260,6 +401,75 @@ const SupabaseTestPage: React.FC = () => {
                       <Database className="mr-1 h-3 w-3" />
                       {table}
                     </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {rpcResults.length > 0 && (
+              <div className="mt-4 p-3 bg-green-50 rounded-md">
+                <h3 className="text-sm font-semibold mb-2">RPC Function Tests</h3>
+                <div className="space-y-2">
+                  {rpcResults.map((result) => (
+                    <div 
+                      key={result.name} 
+                      className={`p-2 rounded-md ${result.success ? 'bg-green-100' : 'bg-red-50'} flex items-start gap-2`}
+                    >
+                      {result.success ? (
+                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">{result.name}</p>
+                        {result.success ? (
+                          <p className="text-xs text-green-700 truncate">{result.responsePreview || 'Success'}</p>
+                        ) : (
+                          <p className="text-xs text-red-700">{result.error || 'Failed'}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {Object.keys(tableDetails).length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50/50 rounded-md border border-blue-100">
+                <h3 className="text-sm font-semibold mb-2">Table Details</h3>
+                <div className="space-y-2">
+                  {Object.entries(tableDetails).map(([tableName, details]) => (
+                    <Accordion key={tableName} type="single" collapsible className="bg-white rounded-md">
+                      <AccordionItem value={tableName}>
+                        <AccordionTrigger className="px-3 py-2 text-xs font-medium">
+                          <span className="flex items-center">
+                            <Database className="mr-2 h-3.5 w-3.5" />
+                            {tableName}
+                            {details.count !== undefined && (
+                              <Badge variant="outline" className="ml-2">
+                                {details.count} rows
+                              </Badge>
+                            )}
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 py-2">
+                          {details.error ? (
+                            <div className="p-2 bg-red-50 rounded text-xs">
+                              <AlertTriangle className="h-4 w-4 text-amber-500 inline mr-1" />
+                              {details.error}
+                            </div>
+                          ) : details.sample ? (
+                            <div className="text-xs">
+                              <div className="font-mono bg-slate-50 p-2 rounded overflow-auto max-h-32">
+                                <pre>{JSON.stringify(details.sample, null, 2)}</pre>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs italic">No sample data available</p>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   ))}
                 </div>
               </div>
