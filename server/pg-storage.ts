@@ -857,8 +857,7 @@ export class PostgresStorage implements IStorage {
         id: settings.id,
         key: settings.key,
         value: settings.value,
-        created_at: settings.created_at,
-        updated_at: settings.updated_at
+        type: settings.type
       }).from(settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -873,8 +872,7 @@ export class PostgresStorage implements IStorage {
         id: settings.id,
         key: settings.key,
         value: settings.value,
-        created_at: settings.created_at,
-        updated_at: settings.updated_at
+        type: settings.type
       }).from(settings).where(eq(settings.key, key));
       return result[0];
     } catch (error) {
@@ -892,8 +890,7 @@ export class PostgresStorage implements IStorage {
           id: settings.id,
           key: settings.key,
           value: settings.value,
-          created_at: settings.created_at,
-          updated_at: settings.updated_at
+          type: settings.type
         });
       return result[0];
     } catch (error) {
@@ -907,15 +904,14 @@ export class PostgresStorage implements IStorage {
       const valueToInsert = {
         key: setting.key,
         value: setting.value,
-        // Don't include description if it's not in the database schema
+        type: setting.type || 'string' // Default to 'string' if not provided
       };
       
       const result = await db.insert(settings).values(valueToInsert).returning({
         id: settings.id,
         key: settings.key,
         value: settings.value,
-        created_at: settings.created_at,
-        updated_at: settings.updated_at
+        type: settings.type
       });
       return result[0];
     } catch (error) {
