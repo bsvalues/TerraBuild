@@ -38,19 +38,23 @@ const SupabaseTestPage: React.FC = () => {
       
       // Try a different approach - check which tables exist in the schema
       try {
-        // This query lists all tables in the public schema
-        const { data, error } = await supabase
-          .rpc('list_tables')
-          .select();
-          
-        if (!error && data) {
-          setTables(data.map((t: any) => t.table_name));
+        // First try direct metadata query instead of RPC
+        const { data: tableData, error: tableError } = await supabase
+          .from('cost_matrix')
+          .select('count', { count: 'exact', head: true });
+        
+        if (!tableError) {
+          // We could connect to cost_matrix table
           setTestResult({
             success: true,
-            message: `Connection successful. Found ${data.length} tables in the database.`
+            message: 'Successfully connected to Supabase and verified cost_matrix table!'
           });
+          setTables(['cost_matrix']);
+          
+          // Try to get more tables to populate the list
+          await getAvailableTables();
         } else {
-          // If RPC method doesn't exist, fallback to basic query
+          // Fallback to basic connection test
           await testBasicConnection();
         }
       } catch (err) {
@@ -65,6 +69,35 @@ const SupabaseTestPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Try to get a list of available tables in the database
+  const getAvailableTables = async () => {
+    try {
+      // Common tables that might exist in our application
+      const commonTables = ['cost_matrix', 'users', 'properties', 'projects', 'settings', 
+                           'cost_factors', 'improvements', 'material_types', 'material_costs'];
+      
+      const foundTables = [];
+      
+      // Try each table to see if it exists
+      for (const table of commonTables) {
+        const { error } = await supabase
+          .from(table)
+          .select('count', { count: 'exact', head: true });
+          
+        if (!error || (error && !error.message.includes('does not exist'))) {
+          foundTables.push(table);
+        }
+      }
+      
+      if (foundTables.length > 0) {
+        setTables(foundTables);
+      }
+    } catch (err) {
+      console.warn('Error getting available tables:', err);
+      // Failure here is non-critical, so just log it
     }
   };
 
@@ -87,6 +120,8 @@ const SupabaseTestPage: React.FC = () => {
             success: true,
             message: 'Successfully connected to Supabase and found users table!'
           });
+          setTables(['users']);
+          await getAvailableTables();
           return;
         } else {
           // Both queries failed, try properties table as last resort
@@ -99,6 +134,8 @@ const SupabaseTestPage: React.FC = () => {
               success: true,
               message: 'Successfully connected to Supabase and found properties table!'
             });
+            setTables(['properties']);
+            await getAvailableTables();
             return;
           } else {
             // All queries failed
@@ -115,6 +152,8 @@ const SupabaseTestPage: React.FC = () => {
           success: true,
           message: 'Successfully connected to Supabase and found cost_matrix table!'
         });
+        setTables(['cost_matrix']);
+        await getAvailableTables();
         return;
       }
     } catch (err) {
@@ -208,6 +247,20 @@ const SupabaseTestPage: React.FC = () => {
                       {testResult.message}
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+            
+            {tables.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <h3 className="text-sm font-semibold mb-2">Available Tables</h3>
+                <div className="flex flex-wrap gap-2">
+                  {tables.map((table) => (
+                    <Badge key={table} variant="outline" className="bg-white">
+                      <Database className="mr-1 h-3 w-3" />
+                      {table}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             )}
