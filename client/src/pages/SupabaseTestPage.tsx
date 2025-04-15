@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC } from 'react';
 import { useSupabase } from '@/components/supabase/SupabaseProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Database } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const SupabaseTestPage: React.FC = () => {
   const { supabase, isConfigured, checkConnection, connectionStatus } = useSupabase();
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tables, setTables] = useState<string[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Initial connection check
@@ -18,6 +21,7 @@ const SupabaseTestPage: React.FC = () => {
   const handleTestConnection = async () => {
     setLoading(true);
     setTestResult(null);
+    setTables([]);
     
     try {
       // First check if we can ping Supabase
@@ -28,39 +32,93 @@ const SupabaseTestPage: React.FC = () => {
           success: false,
           message: 'Could not connect to Supabase. Check your network connection and credentials.'
         });
+        setLoading(false);
         return;
       }
       
+      // Try a different approach - check which tables exist in the schema
+      try {
+        // This query lists all tables in the public schema
+        const { data, error } = await supabase
+          .rpc('list_tables')
+          .select();
+          
+        if (!error && data) {
+          setTables(data.map((t: any) => t.table_name));
+          setTestResult({
+            success: true,
+            message: `Connection successful. Found ${data.length} tables in the database.`
+          });
+        } else {
+          // If RPC method doesn't exist, fallback to basic query
+          await testBasicConnection();
+        }
+      } catch (err) {
+        // Fallback to basic connection test
+        await testBasicConnection();
+      }
+    } catch (err) {
+      console.error('Error testing connection:', err);
+      setTestResult({
+        success: false,
+        message: `Connection error: ${err instanceof Error ? err.message : 'Unknown error'}`
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testBasicConnection = async () => {
+    try {
       // Try to fetch some data - check for any table that should exist
-      const { data, error } = await supabase
+      const { data: costData, error: costError } = await supabase
         .from('cost_matrix')
-        .select('count', { count: 'exact', head: true })
-        
-      // If error is relation doesn't exist, try another core table
-      if (error && error.message && error.message.includes('relation "cost_matrix" does not exist')) {
-        // Try the users table as fallback
+        .select('count', { count: 'exact', head: true });
+      
+      // If cost_matrix query fails, try the users table as fallback
+      if (costError) {
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('count', { count: 'exact', head: true });
           
         if (!userError) {
-          // We could connect successfully to another table
-          return { data: userData, error: null };
+          // We could connect successfully to users table
+          setTestResult({
+            success: true,
+            message: 'Successfully connected to Supabase and found users table!'
+          });
+          return;
+        } else {
+          // Both queries failed, try properties table as last resort
+          const { data: propData, error: propError } = await supabase
+            .from('properties')
+            .select('count', { count: 'exact', head: true });
+            
+          if (!propError) {
+            setTestResult({
+              success: true,
+              message: 'Successfully connected to Supabase and found properties table!'
+            });
+            return;
+          } else {
+            // All queries failed
+            setTestResult({
+              success: false,
+              message: `Connection established but all table queries failed. Database may be empty.`
+            });
+            return;
+          }
         }
-      }
-      
-      if (error) {
-        setTestResult({
-          success: false,
-          message: `Connection established but query failed: ${error.message}`
-        });
       } else {
+        // Cost matrix query succeeded
         setTestResult({
           success: true,
-          message: 'Successfully connected to Supabase and executed a test query!'
+          message: 'Successfully connected to Supabase and found cost_matrix table!'
         });
+        return;
       }
     } catch (err) {
+      console.error('Basic connection test error:', err);
       setTestResult({
         success: false,
         message: `Error: ${err instanceof Error ? err.message : String(err)}`
@@ -76,7 +134,7 @@ const SupabaseTestPage: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Supabase Connection Test
-            <Badge variant={isConfigured ? "default" : "destructive"}>
+            <Badge variant={isConfigured ? "default" : "danger"}>
               {isConfigured ? "Configured" : "Not Configured"}
             </Badge>
           </CardTitle>
@@ -94,7 +152,7 @@ const SupabaseTestPage: React.FC = () => {
                   variant={
                     connectionStatus === 'connected' ? 'success' : 
                     connectionStatus === 'connecting' ? 'warning' :
-                    'destructive'
+                    'danger'
                   }
                   className="flex items-center gap-1"
                 >
@@ -109,7 +167,7 @@ const SupabaseTestPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">API Endpoint:</p>
-                <p className="text-sm truncate">{window.location.hostname.includes('replit') ? '[Protected in UI]' : (supabase.supabaseUrl || 'Not available')}</p>
+                <p className="text-sm truncate">{window.location.hostname.includes('replit') ? '[Protected in UI]' : 'Supabase URL (hidden)'}</p>
               </div>
             </div>
 
