@@ -1,0 +1,280 @@
+msgport.js:70 {"notify":"init_tab"}
+react-dom.development.js:29895 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+App.tsx:215 Setting up mock admin user for development
+App.tsx:174 Global Error:
+App.tsx:175  Message: Uncaught TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+handleError @ App.tsx:175
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:176  Source: https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/BCBSCostCalculatorAPI.tsx Line: 859 Col: 46
+handleError @ App.tsx:176
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:177  Error object: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at BCBSCostCalculatorAPI (BCBSCostCalculatorAPI.tsx:487:97)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+handleError @ App.tsx:177
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+BCBSCostCalculatorAPI.tsx:487  Uncaught TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at BCBSCostCalculatorAPI (BCBSCostCalculatorAPI.tsx:487:97)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+BCBSCostCalculatorAPI @ BCBSCostCalculatorAPI.tsx:487
+renderWithHooks @ react-dom.development.js:15486
+updateFunctionComponent @ react-dom.development.js:19617
+beginWork @ react-dom.development.js:21640
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:174 Global Error:
+App.tsx:175  Message: Uncaught TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+handleError @ App.tsx:175
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:176  Source: https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/BCBSCostCalculatorAPI.tsx Line: 859 Col: 46
+handleError @ App.tsx:176
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:177  Error object: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at BCBSCostCalculatorAPI (BCBSCostCalculatorAPI.tsx:487:97)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+handleError @ App.tsx:177
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+BCBSCostCalculatorAPI.tsx:487  Uncaught TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at BCBSCostCalculatorAPI (BCBSCostCalculatorAPI.tsx:487:97)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+BCBSCostCalculatorAPI @ BCBSCostCalculatorAPI.tsx:487
+renderWithHooks @ react-dom.development.js:15486
+updateFunctionComponent @ react-dom.development.js:19617
+beginWork @ react-dom.development.js:21640
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react-dom.development.js:18704  The above error occurred in the <BCBSCostCalculatorAPI> component:
+
+    at BCBSCostCalculatorAPI (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/BCBSCostCalculatorAPI.tsx:48:45)
+    at div
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HBQWEHPQ.js?v=a4734ef3:41:13
+    at Presence (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VVWJDJSZ.js?v=a4734ef3:24:11)
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=a4734ef3:175:13
+    at _c5 (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HBQWEHPQ.js?v=a4734ef3:41:13
+    at Provider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VNBMSBXO.js?v=a4734ef3:38:15)
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=a4734ef3:53:7
+    at div
+    at div
+    at div
+    at div
+    at main
+    at MainContent (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/layout/MainContent.tsx:22:39)
+    at div
+    at div
+    at LayoutWrapper (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/layout/LayoutWrapper.tsx:19:41)
+    at CalculatorPage (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/pages/CalculatorPage.tsx:27:47)
+    at ProtectedRoute (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/auth/protected-route.tsx:21:42)
+    at Route (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4734ef3:323:16)
+    at ProtectedRouteWrapper (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/App.tsx?t=1744754856778&v=dxULFixzWOE5kddTCMXlG:183:34)
+    at Switch (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4734ef3:379:17)
+    at Router
+    at WindowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at SidebarProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/SidebarContext.tsx:38:35)
+    at AuthProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/auth-context.tsx:22:32)
+    at EnhancedSupabaseProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/supabase/EnhancedSupabaseProvider.tsx:52:3)
+    at ThemeProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/ThemeContext.tsx:30:33)
+    at QueryClientProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a4734ef3:2805:3)
+    at ErrorBoundary (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+logCapturedError @ react-dom.development.js:18704
+callback @ react-dom.development.js:18772
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23403
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+ErrorBoundary.tsx:42  Error caught by ErrorBoundary: TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at BCBSCostCalculatorAPI (BCBSCostCalculatorAPI.tsx:487:97)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+    at performConcurrentWorkOnRoot (react-dom.development.js:25789:22)
+componentDidCatch @ ErrorBoundary.tsx:42
+callback @ react-dom.development.js:18785
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23403
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+ErrorBoundary.tsx:43  Component stack: 
+    at BCBSCostCalculatorAPI (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/BCBSCostCalculatorAPI.tsx:48:45)
+    at div
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HBQWEHPQ.js?v=a4734ef3:41:13
+    at Presence (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VVWJDJSZ.js?v=a4734ef3:24:11)
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=a4734ef3:175:13
+    at _c5 (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ui/tabs.tsx:72:12)
+    at div
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-HBQWEHPQ.js?v=a4734ef3:41:13
+    at Provider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VNBMSBXO.js?v=a4734ef3:38:15)
+    at https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=a4734ef3:53:7
+    at div
+    at div
+    at div
+    at div
+    at main
+    at MainContent (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/layout/MainContent.tsx:22:39)
+    at div
+    at div
+    at LayoutWrapper (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/layout/LayoutWrapper.tsx:19:41)
+    at CalculatorPage (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/pages/CalculatorPage.tsx:27:47)
+    at ProtectedRoute (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/auth/protected-route.tsx:21:42)
+    at Route (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4734ef3:323:16)
+    at ProtectedRouteWrapper (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/App.tsx?t=1744754856778&v=dxULFixzWOE5kddTCMXlG:183:34)
+    at Switch (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4734ef3:379:17)
+    at Router
+    at WindowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at SidebarProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/SidebarContext.tsx:38:35)
+    at AuthProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/auth-context.tsx:22:32)
+    at EnhancedSupabaseProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/supabase/EnhancedSupabaseProvider.tsx:52:3)
+    at ThemeProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/ThemeContext.tsx:30:33)
+    at QueryClientProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a4734ef3:2805:3)
+    at ErrorBoundary (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at App
+componentDidCatch @ ErrorBoundary.tsx:43
+callback @ react-dom.development.js:18785
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23403
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533

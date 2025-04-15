@@ -484,7 +484,7 @@ const BCBSCostCalculatorAPI = () => {
                     <CardHeader className="pb-2">
                       <CardTitle>Cost Calculation Results</CardTitle>
                       <CardDescription>
-                        {calculationResult.squareFootage} sq ft {calculationResult.buildingType.toLowerCase()} building in {calculationResult.region.toLowerCase().replace('_', ' ')}
+                        {calculationResult.squareFootage} sq ft {calculationResult.buildingType ? calculationResult.buildingType.toLowerCase() : 'unknown'} building in {calculationResult.region ? calculationResult.region.toLowerCase().replace('_', ' ') : 'unknown location'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -675,7 +675,7 @@ const BCBSCostCalculatorAPI = () => {
                       <CostReportPDFExport 
                         calculationResult={calculationResult}
                         costBreakdown={costBreakdown}
-                        projectName={`${calculationResult.buildingType} Building Cost Report`}
+                        projectName={`${calculationResult.buildingType || 'Property'} Building Cost Report`}
                       />
                     )}
                   </div>
