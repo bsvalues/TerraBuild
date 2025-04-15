@@ -26,7 +26,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 // Form schema for calculator
 const calculatorSchema = z.object({
-  squareFootage: z.coerce.number().min(1, "Square footage must be greater than 0"),
+  squareFootage: z.coerce.number()
+    .min(1, "Square footage must be greater than 0")
+    .optional()
+    .default(1000),
   buildingType: z.string().min(1, "Building type is required"),
   quality: z.string().min(1, "Quality level is required"),
   complexityFactor: z.coerce.number().min(0.5).max(2.0).default(1.0),
@@ -44,6 +47,37 @@ const calculatorSchema = z.object({
       }
     )
     .default(0),
+    
+  // Arkansas-specific fields for non-building property assessment
+  // Vehicle fields
+  vehicleValue: z.coerce.number()
+    .min(0, "Vehicle value cannot be negative")
+    .optional()
+    .default(0),
+  vehicleMake: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  vehicleYear: z.coerce.number()
+    .min(1900, "Vehicle year must be after 1900")
+    .max(new Date().getFullYear() + 1, "Vehicle year cannot be in the future")
+    .optional(),
+    
+  // Boat fields
+  boatValue: z.coerce.number()
+    .min(0, "Boat value cannot be negative")
+    .optional()
+    .default(0),
+  boatLength: z.coerce.number()
+    .min(0, "Boat length cannot be negative")
+    .optional(),
+  boatType: z.string().optional(),
+    
+  // Business personal property fields
+  businessPropertyValue: z.coerce.number()
+    .min(0, "Business property value cannot be negative")
+    .optional()
+    .default(0),
+  businessPropertyType: z.string().optional(),
+  businessPropertyCategory: z.string().optional(),
 });
 
 type CalculatorFormValues = z.infer<typeof calculatorSchema>;
@@ -95,14 +129,14 @@ const BCBSCostCalculator = () => {
     comparison: Scenario | null;
   }>({ baseline: null, comparison: null });
 
-  // Default form values
+  // Default form values for Benton County assessment
   const defaultValues: Partial<CalculatorFormValues> = {
     squareFootage: 1000,
     buildingType: "RESIDENTIAL",
     quality: "STANDARD",
     complexityFactor: 1.0,
     conditionFactor: 1.0,
-    region: "MIDWEST",
+    region: "RICHLAND", // Default to Richland, Benton County
     buildingAge: 0,
   };
 
@@ -110,6 +144,9 @@ const BCBSCostCalculator = () => {
     resolver: zodResolver(calculatorSchema),
     defaultValues,
   });
+  
+  // Watch buildingType to conditionally show fields
+  const watchBuildingType = form.watch("buildingType");
 
   // Building types and quality levels for Benton County and Arkansas assessment
   const buildingTypes = [
@@ -321,42 +358,114 @@ const BCBSCostCalculator = () => {
     breakdown: CostBreakdown[];
     regionalMultiplier: number;
   } => {
-    const baseCostPerSqFt = getBaseCostPerSqFt(data.buildingType, data.quality);
-    const baseCost = data.squareFootage * baseCostPerSqFt;
-    
     const multiplier = getRegionalMultiplier(data.region);
-    // Don't set state directly in this function to avoid infinite re-renders
-    // setRegionalMultiplier(multiplier);
+    let baseCost = 0;
+    let adjustedCost = 0;
+    let depreciatedCost = 0;
+    const breakdown: CostBreakdown[] = [];
     
-    // Apply factors
-    let adjustedCost = baseCost;
-    adjustedCost *= data.complexityFactor;
-    adjustedCost *= data.conditionFactor;
-    adjustedCost *= multiplier;
+    // Handle different calculation methods based on property type
+    if (data.buildingType === 'VEHICLE') {
+      // For vehicles, we calculate based on value, not square footage
+      const vehicleValue = data.vehicleValue || 0;
+      
+      // Get base rate per $1000 of value based on quality
+      const baseRatePerThousand = getBaseCostPerSqFt(data.buildingType, data.quality);
+      
+      // Calculate base assessment cost
+      baseCost = (vehicleValue / 1000) * baseRatePerThousand;
+      
+      // Apply regional and condition factors
+      adjustedCost = baseCost * multiplier * data.conditionFactor;
+      
+      // Apply age depreciation
+      const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
+      depreciatedCost = adjustedCost * ageDepreciationFactor;
+      
+      // Generate cost breakdown specific to vehicles
+      breakdown.push({ category: 'Base Assessment', cost: baseCost });
+      breakdown.push({ category: 'Condition Adjustment', cost: baseCost * (data.conditionFactor - 1) });
+      breakdown.push({ category: 'Regional Adjustment', cost: (baseCost * data.conditionFactor * multiplier) - (baseCost * data.conditionFactor) });
+      breakdown.push({ category: 'Age Depreciation', cost: adjustedCost - depreciatedCost });
+    } 
+    else if (data.buildingType === 'BOAT') {
+      // For boats, we calculate based on value, not square footage
+      const boatValue = data.boatValue || 0;
+      
+      // Get base rate per $1000 of value based on quality
+      const baseRatePerThousand = getBaseCostPerSqFt(data.buildingType, data.quality);
+      
+      // Calculate base assessment cost
+      baseCost = (boatValue / 1000) * baseRatePerThousand;
+      
+      // Apply regional and condition factors
+      adjustedCost = baseCost * multiplier * data.conditionFactor;
+      
+      // Apply age depreciation
+      const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
+      depreciatedCost = adjustedCost * ageDepreciationFactor;
+      
+      // Generate cost breakdown specific to boats
+      breakdown.push({ category: 'Base Assessment', cost: baseCost });
+      breakdown.push({ category: 'Condition Adjustment', cost: baseCost * (data.conditionFactor - 1) });
+      breakdown.push({ category: 'Regional Adjustment', cost: (baseCost * data.conditionFactor * multiplier) - (baseCost * data.conditionFactor) });
+      breakdown.push({ category: 'Age Depreciation', cost: adjustedCost - depreciatedCost });
+    }
+    else if (data.buildingType === 'BUSINESS_PROPERTY') {
+      // For business property, we calculate based on value, not square footage
+      const businessPropertyValue = data.businessPropertyValue || 0;
+      
+      // Get base rate per $1000 of value based on quality
+      const baseRatePerThousand = getBaseCostPerSqFt(data.buildingType, data.quality);
+      
+      // Calculate base assessment cost
+      baseCost = (businessPropertyValue / 1000) * baseRatePerThousand;
+      
+      // Apply regional and condition factors
+      adjustedCost = baseCost * multiplier * data.conditionFactor;
+      
+      // Apply age depreciation
+      const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
+      depreciatedCost = adjustedCost * ageDepreciationFactor;
+      
+      // Generate cost breakdown specific to business property
+      breakdown.push({ category: 'Base Assessment', cost: baseCost });
+      breakdown.push({ category: 'Condition Adjustment', cost: baseCost * (data.conditionFactor - 1) });
+      breakdown.push({ category: 'Regional Adjustment', cost: (baseCost * data.conditionFactor * multiplier) - (baseCost * data.conditionFactor) });
+      breakdown.push({ category: 'Age Depreciation', cost: adjustedCost - depreciatedCost });
+    }
+    else {
+      // Standard building calculation based on square footage
+      const baseCostPerSqFt = getBaseCostPerSqFt(data.buildingType, data.quality);
+      baseCost = (data.squareFootage || 0) * baseCostPerSqFt;
+      
+      // Apply factors
+      adjustedCost = baseCost;
+      adjustedCost *= data.complexityFactor;
+      adjustedCost *= data.conditionFactor;
+      adjustedCost *= multiplier;
+      
+      // Calculate age depreciation
+      const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
+      
+      // Apply age depreciation to adjusted cost
+      depreciatedCost = adjustedCost * ageDepreciationFactor;
+      
+      // Generate cost breakdown for buildings
+      breakdown.push({ category: 'Base Cost', cost: baseCost });
+      breakdown.push({ category: 'Complexity Adjustment', cost: baseCost * (data.complexityFactor - 1) });
+      breakdown.push({ category: 'Condition Adjustment', cost: baseCost * data.complexityFactor * (data.conditionFactor - 1) });
+      breakdown.push({ category: 'Regional Adjustment', cost: adjustedCost - (baseCost * data.complexityFactor * data.conditionFactor) });
+      breakdown.push({ category: 'Age Depreciation', cost: adjustedCost - depreciatedCost });
+    }
     
-    // Calculate age depreciation
-    const ageDepreciationFactor = calculateAgeDepreciation(data.buildingAge, data.buildingType);
-    
-    // Apply age depreciation to adjusted cost
-    const depreciatedCost = adjustedCost * ageDepreciationFactor;
-    
-    // Calculate material costs
+    // Calculate material costs (common to all property types)
     const materialCost = materials.reduce((total, material) => {
       return total + (material.quantity * material.unitPrice);
     }, 0);
     
-    // Generate cost breakdown
-    const breakdown: CostBreakdown[] = [
-      { category: 'Base Cost', cost: baseCost },
-      { category: 'Complexity Adjustment', cost: baseCost * (data.complexityFactor - 1) },
-      { category: 'Condition Adjustment', cost: baseCost * data.complexityFactor * (data.conditionFactor - 1) },
-      { category: 'Regional Adjustment', cost: adjustedCost - (baseCost * data.complexityFactor * data.conditionFactor) },
-      { category: 'Age Depreciation', cost: adjustedCost - depreciatedCost },
-      { category: 'Materials', cost: materialCost }
-    ];
-    
-    // Don't set state directly in this function to avoid infinite re-renders
-    // setCostBreakdown(breakdown);
+    // Add materials to cost breakdown
+    breakdown.push({ category: 'Materials', cost: materialCost });
     
     return {
       totalCost: depreciatedCost + materialCost,
@@ -440,17 +549,8 @@ const BCBSCostCalculator = () => {
     // Skip if no cost breakdown data is available
     if (!costBreakdown || costBreakdown.length === 0) return [];
     
-    // Group cost components into a hierarchical structure for the treemap
-    const baseCost = costBreakdown.find(c => c.category === 'Base Cost')?.cost || 0;
-    const complexityAdjustment = costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0;
-    const conditionAdjustment = costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0;
-    const regionalAdjustment = costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0;
-    const ageDepreciation = costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0;
-    const materialsCost = costBreakdown.find(c => c.category === 'Materials')?.cost || 0;
-    
-    // Calculate depreciation percentage for visual representation
-    const buildingAge = form.getValues().buildingAge;
     const buildingType = form.getValues().buildingType;
+    const buildingAge = form.getValues().buildingAge;
     const deprecationPercentage = getDepreciationPercentage(buildingAge, buildingType);
     const depreciationColor = getDepreciationColor(deprecationPercentage);
     
@@ -460,6 +560,7 @@ const BCBSCostCalculator = () => {
       : 'Age Depreciation';
     
     // Create the materials sub-items if any are available
+    const materialsCost = costBreakdown.find(c => c.category === 'Materials')?.cost || 0;
     const materialsChildren = materials.length > 0 
       ? materials.map(m => ({
           name: m.name || 'Unnamed Material',
@@ -468,37 +569,85 @@ const BCBSCostCalculator = () => {
         }))
       : [{ name: 'Materials Total', size: materialsCost, color: '#3CAB36' }];
     
-    // Structure the data for the treemap
-    return [
-      {
-        name: 'Total Cost',
-        children: [
-          {
-            name: 'Building Costs',
-            children: [
-              { name: 'Base Cost', size: baseCost, color: '#243E4D' },
-              { name: 'Complexity Adjustment', size: complexityAdjustment, color: '#243E4D' },
-              { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
-              { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
-              { 
-                name: ageDepreciationName, 
-                size: ageDepreciation, 
-                color: depreciationColor,
-                // Add special properties for visual treatment
-                special: 'age-depreciation',
-                percentage: deprecationPercentage,
-                buildingAge: buildingAge,
-                pattern: buildingAge > 0 ? "diagonal-stripes" : undefined
-              },
-            ]
-          },
-          {
-            name: 'Materials',
-            children: materialsChildren
-          }
-        ]
-      }
-    ];
+    // Different visualization structure based on property type
+    if (buildingType === 'VEHICLE' || buildingType === 'BOAT' || buildingType === 'BUSINESS_PROPERTY') {
+      // For non-building property types
+      const baseAssessment = costBreakdown.find(c => c.category === 'Base Assessment')?.cost || 0;
+      const conditionAdjustment = costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0;
+      const regionalAdjustment = costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0;
+      const ageDepreciation = costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0;
+      
+      // Get property type name for display
+      const propertyTypeName = buildingType === 'VEHICLE' 
+        ? 'Vehicle' 
+        : (buildingType === 'BOAT' ? 'Boat' : 'Business Property');
+      
+      return [
+        {
+          name: 'Total Assessment',
+          children: [
+            {
+              name: `${propertyTypeName} Assessment`,
+              children: [
+                { name: 'Base Assessment', size: baseAssessment, color: '#243E4D' },
+                { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
+                { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
+                { 
+                  name: ageDepreciationName, 
+                  size: ageDepreciation, 
+                  color: depreciationColor,
+                  special: 'age-depreciation',
+                  percentage: deprecationPercentage,
+                  buildingAge: buildingAge,
+                  pattern: buildingAge > 0 ? "diagonal-stripes" : undefined
+                },
+              ]
+            },
+            {
+              name: 'Materials',
+              children: materialsChildren
+            }
+          ]
+        }
+      ];
+    } else {
+      // For standard building types
+      const baseCost = costBreakdown.find(c => c.category === 'Base Cost')?.cost || 0;
+      const complexityAdjustment = costBreakdown.find(c => c.category === 'Complexity Adjustment')?.cost || 0;
+      const conditionAdjustment = costBreakdown.find(c => c.category === 'Condition Adjustment')?.cost || 0;
+      const regionalAdjustment = costBreakdown.find(c => c.category === 'Regional Adjustment')?.cost || 0;
+      const ageDepreciation = costBreakdown.find(c => c.category === 'Age Depreciation')?.cost || 0;
+      
+      return [
+        {
+          name: 'Total Cost',
+          children: [
+            {
+              name: 'Building Costs',
+              children: [
+                { name: 'Base Cost', size: baseCost, color: '#243E4D' },
+                { name: 'Complexity Adjustment', size: complexityAdjustment, color: '#243E4D' },
+                { name: 'Condition Adjustment', size: conditionAdjustment, color: '#243E4D' },
+                { name: 'Regional Adjustment', size: regionalAdjustment, color: '#243E4D' },
+                { 
+                  name: ageDepreciationName, 
+                  size: ageDepreciation, 
+                  color: depreciationColor,
+                  special: 'age-depreciation',
+                  percentage: deprecationPercentage,
+                  buildingAge: buildingAge,
+                  pattern: buildingAge > 0 ? "diagonal-stripes" : undefined
+                },
+              ]
+            },
+            {
+              name: 'Materials',
+              children: materialsChildren
+            }
+          ]
+        }
+      ];
+    }
   };
 
   // Save the current calculation as a scenario
@@ -681,22 +830,228 @@ const BCBSCostCalculator = () => {
                         Building Specifications
                       </h3>
                       <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="squareFootage"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Square Footage</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} className="border-gray-200" />
-                              </FormControl>
-                              <FormDescription>
-                                Enter the total square footage of the building
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Show square footage for building types only */}
+                        {(watchBuildingType === 'RESIDENTIAL' || 
+                          watchBuildingType === 'COMMERCIAL' || 
+                          watchBuildingType === 'INDUSTRIAL' || 
+                          watchBuildingType === 'AGRICULTURAL') && (
+                          <FormField
+                            control={form.control}
+                            name="squareFootage"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Square Footage</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} className="border-gray-200" />
+                                </FormControl>
+                                <FormDescription>
+                                  Enter the total square footage of the building
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                        
+                        {/* Show vehicle value field for vehicle type */}
+                        {watchBuildingType === 'VEHICLE' && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="vehicleValue"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Vehicle Value ($)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter the current market value of the vehicle
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="vehicleMake"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Make</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="vehicleModel"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Model</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="vehicleYear"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Year</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
+                        
+                        {/* Show boat value field for boat type */}
+                        {watchBuildingType === 'BOAT' && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="boatValue"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Boat Value ($)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter the current market value of the boat
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="boatLength"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Length (ft)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="boatType"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Boat Type</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="border-gray-200">
+                                        <SelectValue placeholder="Select boat type" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="POWER">Power Boat</SelectItem>
+                                      <SelectItem value="SAIL">Sail Boat</SelectItem>
+                                      <SelectItem value="PWC">Personal Watercraft</SelectItem>
+                                      <SelectItem value="HOUSE">House Boat</SelectItem>
+                                      <SelectItem value="OTHER">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
+                        
+                        {/* Show business property value field for business property type */}
+                        {watchBuildingType === 'BUSINESS_PROPERTY' && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="businessPropertyValue"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Property Value ($)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} className="border-gray-200" />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter the current market value of the business property
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="businessPropertyType"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Property Type</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="border-gray-200">
+                                        <SelectValue placeholder="Select property type" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="EQUIPMENT">Equipment</SelectItem>
+                                      <SelectItem value="FURNITURE">Furniture</SelectItem>
+                                      <SelectItem value="INVENTORY">Inventory</SelectItem>
+                                      <SelectItem value="COMPUTER">Computer/IT</SelectItem>
+                                      <SelectItem value="OTHER">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="businessPropertyCategory"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Category</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="border-gray-200">
+                                        <SelectValue placeholder="Select category" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="RETAIL">Retail</SelectItem>
+                                      <SelectItem value="RESTAURANT">Restaurant</SelectItem>
+                                      <SelectItem value="OFFICE">Office</SelectItem>
+                                      <SelectItem value="INDUSTRIAL">Industrial</SelectItem>
+                                      <SelectItem value="MEDICAL">Medical</SelectItem>
+                                      <SelectItem value="OTHER">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
                         
                         <FormField
                           control={form.control}
