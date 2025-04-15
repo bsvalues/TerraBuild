@@ -33,26 +33,31 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  // Mock user data to bypass authentication
+  const mockUser: User = {
+    id: 1,
+    username: "admin",
+    name: "Admin User",
+    role: "admin",
+    is_active: true
+  };
+  
+  const [user, setUser] = useState<User | null>(mockUser);
   const queryClient = useQueryClient();
 
-  // Query to fetch current user
+  // Set mock user data in query cache
+  useEffect(() => {
+    queryClient.setQueryData(['user'], mockUser);
+  }, [queryClient]);
+  
+  // Mock query to avoid actual API call
   const { isLoading } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      try {
-        const userData = await apiRequest('/api/user', {
-          method: 'GET',
-        });
-        setUser(userData);
-        return userData;
-      } catch (error) {
-        // User is not authenticated, set user to null
-        setUser(null);
-        // Don't throw here to avoid React Query retries
-        return null;
-      }
+      // Return mock user without API call
+      return mockUser;
     },
+    initialData: mockUser,
     retry: false,
     refetchOnWindowFocus: false,
   });
