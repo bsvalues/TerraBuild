@@ -54,6 +54,7 @@ import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import supabaseRoutes from "./routes/supabaseRoutes";
 import supabaseTestRouter from "./routes/supabase-test";
 import supabaseProxyRouter from "./routes/supabaseProxy";
+import systemRoutes from "./routes/systemRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
