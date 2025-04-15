@@ -939,6 +939,31 @@ export class PostgresStorage implements IStorage {
     }
   }
   
+  // Implementation of the setSetting interface method
+  async setSetting(key: string, value: string, description?: string): Promise<boolean> {
+    try {
+      // Check if setting exists
+      const existingSetting = await this.getSetting(key);
+      
+      if (existingSetting) {
+        // Update existing setting (ignore description as it doesn't exist in the DB)
+        await this.updateSetting(key, value);
+      } else {
+        // Create new setting (ignore description as it doesn't exist in the DB)
+        await this.createSetting({
+          key,
+          value,
+          type: 'string' // Default type
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting value:', error);
+      return false;
+    }
+  }
+  
   // Activities
   async getAllActivities(): Promise<Activity[]> {
     return await db.select().from(activities);
