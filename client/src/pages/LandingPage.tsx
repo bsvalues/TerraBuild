@@ -6,12 +6,13 @@ import bentonSeal from '@assets/BC.png';
 import arizonaSunset from '@assets/Arizona-sunset.jpg';
 import vineyardHeader from '@assets/Header-Vineyard-BC.png';
 import ogimage from '@assets/ogimage.jpg';
-import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building, LogIn, User } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building, User } from 'lucide-react';
 
 export default function LandingPage() {
   const [_, navigate] = useLocation();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  // Mock authenticated state - always set to true to bypass login
+  const isAuthenticated = true;
+  const user = { name: "Admin User", username: "admin" };
 
   return (
     <div className="min-h-screen bg-white">
@@ -57,9 +58,9 @@ export default function LandingPage() {
                 <Button 
                   size="lg" 
                   className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate('/cost-wizard')}
                 >
-                  <LogIn className="mr-2 h-5 w-5" /> Sign In
+                  <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
                 </Button>
                 <Button 
                   size="lg" 
