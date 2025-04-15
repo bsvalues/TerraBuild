@@ -1257,6 +1257,39 @@ export class PostgresStorage implements IStorage {
     }
   }
   
+  // Implementation of the storage interface method
+  async getCostMatrices(filter?: Partial<CostMatrix>): Promise<CostMatrix[]> {
+    try {
+      if (!filter || Object.keys(filter).length === 0) {
+        return await this.getAllCostMatrix();
+      }
+      
+      // Build the where conditions based on filter
+      let query = db.select().from(costMatrix);
+      
+      if (filter.building_type) {
+        query = query.where(eq(costMatrix.buildingType, filter.building_type));
+      }
+      
+      if (filter.region) {
+        query = query.where(eq(costMatrix.region, filter.region));
+      }
+      
+      if (filter.year) {
+        query = query.where(eq(costMatrix.year, filter.year));
+      }
+      
+      if (filter.is_active !== undefined) {
+        query = query.where(eq(costMatrix.isActive, filter.is_active));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error("Error in getCostMatrices:", error);
+      return [];
+    }
+  }
+  
   async getCostMatrix(id: number): Promise<CostMatrix | undefined> {
     const result = await db.select().from(costMatrix).where(eq(costMatrix.id, id)).limit(1);
     return result[0];

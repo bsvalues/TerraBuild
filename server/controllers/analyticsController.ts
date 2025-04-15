@@ -348,7 +348,7 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Ensure totalCost is a valid number
-    const totalCost = parseFloat(calc.total_cost as any || calc.base_rate as any);
+    const totalCost = parseFloat(calc.totalCost as any || calc.baseRate as any);
     if (isNaN(totalCost)) {
       return res.status(500).json({ error: 'Invalid total cost value in calculation' });
     }
@@ -361,12 +361,12 @@ export async function getCostBreakdown(req: Request, res: Response) {
     let otherPct = 0.05;     // Default 5% other costs
     
     // Adjust percentages based on building type (simple example adjustment)
-    if (calc.building_type === 'commercial') {
+    if (calc.buildingType === 'commercial') {
       materialsPct = 0.60;
       laborPct = 0.25;
       permitsPct = 0.08;
       otherPct = 0.07;
-    } else if (calc.building_type === 'industrial') {
+    } else if (calc.buildingType === 'industrial') {
       materialsPct = 0.70;
       laborPct = 0.20;
       permitsPct = 0.05;
@@ -374,11 +374,11 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Further adjust based on complexity factor
-    if (calc.complexity_factor === 'complex') {
+    if (calc.complexityFactor === 'complex') {
       // Complex buildings have higher labor costs
       materialsPct -= 0.05;
       laborPct += 0.05;
-    } else if (calc.complexity_factor === 'simple') {
+    } else if (calc.complexityFactor === 'simple') {
       // Simple buildings have lower labor costs
       materialsPct += 0.05;
       laborPct -= 0.05;
