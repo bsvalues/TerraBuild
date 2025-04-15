@@ -92,8 +92,8 @@ const ReconnectionStatus: React.FC<{
       </div>
       
       {attempts > 0 && (
-        <Alert variant="warning" className="mt-2">
-          <AlertTriangle className="h-4 w-4" />
+        <Alert className="mt-2 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
           <AlertTitle>Limited Functionality</AlertTitle>
           <AlertDescription>
             You're in offline mode. Some features may not be available until connection is restored.

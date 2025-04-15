@@ -58,6 +58,7 @@ import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 // Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
+import { EnhancedSupabaseProvider } from "@/components/supabase/EnhancedSupabaseProvider";
 import { useEffect, useState } from "react";
 
 // Add TypeScript declaration for our custom window property
@@ -341,7 +342,7 @@ function App() {
         <ThemeProvider>
           <RemixIconLink />
           <ErrorHandlerWrapper />
-          <SupabaseProvider>
+          <EnhancedSupabaseProvider>
             <AuthProvider>
               <SidebarProvider>
                 <WindowProvider>
@@ -350,7 +351,7 @@ function App() {
                 </WindowProvider>
               </SidebarProvider>
             </AuthProvider>
-          </SupabaseProvider>
+          </EnhancedSupabaseProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
