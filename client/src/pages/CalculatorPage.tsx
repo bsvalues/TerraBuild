@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calculator, BarChart3 } from 'lucide-react';
-import BCBSCostCalculator from '@/components/BCBSCostCalculator';
+import BCBSCostCalculatorSimple from '@/components/BCBSCostCalculatorSimple';
 import BCBSCostCalculatorAPI from '@/components/BCBSCostCalculatorAPI';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import MainContent from '@/components/layout/MainContent';
@@ -44,7 +44,7 @@ const CalculatorPage = () => {
               </TabsContent>
 
               <TabsContent value="client">
-                <BCBSCostCalculator />
+                <BCBSCostCalculatorSimple />
               </TabsContent>
             </Tabs>
           </div>
