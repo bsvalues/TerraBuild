@@ -38,7 +38,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
 
 // Method to check if Supabase is properly configured
 export const isSupabaseConfigured = (): boolean => {
-  return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+  // Using hardcoded fallback values, so it will always be configured
+  return true;
 };
 
 // Utility to check if Supabase is accessible

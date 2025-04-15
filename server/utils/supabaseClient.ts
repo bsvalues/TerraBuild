@@ -14,28 +14,30 @@ type Database = any;
 let supabaseClient: SupabaseClient<Database> | null = null;
 
 /**
- * Get the Supabase URL from environment variables
- * @returns The Supabase URL or null if not configured
+ * Get the Supabase URL from environment variables or use the hardcoded value
+ * @returns The Supabase URL
  */
-export function getSupabaseUrl(): string | null {
-  return process.env.SUPABASE_URL || null;
+export function getSupabaseUrl(): string {
+  return process.env.SUPABASE_URL || 'https://romjfbwktyxljvgcthmk.supabase.co';
 }
 
 /**
- * Get the Supabase anonymous key from environment variables
- * @returns The Supabase anonymous key or null if not configured
+ * Get the Supabase anonymous key from environment variables or use the hardcoded value
+ * @returns The Supabase anonymous key
  */
-export function getSupabaseAnonKey(): string | null {
-  return process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_API_KEY || null;
+export function getSupabaseAnonKey(): string {
+  return process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_API_KEY || 
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvbWpmYndrdHl4bGp2Z2N0aG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0OTM3ODksImV4cCI6MjA2MDA2OTc4OX0.-WNRs4iaAF0cYeseSbXYbhPICZ--dZQuJZqCb7pF7EM';
 }
 
 /**
- * Get the Supabase service key from environment variables
- * @returns The Supabase service key or null if not configured
+ * Get the Supabase service key from environment variables or use the hardcoded value
+ * @returns The Supabase service key
  */
-export function getSupabaseServiceKey(): string | null {
-  // If we get a service key from environment, use it, otherwise use anon key or API key
-  return process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_API_KEY || getSupabaseAnonKey();
+export function getSupabaseServiceKey(): string {
+  // If we get a service key from environment, use it, otherwise use anon key or fallback
+  return process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_API_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvbWpmYndrdHl4bGp2Z2N0aG1rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDQ5Mzc4OSwiZXhwIjoyMDYwMDY5Nzg5fQ.UWhLtKDfjQnmUjzx0CM7PWAXl_BPIj2gGiR27031fgU';
 }
 
 /**
