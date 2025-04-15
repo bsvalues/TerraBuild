@@ -1,0 +1,52 @@
+I need you to prepare our Benton County Building Cost Standards (BCBS) Calculator for an impressive demo within 24 hours. Work autonomously to optimize our application for demonstration, focusing on visual impact and stability rather than new feature development.
+
+IMPORTANT: All necessary property data is already available in the existing files and attached_assets. No need to go to external sources unless something specific is missing.
+
+Follow this structured plan:
+
+1. DEMO ENVIRONMENT SETUP (3 hours)
+   - Use the existing property data already in the files/assets
+   - Select 10 diverse properties from the existing data:
+     * 3 representative residential properties
+     * 3 commercial properties with different uses
+     * 2 agricultural properties
+     * 2 special-purpose properties
+   - Set up 3 demo user accounts (Admin, Assessor, Viewer)
+   - Configure 2 sample collaborative projects with these properties
+
+2. CORE DEMO PATHWAY OPTIMIZATION (5 hours)
+   - Optimize the building assessment workflow
+   - Improve the collaborative project review interface
+   - Enhance the AI-powered analysis features
+   - Ensure calculations run smoothly using the existing methodology
+
+3. VISUAL ENHANCEMENT (6 hours)
+   - Create a polished dashboard for the landing page
+   - Implement clear visualizations for assessment results
+   - Ensure consistent styling throughout the application
+   - Optimize the UI for demo presentation
+
+4. PERFORMANCE OPTIMIZATION (4 hours)
+   - Optimize database queries in demo paths
+   - Implement caching for demo data
+   - Add robust error handling for demo paths
+   - Ensure smooth transitions between screens
+
+5. DEMO MATERIALS (3 hours)
+   - Create a step-by-step demo script
+   - Prepare talking points highlighting business value
+   - Document all demo credentials and starting points
+
+6. TESTING AND DEPLOYMENT (3 hours)
+   - Test all demo workflows thoroughly
+   - Deploy to a stable Replit environment
+   - Prepare backup options for potentially unstable features
+
+DATA INSTRUCTIONS:
+- Use ONLY the property data already in the existing files/assets
+- No need to obtain new data unless something specific is missing
+- Utilize the existing cost calculation methodologies
+- Preserve all existing property classifications and standards
+- Work with the regional factors and adjustment models already implemented
+
+Provide progress updates after completing each major section, including screenshots of key improvements. The goal is to create a compelling demo that showcases the application's value in standardizing and streamlining the property assessment process for Benton County.
