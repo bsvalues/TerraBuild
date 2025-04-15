@@ -468,8 +468,6 @@ router.delete('/projects/:projectId/properties/:propertyId', asyncHandler(async 
 router.get('/settings/:key', asyncHandler(async (req, res) => {
   const setting = await storage.getSetting(req.params.key);
   
-  console.log('getSetting returned:', setting);
-  
   if (!setting) {
     return res.status(404).json({ message: 'Setting not found' });
   }
