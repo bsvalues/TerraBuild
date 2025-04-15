@@ -88,11 +88,15 @@ export function setupAuth(app: Express) {
           // Use the mock admin user
           req.user = {
             id: 1,
+            uuid: "00000000-0000-0000-0000-000000000000",
             username: "admin",
             password: "disabled", // Not the actual password
+            email: "admin@example.com",
             role: "admin",
             name: "Admin User",
-            isActive: true
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
           };
         }
       } catch (error) {
@@ -152,12 +156,17 @@ export function setupAuth(app: Express) {
           details: { userId: user.id, username: user.username }
         }).catch(console.error);
         
+        // We need to handle potential undefined values due to strict type checking
+        if (!user) {
+          return next(new Error("User not found after creation"));
+        }
+        
         res.status(201).json({
           id: user.id,
           username: user.username,
           name: user.name,
           role: user.role,
-          isActive: user.isActive
+          is_active: user.is_active
         });
       });
     } catch (error) {
@@ -177,12 +186,18 @@ export function setupAuth(app: Express) {
     
     // Return user data without password
     const user = req.user;
+    
+    // We need to handle potential undefined values due to strict type checking
+    if (!user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+    
     res.status(200).json({
       id: user.id,
       username: user.username,
       name: user.name,
       role: user.role,
-      isActive: user.isActive
+      is_active: user.is_active
     });
   });
 
@@ -216,12 +231,18 @@ export function setupAuth(app: Express) {
     
     // Return user data without password
     const user = req.user;
+    
+    // This check is redundant as we've already checked above, but TypeScript doesn't know that
+    if (!user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     res.json({
       id: user.id,
       username: user.username,
       name: user.name,
       role: user.role,
-      isActive: user.isActive
+      is_active: user.is_active
     });
   });
 
