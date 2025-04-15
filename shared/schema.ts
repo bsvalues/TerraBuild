@@ -462,7 +462,7 @@ export const insertProjectSchema = createInsertSchema(projects)
 
 // Settings Insert Schema
 export const insertSettingSchema = createInsertSchema(settings)
-  .omit({ id: true, lastUpdated: true });
+  .omit({ id: true });
 
 /*********************
  * TYPES
@@ -494,3 +494,4 @@ export type ConditionFactor = typeof conditionFactors.$inferSelect;
 export type AgeFactor = typeof ageFactors.$inferSelect;
 export type MatrixDetail = typeof matrixDetail.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
