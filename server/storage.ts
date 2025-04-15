@@ -1318,6 +1318,17 @@ export class DBStorage implements IStorage {
   }
 
   // Settings methods
+  async getSettings(): Promise<Setting[]> {
+    const results = await this.db.query.settings.findMany();
+    
+    return results.map(result => ({
+      id: result.id,
+      key: result.key,
+      value: result.value,
+      type: result.type || 'string'
+    }));
+  }
+  
   async getSetting(key: string): Promise<Setting | undefined> {
     const result = await this.db.query.settings.findFirst({
       where: eq(schema.settings.key, key)

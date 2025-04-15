@@ -465,6 +465,13 @@ router.delete('/projects/:projectId/properties/:propertyId', asyncHandler(async 
 /**
  * Settings Routes
  */
+// Get all settings
+router.get('/settings', asyncHandler(async (req, res) => {
+  const settings = await storage.getSettings();
+  res.json(settings);
+}));
+
+// Get a specific setting
 router.get('/settings/:key', asyncHandler(async (req, res) => {
   const setting = await storage.getSetting(req.params.key);
   
@@ -476,6 +483,7 @@ router.get('/settings/:key', asyncHandler(async (req, res) => {
   res.json({ key: req.params.key, value: setting.value });
 }));
 
+// Create or update a setting
 router.put('/settings/:key', asyncHandler(async (req, res) => {
   const { value } = req.body;
   
@@ -484,6 +492,23 @@ router.put('/settings/:key', asyncHandler(async (req, res) => {
   }
   
   // Ignore description parameter as it doesn't exist in the database
+  const success = await storage.setSetting(req.params.key, value);
+  
+  if (!success) {
+    return res.status(500).json({ message: 'Failed to set setting' });
+  }
+  
+  res.json({ key: req.params.key, value });
+}));
+
+// Update a setting (PATCH variation for form compatibility)
+router.patch('/settings/:key', asyncHandler(async (req, res) => {
+  const { value } = req.body;
+  
+  if (!value) {
+    return res.status(400).json({ message: 'Value is required' });
+  }
+  
   const success = await storage.setSetting(req.params.key, value);
   
   if (!success) {
