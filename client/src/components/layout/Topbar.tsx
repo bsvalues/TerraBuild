@@ -3,7 +3,7 @@ import { Bell, Search, Settings, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { APP_NAME } from '@/data/constants';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import BentonBranding from '@/components/BentonBranding';
 
 const Topbar: React.FC = () => {
