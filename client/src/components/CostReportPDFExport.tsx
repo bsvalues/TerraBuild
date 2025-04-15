@@ -185,7 +185,7 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-2">Cost Calculation Results</h2>
             <p className="text-gray-600">
-              {calculationResult.squareFootage} sq ft {calculationResult.buildingType.toLowerCase()} building in {calculationResult.region.toLowerCase().replace('_', ' ')}
+              {calculationResult.squareFootage || 0} sq ft {calculationResult.buildingType ? calculationResult.buildingType.toLowerCase() : 'unknown'} building in {calculationResult.region ? calculationResult.region.toLowerCase().replace('_', ' ') : 'unknown location'}
             </p>
           </div>
           
@@ -193,10 +193,10 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
             <div>
               <h3 className="text-lg font-semibold mb-2">Total Building Cost</h3>
               <div className="text-3xl font-bold text-blue-700">
-                {formatCurrency(calculationResult.totalCost)}
+                {formatCurrency(calculationResult.totalCost || 0)}
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                {formatCurrency(calculationResult.costPerSqft)} per square foot
+                {formatCurrency(calculationResult.costPerSqft || 0)} per square foot
               </div>
             </div>
             <div>
@@ -204,21 +204,21 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span>Base Cost:</span>
-                  <span className="font-medium">{formatCurrency(Number(calculationResult.baseCost))}/sq ft</span>
+                  <span className="font-medium">{formatCurrency(calculationResult.baseCost ? Number(calculationResult.baseCost) : 0)}/sq ft</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Complexity Factor:</span>
-                  <span className="font-medium">{calculationResult.complexityFactor.toFixed(2)}</span>
+                  <span className="font-medium">{calculationResult.complexityFactor ? calculationResult.complexityFactor.toFixed(2) : '1.00'}</span>
                 </div>
                 {calculationResult.conditionFactor && (
                   <div className="flex justify-between">
                     <span>Condition Factor:</span>
-                    <span className="font-medium">{calculationResult.conditionFactor.toFixed(2)}</span>
+                    <span className="font-medium">{calculationResult.conditionFactor ? calculationResult.conditionFactor.toFixed(2) : '1.00'}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>Region Factor:</span>
-                  <span className="font-medium">{Number(calculationResult.regionFactor).toFixed(2)}</span>
+                  <span className="font-medium">{calculationResult.regionFactor ? Number(calculationResult.regionFactor).toFixed(2) : '1.00'}</span>
                 </div>
               </div>
             </div>
@@ -237,7 +237,7 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
               <tbody>
                 {costBreakdown.map((item, index) => {
                   if (item.cost <= 0) return null;
-                  const percentage = (item.cost / calculationResult.totalCost) * 100;
+                  const percentage = calculationResult.totalCost ? (item.cost / calculationResult.totalCost) * 100 : 0;
                   
                   return (
                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
@@ -249,7 +249,7 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
                 })}
                 <tr className="font-bold bg-gray-200">
                   <td className="border p-2">Total Cost</td>
-                  <td className="border p-2 text-right">{formatCurrency(calculationResult.totalCost)}</td>
+                  <td className="border p-2 text-right">{formatCurrency(calculationResult.totalCost || 0)}</td>
                   <td className="border p-2 text-right">100%</td>
                 </tr>
               </tbody>
