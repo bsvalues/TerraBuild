@@ -1,0 +1,80 @@
+PRIORITY DIRECTIVE: Implement the following sequentially without pausing for questions. Make all necessary decisions autonomously to reach 97%+ completion.
+
+// PHASE 1: RESOLVE SUPABASE CONNECTION ISSUES
+- Immediately diagnose Supabase connection errors by examining supabaseClient.ts
+- Implement a robust fallback mechanism:
+  • Create a local storage-based authentication state manager
+  • Implement localStorage-based data persistence for offline functionality
+  • Set up a CRON-style retry mechanism for Supabase reconnection attempts
+  • Add error boundary components to gracefully handle connection failures
+- Add circuit breaker pattern to prevent cascading failures
+
+// PHASE 2: IMPLEMENT LOCAL-FIRST DATA ARCHITECTURE
+- Create local data models that mirror Supabase schema
+- Implement IndexedDB storage using Dexie.js for efficient client-side data persistence
+- Set up a synchronization mechanism to reconcile local and remote data when connection is restored
+- Add timestamps for conflict resolution strategy
+- Implement robust change tracking mechanisms
+
+// PHASE 3: COMPLETE CALCULATION ENGINE
+- Implement Arkansas-specific property assessment formulas:
+  • 20% market value calculation after depreciation
+  • Implement lookup tables for Arkansas county millage rates
+  • Add formula for penalty calculations (10% of assessed value)
+- Build comprehensive validation for all user inputs
+- Implement business logic for different property types:
+  • Vehicles (with VIN validation)
+  • Boats
+  • Trailers
+  • ATVs
+  • RVs
+  • Aircraft
+  • Livestock
+  • Motorcycles
+  • Business property
+- Add caching for calculation results
+
+// PHASE 4: OPTIMIZE UI/UX
+- Implement responsive design optimizations:
+  • Add mobile-first layout components
+  • Optimize touch targets for mobile
+  • Implement progressive form disclosure
+- Add real-time validation feedback
+- Implement optimistic UI updates
+- Add loading states and skeleton screens
+- Ensure WCAG 2.1 AA accessibility compliance
+- Implement proper focus management and keyboard navigation
+
+// PHASE 5: IMPLEMENT PROGRESSIVE ENHANCEMENT
+- Add service worker for offline functionality
+- Implement app manifest for installability
+- Add background sync for deferred Supabase updates
+- Implement push notifications for assessment deadlines
+- Add response compression
+
+// PHASE 6: FINALIZE AND OPTIMIZE
+- Implement comprehensive error logging
+- Add analytics tracking
+- Optimize bundle size through code splitting
+- Implement performance monitoring
+- Add user feedback collection mechanism
+- Create basic help documentation
+- Set up automated test suite
+
+ERROR HANDLING STRATEGY:
+- Always fail gracefully with user-friendly error messages
+- If Supabase connection fails, continue with local-only mode
+- Log all errors to console with detailed diagnostic information
+- Add retry mechanisms with exponential backoff
+- Implement circuit breaker to prevent repeated failed API calls
+
+COMPLETION VALIDATION CHECKLIST:
+- Application loads without critical errors
+- Users can enter property data offline
+- Calculation engine produces accurate results
+- UI is responsive on all device sizes
+- Data persists between sessions
+- Help documentation is accessible
+- Error states are handled gracefully
+
+Do not stop for clarification at any point. When faced with implementation decisions, choose the most robust option that aligns with standard React and modern web development patterns.
