@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,16 +37,29 @@ type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, login, register, isLoading } = useAuth();
   const { autoLoginEnabled, toggleAutoLogin } = useAutoLogin();
   const [activeTab, setActiveTab] = useState<string>("login");
+  const [loginPending, setLoginPending] = useState(false);
+  const [registerPending, setRegisterPending] = useState(false);
   
   // Handle auto-login
   useEffect(() => {
-    if (autoLoginEnabled && !user && !loginMutation.isPending) {
-      loginMutation.mutate({ username: "admin", password: "password" });
+    if (autoLoginEnabled && !user && !loginPending && !isLoading) {
+      handleAutoLogin();
     }
-  }, [autoLoginEnabled, user, loginMutation]);
+  }, [autoLoginEnabled, user, isLoading]);
+  
+  const handleAutoLogin = async () => {
+    try {
+      setLoginPending(true);
+      await login("admin", "password");
+    } catch (error) {
+      console.error("Auto-login failed:", error);
+    } finally {
+      setLoginPending(false);
+    }
+  };
 
   // Login form
   const loginForm = useForm<LoginValues>({

@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, useLocation } from "wouter";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 
 export function ProtectedRoute({
   path,

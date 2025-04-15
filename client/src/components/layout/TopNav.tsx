@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,10 +23,14 @@ import { APP_NAME } from "@/data/constants";
 import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 
 export default function TopNav() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
