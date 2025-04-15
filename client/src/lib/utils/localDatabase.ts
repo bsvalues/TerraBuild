@@ -111,9 +111,9 @@ class LocalDatabase extends Dexie implements LocalDatabaseSchema {
    */
   private async _getPendingSyncItems(): Promise<{ data?: SyncQueueItem[], error?: Error }> {
     try {
+      // Use whereNull instead of equals(undefined)
       const items = await this.syncQueue
-        .where('syncedAt')
-        .equals(undefined)
+        .filter(item => item.syncedAt === undefined)
         .toArray();
       
       return { data: items };
@@ -146,9 +146,7 @@ class LocalDatabase extends Dexie implements LocalDatabaseSchema {
   private async _getFailedSyncItems(): Promise<{ data?: SyncQueueItem[], error?: Error }> {
     try {
       const items = await this.syncQueue
-        .where('attempts')
-        .aboveOrEqual(3) // Items with 3 or more attempts are considered failed
-        .and((item) => item.syncedAt === undefined)
+        .filter(item => item.attempts >= 3 && item.syncedAt === undefined)
         .toArray();
       
       return { data: items };
