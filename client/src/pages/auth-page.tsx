@@ -84,16 +84,31 @@ export default function AuthPage() {
   });
 
   // Handle login form submission
-  const onLoginSubmit = (data: LoginValues) => {
-    loginMutation.mutate({ 
-      username: data.username, 
-      password: data.password 
-    });
+  const onLoginSubmit = async (data: LoginValues) => {
+    try {
+      setLoginPending(true);
+      await login(data.username, data.password);
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setLoginPending(false);
+    }
   };
 
   // Handle register form submission
-  const onRegisterSubmit = (data: RegisterValues) => {
-    registerMutation.mutate(data);
+  const onRegisterSubmit = async (data: RegisterValues) => {
+    try {
+      setRegisterPending(true);
+      // Add a dummy email since it's required by the auth context
+      await register({
+        ...data,
+        email: `${data.username}@example.com` // Generate email from username as required field
+      });
+    } catch (error) {
+      console.error("Registration failed:", error);
+    } finally {
+      setRegisterPending(false);
+    }
   };
 
   // If user is already logged in, redirect to home page
@@ -181,8 +196,8 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                        {loginMutation.isPending ? (
+                      <Button type="submit" className="w-full" disabled={loginPending || isLoading}>
+                        {loginPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Signing in...
@@ -259,8 +274,8 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                        {registerMutation.isPending ? (
+                      <Button type="submit" className="w-full" disabled={registerPending || isLoading}>
+                        {registerPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Creating account...
