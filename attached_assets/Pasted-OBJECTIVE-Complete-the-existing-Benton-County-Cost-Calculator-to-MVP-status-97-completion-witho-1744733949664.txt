@@ -1,0 +1,76 @@
+OBJECTIVE: Complete the existing Benton County Cost Calculator to MVP status (97%+ completion) without interruptions. Execute all tasks sequentially, building upon the current implementation.
+
+CURRENT STATE ASSESSMENT:
+- First, analyze the existing codebase structure in both repositories
+- Identify implemented components and their completion status
+- Map current calculation logic against Arkansas assessment requirements
+- Document existing UI/UX flow and identify gaps
+
+COMPLETION PHASES:
+
+// PHASE 1: CODEBASE ANALYSIS AND COMPLETION PLANNING
+- Review all existing code files and document their purpose
+- Identify any architectural issues that need immediate remediation
+- Map dependencies between components
+- Create a priority list of missing features required for MVP
+- Do not delete or completely rewrite existing functional code
+
+// PHASE 2: CALCULATION ENGINE COMPLETION
+- Verify existing calculation formulas against Arkansas tax code requirements:
+  • Ensure proper implementation of 20% assessment ratio
+  • Validate depreciation schedules match county standards
+  • Confirm millage rate application is correct
+- Complete any missing calculation functions:
+  • Implement penalty calculations for late assessments if missing
+  • Add special property type handlers if not implemented
+  • Ensure all assessment types are supported (vehicles, boats, business property)
+- Add comprehensive validation for all inputs
+- Implement robust error handling for calculation edge cases
+
+// PHASE 3: API/BACKEND COMPLETION
+- Complete any missing API endpoints needed for full functionality
+- Implement proper error handling for all API routes
+- Add input validation middleware if not present
+- Ensure all business logic is properly separated from presentation
+- Implement any missing data storage/retrieval functions
+- Add logging for calculation operations
+
+// PHASE 4: UI COMPLETION
+- Complete any unfinished UI components
+- Ensure responsive design works on all device sizes
+- Implement form validation with clear error messages
+- Add loading indicators for async operations
+- Ensure all calculation results are clearly displayed
+- Add print/export functionality if missing
+- Implement any missing navigation elements
+
+// PHASE 5: TESTING AND OPTIMIZATION
+- Write unit tests for all calculation functions
+- Implement integration tests for form submissions
+- Test with real Benton County property examples
+- Optimize performance for mobile devices
+- Reduce bundle size where possible
+- Implement caching strategies where appropriate
+
+// PHASE 6: DOCUMENTATION AND FINALIZATION
+- Create/update user documentation
+- Add contextual help for complex fields
+- Implement analytics to track usage patterns
+- Add user feedback mechanism
+- Document the code for future maintenance
+- Perform final validation against county requirements
+
+ERROR HANDLING STRATEGY:
+- For any uncertain aspects of the current implementation, preserve the existing approach
+- If existing code contains bugs, fix them without rewriting the entire component
+- When missing requirements, implement standard approach based on similar county calculators
+- Log all decisions made to help with future iterations
+
+COMPLETION CRITERIA:
+- All core calculation functions implemented and tested
+- UI complete and functional on desktop and mobile
+- Documentation updated to reflect current functionality
+- Application performs correctly for all standard assessment scenarios
+
+PROCEED THROUGH ALL PHASES WITHOUT STOPPING FOR QUESTIONS.
+WHEN FACED WITH IMPLEMENTATION DECISIONS, CHOOSE THE OPTION THAT ALIGNS WITH CURRENT CODE PATTERNS.
