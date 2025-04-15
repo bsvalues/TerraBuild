@@ -492,10 +492,10 @@ const BCBSCostCalculatorAPI = () => {
                         <div>
                           <h3 className="text-lg font-semibold mb-2">Total Building Cost</h3>
                           <div className="text-3xl font-bold text-blue-700">
-                            {formatCurrency(calculationResult.totalCost)}
+                            {formatCurrency(calculationResult.totalCost || 0)}
                           </div>
                           <div className="text-sm text-gray-600 mt-1">
-                            {formatCurrency(calculationResult.costPerSqft)} per square foot
+                            {formatCurrency(calculationResult.costPerSqft || 0)} per square foot
                           </div>
                         </div>
                         <div>
@@ -503,19 +503,19 @@ const BCBSCostCalculatorAPI = () => {
                           <div className="space-y-1">
                             <div className="flex justify-between">
                               <span>Base Cost:</span>
-                              <span className="font-medium">{formatCurrency(Number(calculationResult.baseCost))}/sq ft</span>
+                              <span className="font-medium">{formatCurrency(calculationResult.baseCost ? Number(calculationResult.baseCost) : 0)}/sq ft</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Complexity Factor:</span>
-                              <span className="font-medium">{calculationResult.complexityFactor.toFixed(2)}</span>
+                              <span className="font-medium">{calculationResult.complexityFactor ? calculationResult.complexityFactor.toFixed(2) : '1.00'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Condition Factor:</span>
-                              <span className="font-medium">{calculationResult.conditionFactor.toFixed(2)}</span>
+                              <span className="font-medium">{calculationResult.conditionFactor ? calculationResult.conditionFactor.toFixed(2) : '1.00'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Region Factor:</span>
-                              <span className="font-medium">{Number(calculationResult.regionFactor).toFixed(2)}</span>
+                              <span className="font-medium">{calculationResult.regionFactor ? Number(calculationResult.regionFactor).toFixed(2) : '1.00'}</span>
                             </div>
                           </div>
                         </div>
@@ -558,7 +558,7 @@ const BCBSCostCalculatorAPI = () => {
                             // Skip items with zero or negative costs
                             if (item.cost <= 0) return null;
                             
-                            const percentage = (item.cost / calculationResult.totalCost) * 100;
+                            const percentage = calculationResult.totalCost ? (item.cost / calculationResult.totalCost) * 100 : 0;
                             
                             return (
                               <TableRow 
@@ -575,7 +575,7 @@ const BCBSCostCalculatorAPI = () => {
                           })}
                           <TableRow className="font-bold bg-gray-50">
                             <TableCell>Total Cost</TableCell>
-                            <TableCell>{formatCurrency(calculationResult.totalCost)}</TableCell>
+                            <TableCell>{formatCurrency(calculationResult.totalCost || 0)}</TableCell>
                             <TableCell className="text-right">100%</TableCell>
                           </TableRow>
                         </TableBody>
@@ -587,7 +587,7 @@ const BCBSCostCalculatorAPI = () => {
                         {/* Building Blocks Animation */}
                         <BuildingBlocksAnimation 
                           costBreakdown={costBreakdown} 
-                          totalCost={calculationResult.totalCost}
+                          totalCost={calculationResult.totalCost || 0}
                         />
                       </TabsContent>
                     </Tabs>
