@@ -11,10 +11,7 @@ import { RefreshCw } from "lucide-react";
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
-import AuthPage from "@/pages/auth-page";
 import LandingPage from "@/pages/LandingPage";
-import LoginPage from "@/pages/login-page";
-import RegisterPage from "@/pages/register-page";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -261,7 +258,6 @@ function Router() {
       {/* Supabase test route - without protection for easier testing */}
       <Route path="/supabase-test" component={SupabaseTestPage} />
       <Route path="/cost-wizard" component={CostWizardPage} />
-      <Route path="/auth" component={AuthPage} />
       
       {/* Collaborative routes wrapped with CollaborationProvider */}
       <Route path="/shared-projects">
