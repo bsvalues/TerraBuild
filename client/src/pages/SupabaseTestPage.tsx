@@ -365,7 +365,7 @@ const SupabaseTestPage: React.FC = () => {
                         connectionStatus === 'connected' ? 'default' : 
                         connectionStatus === 'partial' ? 'outline' :
                         connectionStatus === 'connecting' ? 'outline' :
-                        'destructive'
+                        'danger'
                       }
                       className="flex items-center gap-1"
                     >
@@ -392,16 +392,42 @@ const SupabaseTestPage: React.FC = () => {
                     <dt>Environment Variables:</dt>
                     <dd>{isConfigured ? '✓ Present' : '✗ Missing'}</dd>
                     
-                    <dt>Client Connection:</dt>
-                    <dd className={connectionStatus === 'connected' ? 'text-green-600' : 'text-amber-600'}>
-                      {connectionStatus === 'connected' ? '✓ Connected' : '⚠ Limited'}
+                    <dt>Connection Type:</dt>
+                    <dd className={
+                      connectionStatus === 'connected' ? 'text-green-600' : 
+                      connectionStatus === 'partial' ? 'text-amber-600' : 
+                      'text-red-600'
+                    }>
+                      {connectionStatus === 'connected' ? '✓ Full Connection' : 
+                       connectionStatus === 'partial' ? '⚠ Partial Connection' : 
+                       connectionStatus === 'connecting' ? '⏳ Connecting...' :
+                       '✗ No Connection'}
                     </dd>
+                    
+                    {serviceStatus && (
+                      <>
+                        <dt>Auth Service:</dt>
+                        <dd className={serviceStatus.auth ? 'text-green-600' : 'text-red-600'}>
+                          {serviceStatus.auth ? '✓ Available' : '✗ Unavailable'}
+                        </dd>
+                        
+                        <dt>Database:</dt>
+                        <dd className={serviceStatus.database ? 'text-green-600' : 'text-red-600'}>
+                          {serviceStatus.database ? '✓ Available' : '✗ Unavailable'}
+                        </dd>
+                        
+                        <dt>Storage:</dt>
+                        <dd className={serviceStatus.storage ? 'text-green-600' : 'text-red-600'}>
+                          {serviceStatus.storage ? '✓ Available' : '✗ Unavailable'}
+                        </dd>
+                        
+                        <dt>Available Tables:</dt>
+                        <dd>{serviceStatus.tables?.length || 0}</dd>
+                      </>
+                    )}
                     
                     <dt>Fallback Values:</dt>
                     <dd>✓ Available</dd>
-                    
-                    <dt>Auth Service:</dt>
-                    <dd>{testResult?.success ? '✓ Working' : '⚠ Limited'}</dd>
                   </dl>
                 </div>
               </TabsContent>
