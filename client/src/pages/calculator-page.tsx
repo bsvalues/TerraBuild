@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 import { CalculationHistory } from "@/components/dashboard/CalculationHistory";
 import Sidebar from "@/components/layout/Sidebar";

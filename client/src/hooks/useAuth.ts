@@ -1,4 +1,4 @@
 /**
- * Auth hook - re-export from AuthContext
+ * Auth hook - re-export from auth-context
  */
-export { useAuth } from '../contexts/AuthContext';
+export { useAuth } from '../contexts/auth-context';
