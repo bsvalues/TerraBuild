@@ -121,7 +121,7 @@ export class MemStorage implements IStorage {
   private projects: Project[] = [];
   private projectMembers: { projectId: string; userId: string; role: string }[] = [];
   private projectProperties: { projectId: string; propertyId: string }[] = [];
-  private settings: { key: string; value: string; description?: string }[] = [];
+  private settings: { key: string; value: string; type?: string }[] = [];
 
   // User methods
   async getUsers(): Promise<User[]> {
@@ -568,21 +568,31 @@ export class MemStorage implements IStorage {
   }
 
   // Settings methods
-  async getSetting(key: string): Promise<string | null> {
+  async getSetting(key: string): Promise<Setting | undefined> {
     const setting = this.settings.find(s => s.key === key);
-    return setting ? setting.value : null;
+    if (!setting) return undefined;
+    
+    return {
+      id: 1, // Mock ID for memory storage
+      key: setting.key,
+      value: setting.value,
+      type: setting.type || 'string'
+    };
   }
 
-  async setSetting(key: string, value: string, description?: string): Promise<boolean> {
+  async setSetting(key: string, value: string): Promise<boolean> {
     const index = this.settings.findIndex(s => s.key === key);
     
     if (index === -1) {
-      this.settings.push({ key, value, description });
+      this.settings.push({ 
+        key, 
+        value, 
+        type: 'string' 
+      });
     } else {
       this.settings[index] = { 
         ...this.settings[index], 
-        value,
-        description: description || this.settings[index].description 
+        value
       };
     }
     
