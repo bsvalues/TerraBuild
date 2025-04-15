@@ -466,29 +466,31 @@ router.delete('/projects/:projectId/properties/:propertyId', asyncHandler(async 
  * Settings Routes
  */
 router.get('/settings/:key', asyncHandler(async (req, res) => {
-  const value = await storage.getSetting(req.params.key);
+  const setting = await storage.getSetting(req.params.key);
   
-  if (value === null) {
+  if (!setting) {
     return res.status(404).json({ message: 'Setting not found' });
   }
   
-  res.json({ key: req.params.key, value });
+  // Return only the value to maintain backward compatibility
+  res.json({ key: req.params.key, value: setting.value });
 }));
 
 router.put('/settings/:key', asyncHandler(async (req, res) => {
-  const { value, description } = req.body;
+  const { value } = req.body;
   
   if (!value) {
     return res.status(400).json({ message: 'Value is required' });
   }
   
-  const success = await storage.setSetting(req.params.key, value, description);
+  // Ignore description parameter as it doesn't exist in the database
+  const success = await storage.setSetting(req.params.key, value);
   
   if (!success) {
     return res.status(500).json({ message: 'Failed to set setting' });
   }
   
-  res.json({ key: req.params.key, value, description });
+  res.json({ key: req.params.key, value });
 }));
 
 /**
