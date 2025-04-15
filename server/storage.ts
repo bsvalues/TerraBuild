@@ -99,6 +99,7 @@ export interface IStorage {
   getProjectProperties(projectId: string): Promise<Property[]>;
 
   // System Settings
+  getSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | undefined>;
   setSetting(key: string, value: string): Promise<boolean>;
 }
@@ -568,12 +569,21 @@ export class MemStorage implements IStorage {
   }
 
   // Settings methods
+  async getSettings(): Promise<Setting[]> {
+    return this.settings.map(setting => ({
+      id: setting.id || 1, // Mock ID for memory storage if not present
+      key: setting.key,
+      value: setting.value,
+      type: setting.type || 'string'
+    }));
+  }
+  
   async getSetting(key: string): Promise<Setting | undefined> {
     const setting = this.settings.find(s => s.key === key);
     if (!setting) return undefined;
     
     return {
-      id: 1, // Mock ID for memory storage
+      id: setting.id || 1, // Mock ID for memory storage if not present
       key: setting.key,
       value: setting.value,
       type: setting.type || 'string'
