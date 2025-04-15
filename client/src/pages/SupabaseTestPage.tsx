@@ -22,10 +22,18 @@ interface RpcResult {
 }
 
 const SupabaseTestPage: React.FC = () => {
-  const { supabase, isConfigured, checkConnection, connectionStatus, diagnostics } = useSupabase();
+  const { 
+    supabase, 
+    isConfigured, 
+    checkConnection, 
+    connectionStatus, 
+    diagnostics,
+    serviceStatus,
+    verifyServices
+  } = useSupabase();
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [tables, setTables] = useState<string[]>([]);
+  const [tables, setTables] = useState<string[]>(serviceStatus?.tables || []);
   const [rpcResults, setRpcResults] = useState<RpcResult[]>([]);
   const [activeTab, setActiveTab] = useState('connection');
   const [tableDetails, setTableDetails] = useState<Record<string, any>>({});
@@ -44,16 +52,32 @@ const SupabaseTestPage: React.FC = () => {
     setTableDetails({});
     
     try {
+      // Use our enhanced service verification to get precise diagnostics
+      const services = await verifyServices();
+      
+      // Update tables with verified tables from service check
+      if (services.tables && services.tables.length > 0) {
+        setTables(services.tables);
+      }
+      
       // First check if we can ping Supabase
       const isConnected = await checkConnection();
       
-      if (!isConnected) {
+      if (!isConnected && !services.auth) {
         setTestResult({
           success: false,
           message: 'Could not connect to Supabase. Check your network connection and credentials.'
         });
         setLoading(false);
         return;
+      }
+      
+      // If we have at least partial connectivity, show that in the result
+      if (!isConnected && services.auth) {
+        setTestResult({
+          success: true,
+          message: 'Partial connection to Supabase detected. Some services are available.'
+        });
       }
       
       // Try a different approach - check which tables exist in the schema
@@ -338,14 +362,17 @@ const SupabaseTestPage: React.FC = () => {
                     <p className="text-sm font-medium mb-1">Connection Status:</p>
                     <Badge 
                       variant={
-                        connectionStatus === 'connected' ? 'success' : 
-                        connectionStatus === 'connecting' ? 'warning' :
-                        'danger'
+                        connectionStatus === 'connected' ? 'default' : 
+                        connectionStatus === 'partial' ? 'outline' :
+                        connectionStatus === 'connecting' ? 'outline' :
+                        'destructive'
                       }
                       className="flex items-center gap-1"
                     >
                       {connectionStatus === 'connected' ? (
-                        <><CheckCircle size={14} /> Connected</>
+                        <><CheckCircle size={14} className="text-green-500" /> Connected</>
+                      ) : connectionStatus === 'partial' ? (
+                        <><AlertTriangle size={14} className="text-amber-500" /> Partial</>
                       ) : connectionStatus === 'connecting' ? (
                         <><RefreshCw size={14} className="animate-spin" /> Connecting</>
                       ) : (
@@ -382,6 +409,62 @@ const SupabaseTestPage: React.FC = () => {
               <TabsContent value="diagnostics" className="space-y-4">
                 <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
                   <h3 className="text-sm font-semibold mb-2">Connection Diagnostics</h3>
+                  
+                  {/* Service Status Overview */}
+                  {serviceStatus && (
+                    <div className="mb-3 bg-white p-2 rounded border border-blue-100">
+                      <h4 className="text-xs font-semibold mb-1">Service Status Overview</h4>
+                      <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.auth ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.auth ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Auth</span>
+                        </div>
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.database ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.database ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Database</span>
+                        </div>
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.storage ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.storage ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Storage</span>
+                        </div>
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.functions ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.functions ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Functions</span>
+                        </div>
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.realtime ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.realtime ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Realtime</span>
+                        </div>
+                        <div className={`p-1 rounded flex items-center gap-1 ${serviceStatus.health ? 'bg-green-50' : 'bg-red-50'}`}>
+                          {serviceStatus.health ? 
+                            <CheckCircle className="h-3 w-3 text-green-500" /> : 
+                            <AlertCircle className="h-3 w-3 text-red-500" />}
+                          <span>Health</span>
+                        </div>
+                      </div>
+
+                      {/* Service Status Message */}
+                      <div className={`text-xs p-1 rounded mt-1
+                        ${serviceStatus.message.includes('✅') ? 'bg-green-50 text-green-800' : 
+                          serviceStatus.message.includes('❌') ? 'bg-red-50 text-red-800' :
+                          serviceStatus.message.includes('⚠️') ? 'bg-yellow-50 text-yellow-800' :
+                          'bg-slate-50 text-slate-800'}`}>
+                        {serviceStatus.message}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Diagnostic Logs */}
                   <div className="text-xs space-y-1 bg-white p-2 rounded border border-blue-100 font-mono max-h-48 overflow-y-auto">
                     {diagnostics.length > 0 ? (
                       diagnostics.map((message, idx) => (
@@ -398,15 +481,28 @@ const SupabaseTestPage: React.FC = () => {
                       <p className="text-gray-500">No diagnostic information available.</p>
                     )}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2 text-xs" 
-                    onClick={checkConnection}
-                  >
-                    <RefreshCw size={12} className="mr-1" />
-                    Refresh Diagnostics
-                  </Button>
+                  
+                  {/* Action Buttons */}
+                  <div className="mt-2 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs" 
+                      onClick={checkConnection}
+                    >
+                      <RefreshCw size={12} className="mr-1" />
+                      Refresh Connection
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs" 
+                      onClick={verifyServices}
+                    >
+                      <Server size={12} className="mr-1" />
+                      Verify Services
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
               
