@@ -1164,37 +1164,43 @@ const BCBSCostCalculator = () => {
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="complexityFactor"
-                        render={({ field }) => (
-                          <FormItem className="bg-[#e6eef2] p-3 rounded-md">
-                            <div className="flex justify-between items-center">
-                              <FormLabel>Complexity Factor</FormLabel>
-                              <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
-                            </div>
-                            <FormControl>
-                              <Slider
-                                defaultValue={[field.value]}
-                                min={0.5}
-                                max={2.0}
-                                step={0.05}
-                                onValueChange={(value) => field.onChange(value[0])}
-                                className="mt-2"
-                              />
-                            </FormControl>
-                            <div className="flex justify-between text-xs text-gray-500 mt-1">
-                              <span>Simple: 0.5</span>
-                              <span>Standard: 1.0</span>
-                              <span>Complex: 2.0</span>
-                            </div>
-                            <FormDescription className="mt-2">
-                              Adjust for building complexity
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Show complexity factor only for building types */}
+                      {(watchBuildingType === 'RESIDENTIAL' || 
+                        watchBuildingType === 'COMMERCIAL' || 
+                        watchBuildingType === 'INDUSTRIAL' || 
+                        watchBuildingType === 'AGRICULTURAL') && (
+                        <FormField
+                          control={form.control}
+                          name="complexityFactor"
+                          render={({ field }) => (
+                            <FormItem className="bg-[#e6eef2] p-3 rounded-md">
+                              <div className="flex justify-between items-center">
+                                <FormLabel>Complexity Factor</FormLabel>
+                                <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
+                              </div>
+                              <FormControl>
+                                <Slider
+                                  defaultValue={[field.value]}
+                                  min={0.5}
+                                  max={2.0}
+                                  step={0.05}
+                                  onValueChange={(value) => field.onChange(value[0])}
+                                  className="mt-2"
+                                />
+                              </FormControl>
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Simple: 0.5</span>
+                                <span>Standard: 1.0</span>
+                                <span>Complex: 2.0</span>
+                              </div>
+                              <FormDescription className="mt-2">
+                                Adjust for building complexity
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       
                       <FormField
                         control={form.control}
