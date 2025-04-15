@@ -586,9 +586,7 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
       
       if (isOfflineMode) {
         // Save to local database
-        const { data, error } = await localDB.create('calculations', calculationData);
-        
-        if (error) throw error;
+        await localDB.upsert('calculations', calculationData);
         
         toast({
           title: "Estimate Saved Locally",
@@ -1259,7 +1257,7 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
           )}
         </div>
         
-        <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+        <Alert className="bg-blue-50 text-blue-800 border-blue-200">
           <AlertTitle className="flex items-center">
             <Info className="mr-2 h-4 w-4" />
             About this estimate

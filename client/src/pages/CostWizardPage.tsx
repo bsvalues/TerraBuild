@@ -18,7 +18,7 @@ import {
   Save 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import CostEstimationWizard from '@/components/wizards/CostEstimationWizard';
+import CostEstimationWizard from '@/components/wizards/CostEstimationWizardFixed';
 import { useQueryClient } from '@tanstack/react-query';
 
 const CostWizardPage: React.FC = () => {
