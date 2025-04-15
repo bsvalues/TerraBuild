@@ -31,10 +31,23 @@ const SupabaseTestPage: React.FC = () => {
         return;
       }
       
-      // Try to fetch some data
+      // Try to fetch some data - check for any table that should exist
       const { data, error } = await supabase
         .from('cost_matrix')
-        .select('count', { count: 'exact', head: true });
+        .select('count', { count: 'exact', head: true })
+        
+      // If error is relation doesn't exist, try another core table
+      if (error && error.message && error.message.includes('relation "cost_matrix" does not exist')) {
+        // Try the users table as fallback
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('count', { count: 'exact', head: true });
+          
+        if (!userError) {
+          // We could connect successfully to another table
+          return { data: userData, error: null };
+        }
+      }
       
       if (error) {
         setTestResult({

@@ -1,0 +1,73 @@
+Project URL
+Source
+
+Primary database
+URL
+https://romjfbwktyxljvgcthmk.supabase.co
+
+Copy
+RESTful endpoint for querying and managing your database
+Project API Keys
+Your API is secured behind an API gateway which requires an API Key for every request.
+You can use the keys below in the Supabase client libraries.
+
+anonpublic
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvbWpmYndrdHl4bGp2Z2N0aG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0OTM3ODksImV4cCI6MjA2MDA2OTc4OX0.-WNRs4iaAF0cYeseSbXYbhPICZ--dZQuJZqCb7pF7EM
+
+Copy
+This key is safe to use in a browser if you have enabled Row Level Security for your tables and configured policies.
+service_rolesecret
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvbWpmYndrdHl4bGp2Z2N0aG1rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDQ5Mzc4OSwiZXhwIjoyMDYwMDY5Nzg5fQ.UWhLtKDfjQnmUjzx0CM7PWAXl_BPIj2gGiR27031fgU
+
+Copy
+This key has the ability to bypass Row Level Security. Never share it publicly. If leaked, generate a new JWT secret immediately.
+Upcoming change
+New API keys coming Q2 2025
+`anon` and `service_role` API keys will be changing to `publishable` and `secret` API keys.
+Read the announcement
+JWT Settings
+JWT Secret
+**** **** **** ****
+
+Reveal
+Used to decode your JWTs. You can also use this to mint your own JWTs.
+Access token expiry time
+3600
+seconds
+How long access tokens are valid for before a refresh token has to be used. Recommendation: 3600 (1 hour).
+Generate a new JWT secret
+
+A random secret will be created, or you can create your own.
+
+
+Generate a new secret
+
+Cancel
+
+Save
+Data API Settings
+Docs
+
+Harden Data API
+
+Enable Data API
+When enabled you will be able to use any Supabase client library and PostgREST endpoints with any schema configured below.
+Exposed schemas
+
+public
+graphql_public
+Select schemas for Data API...
+The schemas to expose in your API. Tables, views and stored procedures in these schemas will get API endpoints.
+Extra search path
+public, extensions
+Extra schemas to add to the search path of every request. Multiple schemas must be comma-separated.
+Max rows
+1000
+The maximum number of rows returned from a view, table, or stored procedure. Limits payload size for accidental or malicious requests.
+Pool size
+Configured automatically based on compute size
+Number of maximum connections to keep open in the Data API server's database pool. Unset to let it be configured automatically based on compute size.
+
+Cancel
+
+Save

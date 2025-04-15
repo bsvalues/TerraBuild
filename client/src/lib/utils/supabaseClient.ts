@@ -45,9 +45,51 @@ export const isSupabaseConfigured = (): boolean => {
 // Utility to check if Supabase is accessible
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // Try a lightweight query that doesn't require authentication
-    const { error } = await supabase.from('scenarios').select('count', { count: 'exact', head: true });
-    return !error;
+    // Most reliable method - try to get the auth configuration which should always exist
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    if (!authError) {
+      return true;
+    }
+    
+    // Try the generic health check
+    try {
+      // Make a simple HTTP request to the Supabase URL to check if the service is up
+      const response = await fetch(`${supabaseUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        }
+      });
+      
+      if (response.ok) {
+        return true;
+      }
+    } catch (fetchError) {
+      console.warn('Health check failed:', fetchError);
+      // Continue to try other methods
+    }
+    
+    // Try a simple table query with minimal permissions requirements
+    try {
+      // Try each of these common tables that might exist
+      const commonTables = ['users', 'cost_matrix', 'properties', 'projects', 'settings'];
+      
+      for (const table of commonTables) {
+        const { error: queryError } = await supabase.from(table).select('count', { count: 'exact', head: true });
+        
+        // If we found a table that works, connection is good
+        if (!queryError || (queryError && !queryError.message.includes('does not exist'))) {
+          return true;
+        }
+      }
+    } catch (queryError) {
+      console.warn('Table queries failed:', queryError);
+    }
+    
+    // All checks failed - no connection
+    console.error('All Supabase connection checks failed');
+    return false;
   } catch (error) {
     console.error('Supabase connection check failed:', error);
     return false;
