@@ -374,11 +374,12 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Further adjust based on complexity factor
-    if (calc.complexityFactor === 'complex') {
+    const complexityValue = calc.complexity || 'average';
+    if (complexityValue === 'complex') {
       // Complex buildings have higher labor costs
       materialsPct -= 0.05;
       laborPct += 0.05;
-    } else if (calc.complexityFactor === 'simple') {
+    } else if (complexityValue === 'simple') {
       // Simple buildings have lower labor costs
       materialsPct += 0.05;
       laborPct -= 0.05;
@@ -410,13 +411,13 @@ export async function getCostBreakdown(req: Request, res: Response) {
     // Add calculation details for reference
     const calculationDetails = {
       id: calc.id,
-      name: calc.name || calc.calculation_id,
-      buildingType: calc.building_type,
+      name: calc.name || calc.calculationId,
+      buildingType: calc.buildingType,
       region: calc.region,
-      squareFootage: calc.square_footage,
-      complexityFactor: calc.complexity_factor,
-      conditionFactor: calc.condition_factor || 'average',
-      createdAt: calc.created_at
+      squareFootage: calc.squareFootage || 0,
+      complexityFactor: calc.complexity || 'average',
+      conditionFactor: calc.condition || 'average',
+      createdAt: calc.createdAt || new Date()
     };
     
     return res.status(200).json({
