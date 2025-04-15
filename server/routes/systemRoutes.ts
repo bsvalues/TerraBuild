@@ -20,7 +20,7 @@ router.get('/connection-status', async (req, res) => {
       supabase: {
         available: false,
         configured: isSupabaseConfigured(),
-        lastChecked: null
+        lastChecked: null as Date | null
       },
       postgres: {
         available: true, // Postgres is always available locally
@@ -36,6 +36,8 @@ router.get('/connection-status', async (req, res) => {
       
       if (adaptiveStorage['lastConnectionCheck']) {
         status.supabase.lastChecked = new Date(adaptiveStorage['lastConnectionCheck']);
+      } else {
+        status.supabase.lastChecked = null;
       }
       
       // Check Supabase connection directly

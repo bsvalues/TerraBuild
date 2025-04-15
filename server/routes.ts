@@ -2948,6 +2948,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register Supabase proxy routes to bypass CORS issues
   app.use('/api/supabase-proxy', supabaseProxyRouter);
   
+  // Register system routes for health checks and database connection status
+  app.use('/api/system', systemRoutes);
+  
   // Log Supabase integration
   await storage.createActivity({
     action: "Supabase integration added",
