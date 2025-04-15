@@ -71,12 +71,10 @@ export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
   key: varchar("key", { length: 100 }).notNull().unique(),
   value: text("value"),
-  description: text("description"),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  type: text("type").default("string"),
 });
 
-export const insertSettingSchema = createInsertSchema(settings).omit({ id: true, created_at: true, updated_at: true });
+export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 
 // Repository status for version control
 export const repositoryStatus = pgTable("repository_status", {
