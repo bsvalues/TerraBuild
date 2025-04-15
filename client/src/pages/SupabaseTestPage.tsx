@@ -22,7 +22,7 @@ interface RpcResult {
 }
 
 const SupabaseTestPage: React.FC = () => {
-  const { supabase, isConfigured, checkConnection, connectionStatus } = useSupabase();
+  const { supabase, isConfigured, checkConnection, connectionStatus, diagnostics } = useSupabase();
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [tables, setTables] = useState<string[]>([]);
@@ -325,50 +325,109 @@ const SupabaseTestPage: React.FC = () => {
         
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium mb-1">Connection Status:</p>
-                <Badge 
-                  variant={
-                    connectionStatus === 'connected' ? 'success' : 
-                    connectionStatus === 'connecting' ? 'warning' :
-                    'danger'
-                  }
-                  className="flex items-center gap-1"
-                >
-                  {connectionStatus === 'connected' ? (
-                    <><CheckCircle size={14} /> Connected</>
-                  ) : connectionStatus === 'connecting' ? (
-                    <><RefreshCw size={14} className="animate-spin" /> Connecting</>
-                  ) : (
-                    <><AlertCircle size={14} /> {connectionStatus === 'unconfigured' ? 'Not Configured' : 'Error'}</>
-                  )}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">API Endpoint:</p>
-                <p className="text-sm truncate">{window.location.hostname.includes('replit') ? '[Protected in UI]' : 'Supabase URL (hidden)'}</p>
-              </div>
-            </div>
+            <Tabs defaultValue="connection" onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="connection">Connection</TabsTrigger>
+                <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
+                <TabsTrigger value="tables">Tables</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="connection" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium mb-1">Connection Status:</p>
+                    <Badge 
+                      variant={
+                        connectionStatus === 'connected' ? 'success' : 
+                        connectionStatus === 'connecting' ? 'warning' :
+                        'danger'
+                      }
+                      className="flex items-center gap-1"
+                    >
+                      {connectionStatus === 'connected' ? (
+                        <><CheckCircle size={14} /> Connected</>
+                      ) : connectionStatus === 'connecting' ? (
+                        <><RefreshCw size={14} className="animate-spin" /> Connecting</>
+                      ) : (
+                        <><AlertCircle size={14} /> {connectionStatus === 'unconfigured' ? 'Not Configured' : 'Error'}</>
+                      )}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-1">API Endpoint:</p>
+                    <p className="text-sm truncate">{window.location.hostname.includes('replit') ? '[Protected in UI]' : 'Supabase URL (hidden)'}</p>
+                  </div>
+                </div>
 
-            <div className="mt-4 p-3 bg-slate-50 rounded-md border border-slate-200">
-              <h3 className="text-sm font-semibold mb-2">Configuration Status</h3>
-              <dl className="grid grid-cols-2 gap-2 text-xs">
-                <dt>Environment Variables:</dt>
-                <dd>{isConfigured ? '✓ Present' : '✗ Missing'}</dd>
-                
-                <dt>Client Connection:</dt>
-                <dd className={connectionStatus === 'connected' ? 'text-green-600' : 'text-amber-600'}>
-                  {connectionStatus === 'connected' ? '✓ Connected' : '⚠ Limited'}
-                </dd>
-                
-                <dt>Fallback Values:</dt>
-                <dd>✓ Available</dd>
-                
-                <dt>Auth Service:</dt>
-                <dd>{testResult?.success ? '✓ Working' : '⚠ Limited'}</dd>
-              </dl>
-            </div>
+                <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
+                  <h3 className="text-sm font-semibold mb-2">Configuration Status</h3>
+                  <dl className="grid grid-cols-2 gap-2 text-xs">
+                    <dt>Environment Variables:</dt>
+                    <dd>{isConfigured ? '✓ Present' : '✗ Missing'}</dd>
+                    
+                    <dt>Client Connection:</dt>
+                    <dd className={connectionStatus === 'connected' ? 'text-green-600' : 'text-amber-600'}>
+                      {connectionStatus === 'connected' ? '✓ Connected' : '⚠ Limited'}
+                    </dd>
+                    
+                    <dt>Fallback Values:</dt>
+                    <dd>✓ Available</dd>
+                    
+                    <dt>Auth Service:</dt>
+                    <dd>{testResult?.success ? '✓ Working' : '⚠ Limited'}</dd>
+                  </dl>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="diagnostics" className="space-y-4">
+                <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
+                  <h3 className="text-sm font-semibold mb-2">Connection Diagnostics</h3>
+                  <div className="text-xs space-y-1 bg-white p-2 rounded border border-blue-100 font-mono max-h-48 overflow-y-auto">
+                    {diagnostics.length > 0 ? (
+                      diagnostics.map((message, idx) => (
+                        <div key={idx} className={`
+                          ${message.includes('✅') ? 'text-green-600' : 
+                            message.includes('❌') ? 'text-red-600' : 
+                            message.includes('⚠️') ? 'text-amber-600' : 
+                            message.includes('ℹ️') ? 'text-blue-600' : 'text-gray-700'}
+                        `}>
+                          {message}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No diagnostic information available.</p>
+                    )}
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 text-xs" 
+                    onClick={checkConnection}
+                  >
+                    <RefreshCw size={12} className="mr-1" />
+                    Refresh Diagnostics
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="tables" className="space-y-4">
+                <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
+                  <h3 className="text-sm font-semibold mb-2">Available Database Tables</h3>
+                  {tables.length > 0 ? (
+                    <div className="text-xs space-y-1">
+                      {tables.map((table) => (
+                        <Badge key={table} variant="outline" className="mr-1 mb-1">
+                          <Database className="mr-1 h-3 w-3" />
+                          {table}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">No table information available yet.</p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
 
             {testResult && (
               <div className={`p-4 rounded-md ${testResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
