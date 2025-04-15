@@ -60,7 +60,8 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
 
   // Check if Supabase is properly configured with environment variables
   const checkSupabaseConfig = () => {
-    const configStatus = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+    // The supabaseClient now has hardcoded fallback values, so it will always be configured
+    const configStatus = true;
     setIsConfigured(configStatus);
     return configStatus;
   };

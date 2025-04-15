@@ -26,7 +26,7 @@ export function getSupabaseUrl(): string | null {
  * @returns The Supabase anonymous key or null if not configured
  */
 export function getSupabaseAnonKey(): string | null {
-  return process.env.SUPABASE_ANON_KEY || null;
+  return process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_API_KEY || null;
 }
 
 /**
@@ -34,8 +34,8 @@ export function getSupabaseAnonKey(): string | null {
  * @returns The Supabase service key or null if not configured
  */
 export function getSupabaseServiceKey(): string | null {
-  // If we get a service key from environment, use it, otherwise use anon key
-  return process.env.SUPABASE_SERVICE_KEY || getSupabaseAnonKey();
+  // If we get a service key from environment, use it, otherwise use anon key or API key
+  return process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_API_KEY || getSupabaseAnonKey();
 }
 
 /**
