@@ -329,11 +329,7 @@ export const settings = pgTable('settings', {
   id: serial('id').primaryKey(),
   key: text('key').notNull().unique(),
   value: text('value').notNull(),
-  description: text('description'),
-  category: text('category'),
-  isSystemSetting: boolean('is_system_setting').default(false),
-  lastUpdated: timestamp('last_updated').defaultNow(),
-  updatedBy: uuid('updated_by').references(() => users.userId),
+  type: text('type').default('string'),
 });
 
 // Cost Matrix Import History

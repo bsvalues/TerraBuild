@@ -99,8 +99,8 @@ export interface IStorage {
   getProjectProperties(projectId: string): Promise<Property[]>;
 
   // System Settings
-  getSetting(key: string): Promise<string | null>;
-  setSetting(key: string, value: string, description?: string): Promise<boolean>;
+  getSetting(key: string): Promise<Setting | undefined>;
+  setSetting(key: string, value: string): Promise<boolean>;
 }
 
 /**
