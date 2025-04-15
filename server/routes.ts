@@ -72,27 +72,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication and authorization
   setupAuth(app);
   
-  // TEMPORARY: Authentication disabled for development
-  // This middleware bypasses authentication checks entirely
+  // Authentication middleware that ensures the user is logged in
   const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-    // Create a mock admin user for all requests
+    // Check if user is authenticated
     if (!req.user) {
-      // Using User type from schema for type safety
-      req.user = {
-        id: 1,
-        username: "admin",
-        password: "disabled", // Using a placeholder value
-        role: "admin",
-        name: "Admin User",
-        isActive: true
-      };
+      return res.status(401).json({ message: "Authentication required" });
     }
     next();
   };
   
-  // Add requireAuth middleware to routes that should be protected
-  // Keeping it commented out for now as we're implementing autologin
-  // const protectedRoute = requireAuth;
+  // Role-based authentication middleware
+  const requireRole = (roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      // First check if user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Then check if user has one of the required roles
+      const userRole = req.user.role;
+      if (!roles.includes(userRole)) {
+        return res.status(403).json({ message: "Access denied: insufficient permissions" });
+      }
+      
+      next();
+    };
+  };
+  
+  // Admin-only routes middleware
+  const requireAdmin = requireRole(['admin']);
+  
+  // User-level authenticated route middleware
+  const requireUser = requireAuth;
   // API endpoints for the Mission Control Panel
   
   // Get all environments

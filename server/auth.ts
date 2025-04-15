@@ -53,15 +53,56 @@ export const devAuthMiddleware = (req: any, res: any, next: any) => {
 };
 
 export function setupAuth(app: Express) {
-  // DEVELOPMENT MODE: Authentication completely disabled
-  log("Authentication is completely disabled for development");
+  // Setup session middleware
+  const PgSession = connectPg(session);
   
-  // Add the development auth middleware to all API routes
-  app.use('/api', devAuthMiddleware);
+  app.use(
+    session({
+      store: new PgSession({
+        pool,
+        tableName: 'sessions',
+        createTableIfMissing: true
+      }),
+      secret: process.env.SESSION_SECRET || 'bcbs_session_secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+      }
+    })
+  );
   
-  // Skip all authentication-related middleware setup
-  // We'll handle user identity via the requireAuth middleware in routes.ts
+  // Initialize Passport.js
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
+  // Set up development mode auto-login if in development environment
+  if (process.env.NODE_ENV !== 'production') {
+    log("Development mode: Auth auto-login enabled");
+    app.use('/api', async (req, res, next) => {
+      // Check if auto-login is enabled in settings
+      try {
+        const autoLoginSetting = await storage.getSetting("DEV_AUTO_LOGIN_ENABLED");
+        if (autoLoginSetting?.value === "true" && !req.user) {
+          // Use the mock admin user
+          req.user = {
+            id: 1,
+            username: "admin",
+            password: "disabled", // Not the actual password
+            role: "admin",
+            name: "Admin User",
+            isActive: true
+          };
+        }
+      } catch (error) {
+        // If we can't check the setting, continue without auto-login
+      }
+      next();
+    });
+  }
 
+  // Configure local strategy for Passport.js
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -87,6 +128,7 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // User registration endpoint
   app.post("/api/register", async (req, res, next) => {
     try {
       const existingUser = await storage.getUserByUsername(req.body.username);
@@ -101,56 +143,104 @@ export function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(user);
+        
+        // Log the registration
+        storage.createActivity({
+          action: "User registration",
+          icon: "ri-user-add-line",
+          iconColor: "success",
+          details: { userId: user.id, username: user.username }
+        }).catch(console.error);
+        
+        res.status(201).json({
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          isActive: user.isActive
+        });
       });
     } catch (error) {
       next(error);
     }
   });
 
+  // User login endpoint
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+    // Log the login
+    storage.createActivity({
+      action: "User login",
+      icon: "ri-login-circle-line",
+      iconColor: "info",
+      details: { userId: req.user?.id, username: req.user?.username }
+    }).catch(console.error);
+    
+    // Return user data without password
+    const user = req.user;
+    res.status(200).json({
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    });
   });
 
+  // User logout endpoint
   app.post("/api/logout", (req, res, next) => {
+    // Save user info before logout for activity log
+    const user = req.user;
+    
     req.logout((err) => {
       if (err) return next(err);
+      
+      // Log the logout if we had a user
+      if (user) {
+        storage.createActivity({
+          action: "User logout",
+          icon: "ri-logout-circle-line",
+          iconColor: "info",
+          details: { userId: user.id, username: user.username }
+        }).catch(console.error);
+      }
+      
       res.sendStatus(200);
     });
   });
 
+  // Current user endpoint
   app.get("/api/user", (req, res) => {
-    // DEVELOPMENT MODE: Always return admin user
-    const adminUser = {
-      id: 1,
-      username: "admin",
-      password: "password", // Not actual password, just for display
-      role: "admin",
-      name: "Admin User",
-      isActive: true
-    };
-    res.json(adminUser);
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    // Return user data without password
+    const user = req.user;
+    res.json({
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    });
   });
 
-  // Development auto-login feature
-  app.get("/api/auth/autologin", async (req, res) => {
-    // DEVELOPMENT MODE: Always succeed with admin user
-    const adminUser = {
-      id: 1,
-      username: "admin",
-      password: "password", // Not actual password, just for display
-      role: "admin",
-      name: "Admin User",
-      isActive: true
-    };
-    
-    // Log activity
-    storage.createActivity({
-      action: "Development auto-login",
-      icon: "ri-login-circle-line",
-      iconColor: "info"
-    }).catch(console.error);
-    
-    return res.json({ success: true, user: adminUser });
+  // Development auto-login settings endpoint
+  app.get("/api/auth/settings", async (req, res) => {
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const autoLoginSetting = await storage.getSetting("DEV_AUTO_LOGIN_ENABLED");
+        const authToken = await storage.getSetting("DEV_AUTH_TOKEN");
+        
+        res.json({
+          enabled: autoLoginSetting?.value === "true",
+          token: authToken?.value || null
+        });
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching auth settings" });
+      }
+    } else {
+      res.status(404).json({ message: "Not available in production mode" });
+    }
   });
 }
