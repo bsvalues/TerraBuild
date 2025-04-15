@@ -147,21 +147,24 @@ const BCBSCostCalculatorAPI = () => {
       const breakdown: CostBreakdown[] = [];
 
       // Base Cost
-      const baseCost = Number(response.data.baseCost);
-      breakdown.push({ category: 'Base Cost', cost: baseCost * response.data.squareFootage });
+      const baseCost = Number(response.data.baseCost) || 0;
+      const squareFootage = response.data.squareFootage || 0;
+      breakdown.push({ category: 'Base Cost', cost: baseCost * squareFootage });
 
       // Complexity Adjustment
-      const complexityAdjustment = baseCost * response.data.squareFootage * (response.data.complexityFactor - 1);
+      const complexityFactor = response.data.complexityFactor || 1.0;
+      const complexityAdjustment = baseCost * squareFootage * (complexityFactor - 1);
       breakdown.push({ category: 'Complexity Adjustment', cost: complexityAdjustment });
 
       // Condition Adjustment
-      const conditionAdjustment = baseCost * response.data.squareFootage * response.data.complexityFactor * (response.data.conditionFactor - 1);
+      const conditionFactor = response.data.conditionFactor || 1.0;
+      const conditionAdjustment = baseCost * squareFootage * complexityFactor * (conditionFactor - 1);
       breakdown.push({ category: 'Condition Adjustment', cost: conditionAdjustment });
 
       // Region Adjustment (if regionFactor is available)
       if (response.data.regionFactor) {
-        const regionFactor = Number(response.data.regionFactor);
-        const regionAdjustment = baseCost * response.data.squareFootage * response.data.complexityFactor * response.data.conditionFactor * (regionFactor - 1);
+        const regionFactor = Number(response.data.regionFactor) || 1.0;
+        const regionAdjustment = baseCost * squareFootage * complexityFactor * conditionFactor * (regionFactor - 1);
         breakdown.push({ category: 'Regional Adjustment', cost: regionAdjustment });
       }
 

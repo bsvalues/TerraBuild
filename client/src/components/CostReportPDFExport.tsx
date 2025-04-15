@@ -270,7 +270,7 @@ const CostReportPDFExport: React.FC<CostReportPDFExportProps> = ({
                 <tbody>
                   {Object.entries(calculationResult.materialCosts).map(([key, cost], index) => {
                     const materialCost = Number(cost);
-                    const percentage = (materialCost / calculationResult.totalCost) * 100;
+                    const percentage = calculationResult.totalCost ? (materialCost / calculationResult.totalCost) * 100 : 0;
                     const formattedName = key.charAt(0).toUpperCase() + key.slice(1);
                     
                     return (
