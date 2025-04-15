@@ -13,6 +13,8 @@ import CalculatorPage from "@/pages/CalculatorPage";
 import UsersPage from "@/pages/users-page";
 import AuthPage from "@/pages/auth-page";
 import LandingPage from "@/pages/LandingPage";
+import LoginPage from "@/pages/login-page";
+import RegisterPage from "@/pages/register-page";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -47,8 +49,9 @@ import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
 import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
-import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider } from "./contexts/AuthContext";
+import Header from "@/components/layout/header";
+import ProtectedRoute from "@/components/auth/protected-route";
+import { AuthProvider } from "@/contexts/auth-context";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
@@ -227,6 +230,23 @@ const ErrorHandlerWrapper = () => {
   return <GlobalErrorHandler />;
 };
 
+// Create a wrapper component to combine Route and ProtectedRoute
+interface ProtectedRouteWrapperProps {
+  path: string;
+  component: React.ComponentType<any>;
+  requiredRole?: string | string[];
+}
+
+const ProtectedRouteWrapper = ({ path, component: Component, requiredRole }: ProtectedRouteWrapperProps) => {
+  return (
+    <Route path={path}>
+      <ProtectedRoute requiredRole={requiredRole}>
+        <Component />
+      </ProtectedRoute>
+    </Route>
+  );
+};
+
 function Router() {
   return (
     <Switch>
@@ -244,10 +264,10 @@ function Router() {
       <Route path="/shared-projects">
         <CollaborationProvider projectId={0}>
           <Switch>
-            <ProtectedRoute path="/shared-projects" component={SharedProjectsPage} />
-            <ProtectedRoute path="/shared-projects/create" component={CreateProjectPage} />
-            <ProtectedRoute path="/shared-projects/:id" component={ProjectDetailsPage} />
-            <ProtectedRoute path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
+            <ProtectedRouteWrapper path="/shared-projects" component={SharedProjectsPage} />
+            <ProtectedRouteWrapper path="/shared-projects/create" component={CreateProjectPage} />
+            <ProtectedRouteWrapper path="/shared-projects/:id" component={ProjectDetailsPage} />
+            <ProtectedRouteWrapper path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
           </Switch>
         </CollaborationProvider>
       </Route>
@@ -255,40 +275,40 @@ function Router() {
       <Route path="/projects">
         <CollaborationProvider projectId={0}>
           <Switch>
-            <ProtectedRoute path="/projects/:id" component={ProjectDetailsPage} />
+            <ProtectedRouteWrapper path="/projects/:id" component={ProjectDetailsPage} />
           </Switch>
         </CollaborationProvider>
       </Route>
       
       {/* Other protected routes */}
-      <ProtectedRoute path="/dashboard" component={DashboardPage} />
-      <ProtectedRoute path="/calculator" component={CalculatorPage} />
-      <ProtectedRoute path="/analytics" component={AnalyticsPage} />
-      <ProtectedRoute path="/users" component={UsersPage} />
-      <ProtectedRoute path="/ai-tools" component={AIToolsPage} />
-      <ProtectedRoute path="/ai-cost-wizard" component={AICostWizardPage} />
-      <ProtectedRoute path="/ar-visualization" component={ARVisualizationPage} />
-      <ProtectedRoute path="/data-import" component={DataImportPage} />
-      <ProtectedRoute path="/benchmarking" component={BenchmarkingPage} />
-      <ProtectedRoute path="/mcp-overview" component={MCPOverviewPage} />
-      <ProtectedRoute path="/mcp-dashboard" component={MCPDashboard} />
-      <ProtectedRoute path="/what-if-scenarios" component={WhatIfScenariosPage} />
-      <ProtectedRoute path="/visualizations" component={VisualizationsPage} />
-      <ProtectedRoute path="/data-exploration" component={DataExplorationDemo} />
-      <ProtectedRoute path="/comparative-analysis" component={ComparativeAnalysisDemo} />
-      <ProtectedRoute path="/statistical-analysis" component={StatisticalAnalysisDemo} />
-      <ProtectedRoute path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
-      <ProtectedRoute path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
-      <ProtectedRoute path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
-      <ProtectedRoute path="/contextual-data" component={ContextualDataPage} />
-      <ProtectedRoute path="/data-connections" component={DataConnectionsPage} />
-      <ProtectedRoute path="/data-connections/ftp" component={FTPConnectionPage} />
-      <ProtectedRoute path="/data-connections/ftp/test" component={FTPConnectionTestPage} />
-      <ProtectedRoute path="/settings/ftp-sync" component={FTPSyncSchedulePage} />
-      <ProtectedRoute path="/properties" component={PropertyBrowserPage} />
-      <ProtectedRoute path="/properties/:id" component={PropertyDetailsPage} />
-      <ProtectedRoute path="/geo-assessment" component={GeoAssessmentPage} />
-      <ProtectedRoute path="/mcp-visualizations" component={MCPVisualizationsPage} />
+      <ProtectedRouteWrapper path="/dashboard" component={DashboardPage} />
+      <ProtectedRouteWrapper path="/calculator" component={CalculatorPage} />
+      <ProtectedRouteWrapper path="/analytics" component={AnalyticsPage} />
+      <ProtectedRouteWrapper path="/users" component={UsersPage} />
+      <ProtectedRouteWrapper path="/ai-tools" component={AIToolsPage} />
+      <ProtectedRouteWrapper path="/ai-cost-wizard" component={AICostWizardPage} />
+      <ProtectedRouteWrapper path="/ar-visualization" component={ARVisualizationPage} />
+      <ProtectedRouteWrapper path="/data-import" component={DataImportPage} />
+      <ProtectedRouteWrapper path="/benchmarking" component={BenchmarkingPage} />
+      <ProtectedRouteWrapper path="/mcp-overview" component={MCPOverviewPage} />
+      <ProtectedRouteWrapper path="/mcp-dashboard" component={MCPDashboard} />
+      <ProtectedRouteWrapper path="/what-if-scenarios" component={WhatIfScenariosPage} />
+      <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
+      <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
+      <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />
+      <ProtectedRouteWrapper path="/statistical-analysis" component={StatisticalAnalysisDemo} />
+      <ProtectedRouteWrapper path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
+      <ProtectedRouteWrapper path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
+      <ProtectedRouteWrapper path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
+      <ProtectedRouteWrapper path="/contextual-data" component={ContextualDataPage} />
+      <ProtectedRouteWrapper path="/data-connections" component={DataConnectionsPage} />
+      <ProtectedRouteWrapper path="/data-connections/ftp" component={FTPConnectionPage} />
+      <ProtectedRouteWrapper path="/data-connections/ftp/test" component={FTPConnectionTestPage} />
+      <ProtectedRouteWrapper path="/settings/ftp-sync" component={FTPSyncSchedulePage} />
+      <ProtectedRouteWrapper path="/properties" component={PropertyBrowserPage} />
+      <ProtectedRouteWrapper path="/properties/:id" component={PropertyDetailsPage} />
+      <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
+      <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
       
       <Route component={NotFound} />
     </Switch>

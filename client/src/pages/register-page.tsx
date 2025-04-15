@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -36,7 +36,7 @@ type RegisterFormValues = z.infer<typeof registerFormSchema>;
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<RegisterFormValues>({
@@ -72,7 +72,7 @@ export default function RegisterPage() {
       });
 
       // Redirect to dashboard after successful registration
-      navigate('/dashboard');
+      setLocation('/dashboard');
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || 'Registration failed. Please try again.');
@@ -171,7 +171,7 @@ export default function RegisterPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => navigate('/login')}>
+          <Button variant="link" onClick={() => setLocation('/login')}>
             Already have an account? Sign in
           </Button>
         </CardFooter>

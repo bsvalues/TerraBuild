@@ -7,7 +7,7 @@ import arizonaSunset from '@assets/Arizona-sunset.jpg';
 import vineyardHeader from '@assets/Header-Vineyard-BC.png';
 import ogimage from '@assets/ogimage.jpg';
 import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building, LogIn, User } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function LandingPage() {
   const [_, navigate] = useLocation();

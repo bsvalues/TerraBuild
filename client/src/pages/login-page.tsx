@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<LoginFormValues>({
@@ -56,7 +56,7 @@ export default function LoginPage() {
       });
 
       // Redirect to dashboard after successful login
-      navigate('/dashboard');
+      setLocation('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       setError('Invalid username or password. Please try again.');
@@ -116,7 +116,7 @@ export default function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => navigate('/register')}>
+          <Button variant="link" onClick={() => setLocation('/register')}>
             Don't have an account? Sign up
           </Button>
         </CardFooter>
