@@ -1,366 +1,330 @@
 /**
  * Data Synchronization Service
  * 
- * This service handles the synchronization of data between the local
- * database and Supabase when connection is restored after being offline.
+ * This module manages synchronization of data between local storage and Supabase
+ * when the connection is restored after being offline.
  */
 
-import { toast } from '@/hooks/use-toast';
-import localDB, { SyncQueueItem } from '@/lib/utils/localDatabase';
-import supabase from '@/lib/utils/supabaseClient';
-import supabaseCircuitBreaker from '@/lib/utils/circuitBreaker';
+import { localDB, SyncQueueItem, SyncOperation } from './localDatabase';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Default sync options
-interface SyncOptions {
-  batchSize: number;
-  maxRetries: number;
-  syncInterval: number;
-  onSyncStart?: () => void;
-  onSyncComplete?: (result: SyncResult) => void;
-  onSyncError?: (error: Error) => void;
+// Event names for sync state changes
+export type SyncEvent = 'SYNC_START' | 'SYNC_COMPLETE' | 'SYNC_ERROR' | 'SYNC_PROGRESS';
+
+// Event listener type
+type SyncEventListener = (event: SyncEvent, data?: any) => void;
+
+// Sync status
+export interface SyncStatus {
+  isSyncing: boolean;
+  lastSyncTime: Date | null;
+  syncErrors: Error[];
+  pendingChanges: number;
+  progress: number;
 }
-
-// Sync result
-interface SyncResult {
-  success: boolean;
-  processed: number;
-  succeeded: number;
-  failed: number;
-  errors: Error[];
-  timestamp: string;
-}
-
-// Default options
-const DEFAULT_OPTIONS: SyncOptions = {
-  batchSize: 20,        // Number of items to sync in a batch
-  maxRetries: 3,         // Maximum number of retries per item
-  syncInterval: 60000,   // Run sync every minute when online
-};
 
 /**
- * Sync Service to manage data synchronization
+ * Data Synchronization Service
  */
 export class SyncService {
-  private options: SyncOptions;
+  private supabase: SupabaseClient | null = null;
   private isSyncing: boolean = false;
-  private syncTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastSyncResult: SyncResult | null = null;
-  private isStarted: boolean = false;
-
-  constructor(options: Partial<SyncOptions> = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
-  }
-
-  /**
-   * Start the sync service
-   */
-  public start(): void {
-    if (this.isStarted) return;
-    
-    this.isStarted = true;
-    this.scheduleSyncIfOnline();
-    
-    // Monitor online/offline status
-    window.addEventListener('online', this.handleOnline);
-    window.addEventListener('offline', this.handleOffline);
-    
-    console.log('Sync service started');
-  }
+  private lastSyncTime: Date | null = null;
+  private syncErrors: Error[] = [];
+  private eventListeners: Map<SyncEvent, SyncEventListener[]> = new Map();
+  private pendingChanges: number = 0;
+  private syncProgress: number = 0;
+  private syncInterval: number | null = null;
+  private syncIntervalTime: number = 60000; // 1 minute
 
   /**
-   * Stop the sync service
+   * Initialize the sync service
+   * @param supabase Supabase client
+   * @param autoSync Enable auto sync
+   * @param interval Auto sync interval in ms
    */
-  public stop(): void {
-    if (!this.isStarted) return;
+  initialize(supabase: SupabaseClient, autoSync: boolean = true, interval?: number): void {
+    this.supabase = supabase;
     
-    this.isStarted = false;
-    
-    if (this.syncTimer) {
-      clearTimeout(this.syncTimer);
-      this.syncTimer = null;
+    if (interval) {
+      this.syncIntervalTime = interval;
     }
     
-    window.removeEventListener('online', this.handleOnline);
-    window.removeEventListener('offline', this.handleOffline);
+    // Check for pending changes
+    this.checkPendingChanges();
     
-    console.log('Sync service stopped');
-  }
-
-  /**
-   * Handle online event
-   */
-  private handleOnline = (): void => {
-    console.log('Network online, scheduling sync...');
-    this.scheduleSyncIfOnline();
-  };
-
-  /**
-   * Handle offline event
-   */
-  private handleOffline = (): void => {
-    console.log('Network offline, pausing sync...');
-    if (this.syncTimer) {
-      clearTimeout(this.syncTimer);
-      this.syncTimer = null;
-    }
-  };
-
-  /**
-   * Force a sync immediately
-   */
-  public async forceSync(): Promise<SyncResult> {
-    return this.performSync();
-  }
-
-  /**
-   * Schedule a sync if online
-   */
-  private scheduleSyncIfOnline(): void {
-    if (!navigator.onLine) return;
-    
-    if (this.syncTimer) {
-      clearTimeout(this.syncTimer);
-    }
-    
-    this.syncTimer = setTimeout(async () => {
-      await this.performSync();
-      // Schedule next sync
-      this.scheduleSyncIfOnline();
-    }, this.options.syncInterval);
-  }
-
-  /**
-   * Perform synchronization
-   */
-  private async performSync(): Promise<SyncResult> {
-    // Check if already syncing or offline
-    if (this.isSyncing || !navigator.onLine) {
-      return {
-        success: false,
-        processed: 0,
-        succeeded: 0,
-        failed: 0,
-        errors: [new Error(this.isSyncing ? 'Sync already in progress' : 'Network offline')],
-        timestamp: new Date().toISOString()
-      };
-    }
-    
-    // Check if circuit breaker is open
-    if (supabaseCircuitBreaker.isOpen()) {
-      console.log('Circuit breaker is open, skipping sync');
-      return {
-        success: false,
-        processed: 0,
-        succeeded: 0,
-        failed: 0,
-        errors: [new Error('Circuit breaker is open')],
-        timestamp: new Date().toISOString()
-      };
-    }
-    
-    this.isSyncing = true;
-    
-    if (this.options.onSyncStart) {
-      this.options.onSyncStart();
-    }
-    
-    try {
-      const result = await this.syncQueueItems();
-      this.lastSyncResult = result;
-      
-      if (this.options.onSyncComplete) {
-        this.options.onSyncComplete(result);
-      }
-      
-      // Show toast if there were synced items
-      if (result.succeeded > 0) {
-        toast({
-          title: 'Sync Complete',
-          description: `Successfully synchronized ${result.succeeded} items`,
-          variant: 'default',
-        });
-      }
-      
-      return result;
-    } catch (error) {
-      const syncError = error instanceof Error 
-        ? error 
-        : new Error('Unknown sync error');
-      
-      console.error('Sync error:', syncError);
-      
-      if (this.options.onSyncError) {
-        this.options.onSyncError(syncError);
-      }
-      
-      // Show toast for sync error
-      toast({
-        title: 'Sync Error',
-        description: syncError.message,
-        variant: 'destructive',
-      });
-      
-      return {
-        success: false,
-        processed: 0,
-        succeeded: 0,
-        failed: 0,
-        errors: [syncError],
-        timestamp: new Date().toISOString()
-      };
-    } finally {
-      this.isSyncing = false;
+    // Start auto sync if enabled
+    if (autoSync) {
+      this.startAutoSync();
     }
   }
 
   /**
-   * Synchronize queued items
+   * Start auto sync at specified interval
    */
-  private async syncQueueItems(): Promise<SyncResult> {
-    try {
-      // Get pending sync items
-      const { data: pendingItems, error } = await localDB.syncQueue.getPending();
-      
-      if (error) throw error;
-      if (!pendingItems || pendingItems.length === 0) {
-        return {
-          success: true,
-          processed: 0,
-          succeeded: 0,
-          failed: 0,
-          errors: [],
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      console.log(`Found ${pendingItems.length} items to sync`);
-      
-      // Process items in batches
-      const batchSize = this.options.batchSize;
-      const result: SyncResult = {
-        success: true,
-        processed: 0,
-        succeeded: 0,
-        failed: 0,
-        errors: [],
-        timestamp: new Date().toISOString()
-      };
-      
-      // Group by table for more efficient processing
-      const itemsByTable = this.groupByTable(pendingItems);
-      
-      // Process tables in parallel, but items in each table sequentially
-      await Promise.all(
-        Object.entries(itemsByTable).map(async ([tableName, items]) => {
-          for (let i = 0; i < items.length; i += batchSize) {
-            const batch = items.slice(i, i + batchSize);
-            const batchResults = await this.processBatch(tableName, batch);
-            
-            // Update result
-            result.processed += batchResults.processed;
-            result.succeeded += batchResults.succeeded;
-            result.failed += batchResults.failed;
-            result.errors.push(...batchResults.errors);
+  startAutoSync(): void {
+    // Clear any existing interval
+    this.stopAutoSync();
+    
+    // Start new interval
+    this.syncInterval = window.setInterval(() => {
+      this.checkPendingChanges()
+        .then(pendingCount => {
+          if (pendingCount > 0) {
+            this.synchronize();
           }
         })
-      );
+        .catch(error => {
+          console.error('Error checking pending changes:', error);
+        });
+    }, this.syncIntervalTime);
+  }
+
+  /**
+   * Stop auto sync
+   */
+  stopAutoSync(): void {
+    if (this.syncInterval) {
+      window.clearInterval(this.syncInterval);
+      this.syncInterval = null;
+    }
+  }
+
+  /**
+   * Check if there are pending changes to sync
+   * @returns Promise with the number of pending changes
+   */
+  async checkPendingChanges(): Promise<number> {
+    try {
+      const { data, error } = await localDB.syncQueue.getPending();
       
-      result.success = result.failed === 0;
-      return result;
+      if (error) {
+        throw error;
+      }
+      
+      this.pendingChanges = data?.length || 0;
+      return this.pendingChanges;
     } catch (error) {
-      console.error('Error during sync:', error);
-      return {
-        success: false,
-        processed: 0,
-        succeeded: 0,
-        failed: 0,
-        errors: [error instanceof Error ? error : new Error('Unknown sync error')],
-        timestamp: new Date().toISOString()
-      };
+      console.error('Error checking pending changes:', error);
+      return 0;
     }
   }
 
   /**
-   * Group sync items by table
+   * Start synchronization process
+   * @returns Promise that resolves when sync is complete
    */
-  private groupByTable(items: SyncQueueItem[]): Record<string, SyncQueueItem[]> {
-    return items.reduce((acc, item) => {
-      if (!acc[item.tableName]) {
-        acc[item.tableName] = [];
+  async synchronize(): Promise<boolean> {
+    // If already syncing or no Supabase, don't start again
+    if (this.isSyncing || !this.supabase) {
+      return false;
+    }
+    
+    try {
+      // Start syncing
+      this.isSyncing = true;
+      this.syncProgress = 0;
+      this.syncErrors = [];
+      this.emit('SYNC_START');
+      
+      // Get pending changes
+      const { data: pendingItems, error } = await localDB.syncQueue.getPending();
+      
+      if (error) {
+        throw error;
       }
-      acc[item.tableName].push(item);
-      return acc;
-    }, {} as Record<string, SyncQueueItem[]>);
-  }
-
-  /**
-   * Process a batch of sync items for a specific table
-   */
-  private async processBatch(
-    tableName: string, 
-    items: SyncQueueItem[]
-  ): Promise<SyncResult> {
-    const result: SyncResult = {
-      success: true,
-      processed: items.length,
-      succeeded: 0,
-      failed: 0,
-      errors: [],
-      timestamp: new Date().toISOString()
-    };
-    
-    const succeededIds: number[] = [];
-    
-    // Process each item
-    for (const item of items) {
-      try {
-        // Use the circuit breaker to protect against failures
-        await supabaseCircuitBreaker.execute(async () => {
-          if (item.operation === 'insert') {
-            await supabase.from(tableName).insert(item.recordData);
-          } else if (item.operation === 'update') {
-            await supabase.from(tableName).update(item.recordData).eq('id', item.recordId);
-          } else if (item.operation === 'delete') {
-            await supabase.from(tableName).delete().eq('id', item.recordId);
-          }
-        }, 'database');
+      
+      if (!pendingItems || pendingItems.length === 0) {
+        // No pending changes
+        this.isSyncing = false;
+        this.lastSyncTime = new Date();
+        this.emit('SYNC_COMPLETE');
+        return true;
+      }
+      
+      this.pendingChanges = pendingItems.length;
+      
+      // Process each item in sequence
+      const syncedIds: number[] = [];
+      const errors: Error[] = [];
+      
+      for (let i = 0; i < pendingItems.length; i++) {
+        const item = pendingItems[i];
+        this.syncProgress = Math.round((i / pendingItems.length) * 100);
+        this.emit('SYNC_PROGRESS', { current: i + 1, total: pendingItems.length, progress: this.syncProgress });
         
-        // If successful, mark for synced
-        if (item.id) succeededIds.push(item.id);
-        result.succeeded++;
-      } catch (error) {
-        console.error(`Error processing sync item ${item.id}:`, error);
-        result.failed++;
-        result.errors.push(error instanceof Error ? error : new Error('Unknown sync error'));
+        try {
+          const success = await this.processSyncItem(item);
+          
+          if (success && item.id) {
+            syncedIds.push(item.id);
+          }
+        } catch (error) {
+          console.error(`Error syncing item ${item.id}:`, error);
+          errors.push(error instanceof Error ? error : new Error('Unknown error during sync'));
+        }
       }
+      
+      // Mark synced items
+      if (syncedIds.length > 0) {
+        await localDB.syncQueue.markAsSynced(syncedIds);
+      }
+      
+      // Update sync state
+      this.isSyncing = false;
+      this.lastSyncTime = new Date();
+      this.syncErrors = errors;
+      this.syncProgress = 100;
+      
+      // Update pending changes count
+      await this.checkPendingChanges();
+      
+      // Emit event
+      if (errors.length > 0) {
+        this.emit('SYNC_ERROR', { errors, syncedCount: syncedIds.length });
+        return false;
+      } else {
+        this.emit('SYNC_COMPLETE', { syncedCount: syncedIds.length });
+        return true;
+      }
+    } catch (error) {
+      console.error('Error during synchronization:', error);
+      this.isSyncing = false;
+      this.syncErrors = [error instanceof Error ? error : new Error('Unknown error during sync')];
+      this.emit('SYNC_ERROR', { errors: this.syncErrors });
+      return false;
     }
-    
-    // Mark synced items as processed
-    if (succeededIds.length > 0) {
-      await localDB.syncQueue.markAsSynced(succeededIds);
-    }
-    
-    result.success = result.failed === 0;
-    return result;
   }
 
   /**
-   * Get the status of the sync service
+   * Get current sync status
    */
-  public getStatus(): {
-    isStarted: boolean;
-    isSyncing: boolean;
-    lastSyncResult: SyncResult | null;
-  } {
+  getStatus(): SyncStatus {
     return {
-      isStarted: this.isStarted,
       isSyncing: this.isSyncing,
-      lastSyncResult: this.lastSyncResult
+      lastSyncTime: this.lastSyncTime,
+      syncErrors: this.syncErrors,
+      pendingChanges: this.pendingChanges,
+      progress: this.syncProgress
     };
+  }
+
+  /**
+   * Add event listener
+   * @param event Event to listen for
+   * @param listener Callback function
+   * @returns Function to remove listener
+   */
+  on(event: SyncEvent, listener: SyncEventListener): () => void {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    
+    const listeners = this.eventListeners.get(event)!;
+    listeners.push(listener);
+    
+    return () => {
+      const index = listeners.indexOf(listener);
+      if (index >= 0) {
+        listeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Clean up resources
+   */
+  dispose(): void {
+    this.stopAutoSync();
+    this.eventListeners.clear();
+  }
+
+  /**
+   * Process a single sync queue item
+   */
+  private async processSyncItem(item: SyncQueueItem): Promise<boolean> {
+    if (!this.supabase) {
+      return false;
+    }
+    
+    try {
+      const { tableName, operation, recordData, recordId } = item;
+      
+      switch (operation) {
+        case 'insert':
+          if (!recordData) {
+            throw new Error('No record data for insert operation');
+          }
+          
+          const { error: insertError } = await this.supabase
+            .from(tableName)
+            .insert(recordData);
+          
+          if (insertError) {
+            throw insertError;
+          }
+          
+          return true;
+          
+        case 'update':
+          if (!recordData || !recordId) {
+            throw new Error('Missing record data or ID for update operation');
+          }
+          
+          const { error: updateError } = await this.supabase
+            .from(tableName)
+            .update(recordData)
+            .eq('id', recordId);
+          
+          if (updateError) {
+            throw updateError;
+          }
+          
+          return true;
+          
+        case 'delete':
+          if (!recordId) {
+            throw new Error('No record ID for delete operation');
+          }
+          
+          const { error: deleteError } = await this.supabase
+            .from(tableName)
+            .delete()
+            .eq('id', recordId);
+          
+          if (deleteError) {
+            throw deleteError;
+          }
+          
+          return true;
+          
+        default:
+          throw new Error(`Unknown operation: ${operation}`);
+      }
+    } catch (error) {
+      console.error('Error processing sync item:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Emit an event
+   */
+  private emit(event: SyncEvent, data?: any): void {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      listeners.forEach(listener => {
+        try {
+          listener(event, data);
+        } catch (error) {
+          console.error('Error in sync event listener:', error);
+        }
+      });
+    }
   }
 }
 
-// Create and export a singleton instance
+// Create and export singleton instance
 export const syncService = new SyncService();
 
 export default syncService;

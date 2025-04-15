@@ -1,474 +1,677 @@
 /**
- * Supabase Connection Test Page
+ * Supabase Test Page
  * 
- * This page is used to test and demonstrate the connection status
- * with Supabase, including offline capabilities, reconnection 
- * mechanisms, and circuit breaker patterns.
+ * This page provides a UI for testing Supabase connectivity
+ * and demonstrating the offline capabilities of the application.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+import React, { useState } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
 } from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { useEnhancedSupabase } from '@/components/supabase/EnhancedSupabaseProvider';
-import { AlertTriangle, CheckCircle, Database, RefreshCw, Shield, WifiOff, XCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CircuitBreaker } from '@/lib/utils/circuitBreaker';
+import { Button } from '@/components/ui/button';
+import { 
+  AlertTriangle, 
+  CheckCircle2, 
+  Database, 
+  RefreshCw, 
+  Shield, 
+  Wifi, 
+  WifiOff 
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { useEnhancedSupabase } from '@/components/supabase/EnhancedSupabaseProvider';
+import { isIndexedDBAvailable, localDB } from '@/lib/utils/localDatabase';
+import { localAuth } from '@/lib/utils/localStorageAuth';
+import { syncService } from '@/lib/utils/syncService';
 
+/**
+ * Supabase Test Page Component
+ */
 const SupabaseTestPage: React.FC = () => {
-  const { 
-    isConfigured, 
-    connectionStatus, 
-    serviceStatus, 
-    checkConnection, 
-    verifyServices,
-    diagnostics,
-    isOfflineMode,
-    enableOfflineMode,
-    disableOfflineMode,
-    pendingSyncChanges,
-    forceSync,
-    isSyncing,
-    isIndexedDBSupported
-  } = useEnhancedSupabase();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTestingAuth, setIsTestingAuth] = useState(false);
+  const [isTestingStorage, setIsTestingStorage] = useState(false);
+  const [testResults, setTestResults] = useState<string[]>([]);
   
   const { toast } = useToast();
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const { 
+    supabase, 
+    connectionStatus, 
+    serviceStatus, 
+    isOfflineMode,
+    isIndexedDBSupported,
+    pendingSyncChanges,
+    isSyncing,
+    reconnectionStatus,
+    diagnostics,
+    checkConnection,
+    verifyServices,
+    enableOfflineMode,
+    disableOfflineMode,
+    forceSync
+  } = useEnhancedSupabase();
 
-  // Test database connection
-  const refreshConnection = async () => {
+  /**
+   * Run a full connection test
+   */
+  const runConnectionTest = async () => {
     try {
-      setIsRefreshing(true);
-      await checkConnection();
+      setIsLoading(true);
+      setTestResults([]);
+      addTestResult('Starting Supabase connection tests...');
+      
+      // Test basic connection
+      addTestResult('Testing Supabase connection to: ' + import.meta.env.VITE_SUPABASE_URL);
+      const status = await checkConnection();
+      addTestResult(`Connection status: ${status}`);
+      
+      // Verify all services
+      addTestResult('Verifying Supabase services...');
+      const services = await verifyServices();
+      
+      // Display service statuses
+      addTestResult('Services status:');
+      addTestResult(`- Health endpoint: ${services.health ? '✅ Connected' : '❌ Failed'}`);
+      addTestResult(`- Auth service: ${services.auth ? '✅ Connected' : '❌ Failed'}`);
+      addTestResult(`- Database: ${services.database ? '✅ Connected' : '❌ Failed'}`);
+      addTestResult(`- Storage: ${services.storage ? '✅ Connected' : '❌ Failed'}`);
+      addTestResult(`- Functions: ${services.functions ? '✅ Connected' : '❌ Failed'}`);
+      addTestResult(`- Realtime: ${services.realtime ? '✅ Connected' : '❌ Failed'}`);
+      
+      if (services.tables && services.tables.length > 0) {
+        addTestResult(`- Available tables: ${services.tables.join(', ')}`);
+      }
+      
+      // Test local storage
+      testLocalStorage();
+      
+      addTestResult('Connection tests completed.');
+      
       toast({
-        title: 'Connection Refreshed',
-        description: `Connection status: ${connectionStatus}`,
+        title: 'Tests completed',
+        description: 'Connection tests have been completed successfully.',
       });
     } catch (error) {
+      console.error('Error running connection tests:', error);
+      addTestResult(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to check connection',
+        title: 'Test Error',
+        description: 'An error occurred while running connection tests.',
         variant: 'destructive',
       });
     } finally {
-      setIsRefreshing(false);
+      setIsLoading(false);
     }
   };
 
-  // Verify all Supabase services
-  const runServiceVerification = async () => {
+  /**
+   * Test authentication
+   */
+  const testAuth = async () => {
     try {
-      setIsRefreshing(true);
-      await verifyServices();
+      setIsTestingAuth(true);
+      addTestResult('Testing Supabase authentication...');
+      
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        throw sessionError;
+      }
+      
+      if (session) {
+        addTestResult(`✅ Authenticated as: ${session.user.email || session.user.id}`);
+        addTestResult(`User ID: ${session.user.id}`);
+        addTestResult(`Session expires: ${new Date(session.expires_at! * 1000).toLocaleString()}`);
+      } else {
+        addTestResult('⚠️ Not authenticated');
+        
+        // In development, set up a test user (this is just for demonstration)
+        if (import.meta.env.DEV) {
+          addTestResult('Setting up mock admin user for development');
+          
+          // Create a local session
+          const mockUser = {
+            id: 'test-user-id',
+            email: 'admin@example.com',
+            role: 'admin',
+            created_at: new Date().toISOString(),
+          };
+          
+          await localAuth.signIn({
+            id: 'local-session-id',
+            user: mockUser,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          });
+          
+          addTestResult('✅ Created mock admin user for testing');
+        }
+      }
+      
       toast({
-        title: 'Services Verified',
-        description: 'Service status has been refreshed',
+        title: 'Auth Test Completed',
+        description: session ? 'You are authenticated.' : 'You are not authenticated.',
       });
     } catch (error) {
+      console.error('Error testing auth:', error);
+      addTestResult(`Auth Error: ${error instanceof Error ? error.message : String(error)}`);
+      
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to verify services',
+        title: 'Auth Test Error',
+        description: 'An error occurred while testing authentication.',
         variant: 'destructive',
       });
     } finally {
-      setIsRefreshing(false);
+      setIsTestingAuth(false);
     }
   };
 
-  // Color status badges
-  const getStatusColor = (status: boolean | undefined) => {
-    if (status === undefined) return 'bg-gray-500';
-    return status ? 'bg-green-500' : 'bg-red-500';
+  /**
+   * Test local storage capabilities
+   */
+  const testLocalStorage = () => {
+    try {
+      addTestResult('Testing local storage capabilities...');
+      
+      // Check IndexedDB support
+      const indexedDBSupported = isIndexedDBAvailable();
+      addTestResult(`IndexedDB support: ${indexedDBSupported ? '✅ Supported' : '❌ Not supported'}`);
+      
+      // Check local authentication
+      const localAuthAvailable = localAuth !== undefined;
+      addTestResult(`Local auth: ${localAuthAvailable ? '✅ Available' : '❌ Not available'}`);
+      
+      // Check if we're in offline mode
+      addTestResult(`Offline mode: ${isOfflineMode ? '✅ Enabled' : '❌ Disabled'}`);
+      
+      // Check sync service status
+      addTestResult(`Pending sync changes: ${pendingSyncChanges || 0}`);
+    } catch (error) {
+      console.error('Error testing local storage:', error);
+      addTestResult(`Local Storage Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
-  // Connection status indicator
-  const ConnectionStatus = () => {
-    let title: string = '';
-    let description: string = '';
-    let icon: React.ReactNode = null;
-    let variant: 'default' | 'destructive' | 'warning' | string = 'default';
-    
+  /**
+   * Test data storage
+   */
+  const testStorage = async () => {
+    try {
+      setIsTestingStorage(true);
+      addTestResult('Testing data storage...');
+      
+      // Test writing to local database first
+      if (isIndexedDBSupported) {
+        addTestResult('Testing local database storage...');
+        
+        const testItem = {
+          id: `test-item-${Date.now()}`,
+          name: 'Test Item',
+          created_at: new Date().toISOString(),
+          value: Math.random()
+        };
+        
+        // Store in local database
+        const { data, error } = await localDB.storeWithSync('test_items', testItem);
+        
+        if (error) {
+          throw error;
+        }
+        
+        addTestResult(`✅ Successfully stored item in local database with ID: ${data?.id}`);
+        
+        // Retrieve from local database
+        const { data: retrievedData, error: retrieveError } = await localDB.get('test_items', data?.id);
+        
+        if (retrieveError) {
+          throw retrieveError;
+        }
+        
+        if (retrievedData) {
+          addTestResult('✅ Successfully retrieved item from local database');
+        } else {
+          addTestResult('❌ Failed to retrieve item from local database');
+        }
+      } else {
+        addTestResult('❌ IndexedDB not supported in this browser');
+      }
+      
+      // Test Supabase storage if online
+      if (supabase && !isOfflineMode) {
+        addTestResult('Testing Supabase storage...');
+        
+        // Get list of buckets
+        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        
+        if (bucketsError) {
+          throw bucketsError;
+        }
+        
+        if (buckets && buckets.length > 0) {
+          addTestResult(`✅ Storage buckets available: ${buckets.map(b => b.name).join(', ')}`);
+        } else {
+          addTestResult('⚠️ No storage buckets found');
+        }
+      } else if (isOfflineMode) {
+        addTestResult('📱 Skipping Supabase storage test (offline mode)');
+      } else {
+        addTestResult('❌ Supabase client not initialized');
+      }
+      
+      toast({
+        title: 'Storage Test Completed',
+        description: 'Data storage tests have been completed.',
+      });
+    } catch (error) {
+      console.error('Error testing storage:', error);
+      addTestResult(`Storage Error: ${error instanceof Error ? error.message : String(error)}`);
+      
+      toast({
+        title: 'Storage Test Error',
+        description: 'An error occurred while testing data storage.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTestingStorage(false);
+    }
+  };
+
+  /**
+   * Toggle offline mode
+   */
+  const toggleOfflineMode = () => {
+    if (isOfflineMode) {
+      disableOfflineMode();
+      addTestResult('🌐 Attempting to disable offline mode...');
+    } else {
+      enableOfflineMode();
+      addTestResult('📱 Enabling offline mode...');
+    }
+  };
+
+  /**
+   * Manually sync data
+   */
+  const syncData = async () => {
+    try {
+      addTestResult('🔄 Starting manual data sync...');
+      
+      const result = await forceSync();
+      
+      if (result) {
+        addTestResult('✅ Data sync completed successfully');
+        
+        toast({
+          title: 'Sync Completed',
+          description: 'Data synchronization has completed successfully.',
+        });
+      } else {
+        addTestResult('⚠️ Data sync completed with errors');
+        
+        toast({
+          title: 'Sync Warning',
+          description: 'Data synchronization completed but with some errors.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error syncing data:', error);
+      addTestResult(`Sync Error: ${error instanceof Error ? error.message : String(error)}`);
+      
+      toast({
+        title: 'Sync Error',
+        description: 'An error occurred during data synchronization.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  /**
+   * Add a test result
+   */
+  const addTestResult = (result: string) => {
+    setTestResults((prev) => [...prev, result]);
+  };
+
+  /**
+   * Get color for connection status
+   */
+  const getConnectionStatusColor = () => {
     switch (connectionStatus) {
       case 'connected':
-        title = 'Connected';
-        description = 'Successfully connected to Supabase';
-        icon = <CheckCircle className="h-4 w-4 text-green-500" />;
-        variant = 'default';
-        break;
+        return 'bg-green-500';
       case 'partial':
-        title = 'Partial Connection';
-        description = 'Some Supabase services are available, but not all';
-        icon = <AlertTriangle className="h-4 w-4 text-amber-500" />;
-        variant = 'warning';
-        break;
+        return 'bg-yellow-500';
       case 'error':
-        title = 'Connection Error';
-        description = 'Failed to connect to Supabase';
-        icon = <XCircle className="h-4 w-4 text-red-500" />;
-        variant = 'destructive';
-        break;
+        return 'bg-red-500';
       case 'offline':
-        title = 'Offline Mode';
-        description = 'Working in offline mode with local storage';
-        icon = <WifiOff className="h-4 w-4 text-gray-500" />;
-        variant = 'default';
-        break;
+        return 'bg-blue-500';
       case 'connecting':
-        title = 'Connecting...';
-        description = 'Attempting to connect to Supabase';
-        icon = <RefreshCw className="h-4 w-4 animate-spin" />;
-        variant = 'default';
-        break;
-      case 'unconfigured':
-        title = 'Not Configured';
-        description = 'Supabase credentials are not properly configured';
-        icon = <AlertTriangle className="h-4 w-4 text-amber-500" />;
-        variant = 'destructive';
-        break;
+        return 'bg-yellow-500 animate-pulse';
+      default:
+        return 'bg-gray-500';
     }
-    
-    return (
-      <Alert className={variant === 'warning' ? 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800' : undefined}>
-        <div className="flex items-center">
-          {icon}
-          <div>
-            <AlertTitle className="ml-2">{title}</AlertTitle>
-            <AlertDescription>{description}</AlertDescription>
-          </div>
-        </div>
-      </Alert>
-    );
   };
 
+  /**
+   * Render the test page
+   */
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Supabase Connection Test</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/">Back to Home</Link>
-          </Button>
-          <Button 
-            variant="outline" 
-            disabled={isRefreshing} 
-            onClick={refreshConnection}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh Status
-          </Button>
-          {!isOfflineMode ? (
-            <Button 
-              variant="default" 
-              onClick={enableOfflineMode}
-            >
-              <WifiOff className="mr-2 h-4 w-4" />
-              Enter Offline Mode
-            </Button>
-          ) : (
-            <Button 
-              variant="secondary" 
-              onClick={disableOfflineMode}
-            >
-              <Database className="mr-2 h-4 w-4" />
-              Exit Offline Mode
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      <ConnectionStatus />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Connection Status Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Connection Status
-            </CardTitle>
-            <CardDescription>
-              Current status of your Supabase connection
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Connection:</span>
-                <Badge className={connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'partial' ? 'bg-amber-500' : 'bg-red-500'}>
-                  {connectionStatus}
-                </Badge>
+    <div className="container mx-auto py-10 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-6 w-6" />
+            Supabase Connection Diagnostics
+          </CardTitle>
+          <CardDescription>
+            This page allows you to test Supabase connectivity and offline features
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Connection Status */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Connection Status</h3>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${getConnectionStatusColor()}`}></div>
+                <span className="font-medium">
+                  {connectionStatus === 'connected' && 'Connected'}
+                  {connectionStatus === 'partial' && 'Partially Connected'}
+                  {connectionStatus === 'error' && 'Connection Error'}
+                  {connectionStatus === 'offline' && 'Offline Mode'}
+                  {connectionStatus === 'connecting' && 'Connecting...'}
+                  {connectionStatus === 'unconfigured' && 'Not Configured'}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span>Configured:</span>
-                <Badge className={isConfigured ? 'bg-green-500' : 'bg-red-500'}>
-                  {isConfigured ? 'Yes' : 'No'}
+              
+              <Badge variant={isOfflineMode ? 'default' : 'outline'} className="ml-2">
+                {isOfflineMode ? (
+                  <WifiOff className="mr-1 h-3 w-3" />
+                ) : (
+                  <Wifi className="mr-1 h-3 w-3" />
+                )}
+                {isOfflineMode ? 'Offline' : 'Online'}
+              </Badge>
+              
+              {pendingSyncChanges > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {pendingSyncChanges} pending changes
                 </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Offline Mode:</span>
-                <Badge className={isOfflineMode ? 'bg-blue-500' : 'bg-gray-500'}>
-                  {isOfflineMode ? 'Enabled' : 'Disabled'}
+              )}
+              
+              {isSyncing && (
+                <Badge variant="secondary" className="ml-2 animate-pulse">
+                  <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+                  Syncing...
                 </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>IndexedDB Support:</span>
-                <Badge className={isIndexedDBSupported ? 'bg-green-500' : 'bg-red-500'}>
-                  {isIndexedDBSupported ? 'Available' : 'Not Available'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Pending Sync Changes:</span>
-                <Badge className={pendingSyncChanges > 0 ? 'bg-amber-500' : 'bg-green-500'}>
-                  {pendingSyncChanges}
-                </Badge>
-              </div>
+              )}
             </div>
-          </CardContent>
-          <CardFooter className="justify-end">
-            {pendingSyncChanges > 0 && (
+          </div>
+          
+          {/* Reconnection Status */}
+          {reconnectionStatus && reconnectionStatus.isReconnecting && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Reconnecting...</h3>
+                <span className="text-xs text-gray-500">
+                  Attempt {reconnectionStatus.attempt} of {reconnectionStatus.maxAttempts}
+                </span>
+              </div>
+              <Progress 
+                value={(reconnectionStatus.attempt / reconnectionStatus.maxAttempts) * 100} 
+                className="h-2"
+              />
+              {reconnectionStatus.nextAttemptTime && (
+                <p className="text-xs text-gray-500">
+                  Next attempt: {new Date(reconnectionStatus.nextAttemptTime).toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={runConnectionTest}
+              disabled={isLoading}
+              className="flex items-center gap-1"
+            >
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Shield className="h-4 w-4" />
+              )}
+              <span>Test Connection</span>
+            </Button>
+            
+            <Button 
+              onClick={testAuth}
+              disabled={isTestingAuth}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              {isTestingAuth ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              <span>Test Authentication</span>
+            </Button>
+            
+            <Button 
+              onClick={testStorage}
+              disabled={isTestingStorage}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              {isTestingStorage ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Database className="h-4 w-4" />
+              )}
+              <span>Test Storage</span>
+            </Button>
+            
+            <Button 
+              onClick={toggleOfflineMode}
+              variant={isOfflineMode ? 'default' : 'secondary'}
+              className="flex items-center gap-1"
+            >
+              {isOfflineMode ? (
+                <Wifi className="h-4 w-4" />
+              ) : (
+                <WifiOff className="h-4 w-4" />
+              )}
+              <span>{isOfflineMode ? 'Go Online' : 'Go Offline'}</span>
+            </Button>
+            
+            {pendingSyncChanges > 0 && !isOfflineMode && (
               <Button 
-                onClick={() => forceSync()} 
-                disabled={isSyncing || !pendingSyncChanges}
+                onClick={syncData}
                 variant="secondary"
-                size="sm"
+                className="flex items-center gap-1"
+                disabled={isSyncing}
               >
-                <RefreshCw className={`mr-2 h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                {isSyncing ? 'Syncing...' : 'Force Sync'}
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>Sync Data ({pendingSyncChanges})</span>
               </Button>
             )}
-          </CardFooter>
-        </Card>
-        
-        {/* Service Status Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Service Status
-            </CardTitle>
-            <CardDescription>
-              Status of individual Supabase services
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span>Health Check:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.health)}`} />
-              </div>
-              <div className="flex justify-between">
-                <span>Auth:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.auth)}`} />
-              </div>
-              <div className="flex justify-between">
-                <span>Database:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.database)}`} />
-              </div>
-              <div className="flex justify-between">
-                <span>Storage:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.storage)}`} />
-              </div>
-              <div className="flex justify-between">
-                <span>Functions:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.functions)}`} />
-              </div>
-              <div className="flex justify-between">
-                <span>Realtime:</span>
-                <span className={`h-3 w-3 rounded-full ${getStatusColor(serviceStatus?.realtime)}`} />
+          </div>
+          
+          {/* Warning if not supported */}
+          {!isIndexedDBSupported && (
+            <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md border border-amber-200 dark:border-amber-900 flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-amber-800 dark:text-amber-300">
+                  Offline mode not fully supported
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Your browser does not support IndexedDB, which is required for full offline functionality.
+                  Some features may be limited.
+                </p>
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={runServiceVerification} 
-              disabled={isRefreshing} 
-              variant="outline" 
-              className="w-full"
-              size="sm"
-            >
-              <RefreshCw className={`mr-2 h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Verify All Services
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        {/* Available Tables Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Tables</CardTitle>
-            <CardDescription>
-              Detected tables in your Supabase project
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {serviceStatus?.tables && serviceStatus.tables.length > 0 ? (
-              <div className="max-h-[200px] overflow-y-auto space-y-1">
-                {serviceStatus.tables.map((table, index) => (
-                  <div key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-sm">
-                    {table}
+          )}
+          
+          {/* Service Status */}
+          {serviceStatus && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Service Status</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.health ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Health</span>
                   </div>
-                ))}
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.health ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.auth ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Authentication</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.auth ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.database ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Database</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.database ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.storage ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Storage</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.storage ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.functions ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Functions</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.functions ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    {serviceStatus.realtime ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">Realtime</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {serviceStatus.realtime ? 'Operational' : 'Service disruption'}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-32">
-                <AlertTriangle className="h-6 w-6 text-amber-500" />
-                <p className="mt-2 text-sm text-gray-500">No tables detected or database unavailable</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="diagnostics">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="diagnostics">Connection Diagnostics</TabsTrigger>
-          <TabsTrigger value="debug">Debug Information</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="diagnostics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connection Diagnostics</CardTitle>
-              <CardDescription>
-                Detailed connection diagnostics and troubleshooting information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-black text-green-400 p-4 rounded-md max-h-[200px] overflow-y-auto font-mono text-sm">
-                {diagnostics.map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="debug">
-          <Card>
-            <CardHeader>
-              <CardTitle>Debug Information</CardTitle>
-              <CardDescription>
-                Technical details useful for debugging
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto max-h-[200px] overflow-y-auto">
-                <pre className="text-xs">
-                  {JSON.stringify(serviceStatus, null, 2)}
+              
+              {serviceStatus.lastChecked && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Last checked: {new Date(serviceStatus.lastChecked).toLocaleString()}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Test Results */}
+          {testResults.length > 0 && (
+            <div className="space-y-2">
+              <Separator />
+              <h3 className="text-lg font-medium">Test Results</h3>
+              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md border overflow-auto max-h-64">
+                <pre className="text-sm">
+                  {testResults.map((result, i) => (
+                    <div key={i} className="py-0.5">
+                      {result}
+                    </div>
+                  ))}
                 </pre>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <p className="text-xs text-gray-500">
+            This diagnostic page is for testing Supabase connectivity and offline functionality.
+          </p>
+        </CardFooter>
+      </Card>
       
-      <Separator />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Connection Resilience</CardTitle>
-            <CardDescription>
-              Mechanisms for handling connection issues
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium">Offline Mode</h3>
-              <p className="text-sm text-gray-500">
-                When enabled, the app operates using local storage and IndexedDB to store data
-                when Supabase is unavailable. Changes are synchronized when connection is restored.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium">Circuit Breaker</h3>
-              <p className="text-sm text-gray-500">
-                Prevents cascading failures by temporarily disabling calls to services that are
-                consistently failing. Automatically attempts recovery after a cooldown period.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium">Reconnection Manager</h3>
-              <p className="text-sm text-gray-500">
-                Automatically attempts to reconnect to Supabase when connection is lost, using
-                exponential backoff to avoid overwhelming the server.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Resilience Features</CardTitle>
-            <CardDescription>
-              Try out the resilience mechanisms
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Button 
-                variant={isOfflineMode ? "destructive" : "default"} 
-                onClick={isOfflineMode ? disableOfflineMode : enableOfflineMode}
-                className="w-full"
-              >
-                {isOfflineMode ? 'Disable Offline Mode' : 'Enable Offline Mode'}
-              </Button>
-              <p className="text-xs text-gray-500 mt-1">
-                {isOfflineMode
-                  ? "Currently working offline. Data is stored locally."
-                  : "Working online. Switch to offline mode to test local storage."}
-              </p>
-            </div>
-            
-            <div>
-              <Button 
-                variant="outline" 
-                onClick={runServiceVerification}
-                className="w-full"
-              >
-                Test Service Availability
-              </Button>
-              <p className="text-xs text-gray-500 mt-1">
-                Checks each Supabase service to determine what's available
-              </p>
-            </div>
-            
-            <div>
-              <Button 
-                variant="outline" 
-                onClick={() => forceSync()}
-                className="w-full"
-                disabled={!pendingSyncChanges}
-              >
-                Sync Pending Changes ({pendingSyncChanges})
-              </Button>
-              <p className="text-xs text-gray-500 mt-1">
-                {pendingSyncChanges > 0
-                  ? `There are ${pendingSyncChanges} changes waiting to be synchronized`
-                  : "No pending changes to synchronize"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Diagnostic Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Diagnostics</CardTitle>
+          <CardDescription>
+            Technical information about the connection status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md border overflow-auto max-h-64">
+            <pre className="text-xs">
+              {diagnostics.map((line, i) => (
+                <div key={i} className="py-0.5">
+                  {line}
+                </div>
+              ))}
+            </pre>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { createServer } from 'http';
+import routes from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
@@ -54,7 +55,11 @@ app.use((req, res, next) => {
     log(`MCP initialization error: ${error}`, 'error');
   }
   
-  const server = await registerRoutes(app);
+  // Register API routes
+  app.use('/api', routes);
+  
+  // Create HTTP server
+  const server = createServer(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

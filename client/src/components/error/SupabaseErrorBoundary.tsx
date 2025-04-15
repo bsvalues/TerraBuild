@@ -1,366 +1,184 @@
 /**
  * Supabase Error Boundary Component
  * 
- * This component provides a graceful fallback UI when Supabase
- * connection errors occur, while allowing the application to
- * continue functioning in offline mode.
+ * This component provides a boundary for handling errors in Supabase-connected components.
+ * It prevents errors from crashing the entire application and provides a graceful fallback.
  */
 
-import React, { Component, ErrorInfo } from 'react';
-import { AlertTriangle, WifiOff, RefreshCw, Database, Shield } from 'lucide-react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { useToast } from '@/hooks/use-toast';
-import { isIndexedDBAvailable } from '@/lib/utils/localDatabase';
-import reconnectionManager from '@/lib/utils/reconnectionManager';
-import { checkSupabaseConnection } from '@/lib/utils/supabaseClient';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
 
-// Error types that this boundary should catch
-const SUPABASE_ERROR_PATTERNS = [
-  'supabase',
-  'connection',
-  'network',
-  'fetch',
-  'api',
-  'authentication',
-  'auth',
-  'database',
-  'storage',
-];
-
-interface Props {
-  children: React.ReactNode;
-  showFallbackInitially?: boolean;
+// Props for the error boundary
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onRetry?: () => void;
+  onOfflineMode?: () => void;
+  showOfflineOption?: boolean;
 }
 
-interface State {
+// State for the error boundary
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  isSupabaseError: boolean;
-  errorStackTrace: string | null;
-  offlineMode: boolean;
-  reconnectionAttempts: number;
-  isReconnecting: boolean;
 }
 
 /**
- * Determine if an error is a Supabase-related error
+ * Error boundary specific for Supabase-related errors
  */
-const isSupabaseError = (error: Error): boolean => {
-  if (!error) return false;
-  
-  const errorString = (error.message + ' ' + (error.stack || '')).toLowerCase();
-  
-  return SUPABASE_ERROR_PATTERNS.some(pattern => 
-    errorString.includes(pattern.toLowerCase())
-  );
-};
-
-/**
- * Component to show reconnection progress
- */
-const ReconnectionStatus: React.FC<{
-  attempts: number;
-  onRetry: () => void;
-  isReconnecting: boolean;
-}> = ({ attempts, onRetry, isReconnecting }) => {
-  return (
-    <div className="space-y-2 mt-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <RefreshCw 
-            className={`mr-2 h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} 
-          />
-          <span>
-            {isReconnecting 
-              ? 'Reconnecting...' 
-              : `Reconnection attempts: ${attempts}`
-            }
-          </span>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onRetry}
-          disabled={isReconnecting}
-        >
-          Retry Now
-        </Button>
-      </div>
-      
-      {attempts > 0 && (
-        <Alert className="mt-2 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <AlertTitle>Limited Functionality</AlertTitle>
-          <AlertDescription>
-            You're in offline mode. Some features may not be available until connection is restored.
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
-};
-
-/**
- * Button to enable offline mode
- */
-const OfflineModeToggle: React.FC<{
-  enabled: boolean;
-  onToggle: () => void;
-}> = ({ enabled, onToggle }) => {
-  return (
-    <Button 
-      variant={enabled ? "default" : "outline"} 
-      className="gap-2"
-      onClick={onToggle}
-    >
-      <WifiOff className="h-4 w-4" />
-      <span>{enabled ? 'Exit Offline Mode' : 'Use Offline Mode'}</span>
-    </Button>
-  );
-};
-
-/**
- * Error details accordion
- */
-const ErrorDetails: React.FC<{
-  error: Error | null;
-  stackTrace: string | null;
-}> = ({ error, stackTrace }) => {
-  return (
-    <Accordion type="single" collapsible className="mt-4">
-      <AccordionItem value="details">
-        <AccordionTrigger className="text-sm">
-          Show Error Details
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs font-mono overflow-auto max-h-[200px]">
-            <p className="mb-2 font-bold">{error?.message || 'Unknown error'}</p>
-            <pre className="whitespace-pre-wrap break-all">
-              {stackTrace || error?.stack || 'No stack trace available'}
-            </pre>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
-};
-
-/**
- * Supabase Error Boundary Class Component
- */
-class SupabaseErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+export class SupabaseErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    
     this.state = {
-      hasError: props.showFallbackInitially || false,
+      hasError: false,
       error: null,
-      errorInfo: null,
-      isSupabaseError: false,
-      errorStackTrace: null,
-      offlineMode: false,
-      reconnectionAttempts: 0,
-      isReconnecting: false
+      errorInfo: null
     };
   }
-  
-  /**
-   * Derived state from error
-   */
-  static getDerivedStateFromError(error: Error): Partial<State> {
-    // Check if this is a Supabase-related error
-    const supabaseError = isSupabaseError(error);
-    
+
+  // Called when an error occurs in a child component
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return {
       hasError: true,
       error,
-      isSupabaseError: supabaseError,
+      errorInfo: null
     };
   }
-  
-  /**
-   * Capture error details when component throws
-   */
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({
-      errorInfo,
-      errorStackTrace: error.stack || null
+
+  // Called after an error has been thrown by a child component
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Update state with error details
+    this.setState({ 
+      error, 
+      errorInfo 
     });
     
-    // Log error to console for debugging
-    console.error('Supabase connection error caught by boundary:', error);
-    console.error('Component stack:', errorInfo.componentStack);
+    // Call onError handler if provided
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+    
+    // Log error to console
+    console.error('Supabase error caught by boundary:', error, errorInfo);
   }
-  
-  /**
-   * Check Supabase connection and try to recover
-   */
-  tryReconnect = async () => {
-    this.setState({
-      isReconnecting: true,
-      reconnectionAttempts: this.state.reconnectionAttempts + 1
-    });
-    
-    try {
-      const isConnected = await checkSupabaseConnection();
-      
-      if (isConnected) {
-        // Connection restored
-        this.setState({
-          hasError: false,
-          error: null,
-          errorInfo: null,
-          isReconnecting: false,
-          offlineMode: false
-        });
-        
-        return true;
-      } else {
-        // Still disconnected
-        this.setState({
-          isReconnecting: false
-        });
-        return false;
-      }
-    } catch (error) {
-      // Error during reconnection
-      this.setState({
-        isReconnecting: false
-      });
-      
-      return false;
-    }
-  };
-  
-  /**
-   * Toggle offline mode
-   */
-  toggleOfflineMode = () => {
-    this.setState(state => ({
-      offlineMode: !state.offlineMode,
-      hasError: !state.offlineMode ? false : state.hasError
-    }));
-    
-    // If turning off offline mode, try to reconnect
-    if (this.state.offlineMode) {
-      this.tryReconnect();
-    }
-  };
-  
-  /**
-   * Reset the error boundary
-   */
-  resetErrorBoundary = () => {
+
+  // Handle retry button click
+  handleRetry = (): void => {
+    // Reset error state
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null,
-      reconnectionAttempts: 0
+      errorInfo: null
     });
-  };
-  
-  /**
-   * Render error boundary content
-   */
-  render() {
-    const { hasError, error, isSupabaseError, errorStackTrace, offlineMode, reconnectionAttempts, isReconnecting } = this.state;
-    const { children } = this.props;
     
-    // If there's no error or it's not a Supabase error, render children normally
-    if (!hasError || (!isSupabaseError && !offlineMode && !this.props.showFallbackInitially)) {
+    // Call onRetry handler if provided
+    if (this.props.onRetry) {
+      this.props.onRetry();
+    }
+  };
+
+  // Handle offline mode button click
+  handleOfflineMode = (): void => {
+    // Call onOfflineMode handler if provided
+    if (this.props.onOfflineMode) {
+      this.props.onOfflineMode();
+      
+      // Reset error state
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null
+      });
+    }
+  };
+
+  // Render the error UI or the children
+  render(): ReactNode {
+    const { hasError, error } = this.state;
+    const { children, fallback, showOfflineOption = true } = this.props;
+    
+    // If there's no error, render children normally
+    if (!hasError) {
       return children;
     }
     
-    // For Supabase errors, render fallback UI with offline mode option
+    // If a custom fallback is provided, use it
+    if (fallback) {
+      return fallback;
+    }
+    
+    // Determine if it's a Supabase-specific error
+    const isSupabaseError = error?.message?.includes('supabase') || 
+                           error?.message?.toLowerCase().includes('network') ||
+                           error?.message?.toLowerCase().includes('fetch') ||
+                           error?.message?.toLowerCase().includes('connection') ||
+                           error?.stack?.includes('supabase');
+    
+    // Get a user-friendly error message
+    const errorMessage = isSupabaseError
+      ? "There was a problem connecting to the database. This could be due to network issues or server problems."
+      : error?.message || "An unexpected error occurred.";
+    
+    // Render the default error UI
     return (
-      <div className="p-4">
-        <Card className="w-full max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Connection Issue
-            </CardTitle>
+      <div className="w-full py-8 px-4">
+        <Card className="max-w-md mx-auto border-red-200 dark:border-red-900">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <CardTitle>Connection Error</CardTitle>
+            </div>
             <CardDescription>
-              {offlineMode 
-                ? "You're working in offline mode. Changes will be synchronized when connection is restored."
-                : "We're having trouble connecting to the server. You can continue in offline mode or try reconnecting."
-              }
+              {isSupabaseError 
+                ? "We're having trouble connecting to our servers." 
+                : "Something went wrong."}
             </CardDescription>
           </CardHeader>
-          
-          <CardContent>
-            <Alert className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>
-                {offlineMode ? "Offline Mode Enabled" : "Connection Error"}
-              </AlertTitle>
-              <AlertDescription>
-                {offlineMode
-                  ? "Your data is being stored locally and will sync when connection is restored."
-                  : "The application is having trouble connecting to the database. This may be due to network issues or server maintenance."
-                }
-              </AlertDescription>
-            </Alert>
-            
-            {/* Connection status indicator */}
-            {!offlineMode && (
-              <ReconnectionStatus 
-                attempts={reconnectionAttempts}
-                onRetry={this.tryReconnect}
-                isReconnecting={isReconnecting}
-              />
-            )}
-            
-            {/* Only show error details in development */}
-            {process.env.NODE_ENV === 'development' && error && (
-              <ErrorDetails 
-                error={error} 
-                stackTrace={errorStackTrace} 
-              />
-            )}
-            
-            {/* Show IndexedDB support status */}
-            <div className="mt-4 bg-gray-50 dark:bg-gray-900 p-3 rounded-md flex items-start gap-2">
-              <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium">Offline Storage Support</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {isIndexedDBAvailable() 
-                    ? "Your browser supports offline storage. Your data will be saved locally until connection is restored."
-                    : "Your browser doesn't fully support offline storage. Some features may not work properly in offline mode."
-                  }
+          <CardContent className="text-sm text-gray-600 dark:text-gray-400">
+            <p>{errorMessage}</p>
+            {isSupabaseError && (
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-md">
+                <p className="text-amber-700 dark:text-amber-300 text-xs">
+                  You can try refreshing the page or continue in offline mode. 
+                  Offline mode will use your device's storage and sync your changes 
+                  when the connection is restored.
                 </p>
               </div>
-            </div>
+            )}
           </CardContent>
-          
-          <CardFooter className="flex justify-between">
-            <OfflineModeToggle 
-              enabled={offlineMode} 
-              onToggle={this.toggleOfflineMode} 
-            />
-            
+          <CardFooter className="flex gap-2 justify-end">
             <Button 
               variant="outline" 
-              onClick={this.resetErrorBoundary}
-              className="gap-2"
+              onClick={this.handleRetry} 
+              className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Reset & Retry</span>
+              <span>Try Again</span>
             </Button>
+            
+            {isSupabaseError && showOfflineOption && (
+              <Button 
+                variant="default" 
+                onClick={this.handleOfflineMode}
+                className="flex items-center gap-2"
+              >
+                <WifiOff className="h-4 w-4" />
+                <span>Work Offline</span>
+              </Button>
+            )}
           </CardFooter>
         </Card>
-        
-        {/* If in offline mode, still render children */}
-        {offlineMode && (
-          <div className="mt-4">
-            {children}
-          </div>
-        )}
       </div>
     );
   }

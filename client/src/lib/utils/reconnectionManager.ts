@@ -1,285 +1,188 @@
 /**
  * Reconnection Manager
  * 
- * This module provides a CRON-style retry mechanism for reconnecting to Supabase
- * when the connection is lost. It uses exponential backoff and monitors network
- * status to optimize reconnection attempts.
+ * This module manages reconnection attempts to Supabase when the connection is lost.
+ * It uses exponential backoff to avoid overwhelming the server with reconnection attempts.
  */
 
-import { checkSupabaseConnection } from "./supabaseClient";
+type ReconnectionCallback = () => Promise<boolean>;
+type ReconnectionStatusCallback = (status: ReconnectionStatus) => void;
 
-export interface ReconnectionOptions {
-  initialDelay: number;       // Initial delay in ms
-  maxDelay: number;           // Maximum delay in ms
-  backoffFactor: number;      // Factor to multiply delay on each attempt
-  jitter: number;             // Random jitter factor (0-1) to avoid thundering herd
-  maxAttempts: number;        // Maximum number of attempts (0 = unlimited)
-  resetIntervalOnSuccess: number; // Time in ms to reset attempt counter after success
-  onReconnectAttempt?: (attempt: number, delay: number) => void; // Callback on attempt
-  onReconnectSuccess?: () => void; // Callback on success
-  onReconnectFailure?: (attempt: number) => void; // Callback on failure
+// Reconnection status
+export interface ReconnectionStatus {
+  isReconnecting: boolean;
+  attempt: number;
+  maxAttempts: number;
+  nextAttemptTime?: Date;
+  lastAttemptTime?: Date;
 }
 
-const DEFAULT_OPTIONS: ReconnectionOptions = {
-  initialDelay: 1000,         // Start with 1 second
-  maxDelay: 60000,            // Maximum 1 minute
-  backoffFactor: 2,           // Double each time
-  jitter: 0.2,                // 20% randomness
-  maxAttempts: 0,             // Unlimited by default
-  resetIntervalOnSuccess: 60000 * 5, // Reset attempt counter after 5 minutes of stable connection
-};
-
 /**
- * Reconnection Manager class
+ * Manages reconnection attempts with exponential backoff
  */
 export class ReconnectionManager {
-  private options: ReconnectionOptions;
-  private attempts: number = 0;
-  private currentDelay: number;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private resetTimer: ReturnType<typeof setTimeout> | null = null;
   private isReconnecting: boolean = false;
-  private lastSuccessTime: number = Date.now();
-  private online: boolean = navigator.onLine;
-  private reconnectTask: (() => Promise<boolean>) | null = null;
+  private reconnectionAttempts: number = 0;
+  private maxReconnectionAttempts: number = 10;
+  private baseDelay: number = 1000; // Start with 1 second delay
+  private maxDelay: number = 60000; // Max delay of 60 seconds
+  private reconnectTimer: number | null = null;
+  private statusListeners: ReconnectionStatusCallback[] = [];
+  private nextAttemptTime: Date | null = null;
+  private lastAttemptTime: Date | null = null;
 
-  constructor(options: Partial<ReconnectionOptions> = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.currentDelay = this.options.initialDelay;
-    
-    // Listen for online/offline events
-    window.addEventListener('online', this.handleOnline);
-    window.addEventListener('offline', this.handleOffline);
+  constructor(maxAttempts?: number, baseDelay?: number, maxDelay?: number) {
+    if (maxAttempts) this.maxReconnectionAttempts = maxAttempts;
+    if (baseDelay) this.baseDelay = baseDelay;
+    if (maxDelay) this.maxDelay = maxDelay;
   }
 
   /**
-   * Start automatic reconnection attempts
+   * Start reconnection process with exponential backoff
+   * @param reconnectCallback Function to call when attempting reconnection
+   * @returns Promise that resolves when reconnection is successful or max attempts reached
    */
-  start(reconnectTask: () => Promise<boolean>): void {
-    this.reconnectTask = reconnectTask;
-    
-    // Immediately try to connect
-    if (this.online) {
-      this.attemptReconnect();
-    }
-  }
-
-  /**
-   * Handle online event
-   */
-  private handleOnline = (): void => {
-    this.online = true;
-    console.log('Network came online. Scheduling reconnection...');
-    
-    // Try to reconnect immediately when we come online
-    this.forceReconnect();
-  };
-
-  /**
-   * Handle offline event
-   */
-  private handleOffline = (): void => {
-    this.online = false;
-    console.log('Network went offline. Pausing reconnection attempts...');
-    
-    // Cancel any pending reconnection attempts
-    this.clearTimers();
-  };
-
-  /**
-   * Schedule the next reconnection attempt
-   */
-  private scheduleReconnect(overrideDelay?: number): void {
-    // Don't schedule if we're not online
-    if (!this.online) return;
-    
-    // Clear any existing timer
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-    }
-    
-    // Calculate delay with jitter
-    const delay = overrideDelay || this.currentDelay;
-    const jitterAmount = delay * this.options.jitter;
-    const actualDelay = delay + (Math.random() * jitterAmount * 2 - jitterAmount);
-    
-    console.log(`Scheduling next reconnection attempt in ${Math.round(actualDelay)}ms`);
-    
-    // Schedule next attempt
-    this.reconnectTimer = setTimeout(() => this.attemptReconnect(), actualDelay);
-  }
-
-  /**
-   * Attempt to reconnect
-   */
-  private attemptReconnect = async (): Promise<boolean> => {
-    // Don't attempt if already reconnecting or offline
-    if (this.isReconnecting || !this.online || !this.reconnectTask) {
+  async startReconnection(reconnectCallback: ReconnectionCallback): Promise<boolean> {
+    // If already reconnecting, don't start again
+    if (this.isReconnecting) {
       return false;
     }
-    
+
     this.isReconnecting = true;
-    this.attempts++;
-    
-    // Calculate next delay with exponential backoff
-    this.currentDelay = Math.min(
-      this.currentDelay * this.options.backoffFactor,
-      this.options.maxDelay
-    );
-    
-    // Notify about attempt
-    if (this.options.onReconnectAttempt) {
-      this.options.onReconnectAttempt(this.attempts, this.currentDelay);
-    }
-    
-    console.log(`Reconnection attempt ${this.attempts}...`);
-    
-    try {
-      // Execute the reconnection task
-      const success = await this.reconnectTask();
-      
-      if (success) {
-        this.handleReconnectSuccess();
-        return true;
-      } else {
-        this.handleReconnectFailure();
-        return false;
-      }
-    } catch (error) {
-      console.error('Error during reconnection attempt:', error);
-      this.handleReconnectFailure();
-      return false;
-    } finally {
-      this.isReconnecting = false;
-    }
-  };
+    this.reconnectionAttempts = 0;
+    this.notifyStatusListeners();
 
-  /**
-   * Handle a successful reconnection
-   */
-  private handleReconnectSuccess(): void {
-    console.log(`Reconnection successful after ${this.attempts} attempts`);
-    
-    this.lastSuccessTime = Date.now();
-    
-    // Reset counters
-    if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
-    }
-    
-    // Schedule a reset of the attempt counter
-    this.resetTimer = setTimeout(() => {
-      console.log('Resetting reconnection attempt counter after period of stability');
-      this.attempts = 0;
-      this.currentDelay = this.options.initialDelay;
-    }, this.options.resetIntervalOnSuccess);
-    
-    // Notify about success
-    if (this.options.onReconnectSuccess) {
-      this.options.onReconnectSuccess();
-    }
-  }
-
-  /**
-   * Handle a failed reconnection
-   */
-  private handleReconnectFailure(): void {
-    console.log(`Reconnection attempt ${this.attempts} failed`);
-    
-    // Check if we've reached max attempts
-    if (this.options.maxAttempts > 0 && this.attempts >= this.options.maxAttempts) {
-      console.log(`Reached maximum reconnection attempts (${this.options.maxAttempts})`);
-      
-      if (this.options.onReconnectFailure) {
-        this.options.onReconnectFailure(this.attempts);
-      }
-      
-      return;
-    }
-    
-    // Schedule the next attempt
-    this.scheduleReconnect();
-    
-    // Notify about failure
-    if (this.options.onReconnectFailure) {
-      this.options.onReconnectFailure(this.attempts);
-    }
-  }
-
-  /**
-   * Force an immediate reconnection attempt
-   */
-  forceReconnect(): void {
-    if (this.isReconnecting) return;
-    
-    console.log('Forcing immediate reconnection attempt');
-    
-    // Clear any pending timer
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    
-    // Attempt reconnection immediately
-    this.attemptReconnect();
+    return this.attemptReconnect(reconnectCallback);
   }
 
   /**
    * Stop reconnection attempts
    */
-  stop(): void {
-    console.log('Stopping reconnection manager');
-    this.clearTimers();
-    this.reconnectTask = null;
-  }
-
-  /**
-   * Clear all timers
-   */
-  private clearTimers(): void {
+  stopReconnection(): void {
     if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
+      window.clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
     
-    if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
-      this.resetTimer = null;
-    }
+    this.isReconnecting = false;
+    this.notifyStatusListeners();
   }
 
   /**
-   * Cleanup
+   * Get current reconnection status
    */
-  destroy(): void {
-    this.stop();
-    window.removeEventListener('online', this.handleOnline);
-    window.removeEventListener('offline', this.handleOffline);
+  getStatus(): ReconnectionStatus {
+    return {
+      isReconnecting: this.isReconnecting,
+      attempt: this.reconnectionAttempts,
+      maxAttempts: this.maxReconnectionAttempts,
+      nextAttemptTime: this.nextAttemptTime || undefined,
+      lastAttemptTime: this.lastAttemptTime || undefined
+    };
+  }
+
+  /**
+   * Add a listener for reconnection status changes
+   * @param listener Callback function to call when status changes
+   * @returns Function to remove the listener
+   */
+  addStatusListener(listener: ReconnectionStatusCallback): () => void {
+    this.statusListeners.push(listener);
+    return () => {
+      this.statusListeners = this.statusListeners.filter(l => l !== listener);
+    };
+  }
+
+  /**
+   * Reset reconnection attempts
+   */
+  reset(): void {
+    this.stopReconnection();
+    this.reconnectionAttempts = 0;
+    this.nextAttemptTime = null;
+    this.lastAttemptTime = null;
+    this.notifyStatusListeners();
+  }
+
+  /**
+   * Attempt reconnection with exponential backoff
+   */
+  private async attemptReconnect(reconnectCallback: ReconnectionCallback): Promise<boolean> {
+    // If we've reached max attempts, stop trying
+    if (this.reconnectionAttempts >= this.maxReconnectionAttempts) {
+      console.warn(`Maximum reconnection attempts (${this.maxReconnectionAttempts}) reached. Giving up.`);
+      this.isReconnecting = false;
+      this.notifyStatusListeners();
+      return false;
+    }
+
+    // Increment attempt counter
+    this.reconnectionAttempts++;
+    this.lastAttemptTime = new Date();
+    this.notifyStatusListeners();
+
+    try {
+      // Try to reconnect
+      console.log(`Attempting reconnection (${this.reconnectionAttempts}/${this.maxReconnectionAttempts})...`);
+      const reconnected = await reconnectCallback();
+      
+      if (reconnected) {
+        // Successfully reconnected
+        console.log('Reconnection successful!');
+        this.isReconnecting = false;
+        this.notifyStatusListeners();
+        return true;
+      }
+    } catch (error) {
+      console.error('Error during reconnection attempt:', error);
+    }
+
+    // If we get here, reconnection failed. Calculate backoff time.
+    const delay = this.calculateBackoff();
+    console.log(`Reconnection failed. Retrying in ${delay / 1000} seconds...`);
+    
+    // Schedule next attempt
+    this.nextAttemptTime = new Date(Date.now() + delay);
+    this.notifyStatusListeners();
+    
+    return new Promise((resolve) => {
+      this.reconnectTimer = window.setTimeout(async () => {
+        const result = await this.attemptReconnect(reconnectCallback);
+        resolve(result);
+      }, delay);
+    });
+  }
+
+  /**
+   * Calculate backoff delay using exponential backoff with jitter
+   */
+  private calculateBackoff(): number {
+    // Exponential backoff: baseDelay * 2^attempt
+    const exponentialDelay = this.baseDelay * Math.pow(2, this.reconnectionAttempts - 1);
+    
+    // Add jitter (randomness) to avoid reconnection storms
+    const jitter = Math.random() * 0.3 * exponentialDelay;
+    
+    // Apply max delay cap
+    return Math.min(exponentialDelay + jitter, this.maxDelay);
+  }
+
+  /**
+   * Notify status listeners of changes
+   */
+  private notifyStatusListeners(): void {
+    const status = this.getStatus();
+    this.statusListeners.forEach(listener => {
+      try {
+        listener(status);
+      } catch (error) {
+        console.error('Error in reconnection status listener:', error);
+      }
+    });
   }
 }
 
-// Create a singleton instance with default options
-export const reconnectionManager = new ReconnectionManager({
-  onReconnectAttempt: (attempt, delay) => {
-    console.log(`Reconnection attempt ${attempt}, next attempt in ${Math.round(delay / 1000)}s`);
-  },
-  onReconnectSuccess: () => {
-    console.log('Reconnected to Supabase successfully');
-  },
-  onReconnectFailure: (attempt) => {
-    console.warn(`Reconnection attempt ${attempt} failed`);
-  }
-});
-
-export const startReconnectionManager = async (): Promise<void> => {
-  reconnectionManager.start(async () => {
-    try {
-      return await checkSupabaseConnection();
-    } catch (error) {
-      console.error('Connection check error:', error);
-      return false;
-    }
-  });
-};
+// Create and export singleton instance
+export const reconnectionManager = new ReconnectionManager();
 
 export default reconnectionManager;

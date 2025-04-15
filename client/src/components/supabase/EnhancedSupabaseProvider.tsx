@@ -1,663 +1,668 @@
 /**
- * Enhanced Supabase Provider
+ * Enhanced Supabase Provider Component
  * 
- * This enhanced provider implements offline capabilities, circuit breaker patterns,
- * and reconnection mechanisms to ensure the application works even when Supabase
- * is unavailable.
+ * This component extends the basic Supabase provider with additional functionality:
+ * - Connection status monitoring
+ * - Service health checks
+ * - Offline mode support
+ * - Reconnection with exponential backoff
+ * - Data synchronization
  */
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { toast } from '@/hooks/use-toast';
-import SupabaseErrorBoundary from '@/components/error/SupabaseErrorBoundary';
-import supabase, { 
-  checkSupabaseConnection, 
-  isSupabaseConfigured, 
-  verifySupabaseServices,
-  SupabaseServiceStatus 
-} from '@/lib/utils/supabaseClient';
-import { localAuth } from '@/lib/utils/localStorageAuth';
-import localDB, { isIndexedDBAvailable } from '@/lib/utils/localDatabase';
-import syncService from '@/lib/utils/syncService';
-import supabaseCircuitBreaker from '@/lib/utils/circuitBreaker';
-import { startReconnectionManager } from '@/lib/utils/reconnectionManager';
-import { AlertCircle, WifiOff } from 'lucide-react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Session, User, SupabaseClient, createClient } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
+import { isIndexedDBAvailable, localDB } from '@/lib/utils/localDatabase';
+import { syncService } from '@/lib/utils/syncService';
+import { reconnectionManager, ReconnectionStatus } from '@/lib/utils/reconnectionManager';
+import { circuitBreakerFactory } from '@/lib/utils/circuitBreaker';
+import { localAuth, LocalSession, LocalUser } from '@/lib/utils/localStorageAuth';
 
-// Enhanced context shape
+// Connection status types
+export type ConnectionStatus = 
+  'connected' | 
+  'partial' | 
+  'error' | 
+  'offline' | 
+  'connecting' | 
+  'unconfigured';
+
+// Service status
+export interface ServiceStatus {
+  health?: boolean;
+  auth?: boolean;
+  database?: boolean;
+  storage?: boolean;
+  functions?: boolean;
+  realtime?: boolean;
+  tables?: string[];
+  lastChecked?: Date;
+}
+
+// Context type
 interface EnhancedSupabaseContextType {
-  // Original Supabase context props
-  supabase: typeof supabase;
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  error: Error | null;
+  supabase: SupabaseClient | null;
+  session: Session | LocalSession | null;
+  user: User | LocalUser | null;
   isConfigured: boolean;
-  connectionStatus: 'connected' | 'error' | 'unconfigured' | 'connecting' | 'partial' | 'offline';
-  checkConnection: () => Promise<boolean>;
-  diagnostics: string[];
-  serviceStatus?: SupabaseServiceStatus;
-  verifyServices: () => Promise<SupabaseServiceStatus>;
-  
-  // Enhanced offline capabilities
+  isInitialized: boolean;
+  connectionStatus: ConnectionStatus;
+  serviceStatus: ServiceStatus | null;
   isOfflineMode: boolean;
+  isIndexedDBSupported: boolean;
+  pendingSyncChanges: number;
+  isSyncing: boolean;
+  reconnectionStatus: ReconnectionStatus | null;
+  diagnostics: string[];
+  checkConnection: () => Promise<ConnectionStatus>;
+  verifyServices: () => Promise<ServiceStatus>;
   enableOfflineMode: () => void;
   disableOfflineMode: () => void;
-  isSyncing: boolean;
-  forceSync: () => Promise<void>;
-  lastSyncTime: Date | null;
-  pendingSyncChanges: number;
-  isIndexedDBSupported: boolean;
+  forceSync: () => Promise<boolean>;
+  refreshSession: () => Promise<void>;
 }
 
-// Create context with default values
-const EnhancedSupabaseContext = createContext<EnhancedSupabaseContextType>({
-  // Original Supabase context defaults
-  supabase,
-  user: null,
+// Default context value
+const defaultContext: EnhancedSupabaseContextType = {
+  supabase: null,
   session: null,
-  isLoading: true,
-  error: null,
+  user: null,
   isConfigured: false,
+  isInitialized: false,
   connectionStatus: 'connecting',
-  checkConnection: async () => false,
-  diagnostics: [],
-  verifyServices: async () => ({
-    health: false,
-    auth: false,
-    storage: false,
-    database: false,
-    functions: false,
-    realtime: false,
-    tables: [],
-    message: 'Not verified',
-    diagnostics: []
-  }),
-  
-  // Enhanced offline defaults
+  serviceStatus: null,
   isOfflineMode: false,
+  isIndexedDBSupported: false,
+  pendingSyncChanges: 0,
+  isSyncing: false,
+  reconnectionStatus: null,
+  diagnostics: [],
+  checkConnection: async () => 'error',
+  verifyServices: async () => ({}),
   enableOfflineMode: () => {},
   disableOfflineMode: () => {},
-  isSyncing: false,
-  forceSync: async () => {},
-  lastSyncTime: null,
-  pendingSyncChanges: 0,
-  isIndexedDBSupported: false
-});
+  forceSync: async () => false,
+  refreshSession: async () => {},
+};
 
-/**
- * Custom hook to access the Enhanced Supabase context
- */
-export const useEnhancedSupabase = () => useContext(EnhancedSupabaseContext);
+// Create context
+const EnhancedSupabaseContext = createContext<EnhancedSupabaseContextType>(defaultContext);
 
+// Props for the provider
 interface EnhancedSupabaseProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  supabaseUrl?: string;
+  supabaseKey?: string;
+  offlineMode?: boolean;
+  autoConnect?: boolean;
 }
 
 /**
- * Enhanced Supabase Provider component
+ * Enhanced Supabase Provider Component
  */
-export const EnhancedSupabaseProvider: React.FC<EnhancedSupabaseProviderProps> = ({ children }) => {
-  // Original Supabase state
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error' | 'unconfigured' | 'connecting' | 'partial' | 'offline'>('connecting');
+export const EnhancedSupabaseProvider: React.FC<EnhancedSupabaseProviderProps> = ({
+  children,
+  supabaseUrl,
+  supabaseKey,
+  offlineMode = false,
+  autoConnect = true,
+}) => {
+  // Environment variables for Supabase
+  const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const envSupabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  // Use provided values or fallback to environment variables
+  const finalSupabaseUrl = supabaseUrl || envSupabaseUrl;
+  const finalSupabaseKey = supabaseKey || envSupabaseKey;
+  
+  // State
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
+  const [session, setSession] = useState<Session | LocalSession | null>(null);
+  const [user, setUser] = useState<User | LocalUser | null>(null);
   const [diagnostics, setDiagnostics] = useState<string[]>([]);
-  const [serviceStatus, setServiceStatus] = useState<SupabaseServiceStatus | undefined>(undefined);
-  
-  // Enhanced offline state
-  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
-  const [isIndexedDBSupported, setIsIndexedDBSupported] = useState<boolean>(false);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(offlineMode);
   const [pendingSyncChanges, setPendingSyncChanges] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [reconnectionStatus, setReconnectionStatus] = useState<ReconnectionStatus | null>(null);
+  const [isIndexedDBSupported, setIsIndexedDBSupported] = useState<boolean>(false);
   
-  const MAX_RETRIES = 3;
-
-  // Check if IndexedDB is available
+  const { toast } = useToast();
+  
+  // Circuit breaker for health checks
+  const healthBreaker = circuitBreakerFactory.getBreaker('supabase-health', {
+    failureThreshold: 3,
+    resetTimeout: 30000,
+  });
+  
+  // Initialize Supabase client
   useEffect(() => {
-    setIsIndexedDBSupported(isIndexedDBAvailable());
-  }, []);
-
-  // Check if Supabase is properly configured with environment variables
-  const checkSupabaseConfig = useCallback(() => {
-    const configStatus = isSupabaseConfigured();
-    setIsConfigured(configStatus);
-    
-    // Add diagnostics information
-    setDiagnostics(prev => [
-      ...prev, 
-      `Supabase configuration check: ${configStatus ? '✅ Configured' : '❌ Not configured'}`
-    ]);
-    
-    return configStatus;
-  }, []);
-
-  // Enhanced service verification for detailed diagnostics
-  const verifyServices = useCallback(async (): Promise<SupabaseServiceStatus> => {
-    try {
-      setDiagnostics(prev => [...prev, "Starting comprehensive service verification..."]);
-      const status = await verifySupabaseServices();
-      setServiceStatus(status);
-      
-      // Update diagnostics with the results
-      setDiagnostics(prev => [...prev, ...status.diagnostics]);
-      
-      // Determine connection status based on service availability
-      if (isOfflineMode) {
-        // If offline mode is enabled, keep it that way
-        setConnectionStatus('offline');
-      } else if (Object.values(status).filter(Boolean).length === 0) {
-        // If no services are available
-        setConnectionStatus('error');
-      } else if (status.auth && status.database) {
-        // If core services are available
-        setConnectionStatus('connected');
-      } else if (status.auth || status.database || status.storage || status.realtime) {
-        // If at least some services are available
-        setConnectionStatus('partial');
-      } else {
-        setConnectionStatus('error');
-      }
-      
-      return status;
-    } catch (error) {
-      if (!isOfflineMode) {
-        setConnectionStatus('error');
-      }
-      
-      if (error instanceof Error) {
-        setError(error);
-        setDiagnostics(prev => [...prev, `❌ Service verification error: ${error.message}`]);
-      }
-      
-      // Return a default error status
-      const errorStatus: SupabaseServiceStatus = {
-        health: false,
-        auth: false,
-        storage: false,
-        database: false,
-        functions: false,
-        realtime: false,
-        tables: [],
-        message: error instanceof Error ? `Error: ${error.message}` : 'Unknown error during service verification',
-        diagnostics: ['Service verification failed']
-      };
-      
-      setServiceStatus(errorStatus);
-      return errorStatus;
-    }
-  }, [isOfflineMode]);
-
-  // Function to check Supabase connection that can be called from consumers
-  const checkConnection = useCallback(async (): Promise<boolean> => {
-    try {
-      // If offline mode is enabled, return false without checking
-      if (isOfflineMode) {
-        setDiagnostics(prev => [...prev, "⚠️ Offline mode enabled, skipping connection check"]);
-        return false;
-      }
-      
-      setDiagnostics(prev => [...prev, "Starting connection check..."]);
-      const isConnected = await checkSupabaseConnection();
-      
-      if (isConnected) {
-        setConnectionStatus('connected');
-        setDiagnostics(prev => [...prev, "✅ Connection successful!"]);
-        
-        // If we've verified a successful connection, also verify services
-        // but don't wait for it to complete
-        verifyServices().catch(error => console.error("Service verification error:", error));
-        
-        // Show success toast but only if we were previously in error state
-        if (connectionStatus === 'error' || connectionStatus === 'unconfigured') {
-          toast({
-            title: "Supabase Connection Restored",
-            description: "Successfully connected to Supabase",
-            variant: "default",
-          });
-        }
-        
-        // Check if we have pending sync changes
-        if (pendingSyncChanges > 0) {
-          syncService.forceSync().catch(console.error);
-        }
-      } else {
-        // Verify services to get detailed status when the basic check fails
-        const status = await verifyServices();
-        
-        // If we have at least auth service but health check fails, we consider it a partial connection
-        if (status.auth) {
-          setConnectionStatus('partial');
-          setDiagnostics(prev => [...prev, "⚠️ Partial Supabase connection - some services available"]);
-          
-          // In development, this is expected so we don't show an error toast
-          if (process.env.NODE_ENV !== 'development') {
-            toast({
-              title: "Partial Supabase Connection",
-              description: `Some Supabase services are available: ${[
-                status.auth ? 'Auth' : null,
-                status.database ? 'Database' : null,
-                status.storage ? 'Storage' : null,
-                status.realtime ? 'Realtime' : null
-              ].filter(Boolean).join(', ')}`,
-              variant: "default",
-            });
-          }
-          
-          // Return true if auth is available as this is often sufficient for basic operations
-          return status.auth;
-        } else {
-          setConnectionStatus('error');
-          setDiagnostics(prev => [...prev, "❌ Connection failed - all checks failed"]);
-          
-          // Only show toast if not in development mode to avoid spamming
-          if (process.env.NODE_ENV === 'production') {
-            toast({
-              title: "Supabase Connection Failed",
-              description: "Could not connect to Supabase. Check console for details.",
-              variant: "destructive",
-            });
-          }
-        }
-      }
-      
-      return isConnected;
-    } catch (error) {
-      if (!isOfflineMode) {
-        setConnectionStatus('error');
-      }
-      
-      if (error instanceof Error) {
-        setError(error);
-        setDiagnostics(prev => [...prev, `❌ Connection error: ${error.message}`]);
-        
-        // Only show toast if not in development mode to avoid spamming
-        if (process.env.NODE_ENV === 'production') {
-          toast({
-            title: "Supabase Connection Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      }
-      
-      return false;
-    }
-  }, [connectionStatus, verifyServices, isOfflineMode, pendingSyncChanges]);
-
-  // Enable offline mode
-  const enableOfflineMode = useCallback(() => {
-    setIsOfflineMode(true);
-    setConnectionStatus('offline');
-    
-    // Show toast for offline mode
-    toast({
-      title: (
-        <div className="flex items-center">
-          <WifiOff className="h-4 w-4 mr-2 text-amber-500" />
-          Offline Mode Enabled
-        </div>
-      ),
-      description: "You are now working offline. Changes will be synchronized when connection is restored.",
-      variant: "default",
-      duration: 5000,
-    });
-    
-    setDiagnostics(prev => [...prev, "📱 Offline mode enabled - using local storage"]);
-  }, []);
-
-  // Disable offline mode and try to reconnect
-  const disableOfflineMode = useCallback(async () => {
-    setIsOfflineMode(false);
-    
-    // Try to reconnect
-    const isConnected = await checkConnection();
-    
-    if (isConnected) {
-      // If we can reconnect, sync pending changes
-      if (pendingSyncChanges > 0) {
-        forceSync();
-      }
-    } else {
-      // If we can't reconnect, notify the user but stay in online mode
-      toast({
-        title: (
-          <div className="flex items-center">
-            <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
-            Connection Issue
-          </div>
-        ),
-        description: "Could not connect to Supabase. Some features may be unavailable.",
-        variant: "default",
-        duration: 5000,
+    if (finalSupabaseUrl && finalSupabaseKey) {
+      // Create Supabase client
+      const client = createClient(finalSupabaseUrl, finalSupabaseKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+        },
       });
-    }
-    
-    setDiagnostics(prev => [...prev, "📶 Offline mode disabled - attempting to use Supabase"]);
-  }, [checkConnection, pendingSyncChanges]);
-
-  // Force a sync of pending changes
-  const forceSync = useCallback(async (): Promise<void> => {
-    setIsSyncing(true);
-    try {
-      await syncService.forceSync();
-      setLastSyncTime(new Date());
       
-      // Update pending sync count
-      const { data } = await localDB.syncQueue.getPending();
-      setPendingSyncChanges(data?.length || 0);
-    } catch (error) {
-      console.error('Error syncing:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, []);
-
-  // Listen for sync queue changes
-  useEffect(() => {
-    // Check for pending sync items on mount
-    const checkPendingSyncItems = async () => {
-      const { data } = await localDB.syncQueue.getPending();
-      setPendingSyncChanges(data?.length || 0);
-    };
-    
-    checkPendingSyncItems();
-    
-    // Listen for storage events to detect changes from other tabs
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key && event.key.includes('syncQueue')) {
-        checkPendingSyncItems();
+      setSupabase(client);
+      setIsConfigured(true);
+      addDiagnostics(`Supabase client initialized with URL: ${finalSupabaseUrl}`);
+      
+      // Initialize services
+      initializeServices(client);
+      
+      // Check offline storage support
+      const indexedDBSupported = isIndexedDBAvailable();
+      setIsIndexedDBSupported(indexedDBSupported);
+      addDiagnostics(`IndexedDB support: ${indexedDBSupported ? 'Available' : 'Not available'}`);
+      
+      // Set initial offline mode
+      if (offlineMode) {
+        enableOfflineMode();
+      } else if (autoConnect) {
+        // Test connection
+        checkConnection().then((status) => {
+          if (status === 'error' || status === 'partial') {
+            addDiagnostics('Initial connection test failed, will retry automatically');
+            startReconnection();
+          }
+        });
       }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Set up a poll to check for pending sync items
-    const intervalId = setInterval(checkPendingSyncItems, 30000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  // Initialize and set up auth state listener
+      
+      // Setup reconnection status listener
+      const removeListener = reconnectionManager.addStatusListener((status) => {
+        setReconnectionStatus(status);
+      });
+      
+      // Setup sync status listener
+      syncService.on('SYNC_START', () => {
+        setIsSyncing(true);
+      });
+      
+      syncService.on('SYNC_COMPLETE', () => {
+        setIsSyncing(false);
+        checkPendingChanges();
+      });
+      
+      syncService.on('SYNC_ERROR', () => {
+        setIsSyncing(false);
+        checkPendingChanges();
+      });
+      
+      // Check for pending changes
+      checkPendingChanges();
+      
+      return () => {
+        removeListener();
+        syncService.dispose();
+      };
+    } else {
+      setIsConfigured(false);
+      setConnectionStatus('unconfigured');
+      addDiagnostics('Supabase credentials not provided');
+    }
+  }, [finalSupabaseUrl, finalSupabaseKey, offlineMode]);
+  
+  // Auth state change listener
   useEffect(() => {
-    let authUnsubscribe: (() => void) | null = null;
-    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    if (!supabase) return;
     
-    // Clear diagnostics on each initialization attempt
-    setDiagnostics(["Initializing Supabase connection..."]);
-    
-    // Get the initial session
-    const initializeSupabase = async () => {
-      try {
-        setIsLoading(true);
-        if (!isOfflineMode) {
-          setConnectionStatus('connecting');
-        }
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        addDiagnostics(`Auth state change: ${event}`);
         
-        // First check if Supabase is configured
-        if (!checkSupabaseConfig()) {
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
+          
+          // Backup session to local storage for offline use
           if (!isOfflineMode) {
-            setConnectionStatus('unconfigured');
+            localAuth.importSupabaseSession(newSession);
           }
-          setDiagnostics(prev => [...prev, "❌ Supabase is not configured"]);
-          setIsLoading(false);
-          
-          // Show a toast to help users understand the issue
-          toast({
-            title: "Supabase Configuration Issue",
-            description: "Supabase is not properly configured. Please check environment variables.",
-            variant: "destructive",
-            duration: 10000,
-          });
-          
-          // Enable offline mode automatically
-          enableOfflineMode();
-          
-          return;
-        }
-        
-        // Try a simple ping to Supabase
-        const isConnected = await checkConnection();
-        
-        if (!isConnected && !isOfflineMode) {
-          // If we've reached max retries, enter offline mode
-          if (retryCount >= MAX_RETRIES) {
-            setDiagnostics(prev => [...prev, `⚠️ Maximum retry attempts (${MAX_RETRIES}) reached, entering offline mode`]);
-            
-            // Show recommendation to use offline mode
-            toast({
-              title: "Connection Failed",
-              description: "Unable to connect to Supabase after multiple attempts. Recommend enabling offline mode.",
-              variant: "destructive",
-              duration: 8000,
-            });
-            
-            // Don't automatically enable offline mode, but suggest it
-            setError(new Error("Unable to connect to Supabase after multiple attempts"));
-          } else {
-            // Set a retry timeout with exponential backoff
-            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-            setDiagnostics(prev => [...prev, `⏱️ Retry attempt ${retryCount + 1}/${MAX_RETRIES} in ${retryDelay}ms`]);
-            
-            retryTimeout = setTimeout(() => {
-              setRetryCount(prevCount => prevCount + 1);
-              initializeSupabase();
-            }, retryDelay);
-            
-            return;
-          }
-        }
-        
-        // Initialize the sync service regardless of connection state
-        syncService.start();
-        
-        // Start the reconnection manager for automatic recovery
-        if (!isOfflineMode) {
-          startReconnectionManager();
-        }
-        
-        // Try to get auth session - from Supabase if connected, or from local storage if not
-        try {
-          setDiagnostics(prev => [...prev, "Fetching auth session..."]);
-          
-          let sessionData;
-          let sessionError = null;
-          
-          if (isConnected) {
-            // Get session from Supabase
-            const result = await supabase.auth.getSession();
-            sessionData = result.data;
-            sessionError = result.error;
-          } else {
-            // Get session from local storage
-            const result = await localAuth.getSession();
-            sessionData = result.data;
-            sessionError = result.error;
-          }
-          
-          if (sessionError) {
-            setDiagnostics(prev => [...prev, `❌ Auth session error: ${sessionError.message}`]);
-            throw sessionError;
-          }
-          
-          // Use the session if available
-          if (sessionData.session) {
-            setSession(sessionData.session);
-            setUser(sessionData.session.user);
-            
-            // If we got a Supabase session, also store it locally for offline use
-            if (isConnected) {
-              localAuth.importSupabaseSession(sessionData.session);
-            }
-          } else {
-            setSession(null);
-            setUser(null);
-          }
-          
-          setDiagnostics(prev => [...prev, `${sessionData.session ? '✅ User authenticated' : 'ℹ️ No authenticated user'}`]);
-        } catch (authError) {
-          setDiagnostics(prev => [...prev, `⚠️ Auth initialization error: ${authError instanceof Error ? authError.message : String(authError)}`]);
+        } else {
           setSession(null);
           setUser(null);
         }
-        
-        // Set up auth state listener
-        try {
-          setDiagnostics(prev => [...prev, "Setting up auth state listener..."]);
-          
-          if (isConnected) {
-            // Listen for Supabase auth changes
-            const { data: authListener } = supabase.auth.onAuthStateChange(
-              (event, updatedSession) => {
-                setDiagnostics(prev => [...prev, `🔄 Supabase auth state changed: ${event}`]);
-                setSession(updatedSession);
-                setUser(updatedSession?.user ?? null);
-                
-                // Also update local storage for offline use
-                if (updatedSession) {
-                  localAuth.importSupabaseSession(updatedSession);
-                } else if (event === 'SIGNED_OUT') {
-                  localAuth.signOut();
-                }
-              }
-            );
-            
-            // Store cleanup function
-            authUnsubscribe = () => {
-              authListener?.subscription?.unsubscribe();
-            };
-          } else {
-            // Listen for local auth changes
-            const { data: authListener } = localAuth.onAuthStateChange(
-              (event, updatedSession) => {
-                setDiagnostics(prev => [...prev, `🔄 Local auth state changed: ${event}`]);
-                if (updatedSession) {
-                  setSession(updatedSession as any);
-                  setUser(updatedSession.user as any);
-                } else {
-                  setSession(null);
-                  setUser(null);
-                }
-              }
-            );
-            
-            // Store cleanup function
-            authUnsubscribe = () => {
-              authListener?.subscription?.unsubscribe();
-            };
-          }
-        } catch (listenerError) {
-          setDiagnostics(prev => [...prev, `⚠️ Auth listener setup error: ${listenerError instanceof Error ? listenerError.message : String(listenerError)}`]);
-        }
-        
-        setDiagnostics(prev => [...prev, "✅ Initialization complete"]);
-      } catch (error) {
-        if (!isOfflineMode) {
-          setConnectionStatus('error');
-        }
-        
-        if (error instanceof Error) {
-          setError(error);
-          setDiagnostics(prev => [...prev, `❌ Initialization error: ${error.message}`]);
-          
-          // Specific error handling
-          const isAuthError = error.message.includes('auth') || 
-                             error.message.includes('token') ||
-                             error.message.includes('session');
-                             
-          // Show toast for specific errors
-          if (isAuthError && process.env.NODE_ENV === 'production') {
-            toast({
-              title: "Authentication Error",
-              description: error.message,
-              variant: "destructive",
-              duration: 8000,
-            });
-          } else if (process.env.NODE_ENV === 'production') {
-            toast({
-              title: "Connection Error",
-              description: error.message || "Failed to initialize connection",
-              variant: "destructive",
-              duration: 8000,
-            });
-          }
-        }
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    // Initialize
-    initializeSupabase();
-
-    // Cleanup
-    return () => {
-      if (authUnsubscribe) {
-        authUnsubscribe();
-      }
-      if (retryTimeout) {
-        clearTimeout(retryTimeout);
+    );
+    
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (initialSession) {
+        setSession(initialSession);
+        setUser(initialSession.user);
+        
+        // Backup session to local storage for offline use
+        localAuth.importSupabaseSession(initialSession);
       }
       
-      // Stop sync service
-      syncService.stop();
-    };
-  }, [
-    retryCount, 
-    checkConnection, 
-    checkSupabaseConfig, 
-    isOfflineMode, 
-    enableOfflineMode
-  ]);
-
-  // Context value
-  const value: EnhancedSupabaseContextType = {
-    // Original Supabase context values
-    supabase,
-    user,
-    session,
-    isLoading,
-    error,
-    isConfigured,
-    connectionStatus,
-    checkConnection,
-    diagnostics,
-    serviceStatus,
-    verifyServices,
+      setIsInitialized(true);
+    });
     
-    // Enhanced offline values
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+  
+  // Local auth state change listener for offline mode
+  useEffect(() => {
+    if (!isOfflineMode) return;
+    
+    // Listen for local auth state changes
+    const { data: { subscription } } = localAuth.onAuthStateChange(
+      (event, localSession) => {
+        addDiagnostics(`Local auth state change: ${event}`);
+        
+        if (localSession) {
+          setSession(localSession);
+          setUser(localSession.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      }
+    );
+    
+    // Get initial local session
+    localAuth.getSession().then(({ data, error }) => {
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+      }
+      
+      setIsInitialized(true);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isOfflineMode]);
+  
+  // Initialize services
+  const initializeServices = (client: SupabaseClient) => {
+    // Initialize sync service
+    syncService.initialize(client, true, 60000);
+  };
+  
+  // Add diagnostic message
+  const addDiagnostics = (message: string) => {
+    setDiagnostics((prev) => [...prev, message]);
+  };
+  
+  // Check connection status
+  const checkConnection = async (): Promise<ConnectionStatus> => {
+    if (!supabase || !isConfigured) {
+      return 'unconfigured';
+    }
+    
+    if (isOfflineMode) {
+      return 'offline';
+    }
+    
+    try {
+      addDiagnostics(`Testing Supabase connection to: ${finalSupabaseUrl}`);
+      
+      // Try health check endpoint first (protected by circuit breaker)
+      try {
+        addDiagnostics('Attempting health check endpoint...');
+        
+        const healthResult = await healthBreaker.execute(async () => {
+          const response = await fetch(`${finalSupabaseUrl}/health`);
+          if (!response.ok) {
+            throw new Error(`Health check failed: ${response.status}`);
+          }
+          return await response.json();
+        });
+        
+        if (healthResult && healthResult.status === 'ok') {
+          addDiagnostics('✅ Health check successful!');
+          setConnectionStatus('connected');
+          return 'connected';
+        } else {
+          addDiagnostics('⚠️ Health check returned unexpected response');
+        }
+      } catch (error) {
+        addDiagnostics(`❌ Health check error: ${error instanceof Error ? error.message : String(error)}`);
+        
+        // Health check failed, try auth as fallback
+        addDiagnostics('Attempting auth session check...');
+        
+        try {
+          const { data } = await supabase.auth.getSession();
+          addDiagnostics('✅ Auth session check successful!');
+          
+          // Auth is working, but health check failed - partial connection
+          setConnectionStatus('partial');
+          return 'partial';
+        } catch (authError) {
+          addDiagnostics(`❌ Auth session check error: ${authError instanceof Error ? authError.message : String(authError)}`);
+          
+          // Both health and auth failed
+          setConnectionStatus('error');
+          return 'error';
+        }
+      }
+      
+      // If we get here, something unexpected happened
+      addDiagnostics('⚠️ Connection check inconclusive');
+      setConnectionStatus('partial');
+      return 'partial';
+    } catch (error) {
+      addDiagnostics(`❌ Connection check error: ${error instanceof Error ? error.message : String(error)}`);
+      setConnectionStatus('error');
+      return 'error';
+    }
+  };
+  
+  // Verify all Supabase services
+  const verifyServices = async (): Promise<ServiceStatus> => {
+    if (!supabase || !isConfigured) {
+      return {};
+    }
+    
+    const status: ServiceStatus = {
+      lastChecked: new Date(),
+    };
+    
+    addDiagnostics('Verifying Supabase services...');
+    
+    // Check health endpoint
+    try {
+      const response = await fetch(`${finalSupabaseUrl}/health`);
+      if (response.ok) {
+        const data = await response.json();
+        status.health = data.status === 'ok';
+        addDiagnostics(`Health check: ${status.health ? 'OK' : 'Failed'}`);
+      } else {
+        status.health = false;
+        addDiagnostics(`Health check failed: ${response.status}`);
+      }
+    } catch (error) {
+      status.health = false;
+      addDiagnostics(`Health check error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Check auth
+    try {
+      const { data } = await supabase.auth.getSession();
+      status.auth = true;
+      addDiagnostics('Auth check: OK');
+    } catch (error) {
+      status.auth = false;
+      addDiagnostics(`Auth check error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Check database
+    try {
+      const { data, error } = await supabase.from('_tables').select('*');
+      
+      if (error) {
+        status.database = false;
+        addDiagnostics(`Database check error: ${error.message}`);
+      } else {
+        status.database = true;
+        status.tables = Array.isArray(data) ? data.map((table) => table.name) : [];
+        addDiagnostics(`Database check: OK (${status.tables.length} tables)`);
+      }
+    } catch (error) {
+      status.database = false;
+      addDiagnostics(`Database check error: ${error instanceof Error ? error.message : String(error)}`);
+      
+      // Try an alternative approach
+      try {
+        const { data, error } = await supabase
+          .rpc('get_schema_info')
+          .select('*');
+        
+        if (error) {
+          addDiagnostics(`Schema info check error: ${error.message}`);
+        } else {
+          status.database = true;
+          status.tables = Array.isArray(data) ? data.map((table) => table.table_name) : [];
+          addDiagnostics(`Schema info check: OK (${status.tables?.length} tables)`);
+        }
+      } catch (innerError) {
+        addDiagnostics(`Schema info check error: ${innerError instanceof Error ? innerError.message : String(innerError)}`);
+      }
+    }
+    
+    // Check storage
+    try {
+      const { data, error } = await supabase.storage.listBuckets();
+      
+      if (error) {
+        status.storage = false;
+        addDiagnostics(`Storage check error: ${error.message}`);
+      } else {
+        status.storage = true;
+        addDiagnostics(`Storage check: OK (${data.length} buckets)`);
+      }
+    } catch (error) {
+      status.storage = false;
+      addDiagnostics(`Storage check error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Check functions (if available)
+    try {
+      const { data, error } = await supabase.functions.listFunctions();
+      
+      if (error) {
+        status.functions = false;
+        addDiagnostics(`Functions check error: ${error.message}`);
+      } else {
+        status.functions = true;
+        addDiagnostics(`Functions check: OK (${data.length} functions)`);
+      }
+    } catch (error) {
+      status.functions = false;
+      addDiagnostics(`Functions check error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Check realtime (we can only verify the connection setup, not actual pub/sub)
+    try {
+      const channel = supabase.channel('test');
+      const subscription = channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.unsubscribe();
+        }
+      });
+      
+      // Wait briefly for the subscription
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      status.realtime = true;
+      addDiagnostics('Realtime check: OK');
+    } catch (error) {
+      status.realtime = false;
+      addDiagnostics(`Realtime check error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+    // Update connection status based on service checks
+    if (status.health && status.auth && status.database) {
+      setConnectionStatus('connected');
+    } else if (status.auth || status.database) {
+      setConnectionStatus('partial');
+    } else {
+      setConnectionStatus('error');
+    }
+    
+    // Update service status state
+    setServiceStatus(status);
+    
+    return status;
+  };
+  
+  // Start reconnection process
+  const startReconnection = async () => {
+    reconnectionManager.startReconnection(async () => {
+      const status = await checkConnection();
+      return status === 'connected' || status === 'partial';
+    });
+  };
+  
+  // Enable offline mode
+  const enableOfflineMode = () => {
+    addDiagnostics('Enabling offline mode');
+    setIsOfflineMode(true);
+    setConnectionStatus('offline');
+    toast({
+      title: 'Offline Mode Enabled',
+      description: 'Changes will be synchronized when connection is restored.',
+    });
+  };
+  
+  // Disable offline mode
+  const disableOfflineMode = async () => {
+    addDiagnostics('Disabling offline mode');
+    setConnectionStatus('connecting');
+    
+    // Try to reconnect to Supabase
+    const status = await checkConnection();
+    
+    if (status === 'connected' || status === 'partial') {
+      setIsOfflineMode(false);
+      toast({
+        title: 'Online Mode Restored',
+        description: 'Connection to Supabase has been restored.',
+      });
+      
+      // Synchronize any offline changes
+      syncService.synchronize().catch((error) => {
+        console.error('Error synchronizing offline changes:', error);
+      });
+    } else {
+      setIsOfflineMode(true);
+      setConnectionStatus('offline');
+      toast({
+        title: 'Cannot Restore Online Mode',
+        description: 'Connection to Supabase is still unavailable.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Force sync offline changes
+  const forceSync = async (): Promise<boolean> => {
+    if (isOfflineMode) {
+      toast({
+        title: 'Cannot Sync',
+        description: 'Disable offline mode first to synchronize changes.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    setIsSyncing(true);
+    
+    try {
+      const result = await syncService.synchronize();
+      await checkPendingChanges();
+      
+      if (result) {
+        toast({
+          title: 'Sync Complete',
+          description: 'All changes have been synchronized.',
+        });
+      } else {
+        toast({
+          title: 'Sync Incomplete',
+          description: 'Some changes could not be synchronized.',
+          variant: 'destructive',
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Sync Error',
+        description: error instanceof Error ? error.message : 'Failed to synchronize changes',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+  
+  // Check for pending changes to sync
+  const checkPendingChanges = async () => {
+    try {
+      const count = await syncService.checkPendingChanges();
+      setPendingSyncChanges(count);
+      return count;
+    } catch (error) {
+      console.error('Error checking pending changes:', error);
+      return 0;
+    }
+  };
+  
+  // Refresh the user session
+  const refreshSession = async () => {
+    if (!supabase || isOfflineMode) return;
+    
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Session refresh error:', error);
+      } else if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        
+        // Backup to local storage
+        localAuth.importSupabaseSession(data.session);
+      }
+    } catch (error) {
+      console.error('Session refresh error:', error);
+    }
+  };
+  
+  // Context value
+  const contextValue: EnhancedSupabaseContextType = {
+    supabase,
+    session,
+    user,
+    isConfigured,
+    isInitialized,
+    connectionStatus,
+    serviceStatus,
     isOfflineMode,
+    isIndexedDBSupported,
+    pendingSyncChanges,
+    isSyncing,
+    reconnectionStatus,
+    diagnostics,
+    checkConnection,
+    verifyServices,
     enableOfflineMode,
     disableOfflineMode,
-    isSyncing,
     forceSync,
-    lastSyncTime,
-    pendingSyncChanges,
-    isIndexedDBSupported
+    refreshSession,
   };
-
-  // Show offline mode indicator
-  useEffect(() => {
-    if (isOfflineMode && !isLoading) {
-      // Only show in UI, not toast, to prevent spamming
-      console.info('Working in offline mode');
-    }
-  }, [isOfflineMode, isLoading]);
-
+  
   return (
-    <EnhancedSupabaseContext.Provider value={value}>
-      <SupabaseErrorBoundary showFallbackInitially={connectionStatus === 'error' && !isOfflineMode}>
-        {children}
-      </SupabaseErrorBoundary>
+    <EnhancedSupabaseContext.Provider value={contextValue}>
+      {children}
     </EnhancedSupabaseContext.Provider>
   );
+};
+
+// Hook for using the enhanced Supabase context
+export const useEnhancedSupabase = () => {
+  const context = useContext(EnhancedSupabaseContext);
+  
+  if (!context) {
+    throw new Error('useEnhancedSupabase must be used within an EnhancedSupabaseProvider');
+  }
+  
+  return context;
 };
 
 export default EnhancedSupabaseProvider;

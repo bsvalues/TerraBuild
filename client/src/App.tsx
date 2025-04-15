@@ -49,6 +49,7 @@ import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
 import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
+import CostWizardPage from "@/pages/CostWizardPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -259,6 +260,7 @@ function Router() {
       
       {/* Supabase test route - without protection for easier testing */}
       <Route path="/supabase-test" component={SupabaseTestPage} />
+      <Route path="/cost-wizard" component={CostWizardPage} />
       <Route path="/auth" component={AuthPage} />
       
       {/* Collaborative routes wrapped with CollaborationProvider */}

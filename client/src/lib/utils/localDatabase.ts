@@ -38,10 +38,7 @@ interface LocalDatabaseSchema extends Dexie {
   calculations: Table<any, number>;
   
   // Sync queue for pending changes
-  syncQueue: Table<SyncQueueItem, number>;
-  
-  // Methods to manage sync queue
-  syncQueue: {
+  syncQueue: Table<SyncQueueItem, number> & {
     add(tableName: string, operation: SyncOperation, data?: any, id?: string | number): Promise<number>;
     getPending(): Promise<{ data?: SyncQueueItem[], error?: Error }>;
     markAsSynced(ids: number[]): Promise<void>;

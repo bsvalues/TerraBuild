@@ -1,539 +1,500 @@
-import { z } from "zod";
-import { createInsertSchema } from "drizzle-zod";
-import { 
-  pgTable, text, serial, timestamp, varchar, uuid, boolean, json, integer, date, decimal, 
-  jsonb, primaryKey, foreignKey
-} from "drizzle-orm/pg-core";
+/**
+ * BCBS Application Database Schema
+ * 
+ * This file defines the schema for the Benton County Building System database.
+ * It includes all tables, relationships, and types used throughout the application.
+ */
 
-// Define the users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  uuid: uuid("uuid").defaultRandom().notNull().unique(),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
-  name: varchar("name", { length: 100 }),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  role: varchar("role", { length: 20 }).default("user").notNull(),
-  is_active: boolean("is_active").default(true).notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+import { relations, sql } from 'drizzle-orm';
+import { integer, pgTable, serial, text, timestamp, boolean, real, json, uuid } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
+
+// Re-export file upload schema
+export * from './fileUploadSchema';
+
+/*********************
+ * USERS & AUTH
+ *********************/
+
+// Users Table
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').defaultRandom().notNull().unique(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  role: text('role').default('user').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  lastLogin: timestamp('last_login'),
+  preferences: json('preferences').$type<{ theme?: string; notifications?: boolean }>(),
 });
 
-// Create a Zod schema for inserting into the users table
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, uuid: true, created_at: true, updated_at: true });
-
-// Create Zod schema for user login
-export const loginUserSchema = z.object({
-  username: z.string().min(3).max(50),
-  password: z.string().min(6).max(100),
+// User Sessions Table
+export const userSessions = pgTable('user_sessions', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.userId, { onDelete: 'cascade' }),
+  sessionToken: text('session_token').notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastActivity: timestamp('last_activity'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
 });
 
-// Define types for TypeScript
+/*********************
+ * PROPERTIES & IMPROVEMENTS
+ *********************/
+
+// Properties Table
+export const properties = pgTable('properties', {
+  id: serial('id').primaryKey(),
+  propertyId: uuid('property_id').defaultRandom().notNull().unique(),
+  parcelId: text('parcel_id').notNull().unique(),
+  address: text('address').notNull(),
+  city: text('city').notNull(),
+  state: text('state').notNull(),
+  zip: text('zip').notNull(),
+  county: text('county').notNull().default('Benton'),
+  ownerName: text('owner_name'),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  propertyType: text('property_type').notNull(),
+  zoning: text('zoning'),
+  acreage: real('acreage'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  lastAssessment: timestamp('last_assessment'),
+  assessedValue: integer('assessed_value'),
+  totalValue: integer('total_value'),
+  landValue: integer('land_value'),
+  metaData: json('meta_data').$type<Record<string, any>>(),
+});
+
+// Property Improvements Table
+export const improvements = pgTable('improvements', {
+  id: serial('id').primaryKey(),
+  improvementId: uuid('improvement_id').defaultRandom().notNull().unique(),
+  propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
+  buildingType: text('building_type').notNull(),
+  description: text('description').notNull(),
+  yearBuilt: integer('year_built').notNull(),
+  quality: text('quality').notNull(),
+  condition: text('condition').notNull(),
+  squareFeet: integer('square_feet').notNull(),
+  stories: integer('stories').notNull().default(1),
+  basementType: text('basement_type'),
+  basementFinished: boolean('basement_finished').default(false),
+  exteriorWall: text('exterior_wall'),
+  roofType: text('roof_type'),
+  heatingType: text('heating_type'),
+  coolingType: text('cooling_type'),
+  garageType: text('garage_type'),
+  garageSquareFeet: integer('garage_square_feet').default(0),
+  costPerSqFt: real('cost_per_sqft'),
+  calculatedValue: integer('calculated_value'),
+  depreciatedValue: integer('depreciated_value'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  // For specific regional characteristics
+  region: text('region').notNull().default('BC-CENTRAL'),
+  adjustmentFactor: real('adjustment_factor').default(1.0),
+  documentReference: text('document_reference'),
+  imageUrls: json('image_urls').$type<string[]>(),
+  additionalFeatures: json('additional_features').$type<Record<string, any>>(),
+});
+
+// Improvement Details Table (for granular improvement data)
+export const improvementDetails = pgTable('improvement_details', {
+  id: serial('id').primaryKey(),
+  improvementId: uuid('improvement_id').notNull().references(() => improvements.improvementId, { onDelete: 'cascade' }),
+  categoryType: text('category_type').notNull(),
+  componentType: text('component_type').notNull(),
+  description: text('description'),
+  quantity: integer('quantity').default(1),
+  unit: text('unit'),
+  unitCost: real('unit_cost'),
+  totalCost: real('total_cost'),
+  adjustmentFactor: real('adjustment_factor').default(1.0),
+  qualityGrade: text('quality_grade'),
+  yearInstalled: integer('year_installed'),
+  condition: text('condition'),
+  normalizedValue: real('normalized_value'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  notes: text('notes'),
+  calculationMethod: text('calculation_method'),
+});
+
+// Land Details Table
+export const landDetails = pgTable('land_details', {
+  id: serial('id').primaryKey(),
+  propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
+  landType: text('land_type').notNull(),
+  acreage: real('acreage').notNull(),
+  landValue: integer('land_value'),
+  valuePerAcre: real('value_per_acre'),
+  zone: text('zone'),
+  topography: text('topography'),
+  access: text('access'),
+  utilities: text('utilities'),
+  soilType: text('soil_type'),
+  waterRights: boolean('water_rights').default(false),
+  floodZone: text('flood_zone'),
+  frontage: real('frontage'),
+  depth: real('depth'),
+  shape: text('shape'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  additionalNotes: text('additional_notes'),
+});
+
+/*********************
+ * COST MATRIX & FACTORS
+ *********************/
+
+// Building Types Table
+export const buildingTypes = pgTable('building_types', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category'),
+  baseRateMin: real('base_rate_min'),
+  baseRateMax: real('base_rate_max'),
+  baseRateAvg: real('base_rate_avg'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  source: text('source'),
+  isActive: boolean('is_active').default(true),
+});
+
+// Regions Table
+export const regions = pgTable('regions', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  state: text('state').notNull(),
+  county: text('county'),
+  multiplier: real('multiplier').notNull().default(1.0),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  source: text('source'),
+  isActive: boolean('is_active').default(true),
+});
+
+// Cost Matrix Table
+export const costMatrix = pgTable('cost_matrix', {
+  id: serial('id').primaryKey(),
+  matrixId: uuid('matrix_id').defaultRandom().notNull().unique(),
+  buildingType: text('building_type').notNull().references(() => buildingTypes.code),
+  region: text('region').notNull().references(() => regions.code),
+  year: integer('year').notNull(),
+  baseRate: real('base_rate').notNull(),
+  description: text('description'),
+  source: text('source'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdBy: uuid('created_by').references(() => users.userId),
+  isActive: boolean('is_active').default(true),
+  metadata: json('metadata').$type<Record<string, any>>(),
+});
+
+// Matrix Detail Table
+export const matrixDetail = pgTable('matrix_detail', {
+  id: serial('id').primaryKey(),
+  matrixId: uuid('matrix_id').notNull().references(() => costMatrix.matrixId, { onDelete: 'cascade' }),
+  qualityGrade: text('quality_grade').notNull(),
+  sizeRange: text('size_range').notNull(),
+  costPerSqFt: real('cost_per_sqft').notNull(),
+  description: text('description'),
+  adjustmentFactor: real('adjustment_factor').default(1.0),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+});
+
+// Quality Factors Table
+export const qualityFactors = pgTable('quality_factors', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  multiplier: real('multiplier').notNull(),
+  buildingType: text('building_type').references(() => buildingTypes.code),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  source: text('source'),
+  isActive: boolean('is_active').default(true),
+});
+
+// Condition Factors Table
+export const conditionFactors = pgTable('condition_factors', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  multiplier: real('multiplier').notNull(),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  source: text('source'),
+  isActive: boolean('is_active').default(true),
+});
+
+// Age Factors Table
+export const ageFactors = pgTable('age_factors', {
+  id: serial('id').primaryKey(),
+  minAge: integer('min_age').notNull(),
+  maxAge: integer('max_age').notNull(),
+  multiplier: real('multiplier').notNull(),
+  description: text('description'),
+  buildingType: text('building_type').references(() => buildingTypes.code),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  source: text('source'),
+  isActive: boolean('is_active').default(true),
+});
+
+/*********************
+ * CALCULATIONS & HISTORY
+ *********************/
+
+// Calculation History Table
+export const calculations = pgTable('calculations', {
+  id: serial('id').primaryKey(),
+  calculationId: uuid('calculation_id').defaultRandom().notNull().unique(),
+  propertyId: uuid('property_id').references(() => properties.propertyId),
+  improvementId: uuid('improvement_id').references(() => improvements.improvementId),
+  userId: uuid('user_id').references(() => users.userId),
+  calculationDate: timestamp('calculation_date').defaultNow().notNull(),
+  buildingType: text('building_type').notNull(),
+  squareFeet: integer('square_feet').notNull(),
+  quality: text('quality').notNull(),
+  condition: text('condition').notNull(),
+  yearBuilt: integer('year_built').notNull(),
+  region: text('region').notNull(),
+  totalCost: integer('total_cost').notNull(),
+  costPerSqFt: real('cost_per_sqft').notNull(),
+  baseRate: real('base_rate').notNull(),
+  adjustedRate: real('adjusted_rate').notNull(),
+  qualityFactor: real('quality_factor').notNull(),
+  conditionFactor: real('condition_factor').notNull(),
+  ageFactor: real('age_factor').notNull(),
+  regionFactor: real('region_factor').notNull(),
+  otherFactors: json('other_factors').$type<Record<string, number>>(),
+  notes: text('notes'),
+  input_values: json('input_values').$type<Record<string, any>>(),
+  result: json('result').$type<Record<string, any>>(),
+  confidenceLevel: text('confidence_level').default('MEDIUM'),
+  version: text('version'),
+});
+
+/*********************
+ * PROJECTS & COLLABORATION
+ *********************/
+
+// Projects Table
+export const projects = pgTable('projects', {
+  id: serial('id').primaryKey(),
+  projectId: uuid('project_id').defaultRandom().notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  ownerId: uuid('owner_id').notNull().references(() => users.userId),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  status: text('status').default('active').notNull(),
+  isPublic: boolean('is_public').default(false),
+  metadata: json('metadata').$type<Record<string, any>>(),
+});
+
+// Project Members Table
+export const projectMembers = pgTable('project_members', {
+  id: serial('id').primaryKey(),
+  projectId: uuid('project_id').notNull().references(() => projects.projectId, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.userId, { onDelete: 'cascade' }),
+  role: text('role').default('member').notNull(),
+  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  invitedBy: uuid('invited_by').references(() => users.userId),
+  lastActivity: timestamp('last_activity'),
+});
+
+// Project Properties Table
+export const projectProperties = pgTable('project_properties', {
+  id: serial('id').primaryKey(),
+  projectId: uuid('project_id').notNull().references(() => projects.projectId, { onDelete: 'cascade' }),
+  propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
+  addedAt: timestamp('added_at').defaultNow().notNull(),
+  addedBy: uuid('added_by').references(() => users.userId),
+  notes: text('notes'),
+});
+
+/*********************
+ * SYSTEM SETTINGS
+ *********************/
+
+// System Settings Table
+export const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  value: text('value').notNull(),
+  description: text('description'),
+  category: text('category'),
+  isSystemSetting: boolean('is_system_setting').default(false),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.userId),
+});
+
+// Cost Matrix Import History
+export const matrixImports = pgTable('matrix_imports', {
+  id: serial('id').primaryKey(),
+  importId: uuid('import_id').defaultRandom().notNull().unique(),
+  fileName: text('file_name').notNull(),
+  fileSize: integer('file_size'),
+  importDate: timestamp('import_date').defaultNow().notNull(),
+  importedBy: uuid('imported_by').references(() => users.userId),
+  status: text('status').notNull(),
+  recordsProcessed: integer('records_processed'),
+  recordsImported: integer('records_imported'),
+  recordsFailed: integer('records_failed'),
+  errors: json('errors').$type<string[]>(),
+  source: text('source'),
+  year: integer('year'),
+});
+
+// Data Import History
+export const dataImports = pgTable('data_imports', {
+  id: serial('id').primaryKey(),
+  importId: uuid('import_id').defaultRandom().notNull().unique(),
+  importType: text('import_type').notNull(),
+  fileName: text('file_name'),
+  importDate: timestamp('import_date').defaultNow().notNull(),
+  importedBy: uuid('imported_by').references(() => users.userId),
+  status: text('status').notNull(),
+  recordsProcessed: integer('records_processed'),
+  recordsImported: integer('records_imported'),
+  recordsFailed: integer('records_failed'),
+  errors: json('errors').$type<string[]>(),
+  source: text('source'),
+  notes: text('notes'),
+});
+
+/*********************
+ * RELATIONS
+ *********************/
+
+// User relations
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(userSessions),
+  ownedProjects: many(projects, { relationName: 'projectOwner' }),
+  projectMemberships: many(projectMembers),
+  calculations: many(calculations),
+}));
+
+// Properties relations
+export const propertiesRelations = relations(properties, ({ many }) => ({
+  improvements: many(improvements),
+  landDetails: many(landDetails),
+  calculations: many(calculations),
+  projectAssociations: many(projectProperties),
+}));
+
+// Improvements relations
+export const improvementsRelations = relations(improvements, ({ one, many }) => ({
+  property: one(properties, {
+    fields: [improvements.propertyId],
+    references: [properties.propertyId],
+  }),
+  details: many(improvementDetails),
+  calculations: many(calculations),
+}));
+
+// Building Types relations
+export const buildingTypesRelations = relations(buildingTypes, ({ many }) => ({
+  costMatrices: many(costMatrix),
+  qualityFactors: many(qualityFactors),
+  ageFactors: many(ageFactors),
+}));
+
+// Regions relations
+export const regionsRelations = relations(regions, ({ many }) => ({
+  costMatrices: many(costMatrix),
+}));
+
+// Cost Matrix relations
+export const costMatrixRelations = relations(costMatrix, ({ one, many }) => ({
+  buildingTypeData: one(buildingTypes, {
+    fields: [costMatrix.buildingType],
+    references: [buildingTypes.code],
+  }),
+  regionData: one(regions, {
+    fields: [costMatrix.region],
+    references: [regions.code],
+  }),
+  details: many(matrixDetail),
+}));
+
+// Projects relations
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [projects.ownerId],
+    references: [users.userId],
+    relationName: 'projectOwner',
+  }),
+  members: many(projectMembers),
+  properties: many(projectProperties),
+}));
+
+/*********************
+ * INSERT SCHEMAS
+ *********************/
+
+// User Insert Schema
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ id: true, createdAt: true, updatedAt: true, lastLogin: true });
+
+// Property Insert Schema
+export const insertPropertySchema = createInsertSchema(properties)
+  .omit({ id: true, createdAt: true, updatedAt: true, lastAssessment: true });
+
+// Improvement Insert Schema
+export const insertImprovementSchema = createInsertSchema(improvements)
+  .omit({ id: true, lastUpdated: true });
+
+// Cost Matrix Insert Schema
+export const insertCostMatrixSchema = createInsertSchema(costMatrix)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Calculation Insert Schema
+export const insertCalculationSchema = createInsertSchema(calculations)
+  .omit({ id: true, calculationDate: true });
+
+// Project Insert Schema
+export const insertProjectSchema = createInsertSchema(projects)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Settings Insert Schema
+export const insertSettingSchema = createInsertSchema(settings)
+  .omit({ id: true, lastUpdated: true });
+
+/*********************
+ * TYPES
+ *********************/
+
+// Type definitions from schema
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type LoginUser = z.infer<typeof loginUserSchema>;
 
-// Other database tables required by the server
-// Activities for tracking user actions
-export const activities = pgTable("activities", {
-  id: serial("id").primaryKey(),
-  action: text("action").notNull(),
-  icon: varchar("icon", { length: 50 }),
-  iconColor: varchar("icon_color", { length: 50 }),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-  details: json("details"),
-});
-
-export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, timestamp: true });
-
-// Environment settings
-export const environments = pgTable("environments", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  description: text("description"),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// API endpoints
-export const apiEndpoints = pgTable("api_endpoints", {
-  id: serial("id").primaryKey(),
-  path: varchar("path", { length: 255 }).notNull().unique(),
-  method: varchar("method", { length: 10 }).notNull(),
-  description: text("description"),
-  active: boolean("active").default(true).notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// Application settings
-export const settings = pgTable("settings", {
-  id: serial("id").primaryKey(),
-  key: varchar("key", { length: 100 }).notNull().unique(),
-  value: text("value"),
-  type: text("type").default("string"),
-});
-
-export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
-
-// Repository status for version control
-export const repositoryStatus = pgTable("repository_status", {
-  id: serial("id").primaryKey(),
-  last_commit: varchar("last_commit", { length: 100 }),
-  branch: varchar("branch", { length: 100 }),
-  status: varchar("status", { length: 20 }),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// Define types for all tables
-export type Activity = typeof activities.$inferSelect;
-export type InsertActivity = typeof activities.$inferInsert;
-
-export type Environment = typeof environments.$inferSelect;
-export type InsertEnvironment = typeof environments.$inferInsert;
-
-export type ApiEndpoint = typeof apiEndpoints.$inferSelect;
-export type InsertApiEndpoint = typeof apiEndpoints.$inferInsert;
-
-export type Setting = typeof settings.$inferSelect;
-export type InsertSetting = typeof settings.$inferInsert;
-export type InsertSettingType = z.infer<typeof insertSettingSchema>;
-
-export type RepositoryStatus = typeof repositoryStatus.$inferSelect;
-export type InsertRepositoryStatus = typeof repositoryStatus.$inferInsert;
-
-// Synchronization tables
-export const syncHistory = pgTable("sync_history", {
-  id: serial("id").primaryKey(),
-  connectionId: integer("connection_id").notNull(),
-  scheduleId: integer("schedule_id"),
-  scheduleName: varchar("schedule_name", { length: 100 }),
-  status: varchar("status", { length: 50 }).notNull(),
-  startTime: timestamp("start_time").defaultNow().notNull(),
-  endTime: timestamp("end_time"),
-  filesTransferred: integer("files_transferred").default(0),
-  totalBytes: integer("total_bytes").default(0),
-  details: json("details"),
-  errors: json("errors").default([]),
-});
-
-export const syncSchedules = pgTable("sync_schedules", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  connectionId: integer("connection_id").notNull(),
-  source: json("source").notNull(),
-  destination: json("destination").notNull(),
-  frequency: varchar("frequency", { length: 50 }).notNull(),
-  time: varchar("time", { length: 10 }),
-  dayOfWeek: integer("day_of_week"),
-  dayOfMonth: integer("day_of_month"),
-  options: json("options").default({}),
-  enabled: boolean("enabled").default(true),
-  status: varchar("status", { length: 50 }).default("pending"),
-  lastRun: timestamp("last_run"),
-  nextRun: timestamp("next_run"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const ftpConnections = pgTable("ftp_connections", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  host: varchar("host", { length: 255 }).notNull(),
-  port: integer("port").default(21),
-  username: varchar("username", { length: 100 }).notNull(),
-  password: varchar("password", { length: 255 }),
-  secure: boolean("secure").default(false),
-  passive: boolean("passive").default(true),
-  status: varchar("status", { length: 50 }).default("disconnected"),
-  lastConnected: timestamp("last_connected"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const connectionHistory = pgTable("connection_history", {
-  id: serial("id").primaryKey(),
-  connectionId: integer("connection_id").notNull(),
-  status: varchar("status", { length: 50 }).notNull(),
-  details: json("details"),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-});
-
-export type SyncHistory = typeof syncHistory.$inferSelect;
-export type InsertSyncHistory = typeof syncHistory.$inferInsert;
-
-export type SyncSchedule = typeof syncSchedules.$inferSelect;
-export type InsertSyncSchedule = typeof syncSchedules.$inferInsert;
-
-export const insertFTPConnectionSchema = createInsertSchema(ftpConnections).omit({ id: true, createdAt: true, updatedAt: true, lastConnected: true });
-export const insertConnectionHistorySchema = createInsertSchema(connectionHistory).omit({ id: true, timestamp: true });
-
-export type FTPConnection = typeof ftpConnections.$inferSelect;
-export type InsertFTPConnection = z.infer<typeof insertFTPConnectionSchema>;
-
-export type ConnectionHistory = typeof connectionHistory.$inferSelect;
-export type InsertConnectionHistory = z.infer<typeof insertConnectionHistorySchema>;
-
-// Import records
-export const importRecords = pgTable("import_records", {
-  id: serial("id").primaryKey(),
-  fileName: varchar("file_name", { length: 255 }).notNull(),
-  fileType: varchar("file_type", { length: 50 }).notNull(),
-  importType: varchar("import_type", { length: 50 }).notNull(),
-  status: varchar("status", { length: 50 }).default("pending").notNull(),
-  details: json("details").default({}),
-  recordCount: integer("record_count").default(0),
-  errorCount: integer("error_count").default(0),
-  startTime: timestamp("start_time").defaultNow().notNull(),
-  endTime: timestamp("end_time"),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type ImportRecord = typeof importRecords.$inferSelect;
-export type InsertImportRecord = typeof importRecords.$inferInsert;
-
-// Define the cost matrix tables
-export const costMatrix = pgTable("cost_matrix", {
-  id: serial("id").primaryKey(),
-  region: varchar("region", { length: 50 }),
-  building_type: varchar("building_type", { length: 50 }),
-  building_type_description: text("building_type_description"),
-  base_cost: varchar("base_cost", { length: 20 }),
-  matrix_year: varchar("matrix_year", { length: 10 }),
-  source_matrix_id: varchar("source_matrix_id", { length: 50 }),
-  matrix_description: text("matrix_description"),
-  data_points: integer("data_points"),
-  min_cost: varchar("min_cost", { length: 20 }),
-  max_cost: varchar("max_cost", { length: 20 }),
-  complexity_factor_base: varchar("complexity_factor_base", { length: 20 }),
-  quality_factor_base: varchar("quality_factor_base", { length: 20 }),
-  condition_factor_base: varchar("condition_factor_base", { length: 20 }),
-  is_active: boolean("is_active").default(true),
-  county: varchar("county", { length: 50 }),
-  state: varchar("state", { length: 50 }),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const costMatrixEntry = pgTable("cost_matrix_entry", {
-  id: serial("id").primaryKey(),
-  matrix_id: varchar("matrix_id", { length: 50 }).notNull(),
-  building_type: varchar("building_type", { length: 50 }).notNull(),
-  region: varchar("region", { length: 50 }).notNull(),
-  base_cost: varchar("base_cost", { length: 20 }).notNull(),
-  county: varchar("county", { length: 50 }),
-  state: varchar("state", { length: 50 }),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Property schema
-export const property = pgTable("property", {
-  id: serial("id").primaryKey(),
-  propId: varchar("prop_id", { length: 50 }).notNull().unique(),
-  block: varchar("block", { length: 50 }),
-  tractOr: varchar("tract_or", { length: 50 }),
-  lot: varchar("lot", { length: 50 }),
-  address: varchar("address", { length: 255 }),
-  citystate: varchar("citystate", { length: 100 }),
-  zip: varchar("zip", { length: 20 }),
-  owner: varchar("owner", { length: 100 }),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const improvement = pgTable("improvement", {
-  id: serial("id").primaryKey(),
-  propId: varchar("prop_id", { length: 50 }).notNull(),
-  apprId: varchar("appr_id", { length: 50 }).notNull().unique(),
-  improvementType: varchar("improvement_type", { length: 50 }),
-  yearBuilt: varchar("year_built", { length: 4 }),
-  squareFeet: varchar("square_feet", { length: 20 }),
-  grade: varchar("grade", { length: 20 }),
-  condition: varchar("condition", { length: 20 }),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Create insert schemas
-export const insertCostMatrixSchema = createInsertSchema(costMatrix).omit({ id: true, created_at: true, updated_at: true });
-export const insertCostMatrixEntrySchema = createInsertSchema(costMatrixEntry).omit({ id: true, created_at: true });
-export const insertPropertySchema = createInsertSchema(property).omit({ id: true, created_at: true, updated_at: true });
-export const insertImprovementSchema = createInsertSchema(improvement).omit({ id: true, created_at: true });
-
-// Define types for TypeScript
-export type CostMatrix = typeof costMatrix.$inferSelect;
-export type InsertCostMatrix = z.infer<typeof insertCostMatrixSchema>;
-export type CostMatrixEntry = typeof costMatrixEntry.$inferSelect;
-export type InsertCostMatrixEntry = z.infer<typeof insertCostMatrixEntrySchema>;
-export type Property = typeof property.$inferSelect;
+export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
-export type Improvement = typeof improvement.$inferSelect;
+
+export type Improvement = typeof improvements.$inferSelect;
 export type InsertImprovement = z.infer<typeof insertImprovementSchema>;
 
-// Building Cost related tables
-export const buildingCosts = pgTable("building_costs", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  baseRate: decimal("base_rate").notNull(),
-  regionMultiplier: decimal("region_multiplier").default("1.0"),
-  qualityGrade: varchar("quality_grade", { length: 10 }),
-  yearBuilt: integer("year_built"),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export type CostMatrix = typeof costMatrix.$inferSelect;
+export type InsertCostMatrix = z.infer<typeof insertCostMatrixSchema>;
 
-export const costFactors = pgTable("cost_factors", {
-  id: serial("id").primaryKey(),
-  buildingType: varchar("building_type", { length: 50 }).notNull(),
-  region: varchar("region", { length: 50 }).notNull(),
-  factorType: varchar("factor_type", { length: 50 }).notNull(),
-  value: decimal("value").notNull(),
-  notes: text("notes"),
-  active: boolean("active").default(true),
-  startDate: date("start_date").notNull(),
-  endDate: date("end_date"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export type Calculation = typeof calculations.$inferSelect;
+export type InsertCalculation = z.infer<typeof insertCalculationSchema>;
 
-export const materialTypes = pgTable("material_types", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  category: varchar("category", { length: 50 }),
-  description: text("description"),
-  unit: varchar("unit", { length: 20 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
 
-export const materialCosts = pgTable("material_costs", {
-  id: serial("id").primaryKey(),
-  materialTypeId: integer("material_type_id").references(() => materialTypes.id),
-  cost: decimal("cost").notNull(),
-  region: varchar("region", { length: 50 }).notNull(),
-  effectiveDate: date("effective_date").notNull(),
-  expirationDate: date("expiration_date"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const buildingCostMaterials = pgTable("building_cost_materials", {
-  id: serial("id").primaryKey(),
-  buildingCostId: integer("building_cost_id").references(() => buildingCosts.id),
-  materialTypeId: integer("material_type_id").references(() => materialTypes.id),
-  quantity: decimal("quantity").notNull(),
-  unitCost: decimal("unit_cost").notNull(),
-  totalCost: decimal("total_cost").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const calculationHistory = pgTable("calculation_history", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  buildingType: varchar("building_type", { length: 50 }).notNull(),
-  sqFeet: integer("sq_feet"),
-  region: varchar("region", { length: 50 }),
-  quality: varchar("quality", { length: 20 }),
-  yearBuilt: integer("year_built"),
-  inputParams: json("input_params"),
-  resultValue: decimal("result_value"),
-  calculationDate: timestamp("calculation_date").defaultNow().notNull(),
-  confidenceLevel: varchar("confidence_level", { length: 20 }),
-  notes: text("notes"),
-});
-
-export const costFactorPresets = pgTable("cost_factor_presets", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  factorValues: json("factor_values").notNull(),
-  isDefault: boolean("is_default").default(false),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const fileUploads = pgTable("file_uploads", {
-  id: serial("id").primaryKey(),
-  filename: varchar("filename", { length: 255 }).notNull(),
-  originalFilename: varchar("original_filename", { length: 255 }).notNull(),
-  path: varchar("path", { length: 255 }).notNull(),
-  mimeType: varchar("mime_type", { length: 100 }),
-  size: integer("size").notNull(),
-  purpose: varchar("purpose", { length: 50 }),
-  uploadedBy: integer("uploaded_by").references(() => users.id),
-  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
-});
-
-export const whatIfScenarios = pgTable("what_if_scenarios", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  baseParams: json("base_params").notNull(),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const scenarioVariations = pgTable("scenario_variations", {
-  id: serial("id").primaryKey(),
-  scenarioId: integer("scenario_id").references(() => whatIfScenarios.id).notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  changedParams: json("changed_params").notNull(),
-  resultValue: decimal("result_value"),
-  comparisonValue: decimal("comparison_value"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const sharedProjects = pgTable("shared_projects", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  isPublic: boolean("is_public").default(false),
-  createdById: integer("created_by_id").references(() => users.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  status: varchar("status", { length: 50 }).default("active"),
-});
-
-export const projectMembers = pgTable("project_members", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => sharedProjects.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  role: varchar("role", { length: 50 }).default("viewer").notNull(),
-  joinedAt: timestamp("joined_at").defaultNow().notNull(),
-  invitedBy: integer("invited_by").references(() => users.id),
-});
-
-export const projectItems = pgTable("project_items", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => sharedProjects.id).notNull(),
-  itemType: varchar("item_type", { length: 50 }).notNull(),
-  itemId: integer("item_id").notNull(),
-  addedBy: integer("added_by").references(() => users.id).notNull(),
-  addedAt: timestamp("added_at").defaultNow().notNull(),
-});
-
-export const projectInvitations = pgTable("project_invitations", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => sharedProjects.id).notNull(),
-  email: varchar("email", { length: 255 }).notNull(),
-  role: varchar("role", { length: 50 }).default("viewer").notNull(),
-  status: varchar("status", { length: 50 }).default("pending").notNull(),
-  invitedBy: integer("invited_by").references(() => users.id).notNull(),
-  invitedAt: timestamp("invited_at").defaultNow().notNull(),
-  respondedAt: timestamp("responded_at"),
-});
-
-export const comments = pgTable("comments", {
-  id: serial("id").primaryKey(),
-  content: text("content").notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  targetType: varchar("target_type", { length: 50 }).notNull(),
-  targetId: integer("target_id").notNull(),
-  parentCommentId: integer("parent_comment_id"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  isResolved: boolean("is_resolved").default(false),
-  isEdited: boolean("is_edited").default(false),
-});
-
-export const sharedLinks = pgTable("shared_links", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => sharedProjects.id).notNull(),
-  token: varchar("token", { length: 255 }).notNull().unique(),
-  accessLevel: varchar("access_level", { length: 50 }).default("viewer").notNull(),
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  createdBy: integer("created_by").references(() => users.id).notNull(),
-  description: text("description"),
-});
-
-// Define types for the additional tables
-// Insert schemas for building costs
-export const insertBuildingCostSchema = createInsertSchema(buildingCosts).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertCostFactorSchema = createInsertSchema(costFactors).omit({ id: true, createdAt: true });
-export const insertMaterialTypeSchema = createInsertSchema(materialTypes).omit({ id: true, createdAt: true });
-export const insertMaterialCostSchema = createInsertSchema(materialCosts).omit({ id: true, createdAt: true });
-export const insertBuildingCostMaterialSchema = createInsertSchema(buildingCostMaterials).omit({ id: true, createdAt: true });
-export const insertCalculationHistorySchema = createInsertSchema(calculationHistory).omit({ id: true, calculationDate: true });
-export const insertCostFactorPresetSchema = createInsertSchema(costFactorPresets).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertFileUploadSchema = createInsertSchema(fileUploads).omit({ id: true, uploadedAt: true });
-export const insertWhatIfScenarioSchema = createInsertSchema(whatIfScenarios).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertScenarioVariationSchema = createInsertSchema(scenarioVariations).omit({ id: true, createdAt: true, updatedAt: true });
-
-// Define types
-export type BuildingCost = typeof buildingCosts.$inferSelect;
-export type InsertBuildingCost = z.infer<typeof insertBuildingCostSchema>;
-
-export type CostFactor = typeof costFactors.$inferSelect;
-export type InsertCostFactor = z.infer<typeof insertCostFactorSchema>;
-
-export type MaterialType = typeof materialTypes.$inferSelect;
-export type InsertMaterialType = z.infer<typeof insertMaterialTypeSchema>;
-
-export type MaterialCost = typeof materialCosts.$inferSelect;
-export type InsertMaterialCost = z.infer<typeof insertMaterialCostSchema>;
-
-export type BuildingCostMaterial = typeof buildingCostMaterials.$inferSelect;
-export type InsertBuildingCostMaterial = z.infer<typeof insertBuildingCostMaterialSchema>;
-
-export type CalculationHistory = typeof calculationHistory.$inferSelect;
-export type InsertCalculationHistory = z.infer<typeof insertCalculationHistorySchema>;
-
-export type CostFactorPreset = typeof costFactorPresets.$inferSelect;
-export type InsertCostFactorPreset = z.infer<typeof insertCostFactorPresetSchema>;
-
-export type FileUpload = typeof fileUploads.$inferSelect;
-export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;
-
-export type WhatIfScenario = typeof whatIfScenarios.$inferSelect;
-export type InsertWhatIfScenario = z.infer<typeof insertWhatIfScenarioSchema>;
-
-export type ScenarioVariation = typeof scenarioVariations.$inferSelect;
-export type InsertScenarioVariation = z.infer<typeof insertScenarioVariationSchema>;
-
-// Insert schemas for shared projects
-export const insertSharedProjectSchema = createInsertSchema(sharedProjects).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertProjectMemberSchema = createInsertSchema(projectMembers).omit({ id: true, joinedAt: true });
-export const insertProjectItemSchema = createInsertSchema(projectItems).omit({ id: true, addedAt: true });
-export const insertProjectInvitationSchema = createInsertSchema(projectInvitations).omit({ id: true, invitedAt: true, respondedAt: true });
-export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertSharedLinkSchema = createInsertSchema(sharedLinks).omit({ id: true, createdAt: true });
-
-// Define types
-export type SharedProject = typeof sharedProjects.$inferSelect;
-export type InsertSharedProject = z.infer<typeof insertSharedProjectSchema>;
-
-export type ProjectMember = typeof projectMembers.$inferSelect;
-export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
-
-export type ProjectItem = typeof projectItems.$inferSelect;
-export type InsertProjectItem = z.infer<typeof insertProjectItemSchema>;
-
-export type ProjectInvitation = typeof projectInvitations.$inferSelect;
-export type InsertProjectInvitation = z.infer<typeof insertProjectInvitationSchema>;
-
-export type Comment = typeof comments.$inferSelect;
-export type InsertComment = z.infer<typeof insertCommentSchema>;
-
-export type SharedLink = typeof sharedLinks.$inferSelect;
-export type InsertSharedLink = z.infer<typeof insertSharedLinkSchema>;
-
-// Project Activities
-export const projectActivities = pgTable("project_activities", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => sharedProjects.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  activityType: varchar("activity_type", { length: 100 }).notNull(),
-  activityData: json("activity_data").default({}),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-});
-
-export const insertProjectActivitySchema = createInsertSchema(projectActivities).omit({ id: true, timestamp: true });
-
-export type ProjectActivity = typeof projectActivities.$inferSelect;
-export type InsertProjectActivity = z.infer<typeof insertProjectActivitySchema>;
+export type BuildingType = typeof buildingTypes.$inferSelect;
+export type Region = typeof regions.$inferSelect;
+export type QualityFactor = typeof qualityFactors.$inferSelect;
+export type ConditionFactor = typeof conditionFactors.$inferSelect;
+export type AgeFactor = typeof ageFactors.$inferSelect;
+export type MatrixDetail = typeof matrixDetail.$inferSelect;
+export type Setting = typeof settings.$inferSelect;
