@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
-import { PropertyPostgresStorage } from './property-storage';
+import { adaptiveStorage } from './adaptive-storage';
 
-// Export the storage interface to use PropertyPostgresStorage implementation
-// which extends PostgresStorage with property data methods
-export const storage = new PropertyPostgresStorage();
+// Export the adaptive storage, which automatically selects between 
+// Supabase and local PostgreSQL storage based on availability
+export const storage = adaptiveStorage;
