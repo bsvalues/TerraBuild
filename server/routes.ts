@@ -475,7 +475,24 @@ router.get('/settings', asyncHandler(async (req, res) => {
 router.get('/settings/:key', asyncHandler(async (req, res) => {
   const setting = await storage.getSetting(req.params.key);
   
+  // Default values for known settings
+  const defaultValues: Record<string, string> = {
+    'SAAS_MODE': 'true',
+    'DEV_AUTOLOGIN': 'true',
+    'DEBUG_MODE': 'false',
+    'API_RATE_LIMITING': 'true',
+    'OPENAI_API_KEY_STATUS': 'missing',
+    'DEV_AUTO_LOGIN_ENABLED': 'true'
+  };
+  
+  // If setting doesn't exist but we have a default, return that
   if (!setting) {
+    if (defaultValues[req.params.key]) {
+      // Store the default value for future use
+      await storage.setSetting(req.params.key, defaultValues[req.params.key]);
+      return res.json({ key: req.params.key, value: defaultValues[req.params.key] });
+    }
+    
     return res.status(404).json({ message: 'Setting not found' });
   }
   
