@@ -1,0 +1,3312 @@
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+2supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+2supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+2supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+2supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!
+romjfbwktyxljvgcthmk.supabase.co/health:1 
+            
+            
+            Failed to load resource: net::ERR_CONNECTION_RESET
+supabaseClient.ts:142 Supabase diagnostics: Testing Supabase connection to: https://romjfbwktyxljvgcthmk.supabase.co
+Attempting health check endpoint...
+❌ Health check error: Failed to fetch
+Attempting auth session check...
+✅ Auth session check successful!

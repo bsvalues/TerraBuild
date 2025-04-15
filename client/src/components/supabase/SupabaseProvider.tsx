@@ -8,7 +8,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from '@/hooks/use-toast';
-import supabase, { checkSupabaseConnection, isSupabaseConfigured } from '@/lib/utils/supabaseClient';
+import supabase, { 
+  checkSupabaseConnection, 
+  isSupabaseConfigured,
+  verifySupabaseServices,
+  SupabaseServiceStatus
+} from '@/lib/utils/supabaseClient';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
 // Define the context shape
@@ -19,9 +24,11 @@ interface SupabaseContextType {
   isLoading: boolean;
   error: Error | null;
   isConfigured: boolean;
-  connectionStatus: 'connected' | 'error' | 'unconfigured' | 'connecting';
+  connectionStatus: 'connected' | 'error' | 'unconfigured' | 'connecting' | 'partial';
   checkConnection: () => Promise<boolean>;
   diagnostics: string[];
+  serviceStatus?: SupabaseServiceStatus;
+  verifyServices: () => Promise<SupabaseServiceStatus>;
 }
 
 // Create context with default values
@@ -35,6 +42,17 @@ const SupabaseContext = createContext<SupabaseContextType>({
   connectionStatus: 'connecting',
   checkConnection: async () => false,
   diagnostics: [],
+  verifyServices: async () => ({
+    health: false,
+    auth: false,
+    storage: false,
+    database: false,
+    functions: false,
+    realtime: false,
+    tables: [],
+    message: 'Not verified',
+    diagnostics: []
+  }),
 });
 
 /**
@@ -56,10 +74,11 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error' | 'unconfigured' | 'connecting'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'error' | 'unconfigured' | 'connecting' | 'partial'>('connecting');
   const [isConfigured, setIsConfigured] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState(0);
   const [diagnostics, setDiagnostics] = useState<string[]>([]);
+  const [serviceStatus, setServiceStatus] = useState<SupabaseServiceStatus | undefined>(undefined);
   const MAX_RETRIES = 3;
 
   // Check if Supabase is properly configured with environment variables
@@ -76,6 +95,56 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
     return configStatus;
   }, []);
 
+  // Enhanced service verification for detailed diagnostics
+  const verifyServices = useCallback(async (): Promise<SupabaseServiceStatus> => {
+    try {
+      setDiagnostics(prev => [...prev, "Starting comprehensive service verification..."]);
+      const status = await verifySupabaseServices();
+      setServiceStatus(status);
+      
+      // Update diagnostics with the results
+      setDiagnostics(prev => [...prev, ...status.diagnostics]);
+      
+      // Determine connection status based on service availability
+      if (Object.values(status).filter(Boolean).length === 0) {
+        // If no services are available
+        setConnectionStatus('error');
+      } else if (status.auth && status.database) {
+        // If core services are available
+        setConnectionStatus('connected');
+      } else if (status.auth || status.database || status.storage || status.realtime) {
+        // If at least some services are available
+        setConnectionStatus('partial');
+      } else {
+        setConnectionStatus('error');
+      }
+      
+      return status;
+    } catch (error) {
+      setConnectionStatus('error');
+      if (error instanceof Error) {
+        setError(error);
+        setDiagnostics(prev => [...prev, `❌ Service verification error: ${error.message}`]);
+      }
+      
+      // Return a default error status
+      const errorStatus: SupabaseServiceStatus = {
+        health: false,
+        auth: false,
+        storage: false,
+        database: false,
+        functions: false,
+        realtime: false,
+        tables: [],
+        message: error instanceof Error ? `Error: ${error.message}` : 'Unknown error during service verification',
+        diagnostics: ['Service verification failed']
+      };
+      
+      setServiceStatus(errorStatus);
+      return errorStatus;
+    }
+  }, []);
+
   // Function to check Supabase connection that can be called from consumers
   const checkConnection = useCallback(async (): Promise<boolean> => {
     try {
@@ -86,6 +155,10 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
         setConnectionStatus('connected');
         setDiagnostics(prev => [...prev, "✅ Connection successful!"]);
         
+        // If we've verified a successful connection, also verify services
+        // but don't wait for it to complete
+        verifyServices().catch(error => console.error("Service verification error:", error));
+        
         // Show success toast but only if we were previously in error state
         if (connectionStatus === 'error' || connectionStatus === 'unconfigured') {
           toast({
@@ -95,16 +168,42 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
           });
         }
       } else {
-        setConnectionStatus('error');
-        setDiagnostics(prev => [...prev, "❌ Connection failed - all checks failed"]);
+        // Verify services to get detailed status when the basic check fails
+        const status = await verifyServices();
         
-        // Only show toast if not in development mode to avoid spamming
-        if (process.env.NODE_ENV === 'production') {
-          toast({
-            title: "Supabase Connection Failed",
-            description: "Could not connect to Supabase. Check console for details.",
-            variant: "destructive",
-          });
+        // If we have at least auth service but health check fails, we consider it a partial connection
+        if (status.auth) {
+          setConnectionStatus('partial');
+          setDiagnostics(prev => [...prev, "⚠️ Partial Supabase connection - some services available"]);
+          
+          // In development, this is expected so we don't show an error toast
+          if (process.env.NODE_ENV !== 'development') {
+            toast({
+              title: "Partial Supabase Connection",
+              description: `Some Supabase services are available: ${[
+                status.auth ? 'Auth' : null,
+                status.database ? 'Database' : null,
+                status.storage ? 'Storage' : null,
+                status.realtime ? 'Realtime' : null
+              ].filter(Boolean).join(', ')}`,
+              variant: "default",
+            });
+          }
+          
+          // Return true if auth is available as this is often sufficient for basic operations
+          return status.auth;
+        } else {
+          setConnectionStatus('error');
+          setDiagnostics(prev => [...prev, "❌ Connection failed - all checks failed"]);
+          
+          // Only show toast if not in development mode to avoid spamming
+          if (process.env.NODE_ENV === 'production') {
+            toast({
+              title: "Supabase Connection Failed",
+              description: "Could not connect to Supabase. Check console for details.",
+              variant: "destructive",
+            });
+          }
         }
       }
       
@@ -128,7 +227,7 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
       
       return false;
     }
-  }, [connectionStatus]);
+  }, [connectionStatus, verifyServices]);
 
   // Initialize and set up auth state listener
   useEffect(() => {
@@ -309,6 +408,8 @@ const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
     connectionStatus,
     checkConnection,
     diagnostics,
+    serviceStatus,
+    verifyServices,
   };
 
   return (

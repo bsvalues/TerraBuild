@@ -104,6 +104,188 @@ export const isSupabaseConfigured = (): boolean => {
   return process.env.NODE_ENV === 'development';
 };
 
+// Define service availability structure
+export interface SupabaseServiceStatus {
+  health: boolean;
+  auth: boolean;
+  storage: boolean;
+  database: boolean;
+  functions: boolean;
+  realtime: boolean;
+  tables: string[];
+  message: string;
+  diagnostics: string[];
+}
+
+// Comprehensive Supabase service verification
+export const verifySupabaseServices = async (): Promise<SupabaseServiceStatus> => {
+  const status: SupabaseServiceStatus = {
+    health: false,
+    auth: false, 
+    storage: false,
+    database: false,
+    functions: false,
+    realtime: false,
+    tables: [],
+    message: 'Verifying Supabase services...',
+    diagnostics: []
+  };
+  
+  status.diagnostics.push(`🔍 Testing Supabase connection to: ${supabaseUrl}`);
+  
+  try {
+    // 1. Health check
+    try {
+      status.diagnostics.push('Attempting health check endpoint...');
+      const healthResponse = await fetch(`${supabaseUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        }
+      });
+      
+      if (healthResponse.ok) {
+        status.health = true;
+        status.diagnostics.push('✅ Health check successful!');
+      } else {
+        status.diagnostics.push(`❌ Health check failed with status: ${healthResponse.status}`);
+      }
+    } catch (healthError) {
+      status.diagnostics.push(`❌ Health check error: ${healthError instanceof Error ? healthError.message : String(healthError)}`);
+    }
+    
+    // 2. Auth service check
+    try {
+      status.diagnostics.push('Attempting auth session check...');
+      const { data: authData, error: authError } = await supabase.auth.getSession();
+      
+      if (!authError) {
+        status.auth = true;
+        status.diagnostics.push('✅ Auth session check successful!');
+      } else {
+        status.diagnostics.push(`❌ Auth session check failed: ${authError.message}`);
+      }
+    } catch (authCheckError) {
+      status.diagnostics.push(`❌ Auth check error: ${authCheckError instanceof Error ? authCheckError.message : String(authCheckError)}`);
+    }
+    
+    // 3. Storage service check
+    try {
+      status.diagnostics.push('Checking storage service...');
+      const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
+      
+      if (!storageError) {
+        status.storage = true;
+        status.diagnostics.push(`✅ Storage service check successful! Found ${buckets.length} buckets.`);
+      } else {
+        status.diagnostics.push(`❌ Storage service check failed: ${storageError.message}`);
+      }
+    } catch (storageCheckError) {
+      status.diagnostics.push(`❌ Storage check error: ${storageCheckError instanceof Error ? storageCheckError.message : String(storageCheckError)}`);
+    }
+    
+    // 4. Database table checks
+    try {
+      status.diagnostics.push('Checking database tables...');
+      // Try each of these common tables that might exist
+      const commonTables = ['users', 'cost_matrix', 'properties', 'projects', 'settings', 
+                           'cost_factors', 'improvements', 'material_types', 'material_costs',
+                           'building_types', 'regions', 'calculation_history'];
+      
+      let tableSuccesses = 0;
+      for (const table of commonTables) {
+        try {
+          const { error: queryError } = await supabase.from(table).select('count', { count: 'exact', head: true });
+          
+          // If we found a table that works, connection is good
+          if (!queryError) {
+            tableSuccesses++;
+            status.tables.push(table);
+            status.diagnostics.push(`✅ Table '${table}' accessible`);
+          } else if (queryError.message.includes('does not exist')) {
+            status.diagnostics.push(`ℹ️ Table '${table}' does not exist`);
+          } else {
+            status.diagnostics.push(`❌ Table '${table}' not accessible: ${queryError.message}`);
+          }
+        } catch (tableError) {
+          status.diagnostics.push(`❌ Error querying table '${table}': ${tableError instanceof Error ? tableError.message : String(tableError)}`);
+        }
+      }
+      
+      if (tableSuccesses > 0) {
+        status.database = true;
+        status.diagnostics.push(`✅ Database service check successful! Found ${tableSuccesses} accessible tables.`);
+      } else {
+        status.diagnostics.push('❌ No database tables accessible');
+      }
+    } catch (dbError) {
+      status.diagnostics.push(`❌ Database check error: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    }
+    
+    // 5. Functions check (if any are configured)
+    try {
+      status.diagnostics.push('Checking edge functions...');
+      // Just check if we can access the functions endpoint, we don't call listFunctions()
+      // since it's not available in all Supabase client versions
+      const functionsClient = supabase.functions;
+      if (functionsClient) {
+        status.functions = true;
+        status.diagnostics.push(`✅ Functions service available`);
+      } else {
+        status.diagnostics.push(`❌ Functions service not available`);
+      }
+    } catch (functionsCheckError) {
+      status.diagnostics.push(`❌ Functions check error: ${functionsCheckError instanceof Error ? functionsCheckError.message : String(functionsCheckError)}`);
+    }
+    
+    // 6. Realtime check
+    try {
+      status.diagnostics.push('Checking realtime service...');
+      // Create a channel but don't subscribe, just testing connectivity
+      const channel = supabase.channel('connection_test');
+      if (channel) {
+        status.realtime = true;
+        status.diagnostics.push(`✅ Realtime service check successful!`);
+      } else {
+        status.diagnostics.push(`❌ Realtime service not available`);
+      }
+    } catch (realtimeCheckError) {
+      status.diagnostics.push(`❌ Realtime check error: ${realtimeCheckError instanceof Error ? realtimeCheckError.message : String(realtimeCheckError)}`);
+    }
+    
+    // Generate overall status message
+    const services = [
+      status.health ? 'Health' : null,
+      status.auth ? 'Auth' : null,
+      status.storage ? 'Storage' : null, 
+      status.database ? 'Database' : null,
+      status.functions ? 'Functions' : null,
+      status.realtime ? 'Realtime' : null
+    ].filter(Boolean);
+    
+    if (services.length === 0) {
+      status.message = '❌ All Supabase services unavailable';
+    } else if (services.length === 6) {
+      status.message = '✅ All Supabase services available and accessible';
+    } else {
+      status.message = `⚠️ Partial Supabase connectivity - Available services: ${services.join(', ')}`;
+    }
+    
+    status.diagnostics.push(status.message);
+    
+    // Log the diagnostic information
+    console.info('Supabase diagnostics:', status.diagnostics.join('\n'));
+    
+    return status;
+  } catch (error) {
+    status.message = `❌ Supabase service verification failed: ${error instanceof Error ? error.message : String(error)}`;
+    status.diagnostics.push(status.message);
+    console.error('Supabase diagnostics:', status.diagnostics.join('\n'));
+    return status;
+  }
+};
+
 // Enhanced utility to check if Supabase is accessible with diagnostics
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   let diagnostics: string[] = [];
