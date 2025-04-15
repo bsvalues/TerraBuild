@@ -5,81 +5,78 @@
  * including database connection status, health checks, and other system information.
  */
 
-import express from 'express';
-import { isSupabaseConfigured } from '../utils/supabaseClient';
-import { adaptiveStorage } from '../adaptive-storage';
-import { log } from '../vite';
+import { Router, Request, Response } from 'express';
+import { AdaptiveStorage } from '../adaptive-storage';
+import { config } from 'dotenv';
 
-const router = express.Router();
+config();
 
-// Get database connection status
-router.get('/connection-status', async (req, res) => {
+export const systemRoutes = Router();
+
+// Database connection status endpoint
+systemRoutes.get('/connection-status', async (req: Request, res: Response) => {
   try {
-    // Get adaptive storage's internal state
-    const status = {
+    const storage = req.app.locals.storage as AdaptiveStorage;
+    const status = await storage.getConnectionStatus();
+
+    res.json({
       supabase: {
-        available: false,
-        configured: isSupabaseConfigured(),
-        lastChecked: null as Date | null
+        available: status.supabase.available,
+        configured: !!process.env.SUPABASE_URL && !!process.env.SUPABASE_KEY,
+        lastChecked: status.supabase.lastChecked
       },
       postgres: {
-        available: true, // Postgres is always available locally
-        configured: true,
-        lastChecked: new Date()
+        available: status.postgres.available,
+        configured: !!process.env.DATABASE_URL,
+        lastChecked: status.postgres.lastChecked
       },
-      activeProvider: 'postgres' as 'postgres' | 'supabase'
-    };
-    
-    // If we have access to the adaptive storage's internal state, use it
-    if (adaptiveStorage['usesFallback'] !== undefined) {
-      status.activeProvider = adaptiveStorage['usesFallback'] ? 'postgres' : 'supabase';
-      
-      if (adaptiveStorage['lastConnectionCheck']) {
-        status.supabase.lastChecked = new Date(adaptiveStorage['lastConnectionCheck']);
-      } else {
-        status.supabase.lastChecked = null;
-      }
-      
-      // Check Supabase connection directly
-      if (status.supabase.configured) {
-        try {
-          // Use the utility method from supabaseClient.ts to check connection
-          const { getSupabaseClient } = await import('../utils/supabaseClient');
-          const supabase = getSupabaseClient();
-          
-          // Try a lightweight query to check connection
-          const { error } = await supabase.from('users').select('count', { count: 'exact', head: true });
-          status.supabase.available = !error;
-        } catch (error) {
-          log(`Error checking Supabase connection for status route: ${error}`, 'system');
-          status.supabase.available = false;
-        }
-      }
-    }
-    
-    res.json(status);
+      activeProvider: status.activeProvider
+    });
   } catch (error) {
-    log(`Error in connection-status route: ${error}`, 'system');
-    res.status(500).json({ 
-      error: 'Failed to get connection status',
-      message: error instanceof Error ? error.message : String(error)
+    console.error('Error retrieving connection status:', error);
+    res.status(500).json({
+      message: 'Failed to retrieve database connection status',
+      error: (error as Error).message
     });
   }
 });
 
-// System health check
-router.get('/health', (req, res) => {
-  // Basic health check that returns system info
-  const healthInfo = {
-    status: 'healthy',
-    timestamp: new Date(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    nodeVersion: process.version,
-    platform: process.platform
-  };
-  
-  res.json(healthInfo);
+// Health check endpoint
+systemRoutes.get('/health', async (req: Request, res: Response) => {
+  try {
+    const storage = req.app.locals.storage as AdaptiveStorage;
+    const dbStatus = await storage.checkHealth();
+    
+    const systemHealth = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || 'unknown',
+      environment: process.env.NODE_ENV || 'development',
+      database: dbStatus,
+    };
+    
+    const overallStatus = dbStatus.connected ? 'healthy' : 'degraded';
+    
+    res.status(200).json({
+      ...systemHealth,
+      overallStatus
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: (error as Error).message
+    });
+  }
 });
 
-export default router;
+// Get system environment information (non-sensitive)
+systemRoutes.get('/environment', (req: Request, res: Response) => {
+  res.json({
+    nodeVersion: process.version,
+    platform: process.platform,
+    environment: process.env.NODE_ENV || 'development',
+    databaseProvider: req.app.locals.storage?.getCurrentProvider() || 'unknown'
+  });
+});

@@ -75,7 +75,7 @@ export const DatabaseStatusMonitor: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Configured:</span>
-                    <Badge variant={status?.supabase.configured ? 'outline' : 'secondary'}>
+                    <Badge variant={status?.supabase.configured ? 'outline' : 'default'} className={status?.supabase.configured ? '' : 'opacity-70'}>
                       {status?.supabase.configured ? 'Yes' : 'No'}
                     </Badge>
                   </div>
@@ -106,13 +106,13 @@ export const DatabaseStatusMonitor: React.FC = () => {
                 <div className="mt-2 space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <Badge variant={status?.postgres.available ? 'success' : 'destructive'}>
+                    <Badge variant={status?.postgres.available ? 'default' : 'outline'} className={status?.postgres.available ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'}>
                       {status?.postgres.available ? 'Available' : 'Unavailable'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span>Configured:</span>
-                    <Badge variant={status?.postgres.configured ? 'outline' : 'secondary'}>
+                    <Badge variant={status?.postgres.configured ? 'outline' : 'default'} className={status?.postgres.configured ? '' : 'opacity-70'}>
                       {status?.postgres.configured ? 'Yes' : 'No'}
                     </Badge>
                   </div>

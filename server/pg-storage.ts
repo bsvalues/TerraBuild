@@ -44,6 +44,25 @@ export class PostgresStorage implements IStorage {
   // Reference to database
   private db = db;
   
+  constructor(postgresUrl?: string) {
+    // URL is used by the parent class for connection management
+    // In this implementation, we're using the configured db
+  }
+  
+  /**
+   * Check if the PostgreSQL connection is working
+   */
+  async checkConnection(): Promise<boolean> {
+    try {
+      // Perform a simple query to check database connectivity
+      const result = await this.db.execute(sql`SELECT 1 as connected`);
+      return result.rows && result.rows.length > 0 && !!result.rows[0]?.connected;
+    } catch (error) {
+      console.error('[postgres] Connection check error:', error);
+      return false;
+    }
+  }
+  
   /**
    * Helper method to check if a table exists in the database
    * @param tableName The name of the table to check

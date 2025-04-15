@@ -54,7 +54,7 @@ import { createCostMatrixImportRouter } from "./routes/cost-matrix-import";
 import supabaseRoutes from "./routes/supabaseRoutes";
 import supabaseTestRouter from "./routes/supabase-test";
 import supabaseProxyRouter from "./routes/supabaseProxy";
-import systemRoutes from "./routes/systemRoutes";
+import { systemRoutes } from "./routes/systemRoutes";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2948,7 +2948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register Supabase proxy routes to bypass CORS issues
   app.use('/api/supabase-proxy', supabaseProxyRouter);
   
-  // Register system routes for health checks and database connection status
+  // Register system routes for monitoring database connections and system health
   app.use('/api/system', systemRoutes);
   
   // Log Supabase integration
