@@ -111,58 +111,133 @@ const BCBSCostCalculator = () => {
     defaultValues,
   });
 
-  // Building types and quality levels
+  // Building types and quality levels for Benton County and Arkansas assessment
   const buildingTypes = [
     { value: "RESIDENTIAL", label: "Residential" },
     { value: "COMMERCIAL", label: "Commercial" },
     { value: "INDUSTRIAL", label: "Industrial" },
+    { value: "AGRICULTURAL", label: "Agricultural" },
+    { value: "VEHICLE", label: "Vehicle" },
+    { value: "BOAT", label: "Boat/Marine" },
+    { value: "BUSINESS_PROPERTY", label: "Business Personal Property" },
   ];
 
   const qualityLevels = [
     { value: "STANDARD", label: "Standard" },
     { value: "PREMIUM", label: "Premium" },
     { value: "LUXURY", label: "Luxury" },
+    { value: "ECONOMY", label: "Economy" },
+    { value: "CUSTOM", label: "Custom" },
   ];
 
+  // Benton County and Arkansas specific regions
   const regions = [
-    { value: "NORTHEAST", label: "Northeast" },
-    { value: "MIDWEST", label: "Midwest" },
-    { value: "SOUTH", label: "South" },
-    { value: "WEST", label: "West" },
+    // Benton County, Washington regions
     { value: "RICHLAND", label: "Richland" },
     { value: "KENNEWICK", label: "Kennewick" },
     { value: "PASCO", label: "Pasco" },
     { value: "WEST_RICHLAND", label: "West Richland" },
     { value: "BENTON_CITY", label: "Benton City" },
     { value: "PROSSER", label: "Prosser" },
+    { value: "OTHER_BENTON", label: "Other Benton County" },
+    // General regions (for comparison)
+    { value: "NORTHEAST", label: "Northeast US" },
+    { value: "MIDWEST", label: "Midwest US" },
+    { value: "SOUTH", label: "South US" },
+    { value: "WEST", label: "West US" },
+    // Arkansas regions
+    { value: "LITTLE_ROCK", label: "Little Rock, AR" },
+    { value: "FAYETTEVILLE", label: "Fayetteville, AR" },
+    { value: "JONESBORO", label: "Jonesboro, AR" },
+    { value: "OTHER_ARKANSAS", label: "Other Arkansas" },
   ];
 
   // Get regional multiplier based on region
   const getRegionalMultiplier = (region: string): number => {
+    // Multipliers based on Benton County and Arkansas assessment data
     const multipliers: Record<string, number> = {
+      // Washington - Benton County regions
       'RICHLAND': 1.05,
       'KENNEWICK': 1.02,
       'PASCO': 1.0,
       'WEST_RICHLAND': 1.07,
       'BENTON_CITY': 0.95,
       'PROSSER': 0.93,
+      'OTHER_BENTON': 0.98,
+      
+      // General US regions (for comparison purposes)
       'NORTHEAST': 1.15,
       'MIDWEST': 1.0,
       'SOUTH': 0.92,
-      'WEST': 1.25
+      'WEST': 1.25,
+      
+      // Arkansas regions
+      'LITTLE_ROCK': 0.97,
+      'FAYETTEVILLE': 1.03,
+      'JONESBORO': 0.91,
+      'OTHER_ARKANSAS': 0.89
     };
     
     return multipliers[region] || 1.0;
   };
 
-  // Base cost per square foot lookup
+  // Base cost per square foot lookup with Arkansas and Benton County values
   const getBaseCostPerSqFt = (buildingType: string, quality: string): number => {
     const baseCosts: Record<string, Record<string, number>> = {
-      'RESIDENTIAL': { 'STANDARD': 125, 'PREMIUM': 175, 'LUXURY': 250 },
-      'COMMERCIAL': { 'STANDARD': 150, 'PREMIUM': 200, 'LUXURY': 300 },
-      'INDUSTRIAL': { 'STANDARD': 100, 'PREMIUM': 150, 'LUXURY': 225 }
+      'RESIDENTIAL': { 
+        'ECONOMY': 95, 
+        'STANDARD': 125, 
+        'PREMIUM': 175, 
+        'LUXURY': 250, 
+        'CUSTOM': 300 
+      },
+      'COMMERCIAL': { 
+        'ECONOMY': 110, 
+        'STANDARD': 150, 
+        'PREMIUM': 200, 
+        'LUXURY': 300,
+        'CUSTOM': 350 
+      },
+      'INDUSTRIAL': { 
+        'ECONOMY': 80, 
+        'STANDARD': 100, 
+        'PREMIUM': 150, 
+        'LUXURY': 225,
+        'CUSTOM': 275 
+      },
+      'AGRICULTURAL': { 
+        'ECONOMY': 60, 
+        'STANDARD': 85, 
+        'PREMIUM': 120, 
+        'LUXURY': 180,
+        'CUSTOM': 220 
+      },
+      // For non-building property types, we use a different approach:
+      // These are priced per unit value, not per square foot
+      'VEHICLE': { 
+        'ECONOMY': 25,  // Value per $1000 of assessed value
+        'STANDARD': 35, 
+        'PREMIUM': 45, 
+        'LUXURY': 60,
+        'CUSTOM': 75 
+      },
+      'BOAT': { 
+        'ECONOMY': 30,  // Value per $1000 of assessed value
+        'STANDARD': 40, 
+        'PREMIUM': 55, 
+        'LUXURY': 70,
+        'CUSTOM': 85 
+      },
+      'BUSINESS_PROPERTY': { 
+        'ECONOMY': 20,  // Value per $1000 of assessed value
+        'STANDARD': 30, 
+        'PREMIUM': 40, 
+        'LUXURY': 50,
+        'CUSTOM': 60 
+      }
     };
     
+    // Return the base cost or a reasonable default if not found
     return baseCosts[buildingType]?.[quality] || 150;
   };
   
@@ -173,25 +248,50 @@ const BCBSCostCalculator = () => {
       return 1.0;
     }
     
-    // Configure depreciation rates by building type
+    // Configure depreciation rates by building type based on Arkansas/Benton County standards
+    // Arkansas uses different depreciation schedules for different property types
     const annualDepreciationRates: Record<string, number> = {
       'RESIDENTIAL': 0.01333, // 1.333% per year (80% over 15 years)
       'COMMERCIAL': 0.01,     // 1% per year (80% over 20 years)
-      'INDUSTRIAL': 0.00889   // 0.889% per year (80% over 25 years)
+      'INDUSTRIAL': 0.00889,  // 0.889% per year (80% over 25 years)
+      'AGRICULTURAL': 0.0125, // 1.25% per year
+      'VEHICLE': 0.15,        // 15% per year for vehicles
+      'BOAT': 0.10,           // 10% per year for boats
+      'BUSINESS_PROPERTY': 0.10 // 10% per year for business personal property
     };
     
     // Configure minimum depreciation values (maximum age effect)
+    // These ensure properties retain a minimum value even at maximum age
     const minimumDepreciationValues: Record<string, number> = {
-      'RESIDENTIAL': 0.3, // Residential buildings retain at least 30% of value
-      'COMMERCIAL': 0.25, // Commercial buildings retain at least 25% of value
-      'INDUSTRIAL': 0.2   // Industrial buildings retain at least 20% of value
+      'RESIDENTIAL': 0.3,   // Residential buildings retain at least 30% of value
+      'COMMERCIAL': 0.25,   // Commercial buildings retain at least 25% of value
+      'INDUSTRIAL': 0.2,    // Industrial buildings retain at least 20% of value
+      'AGRICULTURAL': 0.15, // Agricultural buildings retain at least 15% of value
+      'VEHICLE': 0.1,       // Vehicles retain at least 10% of value
+      'BOAT': 0.15,         // Boats retain at least 15% of value
+      'BUSINESS_PROPERTY': 0.1 // Business property retains at least 10% of value
     };
+    
+    // Maximum age considerations (Arkansas considers properties fully depreciated after these ages)
+    const maximumAgeYears: Record<string, number> = {
+      'RESIDENTIAL': 60,
+      'COMMERCIAL': 75,
+      'INDUSTRIAL': 90,
+      'AGRICULTURAL': 68,
+      'VEHICLE': 15,
+      'BOAT': 20,
+      'BUSINESS_PROPERTY': 10
+    };
+    
+    // Cap the building age at the maximum for this property type
+    const maxAge = maximumAgeYears[buildingType] || maximumAgeYears['RESIDENTIAL'];
+    const cappedAge = Math.min(buildingAge, maxAge);
     
     // Get depreciation rate for building type (default to residential if not found)
     const annualRate = annualDepreciationRates[buildingType] || annualDepreciationRates['RESIDENTIAL'];
     
     // Calculate depreciation factor
-    const calculatedDepreciation = 1.0 - (buildingAge * annualRate);
+    const calculatedDepreciation = 1.0 - (cappedAge * annualRate);
     
     // Apply minimum value
     const minimumValue = minimumDepreciationValues[buildingType] || minimumDepreciationValues['RESIDENTIAL'];
