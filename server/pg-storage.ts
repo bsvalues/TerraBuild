@@ -851,25 +851,77 @@ export class PostgresStorage implements IStorage {
   
   // Settings
   async getAllSettings(): Promise<Setting[]> {
-    return await db.select().from(settings);
+    try {
+      // Only select fields we know exist to avoid errors
+      return await db.select({
+        id: settings.id,
+        key: settings.key,
+        value: settings.value,
+        created_at: settings.created_at,
+        updated_at: settings.updated_at
+      }).from(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      return []; // Return empty array on error
+    }
   }
   
   async getSetting(key: string): Promise<Setting | undefined> {
-    const result = await db.select().from(settings).where(eq(settings.key, key));
-    return result[0];
+    try {
+      // Only select fields we know exist to avoid errors
+      const result = await db.select({
+        id: settings.id,
+        key: settings.key,
+        value: settings.value,
+        created_at: settings.created_at,
+        updated_at: settings.updated_at
+      }).from(settings).where(eq(settings.key, key));
+      return result[0];
+    } catch (error) {
+      console.error("Error fetching setting:", error);
+      return undefined;
+    }
   }
   
   async updateSetting(key: string, value: string): Promise<Setting | undefined> {
-    const result = await db.update(settings)
-      .set({ value })
-      .where(eq(settings.key, key))
-      .returning();
-    return result[0];
+    try {
+      const result = await db.update(settings)
+        .set({ value })
+        .where(eq(settings.key, key))
+        .returning({
+          id: settings.id,
+          key: settings.key,
+          value: settings.value,
+          created_at: settings.created_at,
+          updated_at: settings.updated_at
+        });
+      return result[0];
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      return undefined;
+    }
   }
   
   async createSetting(setting: InsertSetting): Promise<Setting> {
-    const result = await db.insert(settings).values(setting).returning();
-    return result[0];
+    try {
+      const valueToInsert = {
+        key: setting.key,
+        value: setting.value,
+        // Don't include description if it's not in the database schema
+      };
+      
+      const result = await db.insert(settings).values(valueToInsert).returning({
+        id: settings.id,
+        key: settings.key,
+        value: settings.value,
+        created_at: settings.created_at,
+        updated_at: settings.updated_at
+      });
+      return result[0];
+    } catch (error) {
+      console.error("Error creating setting:", error);
+      throw error;
+    }
   }
   
   // Activities
