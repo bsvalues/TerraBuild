@@ -294,6 +294,140 @@ router.post('/request-assistance', (req, res) => {
   }
 });
 
+// POST /api/mcp/enhanced-predict-cost - Predict building costs using advanced AI
+router.post('/enhanced-predict-cost', (req, res) => {
+  try {
+    const { 
+      buildingType, 
+      region, 
+      squareFootage, 
+      quality, 
+      buildingAge, 
+      yearBuilt, 
+      complexityFactor, 
+      conditionFactor, 
+      features, 
+      targetYear,
+      provider
+    } = req.body;
+    
+    // Validate required inputs
+    if (!buildingType || !region || !squareFootage) {
+      return res.status(400).json({
+        error: 'Missing required parameters',
+        message: 'Building type, region, and square footage are required'
+      });
+    }
+    
+    // Mock response data (in a real implementation, this would make an API call to an LLM)
+    // Calculate a base cost based on building type and region
+    let baseCost = 0;
+    
+    switch (buildingType) {
+      case 'RESIDENTIAL':
+        baseCost = 150;
+        break;
+      case 'COMMERCIAL':
+        baseCost = 175;
+        break;
+      case 'INDUSTRIAL':
+        baseCost = 120;
+        break;
+      default:
+        baseCost = 140;
+    }
+    
+    // Apply region adjustment
+    let regionFactor = 1.0;
+    if (region.includes('central') || region === 'benton') {
+      regionFactor = 1.1;
+    } else if (region.includes('western')) {
+      regionFactor = 1.2;
+    } else if (region.includes('eastern')) {
+      regionFactor = 0.95;
+    }
+    
+    // Apply quality adjustment
+    let qualityFactor = 1.0;
+    if (quality === 'PREMIUM' || quality === 'LUXURY') {
+      qualityFactor = 1.3;
+    } else if (quality === 'GOOD') {
+      qualityFactor = 1.15;
+    } else if (quality === 'ECONOMY') {
+      qualityFactor = 0.85;
+    }
+    
+    // Apply age adjustment if building exists
+    let ageFactor = 1.0;
+    if (buildingAge) {
+      ageFactor = Math.max(0.7, 1 - (buildingAge * 0.01));
+    }
+    
+    // Apply user-provided complexity and condition factors
+    const userComplexityFactor = complexityFactor || 1.0;
+    const userConditionFactor = conditionFactor || 1.0;
+    
+    // Calculate additional costs for features
+    let featuresCost = 0;
+    if (features && features.length > 0) {
+      featuresCost = features.length * 5; // Simple model: each feature adds $5/sqft
+    }
+    
+    // Calculate cost per square foot with all factors
+    const costPerSqft = baseCost * regionFactor * qualityFactor * ageFactor 
+                        * userComplexityFactor * userConditionFactor;
+    
+    // Calculate total cost
+    const totalCost = (costPerSqft + featuresCost) * squareFootage;
+    
+    // Generate explanation based on factors
+    let explanation = `This ${buildingType.toLowerCase()} building in the ${region} region has a base cost of $${baseCost.toFixed(2)} per square foot. `;
+    explanation += `Regional factors (${regionFactor.toFixed(2)}) and quality level (${qualityFactor.toFixed(2)}) were applied. `;
+    
+    if (buildingAge) {
+      explanation += `Age adjustment (${ageFactor.toFixed(2)}) reflects a ${buildingAge}-year-old structure. `;
+    }
+    
+    if (features && features.length > 0) {
+      explanation += `${features.length} special features add an additional $${featuresCost.toFixed(2)} per square foot. `;
+    }
+    
+    explanation += `The final cost estimate accounts for complexity (${userComplexityFactor.toFixed(2)}) and condition (${userConditionFactor.toFixed(2)}) factors.`;
+    
+    // Response with prediction results
+    res.json({
+      totalCost: Math.round(totalCost),
+      costPerSquareFoot: costPerSqft,
+      costPerSqft: costPerSqft, // Alias to match frontend expectation
+      baseCost: baseCost,
+      regionFactor: regionFactor.toFixed(2),
+      qualityFactor: qualityFactor.toFixed(2),
+      ageFactor: ageFactor.toFixed(2),
+      complexityFactor: userComplexityFactor.toFixed(2),
+      conditionFactor: userConditionFactor.toFixed(2),
+      featuresCost: featuresCost,
+      confidenceScore: 0.85,
+      dataQualityScore: 0.90,
+      explanation: explanation,
+      timestamp: new Date().toISOString(),
+      factors: {
+        region: regionFactor,
+        quality: qualityFactor,
+        age: ageFactor,
+        complexity: userComplexityFactor,
+        condition: userConditionFactor,
+        features: featuresCost > 0 ? (featuresCost / baseCost) : 0
+      }
+    });
+  } catch (error) {
+    console.error('Error predicting cost:', error);
+    res.status(500).json({
+      error: 'Error predicting cost',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 // GET /api/mcp/dashboard/html - View HTML dashboard (not implemented yet)
 router.get('/dashboard/html', cacheMiddleware(30), (req, res) => {
   res.send(`
