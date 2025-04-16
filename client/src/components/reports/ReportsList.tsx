@@ -1,18 +1,27 @@
 import React from "react";
 import { 
   Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+  CardContent,
+  CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Calendar, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { 
+  ArrowUpRight, 
+  Calendar, 
+  Eye, 
+  FileText, 
+  Lock, 
+  Unlock 
+} from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { formatDistanceToNow } from "date-fns";
 
-// Define report types
 interface Report {
   id: number;
   title: string;
@@ -28,77 +37,95 @@ interface ReportsListProps {
 }
 
 export default function ReportsList({ reports, onSelectReport }: ReportsListProps) {
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, "MMM d, yyyy");
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  // Get report type badge color
-  const getReportTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "assessment":
-        return "bg-blue-100 text-blue-800";
-      case "valuation":
-        return "bg-green-100 text-green-800";
-      case "cost_analysis":
-        return "bg-purple-100 text-purple-800";
-      case "comparison":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Format report type for display
+  // Function to format report type
   const formatReportType = (type: string) => {
     return type
-      .split("_")
+      .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
+  };
+
+  // Function to determine badge color based on report type
+  const getReportTypeBadgeVariant = (type: string): "default" | "destructive" | "outline" | "success" | "warning" | null | undefined => {
+    const typeLower = type.toLowerCase();
+    if (typeLower.includes('assessment')) return 'default';
+    if (typeLower.includes('cost')) return 'destructive';
+    if (typeLower.includes('tax')) return 'warning';
+    if (typeLower.includes('analysis')) return 'outline';
+    if (typeLower.includes('valuation')) return 'success';
+    return 'outline';
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {reports.map((report) => (
-        <Card key={report.id} className="h-full flex flex-col">
-          <CardHeader>
-            <div className="flex justify-between items-start gap-2">
-              <CardTitle className="line-clamp-1">{report.title}</CardTitle>
-              <Badge 
-                className={`${getReportTypeColor(report.report_type)}`}
-                variant="outline"
-              >
+        <Card 
+          key={report.id} 
+          className="hover:shadow-md transition-shadow"
+        >
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-start mb-3">
+              <Badge variant={getReportTypeBadgeVariant(report.report_type)}>
                 {formatReportType(report.report_type)}
               </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-muted-foreground">
+                      {report.is_public ? (
+                        <Unlock className="h-4 w-4" />
+                      ) : (
+                        <Lock className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {report.is_public ? "Public Report" : "Private Report"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <CardDescription className="line-clamp-2">
+            
+            <h3 className="text-xl font-semibold mb-2 line-clamp-1">{report.title}</h3>
+            
+            <p className="text-muted-foreground mb-4 text-sm line-clamp-2">
               {report.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="flex items-center text-sm text-muted-foreground mb-2">
-              <Calendar className="mr-2 h-4 w-4" />
-              <span>Created on {formatDate(report.created_at)}</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground">
-              <FileText className="mr-2 h-4 w-4" />
-              <span>{report.is_public ? "Public Report" : "Private Report"}</span>
+            </p>
+            
+            <div className="flex items-center text-xs text-muted-foreground mb-6">
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>
+                {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
+              </span>
             </div>
           </CardContent>
-          <CardFooter>
+          
+          <CardFooter className="flex justify-between pt-0">
             <Button 
               variant="outline" 
-              className="w-full"
+              size="sm"
               onClick={() => onSelectReport(report.id)}
             >
-              <Eye className="mr-2 h-4 w-4" />
-              View Report
+              <Eye className="h-4 w-4 mr-2" />
+              View
             </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Open in new tab
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardFooter>
         </Card>
       ))}

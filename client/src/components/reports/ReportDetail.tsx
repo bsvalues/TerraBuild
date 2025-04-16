@@ -3,43 +3,41 @@ import {
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
+import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowLeft, 
+  Download, 
+  Building,
+  User,
   Calendar,
-  Download,
+  MapPin,
+  DollarSign,
   Share2,
   Printer,
-  Clock,
-  Building,
-  MapPin,
-  User,
-  FileText,
-  BarChart3
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
+import {
+  BarChart,
+  Bar,
   PieChart,
   Pie,
-  Cell,
   LineChart,
-  Line
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell
 } from "recharts";
 
-// Define report interface
 interface Report {
   id: number;
   title: string;
@@ -85,416 +83,379 @@ interface ReportDetailProps {
   onBack: () => void;
 }
 
-export default function ReportDetail({ report, onBack }: ReportDetailProps) {
-  // Format date
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return format(date, "MMM d, yyyy");
-    } catch (error) {
-      return dateString;
-    }
-  };
+// Color schemes for charts
+const COLORS = [
+  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", 
+  "#82ca9d", "#ffc658", "#8dd1e1", "#a4de6c", "#d0ed57"
+];
 
-  // Format currency
-  const formatCurrency = (value: number | undefined) => {
-    if (value === undefined) return "N/A";
+export default function ReportDetail({ report, onBack }: ReportDetailProps) {
+  // Format currency values 
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
-  // Get report type badge color
-  const getReportTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "assessment":
-        return "bg-blue-100 text-blue-800";
-      case "valuation":
-        return "bg-green-100 text-green-800";
-      case "cost_analysis":
-        return "bg-purple-100 text-purple-800";
-      case "comparison":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Determine badge style based on report type
+  const getReportTypeBadgeVariant = (type: string): "default" | "destructive" | "outline" | "success" | "warning" | null | undefined => {
+    const typeLower = type.toLowerCase();
+    if (typeLower.includes('assessment')) return 'default';
+    if (typeLower.includes('cost')) return 'destructive';
+    if (typeLower.includes('tax')) return 'warning';
+    if (typeLower.includes('analysis')) return 'outline';
+    if (typeLower.includes('valuation')) return 'success';
+    return 'outline';
   };
 
   // Format report type for display
   const formatReportType = (type: string) => {
     return type
-      .split("_")
+      .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
   };
 
-  // Pie chart colors
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  // Format date for display
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
+    return format(new Date(dateString), "MMMM d, yyyy");
+  };
 
-  // Create demo data if none exists in the report
-  const costBreakdownData = report.content?.charts?.cost_breakdown || [
-    { name: 'Structure', value: 245000 },
-    { name: 'Land', value: 120000 },
-    { name: 'Improvements', value: 35000 },
-    { name: 'Features', value: 15000 }
-  ];
-
-  const historicalData = report.content?.charts?.historical_values || [
-    { year: 2020, value: 370000 },
-    { year: 2021, value: 385000 },
-    { year: 2022, value: 405000 },
-    { year: 2023, value: 415000 },
-    { year: 2024, value: 425000 },
-    { year: 2025, value: 450000 }
-  ];
-
-  const comparableData = report.content?.charts?.comparable_properties || [
-    { name: 'Subject Property', value: 450000 },
-    { name: 'Comp 1', value: 445000 },
-    { name: 'Comp 2', value: 467000 },
-    { name: 'Comp 3', value: 428000 },
-    { name: 'Neighborhood Avg', value: 442000 }
-  ];
+  // Format change percentage with color
+  const formatChangePercent = (percent: number | undefined) => {
+    if (percent === undefined) return null;
+    
+    const textColorClass = percent >= 0 
+      ? "text-green-600" 
+      : "text-red-600";
+      
+    return (
+      <span className={textColorClass}>
+        {percent >= 0 ? '+' : ''}{percent.toFixed(2)}%
+      </span>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <Button 
-          variant="ghost" 
-          size="sm" 
+          variant="outline" 
+          size="sm"
           onClick={onBack}
-          className="mr-2"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Reports
         </Button>
         
-        <div className="flex-1" />
-        
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <Button variant="outline" size="sm">
-            <Printer className="h-4 w-4 mr-1" />
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </Button>
+          <Button variant="outline" size="sm">
+            <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
           <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-1" />
-            Download
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-1" />
-            Share
+            <Download className="mr-2 h-4 w-4" />
+            Export
           </Button>
         </div>
       </div>
       
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl">{report.title}</CardTitle>
-              <CardDescription className="mt-2">{report.description}</CardDescription>
-            </div>
-            <Badge 
-              className={`${getReportTypeColor(report.report_type)}`}
-              variant="outline"
-            >
-              {formatReportType(report.report_type)}
-            </Badge>
-          </div>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 space-y-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge variant={getReportTypeBadgeVariant(report.report_type)}>
+                    {formatReportType(report.report_type)}
+                  </Badge>
+                  <CardTitle className="mt-2 text-2xl">{report.title}</CardTitle>
+                  <CardDescription className="mt-2 text-md">{report.description}</CardDescription>
+                </div>
+                <Badge variant={report.is_public ? "outline" : "warning"}>
+                  {report.is_public ? "Public" : "Private"}
+                </Badge>
+              </div>
+              <div className="flex items-center mt-4 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4 mr-2" />
+                <span>Generated on {formatDate(report.created_at)}</span>
+              </div>
+            </CardHeader>
+          </Card>
           
-          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm text-muted-foreground">
-            <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              <span>Report Date: {formatDate(report.created_at)}</span>
-            </div>
-            {report.content?.assessment?.date && (
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>Assessment Date: {formatDate(report.content.assessment.date)}</span>
-              </div>
-            )}
-            {report.content?.assessor?.name && (
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                <span>Assessor: {report.content.assessor.name}</span>
-              </div>
-            )}
-            <div className="flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              <span>{report.is_public ? "Public Report" : "Private Report"}</span>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-8">
-          {/* Property Information Section */}
           {report.content?.property && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Property Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium flex items-center">
-                      <Building className="h-4 w-4 mr-2" />
-                      Building Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <dl className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Type:</dt>
-                        <dd>{report.content.property.building_type || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Year Built:</dt>
-                        <dd>{report.content.property.year_built || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Square Feet:</dt>
-                        <dd>
-                          {report.content.property.square_feet 
-                            ? new Intl.NumberFormat().format(report.content.property.square_feet) + " sq ft"
-                            : "N/A"}
-                        </dd>
-                      </div>
-                    </dl>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Location
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <dl className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Address:</dt>
-                        <dd>{report.content.property.address || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">City:</dt>
-                        <dd>{report.content.property.city || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">County:</dt>
-                        <dd>{report.content.property.county || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">State:</dt>
-                        <dd>{report.content.property.state || "N/A"}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Parcel ID:</dt>
-                        <dd>{report.content.property.parcel_id || "N/A"}</dd>
-                      </div>
-                    </dl>
-                  </CardContent>
-                </Card>
-                
-                {report.content?.assessment && (
-                  <Card>
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-sm font-medium flex items-center">
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Value Assessment
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2">
-                      <dl className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Land Value:</dt>
-                          <dd>{formatCurrency(report.content.assessment.land_value)}</dd>
-                        </div>
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Improvement Value:</dt>
-                          <dd>{formatCurrency(report.content.assessment.improvement_value)}</dd>
-                        </div>
-                        <div className="flex justify-between font-medium">
-                          <dt>Total Value:</dt>
-                          <dd>{formatCurrency(report.content.assessment.total_value)}</dd>
-                        </div>
-                        {report.content.assessment.previous_value && (
-                          <>
-                            <div className="flex justify-between">
-                              <dt className="text-muted-foreground">Previous Value:</dt>
-                              <dd>{formatCurrency(report.content.assessment.previous_value)}</dd>
-                            </div>
-                            <div className="flex justify-between">
-                              <dt className="text-muted-foreground">Change:</dt>
-                              <dd className={
-                                (report.content.assessment.change_percent || 0) >= 0 
-                                  ? "text-green-600" 
-                                  : "text-red-600"
-                              }>
-                                {report.content.assessment.change_percent 
-                                  ? (report.content.assessment.change_percent >= 0 ? "+" : "") +
-                                    report.content.assessment.change_percent + "%"
-                                  : "N/A"}
-                              </dd>
-                            </div>
-                          </>
-                        )}
-                      </dl>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Building className="h-5 w-5 mr-2" />
+                  Property Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {report.content.property.address && (
+                    <div>
+                      <dt className="text-muted-foreground">Address</dt>
+                      <dd className="font-medium">{report.content.property.address}</dd>
+                    </div>
+                  )}
+                  {report.content.property.parcel_id && (
+                    <div>
+                      <dt className="text-muted-foreground">Parcel ID</dt>
+                      <dd className="font-medium">{report.content.property.parcel_id}</dd>
+                    </div>
+                  )}
+                  {report.content.property.city && report.content.property.state && (
+                    <div>
+                      <dt className="text-muted-foreground">Location</dt>
+                      <dd className="font-medium flex items-center">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {report.content.property.city}, {report.content.property.state}
+                      </dd>
+                    </div>
+                  )}
+                  {report.content.property.county && (
+                    <div>
+                      <dt className="text-muted-foreground">County</dt>
+                      <dd className="font-medium">{report.content.property.county}</dd>
+                    </div>
+                  )}
+                  {report.content.property.building_type && (
+                    <div>
+                      <dt className="text-muted-foreground">Building Type</dt>
+                      <dd className="font-medium">{report.content.property.building_type}</dd>
+                    </div>
+                  )}
+                  {report.content.property.year_built && (
+                    <div>
+                      <dt className="text-muted-foreground">Year Built</dt>
+                      <dd className="font-medium">{report.content.property.year_built}</dd>
+                    </div>
+                  )}
+                  {report.content.property.square_feet && (
+                    <div>
+                      <dt className="text-muted-foreground">Square Feet</dt>
+                      <dd className="font-medium">{report.content.property.square_feet.toLocaleString()} sq ft</dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
           )}
           
-          {/* Visualizations Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Assessment Visualizations</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Cost Breakdown Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Value Distribution</CardTitle>
-                  <CardDescription>
-                    Breakdown of assessed property value by component
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={costBreakdownData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {costBreakdownData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number) => formatCurrency(value)} 
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Historical Values Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Historical Values</CardTitle>
-                  <CardDescription>
-                    Property value trends over the past years
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={historicalData}
-                        margin={{
-                          top: 5,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis tickFormatter={(value) => `$${value/1000}k`} />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          name="Assessed Value"
-                          stroke="#8884d8" 
-                          activeDot={{ r: 8 }} 
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Comparable Properties Chart */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="text-base">Comparable Properties</CardTitle>
-                  <CardDescription>
-                    Value comparison with similar properties in the area
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={comparableData}
-                        margin={{
-                          top: 5,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis tickFormatter={(value) => `$${value/1000}k`} />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                        <Legend />
-                        <Bar 
-                          dataKey="value" 
-                          name="Assessed Value" 
-                          fill="#8884d8"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          {report.content?.assessment && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Assessment Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="space-y-4">
+                  {report.content.assessment.date && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <dt className="text-muted-foreground">Assessment Date</dt>
+                      <dd className="font-medium">{formatDate(report.content.assessment.date)}</dd>
+                    </div>
+                  )}
+                  {report.content.assessment.land_value !== undefined && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <dt className="text-muted-foreground">Land Value</dt>
+                      <dd className="font-medium">{formatCurrency(report.content.assessment.land_value)}</dd>
+                    </div>
+                  )}
+                  {report.content.assessment.improvement_value !== undefined && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <dt className="text-muted-foreground">Improvement Value</dt>
+                      <dd className="font-medium">{formatCurrency(report.content.assessment.improvement_value)}</dd>
+                    </div>
+                  )}
+                  {report.content.assessment.total_value !== undefined && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <dt className="text-muted-foreground">Total Value</dt>
+                      <dd className="font-semibold text-lg">{formatCurrency(report.content.assessment.total_value)}</dd>
+                    </div>
+                  )}
+                  {report.content.assessment.previous_value !== undefined && (
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <dt className="text-muted-foreground">Previous Assessment</dt>
+                      <dd className="font-medium">{formatCurrency(report.content.assessment.previous_value)}</dd>
+                    </div>
+                  )}
+                  {report.content.assessment.change_percent !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <dt className="text-muted-foreground">Change</dt>
+                      <dd className="font-medium">
+                        {formatChangePercent(report.content.assessment.change_percent)}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          )}
           
-          {/* Notes Section */}
+          {report.content?.assessor && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Assessor Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {report.content.assessor.name && (
+                    <div>
+                      <dt className="text-muted-foreground">Assessor</dt>
+                      <dd className="font-medium">{report.content.assessor.name}</dd>
+                    </div>
+                  )}
+                  {report.content.assessor.department && (
+                    <div>
+                      <dt className="text-muted-foreground">Department</dt>
+                      <dd className="font-medium">{report.content.assessor.department}</dd>
+                    </div>
+                  )}
+                  {report.content.assessor.contact && (
+                    <div>
+                      <dt className="text-muted-foreground">Contact</dt>
+                      <dd className="font-medium">{report.content.assessor.contact}</dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          )}
+
           {report.content?.notes && (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Assessment Notes</h3>
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="whitespace-pre-line">{report.content.notes}</p>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Notes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground whitespace-pre-line">
+                  {report.content.notes}
+                </p>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
+        </div>
         
-        <CardFooter className="border-t pt-6 flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Reports
-          </Button>
+        <div className="w-full md:w-[38%] space-y-6">
+          {report.content?.charts?.cost_breakdown && report.content.charts.cost_breakdown.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Cost Breakdown</CardTitle>
+                <CardDescription>Distribution of property costs by category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={report.content.charts.cost_breakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {report.content.charts.cost_breakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
-          <div className="flex space-x-2">
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Report
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
+          {report.content?.charts?.historical_values && report.content.charts.historical_values.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Historical Values</CardTitle>
+                <CardDescription>Property value trend over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={report.content.charts.historical_values}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis 
+                        tickFormatter={(value) => formatCurrency(value).replace('$', '').replace(',000', 'K')}
+                      />
+                      <RechartsTooltip 
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#0088FE" 
+                        strokeWidth={2}
+                        activeDot={{ r: 8 }} 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {report.content?.charts?.comparable_properties && report.content.charts.comparable_properties.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Comparable Properties</CardTitle>
+                <CardDescription>Value comparison with similar properties</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={report.content.charts.comparable_properties}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis 
+                        tickFormatter={(value) => formatCurrency(value).replace('$', '').replace(',000', 'K')}
+                      />
+                      <RechartsTooltip 
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Legend />
+                      <Bar dataKey="value" fill="#0088FE" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

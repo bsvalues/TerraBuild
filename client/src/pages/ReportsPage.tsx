@@ -78,7 +78,9 @@ export default function ReportsPage() {
   };
 
   // Get unique report types for filtering
-  const reportTypes = [...new Set(reports.map(report => report.report_type))];
+  const reportTypesSet = new Set<string>();
+  reports.forEach(report => reportTypesSet.add(report.report_type));
+  const reportTypes = Array.from(reportTypesSet);
 
   return (
     <div className="container mx-auto py-8">
@@ -119,7 +121,7 @@ export default function ReportsPage() {
                   <option value="">All Types</option>
                   {reportTypes.map(type => (
                     <option key={type} value={type}>
-                      {type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      {type.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                     </option>
                   ))}
                 </select>
