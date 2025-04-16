@@ -58,34 +58,35 @@ export function CostTrendChart({
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedBuildingType, setSelectedBuildingType] = useState<string | null>(null);
 
-  // Fetch all cost matrix data
+  // Fetch time series data from the analytics endpoint
   const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/api/analytics/time-series', { 
+      buildingType: selectedBuildingType || 'residential',
+      region: selectedRegion || 'BC-CENTRAL',
+      startYear: 2020,
+      endYear: 2025
+    }],
   });
 
   // Process data for the chart
-  const processData = (rawData: any[]): ProcessedDataPoint[] => {
-    if (!rawData || !Array.isArray(rawData)) return [];
+  const processData = (rawData: any): ProcessedDataPoint[] => {
+    if (!rawData || !rawData.series || !Array.isArray(rawData.series)) return [];
 
-    // Group the data by year
-    const groupedByYear = rawData.reduce((acc, item) => {
-      const year = item.matrixYear;
-      if (!acc[year]) {
-        acc[year] = {};
+    // The data from analytics endpoint is already properly formatted
+    // We just need to transform it for recharts
+    return rawData.series.map((item: any) => {
+      const dataPoint: ProcessedDataPoint = {
+        year: item.year
+      };
+      
+      // Add each region/building type combination as a separate key
+      if (item.costByRegionAndType) {
+        Object.entries(item.costByRegionAndType).forEach(([key, value]) => {
+          dataPoint[key] = parseFloat(value as string);
+        });
       }
       
-      // Use region + buildingType as the key
-      const key = `${item.region}_${item.buildingType}`;
-      acc[year][key] = parseFloat(item.baseCost);
-      return acc;
-    }, {});
-
-    // Convert to array format for Recharts
-    return Object.keys(groupedByYear).map(year => {
-      return {
-        year: parseInt(year),
-        ...groupedByYear[year]
-      };
+      return dataPoint;
     }).sort((a, b) => a.year - b.year);
   };
 
