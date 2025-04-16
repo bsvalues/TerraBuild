@@ -10,6 +10,7 @@ import { z } from 'zod';
 import storage from './storage';
 import analyticsRoutes from './routes/analyticsRoutes';
 import reportRoutes from './routes/reportRoutes';
+import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';
 
 import {
   insertUserSchema,
@@ -541,6 +542,7 @@ router.patch('/settings/:key', asyncHandler(async (req, res) => {
  */
 router.use('/analytics', analyticsRoutes);
 router.use('/reports', reportRoutes);
+router.use('/what-if-scenarios', whatIfScenariosRoutes);
 
 /**
  * System Routes
