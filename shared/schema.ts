@@ -252,7 +252,7 @@ export const ageFactors = pgTable('age_factors', {
  *********************/
 
 // Calculation History Table
-export const calculations = pgTable('calculations', {
+export const calculations = pgTable('calculation_history', {
   id: serial('id').primaryKey(),
   calculationId: uuid('calculation_id').defaultRandom().notNull().unique(),
   propertyId: uuid('property_id').references(() => properties.propertyId),
