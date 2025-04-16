@@ -1350,12 +1350,12 @@ export class PostgresStorage implements IStorage {
   
   async getCostMatrixByRegionAndBuildingType(region: string, buildingType: string): Promise<CostMatrix | undefined> {
     try {
-      // Select directly from costMatrix where region and building_type match
+      // Select directly from costMatrix where region and buildingType match
       const results = await db.select()
         .from(costMatrix)
         .where(and(
           eq(costMatrix.region, region),
-          eq(costMatrix.building_type, buildingType)
+          eq(costMatrix.buildingType, buildingType)
         ));
       
       if (results.length === 0) {
@@ -1364,8 +1364,8 @@ export class PostgresStorage implements IStorage {
       
       // Handle potential duplicates by prioritizing the most recent matrix
       const sorted = results.sort((a, b) => {
-        // Sort by created_at in descending order (most recent first)
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        // Sort by createdAt in descending order (most recent first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       
       return sorted[0];
@@ -1381,7 +1381,7 @@ export class PostgresStorage implements IStorage {
   }
   
   async updateCostMatrix(id: number, matrix: Partial<InsertCostMatrix>): Promise<CostMatrix | undefined> {
-    const updateData = { ...matrix, updated_at: new Date() };
+    const updateData = { ...matrix, updatedAt: new Date() };
     const result = await db.update(costMatrix)
       .set(updateData)
       .where(eq(costMatrix.id, id))

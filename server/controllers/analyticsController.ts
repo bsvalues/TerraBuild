@@ -54,12 +54,12 @@ export async function getTimeSeriesData(req: Request, res: Response) {
       return (
         item.buildingType === buildingType &&
         item.region === region &&
-        item.matrix_year >= start &&
-        item.matrix_year <= end &&
-        (item.is_active === true || item.is_active === null)
+        item.year >= start &&
+        item.year <= end &&
+        (item.isActive === true || item.isActive === null)
       );
     })
-    .sort((a: any, b: any) => a.matrix_year - b.matrix_year);
+    .sort((a: any, b: any) => a.year - b.year);
     
     // If no data is found, return empty result
     if (data.length === 0) {
