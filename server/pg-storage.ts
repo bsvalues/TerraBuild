@@ -1404,7 +1404,7 @@ export class PostgresStorage implements IStorage {
         .from(costMatrix)
         .where(and(
           eq(costMatrix.county, county),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.isActive, true)
         ));
       
       return results;
@@ -1423,7 +1423,7 @@ export class PostgresStorage implements IStorage {
         .from(costMatrix)
         .where(and(
           eq(costMatrix.state, state),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.isActive, true)
         ));
       
       return results;
@@ -1440,7 +1440,7 @@ export class PostgresStorage implements IStorage {
         .from(costMatrix)
         .where(and(
           isNotNull(costMatrix.county),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.isActive, true)
         ))
         .groupBy(costMatrix.county);
       
@@ -1458,7 +1458,7 @@ export class PostgresStorage implements IStorage {
         .from(costMatrix)
         .where(and(
           isNotNull(costMatrix.state),
-          eq(costMatrix.is_active, true)
+          eq(costMatrix.isActive, true)
         ))
         .groupBy(costMatrix.state);
       
@@ -1470,7 +1470,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async getCostMatrixByFilters(filters: Record<string, any>): Promise<CostMatrix[]> {
-    let query = db.select().from(costMatrix).where(eq(costMatrix.is_active, true));
+    let query = db.select().from(costMatrix).where(eq(costMatrix.isActive, true));
     
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && key in costMatrix) {
@@ -1484,14 +1484,14 @@ export class PostgresStorage implements IStorage {
   async getBuildingTypesByCounty(county: string): Promise<string[]> {
     try {
       // Select directly from costMatrix to get all building types for a county
-      const results = await db.select({ buildingType: costMatrix.building_type })
+      const results = await db.select({ buildingType: costMatrix.buildingType })
         .from(costMatrix)
         .where(and(
           eq(costMatrix.county, county),
-          eq(costMatrix.is_active, true),
-          isNotNull(costMatrix.building_type)
+          eq(costMatrix.isActive, true),
+          isNotNull(costMatrix.buildingType)
         ))
-        .groupBy(costMatrix.building_type);
+        .groupBy(costMatrix.buildingType);
       
       // Map results and filter out nulls
       return results
@@ -1506,14 +1506,14 @@ export class PostgresStorage implements IStorage {
   async getBuildingTypesByState(state: string): Promise<string[]> {
     try {
       // Select directly from costMatrix table to get all building types for a state
-      const results = await db.select({ buildingType: costMatrix.building_type })
+      const results = await db.select({ buildingType: costMatrix.buildingType })
         .from(costMatrix)
         .where(and(
           eq(costMatrix.state, state),
-          eq(costMatrix.is_active, true),
-          isNotNull(costMatrix.building_type)
+          eq(costMatrix.isActive, true),
+          isNotNull(costMatrix.buildingType)
         ))
-        .groupBy(costMatrix.building_type);
+        .groupBy(costMatrix.buildingType);
       
       // Map results and filter out nulls
       return results
@@ -1544,7 +1544,7 @@ export class PostgresStorage implements IStorage {
     
     // Convert string costs to numbers, handling nulls
     const costs = countyData.map(m => {
-      const baseCostStr = m.base_cost || '0';
+      const baseCostStr = m.baseRate.toString() || '0';
       return Number(baseCostStr);
     }).filter(cost => !isNaN(cost));
     
@@ -1556,8 +1556,8 @@ export class PostgresStorage implements IStorage {
     // Count unique building types, handling nulls
     const buildingTypes = new Set<string>();
     for (const matrix of countyData) {
-      if (matrix.building_type) {
-        buildingTypes.add(matrix.building_type);
+      if (matrix.buildingType) {
+        buildingTypes.add(matrix.buildingType);
       }
     }
     
@@ -1601,22 +1601,22 @@ export class PostgresStorage implements IStorage {
           const qualityFactorBase = item.adjustmentFactors?.quality || 1.0;
           const conditionFactorBase = item.adjustmentFactors?.condition || 1.0;
           
-          // Map API properties to database columns (using snake_case for DB columns)
+          // Map API properties to database columns (using camelCase for DB columns)
           const matrixEntry: InsertCostMatrix = {
             region: item.region,
-            building_type: item.buildingType,
-            building_type_description: item.buildingTypeDescription,
-            base_cost: item.baseCost.toString(),
-            matrix_year: item.matrixYear,
-            source_matrix_id: item.matrixId,
-            matrix_description: item.matrixDescription || "",
-            data_points: item.dataPoints || 0,
-            min_cost: item.minCost?.toString(),
-            max_cost: item.maxCost?.toString(),
-            complexity_factor_base: complexityFactorBase.toString(),
-            quality_factor_base: qualityFactorBase.toString(),
-            condition_factor_base: conditionFactorBase.toString(),
-            is_active: true,
+            buildingType: item.buildingType,
+            buildingTypeDescription: item.buildingTypeDescription,
+            baseRate: parseFloat(item.baseCost.toString()),
+            year: item.matrixYear,
+            sourceMatrixId: item.matrixId,
+            description: item.matrixDescription || "",
+            dataPoints: item.dataPoints || 0,
+            minCost: item.minCost ? parseFloat(item.minCost.toString()) : null,
+            maxCost: item.maxCost ? parseFloat(item.maxCost.toString()) : null,
+            complexityFactorBase: parseFloat(complexityFactorBase.toString()),
+            qualityFactorBase: parseFloat(qualityFactorBase.toString()),
+            conditionFactorBase: parseFloat(conditionFactorBase.toString()),
+            isActive: true,
             // Add optional fields if they exist
             county: item.county || null,
             state: item.state || null
