@@ -237,6 +237,9 @@ export function MCPVisualizationProvider({ children }: { children: ReactNode }) 
       
       const params = new URLSearchParams();
       params.append('buildingType', filters.buildingType);
+      // Required parameters for regional-costs endpoint
+      params.append('year', new Date().getFullYear().toString()); // Current year
+      params.append('squareFootage', '2000'); // Default value
       
       if (filters.regions.length > 0) {
         filters.regions.forEach(region => params.append('regions', region));
@@ -266,6 +269,10 @@ export function MCPVisualizationProvider({ children }: { children: ReactNode }) 
       
       const params = new URLSearchParams();
       params.append('buildingType', filters.buildingType);
+      // Required parameters for hierarchical-costs endpoint
+      params.append('region', 'Central Benton'); // Default region
+      params.append('year', new Date().getFullYear().toString()); // Current year
+      params.append('squareFootage', '2000'); // Default value
       
       const response = await fetch(`/api/analytics/hierarchical-costs?${params.toString()}`);
       if (!response.ok) {
@@ -285,6 +292,8 @@ export function MCPVisualizationProvider({ children }: { children: ReactNode }) 
       params.append('buildingType', filters.buildingType);
       params.append('startYear', filters.startYear.toString());
       params.append('endYear', filters.endYear.toString());
+      // Required parameters for statistical-correlations endpoint
+      params.append('region', 'Central Benton'); // Default region
       
       const response = await fetch(`/api/analytics/statistical-correlations?${params.toString()}`);
       if (!response.ok) {
