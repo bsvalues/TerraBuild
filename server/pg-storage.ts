@@ -1608,11 +1608,11 @@ export class PostgresStorage implements IStorage {
             buildingTypeDescription: item.buildingTypeDescription,
             baseRate: parseFloat(item.baseCost.toString()),
             year: item.matrixYear,
-            sourceMatrixId: item.matrixId,
+            sourceMatrixId: parseInt(item.matrixId.toString()), // Convert to integer
             description: item.matrixDescription || "",
             dataPoints: item.dataPoints || 0,
-            minCost: item.minCost ? item.minCost.toString() : null,
-            maxCost: item.maxCost ? item.maxCost.toString() : null,
+            minCost: item.minCost ? parseFloat(item.minCost.toString()) : null, // Convert to number
+            maxCost: item.maxCost ? parseFloat(item.maxCost.toString()) : null, // Convert to number
             complexityFactorBase: parseFloat(complexityFactorBase.toString()),
             qualityFactorBase: parseFloat(qualityFactorBase.toString()),
             conditionFactorBase: parseFloat(conditionFactorBase.toString()),
