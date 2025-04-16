@@ -183,27 +183,35 @@ export const regions = pgTable('regions', {
 // Cost Matrix Table
 export const costMatrix = pgTable('cost_matrix', {
   id: serial('id').primaryKey(),
-  matrixId: uuid('matrix_id').defaultRandom().notNull().unique(),
-  buildingType: text('building_type').notNull().references(() => buildingTypes.code),
-  region: text('region').notNull().references(() => regions.code),
-  year: integer('year').notNull(),
-  baseRate: real('base_rate').notNull(),
-  description: text('description'),
-  source: text('source'),
+  buildingType: text('building_type').notNull(),
+  region: text('region').notNull(),
+  year: integer('matrix_year').notNull(),
+  baseRate: real('base_cost').notNull(),
+  description: text('matrix_description'),
+  sourceMatrixId: text('source_matrix_id'),
+  buildingTypeDescription: text('building_type_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   createdBy: uuid('created_by').references(() => users.userId),
   isActive: boolean('is_active').default(true),
-  metadata: json('metadata').$type<Record<string, any>>(),
+  complexityFactorBase: real('complexity_factor_base').default(1.0),
+  qualityFactorBase: real('quality_factor_base').default(1.0),
+  conditionFactorBase: real('condition_factor_base').default(1.0),
+  dataPoints: integer('data_points'),
+  minCost: text('min_cost'),
+  maxCost: text('max_cost'),
+  county: text('county'),
+  state: text('state'),
 });
 
-// Matrix Detail Table
-export const matrixDetail = pgTable('matrix_detail', {
+// Matrix Detail Table (Note: This table definition doesn't match the actual database
+// and is kept for compatibility with the code. The real data is in benton_matrix_detail.)
+export const matrixDetail = pgTable('benton_matrix_detail', {
   id: serial('id').primaryKey(),
-  matrixId: uuid('matrix_id').notNull().references(() => costMatrix.matrixId, { onDelete: 'cascade' }),
-  qualityGrade: text('quality_grade').notNull(),
-  sizeRange: text('size_range').notNull(),
-  costPerSqFt: real('cost_per_sqft').notNull(),
+  matrixId: integer('matrix_id').notNull(),
+  qualityGrade: text('quality_grade'),
+  sizeRange: text('size_range'),
+  costPerSqFt: real('cost_per_sqft'),
   description: text('description'),
   adjustmentFactor: real('adjustment_factor').default(1.0),
   lastUpdated: timestamp('last_updated').defaultNow(),
