@@ -33,24 +33,13 @@ function TabButton({ id, title, icon, active, onClick }: TabButtonProps) {
   const [isHovering, setIsHovering] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   
-  // We'll use client-side only code for the hover effect
-  useEffect(() => {
-    const button = buttonRef.current;
-    if (!button) return;
-    
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
-    
-    button.addEventListener('mouseenter', handleMouseEnter);
-    button.addEventListener('mouseleave', handleMouseLeave);
-    
-    return () => {
-      button.removeEventListener('mouseenter', handleMouseEnter);
-      button.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
+  // Handle mouse enter/leave using React events instead of direct DOM manipulation
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
   
+  // Fix for detach functionality
   const handleDetach = (e: React.MouseEvent) => {
+    // Stop click from propagating to parent button
     e.stopPropagation();
     
     const windowId = `tab-${id}`;
@@ -63,6 +52,14 @@ function TabButton({ id, title, icon, active, onClick }: TabButtonProps) {
         <p>This tab will appear in a separate window.</p>
       </div>`
     });
+  };
+  
+  // Handle the tab click properly
+  const handleTabClick = (e: React.MouseEvent) => {
+    // Ensure the click event works properly
+    if (onClick) {
+      onClick();
+    }
   };
   
   return (
@@ -80,9 +77,13 @@ function TabButton({ id, title, icon, active, onClick }: TabButtonProps) {
       style={{
         transformStyle: 'preserve-3d',
         transform: active ? 'translateZ(2px)' : 'translateZ(0)',
-        textShadow: active ? '0 0.5px 0 rgba(0,0,0,0.05)' : 'none'
+        textShadow: active ? '0 0.5px 0 rgba(0,0,0,0.05)' : 'none',
+        zIndex: active ? 10 : 5,
+        position: 'relative'
       }}
-      onClick={onClick}
+      onClick={handleTabClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Background hover effect */}
       <div 
@@ -157,18 +158,21 @@ export default function Dashboard() {
   // Update the indicator position whenever the active tab changes
   useEffect(() => {
     const updateIndicator = () => {
-      const activeTabElement = document.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
-      const tabsContainer = tabsContainerRef.current;
-      
-      if (activeTabElement && tabsContainer) {
-        const tabRect = activeTabElement.getBoundingClientRect();
-        const containerRect = tabsContainer.getBoundingClientRect();
+      // Use a short timeout to ensure DOM has updated
+      setTimeout(() => {
+        const activeTabElement = document.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
+        const tabsContainer = tabsContainerRef.current;
         
-        setIndicatorStyle({
-          width: tabRect.width,
-          transform: `translateX(${tabRect.left - containerRect.left}px)`,
-        });
-      }
+        if (activeTabElement && tabsContainer) {
+          const tabRect = activeTabElement.getBoundingClientRect();
+          const containerRect = tabsContainer.getBoundingClientRect();
+          
+          setIndicatorStyle({
+            width: tabRect.width,
+            transform: `translateX(${tabRect.left - containerRect.left}px)`,
+          });
+        }
+      }, 10);
     };
     
     // Run once on mount and when activeTab changes
