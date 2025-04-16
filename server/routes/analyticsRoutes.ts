@@ -10,7 +10,9 @@ import {
   getTimeSeriesData,
   getRegionalComparison,
   getBuildingTypeComparison,
-  getCostBreakdown
+  getCostBreakdown,
+  getHierarchicalCostData,
+  getStatisticalCorrelationData
 } from '../controllers/analyticsController';
 
 const router = Router();
@@ -24,10 +26,10 @@ router.get('/regional-costs', getRegionalComparison);
 
 // Building type comparison data - support both naming conventions for compatibility
 router.get('/building-type-comparison', getBuildingTypeComparison);
-router.get('/hierarchical-costs', getBuildingTypeComparison);
+router.get('/hierarchical-costs', getHierarchicalCostData);
 
-// Statistical correlations for time series data (alias for time-series)
-router.get('/statistical-correlations', getTimeSeriesData);
+// Statistical correlations for time series data
+router.get('/statistical-correlations', getStatisticalCorrelationData);
 
 // Cost breakdown for a specific calculation
 router.get('/cost-breakdown/:id', getCostBreakdown);

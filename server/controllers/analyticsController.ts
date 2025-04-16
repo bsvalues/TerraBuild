@@ -371,6 +371,207 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
  * @param res - Express response object
  * @returns JSON object with cost breakdown details
  */
+
+/**
+ * Generate hierarchical cost data by building type
+ * 
+ * This endpoint provides hierarchical cost data that can be used to create
+ * tree maps, sunburst charts, or other hierarchical visualizations.
+ * 
+ * @param req - Express request object containing query parameters:
+ *   - buildingType: The type of building (e.g., 'residential', 'commercial')
+ * @param res - Express response object
+ * @returns JSON object with hierarchical cost data
+ */
+export async function getHierarchicalCostData(req: Request, res: Response) {
+  try {
+    const { buildingType } = req.query;
+    
+    // Get cost matrix data from storage
+    const allMatrixData = await storage.getCostMatrices();
+    
+    // Filter by building type if provided
+    const filteredData = buildingType 
+      ? allMatrixData.filter((item: any) => item.buildingType === buildingType)
+      : allMatrixData;
+    
+    // If no data found, return empty result
+    if (filteredData.length === 0) {
+      return res.status(200).json({
+        name: 'Building Costs',
+        children: []
+      });
+    }
+    
+    // Group data by building type and region
+    const hierarchicalData = {
+      name: 'Building Costs',
+      children: [] as any[]
+    };
+    
+    // Get unique building types
+    const buildingTypesSet = new Set<string>();
+    filteredData.forEach((item: any) => {
+      if (item.buildingType) buildingTypesSet.add(item.buildingType);
+    });
+    const buildingTypes = Array.from(buildingTypesSet);
+    
+    // Build the hierarchical structure
+    buildingTypes.forEach(type => {
+      const typeData = filteredData.filter((item: any) => item.buildingType === type);
+      
+      // Get unique regions
+      const regionsSet = new Set<string>();
+      typeData.forEach((item: any) => {
+        if (item.region) regionsSet.add(item.region);
+      });
+      const regions = Array.from(regionsSet);
+      
+      const typeNode = {
+        name: type,
+        children: [] as any[]
+      };
+      
+      regions.forEach(region => {
+        const regionData = typeData.filter((item: any) => item.region === region);
+        const avgCost = regionData.reduce((sum: number, item: any) => 
+          sum + parseFloat(item.baseRate || '0'), 0) / regionData.length;
+        
+        typeNode.children.push({
+          name: region,
+          value: Math.round(avgCost * 100) / 100,
+          itemCount: regionData.length
+        });
+      });
+      
+      hierarchicalData.children.push(typeNode);
+    });
+    
+    return res.status(200).json(hierarchicalData);
+  } catch (error) {
+    console.error('Error generating hierarchical cost data:', error);
+    return res.status(500).json({ error: 'Error generating hierarchical cost data' });
+  }
+}
+
+/**
+ * Generate statistical correlation data for cost factors
+ * 
+ * This endpoint provides statistical correlations between different factors
+ * affecting building costs, useful for correlation matrices and scatter plots.
+ * 
+ * @param req - Express request object containing query parameters:
+ *   - buildingType: The type of building
+ *   - startYear: Starting year for the analysis
+ *   - endYear: Ending year for the analysis
+ * @param res - Express response object
+ * @returns JSON object with correlation data
+ */
+export async function getStatisticalCorrelationData(req: Request, res: Response) {
+  try {
+    const { buildingType, startYear, endYear } = req.query;
+    
+    // Validate parameters
+    if (!buildingType) {
+      return res.status(400).json({ error: 'Missing required parameter: buildingType' });
+    }
+    
+    // Parse years if provided
+    const start = startYear ? parseInt(startYear as string) : 2015;
+    const end = endYear ? parseInt(endYear as string) : new Date().getFullYear();
+    
+    // Get cost matrix data from storage
+    const allMatrixData = await storage.getCostMatrices();
+    
+    // Filter data based on parameters
+    const filteredData = allMatrixData.filter((item: any) => {
+      return item.buildingType === buildingType && 
+             (!startYear || item.year >= start) &&
+             (!endYear || item.year <= end);
+    });
+    
+    // If no data found, return empty result
+    if (filteredData.length === 0) {
+      return res.status(200).json({
+        correlations: [],
+        metadata: {
+          buildingType,
+          startYear: start,
+          endYear: end
+        }
+      });
+    }
+    
+    // Create correlation data between year and cost
+    const yearCostCorrelation = {
+      id: 'year_cost',
+      title: 'Year vs Cost',
+      type: 'scatter',
+      xAxis: 'Year',
+      yAxis: 'Base Cost ($/sqft)',
+      series: filteredData.map((item: any) => ({
+        x: item.year,
+        y: parseFloat(item.baseRate),
+        region: item.region
+      }))
+    };
+    
+    // Create correlation data between regions
+    const regionData: {
+      id: string;
+      title: string;
+      type: string;
+      xAxis: string;
+      yAxis: string;
+      categories: string[];
+      series: Array<{name: string, value: number}>;
+    } = {
+      id: 'region_comparison',
+      title: 'Regional Cost Comparison',
+      type: 'bar',
+      xAxis: 'Region',
+      yAxis: 'Base Cost ($/sqft)',
+      categories: [],
+      series: []
+    };
+    
+    // Get unique regions
+    const regionsSet = new Set<string>();
+    filteredData.forEach((item: any) => {
+      if (item.region) regionsSet.add(item.region);
+    });
+    const regions = Array.from(regionsSet);
+    
+    // Set categories
+    regionData.categories = regions;
+    
+    // Calculate average costs per region
+    regionData.series = regions.map(region => {
+      const regionItems = filteredData.filter((item: any) => item.region === region);
+      const avgCost = regionItems.reduce((sum: number, item: any) => 
+        sum + parseFloat(item.baseRate), 0) / regionItems.length;
+      
+      return {
+        name: region,
+        value: Math.round(avgCost * 100) / 100
+      };
+    });
+    
+    return res.status(200).json({
+      correlations: [yearCostCorrelation, regionData],
+      metadata: {
+        buildingType,
+        startYear: start,
+        endYear: end,
+        dataPoints: filteredData.length
+      }
+    });
+  } catch (error) {
+    console.error('Error generating statistical correlation data:', error);
+    return res.status(500).json({ error: 'Error generating statistical correlation data' });
+  }
+}
+
 export async function getCostBreakdown(req: Request, res: Response) {
   try {
     const { id } = req.params;
