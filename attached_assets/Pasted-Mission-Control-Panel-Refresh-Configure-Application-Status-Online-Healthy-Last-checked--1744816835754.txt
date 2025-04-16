@@ -1,0 +1,165 @@
+Mission Control Panel
+
+Refresh
+
+
+Configure
+Application Status
+Online
+Healthy
+Last checked: 5 minutes ago
+API Status
+All Systems Go
+26
+ 24 Online 2 Degraded
+Endpoints Monitored
+Build Status
+Passing
+#243
+Deployed 2 hours ago
+Repository Clone Status
+Complete
+Source Repository
+bsvalues/BSBuildingCost
+View
+Your Repository
+yourteam/BSBuildingCost
+View
+Clone Process
+
+🧮
+Cost Calculator
+
+📊
+Cost Comparison
+
+⚖️
+Cost Factors
+
+🔢
+Cost Matrix
+
+🔄
+Matrix Compare
+
+⚙️
+Configuration
+
+🔌
+API Manager
+
+🛠️
+Dev Tools
+
+📈
+Monitoring
+🧮
+Building Cost Calculator
+Calculate building costs based on region, building type, square footage, and complexity.
+
+
+Export
+Input
+Results
+Export
+Building Cost Calculator
+Calculate building costs based on region, building type, and other factors.
+
+Basic Information
+Region
+Select region
+
+Select the region for this building
+
+Building Type
+Select building type
+
+Select the building type for calculation
+
+Square Footage
+2000
+Total square footage of the building
+
+Year Built
+2020
+Year the building was constructed
+
+Adjustment Factors
+Complexity Factor: 1
+Simple (0.5)
+Complex (3.0)
+
+Condition Factor: 1
+Poor (0.6)
+Excellent (1.1)
+
+Building Condition
+Select condition
+
+Current condition of the building
+
+Show Advanced Options
+Calculate Cost
+Data Filters
+Filters
+1
+Reset
+
+Region
+
+All Region
+
+Building Type
+
+Residential
+
+Commercial
+
+Industrial
+
+Agricultural
+
+Municipal
+
+Square Footage
+1,000 sq.ft. - 5,000 sq.ft.
+1,000 sq.ft.
+5,000 sq.ft.
+Building Cost Insights
+Latest trends and patterns in building costs across Benton County
+
+
+
+
+Cost Trends
+Regional cost variations across Benton County.
+
+Cost Trend Chart
+Central regions showing 12% increase in commercial costs since last quarter.
+
+Material Analysis
+Impact of material costs on overall assessments.
+
+Material Cost Breakdown
+Lumber costs have decreased by 5.3% while metal components increased by 8.2%.
+
+Regional Comparison
+Building costs across different regions.
+
+Regional Map
+Eastern regions demonstrate the highest cost efficiency for industrial structures.
+
+Seasonal Patterns
+How seasons affect building costs in Benton County.
+
+Seasonal Chart
+Summer construction shows 14% higher costs due to labor and material availability.
+
+
+Quick Actions
+
+Restart Application
+
+Pull Latest Changes
+
+Sync Database

@@ -6,6 +6,8 @@
  * - Regional cost comparisons
  * - Building type comparisons
  * - Cost breakdown analysis
+ * - Hierarchical cost analysis
+ * - Statistical correlations
  * 
  * These endpoints power the interactive data visualizations in the application,
  * allowing users to explore building cost data through various perspectives.

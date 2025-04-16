@@ -18,11 +18,16 @@ const router = Router();
 // Time series data for cost trends
 router.get('/time-series', getTimeSeriesData);
 
-// Regional comparison data
+// Regional comparison data - support both naming conventions for compatibility
 router.get('/regional-comparison', getRegionalComparison);
+router.get('/regional-costs', getRegionalComparison);
 
-// Building type comparison data
+// Building type comparison data - support both naming conventions for compatibility
 router.get('/building-type-comparison', getBuildingTypeComparison);
+router.get('/hierarchical-costs', getBuildingTypeComparison);
+
+// Statistical correlations for time series data (alias for time-series)
+router.get('/statistical-correlations', getTimeSeriesData);
 
 // Cost breakdown for a specific calculation
 router.get('/cost-breakdown/:id', getCostBreakdown);
