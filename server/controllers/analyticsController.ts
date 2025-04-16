@@ -348,7 +348,7 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Ensure totalCost is a valid number
-    const totalCost = parseFloat(calc.totalCost as any || calc.baseRate as any);
+    const totalCost = parseFloat(calc.totalCost || calc.baseCost || '0');
     if (isNaN(totalCost)) {
       return res.status(500).json({ error: 'Invalid total cost value in calculation' });
     }
@@ -374,7 +374,7 @@ export async function getCostBreakdown(req: Request, res: Response) {
     }
     
     // Further adjust based on complexity factor
-    const complexityField = calc.metadata?.complexity as string || 'average';
+    const complexityField = calc.complexity || 'average';
     if (complexityField === 'complex') {
       // Complex buildings have higher labor costs
       materialsPct -= 0.05;
@@ -411,13 +411,13 @@ export async function getCostBreakdown(req: Request, res: Response) {
     // Add calculation details for reference
     const calculationDetails = {
       id: calc.id,
-      name: calc.metadata?.name || calc.calculationId,
+      name: calc.name || `Calculation #${calc.id}`,
       buildingType: calc.buildingType,
       region: calc.region,
-      squareFootage: calc.metadata?.squareFootage || 0,
-      complexityFactor: calc.metadata?.complexity || 'average',
-      conditionFactor: calc.metadata?.condition || 'average',
-      createdDate: new Date(calc.metadata?.createdAt || Date.now())
+      squareFootage: calc.squareFootage || 0,
+      complexityFactor: calc.complexity || 'average',
+      conditionFactor: calc.condition || 'average',
+      createdDate: new Date(calc.createdAt || Date.now())
     };
     
     return res.status(200).json({

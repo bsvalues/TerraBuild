@@ -1082,17 +1082,11 @@ export class DBStorage implements IStorage {
   }
 
   async getCalculationById(id: number | string): Promise<Calculation | null> {
-    if (typeof id === 'string' && id.includes('-')) {
-      // This is a UUID
-      return this.db.query.calculations.findFirst({
-        where: eq(schema.calculations.calculationId, id)
-      });
-    } else {
-      const numId = typeof id === 'string' ? parseInt(id) : id;
-      return this.db.query.calculations.findFirst({
-        where: eq(schema.calculations.id, numId)
-      });
-    }
+    // Convert ID to number and query by ID
+    const numId = typeof id === 'string' ? parseInt(id) : id;
+    return this.db.query.calculations.findFirst({
+      where: eq(schema.calculations.id, numId)
+    });
   }
 
   async createCalculation(calculation: InsertCalculation): Promise<Calculation> {
@@ -1108,7 +1102,7 @@ export class DBStorage implements IStorage {
     if (typeof id === 'string' && id.includes('-')) {
       // This is a UUID
       result = await this.db.delete(schema.calculations)
-        .where(eq(schema.calculations.calculationId, id))
+        .where(eq(schema.calculations.id, id))
         .returning();
     } else {
       const numId = typeof id === 'string' ? parseInt(id) : id;
