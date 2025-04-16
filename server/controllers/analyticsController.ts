@@ -307,11 +307,11 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     const data = allMatrixData.filter((item: any) => {
       return (
         item.region === region &&
-        item.year === yearInt &&
-        (item.isActive === true || item.isActive === null)
+        item.matrix_year === yearInt &&
+        (item.is_active === true || item.is_active === null)
       );
     })
-    .sort((a: any, b: any) => a.buildingType.localeCompare(b.buildingType));
+    .sort((a: any, b: any) => a.building_type.localeCompare(b.building_type));
     
     // If no data is found, return empty result
     if (data.length === 0) {
@@ -329,13 +329,13 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     }
     
     // Calculate cost for each building type based on square footage
-    const buildingTypes = data.map((item: any) => item.buildingType);
+    const buildingTypes = data.map((item: any) => item.building_type);
     const buildingTypeLabels = data.map((item: any) => 
-      item.description || `Building Type ${item.buildingType}`
+      item.description || `Building Type ${item.building_type}`
     );
-    const baseCosts = data.map((item: any) => parseFloat(item.baseRate));
+    const baseCosts = data.map((item: any) => parseFloat(item.base_rate));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseRate) * sqftFloat;
+      const cost = parseFloat(item.base_rate) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
     
