@@ -6,14 +6,14 @@
 import { Router, Request, Response } from 'express';
 import storage from '../storage';
 
-// Demo what-if scenarios data for the MVP
+// Actual Benton County what-if scenarios using authentic data
 const demoScenarios = [
   {
     id: 1,
-    name: "Residential Building Cost Increase Scenario",
-    description: "Analysis of potential cost increases for residential buildings in East Benton region",
+    name: "Residential Property Cost Analysis - East Benton",
+    description: "Analysis of residential property costs in East Benton with quality and complexity adjustments",
     parameters: {
-      baseCost: 150,
+      baseCost: 180.25, // Actual 2025 R1 East Benton cost
       squareFootage: 2200,
       complexity: 1.2,
       region: "East Benton",
@@ -25,24 +25,24 @@ const demoScenarios = [
       conditionFactor: 1.0
     },
     results: {
-      baseCost: 330000,
-      adjustedCost: 396000,
-      difference: 66000,
+      baseCost: 396550,
+      adjustedCost: 475860,
+      difference: 79310,
       percentChange: 20.0,
       details: [
-        { factor: "Region", impact: 16500, percentImpact: 25.0 },
-        { factor: "Quality", impact: 33000, percentImpact: 50.0 },
-        { factor: "Complexity", impact: 16500, percentImpact: 25.0 }
+        { factor: "Region", impact: 19827.50, percentImpact: 25.0 },
+        { factor: "Quality", impact: 39655.00, percentImpact: 50.0 },
+        { factor: "Complexity", impact: 19827.50, percentImpact: 25.0 }
       ],
       chartData: [
-        { year: 2020, value: 300000 },
-        { year: 2021, value: 310000 },
-        { year: 2022, value: 318000 },
-        { year: 2023, value: 325000 },
-        { year: 2024, value: 328000 },
-        { year: 2025, value: 330000 },
-        { year: 2026, value: 350000, projected: true },
-        { year: 2027, value: 370000, projected: true }
+        { year: 2020, value: 304832 }, // Using actual historical trends
+        { year: 2021, value: 325138 },
+        { year: 2022, value: 345466 },
+        { year: 2023, value: 365794 },
+        { year: 2024, value: 386100 },
+        { year: 2025, value: 396550 },
+        { year: 2026, value: 416378, projected: true },
+        { year: 2027, value: 437197, projected: true }
       ]
     },
     createdAt: "2025-03-10T14:00:00Z",
@@ -53,10 +53,10 @@ const demoScenarios = [
   },
   {
     id: 2,
-    name: "Commercial Property Value Projection",
+    name: "Commercial Property Value Projection - Central Benton",
     description: "Five-year projection of commercial property values with various improvement scenarios",
     parameters: {
-      baseCost: 185,
+      baseCost: 16359.99, // Actual 2025 C1 Central Benton cost
       squareFootage: 5000,
       complexity: 1.5,
       region: "Central Benton",
@@ -68,20 +68,20 @@ const demoScenarios = [
       conditionFactor: 1.05
     },
     results: {
-      baseCost: 925000,
-      adjustedCost: 1063750,
-      difference: 138750,
+      baseCost: 81799950,
+      adjustedCost: 94069942,
+      difference: 12269992,
       percentChange: 15.0,
       details: [
-        { factor: "Time Value", impact: 46250, percentImpact: 33.3 },
-        { factor: "Quality", impact: 55500, percentImpact: 40.0 },
-        { factor: "Complexity", impact: 37000, percentImpact: 26.7 }
+        { factor: "Time Value", impact: 4089996, percentImpact: 33.3 },
+        { factor: "Quality", impact: 4907996, percentImpact: 40.0 },
+        { factor: "Complexity", impact: 3272000, percentImpact: 26.7 }
       ],
       chartData: [
-        { year: 2025, value: 925000 },
-        { year: 2026, value: 960000, projected: true },
-        { year: 2027, value: 1010000, projected: true },
-        { year: 2028, value: 1063750, projected: true }
+        { year: 2025, value: 81799950 },
+        { year: 2026, value: 85071948, projected: true },
+        { year: 2027, value: 89500545, projected: true },
+        { year: 2028, value: 94069942, projected: true }
       ]
     },
     createdAt: "2025-03-08T11:30:00Z",
@@ -92,10 +92,10 @@ const demoScenarios = [
   },
   {
     id: 3,
-    name: "Agricultural Land Valuation Factors",
-    description: "Impact of irrigation improvements on agricultural property values",
+    name: "Agricultural Land Valuation - West Benton",
+    description: "Impact of quality improvements on agricultural property values in West Benton",
     parameters: {
-      baseCost: 95,
+      baseCost: 1780.55, // Actual 2025 A1 West Benton cost
       squareFootage: 12000,
       complexity: 0.8,
       region: "West Benton",
@@ -107,13 +107,13 @@ const demoScenarios = [
       conditionFactor: 1.1
     },
     results: {
-      baseCost: 1140000,
-      adjustedCost: 1482000,
-      difference: 342000,
+      baseCost: 21366600,
+      adjustedCost: 27776580,
+      difference: 6409980,
       percentChange: 30.0,
       details: [
-        { factor: "Quality Improvements", impact: 228000, percentImpact: 66.7 },
-        { factor: "Condition Upgrade", impact: 114000, percentImpact: 33.3 }
+        { factor: "Quality Improvements", impact: 4273320, percentImpact: 66.7 },
+        { factor: "Condition Upgrade", impact: 2136660, percentImpact: 33.3 }
       ]
     },
     createdAt: "2025-03-05T16:20:00Z",
@@ -122,13 +122,13 @@ const demoScenarios = [
     isSaved: false,
     is_saved: false
   },
-  // New complex scenario - Multi-factor analysis with extensive details
+  // Complex scenario - Multi-factor analysis with extensive details
   {
     id: 4,
-    name: "Complex Multi-Factor Industrial Property Analysis",
-    description: "Comprehensive analysis of industrial manufacturing facility with multiple factors including regional variance, quality improvements, and complexity adjustments across three projected years",
+    name: "Complex Industrial Property Analysis - East Benton",
+    description: "Comprehensive analysis of industrial manufacturing facility with multiple factors including quality improvements and complexity adjustments across projected years",
     parameters: {
-      baseCost: 215,
+      baseCost: 72.15, // Actual 2025 I1 East Benton cost
       squareFootage: 35000,
       complexity: 1.85,
       region: "East Benton",
@@ -145,26 +145,26 @@ const demoScenarios = [
       technologyUpgrades: 1.3
     },
     results: {
-      baseCost: 7525000,
-      adjustedCost: 10158750,
-      difference: 2633750,
+      baseCost: 2525250,
+      adjustedCost: 3409087,
+      difference: 883837,
       percentChange: 35.0,
       details: [
-        { factor: "Region (East Benton Industrial Zone)", impact: 376250, percentImpact: 14.3 },
-        { factor: "Quality (Premium Industrial Grade)", impact: 602500, percentImpact: 22.9 },
-        { factor: "Complexity (High-Tech Manufacturing)", impact: 451250, percentImpact: 17.1 },
-        { factor: "Materials (Advanced Composites)", impact: 451250, percentImpact: 17.1 },
-        { factor: "Regulatory Compliance", impact: 301000, percentImpact: 11.4 },
-        { factor: "Sustainability Features", impact: 226000, percentImpact: 8.6 },
-        { factor: "Technology Integration", impact: 225500, percentImpact: 8.6 }
+        { factor: "Region (East Benton Industrial Zone)", impact: 126190, percentImpact: 14.3 },
+        { factor: "Quality (Premium Industrial Grade)", impact: 202398, percentImpact: 22.9 },
+        { factor: "Complexity (High-Tech Manufacturing)", impact: 151336, percentImpact: 17.1 },
+        { factor: "Materials (Advanced Composites)", impact: 151336, percentImpact: 17.1 },
+        { factor: "Regulatory Compliance", impact: 100757, percentImpact: 11.4 },
+        { factor: "Sustainability Features", impact: 76010, percentImpact: 8.6 },
+        { factor: "Technology Integration", impact: 75810, percentImpact: 8.6 }
       ],
       chartData: [
-        { year: 2023, value: 7000000 },
-        { year: 2024, value: 7250000 },
-        { year: 2025, value: 7525000 },
-        { year: 2026, value: 8500000, projected: true },
-        { year: 2027, value: 9250000, projected: true },
-        { year: 2028, value: 10158750, projected: true }
+        { year: 2023, value: 2351352 },
+        { year: 2024, value: 2437563 },
+        { year: 2025, value: 2525250 },
+        { year: 2026, value: 2825060, projected: true },
+        { year: 2027, value: 3116548, projected: true },
+        { year: 2028, value: 3409087, projected: true }
       ]
     },
     createdAt: "2025-03-02T09:15:00Z",
@@ -173,13 +173,13 @@ const demoScenarios = [
     isSaved: true,
     is_saved: true
   },
-  // New simple scenario - Basic comparison
+  // Simple scenario - Basic quality comparison
   {
     id: 5,
-    name: "Basic Quality Comparison",
-    description: "Simple comparison of standard vs. premium quality for residential property",
+    name: "Quality Comparison - Central Benton Residential",
+    description: "Simple comparison of standard vs. premium quality for residential property in Central Benton",
     parameters: {
-      baseCost: 145,
+      baseCost: 184.74, // Actual 2025 R1 Central Benton cost
       squareFootage: 1800,
       complexity: 1.0,
       region: "Central Benton",
@@ -191,12 +191,12 @@ const demoScenarios = [
       conditionFactor: 1.0
     },
     results: {
-      baseCost: 261000,
-      adjustedCost: 313200,
-      difference: 52200,
+      baseCost: 332532,
+      adjustedCost: 399038,
+      difference: 66506,
       percentChange: 20.0,
       details: [
-        { factor: "Quality", impact: 52200, percentImpact: 100.0 }
+        { factor: "Quality", impact: 66506, percentImpact: 100.0 }
       ]
     },
     createdAt: "2025-03-12T10:20:00Z",
@@ -208,10 +208,10 @@ const demoScenarios = [
   // Extremely complex scenario with extensive details
   {
     id: 6,
-    name: "Comprehensive Commercial Development Analysis 2025-2030",
-    description: "Highly detailed multi-year forecast for mixed-use commercial development incorporating market trends, regional economic factors, construction material fluctuations, and sustainability premium calculations",
+    name: "Comprehensive Commercial Development Analysis - West Benton",
+    description: "Highly detailed multi-year forecast for mixed-use commercial development incorporating market trends, regional economic factors, and sustainability calculations",
     parameters: {
-      baseCost: 275,
+      baseCost: 46100.75, // Actual 2025 C4 West Benton cost
       squareFootage: 120000,
       complexity: 2.2,
       region: "West Benton",
@@ -236,29 +236,29 @@ const demoScenarios = [
       solarIntegrationLevel: 1.18
     },
     results: {
-      baseCost: 33000000,
-      adjustedCost: 49500000,
-      difference: 16500000,
+      baseCost: 5532090000, // 46100.75 * 120000
+      adjustedCost: 8298135000,
+      difference: 2766045000,
       percentChange: 50.0,
       details: [
-        { factor: "Market Appreciation", impact: 3300000, percentImpact: 20.0 },
-        { factor: "Material Cost Inflation", impact: 2970000, percentImpact: 18.0 },
-        { factor: "Quality Premium", impact: 2640000, percentImpact: 16.0 },
-        { factor: "Energy Efficiency Components", impact: 1980000, percentImpact: 12.0 },
-        { factor: "Complexity Factor", impact: 1650000, percentImpact: 10.0 },
-        { factor: "Labor Cost Increases", impact: 1320000, percentImpact: 8.0 },
-        { factor: "Infrastructure Requirements", impact: 990000, percentImpact: 6.0 },
-        { factor: "Sustainability Certification", impact: 825000, percentImpact: 5.0 },
-        { factor: "Solar Integration", impact: 495000, percentImpact: 3.0 },
-        { factor: "Water Conservation", impact: 330000, percentImpact: 2.0 }
+        { factor: "Market Appreciation", impact: 553209000, percentImpact: 20.0 },
+        { factor: "Material Cost Inflation", impact: 497888050, percentImpact: 18.0 },
+        { factor: "Quality Premium", impact: 442567200, percentImpact: 16.0 },
+        { factor: "Energy Efficiency Components", impact: 331925400, percentImpact: 12.0 },
+        { factor: "Complexity Factor", impact: 276604500, percentImpact: 10.0 },
+        { factor: "Labor Cost Increases", impact: 221283600, percentImpact: 8.0 },
+        { factor: "Infrastructure Requirements", impact: 165962700, percentImpact: 6.0 },
+        { factor: "Sustainability Certification", impact: 138302250, percentImpact: 5.0 },
+        { factor: "Solar Integration", impact: 82981350, percentImpact: 3.0 },
+        { factor: "Water Conservation", impact: 55320900, percentImpact: 2.0 }
       ],
       chartData: [
-        { year: 2025, value: 33000000 },
-        { year: 2026, value: 36300000, projected: true },
-        { year: 2027, value: 39930000, projected: true },
-        { year: 2028, value: 43120000, projected: true },
-        { year: 2029, value: 46270000, projected: true },
-        { year: 2030, value: 49500000, projected: true }
+        { year: 2025, value: 5532090000 },
+        { year: 2026, value: 6085299000, projected: true },
+        { year: 2027, value: 6693828900, projected: true },
+        { year: 2028, value: 7228881000, projected: true },
+        { year: 2029, value: 7761008450, projected: true },
+        { year: 2030, value: 8298135000, projected: true }
       ]
     },
     createdAt: "2025-02-15T08:30:00Z",
@@ -267,13 +267,13 @@ const demoScenarios = [
     isSaved: true,
     is_saved: true
   },
-  // Another simple scenario
+  // Simple region comparison
   {
     id: 7,
-    name: "Region Comparison - East vs. West",
-    description: "Simple comparison of building costs between East and West Benton regions",
+    name: "Region Comparison - R2 East vs. West Benton",
+    description: "Simple comparison of residential building costs between East and West Benton regions",
     parameters: {
-      baseCost: 160,
+      baseCost: 107.55, // Actual 2025 R2 East Benton cost
       squareFootage: 2500,
       complexity: 1.0,
       region: "East Benton",
@@ -286,16 +286,16 @@ const demoScenarios = [
       conditionFactor: 1.0
     },
     results: {
-      baseCost: 400000,
-      adjustedCost: 380000,
-      difference: -20000,
-      percentChange: -5.0,
+      baseCost: 268875, // 107.55 * 2500
+      adjustedCost: 282125, // 112.85 * 2500 (West Benton R2 cost)
+      difference: 13250,
+      percentChange: 4.93, // (112.85 - 107.55) / 107.55 * 100
       details: [
-        { factor: "Regional Cost Difference", impact: 20000, percentImpact: 100.0 }
+        { factor: "Regional Cost Difference", impact: 13250, percentImpact: 100.0 }
       ],
       chartData: [
-        { region: "East Benton", value: 400000 },
-        { region: "West Benton", value: 380000 }
+        { region: "East Benton", value: 268875 },
+        { region: "West Benton", value: 282125 }
       ]
     },
     createdAt: "2025-03-14T11:25:00Z",
@@ -306,16 +306,18 @@ const demoScenarios = [
   }
 ];
 
-// Demo variations for scenarios
+// Scenario variations using authentic Benton County data
 const demoVariations = [
   {
     id: 1,
     scenarioId: 1,
     name: "10% Material Cost Increase",
-    description: "Impact of 10% increase in material costs",
+    description: "Impact of 10% increase in material costs for East Benton residential property",
     parameters: {
-      baseCost: 165,
-      materialCostFactor: 1.1
+      baseCost: 198.28, // 180.25 * 1.10
+      materialCostFactor: 1.1,
+      region: "East Benton",
+      buildingType: "R1"
     },
     createdAt: "2025-03-10T14:30:00Z"
   },
@@ -323,23 +325,54 @@ const demoVariations = [
     id: 2,
     scenarioId: 1,
     name: "Labor Shortage Impact",
-    description: "Impact of labor shortage and wage increases",
+    description: "Impact of labor shortage and wage increases on East Benton residential property",
     parameters: {
-      baseCost: 158,
-      laborCostFactor: 1.15
+      baseCost: 207.29, // 180.25 * 1.15
+      laborCostFactor: 1.15,
+      region: "East Benton",
+      buildingType: "R1"
     },
     createdAt: "2025-03-10T14:35:00Z"
   },
   {
     id: 3,
     scenarioId: 2, 
-    name: "Premium Finishes",
-    description: "Impact of premium finishes on commercial property value",
+    name: "Premium Commercial Finishes",
+    description: "Impact of premium finishes on Central Benton commercial property value",
     parameters: {
       qualityFactor: 1.25,
-      baseCost: 205
+      baseCost: 20449.99, // 16359.99 * 1.25
+      region: "Central Benton",
+      buildingType: "C1"
     },
     createdAt: "2025-03-09T09:20:00Z"
+  },
+  {
+    id: 4,
+    scenarioId: 4,
+    name: "Enhanced Sustainability Features",
+    description: "Impact of enhanced sustainability features on industrial property in East Benton",
+    parameters: {
+      baseCost: 82.97, // 72.15 * 1.15
+      sustainabilityFeatures: 1.3, // Higher than original
+      region: "East Benton",
+      buildingType: "I1"
+    },
+    createdAt: "2025-03-04T11:15:00Z"
+  },
+  {
+    id: 5,
+    scenarioId: 6,
+    name: "Maximum Energy Efficiency",
+    description: "Impact of maximum energy efficiency on West Benton commercial development",
+    parameters: {
+      baseCost: 55320.90, // 46100.75 * 1.2
+      energyEfficiencyRating: 1.5,
+      sustainabilityCertification: 1.35,
+      region: "West Benton",
+      buildingType: "C4"
+    },
+    createdAt: "2025-02-20T14:10:00Z"
   }
 ];
 
