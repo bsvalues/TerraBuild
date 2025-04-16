@@ -16,12 +16,40 @@ const demoScenarios = [
       baseCost: 150,
       squareFootage: 2200,
       complexity: 1.2,
-      region: "East Benton"
+      region: "East Benton",
+      buildingType: "R1",
+      baseYear: 2025,
+      comparisonYear: 2025,
+      adjustmentFactor: 1.2,
+      qualityFactor: 1.1,
+      conditionFactor: 1.0
+    },
+    results: {
+      baseCost: 330000,
+      adjustedCost: 396000,
+      difference: 66000,
+      percentChange: 20.0,
+      details: [
+        { factor: "Region", impact: 16500, percentImpact: 25.0 },
+        { factor: "Quality", impact: 33000, percentImpact: 50.0 },
+        { factor: "Complexity", impact: 16500, percentImpact: 25.0 }
+      ],
+      chartData: [
+        { year: 2020, value: 300000 },
+        { year: 2021, value: 310000 },
+        { year: 2022, value: 318000 },
+        { year: 2023, value: 325000 },
+        { year: 2024, value: 328000 },
+        { year: 2025, value: 330000 },
+        { year: 2026, value: 350000, projected: true },
+        { year: 2027, value: 370000, projected: true }
+      ]
     },
     createdAt: "2025-03-10T14:00:00Z",
     updatedAt: "2025-03-10T14:00:00Z",
     userId: 1,
-    isSaved: true
+    isSaved: true,
+    is_saved: true
   },
   {
     id: 2,
@@ -31,12 +59,36 @@ const demoScenarios = [
       baseCost: 185,
       squareFootage: 5000,
       complexity: 1.5,
-      region: "Central Benton"
+      region: "Central Benton",
+      buildingType: "C1",
+      baseYear: 2025,
+      comparisonYear: 2028,
+      adjustmentFactor: 1.15,
+      qualityFactor: 1.2,
+      conditionFactor: 1.05
+    },
+    results: {
+      baseCost: 925000,
+      adjustedCost: 1063750,
+      difference: 138750,
+      percentChange: 15.0,
+      details: [
+        { factor: "Time Value", impact: 46250, percentImpact: 33.3 },
+        { factor: "Quality", impact: 55500, percentImpact: 40.0 },
+        { factor: "Complexity", impact: 37000, percentImpact: 26.7 }
+      ],
+      chartData: [
+        { year: 2025, value: 925000 },
+        { year: 2026, value: 960000, projected: true },
+        { year: 2027, value: 1010000, projected: true },
+        { year: 2028, value: 1063750, projected: true }
+      ]
     },
     createdAt: "2025-03-08T11:30:00Z",
     updatedAt: "2025-03-09T09:15:00Z",
     userId: 1,
-    isSaved: true
+    isSaved: true,
+    is_saved: true
   },
   {
     id: 3,
@@ -46,12 +98,29 @@ const demoScenarios = [
       baseCost: 95,
       squareFootage: 12000,
       complexity: 0.8,
-      region: "West Benton"
+      region: "West Benton",
+      buildingType: "A1",
+      baseYear: 2025,
+      comparisonYear: 2025,
+      adjustmentFactor: 1.0,
+      qualityFactor: 1.3,
+      conditionFactor: 1.1
+    },
+    results: {
+      baseCost: 1140000,
+      adjustedCost: 1482000,
+      difference: 342000,
+      percentChange: 30.0,
+      details: [
+        { factor: "Quality Improvements", impact: 228000, percentImpact: 66.7 },
+        { factor: "Condition Upgrade", impact: 114000, percentImpact: 33.3 }
+      ]
     },
     createdAt: "2025-03-05T16:20:00Z",
     updatedAt: "2025-03-05T16:20:00Z",
     userId: 1,
-    isSaved: false
+    isSaved: false,
+    is_saved: false
   }
 ];
 
@@ -207,16 +276,54 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name and parameters are required' });
     }
     
-    // Create a new scenario (in a real app, this would save to database)
+    // Calculate base cost (in a real app, this would use more complex logic)
+    const baseCost = parameters.baseCost * parameters.squareFootage || 0;
+    // Calculate adjustment factor from parameters or use a default
+    const adjustmentFactor = parameters.adjustmentFactor || 1.2;
+    // Calculate adjusted cost
+    const adjustedCost = baseCost * adjustmentFactor;
+    // Calculate difference
+    const difference = adjustedCost - baseCost;
+    // Calculate percent change
+    const percentChange = (difference / baseCost) * 100;
+    
+    // Generate sample details for visualization
+    const details = [
+      { 
+        factor: "Region", 
+        impact: difference * 0.3, 
+        percentImpact: 30.0 
+      },
+      { 
+        factor: "Quality", 
+        impact: difference * 0.4, 
+        percentImpact: 40.0 
+      },
+      { 
+        factor: "Complexity", 
+        impact: difference * 0.3, 
+        percentImpact: 30.0 
+      }
+    ];
+    
+    // Create a new scenario with results
     const newScenario = {
       id: demoScenarios.length + 1,
       name,
       description: description || '',
       parameters,
+      results: {
+        baseCost,
+        adjustedCost,
+        difference,
+        percentChange,
+        details
+      },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       userId: userId || 1,
-      isSaved: false
+      isSaved: false,
+      is_saved: false
     };
     
     // Add to demo scenarios (this won't persist after server restart)
@@ -233,7 +340,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const scenarioId = parseInt(req.params.id);
-    const { name, description, parameters, isSaved } = req.body;
+    const { name, description, parameters, isSaved, is_saved } = req.body;
     
     // Find the scenario in demo data
     const scenarioIndex = demoScenarios.findIndex(s => s.id === scenarioId);
@@ -242,13 +349,18 @@ router.patch('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Scenario not found' });
     }
     
+    // Determine saved state (prefer is_saved if both are provided)
+    const savedState = is_saved !== undefined ? is_saved : 
+                      (isSaved !== undefined ? isSaved : demoScenarios[scenarioIndex].isSaved);
+    
     // Update scenario
     const updatedScenario = {
       ...demoScenarios[scenarioIndex],
       name: name || demoScenarios[scenarioIndex].name,
       description: description !== undefined ? description : demoScenarios[scenarioIndex].description,
       parameters: parameters || demoScenarios[scenarioIndex].parameters,
-      isSaved: isSaved !== undefined ? isSaved : demoScenarios[scenarioIndex].isSaved,
+      isSaved: savedState,
+      is_saved: savedState,
       updatedAt: new Date().toISOString()
     };
     
@@ -273,10 +385,11 @@ router.post('/:id/save', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Scenario not found' });
     }
     
-    // Update isSaved flag
+    // Update isSaved flag (support both formats for maximum compatibility)
     demoScenarios[scenarioIndex] = {
       ...demoScenarios[scenarioIndex],
       isSaved: true,
+      is_saved: true,
       updatedAt: new Date().toISOString()
     };
     
