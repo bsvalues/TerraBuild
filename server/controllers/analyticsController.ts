@@ -54,14 +54,14 @@ export async function getTimeSeriesData(req: Request, res: Response) {
     // Filter matrix data based on parameters
     const data = allMatrixData.filter((item: any) => {
       return (
-        item.buildingType === buildingType &&
+        item.building_type === buildingType &&
         item.region === region &&
-        item.year >= start &&
-        item.year <= end &&
-        (item.isActive === true || item.isActive === null)
+        item.matrix_year >= start &&
+        item.matrix_year <= end &&
+        (item.is_active === true || item.is_active === null)
       );
     })
-    .sort((a: any, b: any) => a.year - b.year);
+    .sort((a: any, b: any) => a.matrix_year - b.matrix_year);
     
     // If no data is found, return empty result
     if (data.length === 0) {
@@ -81,8 +81,8 @@ export async function getTimeSeriesData(req: Request, res: Response) {
     
     // Format the response
     const formattedData = data.map((item: any) => ({
-      date: item.year.toString(),
-      value: parseFloat(item.baseRate)
+      date: item.matrix_year.toString(),
+      value: parseFloat(item.base_cost)
     }));
     
     // Ensure we have data for each year in the range by filling gaps
@@ -221,9 +221,9 @@ export async function getRegionalComparison(req: Request, res: Response) {
     // Filter and process the data
     const data = allMatrixData.filter((item: any) => {
       return (
-        item.buildingType === buildingType &&
-        item.year === yearInt &&
-        (item.isActive === true || item.isActive === null)
+        item.building_type === buildingType &&
+        item.matrix_year === yearInt &&
+        (item.is_active === true || item.is_active === null)
       );
     })
     .sort((a: any, b: any) => a.region.localeCompare(b.region));
@@ -309,11 +309,11 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     const data = allMatrixData.filter((item: any) => {
       return (
         item.region === region &&
-        item.year === yearInt &&
-        (item.isActive === true || item.isActive === null)
+        item.matrix_year === yearInt &&
+        (item.is_active === true || item.is_active === null)
       );
     })
-    .sort((a: any, b: any) => a.buildingType.localeCompare(b.buildingType));
+    .sort((a: any, b: any) => a.building_type.localeCompare(b.building_type));
     
     // If no data is found, return empty result
     if (data.length === 0) {
@@ -331,18 +331,18 @@ export async function getBuildingTypeComparison(req: Request, res: Response) {
     }
     
     // Calculate cost for each building type based on square footage
-    const buildingTypes = data.map((item: any) => item.buildingType);
+    const buildingTypes = data.map((item: any) => item.building_type);
     const buildingTypeLabels = data.map((item: any) => 
-      item.description || `Building Type ${item.buildingType}`
+      item.description || `Building Type ${item.building_type}`
     );
-    const baseCosts = data.map((item: any) => parseFloat(item.baseRate));
+    const baseCosts = data.map((item: any) => parseFloat(item.base_cost));
     const values = data.map((item: any) => {
-      const cost = parseFloat(item.baseRate) * sqftFloat;
+      const cost = parseFloat(item.base_cost) * sqftFloat;
       return Math.round(cost * 100) / 100; // Round to 2 decimal places
     });
     
     // Calculate cost per square foot for each building type
-    const costPerSqft = data.map((item: any) => parseFloat(item.baseRate));
+    const costPerSqft = data.map((item: any) => parseFloat(item.base_cost));
     
     return res.status(200).json({ 
       buildingTypes, 
@@ -392,7 +392,7 @@ export async function getHierarchicalCostData(req: Request, res: Response) {
     
     // Filter by building type if provided
     const filteredData = buildingType 
-      ? allMatrixData.filter((item: any) => item.buildingType === buildingType)
+      ? allMatrixData.filter((item: any) => item.building_type === buildingType)
       : allMatrixData;
     
     // If no data found, return empty result
@@ -412,13 +412,13 @@ export async function getHierarchicalCostData(req: Request, res: Response) {
     // Get unique building types
     const buildingTypesSet = new Set<string>();
     filteredData.forEach((item: any) => {
-      if (item.buildingType) buildingTypesSet.add(item.buildingType);
+      if (item.building_type) buildingTypesSet.add(item.building_type);
     });
     const buildingTypes = Array.from(buildingTypesSet);
     
     // Build the hierarchical structure
     buildingTypes.forEach(type => {
-      const typeData = filteredData.filter((item: any) => item.buildingType === type);
+      const typeData = filteredData.filter((item: any) => item.building_type === type);
       
       // Get unique regions
       const regionsSet = new Set<string>();
@@ -435,7 +435,7 @@ export async function getHierarchicalCostData(req: Request, res: Response) {
       regions.forEach(region => {
         const regionData = typeData.filter((item: any) => item.region === region);
         const avgCost = regionData.reduce((sum: number, item: any) => 
-          sum + parseFloat(item.baseRate || '0'), 0) / regionData.length;
+          sum + parseFloat(item.base_cost || '0'), 0) / regionData.length;
         
         typeNode.children.push({
           name: region,
@@ -485,9 +485,9 @@ export async function getStatisticalCorrelationData(req: Request, res: Response)
     
     // Filter data based on parameters
     const filteredData = allMatrixData.filter((item: any) => {
-      return item.buildingType === buildingType && 
-             (!startYear || item.year >= start) &&
-             (!endYear || item.year <= end);
+      return item.building_type === buildingType && 
+             (!startYear || item.matrix_year >= start) &&
+             (!endYear || item.matrix_year <= end);
     });
     
     // If no data found, return empty result
@@ -510,8 +510,8 @@ export async function getStatisticalCorrelationData(req: Request, res: Response)
       xAxis: 'Year',
       yAxis: 'Base Cost ($/sqft)',
       series: filteredData.map((item: any) => ({
-        x: item.year,
-        y: parseFloat(item.baseRate),
+        x: item.matrix_year,
+        y: parseFloat(item.base_cost),
         region: item.region
       }))
     };
@@ -549,7 +549,7 @@ export async function getStatisticalCorrelationData(req: Request, res: Response)
     regionData.series = regions.map(region => {
       const regionItems = filteredData.filter((item: any) => item.region === region);
       const avgCost = regionItems.reduce((sum: number, item: any) => 
-        sum + parseFloat(item.baseRate), 0) / regionItems.length;
+        sum + parseFloat(item.base_cost), 0) / regionItems.length;
       
       return {
         name: region,
