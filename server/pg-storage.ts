@@ -1292,8 +1292,8 @@ export class PostgresStorage implements IStorage {
       // Build the where conditions based on filter
       let query = db.select().from(costMatrix);
       
-      if (filter.building_type) {
-        query = query.where(eq(costMatrix.buildingType, filter.building_type));
+      if (filter.buildingType) {
+        query = query.where(eq(costMatrix.buildingType, filter.buildingType));
       }
       
       if (filter.region) {
@@ -1304,8 +1304,8 @@ export class PostgresStorage implements IStorage {
         query = query.where(eq(costMatrix.year, filter.year));
       }
       
-      if (filter.is_active !== undefined) {
-        query = query.where(eq(costMatrix.isActive, filter.is_active));
+      if (filter.isActive !== undefined) {
+        query = query.where(eq(costMatrix.isActive, filter.isActive));
       }
       
       return await query;
