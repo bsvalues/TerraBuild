@@ -54,12 +54,12 @@ export async function getTimeSeriesData(req: Request, res: Response) {
       return (
         item.buildingType === buildingType &&
         item.region === region &&
-        item.year >= start &&
-        item.year <= end &&
-        (item.isActive === true || item.isActive === null)
+        item.matrix_year >= start &&
+        item.matrix_year <= end &&
+        (item.is_active === true || item.is_active === null)
       );
     })
-    .sort((a: any, b: any) => a.year - b.year);
+    .sort((a: any, b: any) => a.matrix_year - b.matrix_year);
     
     // If no data is found, return empty result
     if (data.length === 0) {
@@ -79,8 +79,8 @@ export async function getTimeSeriesData(req: Request, res: Response) {
     
     // Format the response
     const formattedData = data.map((item: any) => ({
-      date: item.year.toString(),
-      value: parseFloat(item.baseRate)
+      date: item.matrix_year.toString(),
+      value: parseFloat(item.base_rate)
     }));
     
     // Ensure we have data for each year in the range by filling gaps
@@ -220,8 +220,8 @@ export async function getRegionalComparison(req: Request, res: Response) {
     const data = allMatrixData.filter((item: any) => {
       return (
         item.buildingType === buildingType &&
-        item.year === yearInt &&
-        (item.isActive === true || item.isActive === null)
+        item.matrix_year === yearInt &&
+        (item.is_active === true || item.is_active === null)
       );
     })
     .sort((a: any, b: any) => a.region.localeCompare(b.region));
