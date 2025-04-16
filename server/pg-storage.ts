@@ -1336,10 +1336,10 @@ export class PostgresStorage implements IStorage {
   
   async getCostMatrixByBuildingType(buildingType: string): Promise<CostMatrix[]> {
     try {
-      // Select directly from costMatrix table by building_type
+      // Select directly from costMatrix table by buildingType
       const results = await db.select()
         .from(costMatrix)
-        .where(eq(costMatrix.building_type, buildingType));
+        .where(eq(costMatrix.buildingType, buildingType));
       
       return results;
     } catch (error) {
