@@ -1611,8 +1611,8 @@ export class PostgresStorage implements IStorage {
             sourceMatrixId: item.matrixId,
             description: item.matrixDescription || "",
             dataPoints: item.dataPoints || 0,
-            minCost: item.minCost ? parseFloat(item.minCost.toString()) : null,
-            maxCost: item.maxCost ? parseFloat(item.maxCost.toString()) : null,
+            minCost: item.minCost ? item.minCost.toString() : null,
+            maxCost: item.maxCost ? item.maxCost.toString() : null,
             complexityFactorBase: parseFloat(complexityFactorBase.toString()),
             qualityFactorBase: parseFloat(qualityFactorBase.toString()),
             conditionFactorBase: parseFloat(conditionFactorBase.toString()),
@@ -1802,7 +1802,7 @@ export class PostgresStorage implements IStorage {
       
       // Log the activity
       await this.createActivity({
-        action: `Imported ${imported} cost matrix entries from Excel (${fileUpload.filename})`,
+        action: `Imported ${imported} cost matrix entries from Excel (${fileUpload.fileName})`,
         icon: "ri-file-excel-line",
         iconColor: "success",
         userId
@@ -1815,7 +1815,7 @@ export class PostgresStorage implements IStorage {
       
       // Log the error
       await this.createActivity({
-        action: `Failed to import cost matrix from Excel (${fileUpload.filename})`,
+        action: `Failed to import cost matrix from Excel (${fileUpload.fileName})`,
         icon: "ri-file-excel-line",
         iconColor: "error",
         userId
