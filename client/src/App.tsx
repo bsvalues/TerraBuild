@@ -19,6 +19,7 @@ import DataImportPage from "@/pages/DataImportPage";
 import BenchmarkingPage from "@/pages/BenchmarkingPage";
 import MCPOverviewPage from "@/pages/MCPOverviewPage";
 import WhatIfScenariosPage from "@/pages/WhatIfScenariosPage";
+import ReportsPage from "@/pages/ReportsPage";
 import VisualizationsPage from "@/pages/VisualizationsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import DataExplorationDemo from "@/pages/DataExplorationDemo";
@@ -292,6 +293,7 @@ function Router() {
       <ProtectedRouteWrapper path="/mcp-overview" component={MCPOverviewPage} />
       <ProtectedRouteWrapper path="/mcp-dashboard" component={MCPDashboard} />
       <ProtectedRouteWrapper path="/what-if-scenarios" component={WhatIfScenariosPage} />
+      <ProtectedRouteWrapper path="/reports" component={ReportsPage} />
       <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
       <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
       <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />
