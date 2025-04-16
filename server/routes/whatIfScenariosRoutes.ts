@@ -121,6 +121,188 @@ const demoScenarios = [
     userId: 1,
     isSaved: false,
     is_saved: false
+  },
+  // New complex scenario - Multi-factor analysis with extensive details
+  {
+    id: 4,
+    name: "Complex Multi-Factor Industrial Property Analysis",
+    description: "Comprehensive analysis of industrial manufacturing facility with multiple factors including regional variance, quality improvements, and complexity adjustments across three projected years",
+    parameters: {
+      baseCost: 215,
+      squareFootage: 35000,
+      complexity: 1.85,
+      region: "East Benton",
+      buildingType: "I1",
+      baseYear: 2025,
+      comparisonYear: 2028,
+      adjustmentFactor: 1.35,
+      qualityFactor: 1.4,
+      conditionFactor: 1.15,
+      materialCostFactor: 1.22,
+      laborCostFactor: 1.18,
+      regulatoryCompliance: 1.25,
+      sustainabilityFeatures: 1.15,
+      technologyUpgrades: 1.3
+    },
+    results: {
+      baseCost: 7525000,
+      adjustedCost: 10158750,
+      difference: 2633750,
+      percentChange: 35.0,
+      details: [
+        { factor: "Region (East Benton Industrial Zone)", impact: 376250, percentImpact: 14.3 },
+        { factor: "Quality (Premium Industrial Grade)", impact: 602500, percentImpact: 22.9 },
+        { factor: "Complexity (High-Tech Manufacturing)", impact: 451250, percentImpact: 17.1 },
+        { factor: "Materials (Advanced Composites)", impact: 451250, percentImpact: 17.1 },
+        { factor: "Regulatory Compliance", impact: 301000, percentImpact: 11.4 },
+        { factor: "Sustainability Features", impact: 226000, percentImpact: 8.6 },
+        { factor: "Technology Integration", impact: 225500, percentImpact: 8.6 }
+      ],
+      chartData: [
+        { year: 2023, value: 7000000 },
+        { year: 2024, value: 7250000 },
+        { year: 2025, value: 7525000 },
+        { year: 2026, value: 8500000, projected: true },
+        { year: 2027, value: 9250000, projected: true },
+        { year: 2028, value: 10158750, projected: true }
+      ]
+    },
+    createdAt: "2025-03-02T09:15:00Z",
+    updatedAt: "2025-03-03T14:30:00Z",
+    userId: 1,
+    isSaved: true,
+    is_saved: true
+  },
+  // New simple scenario - Basic comparison
+  {
+    id: 5,
+    name: "Basic Quality Comparison",
+    description: "Simple comparison of standard vs. premium quality for residential property",
+    parameters: {
+      baseCost: 145,
+      squareFootage: 1800,
+      complexity: 1.0,
+      region: "Central Benton",
+      buildingType: "R1",
+      baseYear: 2025,
+      comparisonYear: 2025,
+      adjustmentFactor: 1.0,
+      qualityFactor: 1.2,
+      conditionFactor: 1.0
+    },
+    results: {
+      baseCost: 261000,
+      adjustedCost: 313200,
+      difference: 52200,
+      percentChange: 20.0,
+      details: [
+        { factor: "Quality", impact: 52200, percentImpact: 100.0 }
+      ]
+    },
+    createdAt: "2025-03-12T10:20:00Z",
+    updatedAt: "2025-03-12T10:20:00Z",
+    userId: 1,
+    isSaved: false,
+    is_saved: false
+  },
+  // Extremely complex scenario with extensive details
+  {
+    id: 6,
+    name: "Comprehensive Commercial Development Analysis 2025-2030",
+    description: "Highly detailed multi-year forecast for mixed-use commercial development incorporating market trends, regional economic factors, construction material fluctuations, and sustainability premium calculations",
+    parameters: {
+      baseCost: 275,
+      squareFootage: 120000,
+      complexity: 2.2,
+      region: "West Benton",
+      buildingType: "C4",
+      baseYear: 2025,
+      comparisonYear: 2030,
+      adjustmentFactor: 1.5,
+      qualityFactor: 1.6,
+      conditionFactor: 1.3,
+      zoningSurcharge: 1.15,
+      infrastructureIndex: 1.25,
+      energyEfficiencyRating: 1.35,
+      marketAppreciation: 1.32,
+      laborInflation: 1.28,
+      materialInflation: 1.42,
+      propertyTaxAssessment: 1.18,
+      floodZoneClassification: 1.12,
+      highCapacityUtilityFactor: 1.08,
+      publicTransitAccessibility: 0.95,
+      sustainabilityCertification: 1.22,
+      waterConservationSystems: 1.14,
+      solarIntegrationLevel: 1.18
+    },
+    results: {
+      baseCost: 33000000,
+      adjustedCost: 49500000,
+      difference: 16500000,
+      percentChange: 50.0,
+      details: [
+        { factor: "Market Appreciation", impact: 3300000, percentImpact: 20.0 },
+        { factor: "Material Cost Inflation", impact: 2970000, percentImpact: 18.0 },
+        { factor: "Quality Premium", impact: 2640000, percentImpact: 16.0 },
+        { factor: "Energy Efficiency Components", impact: 1980000, percentImpact: 12.0 },
+        { factor: "Complexity Factor", impact: 1650000, percentImpact: 10.0 },
+        { factor: "Labor Cost Increases", impact: 1320000, percentImpact: 8.0 },
+        { factor: "Infrastructure Requirements", impact: 990000, percentImpact: 6.0 },
+        { factor: "Sustainability Certification", impact: 825000, percentImpact: 5.0 },
+        { factor: "Solar Integration", impact: 495000, percentImpact: 3.0 },
+        { factor: "Water Conservation", impact: 330000, percentImpact: 2.0 }
+      ],
+      chartData: [
+        { year: 2025, value: 33000000 },
+        { year: 2026, value: 36300000, projected: true },
+        { year: 2027, value: 39930000, projected: true },
+        { year: 2028, value: 43120000, projected: true },
+        { year: 2029, value: 46270000, projected: true },
+        { year: 2030, value: 49500000, projected: true }
+      ]
+    },
+    createdAt: "2025-02-15T08:30:00Z",
+    updatedAt: "2025-02-28T16:45:00Z",
+    userId: 1,
+    isSaved: true,
+    is_saved: true
+  },
+  // Another simple scenario
+  {
+    id: 7,
+    name: "Region Comparison - East vs. West",
+    description: "Simple comparison of building costs between East and West Benton regions",
+    parameters: {
+      baseCost: 160,
+      squareFootage: 2500,
+      complexity: 1.0,
+      region: "East Benton",
+      targetRegion: "West Benton",
+      buildingType: "R2",
+      baseYear: 2025,
+      comparisonYear: 2025,
+      adjustmentFactor: 1.0,
+      qualityFactor: 1.0,
+      conditionFactor: 1.0
+    },
+    results: {
+      baseCost: 400000,
+      adjustedCost: 380000,
+      difference: -20000,
+      percentChange: -5.0,
+      details: [
+        { factor: "Regional Cost Difference", impact: 20000, percentImpact: 100.0 }
+      ],
+      chartData: [
+        { region: "East Benton", value: 400000 },
+        { region: "West Benton", value: 380000 }
+      ]
+    },
+    createdAt: "2025-03-14T11:25:00Z",
+    updatedAt: "2025-03-14T11:25:00Z",
+    userId: 1,
+    isSaved: true,
+    is_saved: true
   }
 ];
 
