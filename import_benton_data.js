@@ -5,7 +5,7 @@
  * directly into the PostgreSQL database.
  */
 
-import { execute } from './server/storage.js';
+import { db } from './server/db.js';
 import fs from 'fs';
 
 /**
@@ -47,7 +47,7 @@ async function importCostMatrix(jsonFilePath) {
         AND state = 'WA' 
         AND matrix_year = 2025
       `;
-      await execute(deleteQuery);
+      await db.execute(deleteQuery);
       console.log('Cleared existing Benton County 2025 data');
     } catch (error) {
       console.error(`Error clearing existing data: ${error.message}`);
@@ -105,7 +105,7 @@ async function importCostMatrix(jsonFilePath) {
         ];
         
         // Execute the query
-        await execute(insertQuery, values);
+        await db.execute(insertQuery, values);
         imported++;
         
         // Log progress periodically
