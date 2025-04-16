@@ -192,7 +192,6 @@ export const costMatrix = pgTable('cost_matrix', {
   buildingTypeDescription: text('building_type_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  createdBy: uuid('created_by').references(() => users.userId),
   isActive: boolean('is_active').default(true),
   complexityFactorBase: real('complexity_factor_base').default(1.0),
   qualityFactorBase: real('quality_factor_base').default(1.0),
