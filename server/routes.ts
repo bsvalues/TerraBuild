@@ -9,6 +9,7 @@ import express from 'express';
 import { z } from 'zod';
 import storage from './storage';
 import analyticsRoutes from './routes/analyticsRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 import {
   insertUserSchema,
@@ -539,6 +540,7 @@ router.patch('/settings/:key', asyncHandler(async (req, res) => {
  * Analytics Routes
  */
 router.use('/analytics', analyticsRoutes);
+router.use('/reports', reportRoutes);
 
 /**
  * System Routes
