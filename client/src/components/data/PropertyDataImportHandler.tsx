@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress'; // Assuming Progress component exists
 
 // Status badge colors
 const statusColors: Record<string, string> = {
@@ -50,26 +51,26 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
     landDetailsFile?: FileUpload;
     propertiesFile?: FileUpload;
   }>({});
-  
+
   const [batchSize, setBatchSize] = useState<number>(100);
   const { getAll, importPropertyData } = useFileUploads();
   const { data: fileUploads = [], isLoading, refetch } = getAll;
-  
+
   // Filter CSV files only
   const csvFiles = (fileUploads || []).filter(file => 
     file.filename.toLowerCase().endsWith('.csv')
   );
-  
+
   // Sort files by most recent first
   const sortedFiles = [...csvFiles].sort((a, b) => {
     return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
   });
-  
+
   const handleFileUploadComplete = (fileId: number) => {
     // Refresh the file list
     refetch();
   };
-  
+
   const handleImport = async () => {
     // Validate required files
     if (!selectedFiles.improvementsFile ||
@@ -83,7 +84,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
       });
       return;
     }
-    
+
     try {
       await importPropertyData.mutateAsync({
         improvementsFile: selectedFiles.improvementsFile.id,
@@ -93,23 +94,39 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
         propertiesFile: selectedFiles.propertiesFile?.id,
         batchSize
       });
-      
+
       // Reset selection after successful import
       setSelectedFiles({});
-      
+
       // Refresh the list after import
       refetch();
     } catch (error) {
       console.error("Import failed:", error);
     }
   };
-  
+
   const isReadyForImport = 
     selectedFiles.improvementsFile &&
     selectedFiles.improvementDetailsFile &&
     selectedFiles.improvementItemsFile &&
     selectedFiles.landDetailsFile;
-  
+
+  const [progress, setProgress] = useState(0);
+  const [recordsProcessed, setRecordsProcessed] = useState(0);
+  const [errorCount, setErrorCount] = useState(0);
+
+  useEffect(() => {
+    // Simulate progress updates during import (replace with actual import logic)
+    const interval = setInterval(() => {
+      setProgress(prev => Math.min(prev + 10, 100));
+      setRecordsProcessed(prev => prev + 100); // Example: 100 records processed per update
+      setErrorCount(prev => prev + 1); // Example: 1 error per update
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
     <div className="space-y-6">
       <Card>
@@ -124,7 +141,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                 <TabsTrigger value="upload">Upload Files</TabsTrigger>
                 <TabsTrigger value="select">Select & Import</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="upload" className="space-y-4">
                 <FileUploader 
                   title="Upload CSV File" 
@@ -136,7 +153,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                   buttonText="Upload CSV File"
                   onUploadComplete={handleFileUploadComplete}
                 />
-                
+
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Required Files</AlertTitle>
@@ -152,7 +169,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                   </AlertDescription>
                 </Alert>
               </TabsContent>
-              
+
               <TabsContent value="select" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -176,7 +193,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="improvement-details-file">Improvement Details File</Label>
                     <Select 
@@ -198,7 +215,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="improvement-items-file">Improvement Items File</Label>
                     <Select 
@@ -220,7 +237,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="land-details-file">Land Details File</Label>
                     <Select 
@@ -242,7 +259,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="properties-file">Properties File (Optional)</Label>
                     <Select 
@@ -265,7 +282,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="batch-size">Batch Size</Label>
                     <Input
@@ -278,7 +295,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                     />
                   </div>
                 </div>
-                
+
                 <Button 
                   onClick={handleImport}
                   disabled={!isReadyForImport || importPropertyData.isPending}
@@ -286,17 +303,28 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                 >
                   {importPropertyData.isPending ? 'Importing...' : 'Import Property Data'}
                 </Button>
-                
+
                 {importPropertyData.isPending && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Importing</AlertTitle>
                     <AlertDescription>
                       Importing property data. This may take a few minutes depending on file size.
+                      <div className="mt-4 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Import Progress</span>
+                          <span>{Math.round(progress)}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Records Processed: {recordsProcessed}</span>
+                          <span>Errors: {errorCount}</span>
+                        </div>
+                      </div>
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 {importPropertyData.isSuccess && (
                   <Alert>
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -306,7 +334,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 {importPropertyData.isError && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -320,7 +348,7 @@ const PropertyDataImportHandler: React.FC<PropertyDataImportHandlerProps> = ({
                 )}
               </TabsContent>
             </Tabs>
-            
+
             {/* Recent uploads */}
             {sortedFiles.length > 0 && (
               <div className="space-y-2 mt-6">

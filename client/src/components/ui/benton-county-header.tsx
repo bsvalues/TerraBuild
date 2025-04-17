@@ -71,100 +71,83 @@ export default function BentonCountyHeader({
       )}
 
       <div className={cn(
-        'container mx-auto px-4 relative',
-        showHeroBackground ? 'z-20 h-full flex flex-col justify-center' : 'flex items-center justify-between'
+        'container mx-auto px-4 relative flex flex-col md:flex-row items-center justify-between', // Added flex-col/flex-row for responsiveness
+        showHeroBackground ? 'z-20 h-full' : 'py-4' // Adjusted padding for non-hero header
       )}>
-        <div className={cn(
-          'flex items-center',
-          showHeroBackground ? 'mt-8' : 'gap-4',
-          !showHeroBackground && 'justify-between w-full'
-        )}>
-          {/* Logo and title section */}
-          <div className="flex items-center gap-3">
-            {showLogo && (
-              <Link href="/">
-                <img 
-                  src={bentonLogo} 
-                  alt="Benton County" 
-                  className={cn('object-contain', logoSizeClasses[logoSize])}
-                />
-              </Link>
-            )}
-            
-            <div className={cn(showHeroBackground ? 'mt-4' : '')}>
-              <h1 className={cn(
-                'font-bold tracking-tight',
-                showHeroBackground 
-                  ? 'text-3xl md:text-5xl text-white' 
-                  : 'text-xl md:text-2xl text-accent'
-              )}>
-                {title}
-              </h1>
-              
-              {subtitle && (
-                <p className={cn(
-                  'mt-1',
-                  showHeroBackground 
-                    ? 'text-white/90 text-lg md:text-xl max-w-md' 
-                    : 'text-muted-foreground text-sm'
-                )}>
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation and actions */}
-          {!showHeroBackground && !hideNavigation && (
-            <>
-              <nav className="hidden md:flex items-center space-x-6">
-                {links.map((link) => (
-                  <Link 
-                    key={link.href} 
-                    href={link.href}
-                    className={cn(
-                      'text-sm font-medium transition-colors',
-                      link.active 
-                        ? 'text-primary' 
-                        : 'text-muted-foreground hover:text-primary'
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-
-              {actions && (
-                <div className="flex items-center gap-2">
-                  {actions}
-                </div>
-              )}
-            </>
+        <div className="flex items-center gap-3">
+          {showLogo && (
+            <Link href="/">
+              <img 
+                src={bentonLogo} 
+                alt="Benton County" 
+                className={cn('object-contain', logoSizeClasses[logoSize], 'rounded-md')} // Added rounded corners
+              />
+            </Link>
           )}
+
+          <div>
+            <h1 className={cn(
+              'font-bold tracking-tight text-3xl md:text-4xl', // Increased font size for better readability
+              showHeroBackground 
+                ? 'text-white' 
+                : 'text-accent'
+            )}>
+              {title}
+            </h1>
+
+            {subtitle && (
+              <p className={cn(
+                'mt-1 text-lg md:text-xl', // Improved font size and spacing
+                showHeroBackground 
+                  ? 'text-white/90 max-w-md' 
+                  : 'text-muted-foreground'
+              )}>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Special navbar for hero header */}
-        {showHeroBackground && !hideNavigation && (
-          <nav className="mt-auto mb-4 hidden md:flex items-center gap-6 bg-white/10 backdrop-blur-sm py-2 px-4 rounded-md self-start">
+        {!showHeroBackground && !hideNavigation && (
+          <nav className="hidden md:flex items-center space-x-6">
             {links.map((link) => (
               <Link 
                 key={link.href} 
                 href={link.href}
                 className={cn(
-                  'text-sm font-medium transition-colors',
+                  'text-sm font-medium transition-colors hover:underline', // Added hover underline
                   link.active 
-                    ? 'text-white' 
-                    : 'text-white/80 hover:text-white'
+                    ? 'text-primary' 
+                    : 'text-muted-foreground'
                 )}
               >
                 {link.label}
               </Link>
             ))}
-            
-            {actions && (
-              <div className="ml-4">
-                {actions}
-              </div>
+          </nav>
+        )}
+        {!showHeroBackground && actions && (
+          <div className="flex items-center gap-2"> {actions} </div>
+        )}
+
+        {showHeroBackground && !hideNavigation && (
+          <nav className="mt-auto mb-4 hidden md:flex items-center gap-6 bg-white/10 backdrop-blur-sm py-2 px-4 rounded-md">
+            {links.map((link) => (
+              <Link 
+                key={link.href} 
+                href={link.href}
+                className={cn(
+                  'text-sm font-medium transition-colors hover:underline', // Added hover underline
+                  link.active 
+                    ? 'text-white' 
+                    : 'text-white/80'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {showHeroBackground && actions && (
+              <div className="ml-4"> {actions} </div>
             )}
           </nav>
         )}
