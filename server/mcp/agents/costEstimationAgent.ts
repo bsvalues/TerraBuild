@@ -122,13 +122,15 @@ export class CostEstimationAgent extends CustomAgentBase {
   };
 
   constructor() {
-    super('cost-estimation-agent', 'Cost Estimation Agent');
+    super({
+      agentId: 'cost-estimation-agent', 
+      agentName: 'Cost Estimation Agent',
+      description: 'Provides accurate cost estimations for buildings based on various factors'
+    });
     
     // Register event handlers
     this.registerEventHandler('cost:estimate:request', this.handleCostEstimationRequest.bind(this));
     this.registerEventHandler('cost:matrix:update', this.handleCostMatrixUpdate.bind(this));
-    
-    console.log('Cost Estimation Agent initialized');
   }
 
   /**

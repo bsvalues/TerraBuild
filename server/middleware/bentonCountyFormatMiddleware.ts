@@ -11,7 +11,7 @@ import { bentonConversionService } from '../services/bentonConversionService';
 /**
  * Map API endpoints to their response data types
  */
-const endpointDataTypeMap: Record<string, 'costMatrix' | 'buildingCost' | 'propertyData' | 'report' | 'scenario'> = {
+const endpointDataTypeMap: Record<string, 'costMatrix' | 'buildingCost' | 'report' | 'scenario'> = {
   // Cost Matrix endpoints
   '/api/cost-matrix': 'costMatrix',
   '/api/cost-matrix/:id': 'costMatrix',
@@ -77,7 +77,7 @@ function shouldProcessEndpoint(path: string): boolean {
  * @param path API path
  * @returns Data type for the endpoint
  */
-function getDataTypeForEndpoint(path: string): 'costMatrix' | 'buildingCost' | 'propertyData' | 'report' | 'scenario' | null {
+function getDataTypeForEndpoint(path: string): 'costMatrix' | 'buildingCost' | 'report' | 'scenario' | null {
   // Check for exact match
   if (endpointDataTypeMap[path]) return endpointDataTypeMap[path];
   

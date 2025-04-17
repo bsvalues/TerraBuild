@@ -5,54 +5,49 @@ import { developmentAgent } from './agents/developmentAgent';
 import { designAgent } from './agents/designAgent';
 import { dataAnalysisAgent } from './agents/dataAnalysisAgent';
 import { mcpOrchestrator } from './orchestrator';
+import { bentonCountyConversionAgent } from './agents/conversionAgent';
 
-export function initMCP(app: Express) {
-  console.log('Initializing Model Content Protocol (MCP) framework...');
+/**
+ * Initialize the Model Content Protocol (MCP) framework
+ * 
+ * @param app Express application instance
+ */
+export function initMCP(app: Express): void {
+  console.log('Initializing MCP framework...');
   
-  // Check if API keys are available
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn('WARNING: OpenAI API key is not set. OpenAI-based features will use fallback mechanisms.');
-  } else {
-    console.log('MCP initialized with OpenAI API key');
+  try {
+    // Register MCP routes
+    app.use('/mcp', mcpRouter);
+    
+    // Initialize core agents
+    initializeAgents();
+    
+    // Initialize the MCP orchestrator
+    mcpOrchestrator.initialize();
+    
+    console.log('MCP framework initialized successfully');
+  } catch (error) {
+    console.error('Error initializing MCP framework:', error);
+    throw error;
   }
-  
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.warn('WARNING: Anthropic API key is not set. Claude-based features will not be available.');
-  } else {
-    console.log('MCP initialized with Anthropic API key');
+}
+
+/**
+ * Initialize and register all MCP agents
+ */
+function initializeAgents(): void {
+  try {
+    // Register core agents with the coordinator
+    agentCoordinator.registerAgent(developmentAgent);
+    agentCoordinator.registerAgent(designAgent);
+    agentCoordinator.registerAgent(dataAnalysisAgent);
+    
+    // Register Benton County Conversion Agent
+    agentCoordinator.registerAgent(bentonCountyConversionAgent);
+    
+    console.log('All MCP agents initialized successfully');
+  } catch (error) {
+    console.error('Error initializing MCP agents:', error);
+    throw error;
   }
-  
-  // Initialize agent coordinator
-  console.log('Initializing Agent Coordinator...');
-  agentCoordinator.initialize().catch(error => {
-    console.error('Error initializing Agent Coordinator:', error);
-  });
-  
-  // Initialize MCP agents
-  console.log('Initializing MCP agents...');
-  
-  // Development Agent
-  developmentAgent.initialize().catch(error => {
-    console.error('Error initializing Development Agent:', error);
-  });
-  
-  // Design Agent
-  designAgent.initialize().catch(error => {
-    console.error('Error initializing Design Agent:', error);
-  });
-  
-  // Data Analysis Agent
-  dataAnalysisAgent.initialize().catch(error => {
-    console.error('Error initializing Data Analysis Agent:', error);
-  });
-  
-  // Initialize the orchestrator
-  mcpOrchestrator.initialize().catch(error => {
-    console.error('Error initializing MCP Orchestrator:', error);
-  });
-  
-  // Register MCP routes under /api/mcp path
-  app.use('/api/mcp', mcpRouter);
-  
-  console.log('MCP framework initialized successfully');
 }

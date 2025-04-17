@@ -1,87 +1,133 @@
 /**
- * Custom Agent Base for Development, Design, and Data Analysis agents
+ * Custom Agent Base Class
  * 
- * This class provides a simplified base implementation for development-oriented agents
- * that differs from the standard application agents.
+ * This class provides a foundation for custom agents in the MCP framework,
+ * handling the common setup and functionality.
  */
 
-import { agentEventBus } from './eventBus';
-import { v4 as uuidv4 } from 'uuid';
-
-// Define a simple custom event interface for our agents
-export interface AgentEvent {
-  type: string;
-  source: string;
-  timestamp: Date | string;
-  data: any;
+export interface CustomAgentConfig {
+  agentId: string;
+  agentName: string;
+  description: string;
+  version?: string;
+  capabilities?: string[];
 }
 
-/**
- * Base class for custom agents
- */
 export class CustomAgentBase {
-  public agentId: string;
-  public name: string;
-  public isInitialized: boolean = false;
-  public capabilities: string[] = [];
-  
-  /**
-   * Create a new custom agent
-   * 
-   * @param name Human-readable name for this agent
-   * @param id Unique identifier for this agent
-   */
-  constructor(name: string, id: string) {
-    this.name = name;
-    this.agentId = id;
+  protected agentId: string;
+  protected agentName: string;
+  protected description: string;
+  protected version: string;
+  protected capabilities: string[];
+  protected eventHandlers: Map<string, Function> = new Map();
+
+  constructor(config: CustomAgentConfig) {
+    this.agentId = config.agentId;
+    this.agentName = config.agentName;
+    this.description = config.description;
+    this.version = config.version || '1.0.0';
+    this.capabilities = config.capabilities || [];
+    
+    this.initialize();
   }
-  
+
   /**
    * Initialize the agent
+   * Override in subclasses if needed
    */
-  public async initialize(): Promise<boolean> {
-    console.log(`Agent ${this.name} (${this.agentId}) initializing...`);
-    this.isInitialized = true;
-    return true;
+  protected initialize(): void {
+    console.log(`Agent ${this.agentName} (${this.agentId}) initializing...`);
+  }
+
+  /**
+   * Get the agent's ID
+   */
+  public getId(): string {
+    return this.agentId;
+  }
+
+  /**
+   * Get the agent's name
+   */
+  public getName(): string {
+    return this.agentName;
+  }
+
+  /**
+   * Get the agent's description
+   */
+  public getDescription(): string {
+    return this.description;
+  }
+
+  /**
+   * Get the agent's version
+   */
+  public getVersion(): string {
+    return this.version;
+  }
+
+  /**
+   * Get the agent's capabilities
+   */
+  public getCapabilities(): string[] {
+    return [...this.capabilities];
+  }
+
+  /**
+   * Check if the agent has a specific capability
+   */
+  public hasCapability(capability: string): boolean {
+    return this.capabilities.includes(capability);
   }
   
   /**
-   * Shutdown the agent
-   */
-  public async shutdown(): Promise<boolean> {
-    console.log(`Agent ${this.name} (${this.agentId}) shutting down...`);
-    this.isInitialized = false;
-    return true;
-  }
-  
-  /**
-   * Emit an event using the agent event bus
+   * Register an event handler for a specific event type
    * 
-   * @param type Event type
-   * @param data Event data
-   */
-  protected async emitEvent(type: string, data: any): Promise<void> {
-    await agentEventBus.publish({
-      type,
-      source: this.agentId,
-      timestamp: new Date(),
-      data
-    });
-  }
-  
-  /**
-   * Register with the agent registry and event bus
-   * 
-   * @param eventType Event type to subscribe to
-   * @param handler Event handler function
+   * @param eventType Type of event to handle
+   * @param handler Function to handle the event
    */
   protected registerEventHandler(eventType: string, handler: Function): void {
-    agentEventBus.subscribe(
-      eventType, 
-      this.agentId,
-      async (event: any) => await handler(event)
-    );
+    this.eventHandlers.set(eventType, handler);
+    console.log(`Agent ${this.agentId} registered handler for ${eventType}`);
+  }
+  
+  /**
+   * Handle an incoming event
+   * 
+   * @param event The event to handle
+   * @param context Context for event handling
+   */
+  public async handleEvent(event: any, context: any = {}): Promise<void> {
+    const handler = this.eventHandlers.get(event.type);
     
-    console.log(`Agent ${this.agentId} subscribed to ${eventType} events`);
+    if (handler) {
+      try {
+        await handler(event, context);
+      } catch (error) {
+        console.error(`Error in ${this.agentId} handling ${event.type}:`, error);
+      }
+    }
+  }
+  
+  /**
+   * Emit an event
+   * 
+   * @param type Type of event to emit
+   * @param data Data for the event
+   */
+  protected async emitEvent(type: string, data: any): Promise<void> {
+    console.log(`Agent ${this.agentId} emitted ${type} event`);
+    // In a real implementation, this would publish to an event bus
+  }
+  
+  /**
+   * Record an item in agent memory
+   * 
+   * @param item Item to record
+   */
+  protected recordMemory(item: any): void {
+    console.log(`Agent ${this.agentId} recorded memory item`);
+    // In a real implementation, this would store to a persistent memory system
   }
 }
