@@ -4,6 +4,7 @@ import routes from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
+import { createBentonCountyMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 
 const app = express();
 app.use(express.json());
@@ -54,6 +55,12 @@ app.use((req, res, next) => {
   } catch (error) {
     log(`MCP initialization error: ${error}`, 'error');
   }
+  
+  // Apply Benton County format middleware to API responses
+  app.use(createBentonCountyMiddleware({
+    enableConversion: true,
+    enableHeaders: true
+  }));
   
   // Register API routes
   app.use('/api', routes);
