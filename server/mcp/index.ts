@@ -37,13 +37,16 @@ export function initMCP(app: Express): void {
  */
 function initializeAgents(): void {
   try {
-    // Register core agents with the coordinator
-    agentCoordinator.registerAgent(developmentAgent);
-    agentCoordinator.registerAgent(designAgent);
-    agentCoordinator.registerAgent(dataAnalysisAgent);
+    // Initialize agents using the agent registry
+    // The agents are already imported and instantiated in the agent registry
     
-    // Register Benton County Conversion Agent
-    agentCoordinator.registerAgent(bentonCountyConversionAgent);
+    // Let the MCP framework know about the Benton County Conversion Agent
+    console.log('Registering Benton County Conversion Agent with MCP framework');
+    
+    // We don't need to explicitly register agents - they're already in the registry
+    // Instead, we'll update the agentRegistry with our new agents by having the 
+    // coordinator update its registry
+    agentCoordinator.updateAgentRegistry();
     
     console.log('All MCP agents initialized successfully');
   } catch (error) {

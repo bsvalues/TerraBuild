@@ -139,9 +139,12 @@ export class CostEstimationAgent extends CustomAgentBase {
    * @param event The event containing the cost estimation request
    */
   // Add a memory item to the agent's memory
-  private recordMemory(item: AgentMemoryItem) {
+  protected recordMemory(item: AgentMemoryItem) {
     // For now just log the memory item
     console.log(`Memory recorded: ${item.type}`);
+    
+    // Call the parent's recordMemory method
+    super.recordMemory(item);
   }
   
   private async handleCostEstimationRequest(event: any, context: any): Promise<void> {

@@ -20,6 +20,7 @@ export { costAnalysisAgent } from './costAnalysisAgent';
 export { costEstimationAgent } from './costEstimationAgent';
 export { geospatialAnalysisAgent } from './geospatialAnalysisAgent';
 export { documentProcessingAgent } from './documentProcessingAgent';
+export { bentonCountyConversionAgent } from './conversionAgent';
 
 // Export an agent registry object for easy access to all agents
 import { BaseAgent } from './baseAgent';
@@ -29,6 +30,7 @@ import { costAnalysisAgent } from './costAnalysisAgent';
 import { costEstimationAgent } from './costEstimationAgent';
 import { geospatialAnalysisAgent } from './geospatialAnalysisAgent';
 import { documentProcessingAgent } from './documentProcessingAgent';
+import { bentonCountyConversionAgent } from './conversionAgent';
 
 /**
  * Represents the command structure from the strategic guide:
@@ -103,7 +105,8 @@ export const agentRegistry: AgentRegistry = {
     specialistAgents: {
       'cost-estimation-agent': costEstimationAgent as unknown as BaseAgent,
       'geospatial-analysis-agent': geospatialAnalysisAgent as unknown as BaseAgent,
-      'document-processing-agent': documentProcessingAgent as unknown as BaseAgent
+      'document-processing-agent': documentProcessingAgent as unknown as BaseAgent,
+      'benton-county-conversion-agent': bentonCountyConversionAgent as unknown as BaseAgent
     }, // Specialist agents
     
     // Assessment Calculation MCP
@@ -167,6 +170,12 @@ export const agentRegistry: AgentRegistry = {
       case 'document-processing-agent':
         return this.commandStructure.specialistAgents['document-processing-agent'];
         
+      case 'bentonconversion':
+      case 'benton-conversion':
+      case 'benton-county-conversion':
+      case 'benton-county-conversion-agent':
+        return this.commandStructure.specialistAgents['benton-county-conversion-agent'];
+        
       default:
         console.log(`Agent not found in registry: ${name}`);
         return undefined;
@@ -185,8 +194,10 @@ export const agentRegistry: AgentRegistry = {
       await this.compliance.initialize();
       
       // The cost analysis agent doesn't extend BaseAgent yet, so handle separately
-      if (costAnalysisAgent.initialize) {
-        await (costAnalysisAgent as unknown as BaseAgent).initialize();
+      if (typeof costAnalysisAgent.initialize === 'function') {
+        await (costAnalysisAgent as any).initialize();
+      } else {
+        console.log('Cost analysis agent does not have initialize method, skipping initialization');
       }
       
       // Initialize specialist agents
@@ -200,6 +211,10 @@ export const agentRegistry: AgentRegistry = {
       
       if (this.commandStructure.specialistAgents['document-processing-agent']) {
         await (this.commandStructure.specialistAgents['document-processing-agent']).initialize();
+      }
+      
+      if (this.commandStructure.specialistAgents['benton-county-conversion-agent']) {
+        await (this.commandStructure.specialistAgents['benton-county-conversion-agent']).initialize();
       }
       
       console.log('All MCP agents initialized successfully');
@@ -223,7 +238,8 @@ export const agentRegistry: AgentRegistry = {
       'design-agent',
       'data-analysis-agent',
       'geospatial-analysis-agent',
-      'document-processing-agent'
+      'document-processing-agent',
+      'benton-county-conversion-agent'
     ];
     
     return agentIds;
