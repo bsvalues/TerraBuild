@@ -1,77 +1,35 @@
 /**
  * Benton County Conversion Agent
  * 
- * This agent is responsible for converting terminology and data formats
- * according to Benton County standards. It handles conversion in both directions:
- * 1. Generic/standard terms → Benton County specific terms
- * 2. Benton County specific terms → Generic/standard terms
+ * This agent is responsible for converting standard terminology and data
+ * into Benton County specific formats. It handles terminology mapping,
+ * regional adjustments, and data format transformations.
  */
-
 import { CustomAgentBase } from './customAgentBase';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Represents building type mappings between generic and Benton County terms
+ * Interface for terminology conversion requests
  */
-interface BuildingTypeMapping {
-  code: string;
-  genericName: string;
-  bentonName: string;
-  description: string;
-}
-
-/**
- * Represents region mappings between generic and Benton County terms
- */
-interface RegionMapping {
-  code: string;
-  genericName: string;
-  bentonName: string;
-  factor: number;
-}
-
-/**
- * Represents quality level mappings between generic and Benton County terms
- */
-interface QualityMapping {
-  code: string;
-  genericName: string;
-  bentonName: string;
-  factor: number;
-}
-
-/**
- * Represents condition mappings between generic and Benton County terms
- */
-interface ConditionMapping {
-  code: string;
-  genericName: string;
-  bentonName: string;
-  factor: number;
-}
-
-/**
- * Interface for terminology conversion parameters
- */
-interface TerminologyConversionParams {
+interface TerminologyConversionRequest {
   term: string;
   fromType: 'generic' | 'benton';
   category: 'buildingType' | 'region' | 'quality' | 'condition' | 'general';
 }
 
 /**
- * Interface for data conversion parameters
+ * Interface for data conversion requests
  */
-interface DataConversionParams {
+interface DataConversionRequest {
   data: any;
   fromFormat: 'generic' | 'benton';
   dataType: 'costMatrix' | 'propertyRecord' | 'assessment' | 'report';
 }
 
 /**
- * Interface for report formatting parameters
+ * Interface for report formatting requests
  */
-interface ReportFormattingParams {
+interface ReportFormattingRequest {
   reportData: any;
   format: 'detailed' | 'summary' | 'official';
   includeBranding: boolean;
@@ -81,769 +39,660 @@ interface ReportFormattingParams {
  * Benton County Conversion Agent implementation
  */
 class BentonCountyConversionAgent extends CustomAgentBase {
-  // Mapping tables for terminology conversion
-  private readonly buildingTypeMappings: BuildingTypeMapping[] = [
-    { code: 'R1', genericName: 'RESIDENTIAL_SINGLE_FAMILY', bentonName: 'SINGLE FAMILY RESIDENTIAL', description: 'Single-family residential dwelling' },
-    { code: 'R2', genericName: 'RESIDENTIAL_MULTI_FAMILY', bentonName: 'MULTI-FAMILY RESIDENTIAL', description: 'Multi-family residential dwelling' },
-    { code: 'C1', genericName: 'COMMERCIAL_RETAIL', bentonName: 'RETAIL COMMERCIAL', description: 'Retail commercial building' },
-    { code: 'C2', genericName: 'COMMERCIAL_OFFICE', bentonName: 'OFFICE COMMERCIAL', description: 'Office commercial building' },
-    { code: 'C3', genericName: 'COMMERCIAL_MIXED', bentonName: 'MIXED-USE COMMERCIAL', description: 'Mixed-use commercial building' },
-    { code: 'I1', genericName: 'INDUSTRIAL_LIGHT', bentonName: 'LIGHT INDUSTRIAL', description: 'Light industrial building' },
-    { code: 'I2', genericName: 'INDUSTRIAL_HEAVY', bentonName: 'HEAVY INDUSTRIAL', description: 'Heavy industrial building' },
-    { code: 'A1', genericName: 'AGRICULTURAL', bentonName: 'AGRICULTURAL', description: 'Agricultural building' },
-    { code: 'S1', genericName: 'SPECIALTY', bentonName: 'SPECIALTY', description: 'Specialty building' }
-  ];
-  
-  private readonly regionMappings: RegionMapping[] = [
-    { code: 'EB', genericName: 'EASTERN', bentonName: 'EAST BENTON', factor: 0.95 },
-    { code: 'CB', genericName: 'CENTRAL', bentonName: 'CENTRAL BENTON', factor: 1.0 },
-    { code: 'WB', genericName: 'WESTERN', bentonName: 'WEST BENTON', factor: 1.05 }
-  ];
-  
-  private readonly qualityMappings: QualityMapping[] = [
-    { code: 'L', genericName: 'LOW', bentonName: 'LOW QUALITY', factor: 0.8 },
-    { code: 'ML', genericName: 'MEDIUM_LOW', bentonName: 'FAIR QUALITY', factor: 0.9 },
-    { code: 'M', genericName: 'MEDIUM', bentonName: 'AVERAGE QUALITY', factor: 1.0 },
-    { code: 'MH', genericName: 'MEDIUM_HIGH', bentonName: 'GOOD QUALITY', factor: 1.1 },
-    { code: 'H', genericName: 'HIGH', bentonName: 'HIGH QUALITY', factor: 1.2 },
-    { code: 'P', genericName: 'PREMIUM', bentonName: 'PREMIUM QUALITY', factor: 1.3 }
-  ];
-  
-  private readonly conditionMappings: ConditionMapping[] = [
-    { code: 'P', genericName: 'POOR', bentonName: 'POOR CONDITION', factor: 0.7 },
-    { code: 'F', genericName: 'FAIR', bentonName: 'FAIR CONDITION', factor: 0.85 },
-    { code: 'A', genericName: 'AVERAGE', bentonName: 'AVERAGE CONDITION', factor: 1.0 },
-    { code: 'G', genericName: 'GOOD', bentonName: 'GOOD CONDITION', factor: 1.1 },
-    { code: 'E', genericName: 'EXCELLENT', bentonName: 'EXCELLENT CONDITION', factor: 1.2 }
-  ];
+  private buildingTypeMap: Map<string, string> = new Map();
+  private regionMap: Map<string, string> = new Map();
+  private qualityMap: Map<string, string> = new Map();
+  private conditionMap: Map<string, string> = new Map();
+  private generalTermMap: Map<string, string> = new Map();
+  private regionFactors: Map<string, number> = new Map();
 
+  /**
+   * Constructor
+   */
   constructor() {
-    super({
-      agentId: 'benton-county-conversion-agent',
-      agentName: 'Benton County Conversion Agent',
-      description: 'Converts terminology and data formats according to Benton County standards'
-    });
+    super('benton-county-conversion-agent', 'Benton County Conversion Agent');
+    this.initMappings();
     
     // Register event handlers
     this.registerEventHandler('terminology:convert', this.handleTerminologyConversion.bind(this));
     this.registerEventHandler('data:convert', this.handleDataConversion.bind(this));
     this.registerEventHandler('report:format', this.handleReportFormatting.bind(this));
-  }
-  
-  /**
-   * Handle terminology conversion request
-   */
-  private async handleTerminologyConversion(event: any, context: any): Promise<void> {
-    console.log(`Handling terminology conversion request: ${event.correlationId}`);
     
-    try {
-      const params: TerminologyConversionParams = event.payload?.params || event.data?.params;
-      
-      if (!params || !params.term || !params.fromType || !params.category) {
-        throw new Error('Invalid terminology conversion request. Missing required parameters.');
-      }
-      
-      // Convert the terminology
-      const convertedTerm = this.convertTerminology(params);
-      
-      // Emit the result
-      this.emitEvent('terminology:converted', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          originalTerm: params.term,
-          convertedTerm,
-          success: true,
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-      
-      console.log(`Terminology conversion completed for: ${params.term}`);
-    } catch (error) {
-      console.error('Error in terminology conversion:', error instanceof Error ? error.message : String(error));
-      
-      // Emit error event
-      this.emitEvent('terminology:conversion:error', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-    }
-  }
-  
-  /**
-   * Handle data conversion request
-   */
-  private async handleDataConversion(event: any, context: any): Promise<void> {
-    console.log(`Handling data conversion request: ${event.correlationId}`);
-    
-    try {
-      const params: DataConversionParams = event.payload?.params || event.data?.params;
-      
-      if (!params || !params.data || !params.fromFormat || !params.dataType) {
-        throw new Error('Invalid data conversion request. Missing required parameters.');
-      }
-      
-      // Convert the data
-      const convertedData = this.convertData(params);
-      
-      // Emit the result
-      this.emitEvent('data:converted', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          convertedData,
-          success: true,
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-      
-      console.log(`Data conversion completed for type: ${params.dataType}`);
-    } catch (error) {
-      console.error('Error in data conversion:', error instanceof Error ? error.message : String(error));
-      
-      // Emit error event
-      this.emitEvent('data:conversion:error', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-    }
-  }
-  
-  /**
-   * Handle report formatting request
-   */
-  private async handleReportFormatting(event: any, context: any): Promise<void> {
-    console.log(`Handling report formatting request: ${event.correlationId}`);
-    
-    try {
-      const params: ReportFormattingParams = event.payload?.params || event.data?.params;
-      
-      if (!params || !params.reportData || !params.format) {
-        throw new Error('Invalid report formatting request. Missing required parameters.');
-      }
-      
-      // Format the report
-      const formattedReport = this.formatReport(params);
-      
-      // Emit the result
-      this.emitEvent('report:formatted', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          formattedReport,
-          success: true,
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-      
-      console.log(`Report formatting completed for format: ${params.format}`);
-    } catch (error) {
-      console.error('Error in report formatting:', error instanceof Error ? error.message : String(error));
-      
-      // Emit error event
-      this.emitEvent('report:formatting:error', {
-        source: this.agentId,
-        timestamp: new Date(),
-        data: {
-          sourceAgentId: this.agentId,
-          targetAgentId: event.source || event.sourceAgentId,
-          correlationId: event.correlationId,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          requestId: (event.data?.requestId || event.payload?.requestId || uuidv4())
-        }
-      });
-    }
+    console.log('Registering Benton County Conversion Agent with MCP framework');
   }
 
   /**
-   * Convert building type code to full description
-   * 
-   * @param buildingType Building type code (R1, C1, etc.)
-   * @returns Full description of building type
+   * Initialize terminology and data mappings
    */
-  convertBuildingType(buildingType: string): string {
-    const mapping = this.buildingTypeMappings.find(m => 
-      m.code === buildingType || 
-      m.genericName === buildingType || 
-      m.bentonName === buildingType
-    );
+  private initMappings(): void {
+    // Building Type Mappings (Generic <-> Benton)
+    this.buildingTypeMap.set('RESIDENTIAL_SINGLE_FAMILY', 'SINGLE FAMILY RESIDENTIAL');
+    this.buildingTypeMap.set('RESIDENTIAL_MULTI_FAMILY', 'MULTI-FAMILY RESIDENTIAL');
+    this.buildingTypeMap.set('COMMERCIAL_RETAIL', 'RETAIL COMMERCIAL');
+    this.buildingTypeMap.set('COMMERCIAL_OFFICE', 'OFFICE COMMERCIAL');
+    this.buildingTypeMap.set('COMMERCIAL_MIXED', 'MIXED-USE COMMERCIAL');
+    this.buildingTypeMap.set('INDUSTRIAL_LIGHT', 'LIGHT INDUSTRIAL');
+    this.buildingTypeMap.set('INDUSTRIAL_HEAVY', 'HEAVY INDUSTRIAL');
+    this.buildingTypeMap.set('AGRICULTURAL', 'AGRICULTURAL');
+    this.buildingTypeMap.set('SPECIALTY', 'SPECIALTY');
     
-    return mapping ? mapping.bentonName : 'Unknown Building Type';
+    // Also add code-based mappings
+    this.buildingTypeMap.set('R1', 'SINGLE FAMILY RESIDENTIAL');
+    this.buildingTypeMap.set('R2', 'MULTI-FAMILY RESIDENTIAL');
+    this.buildingTypeMap.set('C1', 'RETAIL COMMERCIAL');
+    this.buildingTypeMap.set('C2', 'OFFICE COMMERCIAL');
+    this.buildingTypeMap.set('C3', 'MIXED-USE COMMERCIAL');
+    this.buildingTypeMap.set('I1', 'LIGHT INDUSTRIAL');
+    this.buildingTypeMap.set('I2', 'HEAVY INDUSTRIAL');
+    this.buildingTypeMap.set('A1', 'AGRICULTURAL');
+    this.buildingTypeMap.set('S1', 'SPECIALTY');
+    
+    // Region Mappings (Generic <-> Benton)
+    this.regionMap.set('EASTERN', 'EAST BENTON');
+    this.regionMap.set('CENTRAL', 'CENTRAL BENTON');
+    this.regionMap.set('WESTERN', 'WEST BENTON');
+    
+    // Also add code-based mappings
+    this.regionMap.set('EB', 'EAST BENTON');
+    this.regionMap.set('CB', 'CENTRAL BENTON');
+    this.regionMap.set('WB', 'WEST BENTON');
+    
+    // Quality Mappings (Generic <-> Benton)
+    this.qualityMap.set('LOW', 'MINIMUM QUALITY');
+    this.qualityMap.set('MEDIUM_LOW', 'FAIR QUALITY');
+    this.qualityMap.set('MEDIUM', 'AVERAGE QUALITY');
+    this.qualityMap.set('MEDIUM_HIGH', 'GOOD QUALITY');
+    this.qualityMap.set('HIGH', 'EXCELLENT QUALITY');
+    this.qualityMap.set('VERY_HIGH', 'SUPERIOR QUALITY');
+    
+    // Condition Mappings (Generic <-> Benton)
+    this.conditionMap.set('POOR', 'POOR CONDITION');
+    this.conditionMap.set('FAIR', 'FAIR CONDITION');
+    this.conditionMap.set('AVERAGE', 'AVERAGE CONDITION');
+    this.conditionMap.set('GOOD', 'GOOD CONDITION');
+    this.conditionMap.set('EXCELLENT', 'EXCELLENT CONDITION');
+    
+    // General Term Mappings (Generic <-> Benton)
+    this.generalTermMap.set('COST_MATRIX', 'BENTON COST STANDARDS');
+    this.generalTermMap.set('PROPERTY_ASSESSMENT', 'BENTON PROPERTY VALUATION');
+    this.generalTermMap.set('BUILDING_COST', 'CONSTRUCTION VALUE');
+    this.generalTermMap.set('LAND_VALUE', 'BENTON LAND ASSESSMENT');
+    this.generalTermMap.set('TOTAL_VALUE', 'TOTAL ASSESSED VALUE');
+    
+    // Region Factors
+    this.regionFactors.set('EAST BENTON', 0.95);
+    this.regionFactors.set('CENTRAL BENTON', 1.0);
+    this.regionFactors.set('WEST BENTON', 1.05);
   }
 
   /**
-   * Convert region to full Benton County region name
-   * 
-   * @param region Region code or short name
-   * @returns Full region name for Benton County
+   * Handle terminology conversion requests
    */
-  convertRegion(region: string): string {
-    const mapping = this.regionMappings.find(m => 
-      m.code === region || 
-      m.genericName === region || 
-      m.bentonName === region
-    );
-    
-    return mapping ? mapping.bentonName : 'Unknown Region';
-  }
-
-  /**
-   * Convert quality level to Benton County quality description
-   * 
-   * @param quality Quality level (LOW, MEDIUM, HIGH, etc.)
-   * @returns Benton County quality description
-   */
-  convertQuality(quality: string): string {
-    const mapping = this.qualityMappings.find(m => 
-      m.code === quality || 
-      m.genericName === quality || 
-      m.bentonName === quality
-    );
-    
-    return mapping ? mapping.bentonName : 'Unknown Quality';
-  }
-
-  /**
-   * Convert condition to Benton County condition description
-   * 
-   * @param condition Condition level (POOR, FAIR, GOOD, etc.)
-   * @returns Benton County condition description
-   */
-  convertCondition(condition: string): string {
-    const mapping = this.conditionMappings.find(m => 
-      m.code === condition || 
-      m.genericName === condition || 
-      m.bentonName === condition
-    );
-    
-    return mapping ? mapping.bentonName : 'Unknown Condition';
-  }
-
-  /**
-   * Convert terminology between generic and Benton County specific
-   * 
-   * @param params Parameters for conversion
-   * @returns Converted term
-   */
-  convertTerminology(params: TerminologyConversionParams): string {
-    const { term, fromType, category } = params;
+  private async handleTerminologyConversion(request: TerminologyConversionRequest): Promise<string> {
+    const { term, fromType, category } = request;
     
     // Convert based on category
     switch (category) {
-      case 'buildingType': {
-        const mapping = this.buildingTypeMappings.find(m => 
-          fromType === 'generic' 
-            ? m.genericName === term
-            : (m.bentonName === term || m.code === term)
-        );
-        
-        return mapping 
-          ? (fromType === 'generic' ? mapping.bentonName : mapping.genericName)
-          : `Unknown Building Type: ${term}`;
-      }
-      
-      case 'region': {
-        const mapping = this.regionMappings.find(m => 
-          fromType === 'generic' 
-            ? m.genericName === term
-            : (m.bentonName === term || m.code === term)
-        );
-        
-        return mapping 
-          ? (fromType === 'generic' ? mapping.bentonName : mapping.genericName)
-          : `Unknown Region: ${term}`;
-      }
-      
-      case 'quality': {
-        const mapping = this.qualityMappings.find(m => 
-          fromType === 'generic' 
-            ? m.genericName === term
-            : (m.bentonName === term || m.code === term)
-        );
-        
-        return mapping 
-          ? (fromType === 'generic' ? mapping.bentonName : mapping.genericName)
-          : `Unknown Quality: ${term}`;
-      }
-      
-      case 'condition': {
-        const mapping = this.conditionMappings.find(m => 
-          fromType === 'generic' 
-            ? m.genericName === term
-            : (m.bentonName === term || m.code === term)
-        );
-        
-        return mapping 
-          ? (fromType === 'generic' ? mapping.bentonName : mapping.genericName)
-          : `Unknown Condition: ${term}`;
-      }
-      
-      case 'general': {
-        // General terminology mapping (could be expanded)
-        const generalMappings: Record<string, string> = {
-          // Generic to Benton
-          'PROPERTY_ASSESSMENT': 'BENTON COUNTY PROPERTY VALUATION',
-          'TAX_YEAR': 'ASSESSMENT YEAR',
-          'PROPERTY_VALUE': 'ASSESSED VALUE',
-          'IMPROVEMENT_VALUE': 'IMPROVEMENT ASSESSMENT',
-          'LAND_VALUE': 'LAND ASSESSMENT',
-          'TOTAL_VALUE': 'TOTAL ASSESSMENT',
-          
-          // Benton to Generic (reversed)
-          'BENTON COUNTY PROPERTY VALUATION': 'PROPERTY_ASSESSMENT',
-          'ASSESSMENT YEAR': 'TAX_YEAR',
-          'ASSESSED VALUE': 'PROPERTY_VALUE',
-          'IMPROVEMENT ASSESSMENT': 'IMPROVEMENT_VALUE',
-          'LAND ASSESSMENT': 'LAND_VALUE',
-          'TOTAL ASSESSMENT': 'TOTAL_VALUE'
-        };
-        
-        return generalMappings[term] || `Unknown Term: ${term}`;
-      }
-      
+      case 'buildingType':
+        return this.convertTerminologyWithMap(term, fromType, this.buildingTypeMap);
+      case 'region':
+        return this.convertTerminologyWithMap(term, fromType, this.regionMap);
+      case 'quality':
+        return this.convertTerminologyWithMap(term, fromType, this.qualityMap);
+      case 'condition':
+        return this.convertTerminologyWithMap(term, fromType, this.conditionMap);
+      case 'general':
+        return this.convertTerminologyWithMap(term, fromType, this.generalTermMap);
       default:
-        return `Unknown Category: ${category}`;
+        return term; // Return original if no mapping found
     }
   }
 
   /**
-   * Get regional factors for a specific Benton County region
-   * 
-   * @param region The region name
-   * @returns Regional factors for the specified region
+   * Convert terminology using a mapping
    */
-  getRegionalFactors(region: string): { code: string; name: string; factor: number } {
-    const mapping = this.regionMappings.find(m => 
-      m.code === region || 
-      m.genericName === region || 
-      m.bentonName === region
-    );
+  private convertTerminologyWithMap(
+    term: string, 
+    fromType: 'generic' | 'benton', 
+    map: Map<string, string>
+  ): string {
+    const normalizedTerm = term.toUpperCase();
     
-    return mapping 
-      ? { code: mapping.code, name: mapping.bentonName, factor: mapping.factor }
-      : { code: 'UNK', name: 'Unknown Region', factor: 1.0 };
+    if (fromType === 'generic') {
+      return map.get(normalizedTerm) || term;
+    } else {
+      // Reverse lookup using Array.from to avoid iteration issues
+      const entries = Array.from(map.entries());
+      for (let i = 0; i < entries.length; i++) {
+        const [generic, benton] = entries[i];
+        if (benton === normalizedTerm) {
+          return generic;
+        }
+      }
+      return term; // Return original if no mapping found
+    }
   }
 
   /**
-   * Convert data between generic and Benton County formats
-   * 
-   * @param params Parameters for data conversion
-   * @returns Converted data
+   * Handle data conversion requests
    */
-  convertData(params: DataConversionParams): any {
-    const { data, fromFormat, dataType } = params;
+  private async handleDataConversion(request: DataConversionRequest): Promise<any> {
+    const { data, fromFormat, dataType } = request;
     
     switch (dataType) {
-      case 'costMatrix': {
-        // Process cost matrix data
-        return this.convertCostMatrixData(data, fromFormat);
-      }
-      
-      case 'propertyRecord': {
-        // Process property record data
-        return this.convertPropertyRecordData(data, fromFormat);
-      }
-      
-      case 'assessment': {
-        // Process assessment data
-        return this.convertAssessmentData(data, fromFormat);
-      }
-      
-      case 'report': {
-        // Process report data
-        return this.convertReportData(data, fromFormat);
-      }
-      
+      case 'costMatrix':
+        return this.convertCostMatrix(data, fromFormat);
+      case 'propertyRecord':
+        return this.convertPropertyRecord(data, fromFormat);
+      case 'assessment':
+        return this.convertAssessment(data, fromFormat);
+      case 'report':
+        return this.convertReport(data, fromFormat);
       default:
-        throw new Error(`Unknown data type: ${dataType}`);
+        return data; // Return original if no conversion
     }
   }
 
   /**
    * Convert cost matrix data
    */
-  private convertCostMatrixData(data: any, fromFormat: 'generic' | 'benton'): any {
-    // Clone the data to avoid modifying the original
-    const result = JSON.parse(JSON.stringify(data));
+  private convertCostMatrix(data: any, fromFormat: 'generic' | 'benton'): any {
+    if (!data) return data;
+    
+    // Handle array of matrices
+    if (Array.isArray(data)) {
+      return data.map(matrix => this.convertCostMatrix(matrix, fromFormat));
+    }
+    
+    const converted = { ...data };
     
     if (fromFormat === 'generic') {
-      // Convert from generic to Benton County format
-      if (result.buildingTypes) {
-        result.buildingTypes = result.buildingTypes.map((bt: any) => ({
-          ...bt,
-          name: this.convertTerminology({
-            term: bt.type,
-            fromType: 'generic',
-            category: 'buildingType'
-          }),
-          code: this.buildingTypeMappings.find(m => m.genericName === bt.type)?.code || 'UNK'
-        }));
+      // Convert building type
+      if (data.buildingType) {
+        converted.buildingType = this.convertBuildingType(data.buildingType);
       }
       
-      if (result.regions) {
-        result.regions = result.regions.map((r: any) => ({
-          ...r,
-          name: this.convertTerminology({
-            term: r.name,
-            fromType: 'generic',
-            category: 'region'
-          }),
-          code: this.regionMappings.find(m => m.genericName === r.name)?.code || 'UNK'
-        }));
+      // Convert region
+      if (data.region) {
+        converted.region = this.convertRegion(data.region);
       }
       
-      // Add Benton County-specific metadata
-      result.metadata = {
-        ...(result.metadata || {}),
-        county: 'Benton',
-        state: 'Washington',
-        assessorOffice: 'Benton County Assessor\'s Office',
-        format: 'Benton County Standard'
-      };
+      // Convert description if present
+      if (data.description) {
+        converted.description = `Benton County ${data.description}`;
+      }
+      
+      // Add Benton County specific fields
+      converted.bentonCountySpecific = true;
+      converted.countyCode = 'BN';
+      
+      // Adjust values based on regional factors if needed
+      if (data.baseCost && data.region) {
+        const regionFactor = this.getRegionalFactorByName(this.convertRegion(data.region));
+        if (regionFactor) {
+          converted.adjustedCost = parseFloat((data.baseCost * regionFactor).toFixed(2));
+        }
+      }
     } else {
-      // Convert from Benton County to generic format
-      if (result.buildingTypes) {
-        result.buildingTypes = result.buildingTypes.map((bt: any) => ({
-          ...bt,
-          type: this.convertTerminology({
-            term: bt.name,
-            fromType: 'benton',
-            category: 'buildingType'
-          })
-        }));
+      // Convert from Benton to generic
+      
+      // Convert building type
+      if (data.buildingType) {
+        // Reverse lookup
+        converted.buildingType = this.convertTerminologyWithMap(
+          data.buildingType,
+          'benton',
+          this.buildingTypeMap
+        );
       }
       
-      if (result.regions) {
-        result.regions = result.regions.map((r: any) => ({
-          ...r,
-          name: this.convertTerminology({
-            term: r.name,
-            fromType: 'benton',
-            category: 'region'
-          })
-        }));
+      // Convert region
+      if (data.region) {
+        // Reverse lookup
+        converted.region = this.convertTerminologyWithMap(
+          data.region,
+          'benton',
+          this.regionMap
+        );
       }
       
-      // Remove Benton County-specific metadata
-      if (result.metadata) {
-        const { county, state, assessorOffice, format, ...restMetadata } = result.metadata;
-        result.metadata = restMetadata;
+      // Strip Benton County specific fields
+      delete converted.bentonCountySpecific;
+      delete converted.countyCode;
+      
+      // Description adjustment
+      if (data.description && data.description.startsWith('Benton County ')) {
+        converted.description = data.description.replace('Benton County ', '');
       }
     }
     
-    return result;
+    return converted;
   }
 
   /**
    * Convert property record data
    */
-  private convertPropertyRecordData(data: any, fromFormat: 'generic' | 'benton'): any {
-    // Clone the data to avoid modifying the original
-    const result = JSON.parse(JSON.stringify(data));
+  private convertPropertyRecord(data: any, fromFormat: 'generic' | 'benton'): any {
+    if (!data) return data;
     
-    if (fromFormat === 'generic') {
-      // Convert from generic to Benton County format
-      if (result.buildingInfo) {
-        result.buildingInfo.typeDescription = this.convertTerminology({
-          term: result.buildingInfo.type,
-          fromType: 'generic',
-          category: 'buildingType'
-        });
-        
-        result.buildingInfo.qualityDescription = this.convertTerminology({
-          term: result.buildingInfo.quality,
-          fromType: 'generic',
-          category: 'quality'
-        });
-        
-        result.buildingInfo.conditionDescription = this.convertTerminology({
-          term: result.buildingInfo.condition,
-          fromType: 'generic',
-          category: 'condition'
-        });
-        
-        result.buildingInfo.regionDescription = this.convertTerminology({
-          term: result.buildingInfo.region,
-          fromType: 'generic',
-          category: 'region'
-        });
-      }
-      
-      // Transform property values to Benton County format
-      if (result.values) {
-        result.assessedValues = {
-          land: result.values.land,
-          improvement: result.values.improvement,
-          total: result.values.total,
-          assessmentYear: result.values.taxYear,
-          notes: `Valuation by Benton County Assessor's Office`
-        };
-        delete result.values;
-      }
-    } else {
-      // Convert from Benton County to generic format
-      if (result.buildingInfo) {
-        if (result.buildingInfo.typeDescription) {
-          result.buildingInfo.type = this.convertTerminology({
-            term: result.buildingInfo.typeDescription,
-            fromType: 'benton',
-            category: 'buildingType'
-          });
-        }
-        
-        if (result.buildingInfo.qualityDescription) {
-          result.buildingInfo.quality = this.convertTerminology({
-            term: result.buildingInfo.qualityDescription,
-            fromType: 'benton',
-            category: 'quality'
-          });
-        }
-        
-        if (result.buildingInfo.conditionDescription) {
-          result.buildingInfo.condition = this.convertTerminology({
-            term: result.buildingInfo.conditionDescription,
-            fromType: 'benton',
-            category: 'condition'
-          });
-        }
-        
-        if (result.buildingInfo.regionDescription) {
-          result.buildingInfo.region = this.convertTerminology({
-            term: result.buildingInfo.regionDescription,
-            fromType: 'benton',
-            category: 'region'
-          });
-        }
-      }
-      
-      // Transform Benton County values to generic format
-      if (result.assessedValues) {
-        result.values = {
-          land: result.assessedValues.land,
-          improvement: result.assessedValues.improvement,
-          total: result.assessedValues.total,
-          taxYear: result.assessedValues.assessmentYear
-        };
-        delete result.assessedValues;
-      }
+    // Handle array of records
+    if (Array.isArray(data)) {
+      return data.map(record => this.convertPropertyRecord(record, fromFormat));
     }
     
-    return result;
+    const converted = { ...data };
+    
+    if (fromFormat === 'generic') {
+      // Convert building type
+      if (data.buildingType) {
+        converted.buildingType = this.convertBuildingType(data.buildingType);
+      }
+      
+      // Convert region/location
+      if (data.region) {
+        converted.region = this.convertRegion(data.region);
+      }
+      
+      // Convert quality
+      if (data.quality) {
+        converted.quality = this.convertQuality(data.quality);
+      }
+      
+      // Convert condition
+      if (data.condition) {
+        converted.condition = this.convertCondition(data.condition);
+      }
+      
+      // Add Benton County specific fields
+      converted.bentonCountyParcel = data.parcelId || '';
+      converted.countyCode = 'BN';
+    } else {
+      // Convert from Benton to generic
+      
+      // Convert building type
+      if (data.buildingType) {
+        converted.buildingType = this.convertTerminologyWithMap(
+          data.buildingType,
+          'benton',
+          this.buildingTypeMap
+        );
+      }
+      
+      // Convert region/location
+      if (data.region) {
+        converted.region = this.convertTerminologyWithMap(
+          data.region,
+          'benton',
+          this.regionMap
+        );
+      }
+      
+      // Convert quality
+      if (data.quality) {
+        converted.quality = this.convertTerminologyWithMap(
+          data.quality,
+          'benton',
+          this.qualityMap
+        );
+      }
+      
+      // Convert condition
+      if (data.condition) {
+        converted.condition = this.convertTerminologyWithMap(
+          data.condition,
+          'benton',
+          this.conditionMap
+        );
+      }
+      
+      // Remove Benton County specific fields
+      delete converted.bentonCountyParcel;
+      delete converted.countyCode;
+    }
+    
+    return converted;
   }
 
   /**
    * Convert assessment data
    */
-  private convertAssessmentData(data: any, fromFormat: 'generic' | 'benton'): any {
-    // Similar structure to property record conversion
-    return this.convertPropertyRecordData(data, fromFormat);
+  private convertAssessment(data: any, fromFormat: 'generic' | 'benton'): any {
+    if (!data) return data;
+    
+    // Handle array of assessments
+    if (Array.isArray(data)) {
+      return data.map(assessment => this.convertAssessment(assessment, fromFormat));
+    }
+    
+    const converted = { ...data };
+    
+    if (fromFormat === 'generic') {
+      // Convert property record if present
+      if (data.property) {
+        converted.property = this.convertPropertyRecord(data.property, fromFormat);
+      }
+      
+      // Convert terminology in values
+      if (data.description) {
+        converted.description = data.description.replace(
+          /cost matrix/i,
+          'Benton Cost Standards'
+        );
+      }
+      
+      // Add Benton County specific headers
+      converted.assessmentAuthority = 'Benton County Assessor\'s Office';
+      converted.assessmentYear = new Date().getFullYear();
+      converted.assessmentType = 'Official Benton County Assessment';
+    } else {
+      // Convert from Benton to generic
+      
+      // Convert property record if present
+      if (data.property) {
+        converted.property = this.convertPropertyRecord(data.property, 'benton');
+      }
+      
+      // Convert terminology in values
+      if (data.description) {
+        converted.description = data.description.replace(
+          /Benton Cost Standards/i,
+          'cost matrix'
+        );
+      }
+      
+      // Remove Benton County specific headers
+      delete converted.assessmentAuthority;
+      delete converted.assessmentYear;
+      delete converted.assessmentType;
+    }
+    
+    return converted;
   }
 
   /**
    * Convert report data
    */
-  private convertReportData(data: any, fromFormat: 'generic' | 'benton'): any {
-    // Clone the data to avoid modifying the original
-    const result = JSON.parse(JSON.stringify(data));
+  private convertReport(data: any, fromFormat: 'generic' | 'benton'): any {
+    if (!data) return data;
     
-    if (fromFormat === 'generic') {
-      // Convert from generic to Benton County format
-      
-      // Add Benton County headers/footers
-      result.headers = {
-        ...(result.headers || {}),
-        title: `Benton County Property Assessment Report`,
-        office: `Benton County Assessor's Office`,
-        date: result.headers?.date || new Date().toISOString().split('T')[0],
-        county: 'Benton',
-        state: 'Washington'
-      };
-      
-      // Customize sections with Benton County terminology
-      if (result.sections) {
-        result.sections = result.sections.map((section: any) => {
-          const newSection = { ...section };
-          
-          // Convert section title if needed
-          if (section.title) {
-            const titles: Record<string, string> = {
-              'Property Values': 'Assessed Values',
-              'Building Information': 'Improvement Details',
-              'Location Data': 'Property Location Information',
-              'Owner Information': 'Property Ownership Record'
-            };
-            
-            newSection.title = titles[section.title] || section.title;
-          }
-          
-          return newSection;
-        });
-      }
-      
-      // Add Benton County certification section
-      result.certification = {
-        text: 'This document is an official assessment report of the Benton County Assessor\'s Office.',
-        assessor: 'Benton County Assessor',
-        date: new Date().toISOString().split('T')[0]
-      };
-    } else {
-      // Convert from Benton County to generic format
-      
-      // Simplify headers
-      if (result.headers) {
-        const { office, county, state, ...restHeaders } = result.headers;
-        result.headers = {
-          ...restHeaders,
-          title: 'Property Assessment Report'
-        };
-      }
-      
-      // Standardize sections with generic terminology
-      if (result.sections) {
-        result.sections = result.sections.map((section: any) => {
-          const newSection = { ...section };
-          
-          // Convert section title if needed
-          if (section.title) {
-            const titles: Record<string, string> = {
-              'Assessed Values': 'Property Values',
-              'Improvement Details': 'Building Information',
-              'Property Location Information': 'Location Data',
-              'Property Ownership Record': 'Owner Information'
-            };
-            
-            newSection.title = titles[section.title] || section.title;
-          }
-          
-          return newSection;
-        });
-      }
-      
-      // Remove Benton County-specific certification
-      delete result.certification;
+    // Handle array of reports
+    if (Array.isArray(data)) {
+      return data.map(report => this.convertReport(report, fromFormat));
     }
     
-    return result;
+    const converted = { ...data };
+    
+    if (fromFormat === 'generic') {
+      // Convert assessment data if present
+      if (data.assessment) {
+        converted.assessment = this.convertAssessment(data.assessment, fromFormat);
+      }
+      
+      // Convert property data if present
+      if (data.property) {
+        converted.property = this.convertPropertyRecord(data.property, fromFormat);
+      }
+      
+      // Add Benton County specific headers
+      converted.reportingAuthority = 'Benton County Assessor\'s Office';
+      converted.reportGenerated = new Date().toISOString();
+      converted.reportType = 'Benton County Building Cost Assessment';
+    } else {
+      // Convert from Benton to generic
+      
+      // Convert assessment data if present
+      if (data.assessment) {
+        converted.assessment = this.convertAssessment(data.assessment, 'benton');
+      }
+      
+      // Convert property data if present
+      if (data.property) {
+        converted.property = this.convertPropertyRecord(data.property, 'benton');
+      }
+      
+      // Remove Benton County specific headers
+      delete converted.reportingAuthority;
+      delete converted.reportGenerated;
+      delete converted.reportType;
+    }
+    
+    return converted;
   }
 
   /**
-   * Format a report according to Benton County standards
-   * 
-   * @param params Parameters for report formatting
-   * @returns Formatted report data
+   * Handle report formatting requests
    */
-  formatReport(params: ReportFormattingParams): any {
-    const { reportData, format, includeBranding } = params;
+  private async handleReportFormatting(request: ReportFormattingRequest): Promise<any> {
+    const { reportData, format, includeBranding } = request;
     
-    // Clone the report data to avoid modifying the original
-    const result = JSON.parse(JSON.stringify(reportData));
+    if (!reportData) return reportData;
     
-    // Add Benton County branding if requested
+    // First, ensure data is in Benton County format
+    const bentonData = this.convertReport(reportData, 'generic');
+    
+    // Apply specific formatting based on requested format
+    switch (format) {
+      case 'detailed':
+        return this.formatDetailedReport(bentonData, includeBranding);
+      case 'summary':
+        return this.formatSummaryReport(bentonData, includeBranding);
+      case 'official':
+        return this.formatOfficialReport(bentonData, includeBranding);
+      default:
+        return bentonData;
+    }
+  }
+
+  /**
+   * Format a detailed report
+   */
+  private formatDetailedReport(data: any, includeBranding: boolean): any {
+    const formattedReport = { ...data };
+    
+    // Add detailed report specific fields
+    formattedReport.format = 'detailed';
+    formattedReport.title = 'Detailed Building Cost Assessment';
+    
+    // Include full property and assessment details
+    
+    // Add branding if requested
     if (includeBranding) {
-      result.branding = {
-        logo: '/assets/benton-county-logo.png',
-        name: 'Benton County Assessor\'s Office',
-        address: '5600 W. Canal Drive, Kennewick, WA 99336',
-        phone: '(509) 735-2380',
-        website: 'https://www.co.benton.wa.us/pview.aspx?id=1568&catid=45',
-        colors: {
-          primary: '#00263A',
-          secondary: '#7C9B2B',
-          accent: '#546E7A'
-        }
+      formattedReport.branding = {
+        logo: 'benton_county_logo.png',
+        header: 'Benton County Assessor\'s Office',
+        footer: 'Official Benton County Document',
+        watermark: false
       };
     }
     
-    // Format based on requested type
-    switch (format) {
-      case 'detailed': {
-        // Full detailed report with all information
-        result.format = 'detailed';
-        result.title = 'Detailed Property Assessment Report';
-        result.subtitle = 'Benton County Assessor\'s Office';
-        
-        // Ensure detailed sections are included
-        if (!result.sections) {
-          result.sections = [];
-        }
-        
-        // Add standard detailed sections if not present
-        const requiredSections = ['Property Information', 'Assessment Values', 'Building Details', 'Land Details'];
-        requiredSections.forEach(sectionTitle => {
-          if (!result.sections.some((s: any) => s.title === sectionTitle)) {
-            result.sections.push({
-              title: sectionTitle,
-              content: `[${sectionTitle} to be completed]`
-            });
-          }
-        });
-        
-        break;
-      }
-      
-      case 'summary': {
-        // Simplified summary report
-        result.format = 'summary';
-        result.title = 'Property Assessment Summary';
-        result.subtitle = 'Benton County Assessor\'s Office';
-        
-        // Reduce to just summary sections
-        if (result.sections && result.sections.length > 0) {
-          result.sections = result.sections.filter((s: any) => 
-            ['Property Information', 'Assessment Values'].includes(s.title)
-          );
-        }
-        
-        break;
-      }
-      
-      case 'official': {
-        // Official format for legal/regulatory purposes
-        result.format = 'official';
-        result.title = 'Official Property Assessment Notification';
-        result.subtitle = 'Benton County Assessor\'s Office';
-        
-        // Add legal disclaimers
-        result.legalNotice = 'This is an official assessment document issued by the Benton County Assessor\'s Office. The assessed values contained herein are subject to appeal as provided by law.';
-        
-        // Add certification
-        result.certification = {
-          text: 'I hereby certify that this is an accurate and official assessment report of the Benton County Assessor\'s Office.',
-          assessor: 'Benton County Assessor',
-          date: new Date().toISOString().split('T')[0],
-          seal: '/assets/benton-county-seal.png'
-        };
-        
-        break;
-      }
+    return formattedReport;
+  }
+
+  /**
+   * Format a summary report
+   */
+  private formatSummaryReport(data: any, includeBranding: boolean): any {
+    // Start with a deep copy but exclude raw data fields
+    const { rawData, calculations, ...rest } = data;
+    const formattedReport = { ...rest };
+    
+    // Add summary report specific fields
+    formattedReport.format = 'summary';
+    formattedReport.title = 'Building Cost Assessment Summary';
+    
+    // Include only summary values from calculations
+    if (data.calculations) {
+      formattedReport.summary = {
+        totalValue: data.calculations.totalValue,
+        landValue: data.calculations.landValue,
+        improvementValue: data.calculations.improvementValue,
+        costPerSqFt: data.calculations.costPerSqFt
+      };
     }
     
-    return result;
+    // Add branding if requested
+    if (includeBranding) {
+      formattedReport.branding = {
+        logo: 'benton_county_logo.png',
+        header: 'Benton County Assessor\'s Office',
+        footer: 'Summary Document',
+        watermark: false
+      };
+    }
+    
+    return formattedReport;
+  }
+
+  /**
+   * Format an official report
+   */
+  private formatOfficialReport(data: any, includeBranding: boolean): any {
+    const formattedReport = this.formatDetailedReport(data, false);
+    
+    // Override with official report specific fields
+    formattedReport.format = 'official';
+    formattedReport.title = 'Official Benton County Building Cost Assessment';
+    formattedReport.officialDocument = true;
+    formattedReport.officialId = uuidv4();
+    formattedReport.validUntil = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString();
+    
+    // Always include branding for official reports
+    formattedReport.branding = {
+      logo: 'benton_county_seal.png',
+      header: 'OFFICIAL: Benton County Assessor\'s Office',
+      footer: 'Official Benton County Assessment Document',
+      watermark: true
+    };
+    
+    return formattedReport;
+  }
+
+  /**
+   * Get regional factor by name
+   */
+  private getRegionalFactorByName(regionName: string): number | null {
+    return this.regionFactors.get(regionName) || null;
+  }
+
+  /**
+   * Utility methods exposed for direct use by the service
+   */
+  
+  /**
+   * Convert a building type code or name to Benton County format
+   */
+  public convertBuildingType(buildingType: string): string {
+    return this.convertTerminologyWithMap(buildingType, 'generic', this.buildingTypeMap);
+  }
+  
+  /**
+   * Convert a region code or name to Benton County format
+   */
+  public convertRegion(region: string): string {
+    return this.convertTerminologyWithMap(region, 'generic', this.regionMap);
+  }
+  
+  /**
+   * Convert a quality level to Benton County format
+   */
+  public convertQuality(quality: string): string {
+    return this.convertTerminologyWithMap(quality, 'generic', this.qualityMap);
+  }
+  
+  /**
+   * Convert a condition to Benton County format
+   */
+  public convertCondition(condition: string): string {
+    return this.convertTerminologyWithMap(condition, 'generic', this.conditionMap);
+  }
+  
+  /**
+   * Convert terminology between formats
+   */
+  public convertTerminology(request: TerminologyConversionRequest): string {
+    // Since handleTerminologyConversion is async, we'll use the synchronous version directly
+    const { term, fromType, category } = request;
+    
+    // Convert based on category
+    switch (category) {
+      case 'buildingType':
+        return this.convertTerminologyWithMap(term, fromType, this.buildingTypeMap);
+      case 'region':
+        return this.convertTerminologyWithMap(term, fromType, this.regionMap);
+      case 'quality':
+        return this.convertTerminologyWithMap(term, fromType, this.qualityMap);
+      case 'condition':
+        return this.convertTerminologyWithMap(term, fromType, this.conditionMap);
+      case 'general':
+        return this.convertTerminologyWithMap(term, fromType, this.generalTermMap);
+      default:
+        return term; // Return original if no mapping found
+    }
+  }
+  
+  /**
+   * Convert data between formats - synchronous version
+   */
+  public convertData(request: DataConversionRequest): any {
+    const { data, fromFormat, dataType } = request;
+    
+    switch (dataType) {
+      case 'costMatrix':
+        return this.convertCostMatrix(data, fromFormat);
+      case 'propertyRecord':
+        return this.convertPropertyRecord(data, fromFormat);
+      case 'assessment':
+        return this.convertAssessment(data, fromFormat);
+      case 'report':
+        return this.convertReport(data, fromFormat);
+      default:
+        return data;
+    }
+  }
+  
+  /**
+   * Format a report according to Benton County standards - synchronous version
+   */
+  public formatReport(request: ReportFormattingRequest): any {
+    const { reportData, format, includeBranding } = request;
+    
+    if (!reportData) return reportData;
+    
+    // First, ensure data is in Benton County format
+    const bentonData = this.convertReport(reportData, 'generic');
+    
+    // Apply specific formatting based on requested format
+    switch (format) {
+      case 'detailed':
+        return this.formatDetailedReport(bentonData, includeBranding);
+      case 'summary':
+        return this.formatSummaryReport(bentonData, includeBranding);
+      case 'official':
+        return this.formatOfficialReport(bentonData, includeBranding);
+      default:
+        return bentonData;
+    }
+  }
+  
+  /**
+   * Get regional factors for a specific region
+   */
+  public getRegionalFactors(region: string): { code: string; name: string; factor: number } {
+    const bentonRegion = this.convertRegion(region);
+    const factor = this.getRegionalFactorByName(bentonRegion) || 1.0;
+    
+    // Determine code based on name
+    let code = 'CB'; // Default
+    if (bentonRegion === 'EAST BENTON') code = 'EB';
+    if (bentonRegion === 'WEST BENTON') code = 'WB';
+    
+    return {
+      code,
+      name: bentonRegion,
+      factor
+    };
   }
 }
 
-// Export singleton instance
+// Create and export a singleton instance
 export const bentonCountyConversionAgent = new BentonCountyConversionAgent();

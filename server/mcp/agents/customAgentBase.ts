@@ -1,133 +1,200 @@
 /**
  * Custom Agent Base Class
  * 
- * This class provides a foundation for custom agents in the MCP framework,
- * handling the common setup and functionality.
+ * This class serves as the foundation for all custom agents in the MCP framework.
+ * It provides common functionality like event handling, health reporting, and
+ * state management.
  */
+import { EventEmitter } from 'events';
+import { v4 as uuidv4 } from 'uuid';
 
-export interface CustomAgentConfig {
+/**
+ * Interface for agent health status
+ */
+export interface AgentHealthStatus {
   agentId: string;
-  agentName: string;
-  description: string;
-  version?: string;
-  capabilities?: string[];
+  name: string;
+  status: 'online' | 'offline' | 'degraded';
+  lastChecked: Date;
+  details?: Record<string, any>;
 }
 
-export class CustomAgentBase {
-  protected agentId: string;
-  protected agentName: string;
-  protected description: string;
-  protected version: string;
-  protected capabilities: string[];
-  protected eventHandlers: Map<string, Function> = new Map();
-
-  constructor(config: CustomAgentConfig) {
-    this.agentId = config.agentId;
-    this.agentName = config.agentName;
-    this.description = config.description;
-    this.version = config.version || '1.0.0';
-    this.capabilities = config.capabilities || [];
-    
-    this.initialize();
-  }
+/**
+ * Base class for custom agents with event handling capabilities
+ */
+export abstract class CustomAgentBase {
+  private _id: string;
+  private _name: string;
+  private _isInitialized: boolean = false;
+  private _eventHandlers: Map<string, Function> = new Map();
+  private _emitter: EventEmitter;
 
   /**
-   * Initialize the agent
-   * Override in subclasses if needed
+   * Constructor
+   * 
+   * @param idOrConfig Either the agent ID as a string, or a configuration object
+   * @param name Optional human-readable name (defaults to formatted id)
    */
-  protected initialize(): void {
-    console.log(`Agent ${this.agentName} (${this.agentId}) initializing...`);
+  constructor(idOrConfig: string | { agentId: string; agentName?: string; description?: string }, name?: string) {
+    // Handle both string ID and config object
+    if (typeof idOrConfig === 'string') {
+      this._id = idOrConfig;
+      
+      // If name is provided, use it. Otherwise, try to generate from id
+      if (name) {
+        this._name = name;
+      } else {
+        // Make sure id is a string before trying to split it
+        try {
+          if (this._id.includes('-')) {
+            this._name = this._id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+          } else {
+            this._name = this._id;
+          }
+        } catch (e) {
+          // Fallback in case of any error
+          this._name = this._id;
+        }
+      }
+    } else {
+      // Handle config object
+      this._id = idOrConfig.agentId;
+      this._name = idOrConfig.agentName || this._id;
+    }
+    
+    this._emitter = new EventEmitter();
+    
+    // Set higher max listeners to avoid warnings
+    this._emitter.setMaxListeners(50);
   }
 
   /**
    * Get the agent's ID
    */
-  public getId(): string {
-    return this.agentId;
+  get id(): string {
+    return this._id;
   }
 
   /**
    * Get the agent's name
    */
-  public getName(): string {
-    return this.agentName;
+  get name(): string {
+    return this._name;
   }
 
   /**
-   * Get the agent's description
+   * Check if the agent is initialized
    */
-  public getDescription(): string {
-    return this.description;
+  get isInitialized(): boolean {
+    return this._isInitialized;
   }
 
   /**
-   * Get the agent's version
+   * Initialize the agent
    */
-  public getVersion(): string {
-    return this.version;
+  public async initialize(): Promise<void> {
+    // Base initialization - override in derived classes if needed
+    console.log(`Agent ${this.name} (${this.id}) initializing...`);
+    this._isInitialized = true;
+    
+    // Emit initialization event
+    this.emitEvent('agent:initialized', { agentId: this.id });
   }
 
   /**
-   * Get the agent's capabilities
+   * Get the agent's current health status
    */
-  public getCapabilities(): string[] {
-    return [...this.capabilities];
+  public getHealthStatus(): AgentHealthStatus {
+    return {
+      agentId: this.id,
+      name: this.name,
+      status: 'online',
+      lastChecked: new Date(),
+      details: {
+        eventsHandled: this._eventHandlers.size,
+        isInitialized: this._isInitialized
+      }
+    };
   }
 
   /**
-   * Check if the agent has a specific capability
-   */
-  public hasCapability(capability: string): boolean {
-    return this.capabilities.includes(capability);
-  }
-  
-  /**
-   * Register an event handler for a specific event type
+   * Register an event handler
    * 
    * @param eventType Type of event to handle
    * @param handler Function to handle the event
    */
-  protected registerEventHandler(eventType: string, handler: Function): void {
-    this.eventHandlers.set(eventType, handler);
-    console.log(`Agent ${this.agentId} registered handler for ${eventType}`);
+  public registerEventHandler<T, R>(eventType: string, handler: (data: T) => Promise<R>): void {
+    this._eventHandlers.set(eventType, handler);
+    console.log(`Agent ${this.id} registered handler for ${eventType}`);
   }
-  
+
   /**
-   * Handle an incoming event
+   * Handle an event
    * 
-   * @param event The event to handle
-   * @param context Context for event handling
+   * @param eventType Type of event to handle
+   * @param data Event data
+   * @returns Result of handling the event
    */
-  public async handleEvent(event: any, context: any = {}): Promise<void> {
-    const handler = this.eventHandlers.get(event.type);
+  public async handleEvent<T, R>(eventType: string, data: T): Promise<R | null> {
+    if (!this._eventHandlers.has(eventType)) {
+      console.warn(`Agent ${this.id} has no handler for event ${eventType}`);
+      return null;
+    }
     
-    if (handler) {
-      try {
-        await handler(event, context);
-      } catch (error) {
-        console.error(`Error in ${this.agentId} handling ${event.type}:`, error);
-      }
+    try {
+      const handler = this._eventHandlers.get(eventType) as (data: T) => Promise<R>;
+      return await handler(data);
+    } catch (error) {
+      console.error(`Error handling event ${eventType} in agent ${this.id}:`, error);
+      throw error;
     }
   }
-  
+
   /**
    * Emit an event
    * 
-   * @param type Type of event to emit
-   * @param data Data for the event
+   * @param eventType Type of event to emit
+   * @param data Event data
    */
-  protected async emitEvent(type: string, data: any): Promise<void> {
-    console.log(`Agent ${this.agentId} emitted ${type} event`);
-    // In a real implementation, this would publish to an event bus
+  protected emitEvent<T>(eventType: string, data: T): void {
+    this._emitter.emit(eventType, {
+      id: uuidv4(),
+      timestamp: new Date(),
+      type: eventType,
+      source: this.id,
+      data
+    });
+    
+    console.log(`Agent ${this.id} emitted ${eventType} event`);
   }
-  
+
   /**
-   * Record an item in agent memory
+   * Listen for an event
    * 
-   * @param item Item to record
+   * @param eventType Type of event to listen for
+   * @param listener Function to call when the event is emitted
    */
-  protected recordMemory(item: any): void {
-    console.log(`Agent ${this.agentId} recorded memory item`);
-    // In a real implementation, this would store to a persistent memory system
+  public on<T>(eventType: string, listener: (data: T) => void): void {
+    this._emitter.on(eventType, listener);
+  }
+
+  /**
+   * Listen for an event once
+   * 
+   * @param eventType Type of event to listen for
+   * @param listener Function to call when the event is emitted
+   */
+  public once<T>(eventType: string, listener: (data: T) => void): void {
+    this._emitter.once(eventType, listener);
+  }
+
+  /**
+   * Remove an event listener
+   * 
+   * @param eventType Type of event to stop listening for
+   * @param listener Function to remove
+   */
+  public off<T>(eventType: string, listener: (data: T) => void): void {
+    this._emitter.off(eventType, listener);
   }
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calculator, FileSpreadsheet, Settings, PieChart } from "lucide-react";
 
-export function QuickActions() {
+function QuickActions() {
   return (
     <Card>
       <CardHeader>
@@ -34,3 +34,7 @@ export function QuickActions() {
     </Card>
   );
 }
+
+// Export both as default and named export for flexibility
+export { QuickActions };
+export default QuickActions;
