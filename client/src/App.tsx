@@ -55,6 +55,7 @@ import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import TerraBuildThemeProvider from "./components/TerraBuildThemeProvider";
 // Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { EnhancedSupabaseProvider } from "@/components/supabase/EnhancedSupabaseProvider";
@@ -339,20 +340,22 @@ function App() {
   return (
     <ErrorBoundary fallback={globalErrorFallback}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <RemixIconLink />
-          <ErrorHandlerWrapper />
-          <EnhancedSupabaseProvider>
-            <AuthProvider>
-              <SidebarProvider>
-                <WindowProvider>
-                  <Router />
-                  <Toaster />
-                </WindowProvider>
-              </SidebarProvider>
-            </AuthProvider>
-          </EnhancedSupabaseProvider>
-        </ThemeProvider>
+        <TerraBuildThemeProvider defaultTheme="advanced" defaultMode="light">
+          <ThemeProvider>
+            <RemixIconLink />
+            <ErrorHandlerWrapper />
+            <EnhancedSupabaseProvider>
+              <AuthProvider>
+                <SidebarProvider>
+                  <WindowProvider>
+                    <Router />
+                    <Toaster />
+                  </WindowProvider>
+                </SidebarProvider>
+              </AuthProvider>
+            </EnhancedSupabaseProvider>
+          </ThemeProvider>
+        </TerraBuildThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

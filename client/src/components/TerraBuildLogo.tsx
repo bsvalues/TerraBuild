@@ -23,7 +23,7 @@ export function TerraBuildLogo({
   return (
     <div className={`relative ${className}`} style={{ width: dimensions, height: dimensions }}>
       <img
-        src="/client/src/assets/terrabuild-logo.png"
+        src="@assets/terrabuild-logo.png"
         alt="TerraBuild Logo"
         width={dimensions}
         height={dimensions}
