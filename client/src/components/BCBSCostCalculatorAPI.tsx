@@ -289,10 +289,10 @@ const BCBSCostCalculatorAPI = () => {
                           <div className="flex items-center gap-2">
                             <FormLabel>Building Type</FormLabel>
                             <TooltipProvider>
-                              <Tooltip>
+                              <UITooltip>
                                 <TooltipTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
-                                    <InfoIcon className="h-4 w-4" />
+                                    <Info className="h-4 w-4" />
                                     <span className="sr-only">Building type info</span>
                                   </Button>
                                 </TooltipTrigger>
@@ -309,7 +309,7 @@ const BCBSCostCalculatorAPI = () => {
                                     <p className="text-xs italic mt-2">Benton County uses specific multipliers for each building type.</p>
                                   </div>
                                 </TooltipContent>
-                              </Tooltip>
+                              </UITooltip>
                             </TooltipProvider>
                           </div>
                           <Select
@@ -343,13 +343,38 @@ const BCBSCostCalculatorAPI = () => {
                       name="quality"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Quality Level</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Quality Level</FormLabel>
+                            <TooltipProvider>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                    <Info className="h-4 w-4" />
+                                    <span className="sr-only">Quality level info</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="right">
+                                  <div className="space-y-2">
+                                    <p className="font-semibold">Quality Level Explanation</p>
+                                    <p className="text-sm">The TerraBuild calculator adjusts costs based on construction quality:</p>
+                                    <ul className="text-xs space-y-1 list-disc pl-4">
+                                      <li><span className="font-semibold">Low:</span> Basic materials and minimal features</li>
+                                      <li><span className="font-semibold">Standard:</span> Average market-level materials and finishes</li>
+                                      <li><span className="font-semibold">High:</span> Premium materials and custom features</li>
+                                      <li><span className="font-semibold">Luxury:</span> Top-tier materials with extensive custom work</li>
+                                    </ul>
+                                    <p className="text-xs italic mt-2">Quality significantly impacts the base cost of construction.</p>
+                                  </div>
+                                </TooltipContent>
+                              </UITooltip>
+                            </TooltipProvider>
+                          </div>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="border-cyan-200 focus:ring-cyan-500">
                                 <SelectValue placeholder="Select quality level" />
                               </SelectTrigger>
                             </FormControl>
@@ -375,13 +400,37 @@ const BCBSCostCalculatorAPI = () => {
                       name="region"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Region</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Region</FormLabel>
+                            <TooltipProvider>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                    <Info className="h-4 w-4" />
+                                    <span className="sr-only">Region info</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="right">
+                                  <div className="space-y-2">
+                                    <p className="font-semibold">Region Explanation</p>
+                                    <p className="text-sm">The TerraBuild calculator uses Benton County's regional cost factors:</p>
+                                    <ul className="text-xs space-y-1 list-disc pl-4">
+                                      <li><span className="font-semibold">East Benton:</span> Includes rural areas with different labor/material costs</li>
+                                      <li><span className="font-semibold">Central Benton:</span> Includes most developed areas and standard costs</li>
+                                      <li><span className="font-semibold">West Benton:</span> Includes premium areas with higher labor/material costs</li>
+                                    </ul>
+                                    <p className="text-xs italic mt-2">Each region has specific multipliers that affect the final cost calculation.</p>
+                                  </div>
+                                </TooltipContent>
+                              </UITooltip>
+                            </TooltipProvider>
+                          </div>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="border-cyan-200 focus:ring-cyan-500">
                                 <SelectValue placeholder="Select region" />
                               </SelectTrigger>
                             </FormControl>
@@ -407,9 +456,39 @@ const BCBSCostCalculatorAPI = () => {
                       name="yearBuilt"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Year Built</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Year Built</FormLabel>
+                            <TooltipProvider>
+                              <UITooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                    <Info className="h-4 w-4" />
+                                    <span className="sr-only">Year built info</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="right">
+                                  <div className="space-y-2">
+                                    <p className="font-semibold">Year Built Explanation</p>
+                                    <p className="text-sm">This factor affects depreciation and code compliance costs:</p>
+                                    <ul className="text-xs space-y-1 list-disc pl-4">
+                                      <li><span className="font-semibold">Older buildings:</span> May have higher costs for code compliance and modernization</li>
+                                      <li><span className="font-semibold">Newer buildings:</span> Generally have fewer depreciation adjustments</li>
+                                      <li><span className="font-semibold">Current year:</span> Use for new construction planning</li>
+                                    </ul>
+                                    <p className="text-xs italic mt-2">Benton County applies different age factors based on building type.</p>
+                                  </div>
+                                </TooltipContent>
+                              </UITooltip>
+                            </TooltipProvider>
+                          </div>
                           <FormControl>
-                            <Input type="number" min="1900" max={new Date().getFullYear()} {...field} />
+                            <Input 
+                              type="number" 
+                              min="1900" 
+                              max={new Date().getFullYear()} 
+                              {...field} 
+                              className="border-cyan-200 focus:ring-cyan-500"
+                            />
                           </FormControl>
                           <FormDescription>
                             Enter the year the building was built or leave as current year for new construction
@@ -426,12 +505,36 @@ const BCBSCostCalculatorAPI = () => {
                     name="complexityFactor"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          <div className="flex justify-between">
-                            <span>Complexity Factor</span>
-                            <span className="font-mono">{field.value.toFixed(2)}</span>
-                          </div>
-                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>
+                            <div className="flex justify-between w-full">
+                              <span>Complexity Factor</span>
+                              <span className="font-mono">{field.value.toFixed(2)}</span>
+                            </div>
+                          </FormLabel>
+                          <TooltipProvider>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                  <Info className="h-4 w-4" />
+                                  <span className="sr-only">Complexity factor info</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="top">
+                                <div className="space-y-2">
+                                  <p className="font-semibold">Complexity Factor Explanation</p>
+                                  <p className="text-sm">This factor accounts for architectural and construction complexity:</p>
+                                  <ul className="text-xs space-y-1 list-disc pl-4">
+                                    <li><span className="font-semibold">Simple (0.5):</span> Basic rectangular shapes, standard construction</li>
+                                    <li><span className="font-semibold">Standard (1.0):</span> Normal geometry with some detailed features</li>
+                                    <li><span className="font-semibold">Complex (2.0+):</span> Irregular shapes, multiple levels, custom features</li>
+                                  </ul>
+                                  <p className="text-xs italic mt-2">Higher complexity factors significantly increase labor costs.</p>
+                                </div>
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
+                        </div>
                         <FormControl>
                           <Slider
                             defaultValue={[field.value]}
@@ -458,12 +561,37 @@ const BCBSCostCalculatorAPI = () => {
                     name="conditionFactor"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          <div className="flex justify-between">
-                            <span>Condition Factor</span>
-                            <span className="font-mono">{field.value.toFixed(2)}</span>
-                          </div>
-                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>
+                            <div className="flex justify-between w-full">
+                              <span>Condition Factor</span>
+                              <span className="font-mono">{field.value.toFixed(2)}</span>
+                            </div>
+                          </FormLabel>
+                          <TooltipProvider>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                  <Info className="h-4 w-4" />
+                                  <span className="sr-only">Condition factor info</span>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="top">
+                                <div className="space-y-2">
+                                  <p className="font-semibold">Condition Factor Explanation</p>
+                                  <p className="text-sm">This factor accounts for the current condition of existing properties:</p>
+                                  <ul className="text-xs space-y-1 list-disc pl-4">
+                                    <li><span className="font-semibold">Poor (0.6):</span> Significant deterioration requiring major repairs</li>
+                                    <li><span className="font-semibold">Average (0.8):</span> Standard condition with normal wear and tear</li>
+                                    <li><span className="font-semibold">Good (1.0):</span> Well-maintained property in good repair</li>
+                                    <li><span className="font-semibold">Excellent (1.1):</span> Premium condition with recent improvements</li>
+                                  </ul>
+                                  <p className="text-xs italic mt-2">For new construction, use 1.0 (Good condition).</p>
+                                </div>
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
+                        </div>
                         <FormControl>
                           <Slider
                             defaultValue={[field.value]}
