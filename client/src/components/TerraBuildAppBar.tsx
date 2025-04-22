@@ -58,11 +58,9 @@ export function TerraBuildAppBar({
             {/* Desktop navigation links */}
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <a className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-cyan-800/20 transition-colors">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </a>
+                <Link key={item.path} href={item.path} className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-cyan-800/20 transition-colors">
+                  {item.icon}
+                  <span>{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -124,14 +122,14 @@ export function TerraBuildAppBar({
         <div className="md:hidden bg-[#001529]/95 backdrop-blur-sm">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <a 
-                  className="flex items-center px-3 py-2 text-base font-medium rounded-md text-white hover:bg-cyan-800/20 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </a>
+              <Link 
+                key={item.path} 
+                href={item.path}
+                className="flex items-center px-3 py-2 text-base font-medium rounded-md text-white hover:bg-cyan-800/20 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
               </Link>
             ))}
             <div className="pt-2">
