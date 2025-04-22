@@ -23,13 +23,15 @@ interface TerraBuildAppBarProps {
   userName?: string;
   userRole?: string;
   userAvatar?: string;
+  toggleSidebar?: () => void;
 }
 
 export function TerraBuildAppBar({
   title = 'TerraBuild: Benton County',
   userName = 'Demo User',
   userRole = 'Assessor',
-  userAvatar = ''
+  userAvatar = '',
+  toggleSidebar
 }: TerraBuildAppBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -49,6 +51,16 @@ export function TerraBuildAppBar({
           <div className="flex items-center justify-between h-16">
             {/* Logo and title */}
             <div className="flex items-center gap-3">
+              {toggleSidebar && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  className="text-white hover:bg-cyan-800/20 mr-2"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
               <TerraBuildLogo size="sm" className="shrink-0" />
               <div className="hidden md:block">
                 <h1 className="text-lg font-semibold">{title}</h1>

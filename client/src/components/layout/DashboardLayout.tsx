@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import Sidebar from "./Sidebar";
-import TopNavbar from "./TopNavbar";
 import Footer from "./Footer";
+import TerraBuildAppBar from "@/components/TerraBuildAppBar";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 import { BentonColors } from '@/components/BentonBranding';
@@ -42,7 +42,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-      <TopNavbar toggleSidebar={toggleSidebar} />
+      <TerraBuildAppBar userName="Benton County Assessor" userRole="Administrator" toggleSidebar={toggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <div 

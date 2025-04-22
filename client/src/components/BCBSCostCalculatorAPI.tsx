@@ -286,13 +286,38 @@ const BCBSCostCalculatorAPI = () => {
                       name="buildingType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Building Type</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Building Type</FormLabel>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-cyan-600">
+                                    <InfoIcon className="h-4 w-4" />
+                                    <span className="sr-only">Building type info</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm bg-cyan-950 text-white" side="right">
+                                  <div className="space-y-2">
+                                    <p className="font-semibold">Building Type Explanation</p>
+                                    <p className="text-sm">The TerraBuild calculator adjusts costs based on building type:</p>
+                                    <ul className="text-xs space-y-1 list-disc pl-4">
+                                      <li><span className="font-semibold">Residential:</span> Single-family homes, apartments, condos</li>
+                                      <li><span className="font-semibold">Commercial:</span> Retail, offices, warehouses</li>
+                                      <li><span className="font-semibold">Industrial:</span> Manufacturing, processing facilities</li>
+                                      <li><span className="font-semibold">Office:</span> Specialized office buildings</li>
+                                    </ul>
+                                    <p className="text-xs italic mt-2">Benton County uses specific multipliers for each building type.</p>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="border-cyan-200 focus:ring-cyan-500">
                                 <SelectValue placeholder="Select building type" />
                               </SelectTrigger>
                             </FormControl>
