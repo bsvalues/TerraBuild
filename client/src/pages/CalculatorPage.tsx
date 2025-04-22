@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calculator, BarChart3 } from 'lucide-react';
@@ -6,16 +6,34 @@ import BCBSCostCalculatorSimple from '@/components/BCBSCostCalculatorSimple';
 import BCBSCostCalculatorAPI from '@/components/BCBSCostCalculatorAPI';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import MainContent from '@/components/layout/MainContent';
+import TerraBuildAppBar from '@/components/TerraBuildAppBar';
+import TerraBuildSplashScreen from '@/components/TerraBuildSplashScreen';
 
 const CalculatorPage = () => {
   const [calculatorType, setCalculatorType] = useState<string>("api");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time for the splash screen
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <TerraBuildSplashScreen moduleName="Cost Calculator" onComplete={() => setLoading(false)} />;
+  }
 
   return (
-    <LayoutWrapper>
-      <MainContent title="Calculator">
+    <div className="flex flex-col min-h-screen">
+      <TerraBuildAppBar userName="Benton County Assessor" userRole="Administrator" />
+      
+      <main className="flex-1 bg-gray-50">
         <div className="container mx-auto py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Building Cost Calculator</h1>
+            <h1 className="text-3xl font-bold mb-2">TerraBuild Cost Calculator</h1>
             <p className="text-gray-600">
               Use this calculator to estimate building costs based on various parameters including
               building type, square footage, quality, and regional factors.
@@ -84,8 +102,8 @@ const CalculatorPage = () => {
             </div>
           </div>
         </div>
-      </MainContent>
-    </LayoutWrapper>
+      </main>
+    </div>
   );
 };
 
