@@ -23,6 +23,8 @@ import { MaterialSubstitutionEngine } from './MaterialSubstitutionEngine';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+// Import our custom tooltip components
+import { InteractiveCostTooltip, costTooltipContent } from './tooltips';
 
 // Form schema for calculator
 const calculatorSchema = z.object({
@@ -840,7 +842,16 @@ const BCBSCostCalculator = () => {
                             name="squareFootage"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Square Footage</FormLabel>
+                                <FormLabel>
+                                <InteractiveCostTooltip
+                                  title={costTooltipContent.squareFootage.title}
+                                  content={costTooltipContent.squareFootage.content}
+                                  funFact={costTooltipContent.squareFootage.funFact}
+                                  impact={costTooltipContent.squareFootage.impact}
+                                >
+                                  Square Footage
+                                </InteractiveCostTooltip>
+                              </FormLabel>
                                 <FormControl>
                                   <Input type="number" {...field} className="border-gray-200" />
                                 </FormControl>
@@ -1058,7 +1069,48 @@ const BCBSCostCalculator = () => {
                           name="buildingType"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Building Type</FormLabel>
+                              <FormLabel>
+                                <InteractiveCostTooltip
+                                  title={field.value && field.value.toLowerCase().includes('residential') 
+                                    ? costTooltipContent.buildingType.residential.title
+                                    : field.value && field.value.toLowerCase().includes('commercial')
+                                    ? costTooltipContent.buildingType.commercial.title
+                                    : field.value && field.value.toLowerCase().includes('industrial')
+                                    ? costTooltipContent.buildingType.industrial.title
+                                    : field.value && field.value.toLowerCase().includes('agricultural')
+                                    ? costTooltipContent.buildingType.agricultural.title
+                                    : "Building Type"}
+                                  content={field.value && field.value.toLowerCase().includes('residential')
+                                    ? costTooltipContent.buildingType.residential.content
+                                    : field.value && field.value.toLowerCase().includes('commercial')
+                                    ? costTooltipContent.buildingType.commercial.content
+                                    : field.value && field.value.toLowerCase().includes('industrial')
+                                    ? costTooltipContent.buildingType.industrial.content
+                                    : field.value && field.value.toLowerCase().includes('agricultural')
+                                    ? costTooltipContent.buildingType.agricultural.content
+                                    : "The category of structure affects base costs and calculation methods."}
+                                  funFact={field.value && field.value.toLowerCase().includes('residential')
+                                    ? costTooltipContent.buildingType.residential.funFact
+                                    : field.value && field.value.toLowerCase().includes('commercial')
+                                    ? costTooltipContent.buildingType.commercial.funFact
+                                    : field.value && field.value.toLowerCase().includes('industrial')
+                                    ? costTooltipContent.buildingType.industrial.funFact
+                                    : field.value && field.value.toLowerCase().includes('agricultural')
+                                    ? costTooltipContent.buildingType.agricultural.funFact
+                                    : undefined}
+                                  impact={field.value && field.value.toLowerCase().includes('residential')
+                                    ? costTooltipContent.buildingType.residential.impact
+                                    : field.value && field.value.toLowerCase().includes('commercial')
+                                    ? costTooltipContent.buildingType.commercial.impact
+                                    : field.value && field.value.toLowerCase().includes('industrial')
+                                    ? costTooltipContent.buildingType.industrial.impact
+                                    : field.value && field.value.toLowerCase().includes('agricultural')
+                                    ? costTooltipContent.buildingType.agricultural.impact
+                                    : "medium"}
+                                >
+                                  Building Type
+                                </InteractiveCostTooltip>
+                              </FormLabel>
                               <Select 
                                 onValueChange={field.onChange} 
                                 defaultValue={field.value}
@@ -1097,7 +1149,48 @@ const BCBSCostCalculator = () => {
                           name="quality"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Quality Level</FormLabel>
+                              <FormLabel>
+                                <InteractiveCostTooltip
+                                  title={field.value && field.value.toLowerCase().includes('economy') 
+                                    ? costTooltipContent.quality.economy.title
+                                    : field.value && field.value.toLowerCase().includes('standard')
+                                    ? costTooltipContent.quality.standard.title
+                                    : field.value && field.value.toLowerCase().includes('custom')
+                                    ? costTooltipContent.quality.custom.title
+                                    : field.value && field.value.toLowerCase().includes('luxury')
+                                    ? costTooltipContent.quality.luxury.title
+                                    : "Quality Level"}
+                                  content={field.value && field.value.toLowerCase().includes('economy')
+                                    ? costTooltipContent.quality.economy.content
+                                    : field.value && field.value.toLowerCase().includes('standard')
+                                    ? costTooltipContent.quality.standard.content
+                                    : field.value && field.value.toLowerCase().includes('custom')
+                                    ? costTooltipContent.quality.custom.content
+                                    : field.value && field.value.toLowerCase().includes('luxury')
+                                    ? costTooltipContent.quality.luxury.content
+                                    : "The quality level of construction significantly impacts the total cost."}
+                                  funFact={field.value && field.value.toLowerCase().includes('economy')
+                                    ? costTooltipContent.quality.economy.funFact
+                                    : field.value && field.value.toLowerCase().includes('standard')
+                                    ? costTooltipContent.quality.standard.funFact
+                                    : field.value && field.value.toLowerCase().includes('custom')
+                                    ? costTooltipContent.quality.custom.funFact
+                                    : field.value && field.value.toLowerCase().includes('luxury')
+                                    ? costTooltipContent.quality.luxury.funFact
+                                    : undefined}
+                                  impact={field.value && field.value.toLowerCase().includes('economy')
+                                    ? costTooltipContent.quality.economy.impact
+                                    : field.value && field.value.toLowerCase().includes('standard')
+                                    ? costTooltipContent.quality.standard.impact
+                                    : field.value && field.value.toLowerCase().includes('custom')
+                                    ? costTooltipContent.quality.custom.impact
+                                    : field.value && field.value.toLowerCase().includes('luxury')
+                                    ? costTooltipContent.quality.luxury.impact
+                                    : "medium"}
+                                >
+                                  Quality Level
+                                </InteractiveCostTooltip>
+                              </FormLabel>
                               <Select 
                                 onValueChange={field.onChange} 
                                 defaultValue={field.value}
@@ -1128,7 +1221,40 @@ const BCBSCostCalculator = () => {
                           name="region"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Region</FormLabel>
+                              <FormLabel>
+                                <InteractiveCostTooltip
+                                  title={field.value && field.value.toLowerCase().includes('richland') 
+                                    ? costTooltipContent.region.richland.title
+                                    : field.value && field.value.toLowerCase().includes('kennewick')
+                                    ? costTooltipContent.region.kennewick.title
+                                    : field.value && field.value.toLowerCase().includes('prosser')
+                                    ? costTooltipContent.region.prosser.title
+                                    : "Region"}
+                                  content={field.value && field.value.toLowerCase().includes('richland')
+                                    ? costTooltipContent.region.richland.content
+                                    : field.value && field.value.toLowerCase().includes('kennewick')
+                                    ? costTooltipContent.region.kennewick.content
+                                    : field.value && field.value.toLowerCase().includes('prosser')
+                                    ? costTooltipContent.region.prosser.content
+                                    : "Location affects construction costs due to labor rates, material availability, and local regulations."}
+                                  funFact={field.value && field.value.toLowerCase().includes('richland')
+                                    ? costTooltipContent.region.richland.funFact
+                                    : field.value && field.value.toLowerCase().includes('kennewick')
+                                    ? costTooltipContent.region.kennewick.funFact
+                                    : field.value && field.value.toLowerCase().includes('prosser')
+                                    ? costTooltipContent.region.prosser.funFact
+                                    : undefined}
+                                  impact={field.value && field.value.toLowerCase().includes('richland')
+                                    ? costTooltipContent.region.richland.impact
+                                    : field.value && field.value.toLowerCase().includes('kennewick')
+                                    ? costTooltipContent.region.kennewick.impact
+                                    : field.value && field.value.toLowerCase().includes('prosser')
+                                    ? costTooltipContent.region.prosser.impact
+                                    : "medium"}
+                                >
+                                  Region
+                                </InteractiveCostTooltip>
+                              </FormLabel>
                               <Select 
                                 onValueChange={field.onChange} 
                                 defaultValue={field.value}
@@ -1175,7 +1301,16 @@ const BCBSCostCalculator = () => {
                           render={({ field }) => (
                             <FormItem className="bg-[#e6eef2] p-3 rounded-md">
                               <div className="flex justify-between items-center">
-                                <FormLabel>Complexity Factor</FormLabel>
+                                <FormLabel>
+                                  <InteractiveCostTooltip
+                                    title={costTooltipContent.complexityFactor.title}
+                                    content={costTooltipContent.complexityFactor.content}
+                                    funFact={costTooltipContent.complexityFactor.funFact}
+                                    impact={costTooltipContent.complexityFactor.impact}
+                                  >
+                                    Complexity Factor
+                                  </InteractiveCostTooltip>
+                                </FormLabel>
                                 <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
                               </div>
                               <FormControl>
@@ -1208,7 +1343,16 @@ const BCBSCostCalculator = () => {
                         render={({ field }) => (
                           <FormItem className="bg-[#e8f8fb] p-3 rounded-md">
                             <div className="flex justify-between items-center">
-                              <FormLabel>Condition Factor</FormLabel>
+                              <FormLabel>
+                                <InteractiveCostTooltip
+                                  title={costTooltipContent.conditionFactor.title}
+                                  content={costTooltipContent.conditionFactor.content}
+                                  funFact={costTooltipContent.conditionFactor.funFact}
+                                  impact={costTooltipContent.conditionFactor.impact}
+                                >
+                                  Condition Factor
+                                </InteractiveCostTooltip>
+                              </FormLabel>
                               <Badge variant="outline" className="bg-white text-[#243E4D] border-[#29B7D3]/30">{field.value}</Badge>
                             </div>
                             <FormControl>
@@ -1246,7 +1390,16 @@ const BCBSCostCalculator = () => {
                           return (
                             <FormItem className="bg-[#e6eef2] p-3 rounded-md">
                               <div className="flex justify-between items-center">
-                                <FormLabel>Building Age (years)</FormLabel>
+                                <FormLabel>
+                                  <InteractiveCostTooltip
+                                    title={costTooltipContent.buildingAge.title}
+                                    content={costTooltipContent.buildingAge.content}
+                                    funFact={costTooltipContent.buildingAge.funFact}
+                                    impact={costTooltipContent.buildingAge.impact}
+                                  >
+                                    Building Age (years)
+                                  </InteractiveCostTooltip>
+                                </FormLabel>
                                 <div className="flex items-center gap-2">
                                   {field.value > 0 && (
                                     <Badge 
