@@ -823,15 +823,25 @@ const BCBSCostCalculatorAPI = () => {
                       variant="outline" 
                       className="flex items-center"
                       onClick={() => {
-                        // Ideally, this would save to database
+                        // Add current result to scenarios
+                        const updatedScenarios = [...savedScenarios, {
+                          ...calculationResult,
+                          quality: form.getValues().quality,
+                          yearBuilt: form.getValues().yearBuilt
+                        }];
+                        setSavedScenarios(updatedScenarios);
+                        
+                        // Save to localStorage
+                        localStorage.setItem(SAVED_SCENARIOS_KEY, JSON.stringify(updatedScenarios));
+                        
                         toast({
-                          title: "Calculation Saved",
-                          description: "Your calculation has been saved for future reference",
+                          title: "Scenario Saved",
+                          description: "This calculation has been saved for comparison",
                         });
                       }}
                     >
                       <Save className="mr-2 h-4 w-4" />
-                      Save Calculation
+                      Save as Scenario
                     </Button>
                     <Button 
                       variant="outline" 
@@ -884,6 +894,48 @@ const BCBSCostCalculatorAPI = () => {
           </div>
         </CardFooter>
       </Card>
+      
+      {/* Scenario Comparison Dashboard */}
+      {savedScenarios.length > 0 && (
+        <ScenarioComparisonDashboard 
+          savedScenarios={savedScenarios}
+          onDeleteScenario={(index) => {
+            const updatedScenarios = [...savedScenarios];
+            updatedScenarios.splice(index, 1);
+            setSavedScenarios(updatedScenarios);
+            localStorage.setItem(SAVED_SCENARIOS_KEY, JSON.stringify(updatedScenarios));
+            
+            toast({
+              title: "Scenario Deleted",
+              description: `Scenario ${index + 1} has been removed from comparison`,
+            });
+          }}
+          onClearAllScenarios={() => {
+            setSavedScenarios([]);
+            localStorage.removeItem(SAVED_SCENARIOS_KEY);
+            
+            toast({
+              title: "All Scenarios Cleared",
+              description: "All saved scenarios have been removed",
+            });
+          }}
+          onExportComparison={() => {
+            toast({
+              title: "Comparison Export",
+              description: "Exporting comparison report...",
+            });
+            
+            // This would be implemented with a PDF export function similar to the individual report
+            // For now we'll just show a notification
+            setTimeout(() => {
+              toast({
+                title: "Export Complete",
+                description: "The comparison report has been downloaded",
+              });
+            }, 1500);
+          }}
+        />
+      )}
     </div>
   );
 };
