@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Sector, Treemap } from 'recharts';
-import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle, BrainCircuit, Share2, Loader2, FileDown } from 'lucide-react';
+import { AlertCircle, Info, Building, Home, Trash2, DollarSign, BarChart3, PieChartIcon, Copy, ArrowRightLeft, Save, ArrowLeftRight, Blocks, Clock, FileText, Printer, PlayCircle, BrainCircuit, Share2, Loader2, FileDown, ListPlus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import CostReportPDFExport from "./CostReportPDFExport";
 import BuildingBlocksAnimation from "./BuildingBlocksAnimation";
+import ScenarioComparisonDashboard from "./ScenarioComparisonDashboard";
 
 // Form schema for calculator
 const calculatorSchema = z.object({
@@ -56,7 +57,7 @@ interface CostBreakdown {
   cost: number;
 }
 
-interface CalculationResult {
+export interface CalculationResult {
   region: string;
   buildingType: string;
   squareFootage: number;
@@ -68,7 +69,12 @@ interface CalculationResult {
   adjustedCost: number;
   conditionFactor: number;
   materialCosts?: MaterialCost;
+  quality?: string;
+  yearBuilt?: number;
 }
+
+// Storage key for saved scenarios
+const SAVED_SCENARIOS_KEY = 'terrabuild_saved_scenarios';
 
 const BCBSCostCalculatorAPI = () => {
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
@@ -77,7 +83,23 @@ const BCBSCostCalculatorAPI = () => {
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [hoveredCostItem, setHoveredCostItem] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [savedScenarios, setSavedScenarios] = useState<CalculationResult[]>([]);
   const { toast } = useToast();
+  
+  // Load saved scenarios from localStorage on component mount
+  useEffect(() => {
+    const storedScenarios = localStorage.getItem(SAVED_SCENARIOS_KEY);
+    if (storedScenarios) {
+      try {
+        const parsedScenarios = JSON.parse(storedScenarios);
+        if (Array.isArray(parsedScenarios)) {
+          setSavedScenarios(parsedScenarios);
+        }
+      } catch (error) {
+        console.error('Failed to parse saved scenarios:', error);
+      }
+    }
+  }, []);
 
   // Default form values
   const defaultValues: Partial<CalculatorFormValues> = {
