@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { useCollaboration } from '@/contexts/CollaborationContext';
+import { useCollaboration, CollaborationProvider } from '@/contexts/CollaborationContext';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,7 +65,7 @@ const CreateProjectPage: React.FC = () => {
   // Handle form submission
   const onSubmit = async (data: ProjectFormValues) => {
     try {
-      const newProject = await createProject({
+      await createProject({
         name: data.name,
         description: data.description || null,
         isPublic: data.isPublic,
@@ -76,8 +76,8 @@ const CreateProjectPage: React.FC = () => {
         description: 'Your project has been created successfully',
       });
       
-      // Navigate to the new project page
-      setLocation(`/shared-projects/${newProject.id}`);
+      // Navigate back to the projects page
+      setLocation('/shared-projects');
     } catch (error) {
       console.error('Error creating project:', error);
       toast({
@@ -202,4 +202,13 @@ const CreateProjectPage: React.FC = () => {
   );
 };
 
-export default CreateProjectPage;
+// Wrapper component that provides collaboration context
+const CreateProjectPageWithProvider: React.FC = () => {
+  return (
+    <CollaborationProvider projectId={0}>
+      <CreateProjectPage />
+    </CollaborationProvider>
+  );
+};
+
+export default CreateProjectPageWithProvider;

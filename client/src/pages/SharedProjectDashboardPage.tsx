@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { useCollaboration } from '@/contexts/CollaborationContext';
-import { useAuth } from '@/contexts/auth-context';
+import { useCollaboration, CollaborationProvider } from '@/contexts/CollaborationContext';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectMembersTable from '@/components/collaboration/ProjectMembersTable';
@@ -489,9 +489,11 @@ const SharedProjectDashboardPageWrapper: React.FC = () => {
   const { user } = useAuth();
   
   return (
-    <ProjectProvider projectId={projectId} currentUserId={user?.id || 0}>
-      <SharedProjectDashboardPage />
-    </ProjectProvider>
+    <CollaborationProvider projectId={projectId}>
+      <ProjectProvider projectId={projectId} currentUserId={user?.id || 0}>
+        <SharedProjectDashboardPage />
+      </ProjectProvider>
+    </CollaborationProvider>
   );
 };
 
