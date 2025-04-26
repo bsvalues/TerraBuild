@@ -1,0 +1,130 @@
+Below is a structured “PM playbook” you can feed to your Replit AI Agent.  Use these prompts (in order) to keep the agent on-track, break the work into clear deliverables, and drive progress through sprints.
+
+---
+
+## 1. Project Initiation
+
+**Prompt:**  
+> “Analyze the **BCBSLevy** repository top-to-bottom. Produce a 1–page **Project Charter** that includes:  
+> - High-level objectives and success criteria  
+> - Key user personas and their pain points  
+> - Major technical risks (e.g. legacy migrations, CI gaps, UX inconsistencies)  
+> - Proposed team roles & stakeholders”
+
+**Deliverable:**  
+`docs/project_charter.md`
+
+---
+
+## 2. Backlog & Sprint Planning
+
+**Prompt:**  
+> “Based on the charter, break the work into **user stories** and **technical tasks**. Organize them into a **Kanban backlog** with columns: Backlog, Sprint 1, In Progress, Review, Done. For each story include:  
+> - Title (As a…, I want…, so that…)  
+> - Acceptance criteria  
+> - Estimated effort (T-shirt sizing)  
+> - Dependencies”
+
+**Deliverable:**  
+`docs/backlog.md` (or ideally a GitHub Project board you can script via API)
+
+---
+
+## 3. Sprint 1: Foundation & Architecture
+
+**Prompt:**  
+> “Drive **Sprint 1** to completion. Focus on:  
+> 1. **CI/CD & Dev Containers**  
+>    - Set up GitHub Actions for lint/test/build  
+>    - Create a Docker-Compose dev container with full Python/Flask + PostgreSQL  
+> 2. **Codebase Hygiene**  
+>    - Consolidate Jinja bases to one `base.html`  
+>    - Squash old migrations into feature-scoped migration scripts  
+>    - Configure SQLAlchemy pool metrics  
+> 3. **Storybook Scaffold**  
+>    - Scaffold a minimal React/TypeScript + Storybook setup (no features yet)  
+>  
+> For each task, open a feature branch, push commits with clear messages (`feat:`, `chore:`, `refactor:`), and open a PR targeting `main`. Tag me when you need a review.”
+
+**Deliverable:**  
+Multiple PRs with automated CI passing.
+
+---
+
+## 4. Sprint 2: Core Levy Workflow Wizard
+
+**Prompt:**  
+> “Implement the multi-step “Create Levy” wizard as a React component:  
+> - Step 1: Select Tax District (API: `/api/tax_districts`)  
+> - Step 2: Define Rates (inline validation)  
+> - Step 3: Review & Confirm (display summary, confirm to save)  
+> Persist state in a React context or Zustand store. Add both unit tests (Jest) and an end-to-end test (Playwright) that completes the flow.”
+
+**Deliverable:**  
+`src/components/LevyWizard/` + tests + e2e script.
+
+---
+
+## 5. Sprint 3: Data APIs & Integration
+
+**Prompt:**  
+> “Build the required JSON endpoints to back the wizard:  
+> - `GET /api/tax_districts`  
+> - `POST /api/levies`  
+> - `GET /api/levies/:id`  
+> Ensure each route:  
+> • Validates input (use Marshmallow or Pydantic)  
+> • Returns consistent error format  
+> • Is covered by unit tests  
+>  
+> Update Swagger/OpenAPI docs accordingly.”
+
+**Deliverable:**  
+Updated `routes_*.py`, schemas, tests, and `openapi.yaml`.
+
+---
+
+## 6. Sprint 4: Observability & Quality Gates
+
+**Prompt:**  
+> “Integrate observability:  
+> 1. **Error tracking** with Sentry (JS + Python)  
+> 2. **Web Vitals** collection (via web-vitals lib + Prometheus push)  
+> 3. **Performance budget** in CI: fail if `bundle size > 200 KB` or TTFB > 200 ms in Lighthouse CI  
+>  
+> Add a “Quality Gate” workflow that runs on every PR.”
+
+**Deliverable:**  
+`.github/workflows/quality-gate.yml`, Sentry init code, Prometheus client lib.
+
+---
+
+## 7. Ongoing: Reporting & Communication
+
+> “Each Friday at 3 PM, send me a **Sprint Status Report** summarizing:  
+> - Completed stories & closed PRs  
+> - Blockers & risks  
+> - Burndown chart snapshot  
+> - Next week’s plan”
+
+> *(You might hook this into GitHub Actions + a weekly Slack report.)*
+
+---
+
+### How to Instruct the Agent
+
+At the top of your shell or chat with Replit AI Agent, paste:
+
+```
+You are my autonomous DevOps & Front-end Engineer.  Follow my PM prompts exactly.  After each deliverable, output:
+- Link to PR(s)
+- Test & CI status
+- Any blockers or clarifications needed
+Do not move on until I mark the PR as approved.
+```
+
+Then feed it the **Sprint 1** prompt, wait for PRs, review, merge, and proceed through each sprint.
+
+---
+
+By driving the Agent with **bite-sized sprints**, clear **acceptance criteria**, and **CI-enforced quality gates**, you’ll maintain control as PM while fully leveraging Replit AI Agent’s execution power.
