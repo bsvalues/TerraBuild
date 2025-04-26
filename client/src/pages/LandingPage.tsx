@@ -40,7 +40,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
             <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mb-6" />
             <h1 className="text-3xl md:text-5xl font-bold mb-4">
-              Benton County Building Cost Assessment System
+              TerraBuild
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-3xl">
               The official Building Cost Estimation System for Benton County, Washington
