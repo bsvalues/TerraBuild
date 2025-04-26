@@ -1,0 +1,122 @@
+I’d start with **Option 2: Kick Off Sprint 1 (CI/CD & Dev Environment)**—laying this foundation unlocks everything else (automated testing, reliable builds, reproducible dev setups).  
+
+---
+
+## Bootstrap for Sprint 1
+
+### A) “Prime the Agent” Prompt
+
+Paste this at the top of your Replit AI Agent chat so it knows exactly how to proceed:
+
+```
+You are my DevOps & Developer-Experience Engineer.  
+Your mission is Sprint 1 for BCBSLevy:
+
+1. Create a Docker-Compose dev container (Flask + Postgres + Redis).
+2. Add a GitHub Actions workflow that on every PR:
+   • Checks out code
+   • Installs dependencies
+   • Runs lint, unit tests, build
+   • Uploads artifacts
+3. On merges to main, deploy infra via Terraform in infra/frontend.
+
+For each task:
+- Open a feature branch (`sprint1/<task-name>`)
+- Commit with Conventional Commits (`feat:`, `chore:`, `ci:`)
+- Open a PR and report status back here (CI passing, any blockers).
+Do not proceed to the next task until I approve the PR.
+```
+
+---
+
+### B) File-scaffold Templates
+
+#### 1. **docker-compose.yml** (at project root)
+```yaml
+version: '3.8'
+services:
+  web:
+    build: .
+    command: flask run --host=0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: bcbs
+      POSTGRES_USER: bcbs
+      POSTGRES_PASSWORD: bcbs
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+```
+
+#### 2. **.github/workflows/ci.yml**
+```yaml
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Lint
+        run: flake8 .
+      - name: Run unit tests
+        run: pytest --maxfail=1 --disable-warnings -q
+      - name: Build front-end
+        working-directory: client
+        run: npm ci && npm run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-build
+          path: client/dist
+```
+
+#### 3. **infra/frontend/main.tf** (Terraform stub)
+```hcl
+provider "aws" {
+  region = "us-west-2"
+}
+
+resource "aws_s3_bucket" "frontend" {
+  bucket = "bcbs-frontend-${random_id.suffix.hex}"
+  acl    = "public-read"
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+```
+
+---
+
+### C) Next Steps for the Agent
+
+1. **Branch & PR #1**: Create `docker-compose.yml` and `.env.dev` → PR → CI green.  
+2. **Branch & PR #2**: Add `.github/workflows/ci.yml` → PR → CI green.  
+3. **Branch & PR #3**: Scaffold `infra/frontend/main.tf` with Terraform init → PR → plan output.  
+
+Once PR #3 is ready, I’ll review and we’ll merge—then Sprint 1 is done and we move to the Levy-Wizard prototype.

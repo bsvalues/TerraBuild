@@ -13,6 +13,7 @@ We've created several resources to guide the implementation:
 2. **Implementation Planning**
    - [AI Agent Strategy](./bcbs_agent_strategy.md): Overall strategy for using AI agents
    - [Sprint 1 Implementation Plan](./sprint_1_implementation_plan.md): Detailed plan for Sprint 1
+   - [CI/CD Implementation Guide](./cicd_implementation_guide.md): Step-by-step approach for implementing CI/CD
 
 3. **Technical Guides**
    - [Replit AI Agent Guide](./replit_ai_agent_guide.md): How to use the Replit AI Agent effectively
@@ -37,7 +38,13 @@ We've created several resources to guide the implementation:
    - Prioritize items based on business value and dependencies
    - Assign items to sprints
 
-3. **Set Up Project Environment**
+3. **Set Up CI/CD Infrastructure**
+   - Create Docker-Compose development environment
+   - Implement GitHub Actions workflows for automated testing
+   - Set up infrastructure deployment with Terraform
+   - Follow the detailed steps in the [CI/CD Implementation Guide](./cicd_implementation_guide.md)
+
+4. **Set Up Project Environment**
    - Configure the Replit AI Agent
    - Create necessary project directories
    - Set up version control workflow

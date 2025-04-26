@@ -15,6 +15,7 @@ This directory contains comprehensive documentation for implementing the Replit 
 
 - [**AI Agent Strategy**](./bcbs_agent_strategy.md) - Overall strategy for implementing AI agents in the BCBS project
 - [**Sprint 1 Implementation Plan**](./sprint_1_implementation_plan.md) - Detailed plan for the first sprint with specific tasks and timelines
+- [**CI/CD Implementation Guide**](./cicd_implementation_guide.md) - Step-by-step approach for implementing CI/CD with Docker, GitHub Actions, and Terraform
 
 ### Technical Guides
 
@@ -36,13 +37,15 @@ This directory contains comprehensive documentation for implementing the Replit 
 1. Begin by reviewing the [Project Charter](./project_charter.md) to understand the overall goals
 2. Examine the [Project Backlog](./backlog.md) to see the prioritized work items
 3. Read the [Replit AI Agent Implementation Guide](./replit_ai_agent_implementation_guide.md) for a comprehensive overview
-4. Start with [Sprint 1 Implementation Plan](./sprint_1_implementation_plan.md) to begin the implementation
+4. Set up the CI/CD infrastructure using the [CI/CD Implementation Guide](./cicd_implementation_guide.md)
+5. Begin implementation with the [Sprint 1 Implementation Plan](./sprint_1_implementation_plan.md)
 
 ## Best Practices
 
 - Use the prompt templates in the [Replit AI Agent Guide](./replit_ai_agent_guide.md)
 - Follow the test-driven development approach in [TDD with AI Agent](./tdd_with_ai_agent.md)
 - Leverage the existing MCP framework as described in [MCP Agent Integration](./mcp_agent_integration.md)
+- Implement CI/CD best practices from the [CI/CD Implementation Guide](./cicd_implementation_guide.md)
 - Monitor progress using the metrics defined in the implementation guide
 
 ## Maintenance
