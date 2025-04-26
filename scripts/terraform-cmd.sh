@@ -1,134 +1,102 @@
 #!/bin/bash
-
-# Terraform Helper Script for BCBS Project
-# This script provides shortcuts for common Terraform operations
+# BCBS Terraform Helper Script
+# This script simplifies Terraform operations for different environments
 
 set -e
 
-# Default environment
-ENV=${2:-dev}
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Display help information
+# Default values
+ENV=${1:-dev}
+CMD=${2:-plan}
+ARGS=${@:3}
+
+# Help function
 function show_help {
-  echo "BCBS Terraform Helper"
-  echo ""
-  echo "Usage: ./scripts/terraform-cmd.sh [command] [environment]"
-  echo ""
-  echo "Commands:"
-  echo "  init           Initialize Terraform"
-  echo "  plan           Create execution plan"
-  echo "  apply          Apply changes"
-  echo "  destroy        Destroy infrastructure"
-  echo "  output         Show outputs"
-  echo "  refresh        Refresh state"
-  echo "  help           Show this help message"
-  echo ""
-  echo "Environments:"
-  echo "  dev            Development (default)"
-  echo "  staging        Staging"
-  echo "  prod           Production"
-  echo ""
+  echo -e "${BLUE}BCBS Terraform Helper${NC}"
+  echo -e "Usage: ./scripts/terraform-cmd.sh [environment] [command] [additional args]"
+  echo
+  echo -e "Environments:"
+  echo -e "  ${YELLOW}dev${NC}     - Development environment"
+  echo -e "  ${YELLOW}staging${NC} - Staging environment"
+  echo -e "  ${YELLOW}prod${NC}    - Production environment"
+  echo
+  echo -e "Commands:"
+  echo -e "  ${YELLOW}plan${NC}    - Generate and show Terraform execution plan"
+  echo -e "  ${YELLOW}apply${NC}   - Apply Terraform execution plan"
+  echo -e "  ${YELLOW}destroy${NC} - Destroy Terraform-managed infrastructure"
+  echo -e "  ${YELLOW}output${NC}  - Show Terraform outputs"
+  echo -e "  ${YELLOW}validate${NC}- Validate Terraform configuration files"
+  echo -e "  ${YELLOW}init${NC}    - Initialize Terraform working directory"
+  echo -e "  ${YELLOW}help${NC}    - Show this help message"
+  echo
+  echo -e "Example:"
+  echo -e "  ./scripts/terraform-cmd.sh staging apply -auto-approve"
 }
 
 # Validate environment
-function validate_env {
-  if [[ ! "$ENV" =~ ^(dev|staging|prod)$ ]]; then
-    echo "❌ Invalid environment: $ENV"
-    echo "Valid environments: dev, staging, prod"
-    exit 1
-  fi
-}
+if [[ ! "$ENV" =~ ^(dev|staging|prod)$ ]]; then
+  echo -e "${RED}Error: Invalid environment '${ENV}'. Use 'dev', 'staging', or 'prod'${NC}"
+  show_help
+  exit 1
+fi
 
-# Initialize Terraform
-function init_terraform {
-  echo "🚀 Initializing Terraform for BCBS project..."
-  cd terrafusion
+# Validate command
+if [[ ! "$CMD" =~ ^(plan|apply|destroy|output|validate|init|help)$ ]]; then
+  echo -e "${RED}Error: Invalid command '${CMD}'${NC}"
+  show_help
+  exit 1
+fi
+
+# Show help if requested
+if [[ "$CMD" == "help" ]]; then
+  show_help
+  exit 0
+fi
+
+# Navigate to Terraform directory
+cd terrafusion
+
+# Initialize Terraform if not already initialized
+if [[ ! -d ".terraform" ]] || [[ "$CMD" == "init" ]]; then
+  echo -e "${GREEN}Initializing Terraform...${NC}"
   terraform init
-  echo "✅ Terraform initialized"
-}
+fi
 
-# Create execution plan
-function plan_terraform {
-  validate_env
-  echo "📋 Creating Terraform plan for $ENV environment..."
-  cd terrafusion
-  terraform plan -var-file=environments/${ENV}.tfvars -out=${ENV}.tfplan
-  echo "✅ Plan created: ${ENV}.tfplan"
-}
+# Select workspace
+echo -e "${GREEN}Selecting workspace for ${YELLOW}${ENV}${GREEN} environment...${NC}"
+terraform workspace select ${ENV} 2>/dev/null || terraform workspace new ${ENV}
 
-# Apply changes
-function apply_terraform {
-  validate_env
-  echo "🏗️ Applying Terraform changes for $ENV environment..."
-  cd terrafusion
-  
-  # Check if plan exists
-  if [ -f "${ENV}.tfplan" ]; then
-    terraform apply ${ENV}.tfplan
+# Execute the requested command
+if [[ "$CMD" == "plan" ]]; then
+  echo -e "${GREEN}Planning changes for ${YELLOW}${ENV}${GREEN} environment...${NC}"
+  terraform plan -var-file=environments/${ENV}.tfvars ${ARGS}
+elif [[ "$CMD" == "apply" ]]; then
+  echo -e "${GREEN}Applying changes to ${YELLOW}${ENV}${GREEN} environment...${NC}"
+  terraform apply -var-file=environments/${ENV}.tfvars ${ARGS}
+elif [[ "$CMD" == "destroy" ]]; then
+  echo -e "${RED}WARNING: Destroying infrastructure in ${YELLOW}${ENV}${RED} environment!${NC}"
+  read -p "Are you sure you want to continue? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    terraform destroy -var-file=environments/${ENV}.tfvars ${ARGS}
   else
-    echo "⚠️ No plan file found. Creating plan first..."
-    terraform plan -var-file=environments/${ENV}.tfvars -out=${ENV}.tfplan
-    terraform apply ${ENV}.tfplan
+    echo -e "${RED}Operation cancelled${NC}"
+    exit 0
   fi
-  
-  echo "✅ Infrastructure changes applied"
-}
+elif [[ "$CMD" == "output" ]]; then
+  echo -e "${GREEN}Showing outputs for ${YELLOW}${ENV}${GREEN} environment...${NC}"
+  terraform output ${ARGS}
+elif [[ "$CMD" == "validate" ]]; then
+  echo -e "${GREEN}Validating Terraform configuration...${NC}"
+  terraform validate
+elif [[ "$CMD" == "init" ]]; then
+  echo -e "${GREEN}Terraform initialized successfully.${NC}"
+fi
 
-# Destroy infrastructure
-function destroy_terraform {
-  validate_env
-  echo "⚠️ WARNING: This will destroy all resources in the $ENV environment!"
-  echo "⚠️ To proceed, type 'yes' and press Enter."
-  read confirmation
-  
-  if [ "$confirmation" = "yes" ]; then
-    echo "🧨 Destroying infrastructure for $ENV environment..."
-    cd terrafusion
-    terraform destroy -var-file=environments/${ENV}.tfvars
-    echo "✅ Infrastructure destroyed"
-  else
-    echo "🛑 Destruction cancelled"
-  fi
-}
-
-# Show outputs
-function output_terraform {
-  validate_env
-  echo "📊 Showing Terraform outputs for $ENV environment..."
-  cd terrafusion
-  terraform output
-}
-
-# Refresh state
-function refresh_terraform {
-  validate_env
-  echo "🔄 Refreshing Terraform state for $ENV environment..."
-  cd terrafusion
-  terraform refresh -var-file=environments/${ENV}.tfvars
-  echo "✅ State refreshed"
-}
-
-# Main script logic
-case "$1" in
-  init)
-    init_terraform
-    ;;
-  plan)
-    plan_terraform
-    ;;
-  apply)
-    apply_terraform
-    ;;
-  destroy)
-    destroy_terraform
-    ;;
-  output)
-    output_terraform
-    ;;
-  refresh)
-    refresh_terraform
-    ;;
-  help|*)
-    show_help
-    ;;
-esac
+echo -e "${GREEN}Terraform operation completed successfully!${NC}"

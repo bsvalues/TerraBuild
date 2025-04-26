@@ -1,129 +1,153 @@
 #!/bin/bash
-
-# Docker Development Helper Script for BCBS Project
-# This script provides shortcuts for common Docker operations
+# BCBS Docker Development Helper Script
+# This script provides easy commands for working with Docker during development
 
 set -e
 
-# Display help information
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Command to execute
+CMD=${1:-help}
+
+# Help function
 function show_help {
-  echo "BCBS Docker Development Helper"
-  echo ""
-  echo "Usage: ./scripts/docker-dev.sh [command]"
-  echo ""
-  echo "Commands:"
-  echo "  up             Start all containers"
-  echo "  down           Stop all containers"
-  echo "  build          Rebuild containers"
-  echo "  restart        Restart all containers"
-  echo "  logs           View container logs"
-  echo "  db             Access PostgreSQL CLI"
-  echo "  redis          Access Redis CLI"
-  echo "  migrate        Run database migrations"
-  echo "  test           Run tests in Docker environment"
-  echo "  clean          Remove all containers and volumes"
-  echo "  help           Show this help message"
-  echo ""
+  echo -e "${BLUE}BCBS Docker Development Helper${NC}"
+  echo -e "Usage: ./scripts/docker-dev.sh [command]"
+  echo
+  echo -e "Commands:"
+  echo -e "  ${YELLOW}start${NC}        - Start the development environment"
+  echo -e "  ${YELLOW}stop${NC}         - Stop the development environment"
+  echo -e "  ${YELLOW}restart${NC}      - Restart the development environment"
+  echo -e "  ${YELLOW}rebuild${NC}      - Rebuild the development environment"
+  echo -e "  ${YELLOW}logs${NC}         - Show logs from the containers"
+  echo -e "  ${YELLOW}shell${NC}        - Open a shell in the web container"
+  echo -e "  ${YELLOW}psql${NC}         - Open a PostgreSQL shell"
+  echo -e "  ${YELLOW}redis-cli${NC}    - Open a Redis CLI shell"
+  echo -e "  ${YELLOW}test${NC}         - Run tests in the Docker environment"
+  echo -e "  ${YELLOW}status${NC}       - Show status of Docker containers"
+  echo -e "  ${YELLOW}clean${NC}        - Remove all containers and volumes"
+  echo -e "  ${YELLOW}help${NC}         - Show this help message"
 }
 
-# Start all containers
-function start_containers {
-  echo "🚀 Starting BCBS development environment..."
+# Start the development environment
+function start_dev {
+  echo -e "${GREEN}Starting development environment...${NC}"
   docker-compose up -d
-  echo "✅ Development environment is running"
-  echo "🌎 Application is available at http://localhost:5000"
+  echo -e "${GREEN}Development environment started at ${YELLOW}http://localhost:5000${NC}"
 }
 
-# Stop all containers
-function stop_containers {
-  echo "🛑 Stopping BCBS development environment..."
+# Stop the development environment
+function stop_dev {
+  echo -e "${GREEN}Stopping development environment...${NC}"
   docker-compose down
-  echo "✅ Development environment stopped"
+  echo -e "${GREEN}Development environment stopped${NC}"
 }
 
-# Rebuild containers
-function rebuild_containers {
-  echo "🏗️ Rebuilding BCBS containers..."
-  docker-compose build
-  echo "✅ Containers rebuilt successfully"
-}
-
-# Restart all containers
-function restart_containers {
-  echo "🔄 Restarting BCBS development environment..."
+# Restart the development environment
+function restart_dev {
+  echo -e "${GREEN}Restarting development environment...${NC}"
   docker-compose restart
-  echo "✅ Development environment restarted"
+  echo -e "${GREEN}Development environment restarted${NC}"
 }
 
-# View container logs
-function view_logs {
-  echo "📋 Showing container logs (press Ctrl+C to exit)..."
+# Rebuild the development environment
+function rebuild_dev {
+  echo -e "${GREEN}Rebuilding development environment...${NC}"
+  docker-compose down
+  docker-compose build
+  docker-compose up -d
+  echo -e "${GREEN}Development environment rebuilt and started${NC}"
+}
+
+# Show logs from the containers
+function show_logs {
+  echo -e "${GREEN}Showing logs from containers...${NC}"
   docker-compose logs -f
 }
 
-# Access PostgreSQL CLI
-function access_db {
-  echo "🗃️ Connecting to PostgreSQL database..."
+# Open a shell in the web container
+function open_shell {
+  echo -e "${GREEN}Opening shell in web container...${NC}"
+  docker-compose exec web bash || docker-compose exec web sh
+}
+
+# Open a PostgreSQL shell
+function open_psql {
+  echo -e "${GREEN}Opening PostgreSQL shell...${NC}"
   docker-compose exec db psql -U bcbs -d bcbs
 }
 
-# Access Redis CLI
-function access_redis {
-  echo "📦 Connecting to Redis..."
+# Open a Redis CLI shell
+function open_redis_cli {
+  echo -e "${GREEN}Opening Redis CLI shell...${NC}"
   docker-compose exec redis redis-cli
 }
 
-# Run database migrations
-function run_migrations {
-  echo "🔄 Running database migrations..."
-  docker-compose exec web npm run db:push
-  echo "✅ Migrations completed"
-}
-
-# Run tests in Docker environment
+# Run tests in the Docker environment
 function run_tests {
-  echo "🧪 Running tests in Docker environment..."
+  echo -e "${GREEN}Running tests in Docker environment...${NC}"
   docker-compose exec web npm test
 }
 
-# Clean all Docker resources
-function clean_resources {
-  echo "🧹 Cleaning up Docker resources..."
-  docker-compose down -v
-  echo "✅ All containers and volumes removed"
+# Show status of Docker containers
+function show_status {
+  echo -e "${GREEN}Showing status of Docker containers...${NC}"
+  docker-compose ps
 }
 
-# Main script logic
-case "$1" in
-  up)
-    start_containers
+# Clean up Docker resources
+function clean_dev {
+  echo -e "${YELLOW}WARNING: This will remove all containers and volumes!${NC}"
+  read -p "Are you sure you want to continue? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${GREEN}Removing all containers and volumes...${NC}"
+    docker-compose down -v
+    echo -e "${GREEN}Cleanup complete${NC}"
+  else
+    echo -e "${RED}Operation cancelled${NC}"
+  fi
+}
+
+# Execute the requested command
+case $CMD in
+  start)
+    start_dev
     ;;
-  down)
-    stop_containers
-    ;;
-  build)
-    rebuild_containers
+  stop)
+    stop_dev
     ;;
   restart)
-    restart_containers
+    restart_dev
+    ;;
+  rebuild)
+    rebuild_dev
     ;;
   logs)
-    view_logs
+    show_logs
     ;;
-  db)
-    access_db
+  shell)
+    open_shell
     ;;
-  redis)
-    access_redis
+  psql)
+    open_psql
     ;;
-  migrate)
-    run_migrations
+  redis-cli)
+    open_redis_cli
     ;;
   test)
     run_tests
     ;;
+  status)
+    show_status
+    ;;
   clean)
-    clean_resources
+    clean_dev
     ;;
   help|*)
     show_help

@@ -1,134 +1,116 @@
-# Docker Development Environment Guide
+# Docker Development Guide
 
-This guide explains how to set up and use the Docker development environment for the Benton County Building Cost System (BCBS) application.
+This guide provides instructions for setting up and using the Docker development environment for the Benton County Building Cost System (BCBS) project.
 
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
+- Docker and Docker Compose installed on your local machine
+- Git installed for repository management
+- Basic knowledge of Docker and containerization
 
-1. [Docker](https://docs.docker.com/get-docker/)
-2. [Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
+## Quick Start
 
-## Getting Started
-
-The BCBS application uses Docker Compose to create a consistent development environment with all necessary services.
-
-### Services Included
-
-1. **Web Service**: The Node.js application running the BCBS frontend and backend
-2. **PostgreSQL Database**: For persistent data storage
-3. **Redis**: For session management and caching
-
-### Setup Instructions
-
-1. Clone the repository (if you haven't already):
-   ```bash
-   git clone <repository-url>
-   cd bcbs-application
-   ```
-
-2. Create your local environment file (a template is provided):
-   ```bash
-   cp .env.dev .env.local
-   ```
-
-3. Modify `.env.local` with any custom settings or secrets you need for local development.
-
-4. Start the Docker environment:
-   ```bash
-   docker-compose up
-   ```
-
-5. Access the application at http://localhost:5000
-
-## Common Tasks
-
-### Rebuilding the Docker Image
-
-If you make changes to the Dockerfile or need to rebuild the image:
+1. Clone the repository
+2. Navigate to the project directory
+3. Run the helper script to start the development environment:
 
 ```bash
+./scripts/docker-dev.sh start
+```
+
+4. Open your browser and navigate to http://localhost:5000
+
+## Development Environment Structure
+
+The development environment consists of several Docker containers:
+
+- **Web Container**: Runs the Node.js application with hot reloading
+- **Database Container**: PostgreSQL database for data storage
+- **Redis Container**: Redis instance for caching and session management
+
+## Helper Script Commands
+
+We provide a helper script (`scripts/docker-dev.sh`) to simplify common Docker operations:
+
+| Command | Description |
+|---------|-------------|
+| `start` | Start the development environment |
+| `stop` | Stop the development environment |
+| `restart` | Restart the development environment |
+| `rebuild` | Rebuild the development environment |
+| `logs` | Show logs from the containers |
+| `shell` | Open a shell in the web container |
+| `psql` | Open a PostgreSQL shell |
+| `redis-cli` | Open a Redis CLI shell |
+| `test` | Run tests in the Docker environment |
+| `status` | Show status of Docker containers |
+| `clean` | Remove all containers and volumes |
+| `help` | Show the help message |
+
+## Manual Docker Commands
+
+If you prefer using Docker commands directly:
+
+```bash
+# Start containers in the background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
+
+# Rebuild containers
 docker-compose build
 ```
 
-### Running in Detached Mode
+## Database Access
 
-To run the services in the background:
+The PostgreSQL database is exposed on port 5432. You can connect to it using:
 
-```bash
-docker-compose up -d
-```
+- **Host**: localhost
+- **Port**: 5432
+- **Database**: bcbs
+- **Username**: bcbs
+- **Password**: bcbs
 
-### Viewing Logs
-
-To see logs for all services:
-
-```bash
-docker-compose logs -f
-```
-
-For a specific service:
+Or use the helper script to open a PostgreSQL shell:
 
 ```bash
-docker-compose logs -f web
-```
-
-### Stopping the Environment
-
-To stop all services:
-
-```bash
-docker-compose down
-```
-
-To stop and remove volumes (this will delete all database data):
-
-```bash
-docker-compose down -v
-```
-
-## Database Management
-
-### Accessing the PostgreSQL Database
-
-```bash
-docker-compose exec db psql -U bcbs -d bcbs
-```
-
-### Running Database Migrations
-
-The application uses Drizzle ORM for database migrations. To run migrations:
-
-```bash
-docker-compose exec web npm run db:push
+./scripts/docker-dev.sh psql
 ```
 
 ## Troubleshooting
 
-### Container Won't Start
+### Container not starting
 
-1. Check if ports are already in use on your machine
-2. Verify that Docker has enough resources allocated
-3. Look at the container logs for specific error messages
+If a container fails to start, check the logs:
 
-### Database Connection Issues
+```bash
+docker-compose logs web
+```
 
-If the application can't connect to the database:
+### Database connection issues
 
-1. Ensure the database container is running: `docker-compose ps`
-2. Check the DATABASE_URL environment variable in .env.local
-3. Wait a few moments - the database might still be initializing
+Ensure that the database credentials in `.env.dev` match those in `docker-compose.yml`.
 
-## Next Steps
+### Port conflicts
 
-After getting the Docker environment running, you can:
+If you have port conflicts (e.g., another service using port 5000), edit the port mappings in `docker-compose.yml`.
 
-1. Begin developing new features
-2. Run the test suite
-3. Set up GitHub Actions CI/CD pipeline
+## Best Practices
 
-## Additional Resources
+1. **Use volume mounts** for development to keep your code changes reflected in real-time
+2. **Keep containers stateless** by storing persistent data in volumes
+3. **Use the helper scripts** to ensure consistent environment management
+4. **Run tests inside Docker** to ensure consistency with the CI environment
 
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Drizzle ORM Documentation](https://orm.drizzle.team/)
+## CI/CD Integration
+
+The Docker development environment is designed to match the CI/CD pipeline. When you push changes to GitHub:
+
+1. The CI workflow runs tests in a Docker environment
+2. If tests pass and the branch is `main`, the deployment workflow builds and deploys the application
+
+See the [CI/CD Guide](ci_cd_guide.md) for more details.
