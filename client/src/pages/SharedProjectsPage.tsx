@@ -319,13 +319,9 @@ export const SharedProjectsPageContent: React.FC = () => {
   );
 };
 
-// Main page component wrapped with CollaborationProvider
+// Main page component
 const SharedProjectsPage: React.FC = () => {
-  return (
-    <CollaborationProvider projectId={0}>
-      <SharedProjectsPageContent />
-    </CollaborationProvider>
-  );
+  return <SharedProjectsPageContent />;
 };
 
 // Wrapper component that provides collaboration context
