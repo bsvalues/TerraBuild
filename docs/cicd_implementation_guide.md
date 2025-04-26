@@ -1,257 +1,319 @@
-# CI/CD Implementation Guide with Replit AI Agent
+# CI/CD Implementation Guide for BCBS Project
 
-This guide provides a practical approach to implementing CI/CD and development environment setup for the BCBS project using the Replit AI Agent, based on the specific bootstrap guidance provided.
+This guide outlines the implementation of a Continuous Integration and Continuous Deployment (CI/CD) pipeline for the Benton County Building System (BCBS) application.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Components](#components)
+3. [Docker Development Environment](#docker-development-environment)
+4. [GitHub Actions CI Pipeline](#github-actions-ci-pipeline)
+5. [Terraform Infrastructure Management](#terraform-infrastructure-management)
+6. [Deployment Strategy](#deployment-strategy)
+7. [Monitoring and Rollback](#monitoring-and-rollback)
 
 ## Overview
 
-The provided CI/CD bootstrap approach focuses on three core components:
+The CI/CD pipeline automates testing, building, and deployment of the BCBS application, enabling consistent and reliable delivery of new features and bug fixes.
 
-1. **Docker-Compose Development Environment**: Creates a consistent, reproducible environment with Flask, PostgreSQL, and Redis
-2. **GitHub Actions Workflow**: Implements automated testing, linting, and build processes for every PR
-3. **Terraform Infrastructure Setup**: Manages deployment infrastructure for the frontend
+### Objectives
 
-## Integration with Existing AI Agent Strategy
+- Provide a consistent development environment
+- Automate testing and validation
+- Enable reliable and repeatable deployments
+- Support multiple environments (dev, staging, production)
+- Ensure infrastructure consistency through code
 
-This CI/CD implementation complements our existing AI Agent approach by:
+## Components
 
-1. **Providing Technical Foundation**: Establishes the development and deployment infrastructure needed for all other work
-2. **Automating Quality Checks**: Ensures all AI-generated code meets quality standards through automated testing
-3. **Standardizing Environments**: Creates consistent environments to prevent "works on my machine" issues
-4. **Enabling Continuous Integration**: Allows for rapid iteration with AI-generated code while maintaining quality
+The CI/CD pipeline consists of these key components:
 
-## Implementation Steps
+1. **Docker Development Environment**
+   - Local development environment consistency
+   - Simplified onboarding for new developers
+   - Mirroring of production dependencies
 
-### Step 1: Prime the Replit AI Agent
+2. **GitHub Actions CI Pipeline**
+   - Automated testing
+   - Code quality checks
+   - Build verification
+   - Artifact generation
 
-Use this specialized prompt to instruct the Replit AI Agent on CI/CD implementation:
+3. **Terraform Infrastructure Management**
+   - Infrastructure as Code (IaC)
+   - Environment consistency
+   - Resource management
+   - Security configuration
 
-```
-You are my DevOps & Developer-Experience Engineer.  
-Your mission is Sprint 1 for BCBS:
+4. **Deployment Automation**
+   - Environment-specific deployments
+   - Rollback capabilities
+   - Release management
 
-1. Create a Docker-Compose dev container (Flask + Postgres + Redis).
-2. Add a GitHub Actions workflow that on every PR:
-   • Checks out code
-   • Installs dependencies
-   • Runs lint, unit tests, build
-   • Uploads artifacts
-3. On merges to main, deploy infra via Terraform in infra/frontend.
+## Docker Development Environment
 
-For each task:
-- Open a feature branch (`sprint1/<task-name>`)
-- Commit with Conventional Commits (`feat:`, `chore:`, `ci:`)
-- Open a PR and report status back here (CI passing, any blockers).
-Do not proceed to the next task until I approve the PR.
-```
+### Configuration
 
-### Step 2: Implement Docker-Compose Environment
+The Docker development environment is configured using `docker-compose.yml`:
 
-Create the docker-compose.yml file and .env.dev file:
-
-#### docker-compose.yml
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   web:
-    build: .
-    command: flask run --host=0.0.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run dev
     volumes:
       - .:/app
+      - /app/node_modules
     ports:
       - "5000:5000"
     env_file:
       - .env.dev
     depends_on:
       - db
+      - redis
+
   db:
     image: postgres:15
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: bcbs
       POSTGRES_USER: bcbs
       POSTGRES_PASSWORD: bcbs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
 ```
 
-#### .env.dev
-```
-FLASK_APP=app.py
-FLASK_ENV=development
-DATABASE_URL=postgresql://bcbs:bcbs@db:5432/bcbs
-REDIS_URL=redis://redis:6379/0
-SECRET_KEY=dev-secret-key-change-in-production
-```
+### Usage
 
-After creating these files, commit them to a feature branch `sprint1/docker-setup` and create a PR.
+1. **Starting the environment**:
+   ```bash
+   docker-compose up
+   ```
 
-### Step 3: Implement GitHub Actions Workflow
+2. **Rebuilding after changes**:
+   ```bash
+   docker-compose build
+   docker-compose up
+   ```
 
-Create the GitHub Actions workflow file:
+3. **Running database migrations**:
+   ```bash
+   docker-compose exec web npm run db:push
+   ```
 
-#### .github/workflows/ci.yml
+## GitHub Actions CI Pipeline
+
+### Workflow Configuration
+
+The GitHub Actions workflow is defined in `.github/workflows/ci.yml`:
+
 ```yaml
-name: CI
+name: CI/CD Pipeline
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
 
 jobs:
-  build-test:
+  test:
+    name: Test
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: bcbs
+          POSTGRES_PASSWORD: bcbs
+          POSTGRES_DB: bcbs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.11'
+          node-version: '20'
+          cache: 'npm'
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Lint
-        run: flake8 .
-      - name: Run unit tests
-        run: pytest --maxfail=1 --disable-warnings -q
-      - name: Build front-end
-        working-directory: client
-        run: npm ci && npm run build
-      - name: Upload build artifact
+        run: npm ci
+      - name: Check TypeScript
+        run: npm run check
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://bcbs:bcbs@localhost:5432/bcbs_test
+          REDIS_URL: redis://localhost:6379/0
+          NODE_ENV: test
+  
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: web-build
-          path: client/dist
+          name: build-artifacts
+          path: dist/
 ```
 
-After creating this file, commit it to a feature branch `sprint1/github-ci` and create a PR.
+### CI Pipeline Steps
 
-### Step 4: Set Up Terraform Infrastructure
+1. **Test**:
+   - Run unit tests
+   - Type checking
+   - Code quality validation
 
-Create the Terraform configuration:
+2. **Build**:
+   - Create production artifacts
+   - Package application
+   - Upload artifacts for deployment
 
-#### infra/frontend/main.tf
-```hcl
-provider "aws" {
-  region = "us-west-2"
-}
+3. **Deploy** (when ready):
+   - Deploy to appropriate environment
+   - Run database migrations
+   - Verify deployment
 
-resource "aws_s3_bucket" "frontend" {
-  bucket = "bcbs-frontend-${random_id.suffix.hex}"
-  acl    = "public-read"
-}
+## Terraform Infrastructure Management
 
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-```
+### Resource Management
 
-After creating this file, commit it to a feature branch `sprint1/terraform-setup` and create a PR.
+Terraform modules are organized in the `terrafusion` directory:
 
-## Adapting for TypeScript/Node.js
+- `main.tf` - Main infrastructure configuration
+- `variables.tf` - Variable definitions
+- `outputs.tf` - Output values
+- Environment-specific vars in `environments/*.tfvars`
 
-Since our BCBS project uses TypeScript/Node.js rather than Flask, we'll need to adapt the Docker and CI setup. Here's how the Replit AI Agent can help with this adaptation:
+### Key Components
 
-### Step 1: Adapting Docker-Compose
+1. **Network Infrastructure**:
+   - VPC and subnets
+   - Security groups
+   - Routing tables
 
-Use this prompt to adapt the Docker-Compose setup:
+2. **Database Resources**:
+   - PostgreSQL RDS instance
+   - Backup configuration
+   - Security settings
 
-```
-Adapt the Flask-based Docker-Compose setup to work with our TypeScript/Node.js project:
+3. **Cache Infrastructure**:
+   - Redis ElastiCache cluster
+   - Subnet groups
+   - Security configuration
 
-1. Change the web service to use Node.js instead of Flask
-2. Configure it to run our TypeScript application
-3. Ensure it works with our PostgreSQL database via Supabase
-4. Keep the existing database and Redis services
+### Deployment Integration
 
-Please provide the updated docker-compose.yml and any additional files needed.
-```
+The Terraform configuration integrates with the CI/CD pipeline:
 
-### Step 2: Adapting GitHub Actions
+1. Plan in CI:
+   ```bash
+   terraform plan -var-file=environments/dev.tfvars -out=tfplan
+   ```
 
-Use this prompt to adapt the GitHub Actions workflow:
+2. Apply on approval:
+   ```bash
+   terraform apply tfplan
+   ```
 
-```
-Adapt the GitHub Actions workflow for our TypeScript/Node.js project:
+## Deployment Strategy
 
-1. Change Python setup to Node.js setup
-2. Update dependency installation to use npm/yarn
-3. Update the linting to use ESLint
-4. Configure testing to use Jest
-5. Keep the frontend build steps
+### Environment Progression
 
-Please provide the updated .github/workflows/ci.yml file.
-```
+The deployment strategy follows a progressive approach:
 
-### Step 3: Adapting Terraform
+1. **Development**:
+   - Automatic deployment on merge to development branch
+   - Used for feature testing and integration
 
-Use this prompt to adapt the Terraform configuration:
+2. **Staging**:
+   - Manual approval required
+   - Production-like environment for final testing
+   - Complete integration testing
 
-```
-Enhance the Terraform configuration for our TypeScript/Node.js project:
+3. **Production**:
+   - Manual approval required
+   - Scheduled deployment windows
+   - Canary or blue-green deployment
 
-1. Add configuration for a CDN (CloudFront)
-2. Set up appropriate S3 bucket policies
-3. Configure proper CORS settings
-4. Add outputs for the deployed frontend URL
+### Deployment Configuration
 
-Please provide the updated infra/frontend/main.tf file.
-```
+Environment-specific configurations are managed through:
 
-## Integration with MCP Framework
+- Environment variables
+- Configuration files
+- Feature flags
 
-Our BCBS project uses the Model Content Protocol (MCP) framework for AI capabilities. Here's how to ensure the CI/CD setup works well with MCP:
+## Monitoring and Rollback
 
-### Step 1: MCP Testing in CI
+### Health Checks
 
-Add these specialized tests to verify MCP functionality:
+Automated health checks verify deployment success:
 
-```yaml
-- name: MCP Integration Tests
-  run: npm run test:mcp
-  env:
-    MCP_TEST_MODE: true
-```
+- API endpoint tests
+- Database connectivity
+- Cache functionality
+- Resource utilization
 
-### Step 2: MCP Agent Deployment
+### Rollback Strategy
 
-Configure deployment for MCP agents:
+If issues are detected:
 
-```yaml
-- name: Deploy MCP Agents
-  if: github.ref == 'refs/heads/main'
-  run: npm run deploy:mcp
-  env:
-    MCP_DEPLOY_TOKEN: ${{ secrets.MCP_DEPLOY_TOKEN }}
-```
+1. Automatic rollback for critical failures
+2. Manual rollback option for non-critical issues
+3. Database rollback through migrations
 
-## Best Practices for CI/CD with AI Agent
+### Monitoring Integration
 
-1. **Incremental Implementation**: Implement one piece at a time and verify before moving on
-2. **Thorough Testing**: Ensure all AI-generated code is thoroughly tested in CI
-3. **Environment Consistency**: Keep development, CI, and production environments as similar as possible
-4. **Security First**: Never commit sensitive data; use environment variables and secrets
-5. **Documentation**: Keep documentation updated as CI/CD evolves
+The CI/CD pipeline integrates with monitoring tools:
 
-## Monitoring and Troubleshooting
-
-1. **CI Results Dashboard**: Set up a dashboard to monitor CI runs
-2. **Notification System**: Configure notifications for CI failures
-3. **Debug Logs**: Enable detailed logs for troubleshooting
-4. **Performance Monitoring**: Track build and test times to identify bottlenecks
-
-## Next Steps After CI/CD Setup
-
-Once the CI/CD infrastructure is in place, we can proceed with:
-
-1. **Implementing Core Features**: Use the AI Agent to implement the Levy-Wizard and other core features
-2. **Automated Testing**: Expand test coverage with AI-generated tests
-3. **Performance Optimization**: Use the CI/CD pipeline to monitor and improve performance
-4. **Continuous Deployment**: Set up automatic deployment to staging environments
+- Alerts on deployment failures
+- Performance metrics after deployment
+- Error rate tracking
 
 ## Conclusion
 
-By implementing this CI/CD approach with the Replit AI Agent, we establish a solid foundation for the BCBS project that ensures quality, consistency, and reliability. This infrastructure will make all subsequent development with the AI Agent more efficient and effective.
+This CI/CD implementation provides a robust framework for developing, testing, and deploying the BCBS application. By following these guidelines, the team can ensure consistent quality, reliable deployments, and efficient collaboration.
+
+## Additional Resources
+
+- [Docker Development Guide](./docker_development_guide.md)
+- [Terraform AWS Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
