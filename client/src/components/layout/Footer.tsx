@@ -98,7 +98,7 @@ const Footer: React.FC = () => {
         
         <div className="flex flex-col md:flex-row justify-between items-center mt-6 text-sm text-gray-500">
           <div className="mb-4 md:mb-0">
-            © {currentYear} TerraBuild - Benton County Building Cost Assessment System
+            © {currentYear} TerraBuild - Benton County Property Assessment Platform
           </div>
           <div className="flex space-x-6">
             <Link href="/privacy-policy" className="hover:text-[#29B7D3] transition-colors">
