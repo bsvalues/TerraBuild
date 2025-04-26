@@ -10,6 +10,7 @@ import { RefreshCw } from "lucide-react";
 // Import all page components
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
+import EnhancedCalculatorPage from "@/pages/EnhancedCalculatorPage";
 import UsersPage from "@/pages/users-page";
 import LandingPage from "@/pages/LandingPage";
 import AIToolsPage from "@/pages/AIToolsPage";
@@ -55,6 +56,7 @@ import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import DataFlowProvider from "@/contexts/DataFlowContext";
 import TerraBuildThemeProvider from "./components/TerraBuildThemeProvider";
 // Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
@@ -342,12 +344,14 @@ function App() {
             <ErrorHandlerWrapper />
             <EnhancedSupabaseProvider>
               <AuthProvider>
-                <SidebarProvider>
-                  <WindowProvider>
-                    <Router />
-                    <Toaster />
-                  </WindowProvider>
-                </SidebarProvider>
+                <DataFlowProvider>
+                  <SidebarProvider>
+                    <WindowProvider>
+                      <Router />
+                      <Toaster />
+                    </WindowProvider>
+                  </SidebarProvider>
+                </DataFlowProvider>
               </AuthProvider>
             </EnhancedSupabaseProvider>
           </ThemeProvider>
