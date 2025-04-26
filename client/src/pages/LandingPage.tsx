@@ -1,87 +1,106 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
+import { Link } from 'wouter';
+import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import bentonSeal from '@assets/BC.png';
 import arizonaSunset from '@assets/Arizona-sunset.jpg';
 import vineyardHeader from '@assets/Header-Vineyard-BC.png';
 import ogimage from '@assets/ogimage.jpg';
-import { BarChart3, Calculator, Database, LineChart, Map, FileSpreadsheet, Upload, Download, BrainCircuit, PieChart, Building, User } from 'lucide-react';
+import { 
+  BarChart3, 
+  Calculator, 
+  Database, 
+  LineChart, 
+  Map, 
+  FileSpreadsheet, 
+  Upload, 
+  Download, 
+  BrainCircuit, 
+  PieChart, 
+  Building, 
+  User,
+  ChevronRight  
+} from 'lucide-react';
 
 export default function LandingPage() {
   const [_, navigate] = useLocation();
+  const [loading, setLoading] = useState(false);
+  
   // Mock authenticated state - always set to true to bypass login
   const isAuthenticated = true;
   const user = { name: "Admin User", username: "admin" };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero section */}
-      <section className="relative bg-gradient-to-r from-[#1a3b5c] to-[#235789] text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
-          <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mb-6" />
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Benton County Washington Building Cost Assessment System
-          </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-3xl">
-            The official Building Cost Estimation System for Benton County, Washington
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            {isAuthenticated ? (
-              <>
-                <Button 
-                  size="lg" 
-                  className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-                  onClick={() => navigate('/dashboard')}
-                >
-                  <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="bg-transparent border-white text-white hover:bg-white/10"
-                  onClick={() => navigate('/calculator')}
-                >
-                  <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="bg-transparent border-white text-white hover:bg-white/10"
-                  onClick={() => navigate('/data-import')}
-                >
-                  <Upload className="mr-2 h-5 w-5" /> Import Data
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  size="lg" 
-                  className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-                  onClick={() => navigate('/cost-wizard')}
-                >
-                  <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="bg-transparent border-white text-white hover:bg-white/10"
-                  onClick={() => navigate('/calculator')}
-                >
-                  <Calculator className="mr-2 h-5 w-5" /> Try Calculator
-                </Button>
-              </>
+    <MainLayout loading={loading} isLanding={true}>
+      <div className="bg-white">
+        {/* Hero section */}
+        <section className="relative bg-gradient-to-r from-[#1a3b5c] to-[#235789] text-white -mt-6 -mx-6 mb-4">
+          <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
+            <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mb-6" />
+            <h1 className="text-3xl md:text-5xl font-bold mb-4">
+              Benton County Building Cost Assessment System
+            </h1>
+            <p className="text-lg md:text-xl mb-8 max-w-3xl">
+              The official Building Cost Estimation System for Benton County, Washington
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              {isAuthenticated ? (
+                <>
+                  <Button 
+                    size="lg" 
+                    className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-transparent border-white text-white hover:bg-white/10"
+                    onClick={() => navigate('/calculator')}
+                  >
+                    <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-transparent border-white text-white hover:bg-white/10"
+                    onClick={() => navigate('/data-import')}
+                  >
+                    <Upload className="mr-2 h-5 w-5" /> Import Data
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    size="lg" 
+                    className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                    onClick={() => navigate('/cost-wizard')}
+                  >
+                    <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-transparent border-white text-white hover:bg-white/10"
+                    onClick={() => navigate('/calculator')}
+                  >
+                    <Calculator className="mr-2 h-5 w-5" /> Try Calculator
+                  </Button>
+                </>
+              )}
+            </div>
+            {isAuthenticated && user && (
+              <div className="mt-4 bg-white/10 px-4 py-2 rounded-full flex items-center">
+                <User className="h-4 w-4 mr-2 text-white/80" />
+                <span className="text-white/80 text-sm">Welcome, {user.name || user.username}</span>
+              </div>
             )}
           </div>
-          {isAuthenticated && user && (
-            <div className="mt-4 bg-white/10 px-4 py-2 rounded-full flex items-center">
-              <User className="h-4 w-4 mr-2 text-white/80" />
-              <span className="text-white/80 text-sm">Welcome, {user.name || user.username}</span>
-            </div>
-          )}
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/10 to-transparent"></div>
-      </section>
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/10 to-transparent"></div>
+        </section>
 
       {/* Features section */}
       <section className="py-16 bg-[#f8f9fa]">
@@ -541,5 +560,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </MainLayout>
   );
 }

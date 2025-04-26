@@ -29,7 +29,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-export default function Header() {
+interface HeaderProps {
+  isLanding?: boolean;
+}
+
+export default function Header({ isLanding = false }: HeaderProps) {
   const [, navigate] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const { toggleSidebar } = useSidebar();
@@ -51,18 +55,23 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/90">
+    <header className={cn(
+      "sticky top-0 z-50 w-full border-b bg-white shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/90",
+      isLanding && "bg-transparent border-none shadow-none backdrop-blur-none supports-[backdrop-filter]:bg-transparent"
+    )}>
       <div className="flex h-16 items-center px-4">
         <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="mr-2 md:hidden"
-            aria-label="Toggle sidebar"
-          >
-            <PanelLeft className="h-5 w-5" />
-          </Button>
+          {!isLanding && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="mr-2 md:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          )}
           
           <Link href="/" className="flex items-center space-x-2">
             <div className="hidden md:flex">
@@ -70,7 +79,10 @@ export default function Header() {
                 <div className="h-8 w-8 rounded-md bg-gradient-to-r from-[#29B7D3] to-[#243E4D] flex items-center justify-center mr-2">
                   <span className="text-white font-bold text-lg">TB</span>
                 </div>
-                <span className="text-xl font-bold text-[#243E4D]">TerraBuild</span>
+                <span className={cn(
+                  "text-xl font-bold",
+                  isLanding ? "text-white" : "text-[#243E4D]"
+                )}>TerraBuild</span>
               </div>
             </div>
             <div className="flex md:hidden">
@@ -82,14 +94,16 @@ export default function Header() {
         </div>
 
         <div className="flex-1 md:ml-8">
-          <div className="hidden md:flex relative max-w-md">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input 
-              type="search" 
-              placeholder="Search properties, calculations, reports..." 
-              className="pl-8 bg-gray-50 border-gray-200 focus:bg-white" 
-            />
-          </div>
+          {!isLanding && (
+            <div className="hidden md:flex relative max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input 
+                type="search" 
+                placeholder="Search properties, calculations, reports..." 
+                className="pl-8 bg-gray-50 border-gray-200 focus:bg-white" 
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4">

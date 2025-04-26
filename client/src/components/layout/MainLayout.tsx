@@ -14,6 +14,7 @@ interface MainLayoutProps {
   hideFooter?: boolean;
   fullWidth?: boolean;
   loading?: boolean;
+  isLanding?: boolean;
 }
 
 export default function MainLayout({ 
@@ -22,7 +23,8 @@ export default function MainLayout({
   pageDescription,
   hideFooter = false,
   fullWidth = false,
-  loading = false
+  loading = false,
+  isLanding = false
 }: MainLayoutProps) {
   const { isExpanded, toggleSidebar } = useSidebar();
   const { isLoading: authLoading } = useAuth();
@@ -54,13 +56,13 @@ export default function MainLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-      <Header />
+      <Header isLanding={isLanding} />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        {!isLanding && <Sidebar />}
         <div 
           className={cn(
             "flex-1 flex flex-col transition-all duration-300",
-            isExpanded ? "ml-0 md:ml-56" : "ml-0 md:ml-16"
+            !isLanding && (isExpanded ? "ml-0 md:ml-56" : "ml-0 md:ml-16")
           )}
         >
           <main className="flex-1 overflow-auto p-4 md:p-6" 
