@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import MainContent from '@/components/layout/MainContent';
+import MainLayout from '@/components/layout/MainLayout';
+import PageHeader from '@/components/layout/PageHeader';
 import {
   Card,
   CardContent,
@@ -13,7 +13,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -29,7 +28,11 @@ import {
   Search,
   Building,
   Home,
-  Info
+  Info,
+  Plus,
+  Download,
+  Upload,
+  FileDown
 } from "lucide-react";
 
 // Property type definition
@@ -100,32 +103,62 @@ const PropertyBrowserPage = () => {
       )
     : data;
 
-  return (
-    <LayoutWrapper>
-      <MainContent title="Property Browser">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Property Browser</h1>
-            <p className="text-muted-foreground">
-              Browse and search property records from Benton County
-            </p>
-          </div>
-        </div>
+  // Header actions for the page
+  const headerActions = [
+    {
+      label: "Add Property",
+      icon: <Plus className="h-4 w-4" />,
+      variant: "default" as const,
+      href: "/properties/new",
+      tooltipText: "Add a new property to the database"
+    },
+    {
+      label: "Export",
+      icon: <FileDown className="h-4 w-4" />,
+      variant: "outline" as const,
+      onClick: () => console.log("Export properties"),
+      tooltipText: "Export properties to CSV or Excel"
+    },
+    {
+      label: "Import",
+      icon: <Upload className="h-4 w-4" />,
+      variant: "outline" as const,
+      href: "/data-import",
+      tooltipText: "Import properties from a file"
+    }
+  ];
 
-        <Card className="mb-6">
+  return (
+    <MainLayout loading={isLoading && page === 1}>
+      <div className="space-y-6">
+        <PageHeader
+          title="Property Database"
+          description="Browse, search, and manage property records from Benton County"
+          actions={headerActions}
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Properties", href: "/properties" }
+          ]}
+          helpText="This database contains all of the properties in Benton County. You can search, filter, and export property data from this page."
+        />
+        
+        <Card className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle>Search Properties</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              <Search className="h-5 w-5 text-[#29B7D3] mr-2" />
+              Search Properties
+            </CardTitle>
             <CardDescription>
               Search by address, owner name, or property ID
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="search"
-                placeholder="Search properties..."
-                className="pl-8"
+                placeholder="Type to search properties..."
+                className="pl-8 bg-gray-50 focus:bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -133,15 +166,18 @@ const PropertyBrowserPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle>Property Records</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              <Building className="h-5 w-5 text-[#29B7D3] mr-2" />
+              Property Records
+            </CardTitle>
             <CardDescription>
-              Showing {data ? filteredProperties.length : '0'} properties
+              Showing {data ? (filteredProperties ? filteredProperties.length : 0) : '0'} of {data ? data.length : 0} properties
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading && page !== 1 ? (
               // Skeleton loader for properties table
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -150,10 +186,10 @@ const PropertyBrowserPage = () => {
               </div>
             ) : (
               <>
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="bg-gray-50">
                         <TableHead>ID</TableHead>
                         <TableHead>Address</TableHead>
                         <TableHead>Owner</TableHead>
@@ -164,7 +200,7 @@ const PropertyBrowserPage = () => {
                     <TableBody>
                       {filteredProperties && filteredProperties.length > 0 ? (
                         filteredProperties.map((property: Property) => (
-                          <TableRow key={property.id}>
+                          <TableRow key={property.id} className="hover:bg-gray-50">
                             <TableCell className="font-medium">{property.propId}</TableCell>
                             <TableCell>
                               {property.propertyAddress ? (
@@ -175,14 +211,14 @@ const PropertyBrowserPage = () => {
                                   {property.propertyZip && <> {property.propertyZip}</>}
                                 </>
                               ) : (
-                                <span className="text-muted-foreground italic">No address</span>
+                                <span className="text-gray-400 italic">No address</span>
                               )}
                             </TableCell>
                             <TableCell>{property.ownerName || 'Unknown'}</TableCell>
                             <TableCell>{property.parcelNumber || 'N/A'}</TableCell>
                             <TableCell className="text-right">
                               <Link href={`/properties/${property.id}`}>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" className="hover:bg-[#29B7D3]/10 hover:text-[#29B7D3] hover:border-[#29B7D3]/30">
                                   <Info className="h-4 w-4 mr-1" />
                                   Details
                                 </Button>
@@ -193,13 +229,19 @@ const PropertyBrowserPage = () => {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-6">
-                            <div className="flex flex-col items-center justify-center space-y-2">
-                              <Home className="h-8 w-8 text-muted-foreground" />
-                              <p className="text-muted-foreground">No properties found</p>
+                            <div className="flex flex-col items-center justify-center space-y-2 py-8">
+                              <Home className="h-12 w-12 text-gray-300" />
+                              <p className="text-gray-500 font-medium">No properties found</p>
+                              <p className="text-gray-400 text-sm max-w-md text-center">
+                                {searchQuery ? 
+                                  "Try adjusting your search criteria or clear the search to see all properties." : 
+                                  "There are no properties in the database. Add a property to get started."}
+                              </p>
                               {searchQuery && (
                                 <Button
                                   variant="outline"
                                   onClick={() => setSearchQuery('')}
+                                  className="mt-2"
                                 >
                                   Clear search
                                 </Button>
@@ -218,17 +260,19 @@ const PropertyBrowserPage = () => {
                     variant="outline"
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
+                    className="text-[#243E4D]"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </Button>
-                  <span className="text-sm text-muted-foreground">
+                  <div className="px-4 py-1.5 bg-white border rounded-md text-sm text-gray-600">
                     Page {page}
-                  </span>
+                  </div>
                   <Button
                     variant="outline"
                     onClick={() => setPage(p => p + 1)}
                     disabled={!data || data.length < pageSize}
+                    className="text-[#243E4D]"
                   >
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />
@@ -238,8 +282,8 @@ const PropertyBrowserPage = () => {
             )}
           </CardContent>
         </Card>
-      </MainContent>
-    </LayoutWrapper>
+      </div>
+    </MainLayout>
   );
 };
 
