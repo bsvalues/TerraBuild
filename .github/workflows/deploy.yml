@@ -166,19 +166,69 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       
-      - name: Canary Deployment (10% Traffic)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Choose Deployment Strategy
+        id: deployment-strategy
         run: |
-          echo "Starting canary deployment with 10% traffic to new version"
-          # In a real scenario, this would call AWS CLI to update a Lambda function, 
-          # ECS service, or K8s deployment to direct 10% of traffic to the new version
-          sleep 10  # Simulate wait time for traffic shift
+          # Get the deployment strategy from the commit message or defaulting to blue-green
+          if [[ "${{ github.event.head_commit.message }}" == *"[canary]"* ]]; then
+            echo "strategy=canary" >> $GITHUB_OUTPUT
+            echo "Using canary deployment strategy"
+          else
+            echo "strategy=blue-green" >> $GITHUB_OUTPUT
+            echo "Using blue-green deployment strategy (default)"
+          fi
+      
+      - name: Blue-Green Deployment
+        if: steps.deployment-strategy.outputs.strategy == 'blue-green'
+        run: |
+          echo "Starting blue-green deployment"
           
-          echo "Monitoring canary deployment metrics..."
-          # This would check error rates, latency, etc. for the canary deployment
-          sleep 20  # Simulate monitoring period
+          # Run the blue-green deployment script
+          node scripts/blue_green_deploy.js \
+            --environment=staging \
+            --deployment-id=${{ needs.prepare-deployment.outputs.deploy_id }} \
+            --image-tag=${{ needs.prepare-deployment.outputs.image_tag }}
           
-          echo "Canary deployment successful, increasing to 100% traffic"
-          # This would update the traffic split to 100% for the new version
+          # Check the exit code
+          if [ $? -ne 0 ]; then
+            echo "Blue-green deployment failed"
+            exit 1
+          fi
+          
+          echo "Blue-green deployment completed successfully"
+      
+      - name: Canary Deployment
+        if: steps.deployment-strategy.outputs.strategy == 'canary'
+        run: |
+          echo "Starting canary deployment"
+          
+          # Run the canary deployment script
+          node scripts/canary_deploy.js \
+            --environment=staging \
+            --deployment-id=${{ needs.prepare-deployment.outputs.deploy_id }} \
+            --image-tag=${{ needs.prepare-deployment.outputs.image_tag }} \
+            --initial-percent=10 \
+            --increment=30 \
+            --interval=5 \
+            --error-threshold=1 \
+            --latency-threshold=500
+          
+          # Check the exit code
+          if [ $? -ne 0 ]; then
+            echo "Canary deployment failed"
+            exit 1
+          fi
+          
+          echo "Canary deployment completed successfully"
       
       - name: Run post-deployment checks
         run: |
