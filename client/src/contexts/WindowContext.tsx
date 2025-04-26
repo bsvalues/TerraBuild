@@ -108,7 +108,7 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({ children }) => {
     }));
     
     // Set up the new window's content
-    newWindow.document.title = `${title} - Benton County Building Cost System`;
+    newWindow.document.title = `${title} - TerraBuild`;
     
     // Apply styles and content
     newWindow.document.body.innerHTML = `

@@ -61,7 +61,7 @@ export function generateCostCSV(calculation: CostCalculation, options: ExcelOpti
 
   // Add company info if requested
   if (mergedOptions.includeHeader) {
-    csvRows.push('Benton County Building Cost Report');
+    csvRows.push('TerraBuild - Building Cost Report');
     csvRows.push(`Generated on ${new Date().toLocaleDateString()}`);
     csvRows.push('');
   }
