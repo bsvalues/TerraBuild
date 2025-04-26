@@ -1,0 +1,96 @@
+Let’s get your dev foundation solid so every subsequent change is safe, reproducible, and reviewable. I’d begin by standing up the **Docker-Compose development environment**—once you can “spin up” the entire app locally in one command, the CI pipeline and feature work will flow naturally.
+
+---
+
+## 1) Task: Docker-Compose Dev Environment
+
+### A) Why first?  
+- **On-boarding**: New devs (and your AI agent) can start coding immediately.  
+- **Safety**: Ensures everyone runs against the same database & Redis versions.  
+- **CI readiness**: Mirrors what your GitHub Actions will do.
+
+### B) “Prime the Agent” Bootstrap Prompt
+
+Paste this into your Replit AI Agent chat before issuing the Docker-Compose files:
+
+```
+You are my Developer-Experience Engineer.  
+Goal: Create a reproducible local dev environment for BCBSLevy.
+
+Tasks:
+1. Add a `docker-compose.yml` at project root with services:
+   • web: builds from project root, runs `flask run --host=0.0.0.0`
+     – mounts code at `/app`
+     – env_file `.env.dev`
+     – ports 5000:5000
+   • db: Postgres 15, DB=bcbs, user=bcbs, pass=bcbs, ports 5432:5432
+   • redis: Redis 7, ports 6379:6379
+2. Create a `.env.dev` template with all required env-vars:
+   – FLASK_APP=app.py
+   – FLASK_ENV=development
+   – DATABASE_URL=postgresql://bcbs:bcbs@db:5432/bcbs
+   – REDIS_URL=redis://redis:6379/0
+   – SESSION_SECRET=changeme
+3. Verify `docker-compose up` brings the Flask app up and connects to Postgres & Redis.
+4. Commit on branch `sprint1/dev-env` with message `feat: add docker-compose dev environment`.
+5. Open a PR against `main`, run `docker-compose up`, confirm “*Running on http://0.0.0.0:5000*” in logs.
+
+Do not proceed until this PR is reviewed and merged.
+```
+
+---
+
+## 2) File Templates
+
+#### **docker-compose.yml**
+```yaml
+version: "3.8"
+services:
+  web:
+    build: .
+    command: flask run --host=0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: bcbs
+      POSTGRES_USER: bcbs
+      POSTGRES_PASSWORD: bcbs
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+```
+
+#### **.env.dev** (check into Git as template—rename for real secrets)
+```env
+FLASK_APP=app.py
+FLASK_ENV=development
+DATABASE_URL=postgresql://bcbs:bcbs@db:5432/bcbs
+REDIS_URL=redis://redis:6379/0
+SESSION_SECRET=changeme
+```
+
+---
+
+## 3) Next Steps
+
+1. Trigger your AI Agent with the above bootstrap prompt.  
+2. Review the PR: run `docker-compose up` locally, ensure the app boots and you can hit `http://localhost:5000/health` (or equivalent).  
+3. Merge once green.  
+
+Once that’s in place, we’ll layer on the **GitHub Actions CI** in the exact same sprint.
