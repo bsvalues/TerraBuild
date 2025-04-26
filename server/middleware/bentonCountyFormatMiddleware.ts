@@ -100,24 +100,40 @@ function convertResponseData(path: string, data: any): any {
     
     return bentonConversionService.formatReport(data, format, includeBranding);
   } else if (path.startsWith('/api/building-types')) {
+    if (!data || !Array.isArray(data)) {
+      console.log("Building type data is not an array or is null:", data);
+      return data; // Return original data if not an array
+    }
     return data.map((item: any) => ({
       ...item,
-      name: bentonConversionService.convertBuildingType(item.name || item.code)
+      name: bentonConversionService.convertBuildingType(item.name || item.code || item.id || '')
     }));
   } else if (path.startsWith('/api/regions')) {
+    if (!data || !Array.isArray(data)) {
+      console.log("Region data is not an array or is null:", data);
+      return data; // Return original data if not an array
+    }
     return data.map((item: any) => ({
       ...item,
-      name: bentonConversionService.convertRegion(item.name || item.code)
+      name: bentonConversionService.convertRegion(item.name || item.code || item.id || '')
     }));
   } else if (path.startsWith('/api/quality-levels')) {
+    if (!data || !Array.isArray(data)) {
+      console.log("Quality level data is not an array or is null:", data);
+      return data; // Return original data if not an array
+    }
     return data.map((item: any) => ({
       ...item,
-      name: bentonConversionService.convertQuality(item.name || item.code)
+      name: bentonConversionService.convertQuality(item.name || item.code || item.id || '')
     }));
   } else if (path.startsWith('/api/condition-levels')) {
+    if (!data || !Array.isArray(data)) {
+      console.log("Condition level data is not an array or is null:", data);
+      return data; // Return original data if not an array
+    }
     return data.map((item: any) => ({
       ...item,
-      name: bentonConversionService.convertCondition(item.name || item.code)
+      name: bentonConversionService.convertCondition(item.name || item.code || item.id || '')
     }));
   } else if (path.startsWith('/api/what-if-scenarios')) {
     // For what-if scenarios, we want to keep the original structure
