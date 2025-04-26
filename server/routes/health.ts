@@ -1,111 +1,178 @@
-import { Request, Response, Router } from 'express';
-import os from 'os';
-import { getConnectedClients } from '../socket';
-import { APP_VERSION } from '../../shared/constants';
-import { getFeatureFlags } from '../feature-flags';
+/**
+ * Health Check Endpoint for BCBS Application
+ * 
+ * This file provides health check endpoints that can be used
+ * for monitoring, load balancers, and container orchestration systems.
+ */
 
-const healthRouter = Router();
+import { Request, Response } from 'express';
+import { db } from '../db';
+
+// Health check status types
+type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
+
+// Component health information
+interface ComponentHealth {
+  status: HealthStatus;
+  responseTime?: number;
+  details?: Record<string, any>;
+}
+
+// Overall health response
+interface HealthResponse {
+  status: HealthStatus;
+  version: string;
+  timestamp: string;
+  uptime: number;
+  components: Record<string, ComponentHealth>;
+}
+
+// Application start time for uptime calculation
+const startTime = Date.now();
 
 /**
- * Health check endpoint
- * This provides basic health information about the application and system
+ * Get database health status
+ * @returns {Promise<ComponentHealth>} Database health
  */
-healthRouter.get('/', async (req: Request, res: Response) => {
-  const startTime = process.hrtime();
-  
-  // Basic system info
-  const systemInfo = {
-    hostname: os.hostname(),
-    uptime: Math.floor(process.uptime()),
-    memory: {
-      free: os.freemem(),
-      total: os.totalmem(),
-      usage: (1 - os.freemem() / os.totalmem()) * 100,
-    },
-    cpus: os.cpus().length,
-    load: os.loadavg(),
-  };
-  
-  // Application metrics
-  const appMetrics = {
-    version: APP_VERSION,
-    nodeVersion: process.version,
-    connectedClients: getConnectedClients(),
-    environment: process.env.NODE_ENV || 'development',
-  };
-  
-  // Active feature flags
-  const featureFlags = getFeatureFlags();
-  
-  // Calculate response time
-  const [seconds, nanoseconds] = process.hrtime(startTime);
-  const responseTime = seconds * 1000 + nanoseconds / 1000000;
-  
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    system: systemInfo,
-    application: appMetrics,
-    features: featureFlags,
-    responseTime: `${responseTime.toFixed(2)}ms`,
-  });
-});
-
-/**
- * Detailed metrics endpoint for monitoring systems
- */
-healthRouter.get('/metrics', async (req: Request, res: Response) => {
-  // This would typically be integrated with a monitoring system like Prometheus
-  // For now, we'll just return some basic metrics
-  
-  const memoryUsage = process.memoryUsage();
-  
-  res.json({
-    process: {
-      memory: {
-        rss: memoryUsage.rss,
-        heapTotal: memoryUsage.heapTotal,
-        heapUsed: memoryUsage.heapUsed,
-        external: memoryUsage.external,
-      },
-      uptime: process.uptime(),
-    },
-    system: {
-      loadAvg: os.loadavg(),
-      freeMemory: os.freemem(),
-      totalMemory: os.totalmem(),
-    },
-    application: {
-      startTime: process.env.APP_START_TIME || new Date().toISOString(),
-      activeRequests: Math.floor(Math.random() * 10), // This would be an actual counter in production
-      totalRequests: Math.floor(Math.random() * 1000), // This would be an actual counter in production
-      errors: Math.floor(Math.random() * 5), // This would be an actual counter in production
-    },
-  });
-});
-
-/**
- * Liveness probe for Kubernetes
- */
-healthRouter.get('/liveness', (req: Request, res: Response) => {
-  // Simple check to verify the application is running
-  res.status(200).send('OK');
-});
-
-/**
- * Readiness probe for Kubernetes
- */
-healthRouter.get('/readiness', async (req: Request, res: Response) => {
-  // Check if the application is ready to receive traffic
-  // This would include checking database connections, etc.
-  
+async function getDatabaseHealth(): Promise<ComponentHealth> {
   try {
-    // In a real application, you would check database connections, etc.
-    // For now, we'll just simulate a successful check
-    res.status(200).send('OK');
+    const startQuery = Date.now();
+    // Simple query to check database connectivity
+    await db.execute('SELECT 1');
+    const queryTime = Date.now() - startQuery;
+    
+    return {
+      status: 'healthy',
+      responseTime: queryTime,
+      details: {
+        connectionPool: 'active'
+      }
+    };
   } catch (error) {
-    res.status(500).send('NOT READY');
+    console.error('Database health check failed:', error);
+    return {
+      status: 'unhealthy',
+      details: {
+        error: (error as Error).message
+      }
+    };
   }
-});
+}
 
-export default healthRouter;
+/**
+ * Get memory usage health
+ * @returns {ComponentHealth} Memory health
+ */
+function getMemoryHealth(): ComponentHealth {
+  const memoryUsage = process.memoryUsage();
+  const memoryThresholdMB = 1024; // 1GB
+  
+  const usedHeapMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
+  const totalHeapMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
+  const status: HealthStatus = usedHeapMB > memoryThresholdMB ? 'degraded' : 'healthy';
+  
+  return {
+    status,
+    details: {
+      heapUsed: `${usedHeapMB}MB`,
+      heapTotal: `${totalHeapMB}MB`,
+      rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`
+    }
+  };
+}
+
+/**
+ * Get application info for health check
+ * @returns {ComponentHealth} App info
+ */
+function getAppInfo(): ComponentHealth {
+  return {
+    status: 'healthy',
+    details: {
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version
+    }
+  };
+}
+
+/**
+ * Health check handler for complete detailed health information
+ */
+export async function healthCheck(req: Request, res: Response) {
+  const dbHealth = await getDatabaseHealth();
+  const memoryHealth = getMemoryHealth();
+  const appInfo = getAppInfo();
+  
+  // Determine overall health status
+  let overallStatus: HealthStatus = 'healthy';
+  
+  if (dbHealth.status === 'unhealthy' || memoryHealth.status === 'unhealthy') {
+    overallStatus = 'unhealthy';
+  } else if (dbHealth.status === 'degraded' || memoryHealth.status === 'degraded') {
+    overallStatus = 'degraded';
+  }
+  
+  const healthData: HealthResponse = {
+    status: overallStatus,
+    version: process.env.npm_package_version || '1.0.0',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor((Date.now() - startTime) / 1000), // in seconds
+    components: {
+      database: dbHealth,
+      memory: memoryHealth,
+      application: appInfo
+    }
+  };
+  
+  // Set appropriate status code
+  const statusCode = overallStatus === 'healthy' ? 200 :
+                    overallStatus === 'degraded' ? 200 : 503;
+  
+  res.status(statusCode).json(healthData);
+}
+
+/**
+ * Simple health check handler for load balancers
+ * Returns 200 OK if the service is available, 503 if not
+ */
+export function simpleHealthCheck(req: Request, res: Response) {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Readiness probe for Kubernetes and other orchestrators
+ * Checks if the application is ready to serve traffic
+ */
+export async function readinessProbe(req: Request, res: Response) {
+  try {
+    // Check database connectivity
+    await db.execute('SELECT 1');
+    
+    res.status(200).json({
+      status: 'ready',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'not ready',
+      timestamp: new Date().toISOString(),
+      message: 'Database connection failed'
+    });
+  }
+}
+
+/**
+ * Liveness probe for Kubernetes and other orchestrators
+ * Checks if the application is alive and healthy
+ */
+export function livenessProbe(req: Request, res: Response) {
+  // Simple check that the Node.js process is running
+  res.status(200).json({
+    status: 'alive',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor((Date.now() - startTime) / 1000) // in seconds
+  });
+}

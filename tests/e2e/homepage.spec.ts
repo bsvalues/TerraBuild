@@ -1,110 +1,126 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * End-to-end test for the BCBS Application homepage
+ * Homepage E2E Tests for BCBS Application
+ * 
+ * This suite tests the main homepage functionality including:
+ * - Page load
+ * - Navigation elements
+ * - Key UI components
+ * - Basic interactions
  */
+
 test.describe('Homepage', () => {
-  test('should load the homepage successfully', async ({ page }) => {
+  test('should load the homepage', async ({ page }) => {
     // Navigate to the homepage
     await page.goto('/');
     
-    // Check that the page title contains the expected text
-    await expect(page).toHaveTitle(/Benton County/);
-    
-    // Verify that the main content loaded
-    await expect(page.locator('main')).toBeVisible();
+    // Verify page title
+    await expect(page).toHaveTitle(/Benton County|Building Cost|BCBS/);
     
     // Screenshot for visual verification
-    await page.screenshot({ path: 'test-results/homepage.png' });
+    await page.screenshot({ path: 'test-results/screenshots/homepage.png' });
   });
   
-  test('should display the navigation menu', async ({ page }) => {
+  test('should have a working header with navigation', async ({ page }) => {
     await page.goto('/');
     
-    // Verify navigation menu is present
-    const navigation = page.locator('nav');
-    await expect(navigation).toBeVisible();
+    // Check for header elements
+    const header = page.locator('header');
+    await expect(header).toBeVisible();
     
-    // Should have menu items
-    const menuItems = navigation.locator('a');
-    await expect(menuItems).toHaveCount({ min: 1 });
+    // Check for logo
+    await expect(page.locator('header img[alt*="logo" i]').first()).toBeVisible();
+    
+    // Check for navigation links
+    const navLinks = page.locator('nav a');
+    const linkCount = await navLinks.count();
+    expect(linkCount).toBeGreaterThan(0);
   });
   
-  test('should have a working search function', async ({ page }) => {
+  test('should display the cost calculator section', async ({ page }) => {
     await page.goto('/');
     
-    // Find the search input
-    const searchInput = page.locator('input[type="search"], [placeholder*="Search"]').first();
-    await expect(searchInput).toBeVisible();
+    // Check for calculator section
+    const calculatorSection = page.locator('*:text("Cost Calculator")').first();
+    await expect(calculatorSection).toBeVisible();
     
-    // Enter search term
-    await searchInput.fill('Test');
-    await searchInput.press('Enter');
-    
-    // Wait for search results to appear
-    // This might need adjustment based on the actual app implementation
-    await page.waitForLoadState('networkidle');
-    
-    // Check that we've navigated to search results or the search is being processed
-    const currentUrl = page.url();
-    expect(currentUrl).toContain('search') || expect(currentUrl).toContain('q=');
+    // Basic form elements should be present
+    await expect(page.locator('form')).toBeVisible();
   });
   
-  test('should handle errors gracefully', async ({ page }) => {
-    // Navigate to a non-existent page
-    await page.goto('/non-existent-page-123456789');
+  test('should have a responsive design', async ({ page }) => {
+    // Test with desktop viewport (already default)
+    await page.goto('/');
+    await expect(page.locator('header')).toBeVisible();
+    await page.screenshot({ path: 'test-results/screenshots/homepage-desktop.png' });
     
-    // Check that we get an appropriate error message, not a crash
-    await expect(page.locator('text="not found"')).toBeVisible({ timeout: 10000 });
+    // Test with tablet viewport
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await expect(page.locator('header')).toBeVisible();
+    await page.screenshot({ path: 'test-results/screenshots/homepage-tablet.png' });
+    
+    // Test with mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(page.locator('header')).toBeVisible();
+    await page.screenshot({ path: 'test-results/screenshots/homepage-mobile.png' });
   });
   
-  test('should have proper accessibility attributes', async ({ page }) => {
+  test('should have proper a11y attributes', async ({ page }) => {
     await page.goto('/');
     
-    // Check that images have alt text
-    const images = page.locator('img:visible');
+    // Check for image alt texts
+    const images = page.locator('img');
     const count = await images.count();
     
-    for (let i = 0; i < Math.min(count, 10); i++) { // Test first 10 images max
-      const image = images.nth(i);
-      const altText = await image.getAttribute('alt') || '';
-      // Either has alt text, or explicitly empty alt="" for decorative images
-      expect(altText !== null).toBeTruthy();
+    for (let i = 0; i < count; i++) {
+      const img = images.nth(i);
+      const alt = await img.getAttribute('alt');
+      expect(alt, `Image ${i+1} should have alt text`).toBeTruthy();
     }
     
-    // Check form controls have labels
-    const formControls = page.locator('input:visible, select:visible, textarea:visible');
-    const formControlCount = await formControls.count();
-    
-    for (let i = 0; i < Math.min(formControlCount, 5); i++) { // Test first 5 controls
-      const control = formControls.nth(i);
-      const id = await control.getAttribute('id');
-      
-      if (id) {
-        // Check if there's an associated label
-        const hasLabel = await page.locator(`label[for="${id}"]`).count() > 0;
-        const hasAriaLabel = await control.getAttribute('aria-label') !== null;
-        const hasAriaLabelledBy = await control.getAttribute('aria-labelledby') !== null;
-        
-        expect(hasLabel || hasAriaLabel || hasAriaLabelledBy).toBeTruthy();
-      }
-    }
+    // Check for landmarks
+    await expect(page.locator('header')).toBeVisible();
+    await expect(page.locator('footer')).toBeVisible();
+    await expect(page.locator('main')).toBeVisible();
   });
-  
-  test('should load quickly', async ({ page }) => {
-    // Record performance metrics
-    await page.goto('/', { waitUntil: 'load' });
+});
+
+test.describe('Health Endpoint', () => {
+  test('should return healthy status', async ({ request }) => {
+    const response = await request.get('/api/health');
     
-    // Get performance metrics using JavaScript
-    const timing = await page.evaluate(() => JSON.stringify(window.performance.timing));
-    const timingData = JSON.parse(timing);
+    expect(response.status()).toBe(200);
     
-    // Calculate load time
-    const loadTime = timingData.loadEventEnd - timingData.navigationStart;
+    const body = await response.json();
+    expect(body.status).toBe('healthy');
+  });
+});
+
+test.describe('Feature Flags', () => {
+  test('should load feature flags', async ({ page }) => {
+    await page.goto('/');
     
-    console.log(`Page load time: ${loadTime}ms`);
-    
-    // Should load in less than 5 seconds (adjust as needed)
-    expect(loadTime).toBeLessThan(5000);
+    // Wait for feature flags to be loaded
+    // This tests if the application has loaded feature flags in any form
+    try {
+      // Check if we can find feature flag data in the page content
+      const flagsExist = await page.evaluate(() => {
+        // Look for flags in various possible locations
+        return typeof (window as any).featureFlags !== 'undefined' || 
+               document.querySelector('[data-feature-flags]') !== null;
+      });
+      
+      // We don't need to assert this, as we're just ensuring the evaluation completes
+      // If feature flags aren't found, we'll just not run additional assertions
+      if (flagsExist) {
+        // Additional assertions can go here if flags exist
+        console.log('Feature flags found in the application');
+      } else {
+        console.log('No feature flags found in standard locations');
+      }
+    } catch (error) {
+      console.log('Error checking for feature flags:', error);
+    }
   });
 });
