@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { PageShell, InfoCard, ActionsPanel } from '@/components/layout/PageShell';
+import PageShell, { InfoCard, ActionsPanel } from '@/components/layout/PageShell';
 import {
   TerraBuildUserFlow,
   calculationWorkflowSteps,
@@ -30,7 +30,7 @@ import {
   Info,
   HelpCircle,
   CalendarDays,
-  SquareFoot,
+  SquareDot,
   PaintBucket,
   Star,
   Gauge,

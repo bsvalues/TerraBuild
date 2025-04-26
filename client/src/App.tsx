@@ -281,7 +281,8 @@ function Router() {
       
       {/* Other protected routes */}
       <ProtectedRouteWrapper path="/dashboard" component={DashboardPage} />
-      <ProtectedRouteWrapper path="/calculator" component={CalculatorPage} />
+      <ProtectedRouteWrapper path="/calculator" component={EnhancedCalculatorPage} />
+      <ProtectedRouteWrapper path="/calculator-old" component={CalculatorPage} />
       <ProtectedRouteWrapper path="/analytics" component={AnalyticsPage} />
       <ProtectedRouteWrapper path="/users" component={UsersPage} />
       <ProtectedRouteWrapper path="/ai-tools" component={AIToolsPage} />

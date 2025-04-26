@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
+// Interface for data snapshots
 interface DataSnapshot {
   id: string;
   timestamp: number;
@@ -8,6 +10,7 @@ interface DataSnapshot {
   operation: 'create' | 'read' | 'update' | 'delete' | 'calculate' | 'import' | 'export';
 }
 
+// Interface for the state managed by the context
 interface DataFlowState {
   // Properties being tracked for cost calculations
   propertyId?: string | null;
@@ -39,6 +42,7 @@ interface DataFlowState {
   dataHistory: DataSnapshot[];
 }
 
+// Interface for the context value
 interface DataFlowContextType {
   state: DataFlowState;
   updateState: (updates: Partial<DataFlowState>) => void;
@@ -49,105 +53,82 @@ interface DataFlowContextType {
   trackUserActivity: (activity: string) => void;
 }
 
-const generateSessionId = () => {
-  return `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-};
-
+// Initial state
 const initialState: DataFlowState = {
-  sessionId: generateSessionId(),
+  sessionId: uuidv4(),
   userActivity: [],
-  dataHistory: []
+  dataHistory: [],
 };
 
+// Create context
 const DataFlowContext = createContext<DataFlowContextType | undefined>(undefined);
 
-export const DataFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Provider component
+const DataFlowProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<DataFlowState>(initialState);
-  
-  // Persist state to sessionStorage
-  useEffect(() => {
-    try {
-      const savedState = sessionStorage.getItem('terraflow-state');
-      if (savedState) {
-        setState(JSON.parse(savedState));
-      }
-    } catch (error) {
-      console.error('Failed to load DataFlow state from sessionStorage', error);
-    }
-    
-    return () => {
-      try {
-        sessionStorage.setItem('terraflow-state', JSON.stringify(state));
-      } catch (error) {
-        console.error('Failed to save DataFlow state to sessionStorage', error);
-      }
-    };
+
+  // Update state with new values
+  const updateState = useCallback((updates: Partial<DataFlowState>) => {
+    setState(prevState => ({
+      ...prevState,
+      ...updates,
+    }));
   }, []);
-  
-  // Save state changes to sessionStorage
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('terraflow-state', JSON.stringify(state));
-    } catch (error) {
-      console.error('Failed to save DataFlow state to sessionStorage', error);
-    }
-  }, [state]);
-  
-  const updateState = (updates: Partial<DataFlowState>) => {
-    setState(prevState => ({ ...prevState, ...updates }));
-  };
-  
-  const clearState = () => {
+
+  // Clear state
+  const clearState = useCallback(() => {
     setState({
       ...initialState,
-      sessionId: state.sessionId,
-      userActivity: [...state.userActivity, 'Cleared application state'],
-      dataHistory: [...state.dataHistory]
+      sessionId: state.sessionId, // Keep the same session ID
     });
-  };
-  
-  const addDataSnapshot = (snapshot: Omit<DataSnapshot, 'timestamp'>) => {
+  }, [state.sessionId]);
+
+  // Add a data snapshot to history
+  const addDataSnapshot = useCallback((snapshot: Omit<DataSnapshot, 'timestamp'>) => {
     const newSnapshot: DataSnapshot = {
       ...snapshot,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     setState(prevState => ({
       ...prevState,
-      dataHistory: [...prevState.dataHistory, newSnapshot]
+      dataHistory: [...prevState.dataHistory, newSnapshot],
     }));
-  };
-  
-  const getLastOperation = (operation: DataSnapshot['operation']) => {
-    return state.dataHistory
-      .filter(snapshot => snapshot.operation === operation)
-      .sort((a, b) => b.timestamp - a.timestamp)[0];
-  };
-  
-  const resetHistory = () => {
+  }, []);
+
+  // Get the last operation of a specific type
+  const getLastOperation = useCallback((operation: DataSnapshot['operation']) => {
+    const filtered = state.dataHistory.filter(snap => snap.operation === operation);
+    return filtered.length > 0 ? filtered[filtered.length - 1] : undefined;
+  }, [state.dataHistory]);
+
+  // Reset history
+  const resetHistory = useCallback(() => {
     setState(prevState => ({
       ...prevState,
-      dataHistory: []
+      dataHistory: [],
     }));
-  };
-  
-  const trackUserActivity = (activity: string) => {
+  }, []);
+
+  // Track user activity
+  const trackUserActivity = useCallback((activity: string) => {
     setState(prevState => ({
       ...prevState,
-      userActivity: [...prevState.userActivity, `${new Date().toISOString()}: ${activity}`]
+      userActivity: [...prevState.userActivity, `${new Date().toISOString()} - ${activity}`],
     }));
-  };
-  
-  const value = useMemo(() => ({
+  }, []);
+
+  // Value provided by the context
+  const value: DataFlowContextType = {
     state,
     updateState,
     clearState,
     addDataSnapshot,
     getLastOperation,
     resetHistory,
-    trackUserActivity
-  }), [state]);
-  
+    trackUserActivity,
+  };
+
   return (
     <DataFlowContext.Provider value={value}>
       {children}
@@ -155,92 +136,72 @@ export const DataFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+// Hook to use the context
 export const useDataFlow = (): DataFlowContextType => {
   const context = useContext(DataFlowContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useDataFlow must be used within a DataFlowProvider');
   }
-  
   return context;
 };
 
-// Data visualization component
+// Optional component to visualize the data flow (for debugging)
 export const DataFlowVisualizer: React.FC<{
+  show?: boolean;
   showHistory?: boolean;
-  showCurrentState?: boolean;
-  className?: string;
-}> = ({ showHistory = true, showCurrentState = true, className }) => {
+  showActivity?: boolean;
+}> = ({ show = true, showHistory = true, showActivity = true }) => {
   const { state } = useDataFlow();
-  
-  if (!showHistory && !showCurrentState) return null;
-  
+
+  if (!show) return null;
+
   return (
-    <div className={`text-xs border rounded-md overflow-hidden ${className}`}>
-      <div className="bg-gray-100 px-3 py-2 font-medium border-b">
-        TerraBuild Data Flow Tracker
-      </div>
+    <div className="fixed bottom-0 right-0 bg-white border border-gray-300 rounded-tl-lg shadow-lg p-3 z-50 max-w-md max-h-80 overflow-auto text-xs">
+      <h3 className="text-sm font-semibold mb-2">Data Flow State</h3>
       
-      {showCurrentState && (
-        <div className="px-3 py-2 border-b">
-          <h4 className="font-medium mb-1">Current State</h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {state.propertyId && (
-              <>
-                <div className="text-gray-500">Property ID:</div>
-                <div>{state.propertyId}</div>
-              </>
-            )}
-            {state.buildingType && (
-              <>
-                <div className="text-gray-500">Building Type:</div>
-                <div>{state.buildingType}</div>
-              </>
-            )}
-            {state.region && (
-              <>
-                <div className="text-gray-500">Region:</div>
-                <div>{state.region}</div>
-              </>
-            )}
-            {state.quality && (
-              <>
-                <div className="text-gray-500">Quality:</div>
-                <div>{state.quality}</div>
-              </>
-            )}
-            {state.condition && (
-              <>
-                <div className="text-gray-500">Condition:</div>
-                <div>{state.condition}</div>
-              </>
-            )}
-            {state.calculationId && (
-              <>
-                <div className="text-gray-500">Calculation ID:</div>
-                <div>{state.calculationId}</div>
-              </>
-            )}
+      {showActivity && state.userActivity.length > 0 && (
+        <div className="mb-2">
+          <h4 className="font-medium text-xs mb-1">User Activity:</h4>
+          <div className="border-l-2 border-blue-300 pl-2 max-h-20 overflow-y-auto">
+            {state.userActivity.slice(-5).map((activity, i) => (
+              <div key={i} className="text-xs text-gray-600">{activity}</div>
+            ))}
           </div>
         </div>
       )}
       
       {showHistory && state.dataHistory.length > 0 && (
-        <div className="px-3 py-2">
-          <h4 className="font-medium mb-1">Recent Operations</h4>
-          <div className="space-y-1">
-            {state.dataHistory.slice(-5).reverse().map((snapshot, index) => (
-              <div key={`history-${index}`} className="flex gap-2">
+        <div className="mb-2">
+          <h4 className="font-medium text-xs mb-1">Data History:</h4>
+          <div className="border-l-2 border-green-300 pl-2 max-h-20 overflow-y-auto">
+            {state.dataHistory.slice(-3).map((snapshot) => (
+              <div key={snapshot.id} className="text-xs mb-1">
+                <span className="text-green-600">{snapshot.operation}</span> from{' '}
+                <span className="text-blue-600">{snapshot.source}</span> @{' '}
                 <span className="text-gray-500">
-                  {new Date(snapshot.timestamp).toLocaleTimeString()}:
+                  {new Date(snapshot.timestamp).toLocaleTimeString()}
                 </span>
-                <span className="font-medium capitalize">{snapshot.operation}</span>
-                <span>from {snapshot.source}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+      
+      <div>
+        <h4 className="font-medium text-xs mb-1">Current State:</h4>
+        <div className="border-l-2 border-purple-300 pl-2 max-h-60 overflow-y-auto">
+          <pre className="text-xs whitespace-pre-wrap">
+            {JSON.stringify({
+              propertyId: state.propertyId,
+              buildingType: state.buildingType,
+              region: state.region,
+              quality: state.quality,
+              condition: state.condition,
+              calculationId: state.calculationId,
+            }, null, 2)}
+          </pre>
+        </div>
+      </div>
     </div>
   );
 };
