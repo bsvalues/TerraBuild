@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useCollaboration } from '@/contexts/CollaborationContext';
+import { useCollaboration, CollaborationProvider } from '@/contexts/CollaborationContext';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import ProjectInvitations from '@/components/collaboration/ProjectInvitations';
@@ -57,7 +57,8 @@ interface Project {
   isPublic: boolean;
 }
 
-const SharedProjectsPage: React.FC = () => {
+// Wrapper component that includes the CollaborationProvider
+export const SharedProjectsPageContent: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -315,6 +316,15 @@ const SharedProjectsPage: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+// Main page component wrapped with CollaborationProvider
+const SharedProjectsPage: React.FC = () => {
+  return (
+    <CollaborationProvider projectId={0}>
+      <SharedProjectsPageContent />
+    </CollaborationProvider>
   );
 };
 

@@ -261,24 +261,20 @@ function Router() {
       <Route path="/supabase-test" component={SupabaseTestPage} />
       <Route path="/cost-wizard" component={CostWizardPage} />
       
-      {/* Collaborative routes wrapped with CollaborationProvider */}
+      {/* Collaborative routes - without CollaborationProvider at this level */}
       <Route path="/shared-projects">
-        <CollaborationProvider projectId={0}>
-          <Switch>
-            <ProtectedRouteWrapper path="/shared-projects" component={SharedProjectsPage} />
-            <ProtectedRouteWrapper path="/shared-projects/create" component={CreateProjectPage} />
-            <ProtectedRouteWrapper path="/shared-projects/:id" component={ProjectDetailsPage} />
-            <ProtectedRouteWrapper path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
-          </Switch>
-        </CollaborationProvider>
+        <Switch>
+          <ProtectedRouteWrapper path="/shared-projects" component={SharedProjectsPage} />
+          <ProtectedRouteWrapper path="/shared-projects/create" component={CreateProjectPage} />
+          <ProtectedRouteWrapper path="/shared-projects/:id" component={ProjectDetailsPage} />
+          <ProtectedRouteWrapper path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
+        </Switch>
       </Route>
       
       <Route path="/projects">
-        <CollaborationProvider projectId={0}>
-          <Switch>
-            <ProtectedRouteWrapper path="/projects/:id" component={ProjectDetailsPage} />
-          </Switch>
-        </CollaborationProvider>
+        <Switch>
+          <ProtectedRouteWrapper path="/projects/:id" component={ProjectDetailsPage} />
+        </Switch>
       </Route>
       
       {/* Other protected routes */}
