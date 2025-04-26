@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
-import { useCollaboration } from '@/contexts/CollaborationContext';
-import { useAuth } from '@/contexts/auth-context';
+import { useCollaboration, CollaborationProvider } from '@/contexts/CollaborationContext';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectProvider, useProjectContext } from '@/contexts/ProjectContext';
 import ProjectSharingControls from '@/components/collaboration/ProjectSharingControls';
@@ -828,9 +828,11 @@ const ProjectDetailsPageWithProvider: React.FC = () => {
   const projectId = Number(params.id);
   
   return (
-    <ProjectProvider currentUserId={user?.id || 0}>
-      <ProjectDetailsPage />
-    </ProjectProvider>
+    <CollaborationProvider projectId={projectId}>
+      <ProjectProvider currentUserId={user?.id || 0}>
+        <ProjectDetailsPage />
+      </ProjectProvider>
+    </CollaborationProvider>
   );
 };
 

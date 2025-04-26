@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useCollaboration, CollaborationProvider } from '@/contexts/CollaborationContext';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import ProjectInvitations from '@/components/collaboration/ProjectInvitations';
 import {
