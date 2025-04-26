@@ -12,7 +12,7 @@
  */
 
 import { OpenAI } from 'openai';
-import { db } from '../db';
+import { db, pool } from '../db';
 import * as schema from '../../shared/schema';
 import NodeCache from 'node-cache';
 
@@ -187,8 +187,8 @@ async function fetchHistoricalData(buildingType: string, region: string) {
     let buildingCosts: any[] = [];
     
     try {
-      // Using direct SQL query to avoid schema validation issues
-      const result = await db.execute(
+      // Use the pool object for direct SQL queries
+      const result = await pool.query(
         `SELECT * FROM cost_factors WHERE region = $1 AND building_type = $2 LIMIT 1`,
         [region, buildingType]
       );
@@ -198,8 +198,8 @@ async function fetchHistoricalData(buildingType: string, region: string) {
     }
     
     try {
-      // Using direct SQL query for building costs
-      const result = await db.execute(
+      // Use the pool object for direct SQL queries
+      const result = await pool.query(
         `SELECT * FROM building_costs WHERE region = $1 AND building_type = $2 ORDER BY created_at DESC LIMIT 5`,
         [region, buildingType]
       );
@@ -231,8 +231,8 @@ async function fetchHistoricalData(buildingType: string, region: string) {
         region,
         building_type: buildingType,
         square_footage: 2500,
-        cost_per_sqft: costFactor.base_cost,
-        total_cost: costFactor.base_cost * 2500,
+        cost_per_sqft: Number(costFactor.base_cost) || 200.00,
+        total_cost: (Number(costFactor.base_cost) || 200.00) * 2500,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }];
