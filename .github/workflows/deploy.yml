@@ -1,0 +1,87 @@
+name: Deploy to Staging
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    branches: [main]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # Only run if the CI workflow was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Build Docker images
+        run: docker-compose build
+      
+      - name: Tag and Push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: bcbs-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Tag and push web service
+          docker tag bcbs-app_web:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag bcbs-app_web:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.0.0
+      
+      - name: Terraform Init & Apply
+        working-directory: terrafusion
+        env:
+          TF_VAR_image_tag: ${{ github.sha }}
+        run: |
+          terraform init
+          terraform apply -var-file=environments/staging.tfvars -auto-approve
+      
+      - name: Wait for deployment to stabilize
+        run: sleep 60
+      
+      - name: Post-deploy Smoke Test
+        env:
+          STAGING_URL: ${{ steps.terraform-output.outputs.app_url }}
+        run: |
+          # Basic HTTP check (replace with actual smoke tests)
+          curl --retry 5 --retry-delay 10 --retry-connrefused https://${STAGING_URL:-staging.example.com}/health
+          
+          # Run staging-specific smoke tests if available
+          if [ -f "package.json" ] && grep -q "smoke-test:staging" package.json; then
+            npm run smoke-test:staging
+          else
+            echo "No staging smoke tests defined, using basic health check"
+          fi
+      
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "Deployment to staging successful!"
+          # Add notification integration here (Slack, email, etc.)
+      
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "Deployment to staging failed!"
+          # Add notification integration here (Slack, email, etc.)
