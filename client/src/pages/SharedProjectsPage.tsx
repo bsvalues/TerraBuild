@@ -328,4 +328,13 @@ const SharedProjectsPage: React.FC = () => {
   );
 };
 
-export default SharedProjectsPage;
+// Wrapper component that provides collaboration context
+const SharedProjectsPageWithProvider: React.FC = () => {
+  return (
+    <CollaborationProvider projectId={0}>
+      <SharedProjectsPage />
+    </CollaborationProvider>
+  );
+};
+
+export default SharedProjectsPageWithProvider;
