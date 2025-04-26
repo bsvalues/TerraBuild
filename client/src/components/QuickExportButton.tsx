@@ -134,7 +134,7 @@ export default function QuickExportButton({
         pdf.rect(0, 0, pdfWidth, 20, 'F');
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(16);
-        pdf.text('Benton County Building Cost System', margin, 14);
+        pdf.text('TerraBuild', margin, 14);
         
         // Set y position after header
         let yPosition = 30;
@@ -293,7 +293,7 @@ export default function QuickExportButton({
         pdf.setTextColor(100, 100, 100);
         pdf.setFontSize(8);
         pdf.text(`Generated: ${timestamp}`, margin, pdfHeight - 5);
-        pdf.text(`© Benton County, Washington`, pdfWidth - 60, pdfHeight - 5);
+        pdf.text(`© TerraBuild - Benton County`, pdfWidth - 60, pdfHeight - 5);
         
         // Save the PDF
         pdf.save(`${filename}.pdf`);
@@ -410,7 +410,7 @@ export default function QuickExportButton({
       const colWidths = Object.keys(exportData[0]).map(key => ({ wch: Math.max(key.length, 10) }));
       ws['!cols'] = colWidths;
       
-      XLSX.utils.book_append_sheet(wb, ws, 'Benton County Data');
+      XLSX.utils.book_append_sheet(wb, ws, 'TerraBuild Data');
       
       // Generate the Excel file as a blob
       const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
