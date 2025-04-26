@@ -19,7 +19,7 @@ export default function LandingPageSimple() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                    Benton County Building Cost Assessment System
+                    TerraBuild
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
                     Advanced property assessment with AI-powered cost calculations, 
@@ -161,7 +161,7 @@ export default function LandingPageSimple() {
       
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t justify-center items-center">
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Benton County Building Cost System. All rights reserved.
+          © {new Date().getFullYear()} TerraBuild - Benton County Property Assessment Platform. All rights reserved.
         </p>
       </footer>
     </div>

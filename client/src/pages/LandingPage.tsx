@@ -377,7 +377,7 @@ export default function LandingPage() {
             <div className="md:w-1/2">
               <h2 className="text-3xl font-bold mb-6 text-[#243E4D]">About The System</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                The Benton County Building Cost System (BCBS) is the official tool used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington.
+                TerraBuild (formerly BCBS) is the official property assessment platform used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington.
               </p>
               <p className="text-lg text-muted-foreground mb-6">
                 Our system leverages advanced data analytics and machine learning to provide the most accurate building cost estimations based on real construction data collected over many years.
