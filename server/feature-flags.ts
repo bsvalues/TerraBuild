@@ -189,11 +189,15 @@ export async function createFeatureFlag(flag: Omit<FeatureFlag, 'id' | 'createdA
   }
   
   const now = new Date();
+  const defaultEnvironment = process.env.NODE_ENV || 'development';
+  
+  // Create a new object with our defaults first, then override with the provided flag data
   const newFlag: FeatureFlag = {
     id,
     createdAt: now,
     updatedAt: now,
-    environment: process.env.NODE_ENV || 'development',
+    environment: defaultEnvironment,
+    // Then spread the provided flag (will override environment if it was included)
     ...flag
   };
   
