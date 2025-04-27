@@ -126,7 +126,7 @@ export function StatisticalAnalysisDashboard({ className = '' }: StatisticalAnal
 
   // Fetch cost matrix data
   const { data: costMatrixData, isLoading } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Metric options with display names
