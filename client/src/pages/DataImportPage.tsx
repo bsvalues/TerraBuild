@@ -258,7 +258,7 @@ const DataImportPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/import-history'] });
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/cost-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['/cost-matrices'] });
       
       toast({
         title: "Import Successful",

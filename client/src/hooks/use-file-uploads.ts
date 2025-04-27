@@ -120,7 +120,7 @@ export function useFileUploads() {
       });
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cost-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['/cost-matrices'] });
       
       const imported = data?.imported || 0;
       const updated = data?.updated || 0;

@@ -36,7 +36,7 @@ export default function DataExplorationDemo() {
   
   // Fetch cost matrix data for visualizations
   const { data: costMatrixData, isLoading, error } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Extract building types from data for filtering
