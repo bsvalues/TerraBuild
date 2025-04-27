@@ -422,12 +422,15 @@ export const DataFlowWorkflow: React.FC<DataFlowWorkflowProps> = ({
             "space-y-8"
           )}>
             {/* Workflow Visualizer */}
+            {/* We need to pass currentStep directly since we're not inside a WorkflowProvider yet */}
             <WorkflowVisualizer 
               steps={steps}
+              currentStep={initialStep || steps[0].id}
               variant={variant === 'compact' ? 'minimal' : 'default'}
               showHelp={true}
               orientation="horizontal"
               animated={true}
+              onStepClick={() => {}} // No-op since we're handling navigation separately
             />
             
             {/* Data Flow Content */}
