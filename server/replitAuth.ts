@@ -6,7 +6,10 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
+import { DatabaseStorage } from "./storage-replit-auth";
+
+// Initialize storage
+const storage = new DatabaseStorage();
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -59,12 +62,16 @@ async function upsertUser(
 ) {
   await storage.upsertUser({
     id: claims["sub"],
-    username: claims["username"],
+    username: claims["username"] || `user_${claims["sub"]}`,
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     bio: claims["bio"],
     profileImageUrl: claims["profile_image_url"],
+    role: "user",
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
 }
 
@@ -80,7 +87,7 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user: any = {};
     updateUserSession(user, tokens);
     await upsertUser(tokens.claims());
     verified(null, user);
