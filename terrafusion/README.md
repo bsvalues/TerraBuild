@@ -1,91 +1,141 @@
-# Terraform Infrastructure for BCBS
+# BCBS Infrastructure as Code (IaC)
 
-This directory contains Terraform configurations for deploying the BCBS application infrastructure to AWS.
+This directory contains the Terraform code for provisioning and managing the infrastructure for the Benton County Building Cost System (BCBS) application.
+
+## Directory Structure
+
+```
+terrafusion/
+├── environments/           # Environment-specific configurations
+│   ├── dev/
+│   ├── staging/
+│   └── prod/
+├── modules/                # Reusable Terraform modules
+│   ├── networking/         # VPC, subnets, security groups
+│   ├── database/           # RDS and ElastiCache resources
+│   ├── compute/            # ECS and related resources
+│   ├── load_balancer/      # ALB and related resources
+│   ├── monitoring/         # CloudWatch and related resources
+│   ├── security/           # IAM and security-related resources
+│   └── deployment/         # Blue-Green and Canary deployment resources
+├── functions/              # Lambda functions for deployments
+├── new_main.tf             # Main Terraform configuration
+├── new_variables.tf        # Variable definitions
+├── new_outputs.tf          # Output definitions
+└── terraform-setup.sh      # Script for Terraform operations
+```
 
 ## Prerequisites
 
-1. [Terraform](https://www.terraform.io/downloads.html) (version 1.0.0 or later)
-2. AWS CLI configured with appropriate credentials
-3. S3 bucket for Terraform state (optional but recommended for team environments)
+- Terraform v1.0.0+
+- AWS CLI configured with appropriate permissions
+- S3 bucket for Terraform state (referenced in `backend.tfvars`)
+- DynamoDB table for state locking
 
-## Infrastructure Components
+## Getting Started
 
-The Terraform configuration creates the following resources:
+### Initial Setup
 
-- VPC with public and private subnets
-- PostgreSQL RDS database
-- ElastiCache Redis cluster
-- Security groups for application, database, and Redis
-- (Optional) ECS cluster for containerized application deployment
-
-## Usage
-
-### Initialize Terraform
+1. Initialize Terraform with the appropriate backend:
 
 ```bash
-terraform init
+cd terrafusion
+terraform init -backend-config=environments/dev/backend.tfvars
 ```
 
-For team environments using S3 backend:
+2. Select the appropriate workspace:
 
 ```bash
-terraform init \
-  -backend-config="bucket=YOUR_BUCKET_NAME" \
-  -backend-config="key=state/terraform.tfstate" \
-  -backend-config="region=YOUR_AWS_REGION"
+terraform workspace select dev
+# or
+terraform workspace new dev
 ```
 
-### Plan the Deployment
+### Using the Terraform Setup Script
+
+The `terraform-setup.sh` script simplifies Terraform operations:
 
 ```bash
-terraform plan -var-file=environments/dev.tfvars -out=tfplan
+# Format: ./terraform-setup.sh <environment> <action> [version]
+# Examples:
+./terraform-setup.sh dev plan
+./terraform-setup.sh staging apply v1.0.0
+./terraform-setup.sh prod destroy
 ```
 
-### Apply the Configuration
+### Manual Operations
+
+If you prefer to run Terraform commands directly:
 
 ```bash
-terraform apply tfplan
+# Planning
+terraform plan -var-file=environments/dev/terraform.tfvars -out=terraform.plan
+
+# Applying
+terraform apply terraform.plan
+
+# Destroying
+terraform destroy -var-file=environments/dev/terraform.tfvars
 ```
 
-### Destroy the Infrastructure
+## Environment Management
 
-When you're done, you can destroy all resources:
+The infrastructure supports three environments:
 
-```bash
-terraform destroy -var-file=environments/dev.tfvars
-```
+- **Development (dev)**: For active development and testing
+- **Staging (staging)**: For pre-release testing
+- **Production (prod)**: For the live application
 
-## Environment-Specific Configuration
+Each environment has its own configuration in the `environments/` directory.
 
-Create environment-specific variable files in the `environments/` directory:
+## Deployment Strategies
 
-- `dev.tfvars` - Development environment
-- `staging.tfvars` - Staging environment
-- `prod.tfvars` - Production environment
+### Blue-Green Deployment
 
-## Security Notes
+Blue-Green deployment maintains two identical environments with only one active:
 
-- Database passwords should be managed through environment variables or AWS Secrets Manager
-- Use AWS KMS for encryption of sensitive data
-- Consider implementing additional security controls for production environments
+- New versions are deployed to the inactive environment
+- Traffic is switched once the new version is validated
+- Rollback is immediate by switching traffic back
+
+### Canary Deployment
+
+Canary deployment gradually shifts traffic to the new version:
+
+- Initially routes a small percentage of traffic to the new version
+- Gradually increases traffic if monitoring shows no issues
+- Automatically rolls back if issues are detected
 
 ## CI/CD Integration
 
-This Terraform configuration can be integrated with your CI/CD pipeline:
+The Terraform code is integrated with GitHub Actions for automated:
 
-1. Initialize and validate in the CI environment
-2. Generate and review the plan
-3. Apply the changes on approval (for production environments)
+- Code formatting checks
+- Validation
+- Planning
+- Applying (with approval for staging and production)
 
-Example GitHub Actions workflow snippet:
+See `.github/workflows/terraform.yml` for the workflow definition.
 
-```yaml
-- name: Terraform Init
-  run: terraform -chdir=terrafusion init
+## Security Considerations
 
-- name: Terraform Validate
-  run: terraform -chdir=terrafusion validate
+- Sensitive values are never stored in the repository
+- Secrets are managed through AWS Secrets Manager
+- Infrastructure is deployed with the principle of least privilege
+- Security groups use the principle of least access
 
-- name: Terraform Plan
-  run: terraform -chdir=terrafusion plan -var-file=environments/dev.tfvars -out=tfplan
-```
+## Additional Documentation
+
+For more detailed information, see:
+
+- [Infrastructure as Code Documentation](../docs/infrastructure_as_code.md)
+- [IaC and CI/CD Integration Guide](../docs/iac_cicd_integration.md)
+- [Blue-Green and Canary Deployment Strategies](../docs/blue_green_canary_deployments.md)
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes
+3. Submit a pull request
+4. Review the Terraform plan
+5. Merge after approval
