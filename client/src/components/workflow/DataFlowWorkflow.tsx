@@ -19,7 +19,8 @@ import {
   HistoryIcon,
   RefreshCw,
   Database,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import {
   Card,
@@ -452,10 +453,24 @@ export const DataFlowWorkflow: React.FC<DataFlowWorkflowProps> = ({
           )}>
             {/* Navigation - we'll use a simplified version since we're not inside a WorkflowProvider */}
             <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  // We'll add actual navigation later
+                  console.log('Navigate to previous step');
+                }}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
                 Back
               </Button>
-              <Button size="sm">
+              <Button 
+                size="sm"
+                onClick={() => {
+                  // We'll add actual navigation later
+                  console.log('Navigate to next step');
+                }}
+              >
                 Next Step
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -467,42 +482,22 @@ export const DataFlowWorkflow: React.FC<DataFlowWorkflowProps> = ({
   );
 };
 
-// Component that displays the content for the current workflow step
+// Component that displays the content for the current workflow step with fallback
 const WorkflowStepContent: React.FC = () => {
-  // Use React.useContext to avoid the import error
-  const context = React.useContext(WorkflowContext);
-  // If we don't have context (which should never happen in normal operation),
-  // show a placeholder message instead of throwing an error
-  if (!context) {
-    return (
-      <div className="text-center p-4 text-amber-500">
-        Workflow data not available
-      </div>
-    );
-  }
-  
-  const { currentStep, steps } = context;
-  const currentStepObj = steps.find((step: any) => step.id === currentStep);
-  
-  if (!currentStepObj) {
-    return null;
-  }
-  
-  // This is where you would render the actual content for each step
-  // For now, this just displays a placeholder
+  // Use a simpler approach - just show a placeholder for now
+  // This component will be replaced by the actual step content once
+  // the proper workflow context is available
   return (
     <div className="bg-gray-50 border rounded-lg p-6">
       <h3 className="text-lg font-medium text-gray-800 mb-2">
-        {currentStepObj.label}
+        Step Content
       </h3>
-      {currentStepObj.description && (
-        <p className="text-gray-600 mb-4">
-          {currentStepObj.description}
-        </p>
-      )}
+      <p className="text-gray-600 mb-4">
+        Step content will be shown here based on the selected workflow step.
+      </p>
       
       <div className="p-8 border border-dashed rounded-md bg-white text-center text-gray-500">
-        Content for the "{currentStepObj.label}" step would be rendered here.
+        Select a step in the workflow to view its content.
       </div>
     </div>
   );
