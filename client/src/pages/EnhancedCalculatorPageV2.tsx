@@ -1078,6 +1078,7 @@ const SaveExportStep: React.FC = () => {
 
 // Step Content Wrapper Component
 const StepContent: React.FC = () => {
+  const { useWorkflow } = require('./workflow');
   const { currentStep } = useWorkflow();
   
   switch (currentStep) {
@@ -1112,17 +1113,17 @@ const EnhancedCalculatorPageV2: React.FC = () => {
         { label: "Cost Calculator", href: "/calculator" }
       ]}
     >
-      <DataFlowWorkflow
-        workflowId="cost-calculator-v2"
-        steps={calculatorWorkflowSteps}
-        initialStep="property"
-        title="Building Cost Calculator"
-        description="Calculate building costs in Benton County using official data and regional adjustments"
-        showDataFlowVisualizer={true}
-        variant="default"
-      >
-        <StepContent />
-      </DataFlowWorkflow>
+      <div className="space-y-6">
+        <DataFlowWorkflow
+          workflowId="cost-calculator-v2"
+          steps={calculatorWorkflowSteps}
+          initialStep="property"
+          title="Building Cost Calculator"
+          description="Calculate building costs in Benton County using official data and regional adjustments"
+          showDataFlowVisualizer={true}
+          variant="default"
+        />
+      </div>
     </MainLayout>
   );
 };

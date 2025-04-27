@@ -35,7 +35,8 @@ import {
   PinOff,
   ExternalLink,
   Maximize2,
-  MinusSquare
+  MinusSquare,
+  RefreshCw
 } from "lucide-react";
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useWindow } from '@/contexts/WindowContext';
@@ -358,8 +359,20 @@ export default function Sidebar({ className }: SidebarProps) {
                 href="/calculator"
                 title="Cost Calculator"
                 icon={<Calculator />}
+              />
+              <SidebarItem
+                href="/calculator-v2"
+                title="Enhanced Calculator"
+                icon={<Calculator />}
                 badge="New"
                 badgeColor="bg-[#e6eef2] text-[#243E4D]"
+              />
+              <SidebarItem
+                href="/workflows"
+                title="Workflow Dashboard"
+                icon={<RefreshCw />}
+                badge="New"
+                badgeColor="bg-blue-100 text-blue-800"
               />
               <SidebarItem
                 href="/analytics"

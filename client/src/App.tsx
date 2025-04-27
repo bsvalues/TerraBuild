@@ -11,6 +11,8 @@ import { RefreshCw } from "lucide-react";
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import EnhancedCalculatorPage from "@/pages/EnhancedCalculatorPage";
+import EnhancedCalculatorPageV2 from "@/pages/EnhancedCalculatorPageV2";
+import WorkflowDashboardPage from "@/pages/WorkflowDashboardPage";
 import UsersPage from "@/pages/users-page";
 import LandingPage from "@/pages/LandingPage";
 import AIToolsPage from "@/pages/AIToolsPage";
@@ -282,6 +284,8 @@ function Router() {
       {/* Other protected routes */}
       <ProtectedRouteWrapper path="/dashboard" component={DashboardPage} />
       <ProtectedRouteWrapper path="/calculator" component={EnhancedCalculatorPage} />
+      <ProtectedRouteWrapper path="/calculator-v2" component={EnhancedCalculatorPageV2} />
+      <ProtectedRouteWrapper path="/workflows" component={WorkflowDashboardPage} />
       <ProtectedRouteWrapper path="/calculator-old" component={CalculatorPage} />
       <ProtectedRouteWrapper path="/analytics" component={AnalyticsPage} />
       <ProtectedRouteWrapper path="/users" component={UsersPage} />
