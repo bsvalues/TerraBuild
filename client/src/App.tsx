@@ -348,16 +348,16 @@ function App() {
             <RemixIconLink />
             <ErrorHandlerWrapper />
             <EnhancedSupabaseProvider>
-              <AuthProvider>
-                <DataFlowProvider>
-                  <SidebarProvider>
-                    <WindowProvider>
+              <WindowProvider>
+                <SidebarProvider>
+                  <AuthProvider>
+                    <DataFlowProvider>
                       <Router />
                       <Toaster />
-                    </WindowProvider>
-                  </SidebarProvider>
-                </DataFlowProvider>
-              </AuthProvider>
+                    </DataFlowProvider>
+                  </AuthProvider>
+                </SidebarProvider>
+              </WindowProvider>
             </EnhancedSupabaseProvider>
           </ThemeProvider>
         </TerraBuildThemeProvider>
