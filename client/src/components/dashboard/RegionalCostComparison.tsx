@@ -63,7 +63,7 @@ export function RegionalCostComparison({
 
   // Fetch all cost matrix data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Get available years
