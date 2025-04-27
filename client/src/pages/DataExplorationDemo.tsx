@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardContent, 
@@ -25,10 +25,13 @@ import {
   HelpCircle,
   ArrowRight,
   Filter,
-  Sliders
+  Sliders,
+  RefreshCw
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { VisualizationContextProvider, useVisualizationContext } from '@/contexts/visualization-context';
+import { QueryErrorBoundary } from '@/components/common/QueryErrorBoundary';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 export default function DataExplorationDemo() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
@@ -157,16 +160,17 @@ export default function DataExplorationDemo() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <QueryErrorBoundary 
+                  queryKey="/cost-matrices"
+                  title="Cost Matrix Data Error"
+                  description="There was a problem loading the cost matrix data. This could be due to a network issue or server problem."
+                >
                 {isLoading ? (
                   <div className="flex items-center justify-center h-80">
                     <div className="text-center">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                       <p className="text-muted-foreground">Loading data...</p>
                     </div>
-                  </div>
-                ) : error ? (
-                  <div className="p-4 border border-red-200 rounded-md bg-red-50 text-red-800">
-                    <p>Error loading data. Please try again later.</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -214,6 +218,7 @@ export default function DataExplorationDemo() {
                     )}
                   </div>
                 )}
+                </QueryErrorBoundary>
               </CardContent>
             </Card>
           </div>

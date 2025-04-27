@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 interface QueryErrorBoundaryProps {
   children: React.ReactNode;
@@ -78,8 +79,8 @@ export function QueryErrorBoundary({
 
   // Otherwise, render children
   return (
-    <React.ErrorBoundary
-      onError={handleError}
+    <ErrorBoundary
+      onReset={handleRetry}
       fallback={
         fallback || (
           <Card className={className}>
@@ -107,6 +108,6 @@ export function QueryErrorBoundary({
       }
     >
       {children}
-    </React.ErrorBoundary>
+    </ErrorBoundary>
   );
 }
