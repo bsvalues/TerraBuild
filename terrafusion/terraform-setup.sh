@@ -1,122 +1,124 @@
 #!/bin/bash
-set -eo pipefail
+# Terraform Setup Script for BCBS Infrastructure
+# This script handles environment-specific Terraform operations
 
-# This script is used by the CI/CD pipeline to initialize and apply Terraform
-# Usage: ./terraform-setup.sh <environment> <action> [version]
-# Example: ./terraform-setup.sh staging plan
-# Example: ./terraform-setup.sh prod apply v1.0.0
+set -e
 
-# Parse arguments
-ENVIRONMENT=$1
-ACTION=$2
-VERSION=${3:-"latest"}
-
-if [ -z "$ENVIRONMENT" ] || [ -z "$ACTION" ]; then
-  echo "Usage: $0 <environment> <action> [version]"
-  echo "Environment must be one of: dev, staging, prod"
-  echo "Action must be one of: plan, apply, destroy"
+# Check input parameters
+if [ "$#" -lt 2 ]; then
+  echo "Usage: $0 <environment> <action> [version_tag]"
+  echo "  environment: dev, staging, prod"
+  echo "  action: plan, apply, destroy"
+  echo "  version_tag: optional version tag for the deployment"
   exit 1
 fi
 
+# Parse input parameters
+ENV=$1
+ACTION=$2
+VERSION=${3:-"latest"}
+
 # Validate environment
-if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
-  echo "Invalid environment: $ENVIRONMENT. Must be one of: dev, staging, prod"
+if [[ "$ENV" != "dev" && "$ENV" != "staging" && "$ENV" != "prod" ]]; then
+  echo "Invalid environment: $ENV"
+  echo "Must be one of: dev, staging, prod"
   exit 1
 fi
 
 # Validate action
-if [[ ! "$ACTION" =~ ^(plan|apply|destroy)$ ]]; then
-  echo "Invalid action: $ACTION. Must be one of: plan, apply, destroy"
+if [[ "$ACTION" != "plan" && "$ACTION" != "apply" && "$ACTION" != "destroy" ]]; then
+  echo "Invalid action: $ACTION"
+  echo "Must be one of: plan, apply, destroy"
   exit 1
 fi
 
-# Set variables
-TFVARS_FILE="environments/$ENVIRONMENT/terraform.tfvars"
-BACKEND_FILE="environments/$ENVIRONMENT/backend.tfvars"
-STATE_FILE="terraform.$ENVIRONMENT.tfstate"
-PLAN_FILE="terraform.$ENVIRONMENT.plan"
-LOG_FILE="terraform.$ENVIRONMENT.log"
+echo "=== Terraform Setup for BCBS - Environment: $ENV, Action: $ACTION, Version: $VERSION ==="
 
-echo "=== Terraform Setup for BCBS $ENVIRONMENT Environment ==="
-echo "Environment: $ENVIRONMENT"
-echo "Action: $ACTION"
-echo "Version: $VERSION"
-echo "======================================================"
-
-# Make sure script is being executed from the Terraform root directory
-if [ ! -f "new_main.tf" ]; then
-  echo "Error: This script must be executed from the Terraform root directory"
-  exit 1
-fi
-
-# Create a temporary copy of main.tf with environment-specific settings
+# Setup environment-specific configuration
+echo "Setting up environment-specific configuration..."
 cp new_main.tf main.tf
 cp new_variables.tf variables.tf
 cp new_outputs.tf outputs.tf
 
-# Initialize Terraform with the backend configuration
-echo "Initializing Terraform with backend for $ENVIRONMENT environment..."
-terraform init -backend-config="$BACKEND_FILE"
+# Create terraform.tfvars file with environment-specific values
+cat > terraform.tfvars <<EOF
+environment             = "${ENV}"
+app_version            = "${VERSION}"
+project_name           = "bcbs"
+region                 = "us-west-2"
+enable_blue_green      = true
+enable_canary          = true
+vpc_cidr               = "10.0.0.0/16"
+EOF
 
-# Select workspace
-echo "Selecting workspace: $ENVIRONMENT..."
-terraform workspace select $ENVIRONMENT || terraform workspace new $ENVIRONMENT
+# Add environment-specific overrides
+if [[ "$ENV" == "dev" ]]; then
+  cat >> terraform.tfvars <<EOF
+instance_type          = "t3.small"
+min_capacity           = 1
+max_capacity           = 2
+db_instance_class      = "db.t3.small"
+enable_disaster_recovery = false
+EOF
+elif [[ "$ENV" == "staging" ]]; then
+  cat >> terraform.tfvars <<EOF
+instance_type          = "t3.medium"
+min_capacity           = 2
+max_capacity           = 4
+db_instance_class      = "db.t3.medium"
+enable_disaster_recovery = true
+EOF
+elif [[ "$ENV" == "prod" ]]; then
+  cat >> terraform.tfvars <<EOF
+instance_type          = "t3.large"
+min_capacity           = 2
+max_capacity           = 6
+db_instance_class      = "db.t3.large"
+enable_disaster_recovery = true
+multi_az               = true
+EOF
+fi
 
-# Generate deployment ID based on timestamp
-DEPLOYMENT_ID="deploy-$(date +%Y%m%d%H%M%S)"
+# Initialize Terraform with the right backend configuration
+echo "Initializing Terraform with backend config for $ENV environment..."
+terraform init -backend-config=environments/$ENV/backend.tfvars
 
-# Execute the requested action
-case "$ACTION" in
-  plan)
-    echo "Planning Terraform changes for $ENVIRONMENT environment..."
-    terraform plan \
-      -var-file="$TFVARS_FILE" \
-      -var="deployment_id=$DEPLOYMENT_ID" \
-      -var="image_tag=$VERSION" \
-      -out="$PLAN_FILE" | tee "$LOG_FILE"
-    ;;
-  apply)
-    echo "Applying Terraform changes to $ENVIRONMENT environment..."
-    
-    # First create a plan with the variables
-    terraform plan \
-      -var-file="$TFVARS_FILE" \
-      -var="deployment_id=$DEPLOYMENT_ID" \
-      -var="image_tag=$VERSION" \
-      -out="$PLAN_FILE"
-    
-    # Then apply the plan
-    terraform apply "$PLAN_FILE" | tee "$LOG_FILE"
-    
-    # Output important information
-    echo "=== Deployment Summary ==="
-    echo "Deployment ID: $DEPLOYMENT_ID"
-    echo "Image Tag: $VERSION"
-    echo "Environment: $ENVIRONMENT"
-    echo "Timestamp: $(date)"
-    echo "Active Color: $(terraform output -raw active_environment)"
-    echo "Application URL: $(terraform output -raw app_url)"
-    echo "=========================="
-    ;;
-  destroy)
-    echo "WARNING: About to destroy $ENVIRONMENT environment!"
-    echo "Waiting 10 seconds before proceeding. Press Ctrl+C to abort."
-    sleep 10
-    
-    terraform destroy \
-      -var-file="$TFVARS_FILE" \
-      -var="deployment_id=$DEPLOYMENT_ID" \
-      -var="image_tag=$VERSION" \
-      -auto-approve | tee "$LOG_FILE"
-    ;;
-  *)
-    echo "Invalid action: $ACTION"
+# Select or create workspace
+terraform workspace select $ENV || terraform workspace new $ENV
+
+# Run the requested Terraform action
+echo "Running Terraform $ACTION for $ENV environment..."
+
+LOG_FILE="terraform.$ENV.log"
+touch $LOG_FILE
+
+if [[ "$ACTION" == "plan" ]]; then
+  # Run plan and save to a file
+  terraform plan -var-file=terraform.tfvars -out=terraform.$ENV.tfplan | tee $LOG_FILE
+  echo "Plan saved to terraform.$ENV.tfplan"
+elif [[ "$ACTION" == "apply" ]]; then
+  # Check if we have a plan file, if not create one
+  if [[ ! -f "terraform.$ENV.tfplan" ]]; then
+    echo "No plan file found, creating one..."
+    terraform plan -var-file=terraform.tfvars -out=terraform.$ENV.tfplan | tee -a $LOG_FILE
+  fi
+  
+  # Apply the plan
+  terraform apply -auto-approve terraform.$ENV.tfplan | tee -a $LOG_FILE
+  
+  # Output important values
+  echo "Outputs for $ENV environment:" | tee -a $LOG_FILE
+  terraform output | tee -a $LOG_FILE
+elif [[ "$ACTION" == "destroy" ]]; then
+  echo "WARNING: This will destroy all infrastructure in the $ENV environment!"
+  echo "Are you sure? Type 'yes' to confirm:"
+  read -r CONFIRM
+  if [[ "$CONFIRM" != "yes" ]]; then
+    echo "Destroy cancelled"
     exit 1
-    ;;
-esac
+  fi
+  
+  terraform destroy -var-file=terraform.tfvars -auto-approve | tee -a $LOG_FILE
+fi
 
-# Clean up temporary files
-rm -f main.tf variables.tf outputs.tf
-
-echo "Terraform $ACTION completed for $ENVIRONMENT environment"
-exit 0
+echo "=== Terraform $ACTION completed for $ENV environment ==="
