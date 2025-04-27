@@ -40,12 +40,17 @@ export default function Header({ isLanding = false }: HeaderProps) {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [hasNotifications, setHasNotifications] = React.useState(true);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+  const handleLogout = () => {
+    if (logout) {
+      try {
+        logout();
+        // The redirect will be handled by the Auth Provider
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    } else {
+      // Fallback for direct redirect if the logout method is not available
+      window.location.href = '/api/logout';
     }
   };
 
@@ -167,7 +172,7 @@ export default function Header({ isLanding = false }: HeaderProps) {
                       <User className="h-4 w-4 text-[#29B7D3]" />
                     </div>
                     <div className="hidden md:block text-left">
-                      <p className="text-sm font-medium text-gray-700">{user?.name || user?.username}</p>
+                      <p className="text-sm font-medium text-gray-700">{user?.firstName || user?.username}</p>
                       <p className="text-xs text-gray-500">{user?.role || 'User'}</p>
                     </div>
                     <ChevronDown className="h-4 w-4 hidden md:block text-gray-500" />
