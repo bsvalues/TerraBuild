@@ -4,6 +4,7 @@ import routes from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
+import { setupAuth } from "./replitAuth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 
 const app = express();
@@ -54,6 +55,14 @@ app.use((req, res, next) => {
     initMCP(app);
   } catch (error) {
     log(`MCP initialization error: ${error}`, 'error');
+  }
+  
+  // Setup authentication with Replit Auth
+  try {
+    await setupAuth(app);
+    log('Authentication system initialized successfully');
+  } catch (error) {
+    log(`Authentication initialization error: ${error}`, 'error');
   }
   
   // Apply Benton County format middleware to API responses

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '../../contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { 
   User, 

@@ -53,7 +53,7 @@ import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider } from "./contexts/AuthContext";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
