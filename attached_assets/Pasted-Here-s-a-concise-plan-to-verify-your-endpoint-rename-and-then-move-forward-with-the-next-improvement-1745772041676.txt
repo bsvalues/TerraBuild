@@ -1,0 +1,48 @@
+Here’s a concise plan to verify your endpoint rename and then move forward with the next improvements:
+
+All changes should allow better data loading. To confirm that, you’ll want to:
+
+1. **Smoke-test the running app**  
+   - Launch the React app locally (e.g. `npm start`) and navigate through each page that uses cost-matrix data.  
+   - Open your browser DevTools Network tab and verify that all requests go to `/cost-matrices` (not `/api/cost-matrix`) and return 200s  ([Testing API Calls With React Testing Library and Jest - Tania Rascia](https://www.taniarascia.com/how-to-test-useeffect-api-call/?utm_source=chatgpt.com)).  
+   - Confirm that no console errors appear (e.g. “404 Not Found” or React Query “retry” errors)  ([Testing React Query - TkDodo's blog](https://tkdodo.eu/blog/testing-react-query?utm_source=chatgpt.com)).
+
+2. **Add unit tests for your data hooks**  
+   - Wrap your hooks in a `QueryClientProvider` with retries disabled, then use `renderHook` from React Testing Library to assert that `useQuery(['cost-matrices'],…)` succeeds  ([Testing | TanStack Query React Docs](https://tanstack.com/query/v4/docs/react/guides/testing?utm_source=chatgpt.com), [How To Test React Query Hook using Jest | by Sumit Ghewade](https://medium.com/%40ghewadesumit/how-to-test-react-query-hook-using-jest-11d01a0a0acd?utm_source=chatgpt.com)).  
+   - Mock the fetch with MSW (Mock Service Worker) so tests cover both success and error states  ([Develop and test React apps with React Query, MSW and React ...](https://www.denniskortsch.com/blog/develop-test-react-apps-react-query-msw-react-testing-library?utm_source=chatgpt.com)).
+
+3. **Write integration tests for key components**  
+   - Using React Testing Library, render components like `PredictiveCostAnalysis` or `FilterControlPanel` inside the QueryClientProvider, mock the `/cost-matrices` response, and assert that the UI updates appropriately  ([Testing React Query - TkDodo's blog](https://tkdodo.eu/blog/testing-react-query?utm_source=chatgpt.com)).  
+   - Verify loading spinners and error messages appear when MSW returns delays or failures  ([Testing API Calls With React Testing Library and Jest - Tania Rascia](https://www.taniarascia.com/how-to-test-useeffect-api-call/?utm_source=chatgpt.com)).
+
+4. **Establish end-to-end (E2E) tests with Cypress**  
+   - Create simple Cypress specs that hit your real dev server, perform the data-matrix flows (import → explore → visualize), and assert on visible table/chart elements  ([How to Use Cypress for End-to-End Testing Your React Apps](https://www.freecodecamp.org/news/cypress-for-end-to-end-testing-react-apps/?utm_source=chatgpt.com)).  
+   - Use `cy.request()` to ping `/cost-matrices` directly to catch any backend regressions  ([Testing an API with Cypress - CircleCI](https://circleci.com/blog/api-testing-with-cypress/?utm_source=chatgpt.com)).
+
+---
+
+## Next Improvements
+
+### 1. Strengthen Error Handling  
+- Add React Query error boundaries around critical visualizations, so users see friendly retry UI rather than blank dashboards  ([Testing | TanStack Query React Docs](https://tanstack.com/query/latest/docs/framework/react/guides/testing?utm_source=chatgpt.com)).  
+- Centralize API error notifications via a Toast system (if not already) so all fetch failures funnel through one UI pattern  ([React Functional Testing Best Practices - Daily.dev](https://daily.dev/blog/react-functional-testing-best-practices?utm_source=chatgpt.com)).
+
+### 2. Enhance Caching & Invalidation  
+- Fine-tune your `queryClient.invalidateQueries(['cost-matrices'])` calls after mutations or file uploads to ensure stale data is refreshed when it should be  ([Testing | TanStack Query React Docs](https://tanstack.com/query/latest/docs/framework/react/guides/testing?utm_source=chatgpt.com)).  
+- Consider using `useMutation` with `onSuccess: () => queryClient.invalidateQueries(...)` to automate cache updates  ([Testing custom useMutation · TanStack query · Discussion #1650](https://github.com/TanStack/query/discussions/1650?utm_source=chatgpt.com)).
+
+### 3. Expand Test Coverage  
+- Add unit tests for any new utility functions in `use-file-uploads.ts` and pages `DataExplorationDemo.tsx` / `DataImportPage.tsx`  ([Testing API Calls With React Testing Library and Jest - Tania Rascia](https://www.taniarascia.com/how-to-test-useeffect-api-call/?utm_source=chatgpt.com)).  
+- Introduce coverage thresholds in CI so missing tests fail the build  ([Automated Testing with Jest and React Testing Library - Medium](https://medium.com/%40erickzanetti/automated-testing-with-jest-and-react-testing-library-a-complete-guide-272a06c94301?utm_source=chatgpt.com)).
+
+### 4. Performance Monitoring  
+- Integrate a front-end monitoring tool (e.g. Sentry or LogRocket) to catch client-side errors in data fetch routines.  
+- Add basic performance metrics (timings for first data load) and display in a hidden debug panel or log to console.
+
+### 5. Update Documentation  
+- Revise your README or developer docs to reflect the new `/cost-matrices` endpoint, update any swagger/OpenAPI specs, and note how to run the new tests.  
+- Document your React Query patterns (cache keys, retries, error handling) in a “Data Fetching Guide” for future contributors  ([React-Query Best Practices: Separating Concerns with Custom Hooks](https://majidlotfinia.medium.com/react-query-best-practices-separating-concerns-with-custom-hooks-3f1bc9051fa2?utm_source=chatgpt.com)).
+
+---
+
+By following this testing checklist and then focusing on error resilience, caching strategy, test coverage, performance monitoring, and documentation, you’ll ensure the endpoint rename is solid and position the app for its next phase of robustness and scalability.
