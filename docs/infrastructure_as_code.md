@@ -1,371 +1,276 @@
-# Infrastructure as Code (IaC) with Terraform
+# Infrastructure as Code (IaC) for BCBS
 
-This document provides a comprehensive guide to the Infrastructure as Code (IaC) implementation for the Benton County Building Cost System (BCBS) application.
+This document outlines the Infrastructure as Code (IaC) approach implemented for the Benton County Building Cost System (BCBS) using Terraform.
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Repository Structure](#repository-structure)
-3. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Authentication](#authentication)
-   - [Initialization](#initialization)
-4. [Environments](#environments)
-   - [Development](#development)
-   - [Staging](#staging)
-   - [Production](#production)
-5. [Core Infrastructure Components](#core-infrastructure-components)
-6. [Deployment Strategies](#deployment-strategies)
-7. [CI/CD Integration](#cicd-integration)
-8. [Secrets Management](#secrets-management)
-9. [State Management](#state-management)
-10. [Monitoring and Logging](#monitoring-and-logging)
-11. [Best Practices](#best-practices)
-12. [Troubleshooting](#troubleshooting)
+2. [Architecture](#architecture)
+3. [Terraform Modules](#terraform-modules)
+4. [Environment Management](#environment-management)
+5. [State Management](#state-management)
+6. [CI/CD Integration](#cicd-integration)
+7. [Security Considerations](#security-considerations)
+8. [Operational Guidelines](#operational-guidelines)
+9. [Best Practices](#best-practices)
 
 ## Overview
 
-The BCBS application's infrastructure is fully defined and managed using Infrastructure as Code (IaC) through Terraform. This approach ensures:
+The BCBS infrastructure is managed entirely through code using Terraform, enabling consistent, repeatable, and version-controlled infrastructure deployments across multiple environments. This approach ensures:
 
-1. **Consistency**: Infrastructure is deployed consistently across all environments
-2. **Repeatability**: The entire infrastructure can be recreated with a single command
-3. **Version Control**: All infrastructure changes are tracked in Git
-4. **Automation**: Infrastructure changes can be fully automated
-5. **Documentation**: The infrastructure is self-documenting through code
+- Consistency across environments
+- Disaster recovery capabilities
+- Documentation as code
+- Infrastructure versioning
+- Automated deployments
+- Reduced configuration drift
 
-## Repository Structure
+## Architecture
 
-The Terraform code is organized in a modular structure under the `terrafusion` directory:
+The BCBS infrastructure is built on AWS and consists of the following key components:
+
+- **Networking**: VPC, subnets, security groups, NAT gateways
+- **Compute**: ECS clusters with Fargate for containerized applications
+- **Database**: RDS PostgreSQL for data persistence
+- **Load Balancing**: Application Load Balancer for traffic distribution
+- **Deployment Strategies**: Blue-Green and Canary deployment capabilities
+- **Monitoring**: CloudWatch for metrics, logs, and alarms
+- **Serverless**: Lambda functions for operational tasks
+- **Storage**: S3 for static content and backups
+
+### Architecture Diagram
 
 ```
-terrafusion/
-├── environments/
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
-├── modules/
-│   ├── networking/
-│   ├── database/
-│   ├── compute/
-│   ├── load_balancer/
-│   ├── monitoring/
-│   ├── security/
-│   └── deployment/
-├── main.tf
-├── variables.tf
-├── outputs.tf
-└── ...
+┌─────────────────────────────────────────────────────────────────────┐
+│                            AWS Cloud                                 │
+│                                                                     │
+│  ┌─────────────┐            ┌─────────────┐      ┌──────────────┐   │
+│  │             │            │             │      │              │   │
+│  │   Public    │            │   Private   │      │  Database    │   │
+│  │   Subnet    │            │   Subnet    │      │  Subnet      │   │
+│  │             │            │             │      │              │   │
+│  └─────────────┘            └─────────────┘      └──────────────┘   │
+│         │                          │                    │           │
+│         ▼                          ▼                    ▼           │
+│  ┌─────────────┐            ┌─────────────┐      ┌──────────────┐   │
+│  │             │            │             │      │              │   │
+│  │  Internet   │            │   ECS       │      │   RDS        │   │
+│  │  Gateway    │─────┬─────▶│   Cluster   │      │  Database    │   │
+│  │             │     │      │             │◀─────│              │   │
+│  └─────────────┘     │      └─────────────┘      └──────────────┘   │
+│         ▲            │             ▲                                │
+│         │            │             │                                │
+│         │      ┌─────▼─────┐  ┌────┴────┐                           │
+│         │      │           │  │         │                           │
+│         └──────┤    ALB    │  │ Lambda  │                           │
+│                │           │  │Functions│                           │
+│                └───────────┘  └─────────┘                           │
+│                      ▲             ▲                                │
+│                      │             │                                │
+└──────────────────────┼─────────────┼────────────────────────────────┘
+                       │             │
+                  ┌────┴─────────────┴───┐
+                  │                      │
+                  │  CI/CD Pipeline      │
+                  │                      │
+                  └──────────────────────┘
 ```
 
-This structure separates:
-- Environment-specific configurations (`environments/`)
-- Reusable infrastructure components (`modules/`)
-- Core infrastructure setup (`main.tf` and related files)
+## Terraform Modules
 
-## Getting Started
+The infrastructure is organized into reusable modules:
 
-### Prerequisites
+### Networking Module
 
-To work with the Terraform codebase, you need:
+Manages the VPC, public/private subnets, and network security:
 
-1. Terraform CLI (v1.0.0+)
-2. AWS CLI configured with appropriate access
-3. Access to the S3 bucket for state storage
-4. Git access to the repository
+- VPC with CIDR block
+- Public and private subnets across multiple AZs
+- Internet Gateway and NAT Gateways
+- Route tables and associations
+- Network ACLs and security groups
 
-### Authentication
+### Database Module
 
-Terraform uses AWS credentials for authentication. You can provide these through:
+Manages the PostgreSQL database:
 
-1. AWS environment variables:
-   ```bash
-   export AWS_ACCESS_KEY_ID="your-access-key"
-   export AWS_SECRET_ACCESS_KEY="your-secret-key"
-   export AWS_DEFAULT_REGION="us-west-2"
-   ```
+- RDS instance with specified instance class
+- Multi-AZ deployment for production
+- Automated backups and snapshots
+- Encryption at rest
+- Parameter groups for database configuration
+- Security groups for database access
 
-2. Shared credentials file (~/.aws/credentials):
-   ```
-   [default]
-   aws_access_key_id = your-access-key
-   aws_secret_access_key = your-secret-key
-   ```
+### Deployment Module
 
-3. AWS CLI profile:
-   ```bash
-   export AWS_PROFILE=bcbs-admin
-   ```
+Handles the application deployment infrastructure:
 
-### Initialization
-
-To initialize the Terraform working directory:
-
-```bash
-cd terrafusion
-terraform init -backend-config=environments/dev/backend.tfvars
-```
-
-Replace `dev` with the appropriate environment.
-
-## Environments
-
-### Development
-
-The development environment is used for active development and testing. It is configured with:
-
-- Minimal resources for cost efficiency
-- Lower redundancy requirements
-- More permissive security settings
-- Automatic database snapshots for quick restoration
-
-To deploy:
-
-```bash
-terraform workspace select dev
-terraform apply -var-file=environments/dev/terraform.tfvars
-```
-
-### Staging
-
-The staging environment closely mirrors production and is used for:
-
-- Pre-production testing
-- Performance testing
-- User acceptance testing
-- Deployment verification
-
-To deploy:
-
-```bash
-terraform workspace select staging
-terraform apply -var-file=environments/staging/terraform.tfvars
-```
-
-### Production
-
-The production environment hosts the live application and is configured with:
-
-- High availability across multiple Availability Zones
-- Automatic scaling
-- Strict security controls
-- Regular database backups
-- Enhanced monitoring
-
-To deploy:
-
-```bash
-terraform workspace select prod
-terraform apply -var-file=environments/prod/terraform.tfvars
-```
-
-## Core Infrastructure Components
-
-### Networking (modules/networking)
-
-Handles all networking components including:
-- VPC configuration
-- Public and private subnets
-- Internet and NAT gateways
-- Route tables and security groups
-
-### Database (modules/database)
-
-Manages the PostgreSQL database including:
-- RDS instance configuration
-- Read replicas (if used)
-- Backup and snapshot policies
-- Parameter groups and subnet groups
-
-### Compute (modules/compute)
-
-Handles the application compute resources:
-- ECS cluster and services
-- Task definitions
+- ECS cluster and task definitions
+- Target groups and load balancer
+- Blue-Green deployment infrastructure
+- Canary deployment capabilities
 - Auto-scaling configurations
 - IAM roles and policies
 
-### Load Balancer (modules/load_balancer)
+### Backup Module
 
-Manages application traffic:
-- Application Load Balancer configuration
-- Target groups
-- Listeners and rules
-- SSL/TLS certificate management
-- Health checks
+Manages backup and disaster recovery:
 
-### Monitoring (modules/monitoring)
+- AWS Backup plans and selections
+- Backup retention policies
+- Cross-region replication for production
 
-Handles all monitoring and logging components:
-- CloudWatch metrics and alarms
-- CloudWatch Log groups
-- Dashboard configurations
-- SNS topics for alerts
+### Monitoring Module
 
-### Security (modules/security)
+Sets up monitoring and alerting:
 
-Manages security components:
-- IAM roles and policies
-- Security groups
-- KMS keys for encryption
-- AWS WAF configurations (if used)
+- CloudWatch metrics and dashboards
+- Alarms for critical thresholds
+- Log groups and subscription filters
+- SNS topics for notifications
 
-### Deployment (modules/deployment)
+## Environment Management
 
-Contains deployment-specific infrastructure:
-- Blue-Green deployment configuration
-- Canary deployment setup
-- Rollback mechanisms
-- Deployment metrics collection
+We maintain separate environments for different stages of the development lifecycle:
 
-## Deployment Strategies
+### Development Environment
 
-The infrastructure supports two primary deployment strategies:
+- Lower resource allocations
+- Simplified infrastructure (single NAT Gateway)
+- Shorter backup retention
+- Non-production data
 
-### Blue-Green Deployment
+### Staging Environment
 
-Blue-Green deployments use two identical environments with only one active at a time. This provides a simple and reliable way to deploy new versions:
+- Mirrors production setup at a smaller scale
+- Used for pre-production testing
+- Basic disaster recovery capabilities
+- Test data resembling production
 
-1. Infrastructure is always provisioned for both "blue" and "green" environments
-2. Only one environment is active at any given time
-3. Deployment updates the inactive environment
-4. Traffic is switched to the newly updated environment
-5. In case of issues, traffic can be immediately switched back
+### Production Environment
 
-The module `modules/deployment/blue_green.tf` manages this configuration.
-
-### Canary Deployment
-
-Canary deployments gradually shift traffic to a new version, reducing risk:
-
-1. A small percentage of traffic is directed to the new version
-2. Traffic percentage increases gradually as confidence grows
-3. If issues are detected, traffic is immediately shifted back
-
-The module `modules/deployment/canary.tf` manages this configuration.
-
-## CI/CD Integration
-
-The Terraform infrastructure is integrated with the CI/CD pipeline:
-
-1. **Automated Planning**: Infrastructure changes are automatically planned on pull requests
-2. **Pre-deployment Validation**: Terraform validates infrastructure before deployment
-3. **Automated Apply**: Infrastructure changes are applied as part of the deployment pipeline
-4. **Drift Detection**: Regular checks ensure the actual infrastructure matches the code
-5. **Automated Rollback**: In case of issues, the infrastructure can be automatically rolled back
-
-### Integration Points
-
-The main integration points are:
-
-1. GitHub Actions workflows that run Terraform commands
-2. Terraform Cloud (if used) for remote operations
-3. Custom scripts that manage deployment transitions
-
-## Secrets Management
-
-Sensitive information is managed securely using:
-
-1. **AWS Secrets Manager**: Stores application secrets
-2. **Terraform Variables**: Marked as sensitive to prevent display in logs
-3. **GitHub Secrets**: Secure storage for CI/CD credentials
-4. **IAM Roles**: Least-privilege access for services
-
-### Accessing Secrets
-
-Secrets are provided to the application through:
-
-1. Environment variables injected into ECS tasks
-2. IAM roles allowing access to specific secrets
-3. Runtime access via the AWS SDK
+- Full high-availability configuration
+- Multi-AZ deployments
+- Comprehensive monitoring and alerting
+- Strict security controls
+- Robust backup and disaster recovery
 
 ## State Management
 
-Terraform state is stored remotely to enable collaboration:
+Terraform state is managed securely:
 
-1. **S3 Backend**: State files are stored in a dedicated S3 bucket
-2. **DynamoDB Table**: Used for state locking to prevent concurrent modifications
-3. **Workspaces**: Separate state for each environment
+- Remote state stored in S3 buckets
+- State locking via DynamoDB tables
+- Environment-specific state files
+- Encrypted state storage
+- Limited access to state management
 
-### State Configuration
+## CI/CD Integration
 
-The backend configuration is in `main.tf`:
+The Terraform code is fully integrated with our CI/CD pipeline:
 
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "bcbs-terraform-state"
-    key            = "state/terraform.tfstate"
-    region         = "us-west-2"
-    dynamodb_table = "bcbs-terraform-locks"
-    encrypt        = true
-  }
-}
-```
+1. **Infrastructure Testing**:
+   - Automated validation and linting
+   - Static security analysis
+   - `terraform plan` review
 
-## Monitoring and Logging
+2. **Deployment Process**:
+   - PR approval triggers infrastructure changes
+   - Automatic application of non-destructive changes
+   - Manual approval for destructive changes
+   - Post-deployment validation
 
-The infrastructure includes comprehensive monitoring:
+3. **Workflows**:
+   - Environment-specific workflows
+   - Scheduled security scans
+   - Drift detection
 
-1. **CloudWatch Alarms**: Monitor key metrics and trigger alerts
-2. **CloudWatch Logs**: Capture application and infrastructure logs
-3. **CloudWatch Dashboards**: Visualize application performance
-4. **SNS Topics**: Send notifications for critical events
+## Security Considerations
 
-### Key Metrics
+Security is built into the infrastructure:
 
-Critical metrics monitored include:
+- **Least Privilege**: IAM roles with minimal permissions
+- **Network Isolation**: Private subnets for sensitive resources
+- **Encryption**: Data encrypted at rest and in transit
+- **Secrets Management**: Sensitive values stored in Parameter Store
+- **Security Groups**: Restrictive ingress/egress rules
+- **Logging**: Comprehensive auditing and monitoring
+- **Compliance**: Infrastructure matches compliance requirements
 
-1. Service health and availability
-2. Error rates and latency
-3. Resource utilization
-4. Database performance
-5. Cache hit rates
+## Operational Guidelines
+
+### Applying Changes
+
+1. **Development**:
+   ```bash
+   cd terrafusion
+   ./terraform-setup.sh dev plan
+   ./terraform-setup.sh dev apply
+   ```
+
+2. **Staging**:
+   ```bash
+   cd terrafusion
+   ./terraform-setup.sh staging plan
+   # Review changes carefully
+   ./terraform-setup.sh staging apply
+   ```
+
+3. **Production**:
+   ```bash
+   cd terrafusion
+   ./terraform-setup.sh prod plan
+   # Mandatory peer review
+   # Change window approval
+   ./terraform-setup.sh prod apply
+   ```
+
+### Managing Modules
+
+1. **Adding New Resources**:
+   - Add resource definitions to the appropriate module
+   - Update variables and outputs as needed
+   - Test in development first
+
+2. **Updating Existing Resources**:
+   - Check for potential downtime before applying
+   - Consider using `lifecycle` blocks for critical resources
+   - Update documentation
 
 ## Best Practices
 
-When working with the Terraform codebase:
+1. **Code Organization**:
+   - Use consistent naming conventions
+   - Group related resources
+   - Comment complex configurations
+   - Break large files into logical components
 
-1. **Version Control**: All changes should be committed to Git
-2. **Pull Requests**: Infrastructure changes should be reviewed
-3. **Testing**: Test changes in development before applying to production
-4. **Documentation**: Update this document when making significant changes
-5. **Tagging**: All resources should have appropriate tags
-6. **Modularity**: Keep modules focused and reusable
-7. **State Management**: Never manually modify the state
+2. **Variables and Outputs**:
+   - Define variable types and constraints
+   - Provide descriptive variable descriptions
+   - Use output values for cross-module references
+   - Mark sensitive outputs appropriately
 
-## Troubleshooting
+3. **State Management**:
+   - Never manipulate state files directly
+   - Use `terraform import` for existing resources
+   - Lock state during operations
+   - Back up state regularly
 
-### Common Issues
+4. **Security**:
+   - Store secrets in AWS Parameter Store or Secrets Manager
+   - Regularly rotate credentials
+   - Apply security patches promptly
+   - Perform regular security audits
 
-1. **State Lock Issues**:
-   ```bash
-   terraform force-unlock LOCK_ID
-   ```
+5. **Operations**:
+   - Document manual procedures
+   - Create runbooks for common tasks
+   - Monitor infrastructure costs
+   - Use tagging for resource organization
 
-2. **Initialization Failures**:
-   ```bash
-   rm -rf .terraform
-   terraform init -reconfigure
-   ```
-
-3. **Resource Creation Failures**:
-   - Check AWS service limits
-   - Verify IAM permissions
-   - Check for resource naming conflicts
-
-4. **State Discrepancies**:
-   ```bash
-   terraform refresh
-   ```
-
-### Getting Help
-
-For additional support:
-
-1. Check the AWS documentation
-2. Review Terraform documentation
-3. Contact the DevOps team
-
-## Conclusion
-
-This Infrastructure as Code implementation ensures consistent, reliable, and automated infrastructure management for the BCBS application. By following the practices outlined in this document, you can effectively work with and maintain the infrastructure code.
+6. **Team Workflow**:
+   - Peer review all infrastructure changes
+   - Use feature branches
+   - Document significant changes
+   - Maintain an infrastructure change log

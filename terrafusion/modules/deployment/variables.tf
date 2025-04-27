@@ -1,106 +1,121 @@
-variable "vpc_id" {
-  description = "ID of the VPC"
-  type        = string
-}
-
-variable "private_subnet_ids" {
-  description = "List of private subnet IDs"
-  type        = list(string)
-}
-
-variable "app_security_group_id" {
-  description = "ID of the application security group"
+variable "project_name" {
+  description = "The name of the project"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod)"
+  description = "The environment (dev, staging, prod)"
   type        = string
 }
 
-variable "project" {
-  description = "Project name"
+variable "vpc_id" {
+  description = "The ID of the VPC"
   type        = string
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
-  default     = {}
+variable "public_subnet_ids" {
+  description = "The IDs of the public subnets"
+  type        = list(string)
 }
 
-variable "active_environment" {
-  description = "Currently active environment (blue or green)"
-  type        = string
-  default     = "blue"
-  
-  validation {
-    condition     = contains(["blue", "green"], var.active_environment)
-    error_message = "The active_environment value must be either 'blue' or 'green'."
-  }
+variable "private_subnet_ids" {
+  description = "The IDs of the private subnets"
+  type        = list(string)
 }
 
-variable "task_definition_arn" {
-  description = "ARN of the task definition to deploy"
+variable "db_endpoint" {
+  description = "The endpoint of the database"
   type        = string
 }
 
-variable "ecs_cluster_id" {
-  description = "ID of the ECS cluster"
+variable "db_name" {
+  description = "The name of the database"
   type        = string
 }
 
-variable "ecs_cluster_name" {
-  description = "Name of the ECS cluster"
+variable "db_username" {
+  description = "The username for the database"
   type        = string
 }
 
-variable "container_port" {
-  description = "Port the container exposes"
+variable "db_password" {
+  description = "The password for the database"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_security_group_id" {
+  description = "The ID of the database security group"
+  type        = string
+}
+
+variable "container_image" {
+  description = "The container image to use for the application"
+  type        = string
+}
+
+variable "min_capacity" {
+  description = "The minimum number of tasks to run"
   type        = number
-  default     = 5000
+  default     = 1
 }
 
-variable "alb_arn" {
-  description = "ARN of the Application Load Balancer"
-  type        = string
-}
-
-variable "alb_arn_suffix" {
-  description = "ARN suffix of the Application Load Balancer"
-  type        = string
-}
-
-variable "certificate_arn" {
-  description = "ARN of the SSL certificate for the ALB"
-  type        = string
-}
-
-variable "app_count" {
-  description = "Number of instances of the application to run"
+variable "max_capacity" {
+  description = "The maximum number of tasks to run"
   type        = number
-  default     = 2
+  default     = 10
 }
 
 variable "health_check_path" {
-  description = "Path for health checks"
+  description = "The path to use for health checks"
   type        = string
   default     = "/api/health"
 }
 
-variable "sns_topic_arn" {
-  description = "ARN of the SNS topic for alerting"
-  type        = string
+variable "enable_blue_green" {
+  description = "Whether to enable blue-green deployment"
+  type        = bool
+  default     = true
 }
 
-variable "rollback_lambda_zip" {
-  description = "Path to the Lambda deployment package ZIP for rollback"
-  type        = string
-  default     = "functions/rollback-function.zip"
+variable "enable_canary" {
+  description = "Whether to enable canary deployment"
+  type        = bool
+  default     = false
 }
 
-variable "canary_lambda_zip" {
-  description = "Path to the Lambda deployment package ZIP for canary deployment"
+variable "canary_traffic_percentage" {
+  description = "The percentage of traffic to send to the canary deployment"
+  type        = number
+  default     = 0
+}
+
+variable "rollback_function_path" {
+  description = "The path to the rollback function ZIP file"
   type        = string
-  default     = "functions/canary-function.zip"
+  default     = "./functions/dist/rollback-function.zip"
+}
+
+variable "canary_function_path" {
+  description = "The path to the canary function ZIP file"
+  type        = string
+  default     = "./functions/dist/canary-function.zip"
+}
+
+variable "log_retention_days" {
+  description = "The number of days to retain logs"
+  type        = number
+  default     = 30
+}
+
+variable "alarm_evaluation_periods" {
+  description = "The number of periods to evaluate for the alarm"
+  type        = number
+  default     = 3
+}
+
+variable "alarm_threshold" {
+  description = "The threshold for the alarm"
+  type        = number
+  default     = 90
 }
