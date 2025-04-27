@@ -53,7 +53,7 @@ export function CostPredictionInsights({
 
   // Fetch cost matrix data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Get unique regions and building types for filters
