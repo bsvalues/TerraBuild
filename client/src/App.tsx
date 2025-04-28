@@ -65,7 +65,7 @@ import TerraBuildThemeProvider from "./components/TerraBuildThemeProvider";
 // Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { EnhancedSupabaseProvider } from "@/components/supabase/EnhancedSupabaseProvider";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // Add TypeScript declaration for our custom window property
 declare global {

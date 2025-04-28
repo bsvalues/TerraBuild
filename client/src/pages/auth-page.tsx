@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
