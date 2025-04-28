@@ -3,6 +3,9 @@ import { useAuth } from "./AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 
+// Define authentication methods available in the system
+type AuthMethod = "county-network" | "local" | "replit";
+
 // Define the base authentication context types based on AuthContext from AuthContext.tsx
 interface BaseAuthContextType {
   user: any;
@@ -17,6 +20,8 @@ interface BaseAuthContextType {
 // Extended auth context type that includes initialization state
 interface EnhancedAuthContextType extends BaseAuthContextType {
   isInitializing: boolean;
+  authMethod: AuthMethod;
+  setAuthMethod: (method: AuthMethod) => void;
   login: (username: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   register: (userData: any) => Promise<any>;
@@ -40,29 +45,54 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
   
   // Add initialization state
   const [isInitializing, setIsInitializing] = useState(true);
+  // Track which authentication method is being used
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("county-network");
 
   // Simulate initialization to show how we'd handle this
   useEffect(() => {
     console.log("Initializing authentication system");
     
-    // Simulate a short initialization process
-    const timer = setTimeout(() => {
-      setIsInitializing(false);
-    }, 500);
+    // Try to detect if we're running in the county network
+    const checkNetworkAuth = async () => {
+      try {
+        // This would be a real network check in production
+        const isCountyNetwork = window.location.hostname.includes('county') || 
+                               window.location.hostname.includes('terrafusion');
+        
+        // Set the appropriate auth method based on environment
+        setAuthMethod(isCountyNetwork ? "county-network" : "local");
+        
+        // Finish initialization
+        setIsInitializing(false);
+      } catch (error) {
+        console.error("Error detecting network environment:", error);
+        // Default to local auth if detection fails
+        setAuthMethod("local");
+        setIsInitializing(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    // Run the network check
+    checkNetworkAuth();
   }, []);
 
-  // Handle authentication errors
+  // Handle authentication errors with better error checking
   useEffect(() => {
     if (auth.error) {
       console.error("Authentication error:", auth.error);
+      
+      // Make sure we have a valid error with a message before showing toast
+      const errorMessage = auth.error instanceof Error 
+        ? auth.error.message 
+        : typeof auth.error === 'string'
+          ? auth.error
+          : "There was a problem with authentication";
       
       // Show toast notification for auth errors
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: auth.error.message || "There was a problem with authentication",
+        description: errorMessage,
       });
     }
   }, [auth.error, toast]);
@@ -125,6 +155,8 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
     isAuthenticated: auth.isAuthenticated,
     error: auth.error,
     isInitializing,
+    authMethod,
+    setAuthMethod,
     login: enhancedLogin,
     logout: enhancedLogout,
     register: enhancedRegister
