@@ -23,7 +23,7 @@ export class CountyNetworkStrategy extends Strategy {
     super(async (username, password, done) => {
       try {
         // First check if the user exists in our system
-        const user = await storage.getUserByEmail(username); // Using email as username
+        const user = await storage.getUserByUsername(username);
         
         if (user) {
           // User exists, perform county network authentication
@@ -140,12 +140,7 @@ export function setupCountyNetworkAuth(app: Express) {
   // Add the county network login endpoint
   app.post('/api/county-login', passport.authenticate('county-network'), (req, res) => {
     // Log the login
-    storage.createActivity({
-      action: 'County network login',
-      icon: 'ri-building-line',
-      iconColor: 'success',
-      details: { userId: req.user?.id, username: req.user?.username }
-    }).catch(console.error);
+    console.log(`County network login successful for user: ${req.user?.username}`);
     
     // Return user data
     const user = req.user;

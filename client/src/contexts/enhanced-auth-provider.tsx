@@ -97,17 +97,43 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
     }
   }, [auth.error, toast]);
 
-  // Enhanced login with better error handling
+  // Enhanced login with better error handling and auth method support
   const enhancedLogin = async (username: string, password: string) => {
     try {
-      if (auth.login) {
+      if (!auth.login) {
+        throw new Error("Login function not available");
+      }
+      
+      // If using county network authentication, use the county login endpoint
+      if (authMethod === "county-network") {
+        // Make direct API call to county network authentication endpoint
+        const response = await fetch('/api/county-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error("County network authentication failed");
+        }
+        
+        const user = await response.json();
+        
+        toast({
+          description: "Successfully logged in via County Network",
+        });
+        
+        return user;
+      } else {
+        // Use standard authentication for local or replit auth
         const user = await auth.login(username, password);
+        
         toast({
           description: "Successfully logged in",
         });
+        
         return user;
-      } else {
-        throw new Error("Login function not available");
       }
     } catch (error) {
       console.error("Login error:", error);

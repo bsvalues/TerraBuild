@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
+import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -38,6 +40,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const { user, login, register, isLoading } = useAuth();
+  const { setAuthMethod, authMethod } = useEnhancedAuth();
   const { autoLoginEnabled, toggleAutoLogin } = useAutoLogin();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [loginPending, setLoginPending] = useState(false);
@@ -137,10 +140,22 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+          <Tabs 
+            defaultValue="login" 
+            value={activeTab} 
+            onValueChange={(value) => {
+              setActiveTab(value);
+              // Set auth method based on selected tab
+              if (value === 'county') {
+                setAuthMethod('county-network');
+              } else {
+                setAuthMethod('local');
+              }
+            }}>
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="login">Sign In</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="county">County Network</TabsTrigger>
             </TabsList>
 
             {/* Login Tab */}
@@ -288,6 +303,11 @@ export default function AuthPage() {
                   </Form>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* County Network Auth Tab */}
+            <TabsContent value="county">
+              <CountyNetworkAuth />
             </TabsContent>
           </Tabs>
         </div>

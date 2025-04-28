@@ -61,6 +61,8 @@ app.use((req, res, next) => {
   // Setup authentication with Replit Auth
   try {
     await setupAuth(app);
+    // Setup County Network Authentication
+    setupCountyNetworkAuth(app);
     log('Authentication system initialized successfully');
   } catch (error) {
     log(`Authentication initialization error: ${error}`, 'error');
