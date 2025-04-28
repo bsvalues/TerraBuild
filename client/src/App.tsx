@@ -351,12 +351,14 @@ function App() {
             <EnhancedSupabaseProvider>
               <WindowProvider>
                 <SidebarProvider>
-                  <EnhancedAuthProvider>
-                    <DataFlowProvider>
-                      <Router />
-                      <Toaster />
-                    </DataFlowProvider>
-                  </EnhancedAuthProvider>
+                  <AuthProvider>
+                    <EnhancedAuthProvider>
+                      <DataFlowProvider>
+                        <Router />
+                        <Toaster />
+                      </DataFlowProvider>
+                    </EnhancedAuthProvider>
+                  </AuthProvider>
                 </SidebarProvider>
               </WindowProvider>
             </EnhancedSupabaseProvider>
