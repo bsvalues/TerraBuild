@@ -3,6 +3,7 @@ import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
+import { useToast } from "@/hooks/use-toast";
 import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,6 +43,7 @@ export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const { setAuthMethod, authMethod, login, register } = useEnhancedAuth();
   const { autoLoginEnabled, toggleAutoLogin } = useAutoLogin();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [loginPending, setLoginPending] = useState(false);
   const [registerPending, setRegisterPending] = useState(false);
@@ -58,11 +60,26 @@ export default function AuthPage() {
       setLoginPending(true);
       if (login) {
         await login("admin", "password");
+        // Success is handled by the enhanced auth provider
       } else {
         console.error("Auto-login failed: login method not available");
+        toast({
+          variant: "destructive",
+          title: "Auto-Login Failed",
+          description: "Auto-login service unavailable. Please log in manually.",
+        });
       }
     } catch (error) {
-      console.error("Auto-login failed:", error);
+      // Only log actual errors with content
+      if (error instanceof Error) {
+        console.error("Auto-login failed:", error.message);
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Login Failed",
+          description: error.message || "Failed to log in automatically. Please log in manually.",
+        });
+      }
     } finally {
       setLoginPending(false);
     }
@@ -96,11 +113,28 @@ export default function AuthPage() {
       setLoginPending(true);
       if (login) {
         await login(data.username, data.password);
+        // Success is handled by the enhanced auth provider
       } else {
         console.error("Login failed: login method not available");
+        // Show a specific error toast for this case
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: "Authentication service unavailable. Please try again later.",
+        });
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      // Only log actual errors with content
+      if (error instanceof Error) {
+        console.error("Login failed:", error.message);
+        
+        // Show an appropriate error message
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: error.message || "Invalid credentials. Please check your username and password.",
+        });
+      }
     } finally {
       setLoginPending(false);
     }
@@ -116,11 +150,38 @@ export default function AuthPage() {
           ...data,
           email: `${data.username}@example.com` // Generate email from username as required field
         });
+        // Success is handled by the enhanced auth provider with a toast
       } else {
         console.error("Registration failed: register method not available");
+        // Show a specific error for this scenario
+        toast({
+          variant: "destructive",
+          title: "Registration Error",
+          description: "Registration service is currently unavailable. Please try again later.",
+        });
       }
     } catch (error) {
-      console.error("Registration failed:", error);
+      // Only log actual errors
+      if (error instanceof Error) {
+        console.error("Registration failed:", error.message);
+        
+        // Provide helpful error message based on common issues
+        let errorMessage = error.message;
+        
+        if (error.message.includes("username") && error.message.includes("exists")) {
+          errorMessage = "This username is already taken. Please choose another one.";
+        } else if (error.message.includes("email") && error.message.includes("exists")) {
+          errorMessage = "This email is already registered. Please use another email or try to log in.";
+        } else if (!errorMessage) {
+          errorMessage = "Registration failed. Please check your information and try again.";
+        }
+        
+        toast({
+          variant: "destructive",
+          title: "Registration Failed",
+          description: errorMessage,
+        });
+      }
     } finally {
       setRegisterPending(false);
     }

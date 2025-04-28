@@ -76,21 +76,25 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
   // Handle authentication errors with better error checking
   useEffect(() => {
     if (auth.error) {
-      console.error("Authentication error:", auth.error);
-      
-      // Make sure we have a valid error with a message before showing toast
-      const errorMessage = auth.error instanceof Error 
-        ? auth.error.message 
-        : typeof auth.error === 'string'
-          ? auth.error
-          : "There was a problem with authentication";
-      
-      // Show toast notification for auth errors
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: errorMessage,
-      });
+      // Only log meaningful errors that have data
+      if (auth.error instanceof Error || typeof auth.error === 'string' || 
+          (typeof auth.error === 'object' && Object.keys(auth.error).length > 0)) {
+        console.error("Authentication error:", auth.error);
+        
+        // Make sure we have a valid error with a message before showing toast
+        const errorMessage = auth.error instanceof Error 
+          ? auth.error.message 
+          : typeof auth.error === 'string'
+            ? auth.error
+            : "There was a problem with authentication";
+        
+        // Show toast notification for auth errors
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: errorMessage,
+        });
+      }
     }
   }, [auth.error, toast]);
 
