@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
@@ -56,7 +56,11 @@ export default function AuthPage() {
   const handleAutoLogin = async () => {
     try {
       setLoginPending(true);
-      await login("admin", "password");
+      if (login) {
+        await login("admin", "password");
+      } else {
+        console.error("Auto-login failed: login method not available");
+      }
     } catch (error) {
       console.error("Auto-login failed:", error);
     } finally {
@@ -90,7 +94,11 @@ export default function AuthPage() {
   const onLoginSubmit = async (data: LoginValues) => {
     try {
       setLoginPending(true);
-      await login(data.username, data.password);
+      if (login) {
+        await login(data.username, data.password);
+      } else {
+        console.error("Login failed: login method not available");
+      }
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
@@ -103,10 +111,14 @@ export default function AuthPage() {
     try {
       setRegisterPending(true);
       // Add a dummy email since it's required by the auth context
-      await register({
-        ...data,
-        email: `${data.username}@example.com` // Generate email from username as required field
-      });
+      if (register) {
+        await register({
+          ...data,
+          email: `${data.username}@example.com` // Generate email from username as required field
+        });
+      } else {
+        console.error("Registration failed: register method not available");
+      }
     } catch (error) {
       console.error("Registration failed:", error);
     } finally {

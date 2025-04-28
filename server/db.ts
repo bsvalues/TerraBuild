@@ -3,9 +3,10 @@ import postgres from "postgres";
 import * as schema from "../shared/schema";
 import { log } from "./vite";
 
-// Database client setup
-let client: ReturnType<typeof postgres>;
-let db: ReturnType<typeof drizzle>;
+// Database client setup - initialize with default values
+let connectionString = process.env.DATABASE_URL || '';
+let client = postgres(connectionString);
+let db = drizzle(client, { schema });
 
 // Initialize database connection and verify it works
 export async function initDatabase() {
@@ -14,7 +15,9 @@ export async function initDatabase() {
   }
 
   try {
-    client = postgres(process.env.DATABASE_URL);
+    // Re-initialize with the proper connection string
+    connectionString = process.env.DATABASE_URL;
+    client = postgres(connectionString);
     db = drizzle(client, { schema });
     
     // Test the connection by executing a simple query
