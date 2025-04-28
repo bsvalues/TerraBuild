@@ -353,14 +353,14 @@ function App() {
             <EnhancedSupabaseProvider>
               <WindowProvider>
                 <SidebarProvider>
-                  <AuthProvider>
-                    <EnhancedAuthProvider>
+                  <EnhancedAuthProvider>
+                    <AuthProvider>
                       <DataFlowProvider>
                         <Router />
                         <Toaster />
                       </DataFlowProvider>
-                    </EnhancedAuthProvider>
-                  </AuthProvider>
+                    </AuthProvider>
+                  </EnhancedAuthProvider>
                 </SidebarProvider>
               </WindowProvider>
             </EnhancedSupabaseProvider>

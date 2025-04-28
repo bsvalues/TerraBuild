@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
@@ -39,8 +39,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { user, login, register, isLoading } = useAuth();
-  const { setAuthMethod, authMethod } = useEnhancedAuth();
+  const { user, isLoading } = useAuth();
+  const { setAuthMethod, authMethod, login, register } = useEnhancedAuth();
   const { autoLoginEnabled, toggleAutoLogin } = useAutoLogin();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [loginPending, setLoginPending] = useState(false);

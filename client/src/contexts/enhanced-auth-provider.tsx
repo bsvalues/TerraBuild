@@ -1,19 +1,16 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 
 // Define authentication methods available in the system
 type AuthMethod = "county-network" | "local" | "replit";
 
-// Define the base authentication context types based on AuthContext from AuthContext.tsx
+// Define the base authentication context types based on useAuth hook
 interface BaseAuthContextType {
   user: any;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login?: (username: string, password: string) => Promise<any>;
-  logout?: () => Promise<void>;
-  register?: (userData: any) => Promise<any>;
   error: Error | null;
 }
 
@@ -100,10 +97,6 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
   // Enhanced login with better error handling and auth method support
   const enhancedLogin = async (username: string, password: string) => {
     try {
-      if (!auth.login) {
-        throw new Error("Login function not available");
-      }
-      
       // If using county network authentication, use the county login endpoint
       if (authMethod === "county-network") {
         // Make direct API call to county network authentication endpoint
@@ -127,7 +120,19 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
         return user;
       } else {
         // Use standard authentication for local or replit auth
-        const user = await auth.login(username, password);
+        // Direct API call to login endpoint
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error("Authentication failed");
+        }
+        
+        const user = await response.json();
         
         toast({
           description: "Successfully logged in",
@@ -145,12 +150,19 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
   // Enhanced logout with better feedback
   const enhancedLogout = async () => {
     try {
-      if (auth.logout) {
-        await auth.logout();
-        // The toast is shown by the component that calls logout
-      } else {
-        throw new Error("Logout function not available");
+      // Direct API call to logout endpoint
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error("Logout failed");
       }
+      
+      toast({
+        description: "Successfully logged out",
+      });
     } catch (error) {
       console.error("Logout error:", error);
       throw error;
@@ -160,14 +172,25 @@ export function EnhancedAuthProvider({ children }: EnhancedAuthProviderProps) {
   // Enhanced register with improved error handling
   const enhancedRegister = async (userData: any) => {
     try {
-      if (auth.register) {
-        await auth.register(userData);
-        toast({
-          description: "Registration successful",
-        });
-      } else {
-        throw new Error("Register function not available");
+      // Direct API call to register endpoint
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error("Registration failed");
       }
+      
+      const user = await response.json();
+      
+      toast({
+        description: "Registration successful",
+      });
+      
+      return user;
     } catch (error) {
       console.error("Registration error:", error);
       throw error;
