@@ -10,6 +10,7 @@ import passport from 'passport';
 import { Express } from 'express';
 import { storage } from './storage-implementation';
 import { log } from './vite';
+import { User, InsertUser } from '../shared/schema';
 
 /**
  * County Network Authentication Strategy
@@ -22,7 +23,7 @@ export class CountyNetworkStrategy extends Strategy {
     super(async (username, password, done) => {
       try {
         // First check if the user exists in our system
-        const user = await storage.getUserByUsername(username);
+        const user = await storage.getUserByEmail(username); // Using email as username
         
         if (user) {
           // User exists, perform county network authentication
@@ -43,14 +44,19 @@ export class CountyNetworkStrategy extends Strategy {
             const userInfo = await this.getCountyUserInfo(username);
             
             if (userInfo) {
+              // Split name into first and last name
+              const nameParts = userInfo.name.split(' ');
+              const firstName = nameParts[0];
+              const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+              
               const newUser = await storage.createUser({
                 username: username,
-                password: 'county-network-auth', // placeholder, not used for login
-                name: userInfo.name,
                 email: userInfo.email,
+                firstName: firstName,
+                lastName: lastName,
                 role: userInfo.role || 'user',
-                is_active: true
-              });
+                isActive: true
+              } as InsertUser);
               
               return done(null, newUser);
             }
@@ -151,9 +157,10 @@ export function setupCountyNetworkAuth(app: Express) {
     res.status(200).json({
       id: user.id,
       username: user.username,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
-      is_active: user.is_active,
+      isActive: user.isActive,
       authMethod: 'county-network'
     });
   });
