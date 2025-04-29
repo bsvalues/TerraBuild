@@ -1,25 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  
-  backend "s3" {
-    # These values will be provided during initialization
-    # bucket         = "terrabuild-terraform-state"
-    # key            = "terraform.tfstate"
-    # region         = "us-west-2"
-    # dynamodb_table = "terrabuild-terraform-locks"
-    # encrypt        = true
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
 module "network" {
   source = "./modules/network"
   
@@ -32,12 +10,31 @@ module "network" {
 module "database" {
   source = "./modules/database"
   
-  environment         = var.environment
-  vpc_id              = module.network.vpc_id
-  private_subnet_ids  = module.network.private_subnet_ids
-  db_instance_class   = var.db_instance_class
-  db_name             = var.db_name
-  db_username         = var.db_username
-  db_password         = var.db_password
+  environment          = var.environment
+  vpc_id               = module.network.vpc_id
+  private_subnet_ids   = module.network.private_subnet_ids
+  db_instance_class    = var.db_instance_class
+  db_name              = var.db_name
+  db_username          = var.db_username
+  db_password          = var.db_password
   db_allocated_storage = var.db_allocated_storage
+  
+  depends_on = [module.network]
+}
+
+# Create an AWS Secrets Manager secret for database connection
+resource "aws_secretsmanager_secret" "database_credentials" {
+  name        = "${var.environment}/database/credentials"
+  description = "Database credentials for the TerraBuild application"
+}
+
+resource "aws_secretsmanager_secret_version" "database_credentials" {
+  secret_id = aws_secretsmanager_secret.database_credentials.id
+  secret_string = jsonencode({
+    host     = module.database.database_endpoint
+    port     = module.database.database_port
+    dbname   = module.database.database_name
+    username = module.database.database_username
+    password = var.db_password
+  })
 }
