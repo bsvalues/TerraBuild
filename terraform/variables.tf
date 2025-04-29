@@ -79,3 +79,9 @@ variable "app_desired_count" {
   type        = number
   default     = 2
 }
+
+variable "alert_email_addresses" {
+  description = "List of email addresses to receive monitoring alerts"
+  type        = list(string)
+  default     = []
+}

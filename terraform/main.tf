@@ -71,3 +71,15 @@ module "ecs" {
   
   depends_on = [module.network, module.database]
 }
+
+module "monitoring" {
+  source = "./modules/monitoring"
+  
+  environment          = var.environment
+  aws_region           = var.aws_region
+  ecs_cluster_id       = module.ecs.ecs_cluster_id
+  load_balancer_arn    = module.ecs.load_balancer_arn
+  alert_email_addresses = var.alert_email_addresses
+  
+  depends_on = [module.ecs]
+}

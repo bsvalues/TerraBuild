@@ -36,4 +36,6 @@ module "terrabuild_infrastructure" {
   app_cpu            = 1024
   app_memory         = 2048
   app_desired_count  = 1
+  
+  alert_email_addresses = var.alert_email_addresses
 }

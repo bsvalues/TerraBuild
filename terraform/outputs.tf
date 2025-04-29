@@ -37,3 +37,18 @@ output "ecs_cluster_id" {
   description = "ID of the ECS cluster"
   value       = module.ecs.ecs_cluster_id
 }
+
+output "monitoring_dashboard_url" {
+  description = "URL to the CloudWatch monitoring dashboard"
+  value       = module.monitoring.monitoring_dashboard_url
+}
+
+output "alerts_topic_arn" {
+  description = "ARN of the SNS topic for alerts"
+  value       = module.monitoring.alerts_topic_arn
+}
+
+output "application_log_group" {
+  description = "Name of the application log group"
+  value       = module.monitoring.application_log_group
+}
