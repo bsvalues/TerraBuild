@@ -31,4 +31,9 @@ module "terrabuild_infrastructure" {
   db_username        = var.db_username
   db_password        = var.db_password
   db_allocated_storage = 20
+  
+  domain_name        = var.domain_name
+  app_cpu            = 1024
+  app_memory         = 2048
+  app_desired_count  = 1
 }

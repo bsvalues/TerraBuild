@@ -1,78 +1,146 @@
 #!/bin/bash
-# BCBS Application Deployment Script
-# This script handles the deployment process for the BCBS application
-# to different environments (dev, staging, prod)
+# TerraBuild Deployment Script
+# This script deploys the TerraBuild application to AWS
 
 set -e
 
-# Default environment
-ENV=${1:-dev}
-TAG=${2:-latest}
+# Default values
+ENV="dev"
+SKIP_BUILD=false
+SKIP_INFRA=false
+SKIP_DEPLOY=false
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-echo -e "${GREEN}Starting deployment for BCBS application to ${YELLOW}${ENV}${GREEN} environment${NC}"
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --env)
+      ENV="$2"
+      shift 2
+      ;;
+    --skip-build)
+      SKIP_BUILD=true
+      shift
+      ;;
+    --skip-infra)
+      SKIP_INFRA=true
+      shift
+      ;;
+    --skip-deploy)
+      SKIP_DEPLOY=true
+      shift
+      ;;
+    --help)
+      echo "Usage: ./deploy.sh [OPTIONS]"
+      echo "Options:"
+      echo "  --env ENV         Environment to deploy to (dev, staging, prod) [default: dev]"
+      echo "  --skip-build      Skip building the Docker image"
+      echo "  --skip-infra      Skip applying Terraform infrastructure changes"
+      echo "  --skip-deploy     Skip deploying the application to ECS"
+      echo "  --help            Show this help message"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
 
 # Validate environment
-if [[ ! "$ENV" =~ ^(dev|staging|prod)$ ]]; then
-  echo -e "${RED}Error: Invalid environment specified. Use 'dev', 'staging', or 'prod'${NC}"
+if [[ "$ENV" != "dev" && "$ENV" != "staging" && "$ENV" != "prod" ]]; then
+  echo "Error: Environment must be one of: dev, staging, prod"
   exit 1
 fi
 
-# Build the Docker image
-echo -e "${GREEN}Building Docker images...${NC}"
-docker-compose build
+# Print deployment settings
+echo "=== TerraBuild Deployment ==="
+echo "Environment: $ENV"
+echo "Skip Build: $SKIP_BUILD"
+echo "Skip Infrastructure: $SKIP_INFRA"
+echo "Skip Deploy: $SKIP_DEPLOY"
+echo "==========================="
 
-# Tag the Docker image with environment and timestamp
-TIMESTAMP=$(date +%Y%m%d%H%M%S)
-IMAGE_NAME="bcbs-app"
-FULL_TAG="${IMAGE_NAME}:${ENV}-${TAG}-${TIMESTAMP}"
+# Set AWS region
+AWS_REGION="us-west-2"
+export AWS_REGION
 
-echo -e "${GREEN}Tagging image as ${YELLOW}${FULL_TAG}${NC}"
-docker tag ${IMAGE_NAME}_web:latest ${FULL_TAG}
-
-# Login to container registry (if needed)
-if [[ "$ENV" != "dev" ]]; then
-  echo -e "${GREEN}Logging in to container registry...${NC}"
-  # This would use AWS CLI, GCP CLI, or other registry login commands
-  # aws ecr get-login-password | docker login --username AWS --password-stdin <your-registry>
-  echo "Registry login would happen here in a real deployment"
+# Apply Terraform infrastructure if not skipped
+if [ "$SKIP_INFRA" = false ]; then
+  echo "Applying Terraform infrastructure for $ENV environment..."
+  cd terraform/environments/$ENV
+  
+  # Initialize Terraform
+  terraform init
+  
+  # Apply Terraform configuration
+  terraform apply -auto-approve
+  
+  # Get outputs
+  ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
+  ECS_CLUSTER_ID=$(terraform output -raw ecs_cluster_id)
+  
+  cd ../../..
+  
+  echo "Infrastructure updated successfully."
+else
+  # Get ECR repository URL and ECS cluster ID from Terraform outputs
+  cd terraform/environments/$ENV
+  ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
+  ECS_CLUSTER_ID=$(terraform output -raw ecs_cluster_id)
+  cd ../../..
+  
+  echo "Skipping infrastructure application."
 fi
 
-# Push the image to the registry (if not dev)
-if [[ "$ENV" != "dev" ]]; then
-  echo -e "${GREEN}Pushing image to registry...${NC}"
-  # docker push ${FULL_TAG}
-  echo "Image push would happen here in a real deployment"
+# Get AWS account ID
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+
+# Build and push Docker image if not skipped
+if [ "$SKIP_BUILD" = false ]; then
+  echo "Building and pushing Docker image to ECR..."
+  
+  # Login to ECR
+  aws ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+  
+  # Build Docker image
+  docker build -t terrabuild:latest .
+  
+  # Tag Docker image
+  docker tag terrabuild:latest ${ECR_REPOSITORY_URL}:latest
+  
+  # Push Docker image to ECR
+  docker push ${ECR_REPOSITORY_URL}:latest
+  
+  echo "Docker image built and pushed successfully."
+else
+  echo "Skipping Docker build and push."
 fi
 
-# Apply Terraform for the specified environment
-echo -e "${GREEN}Applying Terraform configuration for ${YELLOW}${ENV}${GREEN} environment...${NC}"
-cd terrafusion
-terraform init
-terraform workspace select ${ENV} || terraform workspace new ${ENV}
-terraform apply -var-file=environments/${ENV}.tfvars -var="image_tag=${TAG}-${TIMESTAMP}" -auto-approve
-
-# Run post-deploy checks
-echo -e "${GREEN}Running post-deployment checks...${NC}"
-HEALTH_CHECK_URL="https://example.com/health"  # Replace with actual health check URL
-
-if [[ "$ENV" == "dev" ]]; then
-  HEALTH_CHECK_URL="http://localhost:5000/health"
-elif [[ "$ENV" == "staging" ]]; then
-  HEALTH_CHECK_URL="https://staging.example.com/health"
-elif [[ "$ENV" == "prod" ]]; then
-  HEALTH_CHECK_URL="https://app.example.com/health"
+# Deploy application to ECS if not skipped
+if [ "$SKIP_DEPLOY" = false ]; then
+  echo "Deploying application to ECS..."
+  
+  # Get latest task definition
+  TASK_FAMILY=$(aws ecs list-task-definitions --family-prefix ${ENV}-terrabuild-app --sort DESC --max-items 1 --query "taskDefinitionArns[0]" --output text | cut -d"/" -f2)
+  
+  # Force new deployment
+  aws ecs update-service --cluster ${ECS_CLUSTER_ID} --service ${ENV}-terrabuild-service --force-new-deployment
+  
+  echo "Application deployed successfully."
+else
+  echo "Skipping application deployment."
 fi
 
-echo -e "${GREEN}Deployment to ${YELLOW}${ENV}${GREEN} completed successfully!${NC}"
-echo -e "${GREEN}To run post-deployment checks:${NC}"
-echo -e "  curl ${HEALTH_CHECK_URL}"
+# Display application URL
+if [ "$SKIP_INFRA" = false ] || [ "$SKIP_DEPLOY" = false ]; then
+  # Get load balancer DNS name
+  cd terraform/environments/$ENV
+  LB_DNS=$(terraform output -raw load_balancer_dns)
+  cd ../../..
+  
+  echo "==========================="
+  echo "Application deployed to: https://${LB_DNS}"
+  echo "==========================="
+fi
 
-# Instructions for rollback if needed
-echo -e "\n${YELLOW}If you need to rollback, run:${NC}"
-echo -e "  ./scripts/deploy.sh ${ENV} <previous-tag>"
+echo "Deployment process completed."

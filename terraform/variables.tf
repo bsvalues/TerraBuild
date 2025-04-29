@@ -56,3 +56,26 @@ variable "db_allocated_storage" {
   type        = number
   default     = 20
 }
+
+variable "domain_name" {
+  description = "Domain name for the application"
+  type        = string
+}
+
+variable "app_cpu" {
+  description = "CPU units for the application (1024 = 1 vCPU)"
+  type        = number
+  default     = 1024
+}
+
+variable "app_memory" {
+  description = "Memory for the application in MB"
+  type        = number
+  default     = 2048
+}
+
+variable "app_desired_count" {
+  description = "Desired number of application containers"
+  type        = number
+  default     = 2
+}

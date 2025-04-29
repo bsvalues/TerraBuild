@@ -22,3 +22,18 @@ output "database_secret_arn" {
   description = "ARN of the AWS Secrets Manager secret containing database credentials"
   value       = aws_secretsmanager_secret.database_credentials.arn
 }
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository for the application"
+  value       = module.ecs.ecr_repository_url
+}
+
+output "load_balancer_dns" {
+  description = "DNS name of the application load balancer"
+  value       = module.ecs.load_balancer_dns
+}
+
+output "ecs_cluster_id" {
+  description = "ID of the ECS cluster"
+  value       = module.ecs.ecs_cluster_id
+}

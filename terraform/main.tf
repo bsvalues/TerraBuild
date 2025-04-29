@@ -36,5 +36,38 @@ resource "aws_secretsmanager_secret_version" "database_credentials" {
     dbname   = module.database.database_name
     username = module.database.database_username
     password = var.db_password
+    connectionString = "postgresql://${module.database.database_username}:${var.db_password}@${replace(module.database.database_endpoint, ":5432", "")}:5432/${module.database.database_name}"
   })
+}
+
+# Create a certificate for HTTPS
+resource "aws_acm_certificate" "app" {
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+  
+  lifecycle {
+    create_before_destroy = true
+  }
+  
+  tags = {
+    Name        = "${var.environment}-terrabuild-certificate"
+    Environment = var.environment
+  }
+}
+
+module "ecs" {
+  source = "./modules/ecs"
+  
+  environment          = var.environment
+  aws_region           = var.aws_region
+  vpc_id               = module.network.vpc_id
+  public_subnet_ids    = module.network.public_subnet_ids
+  private_subnet_ids   = module.network.private_subnet_ids
+  app_cpu              = var.app_cpu
+  app_memory           = var.app_memory
+  app_desired_count    = var.app_desired_count
+  database_secret_arn  = aws_secretsmanager_secret.database_credentials.arn
+  acm_certificate_arn  = aws_acm_certificate.app.arn
+  
+  depends_on = [module.network, module.database]
 }
