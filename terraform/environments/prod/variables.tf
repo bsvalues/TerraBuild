@@ -39,3 +39,12 @@ variable "domain_name" {
   type        = string
   default     = "terrabuild.bentoncounty.com"
 }
+
+variable "alert_email_addresses" {
+  description = "List of email addresses to receive monitoring alerts"
+  type        = list(string)
+  default     = [
+    "ops-team@terrabuild.bentoncounty.com",
+    "admin@terrabuild.bentoncounty.com"
+  ]
+}

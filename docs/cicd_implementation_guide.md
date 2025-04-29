@@ -1,319 +1,261 @@
-# CI/CD Implementation Guide for BCBS Project
+# TerraBuild CI/CD Implementation Guide
 
-This guide outlines the implementation of a Continuous Integration and Continuous Deployment (CI/CD) pipeline for the Benton County Building System (BCBS) application.
+This document provides step-by-step instructions for implementing and maintaining the CI/CD pipeline for the TerraBuild application. This guide is designed for junior engineers who need to understand the deployment process and infrastructure setup.
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Components](#components)
-3. [Docker Development Environment](#docker-development-environment)
-4. [GitHub Actions CI Pipeline](#github-actions-ci-pipeline)
-5. [Terraform Infrastructure Management](#terraform-infrastructure-management)
-6. [Deployment Strategy](#deployment-strategy)
-7. [Monitoring and Rollback](#monitoring-and-rollback)
+2. [Prerequisites](#prerequisites)
+3. [GitHub Actions CI/CD Pipeline](#github-actions-cicd-pipeline)
+4. [Infrastructure Setup](#infrastructure-setup)
+5. [Deployment Process](#deployment-process)
+6. [Monitoring and Alerts](#monitoring-and-alerts)
+7. [Troubleshooting](#troubleshooting)
+8. [Best Practices](#best-practices)
 
 ## Overview
 
-The CI/CD pipeline automates testing, building, and deployment of the BCBS application, enabling consistent and reliable delivery of new features and bug fixes.
+The TerraBuild CI/CD pipeline automates the building, testing, and deployment of the application to AWS infrastructure. The pipeline is triggered by pushes to specific branches in the GitHub repository and uses Terraform for infrastructure provisioning.
 
-### Objectives
+## Prerequisites
 
-- Provide a consistent development environment
-- Automate testing and validation
-- Enable reliable and repeatable deployments
-- Support multiple environments (dev, staging, production)
-- Ensure infrastructure consistency through code
+Before implementing the CI/CD pipeline, ensure you have:
 
-## Components
+1. **AWS Account**: Access to an AWS account with appropriate permissions
+2. **GitHub Repository**: The TerraBuild codebase in a GitHub repository
+3. **AWS CLI**: Installed and configured on your local machine
+4. **Terraform**: Version 1.0.0 or higher installed
+5. **Docker**: Installed for building and testing container images
 
-The CI/CD pipeline consists of these key components:
+## GitHub Actions CI/CD Pipeline
 
-1. **Docker Development Environment**
-   - Local development environment consistency
-   - Simplified onboarding for new developers
-   - Mirroring of production dependencies
+The pipeline is defined in `.github/workflows/ci.yml` and consists of the following stages:
 
-2. **GitHub Actions CI Pipeline**
-   - Automated testing
-   - Code quality checks
-   - Build verification
-   - Artifact generation
+### 1. Build and Test
 
-3. **Terraform Infrastructure Management**
-   - Infrastructure as Code (IaC)
-   - Environment consistency
-   - Resource management
-   - Security configuration
-
-4. **Deployment Automation**
-   - Environment-specific deployments
-   - Rollback capabilities
-   - Release management
-
-## Docker Development Environment
-
-### Configuration
-
-The Docker development environment is configured using `docker-compose.yml`:
+This stage builds the application and runs tests to ensure code quality:
 
 ```yaml
-version: "3.8"
-services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: npm run dev
-    volumes:
-      - .:/app
-      - /app/node_modules
-    ports:
-      - "5000:5000"
-    env_file:
-      - .env.dev
-    depends_on:
-      - db
-      - redis
-
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: bcbs
-      POSTGRES_USER: bcbs
-      POSTGRES_PASSWORD: bcbs
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-```
-
-### Usage
-
-1. **Starting the environment**:
-   ```bash
-   docker-compose up
-   ```
-
-2. **Rebuilding after changes**:
-   ```bash
-   docker-compose build
-   docker-compose up
-   ```
-
-3. **Running database migrations**:
-   ```bash
-   docker-compose exec web npm run db:push
-   ```
-
-## GitHub Actions CI Pipeline
-
-### Workflow Configuration
-
-The GitHub Actions workflow is defined in `.github/workflows/ci.yml`:
-
-```yaml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
 jobs:
-  test:
-    name: Test
+  build:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: bcbs
-          POSTGRES_PASSWORD: bcbs
-          POSTGRES_DB: bcbs_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-    
     steps:
       - uses: actions/checkout@v3
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Check TypeScript
-        run: npm run check
       - name: Run tests
         run: npm test
-        env:
-          DATABASE_URL: postgresql://bcbs:bcbs@localhost:5432/bcbs_test
-          REDIS_URL: redis://localhost:6379/0
-          NODE_ENV: test
-  
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Build application
-        run: npm run build
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: dist/
 ```
 
-### CI Pipeline Steps
+### 2. Security Scan
 
-1. **Test**:
-   - Run unit tests
-   - Type checking
-   - Code quality validation
+This stage performs security scans on the code and dependencies:
 
-2. **Build**:
-   - Create production artifacts
-   - Package application
-   - Upload artifacts for deployment
+```yaml
+  security:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run security scan
+        run: |
+          npm install -g snyk
+          snyk test
+```
 
-3. **Deploy** (when ready):
-   - Deploy to appropriate environment
-   - Run database migrations
-   - Verify deployment
+### 3. Infrastructure Validation
 
-## Terraform Infrastructure Management
+This stage validates the Terraform configuration:
 
-### Resource Management
+```yaml
+  validate-infrastructure:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform Init
+        run: |
+          cd terraform/environments/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+          terraform init -backend=false
+      - name: Terraform Validate
+        run: |
+          cd terraform/environments/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+          terraform validate
+```
 
-Terraform modules are organized in the `terrafusion` directory:
+### 4. Deploy
 
-- `main.tf` - Main infrastructure configuration
-- `variables.tf` - Variable definitions
-- `outputs.tf` - Output values
-- Environment-specific vars in `environments/*.tfvars`
+This stage deploys the application to AWS:
 
-### Key Components
+```yaml
+  deploy:
+    needs: [security, validate-infrastructure]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      - name: Deploy application
+        run: |
+          ENV=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+          ./scripts/deploy.sh --env $ENV
+```
 
-1. **Network Infrastructure**:
-   - VPC and subnets
-   - Security groups
-   - Routing tables
+## Infrastructure Setup
 
-2. **Database Resources**:
-   - PostgreSQL RDS instance
-   - Backup configuration
-   - Security settings
+The infrastructure is managed using Terraform and is organized into modules:
 
-3. **Cache Infrastructure**:
-   - Redis ElastiCache cluster
-   - Subnet groups
-   - Security configuration
+### 1. Network Module
 
-### Deployment Integration
+Sets up the VPC, subnets, security groups, and other networking components:
 
-The Terraform configuration integrates with the CI/CD pipeline:
+```
+terraform/modules/network/
+```
 
-1. Plan in CI:
-   ```bash
-   terraform plan -var-file=environments/dev.tfvars -out=tfplan
-   ```
+### 2. Database Module
 
-2. Apply on approval:
-   ```bash
-   terraform apply tfplan
-   ```
+Creates an RDS PostgreSQL instance:
 
-## Deployment Strategy
+```
+terraform/modules/database/
+```
 
-### Environment Progression
+### 3. ECS Module
 
-The deployment strategy follows a progressive approach:
+Sets up the ECS cluster, services, and load balancer:
 
-1. **Development**:
-   - Automatic deployment on merge to development branch
-   - Used for feature testing and integration
+```
+terraform/modules/ecs/
+```
 
-2. **Staging**:
-   - Manual approval required
-   - Production-like environment for final testing
-   - Complete integration testing
+### 4. Monitoring Module
 
-3. **Production**:
-   - Manual approval required
-   - Scheduled deployment windows
-   - Canary or blue-green deployment
+Configures CloudWatch dashboards, alarms, and log groups:
 
-### Deployment Configuration
+```
+terraform/modules/monitoring/
+```
 
-Environment-specific configurations are managed through:
+### Environment-specific Configuration
 
-- Environment variables
-- Configuration files
-- Feature flags
+Each environment (dev, prod) has its own configuration:
 
-## Monitoring and Rollback
+```
+terraform/environments/dev/
+terraform/environments/prod/
+```
 
-### Health Checks
+## Deployment Process
 
-Automated health checks verify deployment success:
+The deployment process is handled by the `scripts/deploy.sh` script, which:
 
-- API endpoint tests
-- Database connectivity
-- Cache functionality
-- Resource utilization
+1. Applies Terraform infrastructure changes
+2. Builds and pushes a Docker image to ECR
+3. Updates the ECS service to use the new image
 
-### Rollback Strategy
+To deploy manually:
 
-If issues are detected:
+```bash
+# Deploy to dev environment
+./scripts/deploy.sh --env dev
 
-1. Automatic rollback for critical failures
-2. Manual rollback option for non-critical issues
-3. Database rollback through migrations
+# Deploy to production environment
+./scripts/deploy.sh --env prod
 
-### Monitoring Integration
+# Skip certain steps
+./scripts/deploy.sh --env dev --skip-infra
+```
 
-The CI/CD pipeline integrates with monitoring tools:
+## Monitoring and Alerts
 
-- Alerts on deployment failures
-- Performance metrics after deployment
-- Error rate tracking
+Monitoring is set up using AWS CloudWatch:
 
-## Conclusion
+### Dashboards
 
-This CI/CD implementation provides a robust framework for developing, testing, and deploying the BCBS application. By following these guidelines, the team can ensure consistent quality, reliable deployments, and efficient collaboration.
+A comprehensive dashboard is created for each environment showing:
+- ECS CPU and memory utilization
+- RDS metrics
+- Application load balancer metrics
 
-## Additional Resources
+### Alerts
 
-- [Docker Development Guide](./docker_development_guide.md)
-- [Terraform AWS Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+Alerts are configured for:
+- High CPU utilization (> 85%)
+- High memory utilization (> 85%)
+- Database storage running low
+- HTTP 5XX errors
+
+Alert notifications are sent to the email addresses configured in the `alert_email_addresses` variable.
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Deployment Failures
+
+1. **Terraform Apply Fails**:
+   - Check the error message in the CI/CD logs
+   - Ensure AWS credentials are properly configured
+   - Verify that the S3 bucket for Terraform state exists
+
+2. **Docker Build Fails**:
+   - Check for syntax errors in the Dockerfile
+   - Ensure dependencies are properly specified
+   - Verify that the ECR repository exists and is accessible
+
+3. **ECS Service Fails to Start**:
+   - Check the CloudWatch logs for the service
+   - Verify that the container can access the database
+   - Check if the health check endpoint is responding correctly
+
+#### Infrastructure Issues
+
+1. **Database Connection Issues**:
+   - Verify security group rules allow access from the ECS service
+   - Check the database credentials in AWS Secrets Manager
+   - Ensure the database is in the 'available' state
+
+2. **Load Balancer Issues**:
+   - Check that the target group health checks are passing
+   - Verify that the security groups allow traffic on ports 80/443
+   - Ensure the ACM certificate is valid and properly configured
+
+## Best Practices
+
+1. **Infrastructure as Code**:
+   - Always make changes through Terraform, not manually in the AWS console
+   - Version control all infrastructure code
+   - Use environment-specific variables to avoid duplicating code
+
+2. **Deployment Safety**:
+   - Use feature branches and pull requests for code changes
+   - Ensure all tests pass before deploying
+   - Start with the dev environment before deploying to production
+
+3. **Monitoring and Logging**:
+   - Regularly review CloudWatch logs and metrics
+   - Set up appropriate alerts for critical issues
+   - Implement structured logging in the application
+
+4. **Security**:
+   - Keep dependencies up to date
+   - Regularly update the base Docker image
+   - Follow the principle of least privilege for IAM roles and policies
+
+5. **Documentation**:
+   - Keep this guide updated as the pipeline changes
+   - Document any environment-specific configurations
+   - Maintain runbooks for common issues

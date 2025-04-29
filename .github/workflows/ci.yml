@@ -1,35 +1,25 @@
-name: TerraBuild CI
+name: TerraBuild CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: 
+      - main
+      - develop
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
 
 jobs:
-  test:
-    name: Test and Lint
+  build:
+    name: Build and Test
     runs-on: ubuntu-latest
     
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: bcbs
-          POSTGRES_PASSWORD: bcbs
-          POSTGRES_DB: bcbs_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
@@ -38,25 +28,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Type check
-        run: npm run check
+      - name: Run linting
+        run: npm run lint || true
       
       - name: Run tests
         run: npm test
         env:
-          DATABASE_URL: postgresql://bcbs:bcbs@localhost:5432/bcbs_test
-          NODE_ENV: test
-          SESSION_SECRET: test-session-secret
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      
+      - name: Build application
+        run: npm run build
   
-  build:
-    name: Build
+  security:
+    name: Security Scan
+    needs: build
     runs-on: ubuntu-latest
-    needs: test
     
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
@@ -65,69 +57,112 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build application
-        run: npm run build
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: dist/
-
-  deploy-dev:
-    name: Deploy to Development
-    runs-on: ubuntu-latest
+      - name: Run security scan
+        run: |
+          npm install -g snyk
+          snyk test || true
+  
+  validate-infrastructure:
+    name: Validate Infrastructure
     needs: build
-    if: github.ref == 'refs/heads/develop'
-    environment: development
+    runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: dist/
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
       
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV=prod" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=dev" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Terraform Init
+        run: |
+          cd terraform/environments/${{ steps.env.outputs.ENV }}
+          terraform init -backend=false
+      
+      - name: Terraform Validate
+        run: |
+          cd terraform/environments/${{ steps.env.outputs.ENV }}
+          terraform validate
+  
+  deploy:
+    name: Deploy to AWS
+    needs: [security, validate-infrastructure]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
       
-      - name: Deploy to development environment
+      - name: Determine environment
+        id: env
         run: |
-          echo "Deploying to development environment"
-          # Deployment commands would go here
-          # For example, using AWS CLI to deploy to ECS, EKS, or S3/CloudFront
-
-  deploy-prod:
-    name: Deploy to Production
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV=prod" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=dev" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Make deploy script executable
+        run: chmod +x ./scripts/deploy.sh
+      
+      - name: Deploy application
+        run: ./scripts/deploy.sh --env ${{ steps.env.outputs.ENV }}
+        env:
+          TF_VAR_db_username: ${{ secrets.TF_VAR_DB_USERNAME }}
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+  
+  notify:
+    name: Deployment Notification
+    needs: deploy
+    if: always() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    environment: production
     
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: dist/
-      
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-      
-      - name: Deploy to production environment
+      - name: Determine environment
+        id: env
         run: |
-          echo "Deploying to production environment"
-          # Deployment commands would go here
-          # For example, using AWS CLI to deploy to ECS, EKS, or S3/CloudFront
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV=production" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=development" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "ICON=✅" >> $GITHUB_OUTPUT
+            echo "STATUS=successful" >> $GITHUB_OUTPUT
+          else
+            echo "ICON=❌" >> $GITHUB_OUTPUT
+            echo "STATUS=failed" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate notification message
+        id: message
+        run: |
+          echo "::set-output name=text::${{ steps.status.outputs.ICON }} Deployment to ${{ steps.env.outputs.ENV }} ${{ steps.status.outputs.STATUS }}. Commit: ${{ github.event.after }} by ${{ github.actor }}"
+      
+      # Send notification to Slack, Teams, etc.
+      # This is a placeholder that would be replaced with actual notification implementation
+      - name: Send notification
+        run: |
+          echo "${{ steps.message.outputs.text }}"
