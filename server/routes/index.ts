@@ -1,11 +1,9 @@
 import express from 'express';
-import authRoutes from './auth';
 import healthRoutes from './health';
 // Import other route files as needed
 
 export function registerRoutes(app: express.Express): void {
   // Mount API routes
-  app.use('/api/auth', authRoutes);
   app.use('/api', healthRoutes);
   
   // Add other routes as needed

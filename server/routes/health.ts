@@ -1,5 +1,5 @@
 import express from 'express';
-import { db } from '../db';
+import postgres from 'postgres';
 
 const router = express.Router();
 
@@ -9,8 +9,11 @@ const router = express.Router();
  */
 router.get('/health', async (req, res) => {
   try {
-    // Check database connection
-    await db.query('SELECT 1');
+    // Create a temporary connection to check database health
+    // Using process.env.DATABASE_URL directly to avoid circular dependencies
+    const sql = postgres(process.env.DATABASE_URL || '');
+    await sql`SELECT 1`;
+    await sql.end();
     
     // Build response with component statuses
     const healthStatus = {
