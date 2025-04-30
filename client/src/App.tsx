@@ -220,8 +220,9 @@ const ErrorHandlerWrapper = () => {
   // For development mode, set mock admin user directly in the query cache
   useEffect(() => {
     try {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Setting up mock admin user for development");
+        // Set mock user data directly to avoid HTML parsing issues
         queryClient.setQueryData(["/api/user"], {
           id: 1,
           username: "admin",
@@ -229,6 +230,29 @@ const ErrorHandlerWrapper = () => {
           role: "admin",
           isActive: true
         });
+        
+        // Set up a mock implementation for fetch when requesting user data
+        const originalFetch = window.fetch;
+        window.fetch = function(input, init) {
+          // Check if this is a request to /api/user or /api/auth/user
+          if (typeof input === 'string' && 
+              (input.endsWith('/api/user') || input.endsWith('/api/auth/user'))) {
+            console.log("Intercepting auth request in development mode");
+            return Promise.resolve({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve({
+                id: 1,
+                username: "admin",
+                name: "Admin User",
+                role: "admin",
+                isActive: true
+              })
+            } as Response);
+          }
+          // Otherwise, use the original fetch
+          return originalFetch(input as RequestInfo, init);
+        };
       }
     } catch (error) {
       console.error("Error setting up mock user:", error);
