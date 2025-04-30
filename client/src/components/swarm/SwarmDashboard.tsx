@@ -142,7 +142,7 @@ export function SwarmDashboard() {
                 Execute predefined workflows to demonstrate AI Swarm capabilities
               </p>
               
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Cost Assessment</CardTitle>
@@ -217,6 +217,26 @@ export function SwarmDashboard() {
                       size="sm" 
                       disabled={!isActive || demoMutation.isPending}
                       onClick={() => handleRunDemo('boe-appeal')}
+                    >
+                      Run Demo
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Property Enhancement</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <p className="text-xs text-gray-500">
+                      Recommends property improvements and forecasts ROI and future values
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      size="sm" 
+                      disabled={!isActive || demoMutation.isPending}
+                      onClick={() => handleRunDemo('property-enhancement')}
                     >
                       Run Demo
                     </Button>

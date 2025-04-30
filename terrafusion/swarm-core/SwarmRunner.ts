@@ -11,6 +11,7 @@ import { BenchmarkGuard } from './agents/BenchmarkGuard';
 import { CurveTrainer } from './agents/CurveTrainer';
 import { ScenarioAgent } from './agents/ScenarioAgent';
 import { BOEArguer } from './agents/BOEArguer';
+import { Autonimus } from './agents/Autonimus';
 
 export interface SwarmRunnerConfig {
   enabledAgents: string[];
@@ -253,6 +254,13 @@ export class SwarmRunner {
           this.coordinator.registerAgent(boeArguer);
           console.log(`[SwarmRunner] Registered BOEArguer agent`);
           break;
+        
+        case 'autonimus':
+          const autonimus = new Autonimus();
+          this.agentInstances.set(autonimus.getConfig().id, autonimus);
+          this.coordinator.registerAgent(autonimus);
+          console.log(`[SwarmRunner] Registered Autonimus agent`);
+          break;
 
         default:
           console.warn(`[SwarmRunner] Unknown agent type: ${agentType}`);
@@ -284,6 +292,9 @@ export class SwarmRunner {
       
       case 'boe-appeal':
         return this.runBOEAppealDemo();
+      
+      case 'property-enhancement':
+        return this.runPropertyEnhancementDemo();
       
       default:
         throw new Error(`Unknown demo type: ${demoType}`);
@@ -665,6 +676,150 @@ export class SwarmRunner {
       factorAnalysis,
       summary: {
         message: 'BOE appeal argument demo workflow completed successfully',
+        timestamp: new Date()
+      }
+    };
+  }
+
+  /**
+   * Run a demonstration of property enhancement and valuation workflow
+   */
+  private async runPropertyEnhancementDemo(): Promise<Record<string, any>> {
+    console.log(`[SwarmRunner] Running property enhancement demo workflow`);
+
+    // Step 1: Create sample property details
+    const propertyDetails = {
+      propertyId: "BC-2025-67890",
+      address: "542 Hillcrest Drive, Benton County, WA 99320",
+      yearBuilt: 1995,
+      squareFeet: 2200,
+      lotSize: 0.28,
+      zoning: "R-1",
+      currentValue: 425000,
+      features: [
+        "3 bedrooms",
+        "2 bathrooms",
+        "attached 2-car garage",
+        "partially finished basement",
+        "original kitchen",
+        "deck needs refinishing",
+        "outdated windows"
+      ],
+      condition: "fair",
+      location: {
+        latitude: 46.2804,
+        longitude: -119.2752,
+        neighborhood: "Hillcrest Estates"
+      }
+    };
+
+    // Step 2: Analyze the property
+    console.log(`[SwarmRunner] Step 1: Analyzing property...`);
+    const propertyAnalysis = await this.runAgentTask('autonimus', 'property:analyze', {
+      property: propertyDetails
+    });
+
+    // Step 3: Generate enhancement recommendations
+    console.log(`[SwarmRunner] Step 2: Generating enhancement recommendations...`);
+    const enhancementRequest = {
+      property: propertyDetails,
+      budget: 75000,
+      goalType: 'value-increase',
+      constraints: ['must complete within 6 months', 'owner will live in home during renovations'],
+      timeframe: 'medium-term',
+      priorities: ['kitchen', 'energy efficiency', 'curb appeal']
+    };
+    
+    const enhancementRecommendations = await this.runAgentTask('autonimus', 'enhancement:recommend', enhancementRequest);
+
+    // Step 4: Calculate ROI for the recommended enhancements
+    console.log(`[SwarmRunner] Step 3: Calculating ROI for enhancements...`);
+    const sampleEnhancements = [
+      {
+        type: "kitchen",
+        quality: "mid-range",
+        description: "Full kitchen remodel with new cabinets, countertops, and appliances",
+        size: 180, // Square feet
+        cost: 45000
+      },
+      {
+        type: "energy",
+        quality: "high",
+        description: "Window replacement with energy-efficient models throughout home",
+        size: 0, // Not applicable
+        cost: 18000
+      },
+      {
+        type: "landscaping",
+        quality: "mid-range",
+        description: "Front yard landscaping refresh with drought-resistant plants",
+        size: 800, // Square feet
+        cost: 12000
+      }
+    ];
+    
+    const roiAnalysis = await this.runAgentTask('autonimus', 'roi:calculate', {
+      property: propertyDetails,
+      enhancements: sampleEnhancements
+    });
+
+    // Step 5: Analyze local market trends to support recommendations
+    console.log(`[SwarmRunner] Step 4: Analyzing market trends...`);
+    const marketAnalysis = await this.runAgentTask('autonimus', 'market:analyze', {
+      area: 'Benton County',
+      propertyType: 'residential'
+    });
+
+    // Step 6: Forecast future property value
+    console.log(`[SwarmRunner] Step 5: Forecasting future property value...`);
+    const valueForecast = await this.runAgentTask('autonimus', 'future:forecast', {
+      property: propertyDetails,
+      enhancements: sampleEnhancements,
+      yearsAhead: 5
+    });
+
+    // Step 7: Request cross-validation from BenchmarkGuard (agent-to-agent communication)
+    console.log(`[SwarmRunner] Step 6: Cross-validating with BenchmarkGuard...`);
+    
+    let benchmarkValidation;
+    try {
+      // Get the Autonimus instance
+      const autonimus = this.agentInstances.get('autonimus');
+      
+      if (autonimus) {
+        // Use the requestAgentAssistance method to get help from BenchmarkGuard
+        benchmarkValidation = await autonimus.requestAgentAssistance(
+          'benchmark-guard', 
+          'value:validate',
+          {
+            propertyId: propertyDetails.propertyId,
+            proposedValue: valueForecast.enhancedValueForecast,
+            propertyType: 'residential',
+            squareFeet: propertyDetails.squareFeet,
+            yearBuilt: propertyDetails.yearBuilt,
+            location: propertyDetails.location.neighborhood
+          }
+        );
+      } else {
+        benchmarkValidation = { error: "Autonimus agent not found" };
+      }
+    } catch (error) {
+      console.error(`[SwarmRunner] Error in agent-to-agent communication:`, error);
+      benchmarkValidation = { error: error.message };
+    }
+
+    // Combine and return results
+    return {
+      demoType: 'property-enhancement',
+      property: propertyDetails,
+      propertyAnalysis,
+      enhancementRecommendations,
+      roiAnalysis,
+      marketAnalysis,
+      valueForecast,
+      benchmarkValidation,
+      summary: {
+        message: 'Property enhancement demo workflow completed successfully',
         timestamp: new Date()
       }
     };
