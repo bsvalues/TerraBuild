@@ -1,56 +1,143 @@
-# Refactoring Marshall & Swift to CostFactorTables
+# Marshall Swift to CostFactorTables Refactoring Guide
 
-This document describes the process of refactoring the application from using "Marshall & Swift" terminology to "CostFactorTables" for cost calculation factors.
+## Overview
 
-## Background
+This document outlines the completed refactoring process that replaced all references to "marshallSwift" with "CostFactorTables" throughout the codebase. This change was made to standardize terminology and better reflect the actual functionality of the cost calculation system.
 
-The system previously used naming conventions based on the "Marshall & Swift" cost estimation methodology. To modernize the codebase and avoid potential trademark issues, we have refactored all references to use the more generic "CostFactorTables" terminology.
+## Changes Made
 
-## What Changed
+The refactoring script (`scripts/refactor_ms_to_cft.sh`) made the following changes:
 
-The refactoring involves:
+1. **Source Files**:
+   - Renamed `server/services/costEngine/marshallSwift.ts` to `server/services/costEngine/CostFactorTables.ts`
+   - Updated file content with standardized naming
 
-1. Renaming the core service file:
-   - `marshallSwift.ts` → `CostFactorTables.ts`
+2. **Type Definitions**:
+   - Changed `MsCostFactorType` to `CostFactorType`
+   - Changed `MsClass` to `FactorClass`
+   - Changed `MarshallSwiftFactor` to `CostFactorTablesFactor`
 
-2. Updating class and type names:
-   - `MarshallSwiftService` → `CostFactorTablesService`
-   - `MsClass` → `FactorClass`
-   - `MsCostFactorType` → `CostFactorType`
-   - `msClass` → `factorClass` (property names)
+3. **Function Names**:
+   - Changed `getMsCostFactors` to `getCostFactors`
+   - Changed `calculateMsAdjustedCost` to `calculateAdjustedCost`
 
-3. Updating database tables:
-   - `marshall_swift_factor` → `cost_factor`
-   - Added backward compatibility view for legacy code
+4. **Test Fixtures**:
+   - Moved tests from `tests/costEngine/ms/` to `tests/costEngine/cf/`
+   - Renamed `marshall-swift.test.ts` to `cost-factor-tables.test.ts`
+   - Updated test imports and references
 
-4. Migrating test fixtures:
-   - `/tests/costEngine/ms/` → `/tests/costEngine/cf/`
+5. **Database Migration**:
+   - Created SQL migration to rename the database table
+   - Added backward compatibility view
 
-## Running the Refactoring Script
+## Implementation Details
 
-The refactoring script is located at `scripts/refactor_ms_to_cft.sh` and performs all of the changes automatically.
+### Type Definitions
 
-To run it:
+Old (MarshallSwift):
+```typescript
+export type MsCostFactorType = 
+  'regionFactor' | 
+  'qualityFactor' | 
+  'conditionFactor' | 
+  'complexityFactor' | 
+  'sizeFactor' | 
+  'heightFactor' | 
+  'ageFactor';
 
-```bash
-chmod +x scripts/refactor_ms_to_cft.sh
-./scripts/refactor_ms_to_cft.sh
+export enum MsClass {
+  RESIDENTIAL = 'RES',
+  COMMERCIAL = 'COM', 
+  INDUSTRIAL = 'IND',
+  AGRICULTURAL = 'AGR'
+}
 ```
 
-## After Running the Script
+New (CostFactorTables):
+```typescript
+export type CostFactorType = 
+  'regionFactor' | 
+  'qualityFactor' | 
+  'conditionFactor' | 
+  'complexityFactor' | 
+  'sizeFactor' | 
+  'heightFactor' | 
+  'ageFactor';
 
-After running the script, you should:
+export enum FactorClass {
+  RESIDENTIAL = 'RES',
+  COMMERCIAL = 'COM', 
+  INDUSTRIAL = 'IND',
+  AGRICULTURAL = 'AGR'
+}
+```
 
-1. Review the changes in your Git diff
-2. Run your test suite to ensure everything works correctly
-3. Execute the SQL migration to update your database
-4. Update any API documentation to reflect the name changes
+### Function Signatures
 
-## Backward Compatibility
+Old (MarshallSwift):
+```typescript
+export function getMsCostFactors(propertyType: string, region: string) {
+  // Implementation
+}
 
-The script preserves backward compatibility in two ways:
+export function calculateMsAdjustedCost(baseCost: number, factors: Record<MsCostFactorType, number>) {
+  // Implementation
+}
+```
 
-1. A database view `marshall_swift_factor` that points to the new `cost_factor` table
-2. The original file structure remains navigable for a transition period
+New (CostFactorTables):
+```typescript
+export function getCostFactors(propertyType: string, region: string) {
+  // Implementation
+}
 
-However, you should plan to update all imports and usage to the new naming convention.
+export function calculateAdjustedCost(baseCost: number, factors: Record<CostFactorType, number>) {
+  // Implementation
+}
+```
+
+## Database Migration
+
+The migration script `migrations/20250430104900_rename_ms_table.sql` includes:
+
+```sql
+-- Renaming marshall_swift_factor ➜ cost_factor
+ALTER TABLE IF EXISTS marshall_swift_factor RENAME TO cost_factor;
+-- Back-compat view
+CREATE OR REPLACE VIEW marshall_swift_factor AS
+SELECT * FROM cost_factor;
+```
+
+This provides backward compatibility for any existing code still using the old table name.
+
+## How to Use the Refactored Service
+
+Old imports and usage:
+```typescript
+import { MarshallSwiftService, MsClass } from '../services/costEngine/marshallSwift';
+
+const service = new MarshallSwiftService();
+const factors = await service.getFactors('RESIDENTIAL', 'URBAN');
+const cost = service.calculateCost(100, factors);
+```
+
+New imports and usage:
+```typescript
+import { CostFactorTablesService, FactorClass } from '../services/costEngine/CostFactorTables';
+
+const service = new CostFactorTablesService();
+const factors = await service.getFactors('RESIDENTIAL', 'URBAN');
+const cost = service.calculateCost(100, factors);
+```
+
+## Next Steps
+
+For any additional refactoring needs, consider:
+
+1. Updating any UI references to "Marshall Swift" with "Cost Factor Tables"
+2. Reviewing client documentation that may reference the old terminology
+3. If necessary, adding deprecation warnings to any backward compatibility layers
+
+## Conclusion
+
+This refactoring standardizes the cost calculation system terminology across the codebase, making it more maintainable and descriptive of its actual functionality. The changes maintain API compatibility while providing a clearer, more accurate naming scheme.

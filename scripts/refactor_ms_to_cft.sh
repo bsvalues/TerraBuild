@@ -115,7 +115,34 @@ echo "🪄  Updating imports & identifiers..."
 # Create a list of files to process
 FILES_TO_PROCESS=$(find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.md" -o -name "*.yaml" -o -name "*.json" \) -not -path "*/node_modules/*" -not -path "*/.git/*")
 
-# Process each file
+# Special handling for CostFactorTables.ts to prevent over-replacement
+if [ -f "$NEW_FILE" ]; then
+  echo "Performing precise refactoring of $NEW_FILE"
+  # Replace header and service description
+  sed -i '1,5s/Marshall & Swift Cost Factor Service/Cost Factor Tables Service/' "$NEW_FILE"
+  sed -i '1,5s/based on Marshall & Swift data/based on standardized cost factor tables/' "$NEW_FILE"
+
+  # Handle class and type names properly
+  sed -i 's/MarshallSwift/CostFactorTables/g' "$NEW_FILE"
+  sed -i 's/CostFactorTables factor types/Cost factor types/' "$NEW_FILE"
+  sed -i 's/MsCostFactorType/CostFactorType/g' "$NEW_FILE"
+  sed -i 's/FactorCostFactorType/CostFactorType/g' "$NEW_FILE"
+  
+  # Fix function and variable names
+  sed -i 's/msClass/factorClass/g' "$NEW_FILE"
+  sed -i 's/MsClass/FactorClass/g' "$NEW_FILE"
+  sed -i 's/msFactorSchema/factorSchema/g' "$NEW_FILE"
+  sed -i 's/factorFactorSchema/factorSchema/g' "$NEW_FILE"
+  sed -i 's/MarshallSwiftFactor/CostFactorTablesFactor/g' "$NEW_FILE"
+  
+  # Fix function names
+  sed -i 's/getMsCostFactors/getCostFactors/g' "$NEW_FILE"
+  sed -i 's/getFactorCostFactors/getCostFactors/g' "$NEW_FILE"
+  sed -i 's/calculateMsAdjustedCost/calculateAdjustedCost/g' "$NEW_FILE"
+  sed -i 's/calculateFactorAdjustedCost/calculateAdjustedCost/g' "$NEW_FILE"
+fi
+
+# Process each other file
 for file in $FILES_TO_PROCESS; do
   # Skip processing the new file itself
   if [ "$file" != "$NEW_FILE" ]; then
@@ -127,6 +154,10 @@ for file in $FILES_TO_PROCESS; do
       sed -i "s/msClass/factorClass/g" "$file"
       sed -i "s/MsClass/FactorClass/g" "$file"
       sed -i "s/MsCostFactorType/CostFactorType/g" "$file"
+      
+      # Fix function names in other files
+      sed -i "s/getMsCostFactors/getCostFactors/g" "$file"
+      sed -i "s/calculateMsAdjustedCost/calculateAdjustedCost/g" "$file"
     fi
   fi
 done

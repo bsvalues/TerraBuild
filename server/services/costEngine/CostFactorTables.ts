@@ -1,12 +1,12 @@
 /**
- * Marshall & Swift Cost Factor Service
- * Provides cost factors and calculations based on Marshall & Swift data
+ * Cost Factor Tables Service
+ * Provides cost factors and calculations based on standardized cost factor tables
  */
 
 import { z } from 'zod';
 
-// CostFactorTables factor types
-export type FactorCostFactorType = 
+// Cost factor types
+export type CostFactorType = 
   'regionFactor' | 
   'qualityFactor' | 
   'conditionFactor' | 
@@ -15,7 +15,7 @@ export type FactorCostFactorType =
   'heightFactor' | 
   'ageFactor';
 
-// CostFactorTables class codes
+// Factor class codes
 export enum FactorClass {
   RESIDENTIAL = 'RES',
   COMMERCIAL = 'COM', 
@@ -23,8 +23,8 @@ export enum FactorClass {
   AGRICULTURAL = 'AGR'
 }
 
-// CostFactorTables factor schema
-export const factorFactorSchema = z.object({
+// Cost factor schema
+export const factorSchema = z.object({
   id: z.number().optional(),
   factorClass: z.nativeEnum(FactorClass),
   factorType: z.string(),
@@ -35,20 +35,20 @@ export const factorFactorSchema = z.object({
   source: z.string().optional(),
 });
 
-export type CostFactorTablesFactor = z.infer<typeof factorFactorSchema>;
+export type CostFactorTablesFactor = z.infer<typeof factorSchema>;
 
 /**
  * Get cost factors for a specific property type and region
  */
-export function getFactorCostFactors(propertyType: string, region: string) {
+export function getCostFactors(propertyType: string, region: string) {
   // Implementation would fetch from database
   return [];
 }
 
 /**
- * Calculate the adjusted cost using CostFactorTables factors
+ * Calculate the adjusted cost using cost factors
  */
-export function calculateFactorAdjustedCost(baseCost: number, factors: Record<FactorCostFactorType, number>) {
+export function calculateAdjustedCost(baseCost: number, factors: Record<CostFactorType, number>) {
   let adjustedCost = baseCost;
   
   // Apply each factor
@@ -67,14 +67,14 @@ export class CostFactorTablesService {
    * Get cost factors for property
    */
   async getFactors(propertyType: string, region: string) {
-    return getFactorCostFactors(propertyType, region);
+    return getCostFactors(propertyType, region);
   }
   
   /**
-   * Calculate cost with CostFactorTables method
+   * Calculate cost with standardized factors
    */
-  calculateCost(baseCost: number, factors: Record<FactorCostFactorType, number>) {
-    return calculateFactorAdjustedCost(baseCost, factors);
+  calculateCost(baseCost: number, factors: Record<CostFactorType, number>) {
+    return calculateAdjustedCost(baseCost, factors);
   }
 }
 

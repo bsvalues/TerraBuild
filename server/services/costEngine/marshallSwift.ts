@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-// MarshallSwift factor types
+// Marshall Swift factor types
 export type MsCostFactorType = 
   'regionFactor' | 
   'qualityFactor' | 
@@ -15,7 +15,7 @@ export type MsCostFactorType =
   'heightFactor' | 
   'ageFactor';
 
-// MarshallSwift class codes
+// Marshall Swift class codes
 export enum MsClass {
   RESIDENTIAL = 'RES',
   COMMERCIAL = 'COM', 
@@ -23,7 +23,7 @@ export enum MsClass {
   AGRICULTURAL = 'AGR'
 }
 
-// MarshallSwift factor schema
+// Marshall Swift factor schema
 export const msFactorSchema = z.object({
   id: z.number().optional(),
   msClass: z.nativeEnum(MsClass),
@@ -46,7 +46,7 @@ export function getMsCostFactors(propertyType: string, region: string) {
 }
 
 /**
- * Calculate the adjusted cost using MarshallSwift factors
+ * Calculate the adjusted cost using Marshall Swift factors
  */
 export function calculateMsAdjustedCost(baseCost: number, factors: Record<MsCostFactorType, number>) {
   let adjustedCost = baseCost;
@@ -71,7 +71,7 @@ export class MarshallSwiftService {
   }
   
   /**
-   * Calculate cost with MarshallSwift method
+   * Calculate cost with Marshall Swift method
    */
   calculateCost(baseCost: number, factors: Record<MsCostFactorType, number>) {
     return calculateMsAdjustedCost(baseCost, factors);

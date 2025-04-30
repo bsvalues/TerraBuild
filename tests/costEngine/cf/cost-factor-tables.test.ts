@@ -2,7 +2,7 @@
  * Tests for CostFactorTables service
  */
 
-import { CostFactorTablesService, FactorClass } from '../../../server/services/costEngine/CostFactorTables';
+import { CostFactorTablesService, FactorClass, CostFactorType } from '../../../server/services/costEngine/CostFactorTables';
 
 describe('CostFactorTables Service', () => {
   it('should calculate adjusted cost correctly', () => {
@@ -18,5 +18,14 @@ describe('CostFactorTables Service', () => {
     });
     
     expect(result).toBeCloseTo(100 * 1.1 * 1.2 * 0.9 * 1.05 * 1.0 * 1.0 * 0.85);
+  });
+  
+  it('should use correct type definitions', () => {
+    // This test verifies the refactored type definitions are working correctly
+    const factorClass: FactorClass = FactorClass.RESIDENTIAL;
+    const factorType: CostFactorType = 'qualityFactor';
+    
+    expect(factorClass).toBe('RES');
+    expect(factorType).toBe('qualityFactor');
   });
 });
