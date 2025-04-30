@@ -1,16 +1,19 @@
-# TerraBuild Developer Kit
+# TerraFusion Platform
 
-The TerraBuild Developer Kit is a comprehensive toolset designed to rapidly set up a complete infrastructure cost management system. It provides everything needed to spin up an API, Postgres database, sample data, and React UI scaffold in under a minute.
+TerraFusion is a cutting-edge AI-powered infrastructure optimization platform designed to transform government infrastructure lifecycle management for Benton County, Washington, through intelligent decision support and advanced predictive modeling.
 
 ## Overview
 
-TerraBuild offers a streamlined way to calculate and manage infrastructure costs for the Benton County Building Cost Assessment System. The developer kit includes:
+TerraFusion offers a comprehensive solution for infrastructure cost management with advanced AI capabilities:
 
+- AI-powered cost assessment and prediction system
+- Multi-agent AI architecture with specialized components
 - Complete API with import and calculation endpoints
-- React-based UI components
+- React-based UI with modular, responsive components
 - Pre-configured PostgreSQL database integration
-- Sample data import tools
-- Docker containerization support
+- Advanced data analysis and visualization tools
+- Comprehensive DevOps infrastructure with CI/CD
+- Docker containerization and AWS deployment support
 
 ## Getting Started
 
@@ -102,18 +105,32 @@ Total Cost = Base Cost × Region Factor × Quality Factor × Condition Factor ×
 ### Project Structure
 
 ```
-terrabuild-devkit/
-├── client/               # React frontend
+terrafusion/
+├── client/                 # React frontend
 │   └── src/
-│       ├── components/   # Reusable UI components
-│       └── pages/        # Application pages
-├── data/                 # Cost factor data
-├── sample/               # Sample data for import
-├── scripts/              # Utility scripts
-├── server/               # Express API server
-│   ├── routes/           # API route definitions
-│   └── storage/          # Database integration
-└── docker-compose.yml    # Docker configuration
+│       ├── components/     # Reusable UI components
+│       └── pages/          # Application pages
+├── data/                   # Cost factor data
+├── sample/                 # Sample data for import
+├── scripts/                # Utility scripts
+│   ├── backup_and_restore.sh    # Database backup/restore
+│   ├── db-migration.sh          # Database migration
+│   ├── init-terraform-backend.sh # Terraform backend setup
+│   ├── setup-aws-profiles.sh    # AWS profile setup
+│   └── terraform-cmd.sh         # Terraform command wrapper
+├── server/                 # Express API server
+│   ├── routes/             # API route definitions
+│   └── storage/            # Database integration
+├── terraform/              # Infrastructure as Code
+│   └── environments/       # Environment-specific configurations
+│       ├── dev/            # Development environment
+│       ├── staging/        # Staging environment
+│       └── prod/           # Production environment
+├── docker-compose.yml      # Docker configuration
+├── .github/workflows/      # CI/CD pipelines
+│   ├── ci.yml              # Continuous Integration
+│   └── deploy.yml          # Deployment workflow
+└── DEVOPS_README.md        # DevOps documentation
 ```
 
 ### Adding Custom Factors
@@ -131,6 +148,17 @@ To add new API endpoints:
 1. Create a new route file in `server/routes/`
 2. Implement your custom logic
 3. Register the route in `server/routes.ts`
+
+### DevOps Infrastructure
+
+The project includes a comprehensive DevOps setup:
+
+1. **Environment Management**: Configure dev, staging, and production environments
+2. **CI/CD Pipelines**: Automated testing, building, and deployment
+3. **Database Operations**: Migration, backup, and restore scripts
+4. **Infrastructure as Code**: AWS resources managed with Terraform
+
+For detailed instructions, see the [DevOps Guide](DEVOPS_README.md)
 
 ## Testing
 
