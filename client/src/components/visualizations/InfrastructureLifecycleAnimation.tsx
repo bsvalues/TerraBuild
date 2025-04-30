@@ -22,8 +22,31 @@ import {
   SkipForward
 } from 'lucide-react';
 
+// Define interface for animation elements
+interface AnimationElement {
+  id: string;
+  type: string;
+  position: [number, number]; // Tuple type for [x, y] position
+}
+
+// Define interface for lifecycle stage
+interface LifecycleStage {
+  id: string;
+  title: string;
+  color: string;
+  description: string;
+  costPercentage: number;
+  timelinePercentage: number;
+  activities: string[];
+  risks: string[];
+  metrics: Record<string, string>;
+  animation: {
+    elements: AnimationElement[];
+  };
+}
+
 // Define the lifecycle stages with more detailed visualization data
-const LIFECYCLE_STAGES = [
+const LIFECYCLE_STAGES: LifecycleStage[] = [
   {
     id: 'planning',
     title: 'Planning',

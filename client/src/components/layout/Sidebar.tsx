@@ -423,6 +423,13 @@ export default function Sidebar({ className }: SidebarProps) {
                 icon={<LineChart />}
               />
               <SidebarItem
+                href="/infrastructure-lifecycle"
+                title="Infrastructure Lifecycle"
+                icon={<RefreshCw />}
+                badge="New"
+                badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
+              />
+              <SidebarItem
                 href="/what-if-scenarios"
                 title="What-If Scenarios"
                 icon={<Activity />}
