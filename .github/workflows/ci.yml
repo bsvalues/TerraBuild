@@ -31,10 +31,27 @@ jobs:
       - name: Run linting
         run: npm run lint || true
       
-      - name: Run tests
+      - name: Run unit tests
         run: npm test
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      
+      - name: Run E2E tests
+        run: npx playwright test
+        env:
+          TEST_APP_URL: http://localhost:5000
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+      
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            test-results/
+            playwright-report/
+            coverage/
       
       - name: Build application
         run: npm run build

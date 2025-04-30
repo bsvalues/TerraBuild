@@ -1,55 +1,56 @@
-/**
- * Jest Configuration for UI Component Tests
- * 
- * This file configures Jest for testing React components
- * using JSDOM and the Testing Library ecosystem.
- */
+// Jest Configuration for TerraBuild unit tests
 
-export default {
-  // Specify the test environment to use
-  testEnvironment: 'jsdom',
+module.exports = {
+  // Test environment
+  testEnvironment: 'node',
   
-  // File extensions Jest should look for
-  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
+  // Test paths
+  roots: ['<rootDir>/tests/unit-tests'],
+  testMatch: ['**/*.test.js'],
   
-  // Transform files for compatibility with Jest
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest',
-    '^.+\\.css$': 'jest-transform-css',
-  },
-  
-  // Path mapping for module aliases
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/client/src/$1',
-    '^@assets/(.*)$': '<rootDir>/attached_assets/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
-  },
-  
-  // Files to ignore
-  testPathIgnorePatterns: ['/node_modules/', '/.replit/', '/dist/', '/build/', '/.vscode/', '/.github/'],
-  
-  // Setup files for global test configuration
-  setupFilesAfterEnv: ['<rootDir>/tests/ui/setup.js'],
-  
-  // Glob patterns for finding test files
-  testMatch: ['**/__tests__/**/*.js?(x)', '**/?(*.)+(spec|test).js?(x)', '**/?(*.)+(spec|test).ts?(x)'],
-  
-  // Use verbose test output
-  verbose: true,
-  
-  // Add coverage configuration
+  // Coverage reporting
   collectCoverage: true,
   collectCoverageFrom: [
-    'client/src/components/**/*.{js,jsx,ts,tsx}',
-    '!**/node_modules/**',
-    '!**/dist/**',
-    '!**/build/**'
+    'server/**/*.js',
+    'server/**/*.ts',
+    '!server/vite.ts',
+    '!**/*.d.ts',
+    '!**/node_modules/**'
   ],
-  
-  // Configure code coverage reporting
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'clover'],
   
-  // Set timeout for tests
+  // Transformations
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.jsx?$': 'babel-jest'
+  },
+  
+  // Module transformations
+  moduleNameMapper: {
+    // Handle CSS imports (if needed)
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Handle @/ path mapping
+    '^@/(.*)$': '<rootDir>/client/src/$1',
+    // Handle @shared/ path mapping
+    '^@shared/(.*)$': '<rootDir>/shared/$1'
+  },
+  
+  // Setup files
+  setupFilesAfterEnv: ['<rootDir>/tests/unit-tests/setup.js'],
+  
+  // Test timeout
   testTimeout: 10000,
+  
+  // Reporter
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'test-results',
+        outputName: 'junit.xml',
+      },
+    ],
+  ],
 };
