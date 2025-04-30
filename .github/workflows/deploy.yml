@@ -1,291 +1,145 @@
-name: Deploy to Staging
+name: Deploy Pipeline
 
 on:
   workflow_run:
     workflows: ["CI Pipeline"]
-    branches: [main]
     types:
       - completed
+    branches:
+      - main
+      - develop
 
 jobs:
-  prepare-deployment:
-    name: Prepare Deployment
-    runs-on: ubuntu-latest
-    # Only run if the CI workflow was successful
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    outputs:
-      deploy_id: ${{ steps.deployment-id.outputs.id }}
-      image_tag: ${{ steps.set-tag.outputs.tag }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Generate deployment ID
-        id: deployment-id
-        run: echo "id=$(date +%Y%m%d%H%M%S)-${{ github.sha }}" >> $GITHUB_OUTPUT
-      
-      - name: Set image tag
-        id: set-tag
-        run: echo "tag=${{ github.sha }}-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
-      
-      - name: Create deployment record
-        uses: octokit/request-action@v2.x
-        with:
-          route: POST /repos/${{ github.repository }}/deployments
-          ref: ${{ github.ref }}
-          environment: staging
-          auto_merge: false
-          required_contexts: []
-          description: "Deployment to staging"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: prepare-deployment
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
-      - name: Build Docker images
-        run: docker-compose build
-      
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'bcbs-app_web:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-      
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
-      
-      - name: Extract SBOM
-        run: |
-          docker sbom bcbs-app_web:latest > sbom.json
-          echo "Software Bill of Materials extracted"
-      
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v3
-        with:
-          name: sbom
-          path: sbom.json
-
   deploy-staging:
     name: Deploy to Staging
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
-    needs: [prepare-deployment, security-scan]
+    environment: staging
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.7"
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: GitHubActionsDeployment
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
       
-      - name: Build Docker images
-        run: docker-compose build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       
-      - name: Tag and Push to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: bcbs-app
-          IMAGE_TAG: ${{ needs.prepare-deployment.outputs.image_tag }}
-        run: |
-          # Tag and push web service
-          docker tag bcbs-app_web:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker tag bcbs-app_web:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          
-          # Store image URI for later use
-          echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
         with:
-          terraform_version: 1.0.0
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/terrabuild:staging-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
-      - name: Terraform Init & Apply
-        working-directory: terrafusion
-        env:
-          TF_VAR_image_tag: ${{ needs.prepare-deployment.outputs.image_tag }}
-          TF_VAR_deployment_id: ${{ needs.prepare-deployment.outputs.deploy_id }}
+      - name: Initialize Terraform
+        working-directory: ./terraform
+        run: terraform init -backend-config=environments/staging/backend.tfvars
+      
+      - name: Apply Terraform for staging
+        working-directory: ./terraform
         run: |
-          terraform init
-          terraform workspace select staging || terraform workspace new staging
-          terraform plan -var-file=environments/staging.tfvars -out=tfplan
+          terraform plan -var-file=environments/staging/terraform.tfvars -var="app_image=${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}" -out=tfplan
           terraform apply -auto-approve tfplan
-          
-          # Capture outputs for later use
-          echo "APP_URL=$(terraform output -raw app_url)" >> $GITHUB_ENV
       
-      - name: Update deployment status
-        uses: octokit/request-action@v2.x
+      - name: Run post-deployment smoke tests
+        run: |
+          # Wait for new deployment to stabilize
+          sleep 30
+          # Replace with actual smoke test command
+          curl -s https://staging-api.terrabuild.example.com/api/health | grep -q "status":"healthy"
+      
+      - name: Send deployment notification
+        uses: slackapi/slack-github-action@v1.23.0
         with:
-          route: POST /repos/${{ github.repository }}/deployments/${{ needs.prepare-deployment.outputs.deploy_id }}/statuses
-          state: success
-          environment_url: https://${{ env.APP_URL }}
-          description: "Deployment to staging completed"
+          payload: |
+            {
+              "text": "Deployment to staging completed successfully! :rocket:\nVersion: ${{ github.sha }}\nDeployed by: ${{ github.actor }}"
+            }
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  canary-deployment:
-    name: Canary Deployment
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  
+  deploy-production:
+    name: Deploy to Production
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
-    needs: [prepare-deployment, deploy-staging]
+    environment: production
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.7"
+      
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/terrabuild:production-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Choose Deployment Strategy
-        id: deployment-strategy
+      - name: Initialize Terraform
+        working-directory: ./terraform
+        run: terraform init -backend-config=environments/production/backend.tfvars
+      
+      - name: Apply Terraform for production
+        working-directory: ./terraform
         run: |
-          # Get the deployment strategy from the commit message or defaulting to blue-green
-          if [[ "${{ github.event.head_commit.message }}" == *"[canary]"* ]]; then
-            echo "strategy=canary" >> $GITHUB_OUTPUT
-            echo "Using canary deployment strategy"
-          else
-            echo "strategy=blue-green" >> $GITHUB_OUTPUT
-            echo "Using blue-green deployment strategy (default)"
-          fi
+          terraform plan -var-file=environments/production/terraform.tfvars -var="app_image=${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}" -out=tfplan
+          terraform apply -auto-approve tfplan
       
-      - name: Blue-Green Deployment
-        if: steps.deployment-strategy.outputs.strategy == 'blue-green'
+      - name: Run post-deployment verification
         run: |
-          echo "Starting blue-green deployment"
-          
-          # Run the blue-green deployment script
-          node scripts/blue_green_deploy.js \
-            --environment=staging \
-            --deployment-id=${{ needs.prepare-deployment.outputs.deploy_id }} \
-            --image-tag=${{ needs.prepare-deployment.outputs.image_tag }}
-          
-          # Check the exit code
-          if [ $? -ne 0 ]; then
-            echo "Blue-green deployment failed"
-            exit 1
-          fi
-          
-          echo "Blue-green deployment completed successfully"
+          # Wait for new deployment to stabilize
+          sleep 60
+          # Replace with actual verification command
+          curl -s https://api.terrabuild.example.com/api/health | grep -q "status":"healthy"
       
-      - name: Canary Deployment
-        if: steps.deployment-strategy.outputs.strategy == 'canary'
-        run: |
-          echo "Starting canary deployment"
-          
-          # Run the canary deployment script
-          node scripts/canary_deploy.js \
-            --environment=staging \
-            --deployment-id=${{ needs.prepare-deployment.outputs.deploy_id }} \
-            --image-tag=${{ needs.prepare-deployment.outputs.image_tag }} \
-            --initial-percent=10 \
-            --increment=30 \
-            --interval=5 \
-            --error-threshold=1 \
-            --latency-threshold=500
-          
-          # Check the exit code
-          if [ $? -ne 0 ]; then
-            echo "Canary deployment failed"
-            exit 1
-          fi
-          
-          echo "Canary deployment completed successfully"
-      
-      - name: Run post-deployment checks
-        run: |
-          # These would be actual health checks against the deployed application
-          echo "Running post-deployment health checks..."
-          curl --retry 5 --retry-delay 10 --retry-connrefused https://staging.example.com/health || echo "Health check failed but continuing"
-          
-          # Run performance checks against the production deployment
-          echo "Running performance checks..."
-          curl --retry 3 --retry-delay 2 https://staging.example.com/metrics > perf_metrics.json || echo "Metrics endpoint not available"
-
-  post-deployment:
-    name: Post-Deployment Tasks
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, canary-deployment]
-    if: always()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Generate deployment report
-        run: |
-          cat << EOF > deployment_report.md
-          # Deployment Report
-          
-          ## Deployment Details
-          - **Environment:** Staging
-          - **Deployment ID:** ${{ needs.prepare-deployment.outputs.deploy_id }}
-          - **Image Tag:** ${{ needs.prepare-deployment.outputs.image_tag }}
-          - **Status:** ${{ needs.deploy-staging.result == 'success' && needs.canary-deployment.result == 'success' && 'Success' || 'Failed' }}
-          
-          ## Post-Deployment Actions
-          - Deployment monitoring enabled
-          - Error tracking initialized
-          - Performance metrics collected
-          
-          ## Next Steps
-          - [ ] Review deployment metrics
-          - [ ] Run manual validation tests
-          - [ ] Approve for production deployment
-          EOF
-      
-      - name: Upload deployment report
-        uses: actions/upload-artifact@v3
+      - name: Send deployment notification
+        uses: slackapi/slack-github-action@v1.23.0
         with:
-          name: deployment-report
-          path: deployment_report.md
-      
-      - name: Notify on Success
-        if: success()
-        run: |
-          echo "Deployment to staging successful!"
-          # This would be a webhook call to Slack, Teams, or email notification
-          
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          echo "Deployment to staging failed!"
-          # This would be a webhook call to Slack, Teams, or email notification with alert level
+          payload: |
+            {
+              "text": "🎉 *Production Deployment Successful* 🎉\nVersion: ${{ github.sha }}\nDeployed by: ${{ github.actor }}\nCheck it out at https://terrabuild.example.com"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
