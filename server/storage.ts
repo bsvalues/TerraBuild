@@ -102,6 +102,10 @@ export interface IStorage {
   getSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | undefined>;
   setSetting(key: string, value: string): Promise<boolean>;
+  
+  // System Health
+  checkDatabaseConnection(): Promise<boolean>;
+  getAgentStatuses(): Promise<Record<string, any>>;
 }
 
 /**
@@ -607,6 +611,24 @@ export class MemStorage implements IStorage {
     }
     
     return true;
+  }
+  
+  // System Health methods
+  async checkDatabaseConnection(): Promise<boolean> {
+    // For memory storage, always return true as there's no actual DB
+    return true;
+  }
+  
+  async getAgentStatuses(): Promise<Record<string, any>> {
+    // Mock implementation for agent statuses
+    return {
+      "factorTuner": { status: "healthy", lastActive: new Date().toISOString() },
+      "curveTrainer": { status: "healthy", lastActive: new Date().toISOString() },
+      "scenarioAgent": { status: "healthy", lastActive: new Date().toISOString() },
+      "benchmarkGuard": { status: "healthy", lastActive: new Date().toISOString() },
+      "boeArguer": { status: "healthy", lastActive: new Date().toISOString() },
+      "autonimus": { status: "healthy", lastActive: new Date().toISOString() }
+    };
   }
 }
 

@@ -552,9 +552,49 @@ router.use('/', calculationRoutes);
  * System Routes
  */
 
-// Health check endpoint
-router.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check endpoint with detailed system status
+router.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    const dbStatus = await storage.checkDatabaseConnection();
+    
+    // Check memory usage
+    const memoryUsage = process.memoryUsage();
+    
+    // Check system uptime
+    const uptime = process.uptime();
+    
+    // Service version
+    const version = process.env.npm_package_version || '1.0.0';
+    
+    // Check agent health
+    const agentStatuses = await storage.getAgentStatuses();
+    
+    // Return comprehensive health information
+    res.json({
+      status: dbStatus ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      version,
+      uptime,
+      memory: {
+        rss: Math.round(memoryUsage.rss / 1024 / 1024) + 'MB',
+        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + 'MB',
+        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + 'MB',
+        external: Math.round(memoryUsage.external / 1024 / 1024) + 'MB',
+      },
+      database: {
+        connected: dbStatus,
+      },
+      agents: agentStatuses || { status: 'unknown' },
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ 
+      status: 'critical', 
+      timestamp: new Date().toISOString(),
+      error: 'Failed to perform health check'
+    });
+  }
 });
 
 // Current authenticated user
