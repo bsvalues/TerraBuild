@@ -434,6 +434,13 @@ export default function Sidebar({ className }: SidebarProps) {
                 title="What-If Scenarios"
                 icon={<Activity />}
               />
+              <SidebarItem
+                href="/ai-swarm"
+                title="AI Swarm"
+                icon={<BrainCircuit />}
+                badge="New"
+                badgeColor="bg-[#f0e6e6] text-[#8B3D3D]"
+              />
             </SidebarSection>
             
             <SidebarSection 
