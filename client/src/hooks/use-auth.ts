@@ -1,20 +1,19 @@
 /**
- * Unified Auth context hook
+ * County Network Auth Context Hook
  * 
  * This is the central authentication hook that should be used by all components.
- * It provides compatibility with all auth implementations in the codebase.
+ * It focuses on providing county network authentication for the application.
  */
 import { useContext } from 'react';
-import { AuthContext } from '../contexts/auth-context';
+import { AuthContext, AuthContextType } from '@/contexts/auth-context';
 
-// Make the hook compatible with both the original implementation and enhanced auth
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
+  
   if (!context) {
     console.warn("useAuth was called outside of AuthProvider - using fallback values");
     
     // Return a fallback that won't crash the app in development
-    // Include all properties that might be expected by components
     return {
       // Common properties
       user: null,
@@ -35,14 +34,13 @@ export function useAuth() {
         return null as any; 
       },
       
-      // Enhanced auth provider properties
-      isInitializing: false,
-      authMethod: 'local' as const,
+      // County network specific props
+      authMethod: 'county-network' as const,
       setAuthMethod: (method: 'local' | 'county-network') => { 
-        console.warn("setAuthMethod called outside EnhancedAuthProvider"); 
+        console.warn("setAuthMethod called outside AuthProvider"); 
       },
       
-      // Original auth context properties (for backward compatibility)
+      // Mutation convenience methods
       loginMutation: { isPending: false, mutateAsync: async () => null } as any,
       logoutMutation: { isPending: false, mutateAsync: async () => {} } as any,
       registerMutation: { isPending: false, mutateAsync: async () => null } as any,
