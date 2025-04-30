@@ -378,16 +378,16 @@ function App() {
             <ErrorHandlerWrapper />
             <EnhancedSupabaseProvider>
               <WindowProvider>
-                <SidebarProvider>
+                <AuthProvider>
                   <EnhancedAuthProvider>
-                    <AuthProvider>
-                      <DataFlowProvider>
+                    <DataFlowProvider>
+                      <SidebarProvider>
                         <Router />
                         <Toaster />
-                      </DataFlowProvider>
-                    </AuthProvider>
+                      </SidebarProvider>
+                    </DataFlowProvider>
                   </EnhancedAuthProvider>
-                </SidebarProvider>
+                </AuthProvider>
               </WindowProvider>
             </EnhancedSupabaseProvider>
           </ThemeProvider>

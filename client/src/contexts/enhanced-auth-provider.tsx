@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth.ts";
 import { useToast } from "@/hooks/use-toast";
 import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 

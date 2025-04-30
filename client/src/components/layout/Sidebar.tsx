@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/data/constants";
-import { useAuth } from "@/contexts/auth-context";
+import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider.tsx";
 import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 import {
   BarChart3,
@@ -226,7 +226,7 @@ function SidebarSection({ title, children, icon, isCollapsed }: SidebarSectionPr
 }
 
 export default function Sidebar({ className }: SidebarProps) {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const isAdmin = user?.role === "admin";
   const { isExpanded, isPinned, toggleExpanded, togglePinned, expandSidebar, collapseSidebar } = useSidebar();
   const [autoHideEnabled, setAutoHideEnabled] = useState(true);
