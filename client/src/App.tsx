@@ -54,6 +54,7 @@ import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
 import CostCalculator from "@/pages/CostCalculator";
+import SwarmPage from "@/pages/SwarmPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -344,6 +345,7 @@ function Router() {
       <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
       <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
+      <ProtectedRouteWrapper path="/ai-swarm" component={SwarmPage} />
       
       <Route component={NotFound} />
     </Switch>
