@@ -106,6 +106,8 @@ export interface IStorage {
   // System Health
   checkDatabaseConnection(): Promise<boolean>;
   getAgentStatuses(): Promise<Record<string, any>>;
+  getAgentStatus(agentId: string): Promise<AgentStatus | null>;
+  updateAgentStatus(agentId: string, status: string, metadata?: Record<string, any>, errorMessage?: string): Promise<boolean>;
 }
 
 /**
@@ -622,13 +624,83 @@ export class MemStorage implements IStorage {
   async getAgentStatuses(): Promise<Record<string, any>> {
     // Mock implementation for agent statuses
     return {
-      "factorTuner": { status: "healthy", lastActive: new Date().toISOString() },
-      "curveTrainer": { status: "healthy", lastActive: new Date().toISOString() },
-      "scenarioAgent": { status: "healthy", lastActive: new Date().toISOString() },
-      "benchmarkGuard": { status: "healthy", lastActive: new Date().toISOString() },
-      "boeArguer": { status: "healthy", lastActive: new Date().toISOString() },
-      "autonimus": { status: "healthy", lastActive: new Date().toISOString() }
+      "factorTuner": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for tuning cost factors and coefficients",
+          version: "1.2.0"
+        }
+      },
+      "curveTrainer": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for training cost curves from historical data",
+          version: "1.1.5"
+        }
+      },
+      "scenarioAgent": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for scenario analysis and forecasting",
+          version: "1.0.3"
+        }
+      },
+      "benchmarkGuard": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for benchmark comparison and validation",
+          version: "1.0.2"
+        }
+      },
+      "boeArguer": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for Board of Equalization appeals and arguments",
+          version: "1.0.0"
+        }
+      },
+      "autonimus": { 
+        status: "healthy", 
+        lastActive: new Date().toISOString(),
+        metadata: { 
+          description: "AI agent for property enhancement recommendations",
+          version: "1.1.0"
+        }
+      }
     };
+  }
+  
+  async getAgentStatus(agentId: string): Promise<schema.AgentStatus | null> {
+    const agentStatuses = await this.getAgentStatuses();
+    const agentStatus = agentStatuses[agentId];
+    
+    if (!agentStatus) return null;
+    
+    // Convert from in-memory format to database schema format
+    return {
+      agentId,
+      status: agentStatus.status,
+      lastActive: new Date(agentStatus.lastActive),
+      metadata: agentStatus.metadata || {},
+      errorMessage: agentStatus.errorMessage || null
+    };
+  }
+  
+  async updateAgentStatus(
+    agentId: string, 
+    status: string, 
+    metadata?: Record<string, any>, 
+    errorMessage?: string
+  ): Promise<boolean> {
+    // In memory implementation just returns true
+    // In a real implementation, this would update a database
+    console.log(`MemStorage: Updating status for agent ${agentId} to ${status}`);
+    return true;
   }
 }
 
@@ -1444,6 +1516,74 @@ export class DBStorage implements IStorage {
         "boeArguer": { status: "error", lastActive: null, error: "Database query failed" },
         "autonimus": { status: "error", lastActive: null, error: "Database query failed" }
       };
+    }
+  }
+  
+  async getAgentStatus(agentId: string): Promise<schema.AgentStatus | null> {
+    try {
+      const result = await this.db.select()
+        .from(schema.agentStatus)
+        .where(eq(schema.agentStatus.agentId, agentId));
+      
+      if (!result || result.length === 0) {
+        return null;
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error fetching agent status for ${agentId}:`, error);
+      return null;
+    }
+  }
+  
+  async updateAgentStatus(
+    agentId: string, 
+    status: string, 
+    metadata?: Record<string, any>, 
+    errorMessage?: string
+  ): Promise<boolean> {
+    try {
+      // Check if the agent status exists
+      const existingStatus = await this.getAgentStatus(agentId);
+      
+      if (existingStatus) {
+        // Update existing status
+        const updateData: any = {
+          status,
+          lastActive: new Date()
+        };
+        
+        if (metadata !== undefined) {
+          updateData.metadata = metadata;
+        }
+        
+        if (errorMessage !== undefined) {
+          updateData.errorMessage = errorMessage;
+        }
+        
+        const result = await this.db.update(schema.agentStatus)
+          .set(updateData)
+          .where(eq(schema.agentStatus.agentId, agentId))
+          .returning();
+          
+        return result.length > 0;
+      } else {
+        // Insert new status
+        const result = await this.db.insert(schema.agentStatus)
+          .values({
+            agentId,
+            status,
+            lastActive: new Date(),
+            metadata: metadata || {},
+            errorMessage: errorMessage || null
+          })
+          .returning();
+          
+        return result.length > 0;
+      }
+    } catch (error) {
+      console.error(`Error updating agent status for ${agentId}:`, error);
+      return false;
     }
   }
 }
