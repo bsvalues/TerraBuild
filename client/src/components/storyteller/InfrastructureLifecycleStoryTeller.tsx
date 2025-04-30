@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -100,7 +99,6 @@ const riskColorMap = {
 export function InfrastructureLifecycleStoryTeller() {
   const [activeStage, setActiveStage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [visualizationType, setVisualizationType] = useState<"2d" | "3d">("2d");
   
   // Calculate cumulative cost percentage up to the current stage
   const cumulativeCost = lifecycleStages
@@ -156,17 +154,9 @@ export function InfrastructureLifecycleStoryTeller() {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle>Infrastructure Lifecycle Visualization</CardTitle>
-                <Tabs 
-                  defaultValue="2d" 
-                  value={visualizationType}
-                  onValueChange={(value) => setVisualizationType(value as "2d" | "3d")}
-                  className="w-[200px]"
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="2d">2D View</TabsTrigger>
-                    <TabsTrigger value="3d">3D View</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <Badge variant="outline" className="bg-[#e6eef2] text-[#243E4D] border-none">
+                  Interactive View
+                </Badge>
               </div>
               <CardDescription>
                 Interactive visualization of infrastructure assets across their lifecycle
