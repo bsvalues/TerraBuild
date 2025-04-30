@@ -48,11 +48,11 @@ import FTPConnectionTestPage from "@/pages/FTPConnectionTestPage";
 import ContextualDataPage from "@/pages/contextual-data";
 import PropertyBrowserPage from "@/pages/PropertyBrowserPage";
 import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
+import InfrastructureLifecyclePage from "@/pages/InfrastructureLifecyclePage";
 import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
-import InfrastructureLifecyclePage from "@/pages/InfrastructureLifecyclePage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -328,6 +328,7 @@ function Router() {
       <ProtectedRouteWrapper path="/reports" component={ReportsPage} />
       <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
       <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
+      <ProtectedRouteWrapper path="/infrastructure-lifecycle" component={InfrastructureLifecyclePage} />
       <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />
       <ProtectedRouteWrapper path="/statistical-analysis" component={StatisticalAnalysisDemo} />
       <ProtectedRouteWrapper path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
@@ -342,7 +343,6 @@ function Router() {
       <ProtectedRouteWrapper path="/properties/:id" component={PropertyDetailsPage} />
       <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
-      <ProtectedRouteWrapper path="/infrastructure-lifecycle" component={InfrastructureLifecyclePage} />
       
       <Route component={NotFound} />
     </Switch>
