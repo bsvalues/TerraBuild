@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEnhancedAuth } from '@/contexts/enhanced-auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Building } from 'lucide-react';
 
 /**
@@ -13,7 +13,7 @@ import { Loader2, Building } from 'lucide-react';
  * using their network credentials.
  */
 export function CountyNetworkAuth() {
-  const { login, isLoading } = useEnhancedAuth();
+  const { login, isLoading } = useAuth();
   const [networkStatus, setNetworkStatus] = useState<{
     checking: boolean;
     onNetwork: boolean;

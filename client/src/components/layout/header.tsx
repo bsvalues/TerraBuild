@@ -36,7 +36,7 @@ interface HeaderProps {
 
 export default function Header({ isLanding = false }: HeaderProps) {
   const [, navigate] = useLocation();
-  const { user, isAuthenticated, logout, isLoading, isInitializing = false } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
@@ -182,7 +182,7 @@ export default function Header({ isLanding = false }: HeaderProps) {
                       <User className="h-4 w-4 text-[#29B7D3]" />
                     </div>
                     <div className="hidden md:block text-left">
-                      <p className="text-sm font-medium text-gray-700">{user?.firstName || user?.username}</p>
+                      <p className="text-sm font-medium text-gray-700">{user?.name || user?.username}</p>
                       <p className="text-xs text-gray-500">{user?.role || 'User'}</p>
                     </div>
                     <ChevronDown className="h-4 w-4 hidden md:block text-gray-500" />
