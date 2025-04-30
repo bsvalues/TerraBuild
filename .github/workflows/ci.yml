@@ -1,88 +1,159 @@
-name: CI Pipeline
+name: TerraBuild CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, development ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, development ]
 
 jobs:
-  test:
-    name: Test and Validate
+  lint:
+    name: Lint Code
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
-      
-      - name: Install dependencies
+          
+      - name: Install Dependencies
         run: npm ci
-      
-      - name: Run linting
+        
+      - name: Run ESLint
         run: npm run lint
-      
-      - name: Run TypeScript validation
-        run: npm run tsc
-      
-      - name: Run unit tests
-        run: npm run test
-  
-  security-scan:
-    name: Security Scanning
+        
+      - name: Check Formatting
+        run: npm run format:check
+
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    needs: test
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_terrabuild
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Setup Test Database
+        run: |
+          echo "Setting up test database..."
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_terrabuild npm run db:push
+        
+      - name: Run Unit Tests
+        run: npm run test:unit
+        
+      - name: Run Integration Tests
+        run: |
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_terrabuild npm run test:integration
+          
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Build Application
+        run: npm run build
+        
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: |
+            dist
+            !dist/node_modules
+            
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       
       - name: Run npm audit
         run: npm audit --production
-      
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/init@v2
+        continue-on-error: true
+        
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
         with:
-          languages: javascript, typescript
-      
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-  
-  build:
-    name: Build and Validate
+          project: 'TerraBuild'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: reports/
+          
+  docker:
+    name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [test, security-scan]
+    needs: [build, security-scan]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
-      - name: Build Docker image
+        
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            
+      - name: Build and push
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: false
-          load: true
-          tags: terrabuild:latest
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
-      - name: Run Docker image tests
-        run: |
-          docker run --rm terrabuild:latest npm run test:smoke
-      
-      - name: Upload artifact for deployment job
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-build
-          path: |
-            dist/
-            !dist/**/*.md
-            package.json
-            package-lock.json

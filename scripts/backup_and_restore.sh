@@ -1,397 +1,223 @@
 #!/bin/bash
-
-# TerraBuild Backup and Disaster Recovery Script
-# This script handles database backups, restoration, and general disaster recovery procedures
+# backup_and_restore.sh
+# This script manages database backups and restores for the TerraBuild application
 
 set -e
 
 # Default values
-ENVIRONMENT="dev"
+ENV="dev"
 ACTION="backup"
-BACKUP_DIR="./backups"
-BACKUP_RETENTION_DAYS=30
-APP_NAME="terrabuild"
-AWS_REGION="us-west-2"
-AWS_PROFILE=""
-
-# Help message
-function show_help {
-  echo "TerraBuild Backup and Disaster Recovery Script"
-  echo ""
-  echo "Usage: $0 [options]"
-  echo ""
-  echo "Options:"
-  echo "  --env <environment>        Environment (dev or prod, default: dev)"
-  echo "  --action <action>          Action to perform (backup, restore, test-restore)"
-  echo "  --backup-file <file>       Backup file to restore (required for restore)"
-  echo "  --profile <profile>        AWS CLI profile to use"
-  echo "  --region <region>          AWS region (default: us-west-2)"
-  echo "  --retention <days>         Backup retention in days (default: 30)"
-  echo "  --help                     Show this help message"
-  echo ""
-  echo "Examples:"
-  echo "  $0 --env prod --action backup"
-  echo "  $0 --env prod --action restore --backup-file backups/db-backup-20250101-120000.sql"
-  echo "  $0 --env dev --action test-restore --backup-file backups/db-backup-20250101-120000.sql"
-  exit 0
-}
+VERBOSE=0
+BACKUP_FILE=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
-    --env)
-      ENVIRONMENT="$2"
-      shift 2
+  case $1 in
+    --env=*)
+      ENV="${1#*=}"
+      shift
       ;;
-    --action)
-      ACTION="$2"
-      shift 2
+    --action=*)
+      ACTION="${1#*=}"
+      shift
       ;;
-    --backup-file)
-      BACKUP_FILE="$2"
-      shift 2
+    --file=*)
+      BACKUP_FILE="${1#*=}"
+      shift
       ;;
-    --profile)
-      AWS_PROFILE="$2"
-      shift 2
-      ;;
-    --region)
-      AWS_REGION="$2"
-      shift 2
-      ;;
-    --retention)
-      BACKUP_RETENTION_DAYS="$2"
-      shift 2
+    --verbose)
+      VERBOSE=1
+      shift
       ;;
     --help)
-      show_help
+      echo "Usage: $0 [options]"
+      echo ""
+      echo "Options:"
+      echo "  --env=ENVIRONMENT      Environment to use (dev, staging, prod) (default: dev)"
+      echo "  --action=ACTION        Action to perform (backup, restore, list) (default: backup)"
+      echo "  --file=FILENAME        Backup file to restore from (required for restore)"
+      echo "  --verbose              Enable verbose output"
+      echo "  --help                 Show this help message"
+      echo ""
+      echo "Examples:"
+      echo "  $0 --env=dev --action=backup                # Create a backup of the dev database"
+      echo "  $0 --env=staging --action=list              # List available backups for staging"
+      echo "  $0 --env=prod --action=restore --file=prod_backup_20250430.sql.gz  # Restore from backup"
+      exit 0
       ;;
     *)
-      echo "Unknown option: $1"
-      show_help
+      echo "Error: Unknown option $1"
+      echo "Use --help for usage information"
+      exit 1
       ;;
   esac
 done
 
 # Validate environment
-if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "prod" ]]; then
-  echo "Error: Environment must be 'dev' or 'prod'"
+if [[ ! "$ENV" =~ ^(dev|staging|prod)$ ]]; then
+  echo "Error: Invalid environment. Must be one of: dev, staging, prod"
   exit 1
 fi
 
-# Configure AWS CLI with profile if provided
-if [[ -n "$AWS_PROFILE" ]]; then
-  AWS_ARGS="--profile $AWS_PROFILE"
-else
-  AWS_ARGS=""
+# Validate action
+if [[ ! "$ACTION" =~ ^(backup|restore|list)$ ]]; then
+  echo "Error: Invalid action. Must be one of: backup, restore, list"
+  exit 1
 fi
 
-# Set up the timestamp for backup files
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE_NAME="db-backup-$ENVIRONMENT-$TIMESTAMP.sql"
-S3_BUCKET="$APP_NAME-$ENVIRONMENT-backups"
+# Check for required restore file
+if [ "$ACTION" = "restore" ] && [ -z "$BACKUP_FILE" ]; then
+  echo "Error: --file parameter is required for restore action"
+  exit 1
+fi
 
-# Make sure backup directory exists
+# Set backup directory
+BACKUP_DIR="backups/$ENV"
 mkdir -p "$BACKUP_DIR"
 
-# Get database credentials from parameter store
-get_db_credentials() {
-  DB_USER=$(aws $AWS_ARGS ssm get-parameter --name "/$APP_NAME/$ENVIRONMENT/db/username" --with-decryption --query "Parameter.Value" --output text --region "$AWS_REGION")
-  DB_PASSWORD=$(aws $AWS_ARGS ssm get-parameter --name "/$APP_NAME/$ENVIRONMENT/db/password" --with-decryption --query "Parameter.Value" --output text --region "$AWS_REGION")
-  DB_HOST=$(aws $AWS_ARGS ssm get-parameter --name "/$APP_NAME/$ENVIRONMENT/db/host" --query "Parameter.Value" --output text --region "$AWS_REGION")
-  DB_PORT=$(aws $AWS_ARGS ssm get-parameter --name "/$APP_NAME/$ENVIRONMENT/db/port" --query "Parameter.Value" --output text --region "$AWS_REGION")
-  DB_NAME=$(aws $AWS_ARGS ssm get-parameter --name "/$APP_NAME/$ENVIRONMENT/db/name" --query "Parameter.Value" --output text --region "$AWS_REGION")
-}
+# Set database connection based on environment
+case "$ENV" in
+  dev)
+    DB_HOST="localhost"
+    DB_PORT="5432"
+    DB_NAME="terrabuild"
+    DB_USER="postgres"
+    DB_PASSWORD="postgres"
+    ;;
+  staging)
+    # In CI/CD, these would be set by the pipeline
+    DB_HOST="${STAGING_DB_HOST:-}"
+    DB_PORT="${STAGING_DB_PORT:-5432}"
+    DB_NAME="${STAGING_DB_NAME:-}"
+    DB_USER="${STAGING_DB_USER:-}"
+    DB_PASSWORD="${STAGING_DB_PASSWORD:-}"
+    ;;
+  prod)
+    # In CI/CD, these would be set by the pipeline
+    DB_HOST="${PROD_DB_HOST:-}"
+    DB_PORT="${PROD_DB_PORT:-5432}"
+    DB_NAME="${PROD_DB_NAME:-}"
+    DB_USER="${PROD_DB_USER:-}"
+    DB_PASSWORD="${PROD_DB_PASSWORD:-}"
+    ;;
+esac
 
-# Create a database backup
-perform_backup() {
-  echo "===== Backing up $ENVIRONMENT database ====="
-  echo "Creating backup: $BACKUP_DIR/$BACKUP_FILE_NAME"
+# Check if database credentials are set
+if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ]; then
+  echo "Error: Database connection details not set for $ENV environment"
+  exit 1
+fi
+
+# Function to create database backup
+create_backup() {
+  local timestamp=$(date +"%Y%m%d_%H%M%S")
+  local backup_file="${BACKUP_DIR}/terrabuild_${ENV}_${timestamp}.sql.gz"
   
-  # Export the database directly to a file
+  echo "Creating backup of $ENV database..."
+  echo "Database: $DB_NAME"
+  echo "Output file: $backup_file"
+  
   PGPASSWORD="$DB_PASSWORD" pg_dump \
     --host="$DB_HOST" \
     --port="$DB_PORT" \
     --username="$DB_USER" \
     --dbname="$DB_NAME" \
     --format=custom \
-    --file="$BACKUP_DIR/$BACKUP_FILE_NAME" \
-    --verbose
+    --verbose \
+    --file="${backup_file%.gz}" \
+    --exclude-table-data="*_migrations" \
+    --no-owner \
+    --no-acl
   
-  if [ $? -eq 0 ]; then
-    echo "Backup created successfully: $BACKUP_DIR/$BACKUP_FILE_NAME"
-    
-    # Compress the backup
-    echo "Compressing backup..."
-    gzip "$BACKUP_DIR/$BACKUP_FILE_NAME"
-    BACKUP_FILE_NAME="$BACKUP_FILE_NAME.gz"
-    
-    # Upload to S3
-    echo "Uploading backup to S3..."
-    aws $AWS_ARGS s3 cp "$BACKUP_DIR/$BACKUP_FILE_NAME" "s3://$S3_BUCKET/$BACKUP_FILE_NAME" --region "$AWS_REGION"
-    
-    # Create a latest pointer
-    echo "Updating latest backup pointer..."
-    aws $AWS_ARGS s3 cp "s3://$S3_BUCKET/$BACKUP_FILE_NAME" "s3://$S3_BUCKET/latest.gz" --region "$AWS_REGION"
-    
-    echo "Cleaning up old backups (older than $BACKUP_RETENTION_DAYS days)..."
-    find "$BACKUP_DIR" -name "db-backup-$ENVIRONMENT-*.gz" -mtime +$BACKUP_RETENTION_DAYS -delete
-    
-    # Clean up old backups from S3
-    OLD_BACKUPS=$(aws $AWS_ARGS s3api list-objects --bucket "$S3_BUCKET" --prefix "db-backup-$ENVIRONMENT-" --query "Contents[?LastModified<='$(date -d "$BACKUP_RETENTION_DAYS days ago" --iso-8601=seconds)'].[Key]" --output text --region "$AWS_REGION")
-    if [ -n "$OLD_BACKUPS" ]; then
-      echo "Cleaning up old backups from S3..."
-      for file in $OLD_BACKUPS; do
-        aws $AWS_ARGS s3 rm "s3://$S3_BUCKET/$file" --region "$AWS_REGION"
-      done
-    fi
-    
-    echo "Backup completed successfully"
-  else
-    echo "Error: Backup failed"
-    exit 1
-  fi
+  # Compress the backup
+  gzip "${backup_file%.gz}"
+  
+  echo "Backup completed successfully: $backup_file"
+  echo "Backup size: $(du -h "$backup_file" | cut -f1)"
 }
 
-# Restore from a backup
-perform_restore() {
-  if [ -z "$BACKUP_FILE" ]; then
-    echo "Error: --backup-file parameter is required for restore operation"
+# Function to restore database from backup
+restore_from_backup() {
+  local backup_path="$BACKUP_DIR/$BACKUP_FILE"
+  
+  # Check if backup file exists
+  if [ ! -f "$backup_path" ]; then
+    echo "Error: Backup file not found: $backup_path"
     exit 1
   fi
   
-  # If the backup file is in S3, download it first
-  if [[ "$BACKUP_FILE" == s3://* ]]; then
-    echo "Downloading backup from S3..."
-    S3_PATH="$BACKUP_FILE"
-    BACKUP_FILE="$BACKUP_DIR/$(basename "$S3_PATH")"
-    aws $AWS_ARGS s3 cp "$S3_PATH" "$BACKUP_FILE" --region "$AWS_REGION"
+  echo "WARNING: This will REPLACE ALL DATA in the $ENV database with data from the backup."
+  read -p "Are you sure you want to proceed? (yes/no): " confirm
+  if [ "$confirm" != "yes" ]; then
+    echo "Restore cancelled."
+    exit 0
   fi
   
-  if [ ! -f "$BACKUP_FILE" ]; then
-    echo "Error: Backup file not found: $BACKUP_FILE"
-    exit 1
+  echo "Restoring $ENV database from backup: $backup_path"
+  
+  # Extract if it's compressed
+  if [[ "$backup_path" == *.gz ]]; then
+    echo "Extracting compressed backup..."
+    gunzip -c "$backup_path" > "${backup_path%.gz}"
+    backup_path="${backup_path%.gz}"
   fi
   
-  echo "===== Restoring $ENVIRONMENT database from $BACKUP_FILE ====="
-  
-  # Unzip if necessary
-  TEMP_BACKUP_FILE="$BACKUP_FILE"
-  if [[ "$BACKUP_FILE" == *.gz ]]; then
-    echo "Decompressing backup file..."
-    gunzip -c "$BACKUP_FILE" > "${BACKUP_FILE%.gz}"
-    TEMP_BACKUP_FILE="${BACKUP_FILE%.gz}"
-  fi
-  
-  # Confirm before restoring production
-  if [[ "$ENVIRONMENT" == "prod" && "$ACTION" == "restore" ]]; then
-    read -p "WARNING: You are about to restore the PRODUCTION database. Are you sure? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      echo "Restoration cancelled"
-      exit 0
-    fi
-  fi
-  
-  # Perform the restoration
-  echo "Restoring database from backup..."
+  # Restore database
   PGPASSWORD="$DB_PASSWORD" pg_restore \
     --host="$DB_HOST" \
     --port="$DB_PORT" \
     --username="$DB_USER" \
     --dbname="$DB_NAME" \
-    --format=custom \
     --clean \
     --if-exists \
+    --no-owner \
+    --no-acl \
     --verbose \
-    "$TEMP_BACKUP_FILE"
+    "$backup_path"
   
-  RESTORE_EXIT_CODE=$?
-  
-  # If we created a temporary uncompressed file, clean it up
-  if [[ "$TEMP_BACKUP_FILE" != "$BACKUP_FILE" ]]; then
-    echo "Cleaning up temporary files..."
-    rm "$TEMP_BACKUP_FILE"
-  fi
-  
-  if [ $RESTORE_EXIT_CODE -eq 0 ]; then
-    echo "Restoration completed successfully"
-  else
-    echo "Warning: Restoration completed with warnings or errors (code $RESTORE_EXIT_CODE)"
-    echo "Please check the database for consistency"
-  fi
-}
-
-# Test a backup by restoring to a temporary database
-test_restore() {
-  if [ -z "$BACKUP_FILE" ]; then
-    echo "Error: --backup-file parameter is required for test-restore operation"
-    exit 1
-  fi
-  
-  # If the backup file is in S3, download it first
-  if [[ "$BACKUP_FILE" == s3://* ]]; then
-    echo "Downloading backup from S3..."
-    S3_PATH="$BACKUP_FILE"
-    BACKUP_FILE="$BACKUP_DIR/$(basename "$S3_PATH")"
-    aws $AWS_ARGS s3 cp "$S3_PATH" "$BACKUP_FILE" --region "$AWS_REGION"
-  fi
-  
-  if [ ! -f "$BACKUP_FILE" ]; then
-    echo "Error: Backup file not found: $BACKUP_FILE"
-    exit 1
-  fi
-  
-  echo "===== Testing backup restoration from $BACKUP_FILE ====="
-  
-  # Unzip if necessary
-  TEMP_BACKUP_FILE="$BACKUP_FILE"
+  # Clean up extracted file if we decompressed it
   if [[ "$BACKUP_FILE" == *.gz ]]; then
-    echo "Decompressing backup file..."
-    gunzip -c "$BACKUP_FILE" > "${BACKUP_FILE%.gz}"
-    TEMP_BACKUP_FILE="${BACKUP_FILE%.gz}"
+    rm "$backup_path"
   fi
   
-  # Create a temporary database for testing
-  TEST_DB_NAME="${DB_NAME}_test_${TIMESTAMP}"
-  echo "Creating temporary database: $TEST_DB_NAME"
-  
-  PGPASSWORD="$DB_PASSWORD" psql \
-    --host="$DB_HOST" \
-    --port="$DB_PORT" \
-    --username="$DB_USER" \
-    --dbname="postgres" \
-    -c "CREATE DATABASE $TEST_DB_NAME WITH TEMPLATE template0 OWNER $DB_USER;"
-  
-  # Test restore to the temporary database
-  echo "Restoring backup to test database..."
-  PGPASSWORD="$DB_PASSWORD" pg_restore \
-    --host="$DB_HOST" \
-    --port="$DB_PORT" \
-    --username="$DB_USER" \
-    --dbname="$TEST_DB_NAME" \
-    --format=custom \
-    --verbose \
-    "$TEMP_BACKUP_FILE"
-  
-  TEST_RESTORE_EXIT_CODE=$?
-  
-  # Run some validation queries
-  echo "Validating restored database..."
-  PGPASSWORD="$DB_PASSWORD" psql \
-    --host="$DB_HOST" \
-    --port="$DB_PORT" \
-    --username="$DB_USER" \
-    --dbname="$TEST_DB_NAME" \
-    -c "SELECT COUNT(*) as user_count FROM users;" \
-    -c "SELECT COUNT(*) as property_count FROM properties;" \
-    -c "SELECT COUNT(*) as cost_matrix_count FROM cost_matrix;" \
-    -c "SELECT version();"
-  
-  # Drop the test database
-  echo "Dropping test database..."
-  PGPASSWORD="$DB_PASSWORD" psql \
-    --host="$DB_HOST" \
-    --port="$DB_PORT" \
-    --username="$DB_USER" \
-    --dbname="postgres" \
-    -c "DROP DATABASE $TEST_DB_NAME;"
-  
-  # If we created a temporary uncompressed file, clean it up
-  if [[ "$TEMP_BACKUP_FILE" != "$BACKUP_FILE" ]]; then
-    echo "Cleaning up temporary files..."
-    rm "$TEMP_BACKUP_FILE"
-  fi
-  
-  if [ $TEST_RESTORE_EXIT_CODE -eq 0 ]; then
-    echo "Test restoration completed successfully"
-  else
-    echo "Warning: Test restoration completed with warnings or errors (code $TEST_RESTORE_EXIT_CODE)"
-  fi
+  echo "Database restore completed successfully."
 }
 
-# Main script execution
-echo "=========================================="
-echo "TerraBuild Database Management - $ENVIRONMENT Environment"
-echo "=========================================="
-echo "Action: $ACTION"
-echo "Environment: $ENVIRONMENT"
-echo "AWS Region: $AWS_REGION"
-if [ "$ACTION" == "restore" ] || [ "$ACTION" == "test-restore" ]; then
-  echo "Backup File: $BACKUP_FILE"
-fi
-echo "=========================================="
-
-# Ensure S3 bucket exists for backups
-echo "Checking if S3 bucket exists..."
-if ! aws $AWS_ARGS s3api head-bucket --bucket "$S3_BUCKET" --region "$AWS_REGION" 2>/dev/null; then
-  echo "Creating S3 bucket for backups: $S3_BUCKET"
-  aws $AWS_ARGS s3api create-bucket \
-    --bucket "$S3_BUCKET" \
-    --region "$AWS_REGION" \
-    --create-bucket-configuration LocationConstraint="$AWS_REGION"
+# Function to list available backups
+list_backups() {
+  echo "Available backups for $ENV environment:"
   
-  # Enable versioning for additional safety
-  aws $AWS_ARGS s3api put-bucket-versioning \
-    --bucket "$S3_BUCKET" \
-    --versioning-configuration Status=Enabled \
-    --region "$AWS_REGION"
+  if [ ! "$(ls -A "$BACKUP_DIR")" ]; then
+    echo "No backups found in $BACKUP_DIR"
+    return
+  fi
   
-  # Set lifecycle policy for backup cleanup
-  aws $AWS_ARGS s3api put-bucket-lifecycle-configuration \
-    --bucket "$S3_BUCKET" \
-    --lifecycle-configuration '{
-      "Rules": [
-        {
-          "ID": "ExpireOldBackups",
-          "Status": "Enabled",
-          "Prefix": "db-backup-",
-          "Expiration": {
-            "Days": '"$BACKUP_RETENTION_DAYS"'
-          }
-        }
-      ]
-    }' \
-    --region "$AWS_REGION"
+  echo "-----------------------------------------------------"
+  echo "Filename                                      Size"
+  echo "-----------------------------------------------------"
   
-  # Set bucket encryption
-  aws $AWS_ARGS s3api put-bucket-encryption \
-    --bucket "$S3_BUCKET" \
-    --server-side-encryption-configuration '{
-      "Rules": [
-        {
-          "ApplyServerSideEncryptionByDefault": {
-            "SSEAlgorithm": "AES256"
-          }
-        }
-      ]
-    }' \
-    --region "$AWS_REGION"
-fi
+  for backup in "$BACKUP_DIR"/*; do
+    if [ -f "$backup" ]; then
+      filename=$(basename "$backup")
+      size=$(du -h "$backup" | cut -f1)
+      printf "%-45s %s\n" "$filename" "$size"
+    fi
+  done
+  
+  echo "-----------------------------------------------------"
+  echo "Restore command example:"
+  echo "$0 --env=$ENV --action=restore --file=<filename>"
+}
 
-# Get database credentials
-echo "Retrieving database credentials..."
-get_db_credentials
-
-# Execute the requested action
+# Execute requested action
 case "$ACTION" in
   backup)
-    perform_backup
+    create_backup
     ;;
   restore)
-    perform_restore
+    restore_from_backup
     ;;
-  test-restore)
-    test_restore
-    ;;
-  *)
-    echo "Error: Unknown action '$ACTION'"
-    echo "Valid actions are: backup, restore, test-restore"
-    exit 1
+  list)
+    list_backups
     ;;
 esac
-
-echo "=========================================="
-echo "Operation completed"
-echo "=========================================="

@@ -1,29 +1,50 @@
-name: Deploy Pipeline
+name: Deploy TerraBuild
 
 on:
-  workflow_run:
-    workflows: ["CI Pipeline"]
-    types:
-      - completed
-    branches:
-      - main
-      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      backup:
+        description: 'Create database backup before deployment'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/develop' }}
+  prepare:
+    name: Prepare Deployment
     runs-on: ubuntu-latest
-    environment: staging
-    
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
+      CREATE_BACKUP: ${{ github.event.inputs.backup }}
+    outputs:
+      environment: ${{ steps.vars.outputs.environment }}
+      version: ${{ steps.vars.outputs.version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: "1.5.7"
+      - name: Set deployment variables
+        id: vars
+        run: |
+          echo "environment=${{ env.ENVIRONMENT }}" >> $GITHUB_OUTPUT
+          echo "version=$(date +'%Y%m%d').${{ github.run_number }}" >> $GITHUB_OUTPUT
+  
+  backup:
+    name: Backup Database
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: github.event.inputs.backup == 'true'
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+    environment: ${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v3
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -31,66 +52,127 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/terrabuild:staging-latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      
-      - name: Initialize Terraform
-        working-directory: ./terraform
-        run: terraform init -backend-config=environments/staging/backend.tfvars
-      
-      - name: Apply Terraform for staging
-        working-directory: ./terraform
+          
+      - name: Setup database connection
+        id: db-connection
         run: |
-          terraform plan -var-file=environments/staging/terraform.tfvars -var="app_image=${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}" -out=tfplan
-          terraform apply -auto-approve tfplan
-      
-      - name: Run post-deployment smoke tests
+          case "${ENVIRONMENT}" in
+            dev)
+              echo "DB_HOST=${{ secrets.DEV_DB_HOST }}" >> $GITHUB_ENV
+              echo "DB_PORT=${{ secrets.DEV_DB_PORT }}" >> $GITHUB_ENV
+              echo "DB_NAME=${{ secrets.DEV_DB_NAME }}" >> $GITHUB_ENV
+              echo "DB_USER=${{ secrets.DEV_DB_USER }}" >> $GITHUB_ENV
+              echo "DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }}" >> $GITHUB_ENV
+              ;;
+            staging)
+              echo "DB_HOST=${{ secrets.STAGING_DB_HOST }}" >> $GITHUB_ENV
+              echo "DB_PORT=${{ secrets.STAGING_DB_PORT }}" >> $GITHUB_ENV
+              echo "DB_NAME=${{ secrets.STAGING_DB_NAME }}" >> $GITHUB_ENV
+              echo "DB_USER=${{ secrets.STAGING_DB_USER }}" >> $GITHUB_ENV
+              echo "DB_PASSWORD=${{ secrets.STAGING_DB_PASSWORD }}" >> $GITHUB_ENV
+              ;;
+            prod)
+              echo "DB_HOST=${{ secrets.PROD_DB_HOST }}" >> $GITHUB_ENV
+              echo "DB_PORT=${{ secrets.PROD_DB_PORT }}" >> $GITHUB_ENV
+              echo "DB_NAME=${{ secrets.PROD_DB_NAME }}" >> $GITHUB_ENV
+              echo "DB_USER=${{ secrets.PROD_DB_USER }}" >> $GITHUB_ENV
+              echo "DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}" >> $GITHUB_ENV
+              ;;
+          esac
+          
+      - name: Install PostgreSQL client
         run: |
-          # Wait for new deployment to stabilize
-          sleep 30
-          # Replace with actual smoke test command
-          curl -s https://staging-api.terrabuild.example.com/api/health | grep -q "status":"healthy"
-      
-      - name: Send deployment notification
-        uses: slackapi/slack-github-action@v1.23.0
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          
+      - name: Create backup
+        run: |
+          timestamp=$(date +'%Y%m%d_%H%M%S')
+          backup_file="terrabuild_${ENVIRONMENT}_${timestamp}.sql.gz"
+          
+          echo "Creating backup of ${ENVIRONMENT} database..."
+          PGPASSWORD="${DB_PASSWORD}" pg_dump \
+            --host="${DB_HOST}" \
+            --port="${DB_PORT}" \
+            --username="${DB_USER}" \
+            --dbname="${DB_NAME}" \
+            --format=custom \
+            --file="${backup_file%.gz}" \
+            --no-owner \
+            --no-acl
+            
+          gzip "${backup_file%.gz}"
+          
+          # Upload to S3
+          aws s3 cp "${backup_file}" "s3://${{ secrets.BACKUP_BUCKET }}/${ENVIRONMENT}/backups/${backup_file}"
+          
+          echo "Backup created successfully and uploaded to S3: ${backup_file}"
+          echo "backup_file=${backup_file}" >> $GITHUB_ENV
+          
+      - name: Notify team about backup
+        uses: slackapi/slack-github-action@v1
         with:
           payload: |
             {
-              "text": "Deployment to staging completed successfully! :rocket:\nVersion: ${{ github.sha }}\nDeployed by: ${{ github.actor }}"
+              "text": "✅ Database backup created for ${ENVIRONMENT} environment before deployment.\nBackup file: ${backup_file}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  
-  deploy-production:
-    name: Deploy to Production
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    environment: production
     
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [prepare, backup]
+    if: always() && (needs.backup.result == 'success' || needs.backup.result == 'skipped')
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    environment: ${{ needs.prepare.outputs.environment }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
-      - name: Set up Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: "1.5.7"
+          terraform_version: 1.5.0
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: |
+          terraform init \
+            -backend-config="environments/${ENVIRONMENT}/backend.tfvars"
+            
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: |
+          terraform plan \
+            -var-file="environments/${ENVIRONMENT}/terraform.tfvars" \
+            -out="${ENVIRONMENT}_plan.tfplan"
+            
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: |
+          terraform apply \
+            -auto-approve \
+            "${ENVIRONMENT}_plan.tfplan"
+    
+  deploy-application:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-infrastructure]
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    environment: ${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v3
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -98,48 +180,131 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      
+          
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
+        
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/terrabuild:production-latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      
-      - name: Initialize Terraform
-        working-directory: ./terraform
-        run: terraform init -backend-config=environments/production/backend.tfvars
-      
-      - name: Apply Terraform for production
-        working-directory: ./terraform
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: terrabuild-${{ needs.prepare.outputs.environment }}
+          IMAGE_TAG: ${{ needs.prepare.outputs.version }}
         run: |
-          terraform plan -var-file=environments/production/terraform.tfvars -var="app_image=${{ steps.login-ecr.outputs.registry }}/terrabuild:${{ github.sha }}" -out=tfplan
-          terraform apply -auto-approve tfplan
-      
-      - name: Run post-deployment verification
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+      - name: Set environment variables for deployment
         run: |
-          # Wait for new deployment to stabilize
-          sleep 60
-          # Replace with actual verification command
-          curl -s https://api.terrabuild.example.com/api/health | grep -q "status":"healthy"
+          case "${ENVIRONMENT}" in
+            dev)
+              echo "DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            staging)
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            prod)
+              echo "DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+          esac
       
-      - name: Send deployment notification
-        uses: slackapi/slack-github-action@v1.23.0
+      - name: Apply database migrations
+        run: |
+          echo "Running database migrations..."
+          DATABASE_URL="${DATABASE_URL}" npm run db:push
+          
+      - name: Deploy to ECS
+        id: deploy-ecs
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: terrabuild-${{ needs.prepare.outputs.environment }}
+          IMAGE_TAG: ${{ needs.prepare.outputs.version }}
+        run: |
+          aws ecs update-service \
+            --cluster terrabuild-$ENVIRONMENT \
+            --service terrabuild-service \
+            --force-new-deployment \
+            --task-definition $(aws ecs describe-task-definition \
+              --task-definition terrabuild-$ENVIRONMENT \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+          
+          # Wait for deployment to complete
+          echo "Waiting for deployment to complete..."
+          aws ecs wait services-stable \
+            --cluster terrabuild-$ENVIRONMENT \
+            --services terrabuild-service
+            
+          echo "Deployment completed successfully."
+          
+      - name: Notify deployment success
+        uses: slackapi/slack-github-action@v1
         with:
           payload: |
             {
-              "text": "🎉 *Production Deployment Successful* 🎉\nVersion: ${{ github.sha }}\nDeployed by: ${{ github.actor }}\nCheck it out at https://terrabuild.example.com"
+              "text": "✅ Successfully deployed version ${VERSION} to ${ENVIRONMENT} environment"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+  post-deployment-verification:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-application]
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+    environment: ${{ needs.prepare.outputs.environment }}
+    steps:
+      - name: Get application URL
+        id: app-url
+        run: |
+          case "${ENVIRONMENT}" in
+            dev)
+              echo "url=https://dev.terrabuild.example.com" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "url=https://staging.terrabuild.example.com" >> $GITHUB_OUTPUT
+              ;;
+            prod)
+              echo "url=https://terrabuild.example.com" >> $GITHUB_OUTPUT
+              ;;
+          esac
+          
+      - name: Check application health
+        run: |
+          echo "Checking application health at ${{ steps.app-url.outputs.url }}/api/health..."
+          
+          attempt=0
+          max_attempts=10
+          
+          while [ $attempt -lt $max_attempts ]; do
+            attempt=$((attempt+1))
+            
+            response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.app-url.outputs.url }}/api/health)
+            
+            if [ "$response" = "200" ]; then
+              echo "Application is healthy! (Attempt $attempt)"
+              exit 0
+            else
+              echo "Application not healthy yet. Status: $response (Attempt $attempt)"
+              
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Waiting 30 seconds before next check..."
+                sleep 30
+              fi
+            fi
+          done
+          
+          echo "Application health check failed after $max_attempts attempts."
+          exit 1
+          
+      - name: Notify completion
+        uses: slackapi/slack-github-action@v1
+        if: always()
+        with:
+          payload: |
+            {
+              "text": "🚀 Deployment to ${ENVIRONMENT} environment completed.\nStatus: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}\nURL: ${{ steps.app-url.outputs.url }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
