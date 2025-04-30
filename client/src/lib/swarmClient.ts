@@ -21,7 +21,7 @@ export async function getSwarmStatus() {
     return {
       active: true,
       status: {
-        agentCount: 4,
+        agentCount: 5,
         pendingTasks: 0,
         agents: [
           {
@@ -66,6 +66,18 @@ export async function getSwarmStatus() {
             metrics: {
               tasksCompleted: 24,
               scenariosGenerated: 36
+            }
+          },
+          {
+            id: 'boearguer',
+            name: 'BOE Arguer',
+            status: 'ready',
+            health: 'healthy',
+            lastActive: new Date().toISOString(),
+            metrics: {
+              tasksCompleted: 12,
+              appealsCrafted: 8,
+              successRate: 0.75
             }
           }
         ]
@@ -140,7 +152,7 @@ export async function runSwarmTask(
 /**
  * Run a predefined demo workflow
  */
-export async function runDemoWorkflow(demoType: 'cost-assessment' | 'scenario-analysis' | 'sensitivity-analysis') {
+export async function runDemoWorkflow(demoType: 'cost-assessment' | 'scenario-analysis' | 'sensitivity-analysis' | 'boe-appeal') {
   try {
     return await apiRequest('/api/swarm/demo', {
       method: 'POST',

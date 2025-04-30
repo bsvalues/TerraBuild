@@ -10,9 +10,7 @@ import { FactorTuner } from './agents/FactorTuner';
 import { BenchmarkGuard } from './agents/BenchmarkGuard';
 import { CurveTrainer } from './agents/CurveTrainer';
 import { ScenarioAgent } from './agents/ScenarioAgent';
-
-// BOEArguer will be imported in the future
-// import { BOEArguer } from './agents/BOEArguer';
+import { BOEArguer } from './agents/BOEArguer';
 
 export interface SwarmRunnerConfig {
   enabledAgents: string[];
@@ -250,11 +248,10 @@ export class SwarmRunner {
           break;
 
         case 'boearguer':
-          console.log(`[SwarmRunner] BOEArguer agent implementation pending`);
-          // Will be implemented in the future
-          // const boeArguer = new BOEArguer();
-          // this.agentInstances.set(boeArguer.getConfig().id, boeArguer);
-          // this.coordinator.registerAgent(boeArguer);
+          const boeArguer = new BOEArguer();
+          this.agentInstances.set(boeArguer.getConfig().id, boeArguer);
+          this.coordinator.registerAgent(boeArguer);
+          console.log(`[SwarmRunner] Registered BOEArguer agent`);
           break;
 
         default:
@@ -284,6 +281,9 @@ export class SwarmRunner {
       
       case 'sensitivity-analysis':
         return this.runSensitivityAnalysisDemo();
+      
+      case 'boe-appeal':
+        return this.runBOEAppealDemo();
       
       default:
         throw new Error(`Unknown demo type: ${demoType}`);
@@ -529,6 +529,142 @@ export class SwarmRunner {
       sensitivityResults: sensitivityResult,
       summary: {
         message: 'Sensitivity analysis demo workflow completed successfully',
+        timestamp: new Date()
+      }
+    };
+  }
+
+  /**
+   * Run a demonstration of BOE appeal argument generation workflow
+   */
+  private async runBOEAppealDemo(): Promise<Record<string, any>> {
+    console.log(`[SwarmRunner] Running BOE appeal demo workflow`);
+
+    // Step 1: First, analyze a case using the BOEArguer agent
+    console.log(`[SwarmRunner] Step 1: Analyzing appeal case...`);
+    
+    const caseDetails = {
+      propertyId: "BC-2025-12345",
+      ownerName: "Smith Family Trust",
+      currentAssessment: 575000,
+      proposedAssessment: 490000,
+      propertyDetails: {
+        type: "single_family_residence",
+        address: "1234 Vineyard View, Benton County, WA 99320",
+        yearBuilt: 2005,
+        squareFeet: 2850,
+        lotSize: 0.35,
+        features: [
+          "4 bedrooms", 
+          "3 bathrooms", 
+          "2-car garage", 
+          "partial basement with water damage",
+          "outdated HVAC system",
+          "cracked driveway"
+        ]
+      },
+      comparableSales: [
+        {
+          address: "1342 Valley Vista Dr, Benton County, WA 99320",
+          saleDate: new Date("2024-11-15"),
+          salePrice: 495000,
+          squareFeet: 2750,
+          yearBuilt: 2007,
+          distance: 0.8
+        },
+        {
+          address: "2250 Hillside Terrace, Benton County, WA 99320",
+          saleDate: new Date("2024-10-22"),
+          salePrice: 512000,
+          squareFeet: 3100,
+          yearBuilt: 2003,
+          distance: 1.2
+        },
+        {
+          address: "875 Orchard Lane, Benton County, WA 99320",
+          saleDate: new Date("2024-12-05"),
+          salePrice: 479000,
+          squareFeet: 2600,
+          yearBuilt: 2008,
+          distance: 0.5
+        }
+      ],
+      assessorRationale: "Initial assessment based on mass appraisal model using standard condition adjustments for neighborhood and age of property.",
+      appealBasis: "overvaluation"
+    };
+
+    const caseAnalysis = await this.runAgentTask('boe-arguer', 'boe:analyze-case', {
+      caseDetails
+    });
+
+    // Step 2: Get relevant precedents
+    console.log(`[SwarmRunner] Step 2: Finding relevant precedents...`);
+    const precedents = await this.runAgentTask('boe-arguer', 'boe:find-precedents', {
+      appealBasis: caseDetails.appealBasis,
+      propertyType: caseDetails.propertyDetails.type
+    });
+
+    // Step 3: Get relevant statutes
+    console.log(`[SwarmRunner] Step 3: Finding relevant statutes...`);
+    const statutes = await this.runAgentTask('boe-arguer', 'boe:cite-statutes', {
+      appealBasis: caseDetails.appealBasis
+    });
+
+    // Step 4: Generate the appeal argument
+    console.log(`[SwarmRunner] Step 4: Generating appeal argument...`);
+    const appealArgument = await this.runAgentTask('boe-arguer', 'boe:generate-argument', {
+      caseDetails,
+      desiredTone: 'professional',
+      includeCitations: true,
+      maxLength: 1500,
+      focusAreas: [
+        "Comparable sales analysis",
+        "Property condition issues",
+        "Proper adjustments for defects"
+      ]
+    });
+
+    // Step 5: Get factor analysis from FactorTuner to support the appeal
+    console.log(`[SwarmRunner] Step 5: Requesting factor analysis support...`);
+    
+    // Use the agent-to-agent communication capability
+    // This demonstrates how BOEArguer can request assistance from another agent
+    let factorAnalysis;
+    try {
+      // Get the BOEArguer instance
+      const boeArguer = this.agentInstances.get('boe-arguer');
+      
+      if (boeArguer) {
+        // Use the requestAgentAssistance method to get help from FactorTuner
+        factorAnalysis = await boeArguer.requestAgentAssistance(
+          'factor-tuner', 
+          'factor:analyze',
+          {
+            regionCode: 'BENTON',
+            factorTypes: ['condition', 'quality', 'age'],
+            propertyType: caseDetails.propertyDetails.type,
+            yearBuilt: caseDetails.propertyDetails.yearBuilt
+          }
+        );
+      } else {
+        factorAnalysis = { error: "BOEArguer agent not found" };
+      }
+    } catch (error) {
+      console.error(`[SwarmRunner] Error in agent-to-agent communication:`, error);
+      factorAnalysis = { error: error.message };
+    }
+
+    // Combine and return results
+    return {
+      demoType: 'boe-appeal',
+      caseDetails,
+      caseAnalysis,
+      precedents,
+      statutes,
+      appealArgument,
+      factorAnalysis,
+      summary: {
+        message: 'BOE appeal argument demo workflow completed successfully',
         timestamp: new Date()
       }
     };

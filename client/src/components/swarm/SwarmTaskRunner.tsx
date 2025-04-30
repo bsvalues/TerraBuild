@@ -92,6 +92,16 @@ const agents = [
       { id: 'sensitivity:analyze', name: 'Analyze Sensitivity' },
       { id: 'risk:evaluate', name: 'Evaluate Risks' }
     ]
+  },
+  {
+    id: 'boe-arguer',
+    name: 'BOEArguer',
+    tasks: [
+      { id: 'boe:generate-argument', name: 'Generate Appeal Argument' },
+      { id: 'boe:analyze-case', name: 'Analyze Appeal Case' },
+      { id: 'boe:find-precedents', name: 'Find Case Precedents' },
+      { id: 'boe:cite-statutes', name: 'Cite Relevant Statutes' }
+    ]
   }
 ];
 
@@ -151,6 +161,98 @@ const taskTemplates: Record<string, string> = {
       materialShortageRisk: 'low',
       laborShortageRisk: 'medium'
     }
+  }, null, 2),
+  'boe:generate-argument': JSON.stringify({
+    caseDetails: {
+      propertyId: "BC-2025-12345",
+      ownerName: "Smith Family Trust",
+      currentAssessment: 575000,
+      proposedAssessment: 490000,
+      propertyDetails: {
+        type: "single_family_residence",
+        address: "1234 Vineyard View, Benton County, WA 99320",
+        yearBuilt: 2005,
+        squareFeet: 2850,
+        lotSize: 0.35,
+        features: [
+          "4 bedrooms", 
+          "3 bathrooms", 
+          "2-car garage", 
+          "partial basement with water damage",
+          "outdated HVAC system",
+          "cracked driveway"
+        ]
+      },
+      comparableSales: [
+        {
+          address: "1342 Valley Vista Dr, Benton County, WA 99320",
+          saleDate: new Date("2024-11-15").toISOString(),
+          salePrice: 495000,
+          squareFeet: 2750,
+          yearBuilt: 2007,
+          distance: 0.8
+        },
+        {
+          address: "2250 Hillside Terrace, Benton County, WA 99320",
+          saleDate: new Date("2024-10-22").toISOString(),
+          salePrice: 512000,
+          squareFeet: 3100,
+          yearBuilt: 2003,
+          distance: 1.2
+        }
+      ],
+      assessorRationale: "Initial assessment based on mass appraisal model using standard condition adjustments for neighborhood and age of property.",
+      appealBasis: "overvaluation"
+    },
+    desiredTone: "professional",
+    includeCitations: true,
+    maxLength: 1500,
+    focusAreas: [
+      "Comparable sales analysis",
+      "Property condition issues",
+      "Proper adjustments for defects"
+    ]
+  }, null, 2),
+  'boe:analyze-case': JSON.stringify({
+    caseDetails: {
+      propertyId: "BC-2025-12345",
+      ownerName: "Smith Family Trust",
+      currentAssessment: 575000,
+      proposedAssessment: 490000,
+      propertyDetails: {
+        type: "single_family_residence",
+        address: "1234 Vineyard View, Benton County, WA 99320",
+        yearBuilt: 2005,
+        squareFeet: 2850,
+        lotSize: 0.35,
+        features: [
+          "4 bedrooms", 
+          "3 bathrooms", 
+          "2-car garage", 
+          "partial basement with water damage",
+          "outdated HVAC system",
+          "cracked driveway"
+        ]
+      },
+      comparableSales: [
+        {
+          address: "1342 Valley Vista Dr, Benton County, WA 99320",
+          saleDate: new Date("2024-11-15").toISOString(),
+          salePrice: 495000,
+          squareFeet: 2750,
+          yearBuilt: 2007,
+          distance: 0.8
+        }
+      ],
+      appealBasis: "overvaluation"
+    }
+  }, null, 2),
+  'boe:find-precedents': JSON.stringify({
+    appealBasis: "overvaluation",
+    propertyType: "single_family_residence"
+  }, null, 2),
+  'boe:cite-statutes': JSON.stringify({
+    appealBasis: "overvaluation"
   }, null, 2)
 };
 
