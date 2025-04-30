@@ -1,0 +1,172 @@
+{
+  "version": "2025.1",
+  "effectiveDate": "2025-01-01",
+  "expirationDate": "2025-12-31",
+  "factors": {
+    "buildingTypes": [
+      {
+        "code": "RES",
+        "name": "Residential",
+        "baseCost": 125.50,
+        "description": "Single-family residential buildings"
+      },
+      {
+        "code": "COM",
+        "name": "Commercial",
+        "baseCost": 175.25,
+        "description": "Commercial buildings including retail and office space"
+      },
+      {
+        "code": "IND",
+        "name": "Industrial",
+        "baseCost": 145.75,
+        "description": "Manufacturing and industrial facilities"
+      },
+      {
+        "code": "AGR",
+        "name": "Agricultural",
+        "baseCost": 95.00,
+        "description": "Farm buildings and agricultural structures"
+      },
+      {
+        "code": "MUL",
+        "name": "Multi-family",
+        "baseCost": 150.00,
+        "description": "Apartment buildings and other multi-family structures"
+      }
+    ],
+    "regions": [
+      {
+        "code": "BC-NORTH",
+        "name": "Benton County - North",
+        "factor": 1.05,
+        "description": "Northern regions of Benton County"
+      },
+      {
+        "code": "BC-CENTRAL",
+        "name": "Benton County - Central",
+        "factor": 1.10,
+        "description": "Central regions including urban centers"
+      },
+      {
+        "code": "BC-SOUTH",
+        "name": "Benton County - South",
+        "factor": 1.00,
+        "description": "Southern rural regions"
+      }
+    ],
+    "quality": [
+      {
+        "level": "ECONOMY",
+        "factor": 0.85,
+        "description": "Basic construction with minimal features"
+      },
+      {
+        "level": "STANDARD",
+        "factor": 1.00,
+        "description": "Average quality construction"
+      },
+      {
+        "level": "CUSTOM",
+        "factor": 1.25,
+        "description": "Above average quality with some custom features"
+      },
+      {
+        "level": "PREMIUM",
+        "factor": 1.50,
+        "description": "High-end construction with many custom features"
+      },
+      {
+        "level": "LUXURY",
+        "factor": 2.00,
+        "description": "Exceptional quality with premium materials and craftsmanship"
+      }
+    ],
+    "condition": [
+      {
+        "level": "POOR",
+        "factor": 0.60,
+        "description": "Significant deterioration, major repairs needed"
+      },
+      {
+        "level": "FAIR",
+        "factor": 0.80,
+        "description": "Some deterioration, minor repairs needed"
+      },
+      {
+        "level": "AVERAGE",
+        "factor": 1.00,
+        "description": "Normal wear and tear for age"
+      },
+      {
+        "level": "GOOD",
+        "factor": 1.10,
+        "description": "Well-maintained with minimal repairs needed"
+      },
+      {
+        "level": "EXCELLENT",
+        "factor": 1.20,
+        "description": "Exceptionally well-maintained, like-new condition"
+      }
+    ],
+    "age": [
+      {
+        "range": "0-5",
+        "factor": 1.00,
+        "description": "New construction"
+      },
+      {
+        "range": "6-10",
+        "factor": 0.95,
+        "description": "Recent construction"
+      },
+      {
+        "range": "11-20",
+        "factor": 0.90,
+        "description": "Established building"
+      },
+      {
+        "range": "21-30",
+        "factor": 0.85,
+        "description": "Mature building"
+      },
+      {
+        "range": "31-50",
+        "factor": 0.80,
+        "description": "Older building"
+      },
+      {
+        "range": "51+",
+        "factor": 0.75,
+        "description": "Historic or legacy building"
+      }
+    ],
+    "complexity": [
+      {
+        "level": "SIMPLE",
+        "factor": 0.90,
+        "description": "Basic rectangular structure, minimal features"
+      },
+      {
+        "level": "STANDARD",
+        "factor": 1.00,
+        "description": "Average complexity with standard features"
+      },
+      {
+        "level": "MODERATE",
+        "factor": 1.15,
+        "description": "Multiple sections or levels, some complex features"
+      },
+      {
+        "level": "COMPLEX",
+        "factor": 1.30,
+        "description": "Intricate design, multiple complex features"
+      },
+      {
+        "level": "VERY_COMPLEX",
+        "factor": 1.50,
+        "description": "Highly specialized design with unique features"
+      }
+    ]
+  }
+}

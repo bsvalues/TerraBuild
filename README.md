@@ -1,149 +1,129 @@
-# TerraBuild - Benton County Infrastructure Cost Management Platform
+# TerraBuild Developer Kit
 
-TerraBuild is a sophisticated SaaS platform for infrastructure cost management and deployment optimization in Benton County, Washington. The platform leverages advanced data analytics and machine learning to streamline infrastructure lifecycle management.
+A comprehensive toolkit for developing with the TerraBuild infrastructure cost management platform for Benton County, Washington.
 
-## 📋 Table of Contents
+## Quick Start
 
-- [Features](#features)
-- [Technical Stack](#technical-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Development](#development)
-- [DevOps Setup](#devops-setup)
-  - [Infrastructure](#infrastructure)
-  - [CI/CD Pipeline](#cicd-pipeline)
-  - [Deployment](#deployment)
-  - [Monitoring](#monitoring)
-- [Contributing](#contributing)
-- [License](#license)
+```bash
+# 1. Start the application and database
+docker-compose up -d
 
-## 🚀 Features
+# 2. Test API health
+curl http://localhost:5000/api/health
 
-- Advanced cost calculation algorithms
-- Property assessment and valuation
-- Multi-agent Cognitive Processing (MCP) framework
-- Geospatial analysis tools
-- Comprehensive reporting and analytics
+# 3. Import sample data
+./scripts/import_sample.sh        # or ./scripts/import_sample.sh path/to/your.csv
+```
 
-## 💻 Technical Stack
+## Directory Structure
 
-- **Frontend**: React with TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Node.js, Express, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Infrastructure**: AWS (ECS, RDS, VPC, CloudWatch)
-- **CI/CD**: GitHub Actions
-- **Containerization**: Docker
-- **IaC**: Terraform
+- `/client` - React frontend application
+- `/server` - Express API backend
+- `/shared` - Shared types and utilities
+- `/data` - Cost factor tables and other data resources
+- `/sample` - Sample data files for testing
+- `/scripts` - Utility scripts for development and deployment
 
-## 🏁 Getting Started
+## Key Components
+
+### API Server
+
+The API server runs on port 5000 and provides endpoints for:
+
+- Property data management
+- Cost calculations
+- Assessment reports
+- User authentication
+- Health monitoring
+
+### Database
+
+PostgreSQL database with the following configuration:
+
+- **Host**: localhost (container name: db)
+- **Port**: 5432
+- **User**: postgres
+- **Password**: postgres
+- **Database**: terrabuild
+
+Environment variables are used for database connection (see `.env` file).
+
+### Cost Factor Tables
+
+The system uses versioned cost factor tables (JSON format) to calculate building costs:
+
+- Located in `/data/factors-{year}.json`
+- Update by editing or replacing these files
+- No code changes needed when updating factors
+
+## Development
 
 ### Prerequisites
 
-- Node.js (v20+)
-- PostgreSQL
-- AWS CLI (for deployment)
-- Terraform (for infrastructure management)
-- Docker and Docker Compose (for containerized development)
+- Docker and Docker Compose
+- Node.js 20+
+- npm or yarn
 
-### Installation
-
-1. Clone the repository
+### Running Locally Without Docker
 
 ```bash
-git clone https://github.com/benton-county/terrabuild.git
-cd terrabuild
-```
-
-2. Install dependencies
-
-```bash
+# Install dependencies
 npm install
+
+# Start the backend API server
+npm run server
+
+# In another terminal, start the frontend
+npm run client
 ```
 
-3. Set up environment variables
+### Updating Cost Factors
 
-```bash
-cp .env.example .env
-# Edit .env with your configuration
+To update the cost factors for a new year:
+
+1. Create a new file `data/factors-{year}.json` based on the existing template
+2. Edit the factors as needed
+3. Restart the application (Docker container restart required)
+
+## API Endpoints
+
+### Health Check
+
+```
+GET /api/health
 ```
 
-4. Initialize the database
+### Property Data Import
 
-```bash
-npm run db:push
+```
+POST /api/import/parcels
+Content-Type: multipart/form-data
+file: CSV file
 ```
 
-### Development
+### Cost Calculation
 
-1. Start the development server
-
-```bash
-npm run dev
+```
+POST /api/calculate
+Content-Type: application/json
+{
+  "buildingType": "RES",
+  "region": "BC-CENTRAL",
+  "yearBuilt": 2010,
+  "quality": "STANDARD",
+  "condition": "GOOD",
+  "complexity": "STANDARD",
+  "squareFeet": 2000
+}
 ```
 
-2. Or use Docker Compose for a containerized development environment
+## Troubleshooting
 
-```bash
-docker-compose up
-```
+- Check the container logs: `docker logs <container_id>`
+- Verify the database connection
+- Ensure correct environment variables in `.env`
+- Check API health endpoint: `/api/health`
 
-## 🛠️ DevOps Setup
+## License
 
-### Infrastructure
-
-The infrastructure is defined using Terraform and organized into modules:
-
-- **Network**: VPC, subnets, security groups
-- **Database**: RDS PostgreSQL instance
-- **ECS**: Container service for application deployment
-- **Monitoring**: CloudWatch dashboards and alerts
-
-```bash
-# Initialize and apply Terraform configuration
-cd terraform/environments/dev
-terraform init
-terraform apply
-```
-
-### CI/CD Pipeline
-
-The CI/CD pipeline is implemented using GitHub Actions and defined in `.github/workflows/ci.yml`. It includes the following stages:
-
-1. **Build and Test**: Builds the application and runs tests
-2. **Security Scan**: Performs security scans on the code and dependencies
-3. **Infrastructure Validation**: Validates the Terraform configuration
-4. **Deployment**: Deploys the application to AWS based on the branch (dev/prod)
-
-### Deployment
-
-Deployment is handled by the `scripts/deploy.sh` script which:
-
-1. Applies Terraform infrastructure changes
-2. Builds and pushes a Docker image to ECR
-3. Updates the ECS service with the new image
-
-```bash
-# Deploy to the development environment
-./scripts/deploy.sh --env dev
-
-# Deploy to the production environment
-./scripts/deploy.sh --env prod
-```
-
-### Monitoring
-
-Monitoring is set up using AWS CloudWatch with dashboards and alerts for:
-
-- CPU and memory utilization
-- Database metrics
-- HTTP error rates
-- Application-specific metrics
-
-## 👥 Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+© 2025 TerraBuild. All rights reserved.
