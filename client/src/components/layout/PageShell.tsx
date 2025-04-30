@@ -123,7 +123,7 @@ export default function PageShell({
           <Breadcrumb className="animate-fade-in mb-4">
             <BreadcrumbList>
               {breadcrumbs.map((item, index) => (
-                <React.Fragment key={`breadcrumb-${index}`}>
+                <div key={`breadcrumb-${index}`} className="contents">
                   <BreadcrumbItem>
                     {item.href ? (
                       <BreadcrumbLink asChild>
@@ -134,7 +134,7 @@ export default function PageShell({
                     )}
                   </BreadcrumbItem>
                   {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                </React.Fragment>
+                </div>
               ))}
             </BreadcrumbList>
           </Breadcrumb>
