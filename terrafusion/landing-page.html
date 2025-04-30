@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TerraBuild DevKit | Advanced Infrastructure Cost Assessment</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2A6D6F;
+      --secondary: #104C4E;
+      --accent: #F8B24A;
+      --light: #F5F7F7;
+      --dark: #212B36;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: var(--dark);
+      background-color: var(--light);
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPgogIDxkZWZzPgogICAgPHBhdHRlcm4gaWQ9InBhdHRlcm4iIHg9IjAiIHk9IjAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgcGF0dGVyblRyYW5zZm9ybT0icm90YXRlKDQ1KSI+CiAgICAgIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPgogICAgPC9wYXR0ZXJuPgogIDwvZGVmcz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIiAvPgo8L3N2Zz4=');
+      opacity: 0.4;
+    }
+    .gradient-text {
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      background-image: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(42, 109, 111, 0.2);
+    }
+    .btn-secondary {
+      background-color: white;
+      color: var(--primary);
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+    }
+    .feature-icon {
+      background-color: rgba(42, 109, 111, 0.1);
+      color: var(--primary);
+      padding: 1rem;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <h1 class="text-2xl font-bold text-gray-800">TerraBuild<span class="text-teal-600">.dev</span></h1>
+      </div>
+      <nav class="hidden md:flex space-x-8">
+        <a href="#features" class="text-gray-600 hover:text-teal-600 transition duration-150">Features</a>
+        <a href="#agents" class="text-gray-600 hover:text-teal-600 transition duration-150">AI Agents</a>
+        <a href="#pricing" class="text-gray-600 hover:text-teal-600 transition duration-150">Pricing</a>
+        <a href="#docs" class="text-gray-600 hover:text-teal-600 transition duration-150">Documentation</a>
+      </nav>
+      <div>
+        <a href="#download" class="btn-primary">Download DevKit</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero py-20 relative">
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="md:w-2/3 mb-10">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Building Cost Assessment, <br>Reimagined with AI</h1>
+        <p class="text-xl mb-10 text-gray-100">The TerraBuild DevKit provides everything you need to deploy advanced infrastructure cost assessment systems for government and enterprise.</p>
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+          <a href="#download" class="btn-secondary">Download DevKit</a>
+          <a href="#demo" class="btn-primary">Live Demo</a>
+        </div>
+      </div>
+      <div class="hidden md:block md:w-1/3">
+        <!-- Visualization placeholder -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features -->
+  <section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-4">Key Features</h2>
+        <p class="text-xl text-gray-600 md:w-2/3 mx-auto">Comprehensive tools to streamline infrastructure cost assessment and planning.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Cost Calculation Engine</h3>
+          <p class="text-gray-600">Advanced calculation algorithms that incorporate regional factors, quality standards, and building specifications.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Data Import/Export</h3>
+          <p class="text-gray-600">Seamlessly import and export property data and cost factors with built-in validation and error handling.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">React Component Library</h3>
+          <p class="text-gray-600">Pre-built UI components for rapid application development, including forms, visualizations, and dashboards.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Security & Compliance</h3>
+          <p class="text-gray-600">Built with government and enterprise security requirements in mind, including role-based access control.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Modular Architecture</h3>
+          <p class="text-gray-600">Flexible, extensible architecture that allows for customization and integration with existing systems.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="feature-icon mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Containerization</h3>
+          <p class="text-gray-600">Docker and Docker Compose integration for easy deployment and consistent development environments.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Agents -->
+  <section id="agents" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-4">AI Agent Swarm</h2>
+        <p class="text-xl text-gray-600 md:w-2/3 mx-auto">Harness the power of specialized AI agents to optimize infrastructure cost assessments.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold">FactorTuner</h3>
+          </div>
+          <p class="text-gray-600">Automatically fine-tunes cost factors based on historical data and regional economic indicators.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold">CurveTrainer</h3>
+          </div>
+          <p class="text-gray-600">Develops specialized cost curves to accurately model non-linear relationships in building costs.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold">ScenarioAgent</h3>
+          </div>
+          <p class="text-gray-600">Creates and analyzes what-if scenarios to predict cost outcomes under different conditions.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold">BOEArguer</h3>
+          </div>
+          <p class="text-gray-600">Generates justifications and evidence for Board of Equalization hearings and appeals.</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold">BenchmarkGuard</h3>
+          </div>
+          <p class="text-gray-600">Monitors calculations for consistency and flags outliers that may need additional review.</p>
+        </div>
+        
+        <div class="card bg-white p-8 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center mb-4">
+              <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <h3 class="text-xl font-semibold">Full Swarm Runner</h3>
+            </div>
+            <p class="text-gray-600">Orchestrates all AI agents to work together, producing comprehensive assessments with maximum efficiency.</p>
+          </div>
+          <a href="#swarm-detail" class="text-teal-600 font-medium mt-4 inline-flex items-center group">
+            Learn more about the swarm 
+            <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-4">Benefits for Government Agencies</h2>
+        <p class="text-xl text-gray-600 md:w-2/3 mx-auto">Modernize your assessment process with powerful, easy-to-deploy technology.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <img src="https://images.unsplash.com/photo-1584466977773-e625c37cdd50?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80" alt="Government buildings" class="rounded-lg shadow-lg">
+        </div>
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-xl font-semibold mb-2 flex items-center">
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Increase Assessment Accuracy
+            </h3>
+            <p class="text-gray-600">AI-enhanced calculations reduce variation and improve consistency across property assessments.</p>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold mb-2 flex items-center">
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Reduce Staff Time
+            </h3>
+            <p class="text-gray-600">Automated calculations and data imports free up staff for more complex assessment tasks.</p>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold mb-2 flex items-center">
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Strengthen Appeals Defense
+            </h3>
+            <p class="text-gray-600">Comprehensive documentation and justification for every cost factor and calculation result.</p>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold mb-2 flex items-center">
+              <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Deploy in Days, Not Months
+            </h3>
+            <p class="text-gray-600">Pre-built components and Docker integration allow for rapid deployment and configuration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="download" class="py-20 bg-gradient-to-r from-teal-600 to-teal-800 text-white">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-6">Ready to Transform Your Assessment Process?</h2>
+      <p class="text-xl mb-10 max-w-2xl mx-auto">Download the TerraBuild DevKit v3 today and start building your next-generation infrastructure cost assessment system.</p>
+      
+      <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+        <a href="#download-full" class="btn-secondary flex items-center justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          Download Full DevKit
+        </a>
+        <a href="#schedule-demo" class="bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center px-6 py-3 rounded-md font-semibold transition-all">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Schedule Live Demo
+        </a>
+      </div>
+      
+      <div class="mt-16 grid md:grid-cols-3 gap-8 text-left">
+        <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+          <h3 class="text-xl font-semibold mb-2">IAAO 2025 Conference</h3>
+          <p class="text-gray-100">Join us at the IAAO Conference in Chicago for a live demonstration of the TerraBuild DevKit and AI Swarm capabilities.</p>
+          <p class="mt-4 text-amber-200">August 25-28, 2025</p>
+        </div>
+        
+        <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+          <h3 class="text-xl font-semibold mb-2">Custom Implementation</h3>
+          <p class="text-gray-100">Need help with a custom implementation? Our team of experts can help tailor the DevKit to your specific needs.</p>
+          <a href="#contact" class="mt-4 text-amber-200 inline-flex items-center">
+            Contact us
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </a>
+        </div>
+        
+        <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+          <h3 class="text-xl font-semibold mb-2">Developer Resources</h3>
+          <p class="text-gray-100">Access documentation, tutorials, and community forums to help you get the most out of the TerraBuild DevKit.</p>
+          <a href="#resources" class="mt-4 text-amber-200 inline-flex items-center">
+            Browse resources
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-4">What Assessors Are Saying</h2>
+        <p class="text-xl text-gray-600 md:w-2/3 mx-auto">Hear from assessment professionals who have transformed their processes with TerraBuild.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mr-4 text-teal-700 text-xl font-bold">
+              RC
+            </div>
+            <div>
+              <h4 class="font-semibold">Robert Chen</h4>
+              <p class="text-gray-600 text-sm">County Assessor, Benton County</p>
+            </div>
+          </div>
+          <p class="text-gray-600 italic">"The TerraBuild DevKit transformed our assessment process. What used to take weeks now takes days, and our assessments are more accurate and defensible than ever."</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mr-4 text-teal-700 text-xl font-bold">
+              SJ
+            </div>
+            <div>
+              <h4 class="font-semibold">Sarah Johnson</h4>
+              <p class="text-gray-600 text-sm">Director of Property Assessment, Marion County</p>
+            </div>
+          </div>
+          <p class="text-gray-600 italic">"The AI Swarm capabilities have been a game-changer for us. The BOEArguer agent alone has saved countless hours preparing for appeals hearings."</p>
+        </div>
+        
+        <div class="card bg-white p-8">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mr-4 text-teal-700 text-xl font-bold">
+              TB
+            </div>
+            <div>
+              <h4 class="font-semibold">Tom Barker</h4>
+              <p class="text-gray-600 text-sm">IT Director, Washington State Assessors Association</p>
+            </div>
+          </div>
+          <p class="text-gray-600 italic">"From a technical standpoint, the TerraBuild DevKit is impressive. The Docker integration made deployment across our county systems seamless."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="grid md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4">TerraBuild<span class="text-teal-400">.dev</span></h3>
+          <p class="text-gray-400">Advanced infrastructure cost assessment tools for government and enterprise.</p>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Product</h4>
+          <ul class="space-y-2">
+            <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
+            <li><a href="#agents" class="text-gray-400 hover:text-white transition">AI Agents</a></li>
+            <li><a href="#pricing" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+            <li><a href="#roadmap" class="text-gray-400 hover:text-white transition">Roadmap</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Resources</h4>
+          <ul class="space-y-2">
+            <li><a href="#docs" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+            <li><a href="#tutorials" class="text-gray-400 hover:text-white transition">Tutorials</a></li>
+            <li><a href="#community" class="text-gray-400 hover:text-white transition">Community</a></li>
+            <li><a href="#blog" class="text-gray-400 hover:text-white transition">Blog</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Contact</h4>
+          <ul class="space-y-2">
+            <li><a href="mailto:info@terrabuild.dev" class="text-gray-400 hover:text-white transition">info@terrabuild.dev</a></li>
+            <li><a href="tel:+18005551234" class="text-gray-400 hover:text-white transition">(800) 555-1234</a></li>
+            <li class="text-gray-400">123 Main Street</li>
+            <li class="text-gray-400">Seattle, WA 98101</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-gray-400">&copy; 2025 TerraBuild Technologies. All rights reserved.</p>
+        <div class="flex space-x-4 mt-4 md:mt-0">
+          <a href="#privacy" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+          <a href="#terms" class="text-gray-400 hover:text-white transition">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
