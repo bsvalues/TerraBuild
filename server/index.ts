@@ -72,11 +72,24 @@ app.use((req, res, next) => {
   app.use(bentonCountyFormatMiddleware());
   app.use(bentonCountyHeadersMiddleware());
   
-  // Register API routes
-  app.use('/api', routes);
-  
   // Create HTTP server
   const server = createServer(app);
+
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (app.get("env") === "development") {
+    // In development, we need to register API routes AFTER Vite setup
+    // This is because of how Vite handles requests in middleware mode
+    await setupVite(app, server);
+    
+    // Register API routes after Vite middleware
+    app.use('/api', routes);
+  } else {
+    // In production, register routes first, then serve static files
+    app.use('/api', routes);
+    serveStatic(app);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -85,15 +98,6 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
