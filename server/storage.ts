@@ -1406,12 +1406,10 @@ export class DBStorage implements IStorage {
   
   async getAgentStatuses(): Promise<Record<string, any>> {
     try {
-      // Fetch agent statuses from the database
-      const agentStatusesRaw = await this.db.execute(
-        sql`SELECT * FROM agent_status ORDER BY last_active DESC`
-      );
+      // Fetch agent statuses from the database using the schema object to avoid SQL injection
+      const agentStatusesResult = await this.db.select().from(schema.agentStatus);
       
-      if (!agentStatusesRaw.rows || agentStatusesRaw.rows.length === 0) {
+      if (!agentStatusesResult || agentStatusesResult.length === 0) {
         // Return default statuses if no data in database
         return {
           "factorTuner": { status: "unknown", lastActive: null },
@@ -1425,12 +1423,12 @@ export class DBStorage implements IStorage {
       
       // Convert to a more usable format
       const statuses: Record<string, any> = {};
-      for (const row of agentStatusesRaw.rows) {
-        statuses[row.agent_id] = {
+      for (const row of agentStatusesResult) {
+        statuses[row.agentId] = {
           status: row.status,
-          lastActive: row.last_active,
-          version: row.version || "1.0.0",
-          metrics: row.metrics || {}
+          lastActive: row.lastActive,
+          metadata: row.metadata,
+          errorMessage: row.errorMessage
         };
       }
       
