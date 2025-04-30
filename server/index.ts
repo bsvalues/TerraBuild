@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
+import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
@@ -77,8 +78,8 @@ app.use((req, res, next) => {
 
   // Create specific monitoring routes that must be accessible even in development
   // These routes should be prioritized over Vite's middleware
-  app.get('/api/health', routes);
-  app.get('/api/metrics', routes);
+  app.use('/api/health', monitoringRoutes);
+  app.use('/api/metrics', monitoringRoutes);
   
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
