@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useEnhancedAuth } from "@/contexts/enhanced-auth-provider";
 import { useAutoLogin } from "@/hooks/use-autologin";
 import { useToast } from "@/hooks/use-toast";
 import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
@@ -40,8 +39,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { user, isLoading } = useAuth();
-  const { setAuthMethod, authMethod, login, register } = useEnhancedAuth();
+  const { user, isLoading, setAuthMethod, authMethod, login, register } = useAuth();
   const { autoLoginEnabled, toggleAutoLogin } = useAutoLogin();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("login");

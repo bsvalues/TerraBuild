@@ -38,7 +38,9 @@ export function useAuth() {
       // Enhanced auth provider properties
       isInitializing: false,
       authMethod: 'local' as const,
-      setAuthMethod: () => { console.warn("setAuthMethod called outside EnhancedAuthProvider"); },
+      setAuthMethod: (method: 'local' | 'county-network') => { 
+        console.warn("setAuthMethod called outside EnhancedAuthProvider"); 
+      },
       
       // Original auth context properties (for backward compatibility)
       loginMutation: { isPending: false, mutateAsync: async () => null } as any,

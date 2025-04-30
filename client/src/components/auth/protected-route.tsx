@@ -12,8 +12,9 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  // Use destructuring with default values for optional properties
-  const { user, isLoading, isAuthenticated, isInitializing = false } = useAuth();
+  // Use destructuring with default values for optional properties, ensuring both loading states are covered
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const isInitializing = false; // We use isLoading instead of isInitializing for consistency
 
   // Show loading indicator while checking authentication or initializing auth system
   if (isLoading || isInitializing) {
