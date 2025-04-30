@@ -649,6 +649,42 @@ router.get('/metrics', async (req, res) => {
   }
 });
 
+// Agent status endpoints
+router.get('/agents', asyncHandler(async (req, res) => {
+  const agentStatuses = await storage.getAgentStatuses();
+  res.json(agentStatuses);
+}));
+
+router.get('/agents/:agentId', asyncHandler(async (req, res) => {
+  const agentStatus = await storage.getAgentStatus(req.params.agentId);
+  if (!agentStatus) {
+    return res.status(404).json({ message: 'Agent not found' });
+  }
+  res.json(agentStatus);
+}));
+
+router.post('/agents/:agentId/status', asyncHandler(async (req, res) => {
+  const { agentId } = req.params;
+  const { status, metadata, errorMessage } = req.body;
+  
+  if (!status) {
+    return res.status(400).json({ message: 'Status is required' });
+  }
+  
+  const success = await storage.updateAgentStatus(
+    agentId,
+    status,
+    metadata,
+    errorMessage
+  );
+  
+  if (!success) {
+    return res.status(500).json({ message: 'Failed to update agent status' });
+  }
+  
+  res.status(200).json({ message: 'Agent status updated successfully' });
+}));
+
 // Current authenticated user
 router.get('/user', (req, res) => {
   if (!req.user) {
