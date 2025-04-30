@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   register: (userData: RegisterData) => Promise<User>;
+  error: Error | null;
 }
 
 interface RegisterData {
@@ -134,15 +135,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     register,
+    // Add these for EnhancedAuthProvider compatibility
+    isInitializing: false,
+    authMethod: 'local' as const,
+    setAuthMethod: () => {}, // Noop function for compatibility
+    error: null
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+// useAuth function is removed from here - now imported from hooks/use-auth.ts

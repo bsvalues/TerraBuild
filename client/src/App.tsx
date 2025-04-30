@@ -378,15 +378,14 @@ function App() {
             <ErrorHandlerWrapper />
             <EnhancedSupabaseProvider>
               <WindowProvider>
+                {/* Using only the AuthProvider to prevent duplicate context issues */}
                 <AuthProvider>
-                  <EnhancedAuthProvider>
-                    <DataFlowProvider>
-                      <SidebarProvider>
-                        <Router />
-                        <Toaster />
-                      </SidebarProvider>
-                    </DataFlowProvider>
-                  </EnhancedAuthProvider>
+                  <DataFlowProvider>
+                    <SidebarProvider>
+                      <Router />
+                      <Toaster />
+                    </SidebarProvider>
+                  </DataFlowProvider>
                 </AuthProvider>
               </WindowProvider>
             </EnhancedSupabaseProvider>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redirect } from 'wouter';
-import { useEnhancedAuth } from '../../contexts/enhanced-auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader2, ShieldAlert, LogIn } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, isLoading, isAuthenticated, isInitializing } = useEnhancedAuth();
+  // Use destructuring with default values for optional properties
+  const { user, isLoading, isAuthenticated, isInitializing = false } = useAuth();
 
   // Show loading indicator while checking authentication or initializing auth system
   if (isLoading || isInitializing) {

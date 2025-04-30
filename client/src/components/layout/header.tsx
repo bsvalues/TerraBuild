@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useEnhancedAuth } from '../../contexts/enhanced-auth-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { 
@@ -36,7 +36,7 @@ interface HeaderProps {
 
 export default function Header({ isLanding = false }: HeaderProps) {
   const [, navigate] = useLocation();
-  const { user, isAuthenticated, logout, isInitializing } = useEnhancedAuth();
+  const { user, isAuthenticated, logout, isLoading, isInitializing = false } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
