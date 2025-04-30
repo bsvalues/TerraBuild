@@ -387,6 +387,22 @@ export const dataImports = pgTable('data_imports', {
 });
 
 /*********************
+ * MONITORING
+ *********************/
+
+// Agent Status Table for monitoring
+export const agentStatus = pgTable('agent_status', {
+  id: serial('id').primaryKey(),
+  agentId: text('agent_id').notNull().unique(),
+  status: text('status').notNull().default('offline'),
+  lastActive: timestamp('last_active').defaultNow(),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/*********************
  * RELATIONS
  *********************/
 
@@ -484,6 +500,10 @@ export const insertProjectSchema = createInsertSchema(projects)
 export const insertSettingSchema = createInsertSchema(settings)
   .omit({ id: true });
 
+// Agent Status Insert Schema  
+export const insertAgentStatusSchema = createInsertSchema(agentStatus)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
 /*********************
  * TYPES
  *********************/
@@ -515,3 +535,6 @@ export type AgeFactor = typeof ageFactors.$inferSelect;
 export type MatrixDetail = typeof matrixDetail.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+
+export type AgentStatus = typeof agentStatus.$inferSelect;
+export type InsertAgentStatus = z.infer<typeof insertAgentStatusSchema>;
