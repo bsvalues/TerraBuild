@@ -12,16 +12,15 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  // Use destructuring with default values for optional properties, ensuring both loading states are covered
+  // Use destructuring with default values for optional properties
   const { user, isLoading, isAuthenticated } = useAuth();
-  const isInitializing = false; // We use isLoading instead of isInitializing for consistency
 
-  // Show loading indicator while checking authentication or initializing auth system
-  if (isLoading || isInitializing) {
+  // Show loading indicator while checking authentication
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">{isInitializing ? 'Initializing authentication...' : 'Loading user data...'}</span>
+        <span className="ml-2">Loading user data...</span>
       </div>
     );
   }

@@ -4,7 +4,7 @@ import Header from "./header";
 import Footer from "./Footer";
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from "@/lib/utils";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { Loader2, AlertTriangle, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useDataFlow } from "@/contexts/DataFlowContext";
