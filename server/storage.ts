@@ -1391,6 +1391,63 @@ export class DBStorage implements IStorage {
       return false;
     }
   }
+  
+  // System Health methods
+  async checkDatabaseConnection(): Promise<boolean> {
+    try {
+      // Run a simple query to check if the database is responsive
+      await this.db.execute(sql`SELECT 1`);
+      return true;
+    } catch (error) {
+      console.error('Database connection check failed:', error);
+      return false;
+    }
+  }
+  
+  async getAgentStatuses(): Promise<Record<string, any>> {
+    try {
+      // Fetch agent statuses from the database
+      const agentStatusesRaw = await this.db.execute(
+        sql`SELECT * FROM agent_status ORDER BY last_active DESC`
+      );
+      
+      if (!agentStatusesRaw.rows || agentStatusesRaw.rows.length === 0) {
+        // Return default statuses if no data in database
+        return {
+          "factorTuner": { status: "unknown", lastActive: null },
+          "curveTrainer": { status: "unknown", lastActive: null },
+          "scenarioAgent": { status: "unknown", lastActive: null },
+          "benchmarkGuard": { status: "unknown", lastActive: null },
+          "boeArguer": { status: "unknown", lastActive: null },
+          "autonimus": { status: "unknown", lastActive: null }
+        };
+      }
+      
+      // Convert to a more usable format
+      const statuses: Record<string, any> = {};
+      for (const row of agentStatusesRaw.rows) {
+        statuses[row.agent_id] = {
+          status: row.status,
+          lastActive: row.last_active,
+          version: row.version || "1.0.0",
+          metrics: row.metrics || {}
+        };
+      }
+      
+      return statuses;
+    } catch (error) {
+      console.error('Error fetching agent statuses:', error);
+      // Return default statuses if query fails
+      return {
+        "factorTuner": { status: "error", lastActive: null, error: "Database query failed" },
+        "curveTrainer": { status: "error", lastActive: null, error: "Database query failed" },
+        "scenarioAgent": { status: "error", lastActive: null, error: "Database query failed" },
+        "benchmarkGuard": { status: "error", lastActive: null, error: "Database query failed" },
+        "boeArguer": { status: "error", lastActive: null, error: "Database query failed" },
+        "autonimus": { status: "error", lastActive: null, error: "Database query failed" }
+      };
+    }
+  }
 }
 
 // Select the appropriate storage implementation based on environment
