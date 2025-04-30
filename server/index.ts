@@ -78,8 +78,7 @@ app.use((req, res, next) => {
 
   // Create specific monitoring routes that must be accessible even in development
   // These routes should be prioritized over Vite's middleware
-  app.use('/api/health', monitoringRoutes);
-  app.use('/api/metrics', monitoringRoutes);
+  app.use('/api', monitoringRoutes);
   
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

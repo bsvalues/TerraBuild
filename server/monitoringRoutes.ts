@@ -11,7 +11,7 @@ import storage from './storage';
 const router = express.Router();
 
 // Health check endpoint with detailed system status
-router.get('/', async (req, res) => {
+router.get('/health', async (req, res) => {
   try {
     // Check database connection
     const dbStatus = await storage.checkDatabaseConnection();
@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 });
 
 // Prometheus metrics endpoint - exposes metrics in Prometheus format for scraping
-router.get('/', async (req, res) => {
+router.get('/metrics', async (req, res) => {
   try {
     // Check database connection
     const dbStatus = await storage.checkDatabaseConnection();
