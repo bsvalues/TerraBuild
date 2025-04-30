@@ -75,6 +75,11 @@ app.use((req, res, next) => {
   // Create HTTP server
   const server = createServer(app);
 
+  // Create specific monitoring routes that must be accessible even in development
+  // These routes should be prioritized over Vite's middleware
+  app.get('/api/health', routes);
+  app.get('/api/metrics', routes);
+  
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
@@ -83,7 +88,7 @@ app.use((req, res, next) => {
     // This is because of how Vite handles requests in middleware mode
     await setupVite(app, server);
     
-    // Register API routes after Vite middleware
+    // Register remaining API routes after Vite middleware
     app.use('/api', routes);
   } else {
     // In production, register routes first, then serve static files
