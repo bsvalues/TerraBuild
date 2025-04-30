@@ -1,129 +1,150 @@
 # TerraBuild Developer Kit
 
-A comprehensive toolkit for developing with the TerraBuild infrastructure cost management platform for Benton County, Washington.
+The TerraBuild Developer Kit is a comprehensive toolset designed to rapidly set up a complete infrastructure cost management system. It provides everything needed to spin up an API, Postgres database, sample data, and React UI scaffold in under a minute.
 
-## Quick Start
+## Overview
 
-```bash
-# 1. Start the application and database
-docker-compose up -d
+TerraBuild offers a streamlined way to calculate and manage infrastructure costs for the Benton County Building Cost Assessment System. The developer kit includes:
 
-# 2. Test API health
-curl http://localhost:5000/api/health
+- Complete API with import and calculation endpoints
+- React-based UI components
+- Pre-configured PostgreSQL database integration
+- Sample data import tools
+- Docker containerization support
 
-# 3. Import sample data
-./scripts/import_sample.sh        # or ./scripts/import_sample.sh path/to/your.csv
-```
-
-## Directory Structure
-
-- `/client` - React frontend application
-- `/server` - Express API backend
-- `/shared` - Shared types and utilities
-- `/data` - Cost factor tables and other data resources
-- `/sample` - Sample data files for testing
-- `/scripts` - Utility scripts for development and deployment
-
-## Key Components
-
-### API Server
-
-The API server runs on port 5000 and provides endpoints for:
-
-- Property data management
-- Cost calculations
-- Assessment reports
-- User authentication
-- Health monitoring
-
-### Database
-
-PostgreSQL database with the following configuration:
-
-- **Host**: localhost (container name: db)
-- **Port**: 5432
-- **User**: postgres
-- **Password**: postgres
-- **Database**: terrabuild
-
-Environment variables are used for database connection (see `.env` file).
-
-### Cost Factor Tables
-
-The system uses versioned cost factor tables (JSON format) to calculate building costs:
-
-- Located in `/data/factors-{year}.json`
-- Update by editing or replacing these files
-- No code changes needed when updating factors
-
-## Development
+## Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Node.js 20+
-- npm or yarn
+- Node.js 18+
+- Docker and Docker Compose (for containerized development)
+- Git
 
-### Running Locally Without Docker
+### Installation
 
-```bash
-# Install dependencies
-npm install
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-org/terrabuild-devkit.git
+   cd terrabuild-devkit
+   ```
 
-# Start the backend API server
-npm run server
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-# In another terminal, start the frontend
-npm run client
+3. Start the development environment:
+   ```
+   npm run dev
+   ```
+
+### Using Docker (Recommended)
+
+For a completely isolated development environment:
+
+1. Build and start the containers:
+   ```
+   docker-compose -f dev-compose.yml up -d
+   ```
+
+2. The application will be available at http://localhost:5000
+
+## Key Components
+
+### API Routes
+
+The TerraBuild Developer Kit provides several key API routes:
+
+- `/api/calculate` - POST endpoint for cost calculations
+- `/api/import/parcels` - POST endpoint for importing property data
+- `/api/import/factors` - POST endpoint for importing cost factors
+
+### Data Import
+
+Sample data can be imported using the provided script:
+
+```
+chmod +x scripts/import_sample.sh
+./scripts/import_sample.sh
 ```
 
-### Updating Cost Factors
+This will populate your database with:
+- Cost factors from `data/factors-2025.json`
+- Property data from `sample/parcel_data.csv`
 
-To update the cost factors for a new year:
+### React Components
 
-1. Create a new file `data/factors-{year}.json` based on the existing template
-2. Edit the factors as needed
-3. Restart the application (Docker container restart required)
+The kit includes a React-based cost calculator component:
 
-## API Endpoints
+- CostCalculator - A form-based calculator for estimating building costs
 
-### Health Check
+Access the calculator at: `/cost-calculator`
 
+## Cost Calculation
+
+The system uses a factor-based approach to calculate building costs:
+
+1. Base cost determined by building type (e.g., residential, commercial)
+2. Adjustments applied based on:
+   - Region
+   - Building quality
+   - Condition
+   - Age
+   - Design complexity
+
+The calculation follows this formula:
 ```
-GET /api/health
-```
-
-### Property Data Import
-
-```
-POST /api/import/parcels
-Content-Type: multipart/form-data
-file: CSV file
-```
-
-### Cost Calculation
-
-```
-POST /api/calculate
-Content-Type: application/json
-{
-  "buildingType": "RES",
-  "region": "BC-CENTRAL",
-  "yearBuilt": 2010,
-  "quality": "STANDARD",
-  "condition": "GOOD",
-  "complexity": "STANDARD",
-  "squareFeet": 2000
-}
+Total Cost = Base Cost × Region Factor × Quality Factor × Condition Factor × Age Factor × Complexity Factor
 ```
 
-## Troubleshooting
+## Development
 
-- Check the container logs: `docker logs <container_id>`
-- Verify the database connection
-- Ensure correct environment variables in `.env`
-- Check API health endpoint: `/api/health`
+### Project Structure
+
+```
+terrabuild-devkit/
+├── client/               # React frontend
+│   └── src/
+│       ├── components/   # Reusable UI components
+│       └── pages/        # Application pages
+├── data/                 # Cost factor data
+├── sample/               # Sample data for import
+├── scripts/              # Utility scripts
+├── server/               # Express API server
+│   ├── routes/           # API route definitions
+│   └── storage/          # Database integration
+└── docker-compose.yml    # Docker configuration
+```
+
+### Adding Custom Factors
+
+To customize the cost factors:
+
+1. Edit the `data/factors-2025.json` file
+2. Add or modify the factors as needed
+3. Run the import script to update the database
+
+### Extending the API
+
+To add new API endpoints:
+
+1. Create a new route file in `server/routes/`
+2. Implement your custom logic
+3. Register the route in `server/routes.ts`
+
+## Testing
+
+Run the API tests:
+
+```
+chmod +x scripts/test-api.sh
+./scripts/test-api.sh
+```
 
 ## License
 
-© 2025 TerraBuild. All rights reserved.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For questions and support, please open an issue on the GitHub repository or contact the TerraBuild team.
