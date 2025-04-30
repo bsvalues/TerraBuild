@@ -48,7 +48,7 @@ export function SwarmDashboard() {
     }
   });
   
-  const handleRunDemo = (demoType: 'cost-assessment' | 'scenario-analysis' | 'sensitivity-analysis') => {
+  const handleRunDemo = (demoType: 'cost-assessment' | 'scenario-analysis' | 'sensitivity-analysis' | 'boe-appeal') => {
     demoMutation.mutate(demoType);
   };
   
@@ -142,7 +142,7 @@ export function SwarmDashboard() {
                 Execute predefined workflows to demonstrate AI Swarm capabilities
               </p>
               
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Cost Assessment</CardTitle>
@@ -197,6 +197,26 @@ export function SwarmDashboard() {
                       size="sm" 
                       disabled={!isActive || demoMutation.isPending}
                       onClick={() => handleRunDemo('sensitivity-analysis')}
+                    >
+                      Run Demo
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">BOE Appeal</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <p className="text-xs text-gray-500">
+                      Generates persuasive appeal arguments for Board of Equalization hearings
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      size="sm" 
+                      disabled={!isActive || demoMutation.isPending}
+                      onClick={() => handleRunDemo('boe-appeal')}
                     >
                       Run Demo
                     </Button>
