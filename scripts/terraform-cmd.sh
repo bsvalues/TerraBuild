@@ -1,102 +1,192 @@
 #!/bin/bash
-# BCBS Terraform Helper Script
-# This script simplifies Terraform operations for different environments
+# terraform-cmd.sh
+# Helper script for running Terraform commands with the correct environment configuration
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Default values
-ENV=${1:-dev}
-CMD=${2:-plan}
-ARGS=${@:3}
+ENV="dev"
+COMMAND="plan"
+AUTO_APPROVE=""
+VERBOSE=0
+SKIP_BACKEND_CONFIG=0
 
-# Help function
-function show_help {
-  echo -e "${BLUE}BCBS Terraform Helper${NC}"
-  echo -e "Usage: ./scripts/terraform-cmd.sh [environment] [command] [additional args]"
-  echo
-  echo -e "Environments:"
-  echo -e "  ${YELLOW}dev${NC}     - Development environment"
-  echo -e "  ${YELLOW}staging${NC} - Staging environment"
-  echo -e "  ${YELLOW}prod${NC}    - Production environment"
-  echo
-  echo -e "Commands:"
-  echo -e "  ${YELLOW}plan${NC}    - Generate and show Terraform execution plan"
-  echo -e "  ${YELLOW}apply${NC}   - Apply Terraform execution plan"
-  echo -e "  ${YELLOW}destroy${NC} - Destroy Terraform-managed infrastructure"
-  echo -e "  ${YELLOW}output${NC}  - Show Terraform outputs"
-  echo -e "  ${YELLOW}validate${NC}- Validate Terraform configuration files"
-  echo -e "  ${YELLOW}init${NC}    - Initialize Terraform working directory"
-  echo -e "  ${YELLOW}help${NC}    - Show this help message"
-  echo
-  echo -e "Example:"
-  echo -e "  ./scripts/terraform-cmd.sh staging apply -auto-approve"
-}
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --env=*)
+      ENV="${1#*=}"
+      shift
+      ;;
+    --command=*)
+      COMMAND="${1#*=}"
+      shift
+      ;;
+    --auto-approve)
+      AUTO_APPROVE="-auto-approve"
+      shift
+      ;;
+    --verbose)
+      VERBOSE=1
+      shift
+      ;;
+    --skip-backend-config)
+      SKIP_BACKEND_CONFIG=1
+      shift
+      ;;
+    --help)
+      echo "Usage: $0 [options]"
+      echo ""
+      echo "Options:"
+      echo "  --env=ENVIRONMENT      Environment to use (dev, staging, prod) (default: dev)"
+      echo "  --command=COMMAND      Terraform command to run (default: plan)"
+      echo "  --auto-approve         Auto approve (for apply or destroy)"
+      echo "  --verbose              Enable verbose output"
+      echo "  --skip-backend-config  Skip backend configuration"
+      echo "  --help                 Show this help message"
+      echo ""
+      echo "Examples:"
+      echo "  $0 --env=dev --command=plan"
+      echo "  $0 --env=staging --command=apply --auto-approve"
+      echo "  $0 --env=prod --command=destroy"
+      exit 0
+      ;;
+    *)
+      echo "Error: Unknown option $1"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
 
 # Validate environment
 if [[ ! "$ENV" =~ ^(dev|staging|prod)$ ]]; then
-  echo -e "${RED}Error: Invalid environment '${ENV}'. Use 'dev', 'staging', or 'prod'${NC}"
-  show_help
+  echo "Error: Invalid environment. Must be one of: dev, staging, prod"
   exit 1
 fi
+
+# Set paths
+ENV_DIR="terraform/environments/$ENV"
+BACKEND_CONFIG="$ENV_DIR/backend.tfvars"
+TFVARS_FILE="$ENV_DIR/terraform.tfvars"
 
 # Validate command
-if [[ ! "$CMD" =~ ^(plan|apply|destroy|output|validate|init|help)$ ]]; then
-  echo -e "${RED}Error: Invalid command '${CMD}'${NC}"
-  show_help
+case "$COMMAND" in
+  plan|apply|destroy|validate|refresh|output|state|import|show|graph|init)
+    # Valid command
+    ;;
+  *)
+    echo "Error: Invalid command: $COMMAND"
+    echo "Valid commands: plan, apply, destroy, validate, refresh, output, state, import, show, graph, init"
+    exit 1
+    ;;
+esac
+
+# Check if environment directory exists
+if [ ! -d "$ENV_DIR" ]; then
+  echo "Error: Environment directory not found: $ENV_DIR"
   exit 1
 fi
 
-# Show help if requested
-if [[ "$CMD" == "help" ]]; then
-  show_help
-  exit 0
+# Check if tfvars file exists
+if [ ! -f "$TFVARS_FILE" ]; then
+  echo "Error: Terraform variables file not found: $TFVARS_FILE"
+  exit 1
 fi
 
-# Navigate to Terraform directory
-cd terrafusion
-
-# Initialize Terraform if not already initialized
-if [[ ! -d ".terraform" ]] || [[ "$CMD" == "init" ]]; then
-  echo -e "${GREEN}Initializing Terraform...${NC}"
-  terraform init
+# Check AWS profile
+AWS_PROFILE="terrabuild-${ENV}"
+if ! aws configure list --profile "$AWS_PROFILE" &>/dev/null; then
+  echo "Warning: AWS profile '$AWS_PROFILE' not found. Using default AWS credentials."
+  AWS_PROFILE=""
+else
+  export AWS_PROFILE="$AWS_PROFILE"
+  echo "Using AWS profile: $AWS_PROFILE"
 fi
 
-# Select workspace
-echo -e "${GREEN}Selecting workspace for ${YELLOW}${ENV}${GREEN} environment...${NC}"
-terraform workspace select ${ENV} 2>/dev/null || terraform workspace new ${ENV}
-
-# Execute the requested command
-if [[ "$CMD" == "plan" ]]; then
-  echo -e "${GREEN}Planning changes for ${YELLOW}${ENV}${GREEN} environment...${NC}"
-  terraform plan -var-file=environments/${ENV}.tfvars ${ARGS}
-elif [[ "$CMD" == "apply" ]]; then
-  echo -e "${GREEN}Applying changes to ${YELLOW}${ENV}${GREEN} environment...${NC}"
-  terraform apply -var-file=environments/${ENV}.tfvars ${ARGS}
-elif [[ "$CMD" == "destroy" ]]; then
-  echo -e "${RED}WARNING: Destroying infrastructure in ${YELLOW}${ENV}${RED} environment!${NC}"
-  read -p "Are you sure you want to continue? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    terraform destroy -var-file=environments/${ENV}.tfvars ${ARGS}
+# Initialize Terraform if needed
+if [ "$COMMAND" != "init" ] && [ ! -d "terraform/.terraform" ]; then
+  echo "Terraform not initialized. Running terraform init first..."
+  
+  if [ "$SKIP_BACKEND_CONFIG" -eq 1 ] || [ ! -f "$BACKEND_CONFIG" ]; then
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform init)
+    else
+      (cd terraform && terraform init -no-color)
+    fi
   else
-    echo -e "${RED}Operation cancelled${NC}"
-    exit 0
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform init -backend-config="$BACKEND_CONFIG")
+    else
+      (cd terraform && terraform init -no-color -backend-config="$BACKEND_CONFIG")
+    fi
   fi
-elif [[ "$CMD" == "output" ]]; then
-  echo -e "${GREEN}Showing outputs for ${YELLOW}${ENV}${GREEN} environment...${NC}"
-  terraform output ${ARGS}
-elif [[ "$CMD" == "validate" ]]; then
-  echo -e "${GREEN}Validating Terraform configuration...${NC}"
-  terraform validate
-elif [[ "$CMD" == "init" ]]; then
-  echo -e "${GREEN}Terraform initialized successfully.${NC}"
 fi
 
-echo -e "${GREEN}Terraform operation completed successfully!${NC}"
+# Execute Terraform command
+echo "Executing: terraform $COMMAND for environment: $ENV"
+
+if [ "$COMMAND" = "init" ]; then
+  # Handle init specifically
+  if [ "$SKIP_BACKEND_CONFIG" -eq 1 ] || [ ! -f "$BACKEND_CONFIG" ]; then
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform init)
+    else
+      (cd terraform && terraform init -no-color)
+    fi
+  else
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform init -backend-config="$BACKEND_CONFIG")
+    else
+      (cd terraform && terraform init -no-color -backend-config="$BACKEND_CONFIG")
+    fi
+  fi
+elif [ "$COMMAND" = "plan" ]; then
+  # Handle plan command
+  if [ "$VERBOSE" -eq 1 ]; then
+    (cd terraform && terraform plan -var-file="$TFVARS_FILE" -out="${ENV}_plan.tfplan")
+  else
+    (cd terraform && terraform plan -no-color -var-file="$TFVARS_FILE" -out="${ENV}_plan.tfplan")
+  fi
+elif [ "$COMMAND" = "apply" ]; then
+  # Handle apply command
+  if [ -f "terraform/${ENV}_plan.tfplan" ]; then
+    # Apply existing plan
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform apply $AUTO_APPROVE "${ENV}_plan.tfplan")
+    else
+      (cd terraform && terraform apply -no-color $AUTO_APPROVE "${ENV}_plan.tfplan")
+    fi
+  else
+    # Create and apply new plan
+    if [ "$VERBOSE" -eq 1 ]; then
+      (cd terraform && terraform apply $AUTO_APPROVE -var-file="$TFVARS_FILE")
+    else
+      (cd terraform && terraform apply -no-color $AUTO_APPROVE -var-file="$TFVARS_FILE")
+    fi
+  fi
+elif [ "$COMMAND" = "destroy" ]; then
+  # Handle destroy command with extra confirmation
+  if [ -z "$AUTO_APPROVE" ]; then
+    read -p "Are you sure you want to destroy the $ENV environment? (yes/no): " confirm
+    if [ "$confirm" != "yes" ]; then
+      echo "Destroy cancelled."
+      exit 0
+    fi
+  fi
+  
+  if [ "$VERBOSE" -eq 1 ]; then
+    (cd terraform && terraform destroy $AUTO_APPROVE -var-file="$TFVARS_FILE")
+  else
+    (cd terraform && terraform destroy -no-color $AUTO_APPROVE -var-file="$TFVARS_FILE")
+  fi
+else
+  # Handle all other commands
+  if [ "$VERBOSE" -eq 1 ]; then
+    (cd terraform && terraform $COMMAND -var-file="$TFVARS_FILE")
+  else
+    (cd terraform && terraform $COMMAND -no-color -var-file="$TFVARS_FILE")
+  fi
+fi
+
+echo "Terraform $COMMAND completed for environment: $ENV"

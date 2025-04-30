@@ -1,15 +1,48 @@
-environment         = "staging"
-region              = "us-west-2"
-app_name            = "terrabuild"
-domain_name         = "staging.terrabuild.example.com"
-vpc_cidr            = "10.0.0.0/16"
-enable_bastion      = true
-instance_type       = "t3.medium"
-min_capacity        = 2
-max_capacity        = 5
-db_instance_class   = "db.t3.medium"
-db_allocated_storage = 50
-enable_monitoring   = true
-alert_email         = "devops@terrabuild.example.com"
-enable_waf          = true
-log_retention_days  = 30
+# Staging environment configuration
+environment      = "staging"
+project          = "terrabuild"
+aws_region       = "us-west-2"
+
+# VPC Configuration
+vpc_cidr            = "10.1.0.0/16"
+public_subnets_cidr = ["10.1.1.0/24", "10.1.2.0/24"]
+private_subnets_cidr = ["10.1.10.0/24", "10.1.20.0/24"]
+availability_zones  = ["us-west-2a", "us-west-2b"]
+
+# Database Configuration
+db_name           = "terrabuild"
+db_username       = "terrabuild_app"
+db_instance_class = "db.t3.small"
+db_storage_gb     = 50
+
+# Redis Configuration
+redis_node_type   = "cache.t3.small"
+redis_num_nodes   = 2
+
+# Application Configuration
+app_name        = "terrabuild"
+app_domain      = "staging.terrabuild.example.com"
+app_environment = "staging"
+app_port        = 5000
+
+# ECS Configuration
+ecs_task_cpu    = 512
+ecs_task_memory = 1024
+ecs_min_capacity = 2
+ecs_max_capacity = 4
+
+# Auto Scaling Configuration
+cpu_threshold     = 70
+scaling_cooldown  = 240  # seconds
+
+# Monitoring Configuration
+enable_detailed_monitoring = true
+logs_retention_days        = 60
+
+# Tags
+common_tags = {
+  Project     = "TerraFusion"
+  Environment = "Staging"
+  ManagedBy   = "Terraform"
+  Owner       = "DevOps"
+}
