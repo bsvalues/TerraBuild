@@ -53,6 +53,7 @@ import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
+import CostCalculator from "@/pages/CostCalculator";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -342,6 +343,7 @@ function Router() {
       <ProtectedRouteWrapper path="/properties/:id" component={PropertyDetailsPage} />
       <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
+      <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
       
       <Route component={NotFound} />
     </Switch>
