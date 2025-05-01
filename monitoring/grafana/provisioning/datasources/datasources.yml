@@ -1,39 +1,57 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: Loki
+    orgId: 1
+
 datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
+    orgId: 1
     url: http://prometheus:9090
+    basicAuth: false
     isDefault: true
-    version: 1
-    editable: false
     jsonData:
-      httpMethod: GET
-      timeInterval: 15s
-      queryTimeout: 120s
+      timeInterval: '15s'
+      queryTimeout: '60s'
+      httpMethod: 'POST'
       exemplarTraceIdDestinations:
-        - name: traceID
+        - name: TraceID
           datasourceUid: tempo
-
-  - name: Tempo
-    type: tempo
-    access: proxy
-    url: http://tempo:3200
-    version: 1
+          url: $${__value.raw}
     editable: false
-    uid: tempo
-    jsonData:
-      httpMethod: GET
-      nodeGraph:
-        enabled: true
+    version: 1
 
   - name: Loki
     type: loki
     access: proxy
+    orgId: 1
     url: http://loki:3100
-    version: 1
-    editable: false
-    uid: loki
+    basicAuth: false
+    isDefault: false
     jsonData:
+      timeInterval: '15s'
       maxLines: 1000
+    editable: false
+    version: 1
+
+  - name: Postgres
+    type: postgres
+    access: proxy
+    orgId: 1
+    url: ${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}
+    database: ${POSTGRES_DB:-postgres}
+    user: ${POSTGRES_USER:-postgres}
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD:-postgres}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 3
+      connMaxLifetime: 14400
+      postgresVersion: 1400
+    editable: false
+    version: 1
