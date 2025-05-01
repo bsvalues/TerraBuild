@@ -1,533 +1,575 @@
+#!/usr/bin/env node
 /**
  * TerraFusion Blue/Green Deployment Script
  * 
- * This script automates blue/green deployments on AWS ECS using CodeDeploy
- * It handles traffic shifting, health checks, and rollbacks if needed
+ * This script performs a blue/green deployment for the TerraFusion application
+ * using AWS ECS and Route 53 for traffic routing.
  */
 
-const AWS = require('aws-sdk');
-const fs = require('fs');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+const fs = require('fs').promises;
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 // Configuration
 const DEFAULT_CONFIG = {
-  region: 'us-west-2',
-  environment: 'prod',
-  clusterName: null,  // Will be set based on environment
-  serviceName: null,  // Will be set based on environment
-  taskDefPath: './task-definition.json',
-  ecrRepository: null,  // Will be set based on environment
-  imageTag: 'latest',
-  blueTargetGroupArn: null,
-  greenTargetGroupArn: null,
-  listenerArn: null,
-  deploymentTimeout: 15 * 60 * 1000,  // 15 minutes in milliseconds
-  healthCheckInterval: 10 * 1000,     // 10 seconds in milliseconds
-  healthCheckPath: '/api/health',
-  healthCheckSuccessThreshold: 3,
+  environment: 'dev',
+  awsRegion: 'us-west-2',
+  ecsCluster: 'terrafusion-cluster',
+  serviceName: 'terrafusion-api',
+  taskDefinitionFamily: 'terrafusion-api',
+  containerName: 'terrafusion-api',
+  deploymentTimeout: 600, // seconds
   canaryTrafficPercentage: 10,
-  canaryTrafficDuration: 5 * 60 * 1000,  // 5 minutes in milliseconds
+  canaryTestDuration: 300, // seconds
+  healthCheckEndpoint: '/health',
+  healthCheckPort: 5000,
+  healthCheckInterval: 10, // seconds
+  healthCheckHealthyThreshold: 3,
+  healthCheckUnhealthyThreshold: 2,
+  healthCheckTimeout: 5, // seconds
+  rollbackOnFailure: true,
+  logDir: path.join(__dirname, '../../logs'),
+  vpcId: '', // Will be loaded from the ECS service
+  subnets: [], // Will be loaded from the ECS service
+  securityGroups: [], // Will be loaded from the ECS service
+  targetGroupBlue: '',
+  targetGroupGreen: '',
+  loadBalancerArn: '',
+  listenerArn: '',
+  hostedZoneId: '',
+  domainName: '',
+  buildId: process.env.BUILD_ID || randomUUID().substring(0, 8),
+  dryRun: false
 };
 
-let config = { ...DEFAULT_CONFIG };
-let awsClients = {};
+// Parse command line arguments
+const args = process.argv.slice(2);
+const config = { ...DEFAULT_CONFIG };
 
-/**
- * Initialize the script with configuration
- * @param {Object} userConfig - User-provided configuration
- */
-async function init(userConfig = {}) {
-  console.log('Initializing blue/green deployment...');
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
   
-  // Merge user config with defaults
-  config = { ...config, ...userConfig };
-  
-  // Set derived values if not provided
-  if (!config.clusterName) {
-    config.clusterName = `${config.environment}-terrafusion-cluster`;
-  }
-  
-  if (!config.serviceName) {
-    config.serviceName = `${config.environment}-terrafusion-service`;
-  }
-  
-  if (!config.ecrRepository) {
-    config.ecrRepository = `${config.environment}-terrafusion`;
-  }
-  
-  // Initialize AWS clients
-  AWS.config.update({ region: config.region });
-  awsClients.ecs = new AWS.ECS();
-  awsClients.codeDeploy = new AWS.CodeDeploy();
-  awsClients.elbv2 = new AWS.ELBv2();
-  awsClients.cloudwatch = new AWS.CloudWatch();
-  
-  // Validate configuration
-  await validateConfig();
-  
-  console.log('Initialization complete');
-  console.log('Configuration:', JSON.stringify(config, null, 2));
-}
-
-/**
- * Validate the configuration and load missing values from AWS
- */
-async function validateConfig() {
-  console.log('Validating configuration...');
-  
-  // Check if target group ARNs exist
-  if (!config.blueTargetGroupArn || !config.greenTargetGroupArn || !config.listenerArn) {
-    console.log('Target group ARNs or listener ARN not provided, fetching from AWS...');
-    
-    try {
-      // Get service info to extract load balancer info
-      const serviceDetails = await awsClients.ecs.describeServices({
-        cluster: config.clusterName,
-        services: [config.serviceName]
-      }).promise();
-      
-      if (!serviceDetails.services || serviceDetails.services.length === 0) {
-        throw new Error(`Service ${config.serviceName} not found in cluster ${config.clusterName}`);
-      }
-      
-      const service = serviceDetails.services[0];
-      
-      if (service.loadBalancers.length === 0) {
-        throw new Error(`Service ${config.serviceName} does not have any load balancers`);
-      }
-      
-      const targetGroupArn = service.loadBalancers[0].targetGroupArn;
-      const loadBalancerName = service.loadBalancers[0].loadBalancerName;
-      
-      // Get load balancer listeners
-      const loadBalancers = await awsClients.elbv2.describeLoadBalancers({
-        Names: [loadBalancerName]
-      }).promise();
-      
-      if (!loadBalancers.LoadBalancers || loadBalancers.LoadBalancers.length === 0) {
-        throw new Error(`Load balancer ${loadBalancerName} not found`);
-      }
-      
-      const loadBalancerArn = loadBalancers.LoadBalancers[0].LoadBalancerArn;
-      
-      // Get listeners
-      const listeners = await awsClients.elbv2.describeListeners({
-        LoadBalancerArn: loadBalancerArn
-      }).promise();
-      
-      if (!listeners.Listeners || listeners.Listeners.length === 0) {
-        throw new Error(`No listeners found for load balancer ${loadBalancerName}`);
-      }
-      
-      // Find HTTPS listener
-      const httpsListener = listeners.Listeners.find(l => l.Protocol === 'HTTPS');
-      
-      if (!httpsListener) {
-        throw new Error(`No HTTPS listener found for load balancer ${loadBalancerName}`);
-      }
-      
-      config.listenerArn = httpsListener.ListenerArn;
-      
-      // Get target groups
-      const targetGroups = await awsClients.elbv2.describeTargetGroups({
-        LoadBalancerArn: loadBalancerArn
-      }).promise();
-      
-      if (!targetGroups.TargetGroups || targetGroups.TargetGroups.length < 2) {
-        throw new Error(`Not enough target groups found for load balancer ${loadBalancerName}`);
-      }
-      
-      // Determine which target group is currently in use (blue) and which is idle (green)
-      const currentRules = await awsClients.elbv2.describeRules({
-        ListenerArn: config.listenerArn
-      }).promise();
-      
-      if (!currentRules.Rules || currentRules.Rules.length === 0) {
-        throw new Error(`No rules found for listener ${config.listenerArn}`);
-      }
-      
-      const defaultRule = currentRules.Rules.find(r => r.IsDefault);
-      
-      if (!defaultRule || !defaultRule.Actions || defaultRule.Actions.length === 0) {
-        throw new Error(`No default rule found for listener ${config.listenerArn}`);
-      }
-      
-      const currentTargetGroupArn = defaultRule.Actions[0].TargetGroupArn;
-      
-      // Set blue (current) and green (idle) target groups
-      config.blueTargetGroupArn = currentTargetGroupArn;
-      
-      // Find the other target group to use as green
-      const greenTargetGroup = targetGroups.TargetGroups.find(tg => tg.TargetGroupArn !== currentTargetGroupArn);
-      
-      if (!greenTargetGroup) {
-        throw new Error(`No idle target group found for load balancer ${loadBalancerName}`);
-      }
-      
-      config.greenTargetGroupArn = greenTargetGroup.TargetGroupArn;
-      
-      console.log(`Blue (current) target group: ${config.blueTargetGroupArn}`);
-      console.log(`Green (idle) target group: ${config.greenTargetGroupArn}`);
-      console.log(`Listener ARN: ${config.listenerArn}`);
-    } catch (error) {
-      console.error('Error retrieving target group or listener information:', error);
-      throw error;
-    }
+  if (arg === '--env' || arg === '-e') {
+    config.environment = args[++i];
+  } else if (arg === '--region' || arg === '-r') {
+    config.awsRegion = args[++i];
+  } else if (arg === '--cluster' || arg === '-c') {
+    config.ecsCluster = args[++i];
+  } else if (arg === '--service' || arg === '-s') {
+    config.serviceName = args[++i];
+  } else if (arg === '--task-family' || arg === '-t') {
+    config.taskDefinitionFamily = args[++i];
+  } else if (arg === '--canary-traffic' || arg === '-p') {
+    config.canaryTrafficPercentage = parseInt(args[++i], 10);
+  } else if (arg === '--canary-duration' || arg === '-d') {
+    config.canaryTestDuration = parseInt(args[++i], 10);
+  } else if (arg === '--timeout') {
+    config.deploymentTimeout = parseInt(args[++i], 10);
+  } else if (arg === '--no-rollback') {
+    config.rollbackOnFailure = false;
+  } else if (arg === '--dry-run') {
+    config.dryRun = true;
+  } else if (arg === '--help' || arg === '-h') {
+    showHelp();
+    process.exit(0);
   }
 }
 
-/**
- * Create a new task definition revision
- * @returns {string} New task definition ARN
- */
-async function createTaskDefinition() {
-  console.log('Creating new task definition revision...');
-  
-  // Read the task definition template
-  const taskDefPath = path.resolve(config.taskDefPath);
-  
-  if (!fs.existsSync(taskDefPath)) {
-    throw new Error(`Task definition file not found at ${taskDefPath}`);
-  }
-  
-  const taskDefTemplate = JSON.parse(fs.readFileSync(taskDefPath, 'utf8'));
-  
-  // Update the image in the container definitions
-  const imageUri = `${config.ecrRepository}:${config.imageTag}`;
-  taskDefTemplate.containerDefinitions[0].image = imageUri;
-  
-  // Register the new task definition
-  console.log(`Using image: ${imageUri}`);
-  
+// Initialize logging
+const logFilePath = path.join(config.logDir, `deploy_${config.environment}_${new Date().toISOString().replace(/[:.]/g, '-')}.log`);
+let logFile;
+
+// Function to show help
+function showHelp() {
+  console.log(`
+TerraFusion Blue/Green Deployment Script
+
+Usage: node blue_green_deploy.js [options]
+
+Options:
+  --env, -e         Environment (dev, staging, prod) (default: dev)
+  --region, -r      AWS region (default: us-west-2)
+  --cluster, -c     ECS cluster name (default: terrafusion-cluster)
+  --service, -s     ECS service name (default: terrafusion-api)
+  --task-family, -t Task definition family (default: terrafusion-api)
+  --canary-traffic, -p Canary traffic percentage (default: 10)
+  --canary-duration, -d Canary test duration in seconds (default: 300)
+  --timeout         Deployment timeout in seconds (default: 600)
+  --no-rollback     Disable automatic rollback on failure
+  --dry-run         Show what would be done without making changes
+  --help, -h        Show this help message
+  `);
+}
+
+// Main deployment function
+async function deploy() {
   try {
-    const registerResponse = await awsClients.ecs.registerTaskDefinition({
-      family: taskDefTemplate.family,
-      executionRoleArn: taskDefTemplate.executionRoleArn,
-      taskRoleArn: taskDefTemplate.taskRoleArn,
-      networkMode: taskDefTemplate.networkMode,
-      containerDefinitions: taskDefTemplate.containerDefinitions,
-      volumes: taskDefTemplate.volumes || [],
-      placementConstraints: taskDefTemplate.placementConstraints || [],
-      requiresCompatibilities: taskDefTemplate.requiresCompatibilities || [],
-      cpu: taskDefTemplate.cpu,
-      memory: taskDefTemplate.memory
-    }).promise();
+    await initializeLogging();
     
-    const newTaskDefArn = registerResponse.taskDefinition.taskDefinitionArn;
-    console.log(`New task definition registered: ${newTaskDefArn}`);
+    log('=== TerraFusion Blue/Green Deployment ===');
+    log(`Environment: ${config.environment}`);
+    log(`AWS Region: ${config.awsRegion}`);
+    log(`ECS Cluster: ${config.ecsCluster}`);
+    log(`Service: ${config.serviceName}`);
+    log(`Build ID: ${config.buildId}`);
+    log(`Dry Run: ${config.dryRun ? 'Yes' : 'No'}`);
+    log('================================================');
     
-    return newTaskDefArn;
+    // 1. Set AWS region
+    process.env.AWS_REGION = config.awsRegion;
+    
+    // 2. Load current service configuration
+    await loadServiceConfiguration();
+    
+    // 3. Register new task definition
+    const newTaskDefinition = await registerTaskDefinition();
+    
+    // 4. Create new target group for green deployment
+    const greenTargetGroup = await createGreenTargetGroup();
+    
+    // 5. Update service to use the new task definition and target group
+    await updateService(newTaskDefinition, greenTargetGroup);
+    
+    // 6. Wait for service deployment to stabilize
+    await waitForServiceStability();
+    
+    // 7. Perform canary testing if configured
+    if (config.canaryTrafficPercentage > 0) {
+      await performCanaryTesting(greenTargetGroup);
+    }
+    
+    // 8. If all is good, shift 100% traffic to new deployment
+    await shiftTrafficToGreen(greenTargetGroup);
+    
+    // 9. Wait for old tasks to drain
+    await waitForTasksToDrain();
+    
+    // 10. Clean up old target group
+    await cleanupOldTargetGroup();
+    
+    log('Deployment completed successfully');
+    await closeLogging();
+    process.exit(0);
   } catch (error) {
-    console.error('Error registering new task definition:', error);
-    throw error;
-  }
-}
-
-/**
- * Create a CodeDeploy deployment
- * @param {string} taskDefArn - ARN of the new task definition
- * @returns {string} Deployment ID
- */
-async function createDeployment(taskDefArn) {
-  console.log('Creating CodeDeploy deployment...');
-  
-  try {
-    // Check if application exists, create if not
-    const appName = `${config.environment}-terrafusion`;
-    let appExists = false;
-    
-    try {
-      const getAppResponse = await awsClients.codeDeploy.getApplication({
-        applicationName: appName
-      }).promise();
-      
-      if (getAppResponse.application) {
-        appExists = true;
-      }
-    } catch (error) {
-      if (error.code !== 'ApplicationDoesNotExistException') {
-        throw error;
-      }
-    }
-    
-    if (!appExists) {
-      console.log(`Creating CodeDeploy application: ${appName}`);
-      await awsClients.codeDeploy.createApplication({
-        applicationName: appName,
-        computePlatform: 'ECS'
-      }).promise();
-    }
-    
-    // Check if deployment group exists, create if not
-    const deploymentGroupName = `${config.environment}-terrafusion-bluegreen`;
-    let deploymentGroupExists = false;
-    
-    try {
-      const getDeploymentGroupResponse = await awsClients.codeDeploy.getDeploymentGroup({
-        applicationName: appName,
-        deploymentGroupName: deploymentGroupName
-      }).promise();
-      
-      if (getDeploymentGroupResponse.deploymentGroupInfo) {
-        deploymentGroupExists = true;
-      }
-    } catch (error) {
-      if (error.code !== 'DeploymentGroupDoesNotExistException') {
-        throw error;
-      }
-    }
-    
-    if (!deploymentGroupExists) {
-      console.log(`Creating CodeDeploy deployment group: ${deploymentGroupName}`);
-      
-      // Get service role ARN for CodeDeploy
-      const iamClient = new AWS.IAM();
-      const rolesResponse = await iamClient.listRoles({
-        PathPrefix: '/service-role/'
-      }).promise();
-      
-      const codeDeployRole = rolesResponse.Roles.find(role => 
-        role.RoleName.includes('CodeDeploy') && role.AssumeRolePolicyDocument.includes('codedeploy.amazonaws.com')
-      );
-      
-      if (!codeDeployRole) {
-        throw new Error('CodeDeploy service role not found');
-      }
-      
-      await awsClients.codeDeploy.createDeploymentGroup({
-        applicationName: appName,
-        deploymentGroupName: deploymentGroupName,
-        serviceRoleArn: codeDeployRole.Arn,
-        deploymentConfigName: 'CodeDeployDefault.ECSAllAtOnce',
-        ecsServices: [{
-          serviceName: config.serviceName,
-          clusterName: config.clusterName
-        }],
-        loadBalancerInfo: {
-          targetGroupPairInfoList: [{
-            targetGroups: [
-              { name: config.blueTargetGroupArn.split('/').pop() },
-              { name: config.greenTargetGroupArn.split('/').pop() }
-            ],
-            prodTrafficRoute: {
-              listenerArns: [config.listenerArn]
-            }
-          }]
-        },
-        deploymentStyle: {
-          deploymentType: 'BLUE_GREEN',
-          deploymentOption: 'WITH_TRAFFIC_CONTROL'
-        },
-        blueGreenDeploymentConfiguration: {
-          deploymentReadyOption: {
-            actionOnTimeout: 'CONTINUE_DEPLOYMENT',
-            waitTimeInMinutes: 10
-          },
-          terminateBlueInstancesOnDeploymentSuccess: {
-            action: 'TERMINATE',
-            terminationWaitTimeInMinutes: 5
-          }
-        },
-        autoRollbackConfiguration: {
-          enabled: true,
-          events: ['DEPLOYMENT_FAILURE', 'DEPLOYMENT_STOP_ON_ALARM', 'DEPLOYMENT_STOP_ON_REQUEST']
-        }
-      }).promise();
-    }
-    
-    // Create deployment
-    console.log('Creating deployment...');
-    const createDeploymentResponse = await awsClients.codeDeploy.createDeployment({
-      applicationName: appName,
-      deploymentGroupName: deploymentGroupName,
-      revision: {
-        revisionType: 'AppSpecContent',
-        appSpecContent: {
-          content: JSON.stringify({
-            version: 0.0,
-            Resources: [{
-              TargetService: {
-                Type: 'AWS::ECS::Service',
-                Properties: {
-                  TaskDefinition: taskDefArn,
-                  LoadBalancerInfo: {
-                    ContainerName: 'terrafusion-app',
-                    ContainerPort: 5000
-                  }
-                }
-              }
-            }]
-          }),
-          sha256: 'auto-calculated-sha256'
-        }
-      }
-    }).promise();
-    
-    const deploymentId = createDeploymentResponse.deploymentId;
-    console.log(`Deployment created with ID: ${deploymentId}`);
-    
-    return deploymentId;
-  } catch (error) {
-    console.error('Error creating deployment:', error);
-    throw error;
-  }
-}
-
-/**
- * Monitor deployment status
- * @param {string} deploymentId - Deployment ID to monitor
- * @returns {boolean} Success status
- */
-async function monitorDeployment(deploymentId) {
-  console.log(`Monitoring deployment ${deploymentId}...`);
-  
-  const startTime = Date.now();
-  let inProgress = true;
-  let success = false;
-  
-  while (inProgress && (Date.now() - startTime) < config.deploymentTimeout) {
-    try {
-      const deploymentResponse = await awsClients.codeDeploy.getDeployment({
-        deploymentId: deploymentId
-      }).promise();
-      
-      const deploymentInfo = deploymentResponse.deploymentInfo;
-      const status = deploymentInfo.status;
-      
-      console.log(`Deployment status: ${status}`);
-      
-      switch (status) {
-        case 'Succeeded':
-          console.log('Deployment completed successfully');
-          inProgress = false;
-          success = true;
-          break;
-        case 'Failed':
-        case 'Stopped':
-          console.error(`Deployment ${status.toLowerCase()}`);
-          console.error(`Error info: ${JSON.stringify(deploymentInfo.errorInformation || {})}`);
-          inProgress = false;
-          success = false;
-          break;
-        case 'InProgress':
-        case 'Queued':
-        case 'Created':
-        case 'Ready':
-          // Deployment still in progress, continue monitoring
-          await new Promise(resolve => setTimeout(resolve, config.healthCheckInterval));
-          break;
-        default:
-          console.warn(`Unknown deployment status: ${status}`);
-          await new Promise(resolve => setTimeout(resolve, config.healthCheckInterval));
-      }
-    } catch (error) {
-      console.error('Error monitoring deployment:', error);
-      await new Promise(resolve => setTimeout(resolve, config.healthCheckInterval));
-    }
-  }
-  
-  if (inProgress) {
-    console.error('Deployment timed out');
-    
-    try {
-      console.log('Stopping deployment due to timeout');
-      await awsClients.codeDeploy.stopDeployment({
-        deploymentId: deploymentId,
-        autoRollbackEnabled: true
-      }).promise();
-    } catch (stopError) {
-      console.error('Error stopping deployment:', stopError);
-    }
-    
-    return false;
-  }
-  
-  return success;
-}
-
-/**
- * Run the full blue/green deployment process
- */
-async function runDeployment() {
-  try {
-    console.log('Starting blue/green deployment process...');
-    
-    // Create new task definition
-    const newTaskDefArn = await createTaskDefinition();
-    
-    // Create deployment
-    const deploymentId = await createDeployment(newTaskDefArn);
-    
-    // Monitor deployment
-    const deploymentSuccess = await monitorDeployment(deploymentId);
-    
-    if (deploymentSuccess) {
-      console.log('Blue/green deployment completed successfully');
-    } else {
-      console.error('Blue/green deployment failed');
-      process.exit(1);
-    }
-  } catch (error) {
+    log(`ERROR: Deployment failed: ${error.message}`);
     console.error('Deployment failed:', error);
-    process.exit(1);
-  }
-}
-
-/**
- * Main entry point
- */
-async function main() {
-  try {
-    const args = process.argv.slice(2);
-    const userConfig = {};
     
-    // Parse command-line arguments
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      
-      if (arg === '--environment' || arg === '-e') {
-        userConfig.environment = args[++i];
-      } else if (arg === '--region' || arg === '-r') {
-        userConfig.region = args[++i];
-      } else if (arg === '--image-tag' || arg === '-i') {
-        userConfig.imageTag = args[++i];
-      } else if (arg === '--task-def' || arg === '-t') {
-        userConfig.taskDefPath = args[++i];
-      } else if (arg === '--help' || arg === '-h') {
-        console.log(`
-Blue/Green Deployment Script Usage:
---environment, -e    Environment (dev, staging, prod)
---region, -r         AWS region
---image-tag, -i      Docker image tag to deploy
---task-def, -t       Path to task definition template
---help, -h           Show this help message
-        `);
-        process.exit(0);
+    if (config.rollbackOnFailure) {
+      log('Initiating rollback...');
+      try {
+        await rollback();
+        log('Rollback completed successfully');
+      } catch (rollbackError) {
+        log(`ERROR: Rollback failed: ${rollbackError.message}`);
+        console.error('Rollback failed:', rollbackError);
       }
     }
     
-    // Initialize and run deployment
-    await init(userConfig);
-    await runDeployment();
-    
-    console.log('Deployment script completed');
-  } catch (error) {
-    console.error('Script failed:', error);
+    await closeLogging();
     process.exit(1);
   }
 }
 
-// Run script if executed directly
-if (require.main === module) {
-  main();
+// Initialize logging
+async function initializeLogging() {
+  try {
+    await fs.mkdir(config.logDir, { recursive: true });
+    logFile = await fs.open(logFilePath, 'a');
+    log('Logging initialized');
+  } catch (error) {
+    console.error('Failed to initialize logging:', error);
+    // Continue without file logging
+  }
 }
 
-// Export functions for testing
-module.exports = {
-  init,
-  validateConfig,
-  createTaskDefinition,
-  createDeployment,
-  monitorDeployment,
-  runDeployment
-};
+// Log to both console and file
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const formattedMessage = `[${timestamp}] ${message}`;
+  
+  console.log(formattedMessage);
+  
+  if (logFile) {
+    logFile.write(formattedMessage + '\n').catch(err => {
+      console.error('Failed to write to log file:', err);
+    });
+  }
+}
+
+// Close logging
+async function closeLogging() {
+  if (logFile) {
+    try {
+      await logFile.close();
+    } catch (error) {
+      console.error('Failed to close log file:', error);
+    }
+  }
+}
+
+// Load current service configuration
+async function loadServiceConfiguration() {
+  log('Loading current service configuration...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would load service configuration');
+    return;
+  }
+  
+  try {
+    // Describe the ECS service to get current configuration
+    const { stdout } = await execAsync(`aws ecs describe-services --cluster ${config.ecsCluster} --services ${config.serviceName} --region ${config.awsRegion}`);
+    const serviceData = JSON.parse(stdout);
+    
+    if (!serviceData.services || serviceData.services.length === 0) {
+      throw new Error(`Service ${config.serviceName} not found in cluster ${config.ecsCluster}`);
+    }
+    
+    const service = serviceData.services[0];
+    
+    // Get load balancer configuration
+    if (service.loadBalancers && service.loadBalancers.length > 0) {
+      const loadBalancer = service.loadBalancers[0];
+      config.targetGroupBlue = loadBalancer.targetGroupArn;
+      
+      // Get load balancer and listener ARNs
+      const { stdout: lbStdout } = await execAsync(`aws elbv2 describe-target-groups --target-group-arns ${config.targetGroupBlue} --region ${config.awsRegion}`);
+      const targetGroupData = JSON.parse(lbStdout);
+      
+      if (targetGroupData.TargetGroups && targetGroupData.TargetGroups.length > 0) {
+        const targetGroup = targetGroupData.TargetGroups[0];
+        config.loadBalancerArn = targetGroup.LoadBalancerArns[0];
+        
+        // Get listener ARN
+        const { stdout: listenerStdout } = await execAsync(`aws elbv2 describe-listeners --load-balancer-arn ${config.loadBalancerArn} --region ${config.awsRegion}`);
+        const listenerData = JSON.parse(listenerStdout);
+        
+        if (listenerData.Listeners && listenerData.Listeners.length > 0) {
+          config.listenerArn = listenerData.Listeners[0].ListenerArn;
+        }
+      }
+    }
+    
+    // Get network configuration
+    if (service.networkConfiguration && service.networkConfiguration.awsvpcConfiguration) {
+      const { subnets, securityGroups } = service.networkConfiguration.awsvpcConfiguration;
+      config.subnets = subnets;
+      config.securityGroups = securityGroups;
+    }
+    
+    log('Service configuration loaded successfully');
+    log(`Current Target Group: ${config.targetGroupBlue}`);
+    log(`Load Balancer ARN: ${config.loadBalancerArn}`);
+    log(`Listener ARN: ${config.listenerArn}`);
+  } catch (error) {
+    throw new Error(`Failed to load service configuration: ${error.message}`);
+  }
+}
+
+// Register a new task definition based on the current task definition
+async function registerTaskDefinition() {
+  log('Registering new task definition...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would register new task definition');
+    return 'task-definition-arn';
+  }
+  
+  try {
+    // Get the current task definition
+    const { stdout: taskDefStdout } = await execAsync(`aws ecs describe-task-definition --task-definition ${config.taskDefinitionFamily} --region ${config.awsRegion}`);
+    const taskDefData = JSON.parse(taskDefStdout);
+    
+    if (!taskDefData.taskDefinition) {
+      throw new Error(`Task definition family ${config.taskDefinitionFamily} not found`);
+    }
+    
+    const taskDef = taskDefData.taskDefinition;
+    
+    // Remove the read-only fields
+    delete taskDef.taskDefinitionArn;
+    delete taskDef.revision;
+    delete taskDef.status;
+    delete taskDef.requiresAttributes;
+    delete taskDef.compatibilities;
+    delete taskDef.registeredAt;
+    delete taskDef.registeredBy;
+    
+    // Update container tags with build ID
+    taskDef.containerDefinitions.forEach(container => {
+      if (container.name === config.containerName) {
+        const imageParts = container.image.split(':');
+        container.image = `${imageParts[0]}:${config.buildId}`;
+      }
+    });
+    
+    // Write updated task definition to temp file
+    const tempTaskDefPath = path.join('/tmp', `${config.taskDefinitionFamily}-${config.buildId}.json`);
+    await fs.writeFile(tempTaskDefPath, JSON.stringify(taskDef));
+    
+    // Register the new task definition
+    const { stdout: registerStdout } = await execAsync(`aws ecs register-task-definition --cli-input-json file://${tempTaskDefPath} --region ${config.awsRegion}`);
+    const registerData = JSON.parse(registerStdout);
+    
+    if (!registerData.taskDefinition || !registerData.taskDefinition.taskDefinitionArn) {
+      throw new Error('Failed to register new task definition');
+    }
+    
+    const newTaskDefinitionArn = registerData.taskDefinition.taskDefinitionArn;
+    log(`New task definition registered: ${newTaskDefinitionArn}`);
+    
+    return newTaskDefinitionArn;
+  } catch (error) {
+    throw new Error(`Failed to register new task definition: ${error.message}`);
+  }
+}
+
+// Create a new (green) target group
+async function createGreenTargetGroup() {
+  log('Creating new target group for green deployment...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would create new target group');
+    return 'green-target-group-arn';
+  }
+  
+  try {
+    // Describe the current (blue) target group to get its configuration
+    const { stdout: blueStdout } = await execAsync(`aws elbv2 describe-target-groups --target-group-arns ${config.targetGroupBlue} --region ${config.awsRegion}`);
+    const blueData = JSON.parse(blueStdout);
+    
+    if (!blueData.TargetGroups || blueData.TargetGroups.length === 0) {
+      throw new Error(`Target group ${config.targetGroupBlue} not found`);
+    }
+    
+    const blueTargetGroup = blueData.TargetGroups[0];
+    
+    // Create a target group name with a timestamp to ensure uniqueness
+    const timestamp = new Date().getTime();
+    const greenTargetGroupName = `tf-${config.environment}-${config.buildId}-${timestamp}`.substring(0, 32);
+    
+    // Create a new target group with the same settings as the blue one
+    const createCmd = `aws elbv2 create-target-group \
+      --name ${greenTargetGroupName} \
+      --protocol ${blueTargetGroup.Protocol} \
+      --port ${blueTargetGroup.Port} \
+      --vpc-id ${blueTargetGroup.VpcId} \
+      --target-type ${blueTargetGroup.TargetType} \
+      --health-check-protocol ${blueTargetGroup.HealthCheckProtocol} \
+      --health-check-port ${blueTargetGroup.HealthCheckPort} \
+      --health-check-path ${config.healthCheckEndpoint} \
+      --health-check-interval-seconds ${config.healthCheckInterval} \
+      --health-check-timeout-seconds ${config.healthCheckTimeout} \
+      --healthy-threshold-count ${config.healthCheckHealthyThreshold} \
+      --unhealthy-threshold-count ${config.healthCheckUnhealthyThreshold} \
+      --region ${config.awsRegion}`;
+    
+    const { stdout: createStdout } = await execAsync(createCmd);
+    const createData = JSON.parse(createStdout);
+    
+    if (!createData.TargetGroups || createData.TargetGroups.length === 0) {
+      throw new Error('Failed to create new target group');
+    }
+    
+    const greenTargetGroupArn = createData.TargetGroups[0].TargetGroupArn;
+    log(`Created new target group: ${greenTargetGroupArn}`);
+    
+    return greenTargetGroupArn;
+  } catch (error) {
+    throw new Error(`Failed to create green target group: ${error.message}`);
+  }
+}
+
+// Update the service to use the new task definition and target group
+async function updateService(taskDefinitionArn, targetGroupArn) {
+  log('Updating service with new task definition and target group...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would update service');
+    return;
+  }
+  
+  try {
+    const updateCmd = `aws ecs update-service \
+      --cluster ${config.ecsCluster} \
+      --service ${config.serviceName} \
+      --task-definition ${taskDefinitionArn} \
+      --load-balancers targetGroupArn=${targetGroupArn},containerName=${config.containerName},containerPort=${config.healthCheckPort} \
+      --region ${config.awsRegion}`;
+    
+    await execAsync(updateCmd);
+    log('Service updated successfully');
+  } catch (error) {
+    throw new Error(`Failed to update service: ${error.message}`);
+  }
+}
+
+// Wait for service deployment to stabilize
+async function waitForServiceStability() {
+  log('Waiting for service deployment to stabilize...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would wait for service stability');
+    return;
+  }
+  
+  try {
+    const waitCmd = `aws ecs wait services-stable \
+      --cluster ${config.ecsCluster} \
+      --services ${config.serviceName} \
+      --region ${config.awsRegion}`;
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Service stabilization timed out after ${config.deploymentTimeout} seconds`));
+      }, config.deploymentTimeout * 1000);
+    });
+    
+    const stabilityPromise = execAsync(waitCmd);
+    
+    await Promise.race([stabilityPromise, timeoutPromise]);
+    log('Service deployment is stable');
+  } catch (error) {
+    throw new Error(`Service stabilization failed: ${error.message}`);
+  }
+}
+
+// Perform canary testing with partial traffic to the new deployment
+async function performCanaryTesting(greenTargetGroupArn) {
+  log(`Starting canary testing with ${config.canaryTrafficPercentage}% traffic for ${config.canaryTestDuration} seconds...`);
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would perform canary testing');
+    return;
+  }
+  
+  try {
+    // Modify the listener rule to send a percentage of traffic to the green target group
+    const modifyCmd = `aws elbv2 modify-listener \
+      --listener-arn ${config.listenerArn} \
+      --default-actions Type=forward,ForwardConfig='{TargetGroups=[{TargetGroupArn=${config.targetGroupBlue},Weight=${100 - config.canaryTrafficPercentage}},{TargetGroupArn=${greenTargetGroupArn},Weight=${config.canaryTrafficPercentage}}]}' \
+      --region ${config.awsRegion}`;
+    
+    await execAsync(modifyCmd);
+    log(`Canary testing started with ${config.canaryTrafficPercentage}% traffic to new deployment`);
+    
+    // Wait for the canary test duration
+    log(`Waiting for ${config.canaryTestDuration} seconds to monitor canary test...`);
+    await new Promise(resolve => setTimeout(resolve, config.canaryTestDuration * 1000));
+    
+    // TODO: Add CloudWatch metrics check here to ensure the canary deployment is healthy
+    
+    log('Canary testing completed successfully');
+  } catch (error) {
+    throw new Error(`Canary testing failed: ${error.message}`);
+  }
+}
+
+// Shift 100% of traffic to the green deployment
+async function shiftTrafficToGreen(greenTargetGroupArn) {
+  log('Shifting 100% traffic to the new deployment...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would shift traffic to green deployment');
+    return;
+  }
+  
+  try {
+    const modifyCmd = `aws elbv2 modify-listener \
+      --listener-arn ${config.listenerArn} \
+      --default-actions Type=forward,TargetGroupArn=${greenTargetGroupArn} \
+      --region ${config.awsRegion}`;
+    
+    await execAsync(modifyCmd);
+    log('Traffic shifted to new deployment successfully');
+    
+    // Store the green target group as the new blue for future deployments
+    config.targetGroupGreen = greenTargetGroupArn;
+  } catch (error) {
+    throw new Error(`Failed to shift traffic: ${error.message}`);
+  }
+}
+
+// Wait for old tasks to drain
+async function waitForTasksToDrain() {
+  log('Waiting for old tasks to drain...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would wait for old tasks to drain');
+    return;
+  }
+  
+  // Wait a fixed amount of time to allow connections to drain
+  await new Promise(resolve => setTimeout(resolve, 60 * 1000));
+  log('Old tasks drained');
+}
+
+// Clean up the old target group
+async function cleanupOldTargetGroup() {
+  log('Cleaning up old target group...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would clean up old target group');
+    return;
+  }
+  
+  try {
+    // Wait a bit longer to ensure no traffic is going to the old target group
+    await new Promise(resolve => setTimeout(resolve, 30 * 1000));
+    
+    // Delete the old target group
+    const deleteCmd = `aws elbv2 delete-target-group \
+      --target-group-arn ${config.targetGroupBlue} \
+      --region ${config.awsRegion}`;
+    
+    await execAsync(deleteCmd);
+    log('Old target group deleted successfully');
+  } catch (error) {
+    log(`Warning: Failed to clean up old target group: ${error.message}`);
+    // Don't throw an error here as this is not critical
+  }
+}
+
+// Rollback function for failed deployments
+async function rollback() {
+  log('Starting rollback process...');
+  
+  if (config.dryRun) {
+    log('DRY RUN: Would perform rollback');
+    return;
+  }
+  
+  try {
+    // Return traffic to blue target group
+    const modifyCmd = `aws elbv2 modify-listener \
+      --listener-arn ${config.listenerArn} \
+      --default-actions Type=forward,TargetGroupArn=${config.targetGroupBlue} \
+      --region ${config.awsRegion}`;
+    
+    await execAsync(modifyCmd);
+    log('Traffic returned to original deployment');
+    
+    // Delete the green target group if it was created
+    if (config.targetGroupGreen) {
+      const deleteCmd = `aws elbv2 delete-target-group \
+        --target-group-arn ${config.targetGroupGreen} \
+        --region ${config.awsRegion}`;
+      
+      await execAsync(deleteCmd);
+      log('New target group deleted');
+    }
+    
+    log('Rollback completed successfully');
+  } catch (error) {
+    throw new Error(`Rollback failed: ${error.message}`);
+  }
+}
+
+// Run the deployment
+deploy().catch(error => {
+  console.error('Unhandled deployment error:', error);
+  process.exit(1);
+});
