@@ -1,0 +1,100 @@
+---
+region: us-west-2
+metrics:
+  - aws_namespace: AWS/ECS
+    aws_metric_name: CPUUtilization
+    aws_dimensions: [ClusterName, ServiceName]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      ClusterName: ["dev-terrafusion-cluster", "staging-terrafusion-cluster", "prod-terrafusion-cluster"]
+
+  - aws_namespace: AWS/ECS
+    aws_metric_name: MemoryUtilization
+    aws_dimensions: [ClusterName, ServiceName]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      ClusterName: ["dev-terrafusion-cluster", "staging-terrafusion-cluster", "prod-terrafusion-cluster"]
+
+  - aws_namespace: AWS/ApplicationELB
+    aws_metric_name: HTTPCode_Target_4XX_Count
+    aws_dimensions: [LoadBalancer, TargetGroup]
+    aws_statistics: [Sum]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/ApplicationELB
+    aws_metric_name: HTTPCode_Target_5XX_Count
+    aws_dimensions: [LoadBalancer, TargetGroup]
+    aws_statistics: [Sum]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/ApplicationELB
+    aws_metric_name: RequestCount
+    aws_dimensions: [LoadBalancer]
+    aws_statistics: [Sum]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/ApplicationELB
+    aws_metric_name: TargetResponseTime
+    aws_dimensions: [LoadBalancer, TargetGroup]
+    aws_statistics: [Average, p90, p95, p99]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/RDS
+    aws_metric_name: CPUUtilization
+    aws_dimensions: [DBInstanceIdentifier]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      DBInstanceIdentifier: ["dev-terrafusion-db", "staging-terrafusion-db", "prod-terrafusion-db"]
+
+  - aws_namespace: AWS/RDS
+    aws_metric_name: DatabaseConnections
+    aws_dimensions: [DBInstanceIdentifier]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      DBInstanceIdentifier: ["dev-terrafusion-db", "staging-terrafusion-db", "prod-terrafusion-db"]
+
+  - aws_namespace: AWS/RDS
+    aws_metric_name: FreeStorageSpace
+    aws_dimensions: [DBInstanceIdentifier]
+    aws_statistics: [Average, Minimum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      DBInstanceIdentifier: ["dev-terrafusion-db", "staging-terrafusion-db", "prod-terrafusion-db"]
+
+  - aws_namespace: AWS/RDS
+    aws_metric_name: ReadIOPS
+    aws_dimensions: [DBInstanceIdentifier]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      DBInstanceIdentifier: ["dev-terrafusion-db", "staging-terrafusion-db", "prod-terrafusion-db"]
+
+  - aws_namespace: AWS/RDS
+    aws_metric_name: WriteIOPS
+    aws_dimensions: [DBInstanceIdentifier]
+    aws_statistics: [Average, Maximum]
+    aws_period_seconds: 60
+    aws_dimension_select:
+      DBInstanceIdentifier: ["dev-terrafusion-db", "staging-terrafusion-db", "prod-terrafusion-db"]
+
+  - aws_namespace: AWS/Lambda
+    aws_metric_name: Invocations
+    aws_dimensions: [FunctionName]
+    aws_statistics: [Sum]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/Lambda
+    aws_metric_name: Errors
+    aws_dimensions: [FunctionName]
+    aws_statistics: [Sum]
+    aws_period_seconds: 60
+
+  - aws_namespace: AWS/Lambda
+    aws_metric_name: Duration
+    aws_dimensions: [FunctionName]
+    aws_statistics: [Average, Maximum, p90, p95]
+    aws_period_seconds: 60

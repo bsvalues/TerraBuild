@@ -3,60 +3,95 @@ variable "environment" {
   type        = string
 }
 
-variable "db_instance_class" {
-  description = "Database instance class"
+variable "vpc_id" {
+  description = "ID of the VPC"
   type        = string
-  default     = "db.t3.small"
+}
+
+variable "subnet_ids" {
+  description = "List of subnet IDs for DB subnet group"
+  type        = list(string)
+}
+
+variable "security_group_ids" {
+  description = "List of security group IDs for the DB instance"
+  type        = list(string)
+}
+
+variable "kms_key_arn" {
+  description = "ARN of the KMS key for encryption"
+  type        = string
+}
+
+variable "db_instance_class" {
+  description = "Instance class for the DB instance"
+  type        = string
+  default     = "db.t3.medium"
 }
 
 variable "db_allocated_storage" {
-  description = "Allocated storage in GB"
+  description = "Allocated storage for DB instance in GB"
   type        = number
   default     = 20
 }
 
-variable "db_max_allocated_storage" {
-  description = "Maximum allocated storage in GB for autoscaling"
+variable "db_max_storage" {
+  description = "Maximum storage limit for autoscaling in GB"
   type        = number
   default     = 100
 }
 
-variable "db_username" {
-  description = "Database master username"
+variable "engine_version" {
+  description = "PostgreSQL engine version"
   type        = string
-  sensitive   = true
-}
-
-variable "db_password" {
-  description = "Database master password"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_subnet_group_name" {
-  description = "Database subnet group name"
-  type        = string
-}
-
-variable "db_security_group_id" {
-  description = "Database security group ID"
-  type        = string
-}
-
-variable "kms_key_id" {
-  description = "KMS key ID for database encryption"
-  type        = string
-  default     = null
-}
-
-variable "backup_retention_period" {
-  description = "Number of days to retain backups"
-  type        = number
-  default     = 7
+  default     = "14.6"
 }
 
 variable "multi_az" {
   description = "Whether to enable Multi-AZ deployment"
+  type        = bool
+  default     = false
+}
+
+variable "deletion_protection" {
+  description = "Whether to enable deletion protection"
+  type        = bool
+  default     = false
+}
+
+variable "apply_immediately" {
+  description = "Whether to apply changes immediately or during maintenance window"
+  type        = bool
+  default     = false
+}
+
+variable "backup_retention_period" {
+  description = "Number of days to retain automated backups"
+  type        = number
+  default     = 7
+}
+
+variable "db_name" {
+  description = "Name of the database to create"
+  type        = string
+  default     = "terrafusion"
+}
+
+variable "db_username" {
+  description = "Username for the master DB user"
+  type        = string
+  default     = "tfadmin"
+}
+
+variable "db_password" {
+  description = "Password for the master DB user. If not provided, a random password will be generated."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "enable_performance_insights" {
+  description = "Whether to enable Performance Insights"
   type        = bool
   default     = false
 }

@@ -6,13 +6,34 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
-    editable: false
     version: 1
+    editable: false
+    jsonData:
+      httpMethod: GET
+      timeInterval: 15s
+      queryTimeout: 120s
+      exemplarTraceIdDestinations:
+        - name: traceID
+          datasourceUid: tempo
+
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    version: 1
+    editable: false
+    uid: tempo
+    jsonData:
+      httpMethod: GET
+      nodeGraph:
+        enabled: true
 
   - name: Loki
     type: loki
     access: proxy
     url: http://loki:3100
-    isDefault: false
-    editable: false
     version: 1
+    editable: false
+    uid: loki
+    jsonData:
+      maxLines: 1000
