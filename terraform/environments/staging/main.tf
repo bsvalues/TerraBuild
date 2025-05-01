@@ -1,7 +1,8 @@
 /**
- * TerraFusion Production Environment Configuration
+ * TerraFusion Staging Environment Configuration
  * 
- * This configuration sets up the production environment for TerraFusion with high availability
+ * This configuration sets up the staging environment for TerraFusion
+ * It mirrors production but with smaller resources
  */
 
 provider "aws" {
@@ -10,7 +11,7 @@ provider "aws" {
   default_tags {
     tags = {
       Project     = "TerraFusion"
-      Environment = "prod"
+      Environment = "staging"
       ManagedBy   = "Terraform"
     }
   }
@@ -19,17 +20,17 @@ provider "aws" {
 # Setup backend for Terraform state
 terraform {
   backend "s3" {
-    bucket         = "terrafusion-tfstate-prod"
+    bucket         = "terrafusion-tfstate-staging"
     key            = "terraform.tfstate"
     region         = "us-west-2"
     encrypt        = true
-    dynamodb_table = "terrafusion-tfstate-lock-prod"
+    dynamodb_table = "terrafusion-tfstate-lock-staging"
   }
 }
 
 # Create ACM certificate for HTTPS
 resource "aws_acm_certificate" "cert" {
-  domain_name       = "terrafusion.benton-county.example.com"
+  domain_name       = "staging.terrafusion.benton-county.example.com"
   validation_method = "DNS"
   
   lifecycle {
@@ -37,7 +38,7 @@ resource "aws_acm_certificate" "cert" {
   }
   
   tags = {
-    Name = "prod-terrafusion-cert"
+    Name = "staging-terrafusion-cert"
   }
 }
 
@@ -68,7 +69,7 @@ resource "aws_acm_certificate_validation" "cert" {
 # DNS record for the application
 resource "aws_route53_record" "app" {
   zone_id = data.aws_route53_zone.main.zone_id
-  name    = "terrafusion.benton-county.example.com"
+  name    = "staging.terrafusion.benton-county.example.com"
   type    = "A"
   
   alias {
@@ -82,22 +83,21 @@ resource "aws_route53_record" "app" {
 module "networking" {
   source = "../../modules/networking"
   
-  environment             = "prod"
-  vpc_cidr                = "10.1.0.0/16"
-  public_subnet_cidrs     = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
-  private_subnet_cidrs    = ["10.1.4.0/24", "10.1.5.0/24", "10.1.6.0/24"]
-  database_subnet_cidrs   = ["10.1.7.0/24", "10.1.8.0/24", "10.1.9.0/24"]
-  availability_zones      = ["${var.region}a", "${var.region}b", "${var.region}c"]
+  environment             = "staging"
+  vpc_cidr                = "10.2.0.0/16"
+  public_subnet_cidrs     = ["10.2.1.0/24", "10.2.2.0/24"]
+  private_subnet_cidrs    = ["10.2.3.0/24", "10.2.4.0/24"]
+  database_subnet_cidrs   = ["10.2.5.0/24", "10.2.6.0/24"]
+  availability_zones      = ["${var.region}a", "${var.region}b"]
   enable_nat_gateway      = true
-  single_nat_gateway      = false  # High availability with multiple NAT gateways
-  enable_vpn_gateway      = true
+  single_nat_gateway      = true  # Cost saving with a single NAT gateway
 }
 
 # Create security resources
 module "security" {
   source = "../../modules/security"
   
-  environment    = "prod"
+  environment    = "staging"
   openai_api_key = var.openai_api_key
 }
 
@@ -105,18 +105,17 @@ module "security" {
 module "database" {
   source = "../../modules/database"
   
-  environment             = "prod"
+  environment             = "staging"
   vpc_id                  = module.networking.vpc_id
   subnet_ids              = module.networking.database_subnet_ids
   security_group_ids      = [module.networking.database_security_group_id]
   kms_key_arn             = module.security.kms_key_arn
-  db_instance_class       = "db.m5.large"
-  db_allocated_storage    = 100
-  db_max_storage          = 500
-  multi_az                = true   # High availability with multi-AZ deployment
-  deletion_protection     = true   # Protect against accidental deletion
-  backup_retention_period = 30     # 30 days backup retention
-  apply_immediately       = false  # Apply changes during maintenance window
+  db_instance_class       = "db.t3.large"
+  db_allocated_storage    = 50
+  db_max_storage          = 200
+  multi_az                = true   # Multi-AZ for staging to mirror production
+  deletion_protection     = true
+  backup_retention_period = 7      # 7 days backup retention
   db_name                 = "terrafusion"
   db_username             = "tfadmin"
   db_password             = var.db_password
@@ -127,7 +126,7 @@ module "database" {
 module "compute" {
   source = "../../modules/compute"
   
-  environment           = "prod"
+  environment           = "staging"
   vpc_id                = module.networking.vpc_id
   public_subnet_ids     = module.networking.public_subnet_ids
   private_subnet_ids    = module.networking.private_subnet_ids
@@ -136,99 +135,19 @@ module "compute" {
   db_secret_arn         = module.database.db_secret_arn
   certificate_arn       = aws_acm_certificate_validation.cert.certificate_arn
   app_version           = var.app_version
-  service_desired_count = 3  # Multiple instances for high availability
-  task_cpu              = "2048"
-  task_memory           = "4096"
-  enable_container_insights = true
+  service_desired_count = 2  # 2 instances for staging
+  task_cpu              = "1024"
+  task_memory           = "2048"
 }
 
 # Create monitoring resources
 module "monitoring" {
   source = "../../modules/monitoring"
   
-  environment     = "prod"
+  environment     = "staging"
   region          = var.region
   alert_emails    = var.alert_emails
   alb_arn_suffix  = module.compute.alb_dns_name
-}
-
-# Create AWS Backup plan for RDS and EFS
-resource "aws_backup_plan" "main" {
-  name = "prod-terrafusion-backup-plan"
-  
-  rule {
-    rule_name           = "daily-backup"
-    target_vault_name   = aws_backup_vault.main.name
-    schedule            = "cron(0 1 * * ? *)"  # Daily at 1:00 AM UTC
-    start_window        = 60
-    completion_window   = 120
-    
-    lifecycle {
-      cold_storage_after = 30
-      delete_after       = 365
-    }
-  }
-  
-  rule {
-    rule_name           = "weekly-backup"
-    target_vault_name   = aws_backup_vault.main.name
-    schedule            = "cron(0 5 ? * SAT *)"  # Weekly on Saturday at 5:00 AM UTC
-    start_window        = 60
-    completion_window   = 180
-    
-    lifecycle {
-      cold_storage_after = 90
-      delete_after       = 730
-    }
-  }
-  
-  advanced_backup_setting {
-    backup_options = {
-      WindowsVSS = "enabled"
-    }
-    resource_type = "EC2"
-  }
-}
-
-# Create AWS Backup vault
-resource "aws_backup_vault" "main" {
-  name        = "prod-terrafusion-backup-vault"
-  kms_key_arn = module.security.kms_key_arn
-}
-
-# Create AWS Backup selection
-resource "aws_backup_selection" "main" {
-  name          = "prod-terrafusion-backup-selection"
-  iam_role_arn  = aws_iam_role.backup_role.arn
-  plan_id       = aws_backup_plan.main.id
-  
-  resources = [
-    module.database.db_arn
-  ]
-}
-
-# Create IAM role for AWS Backup
-resource "aws_iam_role" "backup_role" {
-  name = "prod-terrafusion-backup-role"
-  
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "backup.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-# Attach AWS Backup policy to IAM role
-resource "aws_iam_role_policy_attachment" "backup_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-  role       = aws_iam_role.backup_role.name
 }
 
 # Data sources
