@@ -1,43 +1,37 @@
-name: TerraBuild CI
+name: Continuous Integration
 
 on:
   push:
-    branches: [ main, development ]
+    branches: [ develop, main ]
   pull_request:
-    branches: [ main, development ]
+    branches: [ develop, main ]
 
 jobs:
   lint:
-    name: Lint Code
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
           cache: 'npm'
-          
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
-        
       - name: Run ESLint
         run: npm run lint
         
-      - name: Check Formatting
-        run: npm run format:check
-
   test:
-    name: Run Tests
+    name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: test_terrabuild
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
         ports:
           - 5432:5432
         options: >-
@@ -48,112 +42,49 @@ jobs:
           
     steps:
       - uses: actions/checkout@v3
-      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
           cache: 'npm'
-          
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
-        
-      - name: Setup Test Database
-        run: |
-          echo "Setting up test database..."
-          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_terrabuild npm run db:push
-        
-      - name: Run Unit Tests
-        run: npm run test:unit
-        
-      - name: Run Integration Tests
-        run: |
-          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_terrabuild npm run test:integration
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          NODE_ENV: test
           
   build:
-    name: Build Application
+    name: Build
     runs-on: ubuntu-latest
     needs: [lint, test]
     steps:
       - uses: actions/checkout@v3
-      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
           cache: 'npm'
-          
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
-        
-      - name: Build Application
+      - name: Build
         run: npm run build
-        
-      - name: Upload Build Artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build-files
-          path: |
-            dist
-            !dist/node_modules
-            
-  security-scan:
+          name: build-artifacts
+          path: dist/
+          
+  scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Run npm audit
-        run: npm audit --production
-        continue-on-error: true
-        
-      - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+      - name: Run SAST scan
+        uses: snyk/actions/node@master
         with:
-          project: 'TerraBuild'
-          path: '.'
-          format: 'HTML'
-          out: 'reports'
-          
-      - name: Upload Security Reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-reports
-          path: reports/
-          
-  docker:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    needs: [build, security-scan]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          args: --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

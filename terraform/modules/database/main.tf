@@ -1,116 +1,133 @@
-resource "aws_security_group" "database" {
-  name        = "${var.environment}-db-sg"
-  description = "Security group for RDS PostgreSQL"
-  vpc_id      = var.vpc_id
-  
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]  # Allow access from within the VPC
-  }
-  
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+/**
+ * TerraFusion Database Module
+ * 
+ * This module provisions an RDS PostgreSQL database for TerraFusion
+ */
+
+# Create AWS Secrets Manager secret for database credentials
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name        = "${var.environment}-terrafusion-db-credentials"
+  description = "Database credentials for TerraFusion ${var.environment} environment"
   
   tags = {
-    Name        = "${var.environment}-db-sg"
     Environment = var.environment
+    Project     = "TerraFusion"
+    ManagedBy   = "Terraform"
   }
 }
 
-resource "aws_db_subnet_group" "main" {
-  name       = "${var.environment}-db-subnet-group"
-  subnet_ids = var.private_subnet_ids
-  
-  tags = {
-    Name        = "${var.environment}-db-subnet-group"
-    Environment = var.environment
-  }
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = var.db_password
+    dbname   = "terrafusion"
+    host     = aws_db_instance.postgres.address
+    port     = aws_db_instance.postgres.port
+  })
 }
 
+# Create RDS Parameter Group
 resource "aws_db_parameter_group" "postgres" {
-  name   = "${var.environment}-postgres-params"
-  family = "postgres15"
+  name        = "${var.environment}-terrafusion-postgres-params"
+  family      = "postgres14"
+  description = "Parameter group for TerraFusion ${var.environment} PostgreSQL database"
   
   parameter {
-    name  = "log_connections"
-    value = "1"
-  }
-  
-  parameter {
-    name  = "log_disconnections"
-    value = "1"
-  }
-  
-  parameter {
-    name  = "log_duration"
-    value = "1"
-  }
-  
-  parameter {
-    name  = "log_lock_waits"
-    value = "1"
+    name  = "log_statement"
+    value = var.environment == "prod" ? "none" : "ddl"
   }
   
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000"  # Log statements running longer than 1 second
+    value = var.environment == "prod" ? "1000" : "500"
   }
   
   tags = {
-    Name        = "${var.environment}-postgres-params"
     Environment = var.environment
+    Project     = "TerraFusion"
+    ManagedBy   = "Terraform"
   }
 }
 
+# Create RDS Instance
 resource "aws_db_instance" "postgres" {
-  identifier             = "${var.environment}-postgres"
-  allocated_storage      = var.db_allocated_storage
-  storage_type           = "gp3"
-  engine                 = "postgres"
-  engine_version         = "15"
-  instance_class         = var.db_instance_class
-  db_name                = var.db_name
-  username               = var.db_username
-  password               = var.db_password
-  parameter_group_name   = aws_db_parameter_group.postgres.name
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.database.id]
-  skip_final_snapshot    = var.environment != "prod"
-  deletion_protection    = var.environment == "prod"
-  backup_retention_period = var.environment == "prod" ? 7 : 1
-  multi_az               = var.environment == "prod"
-  storage_encrypted      = true
+  identifier                  = "${var.environment}-terrafusion-db"
+  engine                      = "postgres"
+  engine_version              = "14.5"
+  instance_class              = var.db_instance_class
+  allocated_storage           = var.db_allocated_storage
+  max_allocated_storage       = var.db_max_allocated_storage
+  storage_type                = "gp3"
+  storage_encrypted           = true
+  kms_key_id                  = var.kms_key_id
+  
+  db_name                     = "terrafusion"
+  username                    = var.db_username
+  password                    = var.db_password
+  port                        = 5432
+  
+  multi_az                    = var.multi_az
+  db_subnet_group_name        = var.db_subnet_group_name
+  vpc_security_group_ids      = [var.db_security_group_id]
+  parameter_group_name        = aws_db_parameter_group.postgres.name
+  
+  backup_retention_period     = var.backup_retention_period
+  backup_window               = "03:00-06:00"
+  maintenance_window          = "Mon:00:00-Mon:03:00"
+  
+  auto_minor_version_upgrade  = true
+  allow_major_version_upgrade = false
+  apply_immediately           = var.environment != "prod"
+  skip_final_snapshot         = var.environment != "prod"
+  final_snapshot_identifier   = "${var.environment}-terrafusion-final-snapshot"
+  deletion_protection         = var.environment == "prod"
+  
+  performance_insights_enabled          = var.environment == "prod"
+  performance_insights_retention_period = var.environment == "prod" ? 7 : 0
+  
+  monitoring_interval = 60
+  monitoring_role_arn = aws_iam_role.rds_monitoring_role.arn
+  
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   
   tags = {
-    Name        = "${var.environment}-postgres"
     Environment = var.environment
+    Project     = "TerraFusion"
+    ManagedBy   = "Terraform"
+  }
+  
+  lifecycle {
+    prevent_destroy = var.environment == "prod"
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "database_cpu" {
-  alarm_name          = "${var.environment}-db-cpu-alarm"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/RDS"
-  period              = "120"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors database CPU utilization"
-  alarm_actions       = []  # Add SNS topic ARN for notifications
+# Create IAM role for RDS enhanced monitoring
+resource "aws_iam_role" "rds_monitoring_role" {
+  name = "${var.environment}-terrafusion-rds-monitoring-role"
   
-  dimensions = {
-    DBInstanceIdentifier = aws_db_instance.postgres.id
-  }
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "monitoring.rds.amazonaws.com"
+        }
+      }
+    ]
+  })
   
   tags = {
-    Name        = "${var.environment}-db-cpu-alarm"
     Environment = var.environment
+    Project     = "TerraFusion"
+    ManagedBy   = "Terraform"
   }
+}
+
+# Attach policy for RDS enhanced monitoring
+resource "aws_iam_role_policy_attachment" "rds_monitoring_attachment" {
+  role       = aws_iam_role.rds_monitoring_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
