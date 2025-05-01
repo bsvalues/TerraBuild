@@ -136,14 +136,20 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .orderBy(desc(costMatrix.year));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Apply filters based on request
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      query = query.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
     if (request.regions && request.regions.length > 0) {
-      query = query.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     // Execute query
     const costData = await query;
@@ -172,15 +178,21 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(regions, eq(costMatrix.region, regions.code));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Apply building type filter if provided
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      query = query.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
     // Apply region filter if provided
     if (request.regions && request.regions.length > 0) {
-      query = query.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     const costByRegion = await query;
     
@@ -207,15 +219,21 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(buildingTypes, eq(costMatrix.buildingType, buildingTypes.code));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Apply building type filter if provided
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      query = query.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
     // Apply region filter if provided
     if (request.regions && request.regions.length > 0) {
-      query = query.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     const costByBuildingType = await query;
     
@@ -239,10 +257,16 @@ export class StorytellingService {
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      query = query.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     const propertyData = await query;
     
@@ -267,10 +291,16 @@ export class StorytellingService {
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId))
       .leftJoin(properties, eq(improvements.propertyId, properties.id));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      query = query.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     const improvementData = await query;
     
@@ -292,10 +322,16 @@ export class StorytellingService {
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
+    // Create a new query with filters if needed
+    let filteredQuery = query;
+    
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      query = query.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
     }
+    
+    // Use the filtered query
+    query = filteredQuery;
     
     const infrastructureData = await query;
     
@@ -322,10 +358,16 @@ export class StorytellingService {
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
+    // Create a new query with filters if needed
+    let filteredPropertyQuery = propertyQuery;
+    
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      propertyQuery = propertyQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      filteredPropertyQuery = filteredPropertyQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
     }
+    
+    // Use the filtered query
+    propertyQuery = filteredPropertyQuery;
     
     const propertyData = await propertyQuery;
     
