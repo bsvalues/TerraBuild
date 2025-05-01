@@ -1,10 +1,9 @@
-name: Deploy
+name: TerraFusion Deployment
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       environment:
@@ -16,116 +15,226 @@ on:
           - dev
           - staging
           - prod
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+        type: string
 
 jobs:
-  determine_environment:
-    name: Determine Environment
+  prepare:
+    name: Prepare Deployment
     runs-on: ubuntu-latest
+    
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
+      version: ${{ steps.set-version.outputs.version }}
+    
     steps:
-      - id: set-env
+      - name: Set environment
+        id: set-env
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "environment=prod" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
           else
             echo "environment=dev" >> $GITHUB_OUTPUT
           fi
+      
+      - name: Set version
+        id: set-version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "version=latest" >> $GITHUB_OUTPUT
+          fi
   
-  deploy:
-    name: Deploy to ${{ needs.determine_environment.outputs.environment }}
+  build:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    needs: determine_environment
-    environment: ${{ needs.determine_environment.outputs.environment }}
+    needs: prepare
+    
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+      VERSION: ${{ needs.prepare.outputs.version }}
     
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-          
+          aws-region: ${{ vars.AWS_REGION }}
+      
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
       
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build and push
+        uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/terrafusion:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/terrafusion:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ENVIRONMENT }}-terrafusion:${{ env.VERSION }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ENVIRONMENT }}-terrafusion:latest
+          build-args: |
+            NODE_ENV=${{ env.ENVIRONMENT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: Set image URI output
+        id: image-uri
+        run: echo "image_uri=${{ steps.login-ecr.outputs.registry }}/${{ env.ENVIRONMENT }}-terrafusion:${{ env.VERSION }}" >> $GITHUB_OUTPUT
+    
+    outputs:
+      image_uri: ${{ steps.image-uri.outputs.image_uri }}
+  
+  deploy:
+    name: Deploy to ${{ needs.prepare.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    environment: ${{ needs.prepare.outputs.environment }}
+    
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      IMAGE_URI: ${{ needs.build.outputs.image_uri }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          terraform_version: 1.4.5
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
       
-      - name: Terraform Init
-        run: |
-          cd terraform/environments/${{ needs.determine_environment.outputs.environment }}
-          terraform init
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
       
-      - name: Terraform Plan
+      - name: Install AWS CLI
         run: |
-          cd terraform/environments/${{ needs.determine_environment.outputs.environment }}
-          terraform plan -var="app_version=${{ github.sha }}" -out=tfplan
-        
-      - name: Terraform Apply
-        run: |
-          cd terraform/environments/${{ needs.determine_environment.outputs.environment }}
-          terraform apply -auto-approve tfplan
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update
       
-      - name: Deploy Database Migrations
+      - name: Install dependencies
+        run: npm ci
+      
+      # Create task definition with new image
+      - name: Render task definition
+        id: render-task-def
         run: |
-          npm ci
-          npm run db:migrate
+          TASK_DEF_PATH=scripts/deployment/task-definition-template.json
+          
+          # Replace placeholders in task definition
+          jq '.containerDefinitions[0].image = env.IMAGE_URI' $TASK_DEF_PATH > task-definition.json
+          
+          echo "Task definition:"
+          cat task-definition.json
+      
+      # Use blue/green deployment
+      - name: Install deployment dependencies
+        run: npm install aws-sdk
+      
+      - name: Run blue/green deployment
+        run: |
+          node scripts/deployment/blue_green_deploy.js \
+            --environment ${{ env.ENVIRONMENT }} \
+            --image-tag ${{ env.VERSION }} \
+            --task-def task-definition.json
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NODE_ENV: ${{ needs.determine_environment.outputs.environment }}
-          
-      - name: Health Check
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      
+      # Apply database migrations if needed
+      - name: Apply database migrations
+        if: ${{ env.ENVIRONMENT != 'prod' }}
         run: |
-          HEALTH_URL=$(cd terraform/environments/${{ needs.determine_environment.outputs.environment }} && terraform output -raw api_health_url)
-          attempts=0
-          max_attempts=30
-          until $(curl --output /dev/null --silent --fail $HEALTH_URL) || [ $attempts -eq $max_attempts ]; do
-            attempts=$((attempts+1))
-            echo "Waiting for deployment to be ready... ($attempts/$max_attempts)"
-            sleep 10
-          done
-          
-          if [ $attempts -eq $max_attempts ]; then
-            echo "Deployment failed health check"
-            exit 1
-          fi
-          
-          echo "Deployment successful"
-
+          ./scripts/deployment/db-migration.sh \
+            -e ${{ env.ENVIRONMENT }} \
+            -d ${{ secrets.DATABASE_URL }} \
+            apply
+      
+      # For production, run migrations with explicit approval
+      - name: Apply database migrations (production)
+        if: ${{ env.ENVIRONMENT == 'prod' }}
+        run: |
+          ./scripts/deployment/db-migration.sh \
+            -e ${{ env.ENVIRONMENT }} \
+            -d ${{ secrets.DATABASE_URL }} \
+            -f \
+            apply
+  
   notify:
     name: Notify Deployment Status
     runs-on: ubuntu-latest
-    needs: [deploy]
+    needs: [prepare, build, deploy]
     if: always()
+    
+    env:
+      ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    
     steps:
-      - name: Notify Slack
-        uses: rtCamp/action-slack-notify@v2
+      - name: Check deployment status
+        id: check_status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "color=#36a64f" >> $GITHUB_OUTPUT
+            echo "message=✅ Deployment to ${{ env.ENVIRONMENT }} completed successfully (Version: ${{ env.VERSION }})" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "color=#dc3545" >> $GITHUB_OUTPUT
+            echo "message=❌ Deployment to ${{ env.ENVIRONMENT }} failed (Version: ${{ env.VERSION }})" >> $GITHUB_OUTPUT
+          fi
+      
+      # Slack notification
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.check_status.outputs.status }}
+          text: ${{ steps.check_status.outputs.message }}
+          fields: repo,commit,author,action,eventName,ref,workflow
+          color: ${{ steps.check_status.outputs.color }}
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: deployments
-          SLACK_TITLE: Deployment ${{ needs.deploy.result == 'success' && 'Successful' || 'Failed' }}
-          SLACK_MESSAGE: |
-            Environment: ${{ needs.determine_environment.outputs.environment }}
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Status: ${{ needs.deploy.result == 'success' && '✅ Success' || '❌ Failed' }}
-          SLACK_COLOR: ${{ needs.deploy.result == 'success' && 'good' || 'danger' }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+      
+      # Teams notification
+      - name: Send Microsoft Teams notification
+        uses: aliencube/microsoft-teams-actions@v0.8.0
+        with:
+          webhook_uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          title: "TerraFusion Deployment"
+          summary: ${{ steps.check_status.outputs.message }}
+          theme_color: ${{ steps.check_status.outputs.color }}
+          sections: |
+            [{
+              "activityTitle": "${{ steps.check_status.outputs.message }}",
+              "activitySubtitle": "Deployed to ${{ env.ENVIRONMENT }} environment",
+              "facts": [
+                { "name": "Environment", "value": "${{ env.ENVIRONMENT }}" },
+                { "name": "Version", "value": "${{ env.VERSION }}" },
+                { "name": "Triggered by", "value": "${{ github.actor }}" },
+                { "name": "Repository", "value": "${{ github.repository }}" }
+              ]
+            }]
+        if: ${{ secrets.MS_TEAMS_WEBHOOK_URI != '' }}

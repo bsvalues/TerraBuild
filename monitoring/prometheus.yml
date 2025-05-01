@@ -1,0 +1,79 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+scrape_configs:
+  # TerraFusion Application
+  - job_name: 'terrafusion'
+    metrics_path: '/api/metrics'
+    scheme: https
+    static_configs:
+      - targets: ['terrafusion.benton-county.example.com']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '(.*)'
+        replacement: '$1'
+  
+  # ECS Service
+  - job_name: 'ecs'
+    static_configs:
+      - targets: ['prometheus-ecs-sd:9090']
+    relabel_configs:
+      - source_labels: [__meta_ecs_cluster_name]
+        target_label: cluster
+      - source_labels: [__meta_ecs_service_name]
+        target_label: service
+      - source_labels: [__meta_ecs_task_definition_family]
+        target_label: task_definition
+      - source_labels: [__meta_ecs_container_name]
+        target_label: container_name
+  
+  # Node Exporter
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+  
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  
+  # AWS CloudWatch Exporter
+  - job_name: 'cloudwatch'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    scrape_interval: 1m
+    scrape_timeout: 30s
+  
+  # PostgreSQL Exporter
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+  
+  # Alert Manager
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+  
+  # cAdvisor
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [container_label_com_amazonaws_ecs_task_definition_family]
+        target_label: task_definition
+      - source_labels: [container_label_com_amazonaws_ecs_cluster]
+        target_label: cluster
+      - source_labels: [container_label_com_amazonaws_ecs_service]
+        target_label: service
