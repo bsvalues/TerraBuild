@@ -1,24 +1,35 @@
-output "database_endpoint" {
-  description = "The connection endpoint for the PostgreSQL database"
+output "db_instance_id" {
+  description = "ID of the RDS instance"
+  value       = aws_db_instance.postgres.id
+}
+
+output "db_instance_address" {
+  description = "Address of the RDS instance"
+  value       = aws_db_instance.postgres.address
+}
+
+output "db_instance_endpoint" {
+  description = "Endpoint of the RDS instance"
   value       = aws_db_instance.postgres.endpoint
 }
 
-output "database_name" {
-  description = "The name of the PostgreSQL database"
+output "db_instance_port" {
+  description = "Port of the RDS instance"
+  value       = aws_db_instance.postgres.port
+}
+
+output "db_name" {
+  description = "Name of the database"
   value       = aws_db_instance.postgres.db_name
 }
 
-output "database_username" {
-  description = "The username for the PostgreSQL database"
-  value       = aws_db_instance.postgres.username
+output "db_secret_arn" {
+  description = "ARN of the secret containing database credentials"
+  value       = aws_secretsmanager_secret.db_credentials.arn
 }
 
-output "database_port" {
-  description = "The port for the PostgreSQL database"
-  value       = 5432
-}
-
-output "database_security_group_id" {
-  description = "The ID of the security group for the PostgreSQL database"
-  value       = aws_security_group.database.id
+output "connection_url" {
+  description = "PostgreSQL connection URL"
+  value       = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}"
+  sensitive   = true
 }
