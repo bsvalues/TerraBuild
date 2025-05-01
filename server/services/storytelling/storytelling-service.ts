@@ -1,6 +1,6 @@
 import { generateNarrative } from './anthropic-client';
 import { db } from '../../db';
-import { eq, desc, or } from 'drizzle-orm';
+import { eq, desc, or, and, SQL } from 'drizzle-orm';
 import { 
   costMatrix, 
   matrixDetail, 
@@ -130,29 +130,29 @@ export class StorytellingService {
    * Gather data for cost trends analysis
    */
   private async gatherCostTrendsData(request: StoryRequest): Promise<any> {
-    // Get cost matrices with their details
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(costMatrix)
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .orderBy(desc(costMatrix.year));
+      
+    // Build conditions array
+    const conditions: SQL[] = [];
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
-    
-    // Apply filters based on request
+    // Add building type filter if provided
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
+    // Add region filter if provided
     if (request.regions && request.regions.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
     
-    // Use the filtered query
-    query = filteredQuery;
-    
-    // Execute query
-    const costData = await query;
+    // Execute query with all conditions combined
+    const costData = conditions.length > 0
+      ? await baseQuery.where(and(...conditions))
+      : await baseQuery;
     
     // Get building type and region details for better context
     const buildingTypeDetails = await db.select().from(buildingTypes);
@@ -172,29 +172,29 @@ export class StorytellingService {
     // Get region details
     const regionsList = await db.select().from(regions);
     
-    // Get cost data by region
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(costMatrix)
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(regions, eq(costMatrix.region, regions.code));
+      
+    // Build conditions array
+    const conditions: SQL[] = [];
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
-    
-    // Apply building type filter if provided
+    // Add building type filter if provided
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
-    // Apply region filter if provided
+    // Add region filter if provided
     if (request.regions && request.regions.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
     
-    // Use the filtered query
-    query = filteredQuery;
-    
-    const costByRegion = await query;
+    // Execute query with all conditions combined
+    const costByRegion = conditions.length > 0
+      ? await baseQuery.where(and(...conditions))
+      : await baseQuery;
     
     // Calculate average costs by region
     const regionalAverages = this.calculateRegionalAverages(costByRegion);
@@ -213,29 +213,29 @@ export class StorytellingService {
     // Get building type details
     const buildingTypesList = await db.select().from(buildingTypes);
     
-    // Get cost data by building type
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(costMatrix)
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(buildingTypes, eq(costMatrix.buildingType, buildingTypes.code));
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
+    // Build conditions array
+    const conditions: SQL[] = [];
     
-    // Apply building type filter if provided
+    // Add building type filter if provided
     if (request.buildingTypes && request.buildingTypes.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
     }
     
-    // Apply region filter if provided
+    // Add region filter if provided
     if (request.regions && request.regions.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.regions.map(r => eq(costMatrix.region, r))));
+      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
     }
     
-    // Use the filtered query
-    query = filteredQuery;
-    
-    const costByBuildingType = await query;
+    // Execute query with all conditions combined
+    const costByBuildingType = conditions.length > 0
+      ? await baseQuery.where(and(...conditions))
+      : await baseQuery;
     
     // Calculate average costs by building type
     const buildingTypeAverages = this.calculateBuildingTypeAverages(costByBuildingType);
@@ -251,24 +251,20 @@ export class StorytellingService {
    * Gather data for property insights
    */
   private async gatherPropertyInsightsData(request: StoryRequest): Promise<any> {
-    // Get property data
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(properties)
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
+    let propertyData;
     
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      propertyData = await baseQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+    } else {
+      propertyData = await baseQuery;
     }
-    
-    // Use the filtered query
-    query = filteredQuery;
-    
-    const propertyData = await query;
     
     // Get relevant cost matrices for context
     const relevantCostMatrices = await db.select()
@@ -285,24 +281,20 @@ export class StorytellingService {
    * Gather data for improvement analysis
    */
   private async gatherImprovementAnalysisData(request: StoryRequest): Promise<any> {
-    // Get improvement data
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(improvements)
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId))
       .leftJoin(properties, eq(improvements.propertyId, properties.id));
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
+    let improvementData;
     
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      improvementData = await baseQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+    } else {
+      improvementData = await baseQuery;
     }
-    
-    // Use the filtered query
-    query = filteredQuery;
-    
-    const improvementData = await query;
     
     return {
       improvementData
@@ -316,24 +308,20 @@ export class StorytellingService {
     // This would typically involve collecting metrics from monitoring systems
     // For now, we'll use a simplified approach with the data we have
     
-    // Get property and improvement data
-    let query = db.select()
+    // Base query with no filters
+    const baseQuery = db.select()
       .from(properties)
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
-    // Create a new query with filters if needed
-    let filteredQuery = query;
+    let infrastructureData;
     
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      filteredQuery = filteredQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      infrastructureData = await baseQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+    } else {
+      infrastructureData = await baseQuery;
     }
-    
-    // Use the filtered query
-    query = filteredQuery;
-    
-    const infrastructureData = await query;
     
     // We would typically have more health indicators here
     return {
