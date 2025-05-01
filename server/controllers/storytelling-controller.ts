@@ -57,13 +57,13 @@ export class StorytellingController {
         success: true,
         story
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating story:', error);
       
       res.status(500).json({
         success: false,
         error: 'Error generating story',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -118,13 +118,13 @@ export class StorytellingController {
         success: true,
         storyTypes
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error getting story types:', error);
       
       res.status(500).json({
         success: false,
         error: 'Error getting story types',
-        message: error.message
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   }
