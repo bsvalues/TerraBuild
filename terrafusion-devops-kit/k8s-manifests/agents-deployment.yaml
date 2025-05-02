@@ -1,143 +1,45 @@
+---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: terrafusion-agents
   labels:
     name: terrafusion-agents
-    part-of: terrafusion
-    environment: ${ENVIRONMENT}
-
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agents
 ---
-# Agent namespace network policy - restrict to only needed communications
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: agents-network-policy
-  namespace: terrafusion-agents
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  # Allow from backend
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: default
-      podSelector:
-        matchLabels:
-          app.kubernetes.io/name: terrafusion-backend
-    ports:
-    - protocol: TCP
-      port: 4000
-  # Allow from other agents
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: terrafusion-agents
-    ports:
-    - protocol: TCP
-      port: 4000
-  # Allow from monitoring
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: monitoring
-    ports:
-    - protocol: TCP
-      port: 9090
-  egress:
-  # Allow to backend
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: default
-      podSelector:
-        matchLabels:
-          app.kubernetes.io/name: terrafusion-backend
-    ports:
-    - protocol: TCP
-      port: 5000
-  # Allow to Vault
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: vault
-    ports:
-    - protocol: TCP
-      port: 8200
-  # Allow to other agents
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: terrafusion-agents
-    ports:
-    - protocol: TCP
-      port: 4000
-  # Allow to databases
-  - to:
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          app: postgres
-    ports:
-    - protocol: TCP
-      port: 5432
-  # Allow external API access
-  - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
-        except:
-        - 10.0.0.0/8
-        - 172.16.0.0/12
-        - 192.168.0.0/16
-    ports:
-    - protocol: TCP
-      port: 443
-
----
-# ResourceQuota for the agents namespace
 apiVersion: v1
-kind: ResourceQuota
+kind: ConfigMap
 metadata:
-  name: agents-quota
+  name: terrafusion-agents-config
   namespace: terrafusion-agents
-spec:
-  hard:
-    pods: "20"
-    requests.cpu: "10"
-    requests.memory: 20Gi
-    limits.cpu: "20"
-    limits.memory: 40Gi
-
+data:
+  # Global agent configuration
+  ENVIRONMENT: "${ENVIRONMENT}"
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  MCP_FRAMEWORK_PORT: "4000"
+  MCP_COORDINATOR_PORT: "4100"
+  AGENT_POLL_INTERVAL: "5000"
+  METRICS_PORT: "9090"
+  
+  # Model settings
+  MODEL_VERSION: "1.0.0"
+  MODEL_PROVIDER: "openai"
+  MODEL_DEFAULTS: "{\"temperature\":0.7,\"max_tokens\":1000}"
 ---
-# LimitRange for the agents namespace
 apiVersion: v1
-kind: LimitRange
+kind: Secret
 metadata:
-  name: agents-limits
+  name: terrafusion-agents-secrets
   namespace: terrafusion-agents
-spec:
-  limits:
-  - default:
-      memory: 1Gi
-      cpu: 500m
-    defaultRequest:
-      memory: 256Mi
-      cpu: 100m
-    type: Container
-
----
-# Service Account for Agent Pods
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: terrafusion-agent
-  namespace: terrafusion-agents
-  annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/terrafusion-agents-${ENVIRONMENT}"
-
+type: Opaque
+data:
+  # These are placeholders, actual secrets will be managed by AWS Secrets Manager
+  DATABASE_URL: "" # Will be injected by environment
+  AI_API_KEY: "" # Will be injected by environment
 ---
 # Factor Tuner Agent Deployment
 apiVersion: apps/v1
@@ -146,218 +48,426 @@ metadata:
   name: factor-tuner
   namespace: terrafusion-agents
   labels:
+    app: factor-tuner
+    role: agent
     app.kubernetes.io/name: factor-tuner
-    app.kubernetes.io/part-of: terrafusion-agents
-    app.kubernetes.io/component: ai-agent
-    agent-type: cost-analysis
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: factor-tuner
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      app: factor-tuner
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: factor-tuner
-        app.kubernetes.io/part-of: terrafusion-agents
-        app.kubernetes.io/component: ai-agent
-        agent-type: cost-analysis
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/agent-inject-status: "update"
-        vault.hashicorp.com/role: "agent"
-        vault.hashicorp.com/agent-inject-secret-db-creds: "secret/data/terrafusion/databases/terrafusion"
-        vault.hashicorp.com/agent-inject-template-db-creds: |
-          {{- with secret "secret/data/terrafusion/databases/terrafusion" -}}
-          export DATABASE_URL="postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@{{ .Data.data.host }}:{{ .Data.data.port }}/{{ .Data.data.dbname }}"
-          {{- end -}}
-        vault.hashicorp.com/agent-inject-secret-ai-keys: "secret/data/terrafusion/ai-providers"
-        vault.hashicorp.com/agent-inject-template-ai-keys: |
-          {{- with secret "secret/data/terrafusion/ai-providers/openai" -}}
-          export OPENAI_API_KEY="{{ .Data.data.key }}"
-          {{- end -}}
-          {{- with secret "secret/data/terrafusion/ai-providers/anthropic" -}}
-          export ANTHROPIC_API_KEY="{{ .Data.data.key }}"
-          {{- end -}}
-        vault.hashicorp.com/agent-inject-secret-agent-key: "secret/data/terrafusion/agents/factor-tuner/api-key"
-        vault.hashicorp.com/agent-inject-template-agent-key: |
-          {{- with secret "secret/data/terrafusion/agents/factor-tuner/api-key" -}}
-          export AGENT_API_KEY="{{ .Data.data.key }}"
-          {{- end -}}
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: "9090"
+        app: factor-tuner
+        role: agent
     spec:
       serviceAccountName: terrafusion-agent
       containers:
       - name: factor-tuner
         image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-factor-tuner:${AGENT_VERSION}
-        imagePullPolicy: Always
-        command: ["/bin/sh", "-c"]
-        args:
-        - |
-          source /vault/secrets/db-creds
-          source /vault/secrets/ai-keys
-          source /vault/secrets/agent-key
-          node server/agents/factor-tuner/index.js
-        env:
-        - name: NODE_ENV
-          value: production
-        - name: PORT
-          value: "4000"
-        - name: METRICS_PORT
-          value: "9090"
-        - name: LOG_LEVEL
-          value: info
-        - name: BACKEND_URL
-          value: "http://terrafusion-backend.default.svc.cluster.local:5000"
-        - name: AGENT_ID
-          value: "factor-tuner"
-        - name: AGENT_NAME
-          value: "Factor Tuner"
         ports:
-        - name: http
-          containerPort: 4000
-          protocol: TCP
-        - name: metrics
-          containerPort: 9090
-          protocol: TCP
+        - containerPort: 4000
+          name: mcp
+        - containerPort: 9090
+          name: metrics
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+          - configMapRef:
+              name: terrafusion-agents-config
+        env:
+          - name: AGENT_ID
+            value: "factor-tuner"
+          - name: AGENT_NAME
+            value: "Factor Tuner"
+          - name: MODEL_PATH
+            value: "/app/data/models/factor-tuner"
+          - name: TRAINING_DATA_PATH
+            value: "/app/data/training/factor-tuner"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-db-credentials
+                key: url
+          - name: AI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-ai-credentials
+                key: api_key
+        volumeMounts:
+          - name: models-volume
+            mountPath: /app/data/models
+          - name: training-volume
+            mountPath: /app/data/training
+          - name: logs-volume
+            mountPath: /app/logs
         livenessProbe:
           httpGet:
             path: /health
-            port: http
+            port: 4000
           initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 3
+          periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /health/ready
-            port: http
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 2
+            path: /health
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+      volumes:
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: models-pvc
+        - name: training-volume
+          persistentVolumeClaim:
+            claimName: training-pvc
+        - name: logs-volume
+          emptyDir: {}
+---
+# Benchmark Guard Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmark-guard
+  namespace: terrafusion-agents
+  labels:
+    app: benchmark-guard
+    role: agent
+    app.kubernetes.io/name: benchmark-guard
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benchmark-guard
+  template:
+    metadata:
+      labels:
+        app: benchmark-guard
+        role: agent
+    spec:
+      serviceAccountName: terrafusion-agent
+      containers:
+      - name: benchmark-guard
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-benchmark-guard:${AGENT_VERSION}
+        ports:
+        - containerPort: 4000
+          name: mcp
+        - containerPort: 9090
+          name: metrics
         resources:
           limits:
-            cpu: 1000m
-            memory: 2Gi
+            cpu: "1"
+            memory: "1Gi"
           requests:
-            cpu: 200m
-            memory: 512Mi
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+          - configMapRef:
+              name: terrafusion-agents-config
+        env:
+          - name: AGENT_ID
+            value: "benchmark-guard"
+          - name: AGENT_NAME
+            value: "Benchmark Guard"
+          - name: MODEL_PATH
+            value: "/app/data/models/benchmark-guard"
+          - name: TRAINING_DATA_PATH
+            value: "/app/data/training/benchmark-guard"
+          - name: BENCHMARKS_PATH
+            value: "/app/data/benchmarks"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-db-credentials
+                key: url
+          - name: AI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-ai-credentials
+                key: api_key
         volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: training-data
-          mountPath: /app/data/training/factor-tuner
-        - name: model-storage
-          mountPath: /app/data/models/factor-tuner
+          - name: models-volume
+            mountPath: /app/data/models
+          - name: training-volume
+            mountPath: /app/data/training
+          - name: benchmarks-volume
+            mountPath: /app/data/benchmarks
+          - name: logs-volume
+            mountPath: /app/logs
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 5
       volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: training-data
-        persistentVolumeClaim:
-          claimName: factor-tuner-training-data
-      - name: model-storage
-        persistentVolumeClaim:
-          claimName: factor-tuner-model-storage
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: models-pvc
+        - name: training-volume
+          persistentVolumeClaim:
+            claimName: training-pvc
+        - name: benchmarks-volume
+          persistentVolumeClaim:
+            claimName: benchmarks-pvc
+        - name: logs-volume
+          emptyDir: {}
 ---
-# Factor Tuner Agent Service
+# Curve Trainer Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curve-trainer
+  namespace: terrafusion-agents
+  labels:
+    app: curve-trainer
+    role: agent
+    app.kubernetes.io/name: curve-trainer
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curve-trainer
+  template:
+    metadata:
+      labels:
+        app: curve-trainer
+        role: agent
+    spec:
+      serviceAccountName: terrafusion-agent
+      containers:
+      - name: curve-trainer
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-curve-trainer:${AGENT_VERSION}
+        ports:
+        - containerPort: 4000
+          name: mcp
+        - containerPort: 9090
+          name: metrics
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+        envFrom:
+          - configMapRef:
+              name: terrafusion-agents-config
+        env:
+          - name: AGENT_ID
+            value: "curve-trainer"
+          - name: AGENT_NAME
+            value: "Curve Trainer"
+          - name: MODEL_PATH
+            value: "/app/data/models/curve-trainer"
+          - name: TRAINING_DATA_PATH
+            value: "/app/data/training/curve-trainer"
+          - name: CURVE_LIBRARIES_PATH
+            value: "/app/data/curve-libraries"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-db-credentials
+                key: url
+          - name: AI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: terrafusion-ai-credentials
+                key: api_key
+        volumeMounts:
+          - name: models-volume
+            mountPath: /app/data/models
+          - name: training-volume
+            mountPath: /app/data/training
+          - name: curve-libraries-volume
+            mountPath: /app/data/curve-libraries
+          - name: logs-volume
+            mountPath: /app/logs
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+      volumes:
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: models-pvc
+        - name: training-volume
+          persistentVolumeClaim:
+            claimName: training-pvc
+        - name: curve-libraries-volume
+          persistentVolumeClaim:
+            claimName: curve-libraries-pvc
+        - name: logs-volume
+          emptyDir: {}
+---
+# Service Account for Agents
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: terrafusion-agent
+  namespace: terrafusion-agents
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/terrafusion-agents-${ENVIRONMENT}"
+---
+# Persistent Volume Claims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-pvc
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: training-pvc
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: benchmarks-pvc
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: curve-libraries-pvc
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 2Gi
+---
+# Monitoring with ServiceMonitor (for Prometheus)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: terrafusion-agents
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: terrafusion
+      app.kubernetes.io/component: agent
+  namespaceSelector:
+    matchNames:
+      - terrafusion-agents
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+---
+# Services for each agent for metrics and internal communication
 apiVersion: v1
 kind: Service
 metadata:
   name: factor-tuner
   namespace: terrafusion-agents
   labels:
+    app: factor-tuner
     app.kubernetes.io/name: factor-tuner
-    app.kubernetes.io/part-of: terrafusion-agents
-    app.kubernetes.io/component: ai-agent
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/path: "/metrics"
-    prometheus.io/port: "9090"
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
 spec:
   ports:
   - port: 4000
-    targetPort: http
-    protocol: TCP
-    name: http
+    name: mcp
+    targetPort: mcp
   - port: 9090
-    targetPort: metrics
-    protocol: TCP
     name: metrics
+    targetPort: metrics
   selector:
-    app.kubernetes.io/name: factor-tuner
-  type: ClusterIP
-
----
-# Persistent Volume Claims for Factor Tuner
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: factor-tuner-training-data
-  namespace: terrafusion-agents
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: gp2
-  resources:
-    requests:
-      storage: 5Gi
-
+    app: factor-tuner
 ---
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Service
 metadata:
-  name: factor-tuner-model-storage
+  name: benchmark-guard
   namespace: terrafusion-agents
+  labels:
+    app: benchmark-guard
+    app.kubernetes.io/name: benchmark-guard
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
 spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: gp2
-  resources:
-    requests:
-      storage: 10Gi
-
+  ports:
+  - port: 4000
+    name: mcp
+    targetPort: mcp
+  - port: 9090
+    name: metrics
+    targetPort: metrics
+  selector:
+    app: benchmark-guard
 ---
-# Horizontal Pod Autoscaler for Factor Tuner
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: v1
+kind: Service
 metadata:
-  name: factor-tuner-hpa
+  name: curve-trainer
   namespace: terrafusion-agents
+  labels:
+    app: curve-trainer
+    app.kubernetes.io/name: curve-trainer
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: agent
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: factor-tuner
-  minReplicas: 1
-  maxReplicas: 3
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-    scaleUp:
-      stabilizationWindowSeconds: 60
+  ports:
+  - port: 4000
+    name: mcp
+    targetPort: mcp
+  - port: 9090
+    name: metrics
+    targetPort: metrics
+  selector:
+    app: curve-trainer

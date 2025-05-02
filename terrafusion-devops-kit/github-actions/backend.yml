@@ -7,7 +7,6 @@ on:
       - 'server/**'
       - 'shared/**'
       - 'package*.json'
-      - 'Dockerfile'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main, develop]
@@ -15,7 +14,6 @@ on:
       - 'server/**'
       - 'shared/**'
       - 'package*.json'
-      - 'Dockerfile'
       - '.github/workflows/backend.yml'
   workflow_dispatch:
     inputs:
@@ -28,11 +26,6 @@ on:
           - dev
           - staging
           - prod
-      debug_enabled:
-        description: 'Enable debug mode'
-        required: false
-        default: false
-        type: boolean
 
 env:
   AWS_REGION: us-west-2
@@ -43,44 +36,71 @@ jobs:
   lint-and-test:
     name: Lint and Test
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: terrafusion_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
-
+      
       - name: Install dependencies
         run: npm ci
-
+      
       - name: Lint code
-        run: npm run lint
-        
+        run: npm run lint:server
+      
       - name: Type check
         run: npm run type-check
-        
+      
       - name: Run unit tests
         run: npm run test:server
         env:
           NODE_ENV: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-          
-      - name: Generate test coverage report
-        run: npm run test:coverage
-        
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
+      
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
+          TEST_AI_API_KEY: ${{ secrets.TEST_AI_API_KEY }}
+      
+      - name: Generate test coverage
+        run: npm run test:coverage:server
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
+      
       - name: Upload test coverage
         uses: actions/upload-artifact@v3
         with:
-          name: test-coverage
-          path: coverage/
-
+          name: backend-test-coverage
+          path: coverage-server/
+  
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
     needs: lint-and-test
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -89,14 +109,14 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: javascript, typescript
-          
+      
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v2
-        
+      
       - name: Run npm audit
         run: npm audit --production
         continue-on-error: true
-        
+      
       - name: Run Snyk scan
         uses: snyk/actions/node@master
         with:
@@ -111,195 +131,132 @@ jobs:
     needs: [lint-and-test, security-scan]
     outputs:
       image: ${{ steps.build-image.outputs.image }}
-      
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          
+      
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-        
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        
+      
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-backend-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
-            
+            ${{ runner.os }}-buildx-backend-
+      
       - name: Build and tag Docker image
         id: build-image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: Dockerfile
+          file: terrafusion-devops-kit/docker/backend.Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
           build-args: |
             NODE_ENV=production
+            BUILD_VERSION=${{ github.sha }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          
+      
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-          
+      
       - name: Output image info
         run: echo "::set-output name=image::${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
-        
-      - name: Generate Software Bill of Materials (SBOM)
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          format: cyclonedx
-          output-file: ./sbom.json
-          
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v3
-        with:
-          name: sbom
-          path: ./sbom.json
-          
+      
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           format: sarif
-          output: trivy-results.sarif
+          output: trivy-backend-results.sarif
           severity: 'CRITICAL,HIGH'
-          
+      
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: trivy-results.sarif
-          
-  integration-test:
-    name: Integration Tests
+          sarif_file: trivy-backend-results.sarif
+  
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     needs: build
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: terrafusion_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Setup test database
-        run: npm run db:setup:test
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
-          
-      - name: Run integration tests
-        run: npm run test:integration
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
-          
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: [build, integration-test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'workflow_dispatch'
-    environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
       
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.4.6
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        
+      
       - name: Set environment
         run: echo "ENVIRONMENT=${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}" >> $GITHUB_ENV
-        
+      
       - name: Update Kubernetes deployment
-        working-directory: ./terrafusion-devops-kit/terraform
         run: |
-          terraform init -backend-config=environments/${ENVIRONMENT}.tfbackend
-          terraform workspace select ${ENVIRONMENT} || terraform workspace new ${ENVIRONMENT}
+          # Configure kubectl
+          aws eks update-kubeconfig --name terrafusion-${ENVIRONMENT} --region ${AWS_REGION}
           
-          # Update image tag in Terraform variables
-          cat > image_version.auto.tfvars <<EOF
-          backend_image_tag = "${{ env.IMAGE_TAG }}"
-          EOF
+          # Update backend deployment with new image
+          kubectl set image deployment/terrafusion-backend backend=${needs.build.outputs.image} -n default
           
-          # Validate and plan
-          terraform validate
-          terraform plan -var-file=environments/${ENVIRONMENT}.tfvars -out=tfplan
-          
-          # Apply if auto-approve is enabled for the environment
-          if [[ "${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}" != "prod" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            terraform apply -auto-approve tfplan
-          else
-            echo "Production deployment requires manual approval. Please review and apply the plan in the Terraform Cloud console."
-          fi
-          
-      - name: Run post-deployment tests
-        if: success()
+          # Wait for rollout to complete
+          kubectl rollout status deployment/terrafusion-backend -n default --timeout=300s
+      
+      - name: Run health check
         run: |
-          # Get the API endpoint from Terraform outputs
-          API_ENDPOINT=$(terraform -chdir=./terrafusion-devops-kit/terraform output -raw api_gateway_endpoint)
+          # Get the backend service URL
+          SERVICE_URL=$(kubectl get service terrafusion-backend -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          PORT=$(kubectl get service terrafusion-backend -n default -o jsonpath='{.spec.ports[0].port}')
           
-          # Wait for the deployment to be ready
-          echo "Waiting for deployment to be ready..."
-          sleep 30
+          # Wait for DNS propagation and service to be available
+          echo "Waiting for service to be available..."
+          attempts=0
+          max_attempts=30
+          until $(curl --output /dev/null --silent --fail http://${SERVICE_URL}:${PORT}/health); do
+            if [ ${attempts} -eq ${max_attempts} ]; then
+              echo "Service health check failed after ${max_attempts} attempts"
+              exit 1
+            fi
+            
+            printf '.'
+            attempts=$(($attempts+1))
+            sleep 10
+          done
           
-          # Run health check
-          echo "Running health check..."
-          curl -s -f "${API_ENDPOINT}/api/health" || exit 1
-          
-          echo "Deployment successfully verified!"
-          
+          echo "Health check passed!"
+      
       - name: Notify on success
         if: success()
         uses: slackapi/slack-github-action@v1
@@ -329,10 +286,6 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Commit:*\n<${{ github.event.repository.html_url }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Build:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View build details>"
                     }
                   ]
                 }
@@ -341,7 +294,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          
+      
       - name: Notify on failure
         if: failure()
         uses: slackapi/slack-github-action@v1
@@ -371,10 +324,6 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Commit:*\n<${{ github.event.repository.html_url }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Build:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View build details>"
                     }
                   ]
                 }
