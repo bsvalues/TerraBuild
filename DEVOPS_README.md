@@ -1,168 +1,177 @@
-# TerraFusion DevOps Guide
+# TerraFusion DevOps Kit
 
-This guide provides an overview of the DevOps implementation for the TerraFusion project. It covers infrastructure provisioning, CI/CD pipelines, database management, and deployment procedures.
+This DevOps Kit provides a comprehensive set of tools and infrastructure configurations to operationalize the TerraFusion AI-Agents system for Benton County's infrastructure optimization platform.
 
-## Table of Contents
+## 🚀 Getting Started
 
-1. [Infrastructure Overview](#infrastructure-overview)
-2. [Environment Configuration](#environment-configuration)
-3. [Deployment Pipeline](#deployment-pipeline)
-4. [Database Management](#database-management)
-5. [Monitoring and Logging](#monitoring-and-logging)
-6. [Disaster Recovery](#disaster-recovery)
-7. [Local Development](#local-development)
+The DevOps Kit is organized in the `terrafusion-devops-kit` directory and contains everything needed to deploy, monitor, and manage the TerraFusion platform and its AI Agents.
 
-## Infrastructure Overview
+### Prerequisites
 
-TerraFusion infrastructure is provisioned and managed using Infrastructure as Code (IaC) with Terraform. The infrastructure includes:
+- AWS account with appropriate permissions
+- Kubernetes cluster (EKS) or ability to create one
+- Terraform >= 1.0.0
+- kubectl
+- Helm >= 3.0
+- Docker
+- jq
+- AWS CLI
+- Basic understanding of Kubernetes, Terraform, and CI/CD concepts
 
-- VPC with public and private subnets
-- RDS PostgreSQL database
-- ElastiCache Redis
-- ECS (Elastic Container Service) for application hosting
-- CloudWatch for monitoring and logging
-- S3 for data storage
-- Route53 for DNS management
+### DevOps Kit Structure
 
-All resources are tagged appropriately for cost tracking and management.
-
-## Environment Configuration
-
-The project supports three environments:
-
-1. **Development (dev)** - For ongoing development and testing
-2. **Staging (staging)** - For pre-production validation
-3. **Production (prod)** - For live application
-
-Each environment has its own configuration located in `terraform/environments/<env>/`. The environment configurations include:
-
-- `terraform.tfvars` - Environment-specific variables
-- `backend.tfvars` - Terraform backend configuration for state storage
-
-### Setting Up AWS Profiles
-
-For local development and manual operations, configure AWS profiles for each environment:
-
-```bash
-aws configure --profile terrabuild-dev
-aws configure --profile terrabuild-staging
-aws configure --profile terrabuild-prod
+```
+terrafusion-devops-kit/
+├── README.md                   # DevOps Kit overview
+├── terraform/                  # Infrastructure as Code definitions
+│   ├── main.tf                 # Main Terraform configuration
+│   ├── variables.tf            # Input variables
+│   └── outputs.tf              # Output values
+├── helm/                       # Helm charts for Kubernetes
+│   ├── terrafusion-backend/
+│   ├── terrafusion-frontend/
+│   └── swarm-agents/
+├── docker/                     # Dockerfile templates
+│   ├── backend.Dockerfile
+│   ├── frontend.Dockerfile
+│   └── agent-base.Dockerfile
+├── github-actions/             # CI/CD workflow definitions
+│   ├── backend.yml             # Backend build & deploy workflow
+│   ├── frontend.yml            # Frontend build & deploy workflow
+│   └── swarm.yml               # AI Agent build & deploy workflow
+├── k8s-manifests/              # Kubernetes manifest templates
+│   ├── ingress.yaml
+│   ├── agents-deployment.yaml
+│   └── services.yaml
+├── secrets/                    # Vault templates & configs
+│   └── vault-templates.hcl
+├── observability/              # Monitoring & logging configs
+│   ├── loki.yaml
+│   ├── prom-config.yaml
+│   └── grafana-dashboards/
+│       └── swarm-agent-activity.json
+└── scripts/                    # Utility scripts
+    ├── deploy-all.sh           # Full deployment script
+    ├── update-agents.sh        # Agent-specific update script
+    └── rotate-secrets.sh       # Secret rotation script
 ```
 
-## Deployment Pipeline
+## 🔧 Common Tasks
 
-The CI/CD pipeline is implemented using GitHub Actions. The workflow consists of the following stages:
+### Deploying the Complete Stack
 
-### Continuous Integration
-
-The CI pipeline is defined in `.github/workflows/ci.yml` and runs on every pull request and push to the main and development branches. It includes:
-
-1. **Linting and Code Quality Checks** - ESLint and formatting
-2. **Unit and Integration Tests** - With a test database
-3. **Build** - Compiles the application
-4. **Security Scan** - Checks for vulnerabilities
-5. **Docker Image Build** - Creates and pushes a container image
-
-### Continuous Deployment
-
-The CD pipeline is defined in `.github/workflows/deploy.yml` and is triggered manually with environment selection. It includes:
-
-1. **Database Backup** - Creates a backup before deployment
-2. **Infrastructure Deployment** - Applies Terraform changes
-3. **Application Deployment** - Deploys the application to ECS
-4. **Post-Deployment Verification** - Checks that the application is working
-
-## Database Management
-
-Database operations are managed through scripts in the `scripts/` directory:
-
-### Database Migrations
+To deploy the entire TerraFusion platform, including infrastructure, services, and AI agents:
 
 ```bash
-# View migration status
-./scripts/db-migration.sh --env=dev --action=status
-
-# Apply migrations
-./scripts/db-migration.sh --env=staging --action=up
-
-# Create a new migration
-./scripts/db-migration.sh --env=dev --action=create --name=add_user_roles
+cd terrafusion-devops-kit
+./scripts/deploy-all.sh --environment dev
 ```
 
-### Database Backup and Restore
+This will:
+1. Set up the AWS infrastructure using Terraform
+2. Deploy Kubernetes resources using Helm
+3. Deploy the backend and frontend applications
+4. Deploy all AI agents
+
+For production deployments:
 
 ```bash
-# Create a backup
-./scripts/backup_and_restore.sh --env=prod --action=backup
-
-# List available backups
-./scripts/backup_and_restore.sh --env=staging --action=list
-
-# Restore from a backup
-./scripts/backup_and_restore.sh --env=dev --action=restore --file=terrabuild_dev_20250430_123045.sql.gz
+./scripts/deploy-all.sh --environment prod --version v1.2.3
 ```
 
-## Monitoring and Logging
+### Managing AI Agents
 
-The application and infrastructure are monitored using AWS CloudWatch. Key metrics include:
+To update, restart, check status, or view logs for specific AI agents:
 
-- CPU and memory utilization
-- Database performance
-- API response times
-- Error rates
+```bash
+# Update specific agents
+./scripts/update-agents.sh --agent factor-tuner --agent benchmark-guard --version v1.1.0
 
-Logs are centralized in CloudWatch Logs with a retention period based on the environment:
-- Dev: 30 days
-- Staging: 60 days
-- Production: 90 days
+# Restart an agent
+./scripts/update-agents.sh --agent curve-trainer --action restart
 
-## Disaster Recovery
+# Check agent status
+./scripts/update-agents.sh --agent boe-arguer --action status
 
-Disaster recovery procedures include:
+# View agent logs
+./scripts/update-agents.sh --agent scenario-agent --action logs
 
-1. **Regular Backups** - Automated database backups
-2. **Multi-AZ Deployment** - For production environment
-3. **Restore Procedures** - Documented in this guide
-4. **Failover Testing** - Conducted quarterly
+# Force retrain an agent
+./scripts/update-agents.sh --agent factor-tuner --action retrain
+```
 
-## Local Development
+### Rotating Secrets
 
-For local development:
+For security, regularly rotate secrets and API keys:
 
-1. **Terraform Execution**
+```bash
+# Rotate OpenAI API key
+./scripts/rotate-secrets.sh --type ai-key --name openai --value "sk-yourapikeyhere"
 
-   Use the helper script for running Terraform commands:
+# Generate a new agent API key
+./scripts/rotate-secrets.sh --type agent-key --name factor-tuner
 
-   ```bash
-   # Plan changes for dev environment
-   ./scripts/terraform-cmd.sh --env=dev --command=plan
+# Rotate database password
+./scripts/rotate-secrets.sh --type db-password --name terrafusion
+```
 
-   # Apply changes to staging
-   ./scripts/terraform-cmd.sh --env=staging --command=apply --auto-approve
+## 🔄 CI/CD Pipelines
 
-   # Show outputs for production
-   ./scripts/terraform-cmd.sh --env=prod --command=output
-   ```
+The DevOps Kit includes GitHub Actions workflows for continuous integration and deployment:
 
-2. **Database Operations**
+### Backend Pipeline (`github-actions/backend.yml`)
 
-   Local database setup:
+- Triggers on changes to server code
+- Runs tests, security scans, and builds Docker image
+- Deploys to the appropriate environment
 
-   ```bash
-   # Start database
-   npm run db:dev
+### Frontend Pipeline (`github-actions/frontend.yml`)
 
-   # Apply migrations
-   npm run db:push
-   ```
+- Triggers on changes to client code
+- Builds, tests, and deploys the frontend application
 
-3. **Running the Application**
+### AI Agent Pipeline (`github-actions/swarm.yml`)
 
-   ```bash
-   # Start development server
-   npm run dev
-   ```
+- Builds and deploys AI agent containers
+- Supports selective agent updates
+- Includes testing and validation for agents
 
----
+## 📊 Monitoring & Observability
 
-For questions or support, please contact the DevOps team at devops@terrabuild.example.com
+The DevOps Kit includes comprehensive monitoring with:
+
+- Prometheus for metrics collection
+- Loki for centralized logging
+- Grafana dashboards for visualization
+- Custom agent telemetry dashboards
+
+Access the monitoring dashboard at:
+`https://grafana.terrafusion-{environment}.example.com`
+
+## 🔒 Security & Compliance
+
+Security is built into the DevOps Kit:
+
+- Vault for secrets management and rotation
+- Network policies to restrict agent communication
+- RBAC for Kubernetes resources
+- Regular security scanning in CI pipeline
+- Container hardening best practices
+
+## 🌐 Infrastructure Management
+
+The infrastructure is defined as code using Terraform:
+
+- EKS cluster with node groups for applications and AI workloads
+- RDS PostgreSQL for application data
+- ECR repositories for container images
+- VPC networking and security groups
+- IAM roles and service accounts
+
+## 📚 Additional Resources
+
+- [Terraform Documentation](https://www.terraform.io/docs)
+- [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+- [Vault Documentation](https://www.vaultproject.io/docs)
+- [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)

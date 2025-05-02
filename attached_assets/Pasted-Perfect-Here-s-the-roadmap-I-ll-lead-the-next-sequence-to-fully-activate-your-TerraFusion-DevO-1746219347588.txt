@@ -1,0 +1,105 @@
+Perfect. Here's the roadmap. I'll lead the **next sequence** to fully activate your TerraFusion DevOps deployment and orchestration environment.
+
+---
+
+## 🎯 PHASE 1: Command Central Bootstrap  
+> Deliver powerful one-command DevOps operations via a `Makefile`
+
+---
+
+### 📁 `/Makefile`
+
+```makefile
+# -- Global Variables --
+REPO_NAME = ghcr.io/your-org/terrafusion-backend
+IMAGE_TAG = latest
+
+# -- Terraform Targets --
+init:
+	cd terraform && terraform init
+
+plan:
+	cd terraform && terraform plan
+
+apply:
+	cd terraform && terraform apply -auto-approve
+
+destroy:
+	cd terraform && terraform destroy -auto-approve
+
+# -- Docker Targets --
+build:
+	docker build -f docker/backend.Dockerfile -t $(REPO_NAME):$(IMAGE_TAG) ./backend
+
+push:
+	docker push $(REPO_NAME):$(IMAGE_TAG)
+
+# -- Helm Deploy --
+helm-up:
+	helm upgrade --install terrafusion-backend ./helm/terrafusion-backend --set image.tag=$(IMAGE_TAG)
+
+# -- Full CI/CD Dev Deploy --
+deploy-dev: build push helm-up
+
+# -- Secret Rotation --
+rotate-secrets:
+	./scripts/rotate-secrets.sh
+
+.PHONY: init plan apply destroy build push helm-up deploy-dev rotate-secrets
+```
+
+> ✅ This lets both humans and AI-Agents run the full infra stack cleanly.
+
+---
+
+## 🧠 PHASE 2: Agent Coordination Manifest
+
+### 📄 `/agent-manifest.yaml`
+
+```yaml
+agents:
+  - name: CurveTrainer
+    version: "1.2.1"
+    mode: autonomous
+    schedule: "0 2 * * *"
+    memory: persistent
+    sensitivity: medium
+    on_anomaly: suggest_correction
+
+  - name: ScenarioAgent
+    version: "0.9.7"
+    mode: suggestive
+    trigger_on: user_interest
+    max_outputs: 3
+    feedback_loop: true
+
+  - name: BenchmarkGuard
+    version: "2.0.0"
+    mode: watchdog
+    source:
+      - rsmeans
+      - corelogic
+    alert_threshold: 5%
+```
+
+> This is **the source of truth for agent scheduling, logic tuning, and autonomy flags**. You'll mount this as a config map or volume into your swarm runners.
+
+---
+
+## 📊 PHASE 3: Agent Metrics Dashboard (Grafana)
+
+### 📄 `/observability/grafana-dashboards/swarm-agent-activity.json`
+
+This is a stubbed **Grafana dashboard JSON** to visualize:
+- Agent run counts per day
+- Agent anomalies detected
+- User feedback per agent
+
+Would you like me to now:
+- Generate this JSON structure with PromQL placeholders?
+- Write the parser/validator for `agent-manifest.yaml` (in Python or TypeScript)?
+- Or scaffold `swarm/agent-runner.ts` to actually read and execute agents per manifest?
+
+You're now in the final sprint. Your infrastructure has **a brain**, **a spine**, and **a voice**.
+
+What gets deployed next?
