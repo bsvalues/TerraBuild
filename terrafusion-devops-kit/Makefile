@@ -1,6 +1,22 @@
 # TerraFusion DevOps Kit - Master Makefile
 # This Makefile provides a unified interface for DevOps operations across the TerraFusion platform
 
+# Display header with project branding
+define HEADER
+$(CYAN)
+  _______                   _____           _                
+ |__   __|                 |  __ \         (_)               
+    | | ___ _ __ _ __ __ _ | |__) |   _ ___ _  ___  _ __    
+    | |/ _ \ '__| '__/ _` ||  ___/ | | / __| |/ _ \| '_ \   
+    | |  __/ |  | | | (_| || |   | |_| \__ \ | (_) | | | |  
+    |_|\___|_|  |_|  \__,_||_|    \__,_|___/_|\___/|_| |_|  
+                                                            
+    $(YELLOW)D e v O p s   K i t  -  v1.1.0$(CYAN)
+                                                      
+$(RESET)
+endef
+export HEADER
+
 # -- Global Variables --
 REPO_NAME ?= ghcr.io/benton-county/terrafusion
 IMAGE_TAG ?= latest
@@ -26,6 +42,12 @@ else
   PROMETHEUS_RETENTION = 7d
 endif
 
+# Docker compose project name
+COMPOSE_PROJECT_NAME ?= terrafusion-$(ENVIRONMENT)
+
+# Host-specific overrides (if local config exists)
+-include .makefile.local
+
 # Colors for better output
 YELLOW := \033[1;33m
 GREEN := \033[1;32m
@@ -34,9 +56,14 @@ BLUE := \033[1;34m
 CYAN := \033[1;36m
 RESET := \033[0m
 
+# Show header when running help
+.PHONY: _header
+_header:
+        @echo "$$HEADER"
+
 # -- Help Target --
 .PHONY: help
-help:
+help: _header
         @echo "${YELLOW}TerraFusion DevOps Commands${RESET}"
         @echo ""
         @echo "${CYAN}One-Command Operations:${RESET}"
