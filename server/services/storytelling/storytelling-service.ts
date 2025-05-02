@@ -136,23 +136,33 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .orderBy(desc(costMatrix.year));
       
-    // Build conditions array
-    const conditions: SQL[] = [];
+    // Build filters based on request parameters
+    let costData;
     
-    // Add building type filter if provided
-    if (request.buildingTypes && request.buildingTypes.length > 0) {
-      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+    // Different combinations of filters
+    if (request.buildingTypes?.length && request.regions?.length) {
+      // Both building types and regions are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      
+      costData = await baseQuery.where(
+        and(
+          or(...buildingTypeConditions),
+          or(...regionConditions)
+        )
+      );
+    } else if (request.buildingTypes?.length) {
+      // Only building types are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      costData = await baseQuery.where(or(...buildingTypeConditions));
+    } else if (request.regions?.length) {
+      // Only regions are specified
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      costData = await baseQuery.where(or(...regionConditions));
+    } else {
+      // No filters
+      costData = await baseQuery;
     }
-    
-    // Add region filter if provided
-    if (request.regions && request.regions.length > 0) {
-      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
-    }
-    
-    // Execute query with all conditions combined
-    const costData = conditions.length > 0
-      ? await baseQuery.where(and(...conditions))
-      : await baseQuery;
     
     // Get building type and region details for better context
     const buildingTypeDetails = await db.select().from(buildingTypes);
@@ -178,23 +188,33 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(regions, eq(costMatrix.region, regions.code));
       
-    // Build conditions array
-    const conditions: SQL[] = [];
+    // Build filters based on request parameters
+    let costByRegion;
     
-    // Add building type filter if provided
-    if (request.buildingTypes && request.buildingTypes.length > 0) {
-      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+    // Different combinations of filters
+    if (request.buildingTypes?.length && request.regions?.length) {
+      // Both building types and regions are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      
+      costByRegion = await baseQuery.where(
+        and(
+          or(...buildingTypeConditions),
+          or(...regionConditions)
+        )
+      );
+    } else if (request.buildingTypes?.length) {
+      // Only building types are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      costByRegion = await baseQuery.where(or(...buildingTypeConditions));
+    } else if (request.regions?.length) {
+      // Only regions are specified
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      costByRegion = await baseQuery.where(or(...regionConditions));
+    } else {
+      // No filters
+      costByRegion = await baseQuery;
     }
-    
-    // Add region filter if provided
-    if (request.regions && request.regions.length > 0) {
-      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
-    }
-    
-    // Execute query with all conditions combined
-    const costByRegion = conditions.length > 0
-      ? await baseQuery.where(and(...conditions))
-      : await baseQuery;
     
     // Calculate average costs by region
     const regionalAverages = this.calculateRegionalAverages(costByRegion);
@@ -219,23 +239,33 @@ export class StorytellingService {
       .leftJoin(matrixDetail, eq(costMatrix.id, matrixDetail.matrixId))
       .leftJoin(buildingTypes, eq(costMatrix.buildingType, buildingTypes.code));
     
-    // Build conditions array
-    const conditions: SQL[] = [];
+    // Build filters based on request parameters
+    let costByBuildingType;
     
-    // Add building type filter if provided
-    if (request.buildingTypes && request.buildingTypes.length > 0) {
-      conditions.push(or(...request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt))));
+    // Different combinations of filters
+    if (request.buildingTypes?.length && request.regions?.length) {
+      // Both building types and regions are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      
+      costByBuildingType = await baseQuery.where(
+        and(
+          or(...buildingTypeConditions),
+          or(...regionConditions)
+        )
+      );
+    } else if (request.buildingTypes?.length) {
+      // Only building types are specified
+      const buildingTypeConditions = request.buildingTypes.map(bt => eq(costMatrix.buildingType, bt));
+      costByBuildingType = await baseQuery.where(or(...buildingTypeConditions));
+    } else if (request.regions?.length) {
+      // Only regions are specified
+      const regionConditions = request.regions.map(r => eq(costMatrix.region, r));
+      costByBuildingType = await baseQuery.where(or(...regionConditions));
+    } else {
+      // No filters
+      costByBuildingType = await baseQuery;
     }
-    
-    // Add region filter if provided
-    if (request.regions && request.regions.length > 0) {
-      conditions.push(or(...request.regions.map(r => eq(costMatrix.region, r))));
-    }
-    
-    // Execute query with all conditions combined
-    const costByBuildingType = conditions.length > 0
-      ? await baseQuery.where(and(...conditions))
-      : await baseQuery;
     
     // Calculate average costs by building type
     const buildingTypeAverages = this.calculateBuildingTypeAverages(costByBuildingType);
@@ -341,23 +371,20 @@ export class StorytellingService {
     const buildingTypesList = await db.select().from(buildingTypes);
     const regionsList = await db.select().from(regions);
     
-    let propertyQuery = db.select()
+    // Base query with no filters
+    const basePropertyQuery = db.select()
       .from(properties)
       .leftJoin(improvements, eq(properties.id, improvements.propertyId))
       .leftJoin(improvementDetails, eq(improvements.id, improvementDetails.improvementId));
     
-    // Create a new query with filters if needed
-    let filteredPropertyQuery = propertyQuery;
+    let propertyData;
     
     // Filter by property IDs if provided
     if (request.propertyIds && request.propertyIds.length > 0) {
-      filteredPropertyQuery = filteredPropertyQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+      propertyData = await basePropertyQuery.where(or(...request.propertyIds.map(id => eq(properties.id, id))));
+    } else {
+      propertyData = await basePropertyQuery;
     }
-    
-    // Use the filtered query
-    propertyQuery = filteredPropertyQuery;
-    
-    const propertyData = await propertyQuery;
     
     return {
       costData,
