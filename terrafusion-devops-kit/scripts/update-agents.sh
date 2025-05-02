@@ -1,238 +1,262 @@
 #!/bin/bash
 # TerraFusion AI Agent Update Script
-# Updates and manages AI agents in the Kubernetes cluster
+# Updates one or more AI agents in the specified environment
 
-set -euo pipefail
-
-# Terminal colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+set -e
 
 # Default values
 ENVIRONMENT="dev"
-AGENTS=()
-VERSION="latest"
+AGENT_LIST="all"
 FORCE_RETRAIN=false
-ACTION="update"
+SKIP_TESTS=false
 SKIP_CONFIRMATION=false
+ONLY_RETRAIN=false
+VERSION=$(git rev-parse --short HEAD 2>/dev/null || echo "latest")
 
-# Function to display usage information
-function show_usage() {
-  echo -e "${BLUE}TerraFusion AI Agent Management Script${NC}"
-  echo -e "Manage AI Agents in the TerraFusion platform"
-  echo ""
-  echo -e "Usage: $0 [options]"
-  echo ""
+# Display help information
+function show_help {
+  echo "TerraFusion AI Agent Update Script"
+  echo
+  echo "Usage: $0 [options]"
+  echo
   echo "Options:"
-  echo "  -e, --environment ENV     Target environment: dev, staging, prod (default: dev)"
-  echo "  -a, --agent AGENT         Specific agent to manage (can be used multiple times)"
-  echo "                            Available: factor-tuner, benchmark-guard, curve-trainer,"
-  echo "                                      scenario-agent, boe-arguer, all"
-  echo "  -v, --version VERSION     Version to deploy (default: latest)"
-  echo "  -f, --force-retrain       Force agent retraining after update"
-  echo "  --action ACTION           Action to perform: update, restart, status, logs, retrain"
-  echo "  -y, --yes                 Skip confirmation prompt"
   echo "  -h, --help                Show this help message"
-  echo ""
+  echo "  -e, --environment ENV     Target environment (dev, staging, prod) [default: dev]"
+  echo "  -a, --agents AGENTS       Agents to update (comma-separated, all for all agents) [default: all]"
+  echo "  -v, --version VERSION     Version to deploy [default: git commit hash]"
+  echo "  -r, --retrain             Force retraining of agents"
+  echo "  -s, --skip-tests          Skip test execution"
+  echo "  -y, --yes                 Skip all confirmations"
+  echo "  -t, --only-retrain        Only retrain agents without updating their code"
+  echo
   echo "Examples:"
-  echo "  $0 --agent factor-tuner --agent benchmark-guard --action restart"
-  echo "  $0 --agent all --force-retrain"
-  echo "  $0 --agent curve-trainer --action logs"
+  echo "  $0 --environment prod                   # Update all agents in production"
+  echo "  $0 --environment dev --agents factor-tuner,benchmark-guard # Update only specific agents in dev"
+  echo "  $0 -e staging -a curve-trainer -r       # Update and retrain the curve-trainer agent in staging"
+  echo "  $0 -e dev -t -a all                    # Only retrain all agents in dev without deploying new code"
+  echo
 }
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
+  case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
     -e|--environment)
       ENVIRONMENT="$2"
-      shift
-      shift
+      shift 2
       ;;
-    -a|--agent)
-      if [[ "$2" == "all" ]]; then
-        AGENTS=("factor-tuner" "benchmark-guard" "curve-trainer" "scenario-agent" "boe-arguer")
-      else
-        AGENTS+=("$2")
-      fi
-      shift
-      shift
+    -a|--agents)
+      AGENT_LIST="$2"
+      shift 2
       ;;
     -v|--version)
       VERSION="$2"
-      shift
-      shift
+      shift 2
       ;;
-    -f|--force-retrain)
+    -r|--retrain)
       FORCE_RETRAIN=true
       shift
       ;;
-    --action)
-      ACTION="$2"
-      shift
+    -s|--skip-tests)
+      SKIP_TESTS=true
       shift
       ;;
     -y|--yes)
       SKIP_CONFIRMATION=true
       shift
       ;;
-    -h|--help)
-      show_usage
-      exit 0
+    -t|--only-retrain)
+      ONLY_RETRAIN=true
+      shift
       ;;
     *)
-      echo -e "${RED}Error: Unknown option $key${NC}"
-      show_usage
+      echo "Unknown option: $1"
+      show_help
       exit 1
       ;;
   esac
 done
 
 # Validate environment
-if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
-  echo -e "${RED}Error: Environment must be one of: dev, staging, prod${NC}"
+if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "prod" ]]; then
+  echo "Error: Invalid environment. Must be one of: dev, staging, prod"
   exit 1
 fi
 
-# Validate action
-if [[ ! "$ACTION" =~ ^(update|restart|status|logs|retrain)$ ]]; then
-  echo -e "${RED}Error: Action must be one of: update, restart, status, logs, retrain${NC}"
-  exit 1
+# Get the list of all available agents
+AVAILABLE_AGENTS=("factor-tuner" "benchmark-guard" "curve-trainer" "scenario-agent" "boe-arguer")
+AVAILABLE_AGENTS_STR=$(printf ", %s" "${AVAILABLE_AGENTS[@]}")
+AVAILABLE_AGENTS_STR=${AVAILABLE_AGENTS_STR:2}
+
+# Validate agents
+if [[ "$AGENT_LIST" != "all" ]]; then
+  IFS=',' read -ra AGENTS <<< "$AGENT_LIST"
+  for agent in "${AGENTS[@]}"; do
+    if [[ ! " ${AVAILABLE_AGENTS[*]} " =~ " ${agent} " ]]; then
+      echo "Error: Invalid agent: $agent. Valid options: ${AVAILABLE_AGENTS_STR}"
+      exit 1
+    fi
+  done
+else
+  # If "all" is specified, use all available agents
+  AGENTS=("${AVAILABLE_AGENTS[@]}")
 fi
 
-# If no agents specified, use all
-if [ ${#AGENTS[@]} -eq 0 ]; then
-  AGENTS=("factor-tuner" "benchmark-guard" "curve-trainer" "scenario-agent" "boe-arguer")
-fi
+# Set AWS region based on environment
+case "$ENVIRONMENT" in
+  "dev"|"staging")
+    AWS_REGION="us-west-2"
+    ;;
+  "prod")
+    AWS_REGION="us-west-2"
+    ;;
+esac
 
-# Display plan
-echo -e "${BLUE}=== TerraFusion AI Agent Management Plan ===${NC}"
-echo -e "Environment: ${GREEN}$ENVIRONMENT${NC}"
-echo -e "Action: ${GREEN}$ACTION${NC}"
-echo -e "Agents: ${GREEN}${AGENTS[*]}${NC}"
-if [ "$ACTION" = "update" ]; then
-  echo -e "Version: ${GREEN}$VERSION${NC}"
-  echo -e "Force Retrain: ${GREEN}$FORCE_RETRAIN${NC}"
-fi
+# Determine the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." &>/dev/null && pwd)"
 
-# Ask for confirmation unless skipped
+# Confirm update
 if [ "$SKIP_CONFIRMATION" = false ]; then
-  echo ""
-  read -p "Continue with agent management? (y/n): " confirm
-  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Operation aborted by user${NC}"
+  echo "=========================================================="
+  echo "TerraFusion AI Agent Update"
+  echo "=========================================================="
+  echo "Environment: $ENVIRONMENT"
+  echo "Agents: ${AGENT_LIST}"
+  echo "Version: $VERSION"
+  echo "Force retrain: $FORCE_RETRAIN"
+  echo "Only retrain (no code update): $ONLY_RETRAIN"
+  echo "Skip tests: $SKIP_TESTS"
+  echo "=========================================================="
+  
+  read -p "Do you want to proceed with this update? (y/n) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Update cancelled."
     exit 0
   fi
 fi
 
-# Set AWS region based on environment
-case $ENVIRONMENT in
-  dev)
-    AWS_REGION=${AWS_REGION:-us-west-2}
-    ;;
-  staging)
-    AWS_REGION=${AWS_REGION:-us-west-2}
-    ;;
-  prod)
-    AWS_REGION=${AWS_REGION:-us-west-2}
-    ;;
-esac
+echo "Starting AI agent update to $ENVIRONMENT environment..."
 
-# Configure kubectl for the right cluster
-echo -e "${YELLOW}Configuring kubectl for EKS cluster...${NC}"
-aws eks update-kubeconfig --name terrafusion-${ENVIRONMENT} --region ${AWS_REGION}
+# Ensure AWS is configured correctly
+echo "Validating AWS credentials..."
+aws sts get-caller-identity >/dev/null || {
+  echo "Error: AWS credentials not configured or insufficient permissions."
+  exit 1
+}
 
-# Process each agent
-for agent in "${AGENTS[@]}"; do
-  echo -e "\n${BLUE}=== Managing Agent: ${agent} ===${NC}"
-  
-  case $ACTION in
-    update)
-      AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      ECR_REPOSITORY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-${agent}
-      
-      echo -e "${YELLOW}Updating ${agent} to version ${VERSION}...${NC}"
-      
-      # Check if deployment exists
-      if kubectl get deployment ${agent} -n terrafusion-agents &>/dev/null; then
-        kubectl set image deployment/${agent} ${agent}=${ECR_REPOSITORY}:${VERSION} -n terrafusion-agents
-        echo -e "${YELLOW}Waiting for rollout to complete...${NC}"
-        kubectl rollout status deployment/${agent} -n terrafusion-agents --timeout=300s
-      else
-        echo -e "${YELLOW}Deployment for ${agent} not found, creating from template...${NC}"
-        export AGENT_VERSION=${VERSION}
-        export AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
-        export AWS_REGION=${AWS_REGION}
-        envsubst < ../k8s-manifests/agents/${agent}.yaml | kubectl apply -f -
-      fi
-      
-      # Trigger retraining if requested
-      if [ "$FORCE_RETRAIN" = true ]; then
-        echo -e "${YELLOW}Triggering retraining for ${agent}...${NC}"
-        API_GATEWAY=$(kubectl get service -n api-gateway kong-kong-proxy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-        curl -X POST "http://${API_GATEWAY}/api/agents/${agent}/retrain" \
-          -H "Content-Type: application/json" \
-          -d '{"force": true}'
-      fi
-      
-      echo -e "${GREEN}✓ ${agent} update complete${NC}"
-      ;;
-      
-    restart)
-      echo -e "${YELLOW}Restarting ${agent}...${NC}"
-      kubectl rollout restart deployment/${agent} -n terrafusion-agents
-      echo -e "${YELLOW}Waiting for restart to complete...${NC}"
-      kubectl rollout status deployment/${agent} -n terrafusion-agents --timeout=300s
-      echo -e "${GREEN}✓ ${agent} restart complete${NC}"
-      ;;
-      
-    status)
-      echo -e "${YELLOW}Checking ${agent} status...${NC}"
-      kubectl get deployment ${agent} -n terrafusion-agents -o wide
-      kubectl get pods -n terrafusion-agents -l app.kubernetes.io/name=${agent} -o wide
-      kubectl describe deployment ${agent} -n terrafusion-agents | grep -A5 "Conditions:"
-      
-      # Check agent health endpoint
-      echo -e "\n${YELLOW}Checking agent health endpoint...${NC}"
-      API_GATEWAY=$(kubectl get service -n api-gateway kong-kong-proxy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-      curl -s "http://${API_GATEWAY}/api/agents/${agent}/health" | jq .
-      ;;
-      
-    logs)
-      echo -e "${YELLOW}Fetching logs for ${agent}...${NC}"
-      POD=$(kubectl get pods -n terrafusion-agents -l app.kubernetes.io/name=${agent} -o jsonpath='{.items[0].metadata.name}')
-      if [ -n "$POD" ]; then
-        kubectl logs -n terrafusion-agents $POD --tail=100
-        echo -e "\n${YELLOW}To follow logs in real-time:${NC}"
-        echo -e "kubectl logs -n terrafusion-agents $POD -f"
-      else
-        echo -e "${RED}No pods found for agent ${agent}${NC}"
-      fi
-      ;;
-      
-    retrain)
-      echo -e "${YELLOW}Triggering retraining for ${agent}...${NC}"
-      API_GATEWAY=$(kubectl get service -n api-gateway kong-kong-proxy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-      curl -X POST "http://${API_GATEWAY}/api/agents/${agent}/retrain" \
-        -H "Content-Type: application/json" \
-        -d '{"force": true}'
-      echo -e "\n${GREEN}✓ Retraining triggered for ${agent}${NC}"
-      ;;
-  esac
-done
-
-echo -e "\n${BLUE}=== Summary ===${NC}"
-echo -e "Action '${GREEN}${ACTION}${NC}' completed for agents: ${GREEN}${AGENTS[*]}${NC}"
-
-# Show monitoring links
-echo -e "\n${BLUE}=== Monitoring ===${NC}"
-if kubectl get ingress -n monitoring grafana-ingress &>/dev/null; then
-  MONITORING_URL=$(kubectl get ingress -n monitoring grafana-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-  echo -e "Monitoring Dashboard: ${GREEN}https://${MONITORING_URL}${NC}"
-  echo -e "Agent Dashboard: ${GREEN}https://${MONITORING_URL}/d/terrafusion-agents/terrafusion-ai-swarm-agents${NC}"
+# Check if kubectl is configured for the target cluster
+echo "Validating kubectl configuration..."
+if ! kubectl config use-context "terrafusion-$ENVIRONMENT" 2>/dev/null; then
+  echo "Configuring kubectl for terrafusion-$ENVIRONMENT..."
+  aws eks update-kubeconfig --name "terrafusion-$ENVIRONMENT" --region "$AWS_REGION"
 fi
 
-echo -e "\n${GREEN}✓ Operation completed successfully!${NC}"
+# Run tests if not skipped
+if [ "$SKIP_TESTS" = false ] && [ "$ONLY_RETRAIN" = false ]; then
+  echo "Running agent tests..."
+  cd "$PROJECT_ROOT"
+  
+  for agent in "${AGENTS[@]}"; do
+    echo "Testing $agent..."
+    npm run test:agent -- --agent="$agent" || {
+      echo "Tests failed for $agent. Aborting update."
+      exit 1
+    }
+  done
+fi
+
+# If we're only retraining, skip the deployment part
+if [ "$ONLY_RETRAIN" = false ]; then
+  # Trigger the GitHub Actions workflow for agent update
+  echo "Triggering agent deployment workflow..."
+  
+  AGENT_PARAM=""
+  if [[ "$AGENT_LIST" != "all" ]]; then
+    AGENT_PARAM="-f agentFilter=${AGENT_LIST}"
+  fi
+  
+  RETRAIN_PARAM=""
+  if [ "$FORCE_RETRAIN" = true ]; then
+    RETRAIN_PARAM="-f forceRetrain=true"
+  fi
+  
+  gh workflow run swarm.yml -f environment="$ENVIRONMENT" $AGENT_PARAM $RETRAIN_PARAM
+  
+  echo "Agent deployment workflow triggered."
+  
+  # Wait for deployments to start
+  echo "Waiting for deployment to begin (30s)..."
+  sleep 30
+  
+  # Check deployment status for each agent
+  for agent in "${AGENTS[@]}"; do
+    echo "Checking deployment status for $agent..."
+    kubectl rollout status deployment/"$agent" -n terrafusion-agents --timeout=300s || {
+      echo "Deployment failed for $agent."
+      exit 1
+    }
+  done
+else
+  # If only retraining, trigger the retraining API for each agent
+  echo "Triggering agent retraining (without code update)..."
+  
+  # Get the API gateway URL
+  API_GATEWAY=$(kubectl get service -n api-gateway kong-kong-proxy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+  
+  if [ -z "$API_GATEWAY" ]; then
+    echo "Error: Cannot find API gateway service. Make sure the API gateway is deployed."
+    exit 1
+  fi
+  
+  # Get API token from secret
+  API_TOKEN=$(kubectl get secret terrafusion-api-credentials -n terrafusion-agents -o jsonpath='{.data.api_token}' 2>/dev/null | base64 --decode)
+  
+  if [ -z "$API_TOKEN" ]; then
+    echo "Error: Cannot retrieve API token. Make sure terrafusion-api-credentials secret exists."
+    exit 1
+  fi
+  
+  # Trigger retraining for each agent
+  for agent in "${AGENTS[@]}"; do
+    echo "Triggering retraining for $agent..."
+    curl -X POST "http://${API_GATEWAY}/api/agents/${agent}/retrain" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer ${API_TOKEN}" \
+      -d '{"force": true}'
+    
+    echo
+  done
+fi
+
+echo "Agent update process completed!"
+
+# Get pod status for each agent
+echo "Current agent pod status:"
+kubectl get pods -n terrafusion-agents -l role=agent -o wide
+
+# View agent logs if requested
+if [ "$SKIP_CONFIRMATION" = false ]; then
+  read -p "Do you want to view the logs for any of the updated agents? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    PS3="Select an agent to view logs (or 0 to exit): "
+    select agent in "${AGENTS[@]}" "Exit"; do
+      if [ "$agent" = "Exit" ] || [ -z "$agent" ]; then
+        break
+      fi
+      
+      POD=$(kubectl get pods -n terrafusion-agents -l app="$agent" -o jsonpath='{.items[0].metadata.name}')
+      if [ -n "$POD" ]; then
+        kubectl logs -f "$POD" -n terrafusion-agents
+      else
+        echo "No pod found for $agent"
+      fi
+      break
+    done
+  fi
+fi

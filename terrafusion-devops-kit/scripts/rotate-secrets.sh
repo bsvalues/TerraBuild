@@ -1,330 +1,375 @@
 #!/bin/bash
 # TerraFusion Secret Rotation Script
-# Securely rotates API keys and credentials in Vault, then triggers rolling updates
+# Securely rotates credentials and API keys in the platform
 
-set -euo pipefail
-
-# Terminal colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+set -e
 
 # Default values
 ENVIRONMENT="dev"
-SECRET_TYPE=""
-SECRET_NAME=""
-SKIP_ROLLOUT=false
+SECRET_TYPE="all"
 SKIP_CONFIRMATION=false
-VALUE_PROVIDED=false
-NEW_VALUE=""
+BACKUP_SECRETS=true
+VAULT_AUTH_METHOD="token"
 
-# Function to display usage information
-function show_usage() {
-  echo -e "${BLUE}TerraFusion Secret Rotation Script${NC}"
-  echo -e "Safely rotate secrets and credentials in Vault"
-  echo ""
-  echo -e "Usage: $0 [options]"
-  echo ""
+# Display help information
+function show_help {
+  echo "TerraFusion Secret Rotation Script"
+  echo
+  echo "Usage: $0 [options]"
+  echo
   echo "Options:"
-  echo "  -e, --environment ENV     Target environment: dev, staging, prod (default: dev)"
-  echo "  -t, --type TYPE           Type of secret to rotate:"
-  echo "                            ai-key, db-password, jwt, agent-key, oauth"
-  echo "  -n, --name NAME           Name of the specific secret to rotate"
-  echo "                            For ai-key: openai, anthropic, etc."
-  echo "                            For agent-key: factor-tuner, benchmark-guard, etc."
-  echo "  -v, --value VALUE         New value to set (omit to auto-generate)"
-  echo "  --skip-rollout            Skip rolling out the update to affected services"
-  echo "  -y, --yes                 Skip confirmation prompt"
-  echo "  -h, --help                Show this help message"
-  echo ""
+  echo "  -h, --help                 Show this help message"
+  echo "  -e, --environment ENV      Target environment (dev, staging, prod) [default: dev]"
+  echo "  -t, --type TYPE            Type of secrets to rotate (db, ai, jwt, all) [default: all]"
+  echo "  -m, --vault-auth METHOD    HashiCorp Vault authentication method (token, aws, k8s) [default: token]"
+  echo "  -n, --no-backup            Skip backing up secrets before rotation"
+  echo "  -y, --yes                  Skip all confirmations"
+  echo
   echo "Examples:"
-  echo "  $0 --type ai-key --name openai"
-  echo "  $0 --type db-password --name terrafusion --value \"newpassword\""
-  echo "  $0 --type agent-key --name factor-tuner"
-}
-
-# Function to generate secure passwords or keys
-function generate_secure_value() {
-  local type=$1
-  
-  case $type in
-    db-password)
-      # Generate a 24 character password with special chars
-      openssl rand -base64 18 | tr -d "=/+"
-      ;;
-    jwt)
-      # Generate a 64 character key
-      openssl rand -hex 32
-      ;;
-    agent-key)
-      # Generate a 48 character key
-      openssl rand -base64 36 | tr -d "=/+"
-      ;;
-    oauth)
-      # Generate a 32 character client secret
-      openssl rand -hex 16
-      ;;
-    *)
-      echo ""
-      ;;
-  esac
+  echo "  $0 --environment prod                # Rotate all secrets in production"
+  echo "  $0 --environment dev --type db       # Rotate only database credentials in dev"
+  echo "  $0 -e staging -t ai -y               # Rotate AI API keys in staging without confirmation"
+  echo
 }
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
+  case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
     -e|--environment)
       ENVIRONMENT="$2"
-      shift
-      shift
+      shift 2
       ;;
     -t|--type)
       SECRET_TYPE="$2"
-      shift
-      shift
+      shift 2
       ;;
-    -n|--name)
-      SECRET_NAME="$2"
-      shift
-      shift
+    -m|--vault-auth)
+      VAULT_AUTH_METHOD="$2"
+      shift 2
       ;;
-    -v|--value)
-      NEW_VALUE="$2"
-      VALUE_PROVIDED=true
-      shift
-      shift
-      ;;
-    --skip-rollout)
-      SKIP_ROLLOUT=true
+    -n|--no-backup)
+      BACKUP_SECRETS=false
       shift
       ;;
     -y|--yes)
-      SKIP_CONFIRMATION=true
+      SKIP_CONFIRMATION=false
       shift
       ;;
-    -h|--help)
-      show_usage
-      exit 0
-      ;;
     *)
-      echo -e "${RED}Error: Unknown option $key${NC}"
-      show_usage
+      echo "Unknown option: $1"
+      show_help
       exit 1
       ;;
   esac
 done
 
 # Validate environment
-if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
-  echo -e "${RED}Error: Environment must be one of: dev, staging, prod${NC}"
+if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "prod" ]]; then
+  echo "Error: Invalid environment. Must be one of: dev, staging, prod"
   exit 1
 fi
 
 # Validate secret type
-if [[ ! "$SECRET_TYPE" =~ ^(ai-key|db-password|jwt|agent-key|oauth)$ ]]; then
-  echo -e "${RED}Error: Secret type must be one of: ai-key, db-password, jwt, agent-key, oauth${NC}"
+if [[ "$SECRET_TYPE" != "all" && 
+      "$SECRET_TYPE" != "db" && 
+      "$SECRET_TYPE" != "ai" && 
+      "$SECRET_TYPE" != "jwt" ]]; then
+  echo "Error: Invalid secret type. Must be one of: all, db, ai, jwt"
   exit 1
 fi
 
-# Validate secret name is provided
-if [ -z "$SECRET_NAME" ]; then
-  echo -e "${RED}Error: Secret name must be provided with --name${NC}"
+# Validate Vault auth method
+if [[ "$VAULT_AUTH_METHOD" != "token" && 
+      "$VAULT_AUTH_METHOD" != "aws" && 
+      "$VAULT_AUTH_METHOD" != "k8s" ]]; then
+  echo "Error: Invalid Vault authentication method. Must be one of: token, aws, k8s"
   exit 1
 fi
 
-# Set Vault path based on secret type and name
-case $SECRET_TYPE in
-  ai-key)
-    VAULT_PATH="secret/terrafusion/ai-providers/${SECRET_NAME}"
-    AFFECTED_SERVICES=("backend" "agent-pods")
-    ;;
-  db-password)
-    VAULT_PATH="secret/terrafusion/databases/${SECRET_NAME}"
-    AFFECTED_SERVICES=("backend")
-    ;;
-  jwt)
-    VAULT_PATH="secret/terrafusion/auth/jwt"
-    AFFECTED_SERVICES=("backend")
-    ;;
-  agent-key)
-    VAULT_PATH="secret/terrafusion/agents/${SECRET_NAME}/api-key"
-    AFFECTED_SERVICES=("${SECRET_NAME}-agent")
-    ;;
-  oauth)
-    VAULT_PATH="secret/terrafusion/auth/oauth-clients/${SECRET_NAME}"
-    AFFECTED_SERVICES=("backend")
-    ;;
-esac
+# Determine the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." &>/dev/null && pwd)"
 
-# Generate a new value if not provided
-if [ "$VALUE_PROVIDED" = false ]; then
-  NEW_VALUE=$(generate_secure_value "$SECRET_TYPE")
-  
-  # If still empty (like for ai-key which can't be auto-generated)
-  if [ -z "$NEW_VALUE" ]; then
-    echo -e "${RED}Error: For ${SECRET_TYPE}, you must provide a value with --value${NC}"
-    exit 1
-  fi
-fi
-
-# Display rotation plan
-echo -e "${BLUE}=== TerraFusion Secret Rotation Plan ===${NC}"
-echo -e "Environment: ${GREEN}$ENVIRONMENT${NC}"
-echo -e "Secret Type: ${GREEN}$SECRET_TYPE${NC}"
-echo -e "Secret Name: ${GREEN}$SECRET_NAME${NC}"
-echo -e "Vault Path: ${GREEN}$VAULT_PATH${NC}"
-echo -e "Value Source: ${GREEN}$([ "$VALUE_PROVIDED" = true ] && echo "User provided" || echo "Auto-generated")${NC}"
-echo -e "Affected Services: ${GREEN}${AFFECTED_SERVICES[*]}${NC}"
-echo -e "Rolling Restart: ${GREEN}$([ "$SKIP_ROLLOUT" = true ] && echo "Skipped" || echo "Yes")${NC}"
-
-# Ask for confirmation unless skipped
+# Confirm rotation
 if [ "$SKIP_CONFIRMATION" = false ]; then
-  echo ""
-  read -p "Continue with secret rotation? (y/n): " confirm
-  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Rotation aborted by user${NC}"
+  echo "=========================================================="
+  echo "TerraFusion Secret Rotation"
+  echo "=========================================================="
+  echo "Environment: $ENVIRONMENT"
+  echo "Secret type: $SECRET_TYPE"
+  echo "Backup secrets: $BACKUP_SECRETS"
+  echo "Vault auth method: $VAULT_AUTH_METHOD"
+  echo "=========================================================="
+  echo "WARNING: This operation will rotate secrets and may cause"
+  echo "temporary service disruption during the transition."
+  echo "=========================================================="
+  
+  read -p "Do you want to proceed with secret rotation? (y/n) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Secret rotation cancelled."
     exit 0
+  fi
+  
+  if [ "$ENVIRONMENT" = "prod" ]; then
+    echo
+    echo "⚠️  WARNING: You are rotating secrets in PRODUCTION ⚠️"
+    echo
+    read -p "Type 'CONFIRM' to proceed with production secret rotation: " confirmation
+    if [ "$confirmation" != "CONFIRM" ]; then
+      echo "Secret rotation cancelled."
+      exit 0
+    fi
   fi
 fi
 
 # Set AWS region based on environment
-case $ENVIRONMENT in
-  dev)
-    AWS_REGION=${AWS_REGION:-us-west-2}
+case "$ENVIRONMENT" in
+  "dev"|"staging")
+    AWS_REGION="us-west-2"
     ;;
-  staging)
-    AWS_REGION=${AWS_REGION:-us-west-2}
-    ;;
-  prod)
-    AWS_REGION=${AWS_REGION:-us-west-2}
+  "prod")
+    AWS_REGION="us-west-2"
     ;;
 esac
 
-# Configure kubectl for the right cluster
-echo -e "${YELLOW}Configuring kubectl for EKS cluster...${NC}"
-aws eks update-kubeconfig --name terrafusion-${ENVIRONMENT} --region ${AWS_REGION}
-
-# Ensure Vault port-forward is active
-echo -e "${YELLOW}Setting up port-forward to Vault...${NC}"
-VAULT_POD=$(kubectl get pods -n vault -l app.kubernetes.io/name=vault -o jsonpath='{.items[0].metadata.name}')
-kubectl port-forward -n vault $VAULT_POD 8200:8200 &
-PORT_FORWARD_PID=$!
-
-# Ensure port-forward is cleaned up on exit
-function cleanup {
-  echo -e "${YELLOW}Cleaning up port-forward...${NC}"
-  kill $PORT_FORWARD_PID || true
-}
-trap cleanup EXIT
-
-# Wait for port-forward to be ready
-sleep 3
-
-# Login to Vault using Kubernetes auth
-echo -e "${YELLOW}Logging in to Vault...${NC}"
-VAULT_ADDR="http://localhost:8200"
-KUBE_TOKEN=$(kubectl create token vault-auth -n vault)
-VAULT_TOKEN=$(curl -s --request POST --data "{\"jwt\": \"${KUBE_TOKEN}\", \"role\": \"admin\"}" ${VAULT_ADDR}/v1/auth/kubernetes/login | jq -r '.auth.client_token')
-
-if [ -z "$VAULT_TOKEN" ] || [ "$VAULT_TOKEN" = "null" ]; then
-  echo -e "${RED}Error: Failed to authenticate with Vault${NC}"
+# Ensure AWS is configured correctly
+echo "Validating AWS credentials..."
+aws sts get-caller-identity >/dev/null || {
+  echo "Error: AWS credentials not configured or insufficient permissions."
   exit 1
+}
+
+# Check if kubectl is configured for the target cluster
+echo "Validating kubectl configuration..."
+if ! kubectl config use-context "terrafusion-$ENVIRONMENT" 2>/dev/null; then
+  echo "Configuring kubectl for terrafusion-$ENVIRONMENT..."
+  aws eks update-kubeconfig --name "terrafusion-$ENVIRONMENT" --region "$AWS_REGION"
 fi
 
-# Update the secret in Vault
-echo -e "${YELLOW}Updating secret in Vault...${NC}"
-
-# Format differs based on secret type
-case $SECRET_TYPE in
-  ai-key)
-    JSON_DATA="{\"key\": \"${NEW_VALUE}\", \"last_rotated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}"
-    ;;
-  db-password)
-    JSON_DATA="{\"password\": \"${NEW_VALUE}\", \"last_rotated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}"
-    ;;
-  jwt)
-    JSON_DATA="{\"secret\": \"${NEW_VALUE}\", \"last_rotated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}"
-    ;;
-  agent-key)
-    JSON_DATA="{\"key\": \"${NEW_VALUE}\", \"last_rotated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}"
-    ;;
-  oauth)
-    JSON_DATA="{\"client_secret\": \"${NEW_VALUE}\", \"last_rotated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}"
-    ;;
-esac
-
-# Update the secret
-curl -s \
-  --header "X-Vault-Token: ${VAULT_TOKEN}" \
-  --request POST \
-  --data "{\"data\": ${JSON_DATA}}" \
-  ${VAULT_ADDR}/v1/${VAULT_PATH}
-
-echo -e "${GREEN}✓ Secret updated in Vault${NC}"
-
-# Handle database password change if needed
-if [ "$SECRET_TYPE" = "db-password" ]; then
-  echo -e "${YELLOW}Updating database password...${NC}"
+# Backup secrets if requested
+if [ "$BACKUP_SECRETS" = true ]; then
+  echo "Backing up secrets..."
+  BACKUP_DIR="$PROJECT_ROOT/backups/secrets/$ENVIRONMENT/$(date +%Y%m%d-%H%M%S)"
+  mkdir -p "$BACKUP_DIR"
   
-  # Get database connection info from Vault
-  DB_INFO=$(curl -s \
-    --header "X-Vault-Token: ${VAULT_TOKEN}" \
-    --request GET \
-    ${VAULT_ADDR}/v1/secret/terrafusion/databases/${SECRET_NAME})
+  if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "db" ]]; then
+    echo "Backing up database credentials..."
+    kubectl get secret terrafusion-db-credentials -n default -o yaml > "$BACKUP_DIR/db-credentials.yaml"
+  fi
   
-  DB_HOST=$(echo $DB_INFO | jq -r '.data.data.host')
-  DB_PORT=$(echo $DB_INFO | jq -r '.data.data.port')
-  DB_USER=$(echo $DB_INFO | jq -r '.data.data.username')
+  if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "ai" ]]; then
+    echo "Backing up AI API credentials..."
+    kubectl get secret terrafusion-ai-credentials -n terrafusion-agents -o yaml > "$BACKUP_DIR/ai-credentials.yaml"
+  fi
   
-  # Connect to database and update password
-  PGPASSWORD=$(echo $DB_INFO | jq -r '.data.data.password') psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c "ALTER USER \"$DB_USER\" WITH PASSWORD '$NEW_VALUE';"
+  if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "jwt" ]]; then
+    echo "Backing up JWT credentials..."
+    kubectl get secret terrafusion-jwt-secret -n default -o yaml > "$BACKUP_DIR/jwt-secret.yaml"
+  fi
   
-  echo -e "${GREEN}✓ Database password updated${NC}"
+  echo "Secrets backed up to $BACKUP_DIR"
 fi
 
-# Rolling restart of affected services if not skipped
-if [ "$SKIP_ROLLOUT" = false ]; then
-  echo -e "${YELLOW}Performing rolling restart of affected services...${NC}"
+# Function to rotate database credentials
+rotate_db_credentials() {
+  echo "Rotating database credentials..."
   
-  for service in "${AFFECTED_SERVICES[@]}"; do
-    case $service in
-      backend)
-        echo -e "${YELLOW}Restarting backend service...${NC}"
-        kubectl rollout restart deployment/terrafusion-backend -n default
-        kubectl rollout status deployment/terrafusion-backend -n default --timeout=300s
-        ;;
-      agent-pods)
-        echo -e "${YELLOW}Restarting all agent pods...${NC}"
-        kubectl rollout restart deployment -n terrafusion-agents
-        kubectl rollout status deployment -n terrafusion-agents --timeout=300s
-        ;;
-      *-agent)
-        agent=${service%-agent}
-        echo -e "${YELLOW}Restarting ${agent} agent...${NC}"
-        if kubectl get deployment ${agent} -n terrafusion-agents &>/dev/null; then
-          kubectl rollout restart deployment/${agent} -n terrafusion-agents
-          kubectl rollout status deployment/${agent} -n terrafusion-agents --timeout=300s
-        else
-          echo -e "${YELLOW}Warning: Agent deployment ${agent} not found${NC}"
-        fi
-        ;;
-    esac
-  done
+  # Generate new password
+  NEW_DB_PASSWORD=$(openssl rand -base64 20 | tr -dc 'a-zA-Z0-9' | head -c 16)
   
-  echo -e "${GREEN}✓ Services restarted successfully${NC}"
-else
-  echo -e "${YELLOW}Skipping service restart as requested${NC}"
-  echo -e "${YELLOW}Note: Services will need to be restarted manually to pick up the new secret${NC}"
+  # Get current database credentials
+  DB_SECRET=$(kubectl get secret terrafusion-db-credentials -n default -o json)
+  DB_HOST=$(echo "$DB_SECRET" | jq -r '.data.host' | base64 --decode)
+  DB_PORT=$(echo "$DB_SECRET" | jq -r '.data.port' | base64 --decode)
+  DB_NAME=$(echo "$DB_SECRET" | jq -r '.data.dbname' | base64 --decode)
+  DB_USER=$(echo "$DB_SECRET" | jq -r '.data.username' | base64 --decode)
+  
+  echo "Updating RDS instance password..."
+  aws rds modify-db-instance \
+    --db-instance-identifier "terrafusion-$ENVIRONMENT" \
+    --master-user-password "$NEW_DB_PASSWORD" \
+    --apply-immediately \
+    --region "$AWS_REGION"
+  
+  echo "Waiting for database password update to complete..."
+  aws rds wait db-instance-available \
+    --db-instance-identifier "terrafusion-$ENVIRONMENT" \
+    --region "$AWS_REGION"
+  
+  # Update Kubernetes secret
+  NEW_DB_URL="postgresql://$DB_USER:$NEW_DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
+  
+  echo "Updating Kubernetes secret with new credentials..."
+  kubectl create secret generic terrafusion-db-credentials \
+    --namespace default \
+    --from-literal=username="$DB_USER" \
+    --from-literal=password="$NEW_DB_PASSWORD" \
+    --from-literal=host="$DB_HOST" \
+    --from-literal=port="$DB_PORT" \
+    --from-literal=dbname="$DB_NAME" \
+    --from-literal=url="$NEW_DB_URL" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  
+  # Update HashiCorp Vault if configured
+  if command -v vault &> /dev/null; then
+    echo "Updating HashiCorp Vault with new database credentials..."
+    
+    # Authenticate with Vault
+    vault_login
+    
+    # Update secrets in Vault
+    vault kv put "secret/terrafusion/$ENVIRONMENT/db" \
+      username="$DB_USER" \
+      password="$NEW_DB_PASSWORD" \
+      host="$DB_HOST" \
+      port="$DB_PORT" \
+      dbname="$DB_NAME" \
+      url="$NEW_DB_URL"
+  fi
+  
+  echo "Database credentials rotated successfully."
+}
+
+# Function to rotate AI API keys
+rotate_ai_credentials() {
+  echo "Rotating AI API credentials..."
+  
+  # Get current AI provider
+  AI_SECRET=$(kubectl get secret terrafusion-ai-credentials -n terrafusion-agents -o json)
+  AI_PROVIDER=$(echo "$AI_SECRET" | jq -r '.data.provider' | base64 --decode)
+  
+  echo "Current AI provider: $AI_PROVIDER"
+  echo "Please generate a new API key from the AI provider's website."
+  
+  if [ "$SKIP_CONFIRMATION" = false ]; then
+    read -p "Enter new API key for $AI_PROVIDER: " NEW_API_KEY
+    
+    if [ -z "$NEW_API_KEY" ]; then
+      echo "Error: API key cannot be empty."
+      exit 1
+    fi
+  else
+    # In automated mode, we would typically fetch this from a secure source
+    # For this script, we'll just demonstrate the pattern
+    echo "Automated mode: Would fetch key from secure source."
+    NEW_API_KEY="dummy-api-key-for-demo-only"
+  fi
+  
+  # Update Kubernetes secret
+  echo "Updating Kubernetes secret with new API key..."
+  kubectl create secret generic terrafusion-ai-credentials \
+    --namespace terrafusion-agents \
+    --from-literal=provider="$AI_PROVIDER" \
+    --from-literal=api_key="$NEW_API_KEY" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  
+  # Update HashiCorp Vault if configured
+  if command -v vault &> /dev/null; then
+    echo "Updating HashiCorp Vault with new AI API key..."
+    
+    # Authenticate with Vault
+    vault_login
+    
+    # Update secrets in Vault
+    vault kv put "secret/terrafusion/$ENVIRONMENT/ai" \
+      provider="$AI_PROVIDER" \
+      api_key="$NEW_API_KEY"
+  fi
+  
+  echo "AI API credentials rotated successfully."
+}
+
+# Function to rotate JWT secret
+rotate_jwt_secret() {
+  echo "Rotating JWT signing secret..."
+  
+  # Generate new JWT secret
+  NEW_JWT_SECRET=$(openssl rand -base64 48)
+  
+  # Update Kubernetes secret
+  echo "Updating Kubernetes secret with new JWT signing secret..."
+  kubectl create secret generic terrafusion-jwt-secret \
+    --namespace default \
+    --from-literal=secret="$NEW_JWT_SECRET" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  
+  # Update HashiCorp Vault if configured
+  if command -v vault &> /dev/null; then
+    echo "Updating HashiCorp Vault with new JWT signing secret..."
+    
+    # Authenticate with Vault
+    vault_login
+    
+    # Update secrets in Vault
+    vault kv put "secret/terrafusion/$ENVIRONMENT/jwt" \
+      secret="$NEW_JWT_SECRET"
+  fi
+  
+  echo "JWT signing secret rotated successfully."
+}
+
+# Function to authenticate with HashiCorp Vault
+vault_login() {
+  if [ "$VAULT_AUTH_METHOD" = "token" ]; then
+    # Token auth method (usually used in dev)
+    if [ -z "$VAULT_TOKEN" ]; then
+      read -p "Enter Vault token: " VAULT_TOKEN
+      export VAULT_TOKEN
+    fi
+  elif [ "$VAULT_AUTH_METHOD" = "aws" ]; then
+    # AWS auth method
+    echo "Authenticating to Vault using AWS IAM..."
+    VAULT_ROLE="terrafusion-$ENVIRONMENT"
+    vault_output=$(vault login -method=aws role="$VAULT_ROLE")
+    export VAULT_TOKEN=$(echo "$vault_output" | grep "token " | awk '{print $2}')
+  elif [ "$VAULT_AUTH_METHOD" = "k8s" ]; then
+    # Kubernetes auth method
+    echo "Authenticating to Vault using Kubernetes service account..."
+    VAULT_ROLE="terrafusion-$ENVIRONMENT"
+    JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    vault_output=$(vault write auth/kubernetes/login role="$VAULT_ROLE" jwt="$JWT")
+    export VAULT_TOKEN=$(echo "$vault_output" | grep "token " | awk '{print $2}')
+  fi
+}
+
+# Perform secret rotation based on selected type
+if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "db" ]]; then
+  rotate_db_credentials
 fi
 
-echo -e "\n${GREEN}✓ Secret rotation completed successfully!${NC}"
-
-# If this was an AI key, suggest testing
-if [ "$SECRET_TYPE" = "ai-key" ]; then
-  echo -e "\n${BLUE}=== Next Steps ===${NC}"
-  echo -e "To verify the new AI key works correctly, run:"
-  echo -e "kubectl exec -it deploy/terrafusion-backend -n default -- node ./scripts/test-ai-key.js --provider ${SECRET_NAME}"
+if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "ai" ]]; then
+  rotate_ai_credentials
 fi
+
+if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "jwt" ]]; then
+  rotate_jwt_secret
+fi
+
+# Restart affected deployments to pick up new secrets
+echo "Restarting affected deployments to pick up new secrets..."
+
+if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "db" || "$SECRET_TYPE" == "jwt" ]]; then
+  echo "Restarting backend deployment..."
+  kubectl rollout restart deployment/terrafusion-backend -n default
+  kubectl rollout status deployment/terrafusion-backend -n default --timeout=120s
+fi
+
+if [[ "$SECRET_TYPE" == "all" || "$SECRET_TYPE" == "ai" ]]; then
+  echo "Restarting agent deployments..."
+  kubectl rollout restart deployment -l role=agent -n terrafusion-agents
+  kubectl rollout status deployment -l role=agent -n terrafusion-agents --timeout=120s
+fi
+
+echo "Secret rotation completed successfully!"
+echo "Verifying system health..."
+
+# Verify system health
+kubectl get pods -A | grep terrafusion
+kubectl get pods -n terrafusion-agents -o wide
+
+echo "Secret rotation process complete. Monitor logs for any issues."
