@@ -1,199 +1,195 @@
 # TerraFusion DevOps Kit
 
-A comprehensive DevOps toolkit for deploying, managing and scaling the TerraFusion AI platform. This kit provides infrastructure as code, CI/CD pipelines, observability, and automation tools for the TerraFusion ecosystem.
+A comprehensive DevOps toolkit for deploying, managing, and monitoring the TerraFusion AI infrastructure optimization platform, with a focus on intelligent multi-agent systems.
 
-## 🚀 Overview
+## 📋 Overview
 
-The TerraFusion DevOps Kit provides a complete set of tools and processes for operationalizing the AI agent-based infrastructure optimization platform. It's designed to support the full lifecycle of development, testing, deployment, and monitoring across multiple environments.
+The TerraFusion DevOps Kit provides a complete set of tools and configurations for managing the TerraFusion platform throughout its lifecycle. It includes:
 
-## 📋 Features
+- Infrastructure as Code (Terraform)
+- Continuous Integration/Continuous Deployment (GitHub Actions)
+- Docker containerization for all components
+- Kubernetes deployment manifests
+- Monitoring and observability stack
+- Agent management tools
+- Security and compliance frameworks
 
-- **Infrastructure as Code**: Terraform configurations for AWS resources
-- **CI/CD Pipelines**: GitHub Actions workflows for automated testing and deployment
-- **Container Management**: Docker configurations for all components
-- **Kubernetes Orchestration**: Manifests for Kubernetes deployments
-- **Observability**: Prometheus, Grafana, and Loki for monitoring and logging
-- **Secrets Management**: HashiCorp Vault integration for secure credential handling
-- **Deployment Automation**: Scripts for zero-downtime rollouts
-- **Backup & Disaster Recovery**: Tools for data resilience
-- **Security Scanning**: Tools for vulnerability detection and mitigation
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/benton-county/terrafusion-devops-kit
+
+# Navigate to the repository directory
+cd terrafusion-devops-kit
+
+# Install the Agent Configuration Wizard
+./scripts/install-agent-wizard.sh
+
+# Deploy all components to development environment
+make deploy-all
+```
 
 ## 🛠️ Components
 
-### 1. Infrastructure as Code (Terraform)
+### Infrastructure as Code (Terraform)
 
-The `terraform` directory contains configurations for creating and managing cloud infrastructure:
+The `terraform/` directory contains Terraform configurations for provisioning cloud infrastructure:
 
-- VPC and networking
-- EKS clusters for Kubernetes workloads
-- RDS PostgreSQL databases
-- S3 buckets for data storage
-- ECR repositories for container images
-- IAM roles and policies
-- CloudWatch monitoring
+- Network resources (VPC, subnets, security groups)
+- Compute resources (Kubernetes clusters, databases)
+- Storage resources (object storage, file systems)
+- Identity and access management
 
-### 2. CI/CD Pipelines (GitHub Actions)
+### CI/CD (GitHub Actions)
 
-The `github-actions` directory contains workflows for:
+The `github-actions/` directory contains workflow definitions for:
 
-- Backend services
-- Frontend applications
-- AI Agent swarm
-- Infrastructure changes
+- Building and testing backend components
+- Building and testing frontend components
+- Deploying AI agent swarm
+- Security scanning
+- Documentation generation
 
-### 3. Containerization (Docker)
+### Docker Containers
 
-The `docker` directory contains:
+The `docker/` directory contains Dockerfiles for:
 
-- Base images for various components
-- Agent-specific Dockerfiles
-- Multi-stage optimized builds
-- Security-focused configurations
+- Base images for different agent types
+- Specialized agent containers
+- Backend API services
+- Frontend web application
 
-### 4. Kubernetes Configuration
+### Kubernetes Manifests
 
-The `k8s-manifests` directory contains:
+The `k8s-manifests/` directory contains Kubernetes deployment configurations for:
 
-- Deployment manifests
-- Service definitions
-- Persistent volume claims
-- Configuration maps
-- Secrets management
-- Namespace definitions
+- Agent swarm deployment
+- Backend API services
+- Frontend application
+- Databases and caches
+- Monitoring components
 
-### 5. Observability Stack
+### AI Agent Swarm
 
-Configurations for:
+The `swarm/` directory contains configurations for the AI agent swarm:
+
+- Agent manifest schema and examples
+- Agent runner implementation
+- Inter-agent communication framework
+- Agent lifecycle management
+
+### Monitoring and Observability
+
+The `monitoring/` directory contains configurations for:
 
 - Prometheus for metrics collection
 - Grafana for visualization
 - Loki for log aggregation
-- Tempo for distributed tracing
-- Custom dashboards for AI agents
+- Jaeger for distributed tracing
+- Alert manager for notifications
 
-### 6. Deployment Scripts
+### Tools
 
-The `scripts` directory contains utilities for:
+The `tools/` directory contains utility tools for managing the platform:
 
-- Database migrations
-- Zero-downtime deployments
-- Secret rotation
-- Agent retraining
-- Backup/restore procedures
+- **Agent Configuration Wizard**: User-friendly tool for configuring and deploying AI agents
+- Secrets rotation utilities
+- Database migration tools
+- Performance benchmarking utilities
 
-## 🏗️ Architecture
+## 📚 Usage
 
-The TerraFusion platform uses a microservices architecture with the following key components:
+### Agent Configuration Wizard
 
-1. **Backend Services**: Node.js Express APIs
-2. **Frontend Application**: React-based UI
-3. **AI Agent Swarm**: Specialized AI agents for different optimization tasks
-4. **Model Content Protocol (MCP)**: Framework for agent communication
-5. **PostgreSQL Database**: Data persistence layer
-6. **Redis Cache**: Performance optimization
-7. **EFS Storage**: Shared file storage for models and training data
-
-## 🚦 Getting Started
-
-### Prerequisites
-
-- AWS Account with appropriate permissions
-- GitHub account with repository access
-- Docker and Docker Compose
-- Terraform CLI
-- kubectl configured for Kubernetes access
-- AWS CLI
-
-### Initial Setup
-
-1. Clone this repository
-2. Initialize Terraform for your desired environment
+The Agent Configuration Wizard provides a user-friendly interface for configuring and managing AI agents:
 
 ```bash
-cd terraform
-terraform init -backend-config=environments/dev.tfbackend
+# Launch the interactive wizard
+agentctl wizard
+
+# Validate an agent manifest
+agentctl validate
+
+# List configured agents
+agentctl list
+
+# Check agent status
+agentctl status
+
+# Deploy agents
+agentctl deploy
 ```
 
-3. Create initial infrastructure
+See the [Agent Configuration Wizard documentation](tools/agent-wizard/README.md) for more details.
+
+### Deploying with Make
+
+The Makefile provides a unified interface for DevOps operations:
 
 ```bash
-terraform apply -var-file=environments/dev.tfvars
+# Initialize Terraform
+make init
+
+# Deploy backend
+make deploy-backend
+
+# Deploy frontend
+make deploy-frontend
+
+# Deploy agents
+make deploy-agents
+
+# Deploy all components
+make deploy-all
 ```
 
-4. Set up GitHub repository secrets for CI/CD
-5. Push changes to trigger initial deployments
+Run `make help` to see all available commands.
 
-## 🔄 Deployment Workflows
+## 🔐 Security
 
-### Standard Deployment Process
+The DevOps Kit includes security best practices:
 
-1. Code changes are pushed to GitHub
-2. CI pipeline runs tests and builds containers
-3. Containers are pushed to ECR
-4. CD pipeline deploys to appropriate environment
-5. Health checks verify successful deployment
+- Secrets management with HashiCorp Vault
+- Network security policies
+- RBAC configurations
+- Vulnerability scanning
+- Compliance checks
 
-### Agent Deployment Process
+## 📊 Monitoring
 
-AI agents follow a specialized deployment process:
+The monitoring stack provides comprehensive visibility into the system:
 
-1. Agent code changes trigger CI process
-2. Build and testing validate the agent
-3. Agent container is built and pushed to ECR
-4. Deployment updates the agent in the Kubernetes cluster
-5. Agent retraining may be triggered if needed
+- Real-time agent performance metrics
+- Resource utilization
+- API response times
+- Error rates
+- User activity
 
-## 📊 Monitoring and Observability
+## 🧪 Testing
 
-### Metrics Collection
+The DevOps Kit includes testing frameworks for:
 
-- Infrastructure metrics
-- Application performance metrics
-- Agent-specific metrics
-- Model performance metrics
+- Unit testing of agent components
+- Integration testing of agent interactions
+- End-to-end testing of workflows
+- Load testing of APIs
+- Security scanning
 
-### Logging
+## 📝 Documentation
 
-- Centralized log collection with Loki
-- Structured logging for all components
-- Log-based alerting for critical errors
+Comprehensive documentation is available:
 
-### Alerting
-
-- Multi-channel notifications (Slack, email, PagerDuty)
-- Customizable alert thresholds
-- Alert aggregation and de-duplication
-
-## 🛡️ Security Considerations
-
-- Infrastructure security (network isolation, IAM least privilege)
-- Container security (vulnerability scanning, minimal base images)
-- Data security (encryption at rest and in transit)
-- Secret management (HashiCorp Vault integration)
-- Compliance monitoring (automated checks)
-
-## 📚 Documentation
-
-- [Terraform Configuration](./terraform/README.md)
-- [GitHub Actions Workflows](./github-actions/README.md)
-- [Docker Configurations](./docker/README.md)
-- [Kubernetes Manifests](./k8s-manifests/README.md)
-
-## 🔧 Troubleshooting
-
-Common issues and solutions can be found in the [Troubleshooting Guide](./docs/troubleshooting.md).
+- [Installation Guide](docs/installation.md)
+- [Deployment Guide](docs/deployment.md)
+- [Agent Development Guide](docs/agent-development.md)
+- [Monitoring Guide](docs/monitoring.md)
+- [Security Guide](docs/security.md)
 
 ## 🤝 Contributing
 
-1. Create a feature branch
-2. Make your changes
-3. Run the validation scripts
-4. Submit a pull request
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-© 2025 TerraFusion. All rights reserved.
-
-## 📧 Contact
-
-For questions or issues, please contact the DevOps team.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
