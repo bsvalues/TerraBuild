@@ -1,0 +1,468 @@
+name: AI Swarm Agents CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'server/mcp/**'
+      - 'server/services/**'
+      - 'shared/schemas/agent-types.ts'
+      - 'docker/agent-base.Dockerfile'
+      - '.github/workflows/swarm.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'server/mcp/**'
+      - 'server/services/**'
+      - 'shared/schemas/agent-types.ts'
+      - 'docker/agent-base.Dockerfile'
+      - '.github/workflows/swarm.yml'
+  workflow_dispatch:
+    inputs:
+      agent_id:
+        description: 'Specific agent ID to deploy (leave empty for all)'
+        required: false
+        type: string
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      force_retrain:
+        description: 'Force agent retraining'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  AWS_REGION: us-west-2
+  BASE_ECR_REPOSITORY: terrafusion-agent-base
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  agent-lint-test:
+    name: Lint and Test Agents
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint:agents
+        
+      - name: Type check
+        run: npm run type-check
+        
+      - name: Run agent unit tests
+        run: npm run test:agents
+        env:
+          NODE_ENV: test
+          OPENAI_API_KEY: ${{ secrets.TEST_OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.TEST_ANTHROPIC_API_KEY }}
+          
+      - name: Generate test coverage report
+        run: npm run test:agents:coverage
+        
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: agent-test-coverage
+          path: coverage-agents/
+
+  build-base-image:
+    name: Build Base Agent Image
+    runs-on: ubuntu-latest
+    needs: agent-lint-test
+    outputs:
+      base_image: ${{ steps.build-base-image.outputs.image }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-base-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-base-
+            
+      - name: Build and tag base Docker image
+        id: build-base-image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/agent-base.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_ECR_REPOSITORY }}:latest
+          build-args: |
+            NODE_ENV=production
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          
+      - name: Output base image info
+        run: echo "::set-output name=image::${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+        
+      - name: Scan Base Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-base-results.sarif
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-base-results.sarif
+
+  build-agent-images:
+    name: Build Specific Agent Images
+    runs-on: ubuntu-latest
+    needs: build-base-image
+    strategy:
+      matrix:
+        agent: [factor-tuner, benchmark-guard, curve-trainer, scenario-agent, boe-arguer]
+        # Skip agents not in the selection when a specific agent is requested
+        include:
+          - agent: factor-tuner
+            skip: ${{ github.event.inputs.agent_id != '' && github.event.inputs.agent_id != 'factor-tuner' }}
+          - agent: benchmark-guard
+            skip: ${{ github.event.inputs.agent_id != '' && github.event.inputs.agent_id != 'benchmark-guard' }}
+          - agent: curve-trainer
+            skip: ${{ github.event.inputs.agent_id != '' && github.event.inputs.agent_id != 'curve-trainer' }}
+          - agent: scenario-agent
+            skip: ${{ github.event.inputs.agent_id != '' && github.event.inputs.agent_id != 'scenario-agent' }}
+          - agent: boe-arguer
+            skip: ${{ github.event.inputs.agent_id != '' && github.event.inputs.agent_id != 'boe-arguer' }}
+    
+    # Skip this job for agents not selected
+    if: ${{ !matrix.skip }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Extract agent version
+        id: agent-version
+        run: |
+          VERSION=$(node -e "console.log(require('./shared/schemas/agent-versions.json')['${{ matrix.agent }}'] || '1.0.0')")
+          echo "AGENT_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "AGENT_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          
+      - name: Build and tag agent Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/agents/${{ matrix.agent }}.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:v${{ env.AGENT_VERSION }}
+            ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:latest
+          build-args: |
+            BASE_IMAGE=${{ needs.build-base-image.outputs.base_image }}
+            AGENT_VERSION=${{ env.AGENT_VERSION }}
+            NODE_ENV=production
+          
+      - name: Scan Agent Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:${{ env.IMAGE_TAG }}
+          format: table
+          output: trivy-${{ matrix.agent }}-results.txt
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-${{ matrix.agent }}-results
+          path: trivy-${{ matrix.agent }}-results.txt
+
+  agent-validation:
+    name: Validate Agent Behavior
+    runs-on: ubuntu-latest
+    needs: [build-base-image, build-agent-images]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: terrafusion_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Setup test database
+        run: npm run db:setup:test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
+          
+      - name: Run agent validation tests
+        run: npm run test:agent-validation
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terrafusion_test
+          OPENAI_API_KEY: ${{ secrets.TEST_OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.TEST_ANTHROPIC_API_KEY }}
+          
+      - name: Validate agent inference
+        run: npm run validate:agent-inference
+        if: github.event.inputs.force_retrain == 'true'
+        env:
+          NODE_ENV: test
+          OPENAI_API_KEY: ${{ secrets.TEST_OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.TEST_ANTHROPIC_API_KEY }}
+          
+  deploy-agents:
+    name: Deploy Agents
+    runs-on: ubuntu-latest
+    needs: [build-agent-images, agent-validation]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.6
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Set environment
+        run: echo "ENVIRONMENT=${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}" >> $GITHUB_ENV
+        
+      - name: Get agents to deploy
+        id: get-agents
+        run: |
+          if [[ -n "${{ github.event.inputs.agent_id }}" ]]; then
+            echo "AGENTS=${{ github.event.inputs.agent_id }}" >> $GITHUB_ENV
+          else
+            echo "AGENTS=factor-tuner,benchmark-guard,curve-trainer,scenario-agent,boe-arguer" >> $GITHUB_ENV
+          fi
+          
+      - name: Update Kubernetes deployment
+        working-directory: ./terrafusion-devops-kit/terraform
+        run: |
+          terraform init -backend-config=environments/${ENVIRONMENT}.tfbackend
+          terraform workspace select ${ENVIRONMENT} || terraform workspace new ${ENVIRONMENT}
+          
+          # Update agent versions in Terraform variables
+          AGENTS_ARRAY=(${AGENTS//,/ })
+          echo "Updating agents: ${AGENTS_ARRAY[*]}"
+          
+          # Create agent versions file
+          echo "agent_versions = {" > agent_versions.auto.tfvars
+          
+          for agent in "${AGENTS_ARRAY[@]}"; do
+            VERSION=$(node -e "console.log(require('../shared/schemas/agent-versions.json')['${agent}'] || '1.0.0')")
+            echo "  \"${agent}\" = \"${VERSION}\"," >> agent_versions.auto.tfvars
+          done
+          
+          echo "}" >> agent_versions.auto.tfvars
+          
+          # Add image tag
+          echo "agent_image_tag = \"${{ env.IMAGE_TAG }}\"" >> agent_versions.auto.tfvars
+          
+          # Force retrain flag
+          echo "force_agent_retrain = ${{ github.event.inputs.force_retrain || 'false' }}" >> agent_versions.auto.tfvars
+          
+          # Validate and plan
+          terraform validate
+          terraform plan -var-file=environments/${ENVIRONMENT}.tfvars -out=tfplan
+          
+          # Apply if not production or if explicitly requested
+          if [[ "${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}" != "prod" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            terraform apply -auto-approve tfplan
+          else
+            echo "Production deployment requires manual approval. Please review and apply the plan in the Terraform Cloud console."
+          fi
+          
+      - name: Verify agent deployment
+        run: |
+          # Get the API endpoint from Terraform outputs
+          API_ENDPOINT=$(terraform -chdir=./terrafusion-devops-kit/terraform output -raw api_gateway_endpoint)
+          
+          # Wait for the deployment to be ready
+          echo "Waiting for agent deployment to be ready..."
+          sleep 30
+          
+          # Run health check for each agent
+          AGENTS_ARRAY=(${AGENTS//,/ })
+          
+          for agent in "${AGENTS_ARRAY[@]}"; do
+            echo "Checking health for agent: ${agent}"
+            curl -s -f "${API_ENDPOINT}/api/agents/${agent}/health" || echo "Warning: Agent ${agent} health check failed"
+          done
+          
+          # Check overall swarm health
+          echo "Checking overall swarm health..."
+          curl -s -f "${API_ENDPOINT}/api/swarm/health" || echo "Warning: Swarm health check failed"
+          
+          echo "Agent deployment verified!"
+          
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ AI Agents deployment to ${{ env.ENVIRONMENT }} successful!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ AI Agents Deployment Successful"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ env.ENVIRONMENT }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Agents:*\n${{ env.AGENTS }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deployed by:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View build details>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ AI Agents deployment to ${{ env.ENVIRONMENT }} failed!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ AI Agents Deployment Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ env.ENVIRONMENT }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Agents:*\n${{ env.AGENTS }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Attempted by:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View build details>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

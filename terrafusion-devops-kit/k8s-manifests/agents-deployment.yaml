@@ -1,0 +1,569 @@
+---
+# Namespace for TerraFusion AI Agents
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: terrafusion-agents
+  labels:
+    app.kubernetes.io/part-of: terrafusion
+    istio-injection: enabled
+
+---
+# Common ConfigMap for all agents
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-common-config
+  namespace: terrafusion-agents
+data:
+  agent-config.json: |
+    {
+      "telemetry": {
+        "enabled": true,
+        "flushInterval": 60000,
+        "samplingRate": 0.1
+      },
+      "logging": {
+        "level": "info",
+        "format": "json",
+        "destination": "stdout"
+      },
+      "security": {
+        "allowedOrigins": ["https://api.terrafusion.example.com", "https://terrafusion.example.com"],
+        "trustedProxies": ["10.0.0.0/8"]
+      },
+      "mcp": {
+        "orchestratorEndpoint": "http://terrafusion-backend.default.svc.cluster.local:5000/api/mcp",
+        "healthCheckInterval": 30000
+      }
+    }
+
+---
+# Service Account for Agents with IRSA annotations
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: terrafusion-agents
+  namespace: terrafusion-agents
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/terrafusion-agents-role"
+
+---
+# NetworkPolicy to restrict agent communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-network-policy
+  namespace: terrafusion-agents
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: terrafusion-agents
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: terrafusion-backend
+    ports:
+    - protocol: TCP
+      port: 4000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: terrafusion-backend
+    ports:
+    - protocol: TCP
+      port: 5000
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: terrafusion-agents
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: vault
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: vault
+    ports:
+    - protocol: TCP
+      port: 8200
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+
+---
+# HorizontalPodAutoscaler for agents
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agents-hpa
+  namespace: terrafusion-agents
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: factor-tuner
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+
+---
+# Factor Tuner Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: factor-tuner
+  namespace: terrafusion-agents
+  labels:
+    app.kubernetes.io/name: factor-tuner
+    app.kubernetes.io/part-of: terrafusion-agents
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: factor-tuner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: factor-tuner
+        app.kubernetes.io/part-of: terrafusion-agents
+        app.kubernetes.io/component: agent
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-status: "update"
+        vault.hashicorp.com/role: "factor-tuner"
+        vault.hashicorp.com/agent-inject-secret-ai-keys: "secret/data/terrafusion/agents/factor-tuner/ai-keys"
+        vault.hashicorp.com/agent-inject-template-ai-keys: |
+          {{- with secret "secret/data/terrafusion/agents/factor-tuner/ai-keys" -}}
+          export OPENAI_API_KEY="{{ .Data.data.openai }}"
+          export ANTHROPIC_API_KEY="{{ .Data.data.anthropic }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: terrafusion-agents
+      containers:
+      - name: factor-tuner
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-factor-tuner:${AGENT_VERSION}
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: AGENT_ID
+          value: factor-tuner
+        - name: AGENT_PORT
+          value: "4000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: url
+        - name: AGENT_VERSION
+          value: "${AGENT_VERSION}"
+        ports:
+        - containerPort: 4000
+          name: http
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: temp-volume
+          mountPath: /app/temp
+        - name: agent-storage
+          mountPath: /app/storage
+      volumes:
+      - name: config-volume
+        configMap:
+          name: agent-common-config
+      - name: temp-volume
+        emptyDir: {}
+      - name: agent-storage
+        persistentVolumeClaim:
+          claimName: factor-tuner-storage
+
+---
+# Persistent Volume Claim for Factor Tuner
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: factor-tuner-storage
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Factor Tuner Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: factor-tuner
+  namespace: terrafusion-agents
+  labels:
+    app.kubernetes.io/name: factor-tuner
+    app.kubernetes.io/part-of: terrafusion-agents
+spec:
+  ports:
+  - port: 4000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: factor-tuner
+
+---
+# Benchmark Guard Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmark-guard
+  namespace: terrafusion-agents
+  labels:
+    app.kubernetes.io/name: benchmark-guard
+    app.kubernetes.io/part-of: terrafusion-agents
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: benchmark-guard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: benchmark-guard
+        app.kubernetes.io/part-of: terrafusion-agents
+        app.kubernetes.io/component: agent
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-status: "update"
+        vault.hashicorp.com/role: "benchmark-guard"
+        vault.hashicorp.com/agent-inject-secret-ai-keys: "secret/data/terrafusion/agents/benchmark-guard/ai-keys"
+        vault.hashicorp.com/agent-inject-template-ai-keys: |
+          {{- with secret "secret/data/terrafusion/agents/benchmark-guard/ai-keys" -}}
+          export OPENAI_API_KEY="{{ .Data.data.openai }}"
+          export ANTHROPIC_API_KEY="{{ .Data.data.anthropic }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: terrafusion-agents
+      containers:
+      - name: benchmark-guard
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-benchmark-guard:${AGENT_VERSION}
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: AGENT_ID
+          value: benchmark-guard
+        - name: AGENT_PORT
+          value: "4000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: url
+        - name: AGENT_VERSION
+          value: "${AGENT_VERSION}"
+        ports:
+        - containerPort: 4000
+          name: http
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: temp-volume
+          mountPath: /app/temp
+        - name: agent-storage
+          mountPath: /app/storage
+      volumes:
+      - name: config-volume
+        configMap:
+          name: agent-common-config
+      - name: temp-volume
+        emptyDir: {}
+      - name: agent-storage
+        persistentVolumeClaim:
+          claimName: benchmark-guard-storage
+
+---
+# Persistent Volume Claim for Benchmark Guard
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: benchmark-guard-storage
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Benchmark Guard Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: benchmark-guard
+  namespace: terrafusion-agents
+  labels:
+    app.kubernetes.io/name: benchmark-guard
+    app.kubernetes.io/part-of: terrafusion-agents
+spec:
+  ports:
+  - port: 4000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: benchmark-guard
+
+---
+# CronJob for nightly data analysis with Curve Trainer
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: curve-trainer-nightly
+  namespace: terrafusion-agents
+spec:
+  schedule: "0 2 * * *"  # Run at 2 AM every day
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: curve-trainer
+            app.kubernetes.io/part-of: terrafusion-agents
+            app.kubernetes.io/component: agent
+          annotations:
+            vault.hashicorp.com/agent-inject: "true"
+            vault.hashicorp.com/agent-inject-status: "update"
+            vault.hashicorp.com/role: "curve-trainer"
+            vault.hashicorp.com/agent-inject-secret-ai-keys: "secret/data/terrafusion/agents/curve-trainer/ai-keys"
+            vault.hashicorp.com/agent-inject-template-ai-keys: |
+              {{- with secret "secret/data/terrafusion/agents/curve-trainer/ai-keys" -}}
+              export OPENAI_API_KEY="{{ .Data.data.openai }}"
+              export ANTHROPIC_API_KEY="{{ .Data.data.anthropic }}"
+              {{- end -}}
+        spec:
+          serviceAccountName: terrafusion-agents
+          containers:
+          - name: curve-trainer
+            image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-curve-trainer:${AGENT_VERSION}
+            imagePullPolicy: Always
+            command: ["/bin/sh", "-c"]
+            args:
+            - |
+              source /vault/secrets/ai-keys
+              node /app/batch-jobs/nightly-training.js
+            env:
+            - name: NODE_ENV
+              value: production
+            - name: AGENT_ID
+              value: curve-trainer
+            - name: JOB_TYPE
+              value: nightly
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+            - name: AGENT_VERSION
+              value: "${AGENT_VERSION}"
+            resources:
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+              requests:
+                cpu: 500m
+                memory: 1Gi
+            volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+            - name: temp-volume
+              mountPath: /app/temp
+            - name: job-storage
+              mountPath: /app/storage
+          volumes:
+          - name: config-volume
+            configMap:
+              name: agent-common-config
+          - name: temp-volume
+            emptyDir: {}
+          - name: job-storage
+            persistentVolumeClaim:
+              claimName: curve-trainer-storage
+          restartPolicy: OnFailure
+
+---
+# Persistent Volume Claim for Curve Trainer
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: curve-trainer-storage
+  namespace: terrafusion-agents
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# Prometheus ServiceMonitor for Agent Metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: agent-monitor
+  namespace: terrafusion-agents
+  labels:
+    app.kubernetes.io/part-of: terrafusion-agents
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: terrafusion-agents
+  namespaceSelector:
+    matchNames:
+    - terrafusion-agents
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
+
+---
+# ConfigMap for Prometheus Rule Alerts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-prometheus-rules
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: terrafusion
+data:
+  agent-rules.yaml: |
+    groups:
+    - name: agent.rules
+      rules:
+      - alert: AgentDown
+        expr: up{job="agent"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: agents
+        annotations:
+          summary: "Agent {{ $labels.agent }} is down"
+          description: "Agent {{ $labels.agent }} has been down for more than 5 minutes."
+          
+      - alert: AgentHighErrorRate
+        expr: rate(agent_errors_total{job="agent"}[5m]) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "Agent {{ $labels.agent }} has high error rate"
+          description: "Agent {{ $labels.agent }} has an error rate of {{ $value }} errors per second."
+          
+      - alert: AgentHighLatency
+        expr: histogram_quantile(0.95, sum(rate(agent_latency_seconds_bucket{job="agent"}[5m])) by (le, agent)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "Agent {{ $labels.agent }} has high latency"
+          description: "Agent {{ $labels.agent }} has 95th percentile latency of {{ $value }} seconds."
