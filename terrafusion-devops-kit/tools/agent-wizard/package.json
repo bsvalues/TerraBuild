@@ -1,0 +1,35 @@
+{
+  "name": "terrafusion-agent-wizard",
+  "version": "1.0.0",
+  "description": "User-friendly configuration wizard for TerraFusion AI agents",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "node build.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.0.0",
+    "conf": "^11.0.1",
+    "enquirer": "^2.3.6",
+    "js-yaml": "^4.1.0",
+    "ora": "^7.0.1",
+    "terminal-link": "^3.0.0",
+    "table": "^6.8.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.46.0",
+    "pkg": "^5.8.1"
+  },
+  "keywords": [
+    "terrafusion",
+    "ai",
+    "agent",
+    "configuration",
+    "wizard"
+  ],
+  "author": "TerraFusion DevOps Team",
+  "license": "MIT"
+}
