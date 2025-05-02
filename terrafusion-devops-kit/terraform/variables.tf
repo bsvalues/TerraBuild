@@ -1,10 +1,8 @@
-/**
- * TerraFusion Infrastructure as Code
- * Terraform Variables
- */
+# TerraFusion Infrastructure Variables
+# Variables used in the Terraform configuration
 
 variable "environment" {
-  description = "Deployment environment (dev, staging, prod)"
+  description = "Environment name (e.g., dev, staging, prod)"
   type        = string
   default     = "dev"
   
@@ -15,7 +13,7 @@ variable "environment" {
 }
 
 variable "aws_region" {
-  description = "AWS region to deploy resources"
+  description = "AWS region for all resources"
   type        = string
   default     = "us-west-2"
 }
@@ -26,140 +24,73 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "availability_zones" {
-  description = "List of availability zones to use"
-  type        = list(string)
-  default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
+variable "db_instance_type" {
+  description = "Instance type for the RDS PostgreSQL database"
+  type        = string
+  default     = "db.t3.medium"
 }
 
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets"
-  type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-}
-
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets"
-  type        = list(string)
-  default     = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+variable "db_allocated_storage" {
+  description = "Allocated storage in GiB for the RDS PostgreSQL database"
+  type        = number
+  default     = 20
 }
 
 variable "kubernetes_version" {
-  description = "Kubernetes version to use for EKS cluster"
+  description = "Kubernetes version for the EKS cluster"
   type        = string
   default     = "1.27"
 }
 
-variable "min_app_nodes" {
-  description = "Minimum number of application nodes"
-  type        = number
-  default     = 2
-}
-
-variable "max_app_nodes" {
-  description = "Maximum number of application nodes"
-  type        = number
-  default     = 10
-}
-
-variable "desired_app_nodes" {
-  description = "Desired number of application nodes"
-  type        = number
-  default     = 3
-}
-
-variable "min_ai_nodes" {
-  description = "Minimum number of AI nodes"
-  type        = number
-  default     = 1
-}
-
-variable "max_ai_nodes" {
-  description = "Maximum number of AI nodes"
-  type        = number
-  default     = 5
-}
-
-variable "desired_ai_nodes" {
-  description = "Desired number of AI nodes"
-  type        = number
-  default     = 1
-}
-
-variable "db_instance_class" {
-  description = "RDS instance class"
+variable "deployment_version" {
+  description = "Version tag used for deployments"
   type        = string
-  default     = "db.t3.large"
+  default     = "latest"
 }
 
-variable "db_allocated_storage" {
-  description = "Allocated storage for RDS instance (GB)"
-  type        = number
-  default     = 100
-}
-
-variable "db_backup_retention_period" {
-  description = "Number of days to retain database backups"
-  type        = number
-  default     = 7
-}
-
-variable "route53_zone_arns" {
-  description = "ARNs of Route53 hosted zones for DNS management"
-  type        = list(string)
-  default     = []
-}
-
-variable "vault_address" {
-  description = "HashiCorp Vault server address"
+variable "deployment_timestamp" {
+  description = "Timestamp of the deployment"
   type        = string
-  default     = "https://vault.terrafusion.internal:8200"
+  default     = null
 }
 
-variable "admin_email" {
-  description = "Email address for administrative notifications"
-  type        = string
-  default     = "admin@example.com"
+variable "enable_monitoring" {
+  description = "Enable Prometheus, Grafana, and other monitoring tools"
+  type        = bool
+  default     = true
 }
 
-variable "domain_name" {
-  description = "Base domain name for the application"
+variable "enable_logging" {
+  description = "Enable centralized logging with Loki"
+  type        = bool
+  default     = true
+}
+
+variable "base_domain" {
+  description = "Base domain for route53 and certificate manager"
   type        = string
   default     = "terrafusion.example.com"
 }
 
-variable "enable_ai_scaling" {
-  description = "Enable auto-scaling for AI agent nodes based on queue depth"
+variable "force_agent_retrain" {
+  description = "Force agent retraining after deployment"
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "agent_log_retention_days" {
-  description = "Number of days to retain agent logs"
-  type        = number
-  default     = 90
-}
-
-variable "enable_agent_telemetry" {
-  description = "Enable detailed telemetry for AI agents"
-  type        = bool
-  default     = true
-}
-
-variable "agent_versions" {
-  description = "Versions of each agent to deploy"
-  type        = map(string)
-  default     = {
-    "factor-tuner"     = "1.0.0",
-    "benchmark-guard"  = "1.0.0",
-    "curve-trainer"    = "1.0.0",
-    "scenario-agent"   = "1.0.0",
-    "boe-arguer"       = "1.0.0"
+variable "ai_provider" {
+  description = "Default AI provider for agents"
+  type        = string
+  default     = "openai"
+  
+  validation {
+    condition     = contains(["openai", "anthropic", "replicate"], var.ai_provider)
+    error_message = "AI provider must be one of: openai, anthropic, replicate."
   }
 }
 
-variable "enable_chaos_testing" {
-  description = "Enable chaos testing in the environment"
-  type        = bool
-  default     = false
+variable "tags" {
+  description = "Additional tags for all resources"
+  type        = map(string)
+  default     = {}
 }

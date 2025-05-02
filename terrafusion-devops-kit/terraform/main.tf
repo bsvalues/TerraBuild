@@ -1,534 +1,494 @@
-/**
- * TerraFusion Infrastructure as Code
- * Main Terraform Configuration
- */
+# TerraFusion Infrastructure as Code
+# This is the main Terraform configuration for the TerraFusion platform
 
 terraform {
-  required_version = ">= 1.0.0"
-  
+  required_version = "~> 1.4"
+
+  backend "s3" {
+    # These values are set via backend-config at initialization
+    # Example: terraform init -backend-config=environments/dev.tfbackend
+    # 
+    # bucket         = "terrafusion-tfstate-dev"
+    # key            = "terraform.tfstate"
+    # region         = "us-west-2"
+    # dynamodb_table = "terrafusion-tfstate-lock-dev"
+    # encrypt        = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+      version = "~> 2.20"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.0"
+      version = "~> 2.10"
     }
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~> 3.0"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
     }
-  }
-  
-  backend "s3" {
-    # Variables are initialized from *.tfbackend config files
-    # Example: terraform init -backend-config=environments/dev.tfbackend
   }
 }
 
+# Provider configuration
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
       Environment = var.environment
       Project     = "TerraFusion"
       ManagedBy   = "Terraform"
+      Owner       = "DevOps"
     }
   }
 }
 
-# Configure Kubernetes provider with EKS cluster details
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
-  }
-}
+# Retrieve existing AWS account information
+data "aws_caller_identity" "current" {}
+data "aws_availability_zones" "available" {}
 
-# Configure Helm provider with Kubernetes credentials
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
-    }
-  }
-}
-
-# Configure Vault provider
-provider "vault" {
-  address = var.vault_address
-  # Authentication handled via AWS IAM
-  auth_login {
-    path = "auth/aws/login"
-    parameters = {
-      role = "terrafusion-${var.environment}"
-    }
-  }
-}
-
-# Import common modules
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-  version = "~> 3.0"
-  
-  name = "terrafusion-${var.environment}-vpc"
-  cidr = var.vpc_cidr
-  
-  azs             = var.availability_zones
-  private_subnets = var.private_subnet_cidrs
-  public_subnets  = var.public_subnet_cidrs
-  
-  enable_nat_gateway   = true
-  single_nat_gateway   = var.environment != "prod"
-  enable_dns_hostnames = true
-  
-  # Tag subnets for Kubernetes
-  private_subnet_tags = {
-    "kubernetes.io/cluster/terrafusion-${var.environment}" = "shared"
-    "kubernetes.io/role/internal-elb"                      = 1
-  }
-  
-  public_subnet_tags = {
-    "kubernetes.io/cluster/terrafusion-${var.environment}" = "shared"
-    "kubernetes.io/role/elb"                               = 1
-  }
-}
-
-# EKS Cluster
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 18.0"
-  
+locals {
   cluster_name    = "terrafusion-${var.environment}"
-  cluster_version = var.kubernetes_version
+  vpc_name        = "terrafusion-vpc-${var.environment}"
+  account_id      = data.aws_caller_identity.current.account_id
+  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
+  agents          = ["factor-tuner", "benchmark-guard", "curve-trainer", "scenario-agent", "boe-arguer"]
   
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
-  
-  # EKS Managed Node Group(s)
-  eks_managed_node_groups = {
-    # System node group for core services
-    system = {
-      instance_types       = ["m5.large"]
-      min_size             = 2
-      max_size             = 4
-      desired_size         = 2
-      
-      labels = {
-        role = "system"
-      }
-    }
-    
-    # Application node group for TerraFusion services
-    app = {
-      instance_types       = ["m5.xlarge"]
-      min_size             = var.min_app_nodes
-      max_size             = var.max_app_nodes
-      desired_size         = var.desired_app_nodes
-      
-      labels = {
-        role = "application"
-      }
-    }
-    
-    # AI node group for ML workloads and agent processing
-    ai = {
-      instance_types       = ["g4dn.xlarge"]  # GPU instances for AI workloads
-      min_size             = var.min_ai_nodes
-      max_size             = var.max_ai_nodes
-      desired_size         = var.desired_ai_nodes
-      
-      labels = {
-        role = "ai"
-      }
-      
-      taints = [{
-        key    = "workload"
-        value  = "ai"
-        effect = "NO_SCHEDULE"
-      }]
-    }
+  # Common tags
+  common_tags = {
+    Project     = "TerraFusion"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Owner       = "DevOps"
   }
-  
-  # OIDC provider for service accounts
-  enable_irsa = true
 }
 
-# RDS PostgreSQL instance for application data
-module "postgres" {
-  source  = "terraform-aws-modules/rds/aws"
-  version = "~> 5.0"
+# Create KMS key for EKS encryption
+resource "aws_kms_key" "eks" {
+  description             = "EKS Encryption Key for ${local.cluster_name}"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  tags                    = local.common_tags
+}
+
+# Create a random string for database password
+resource "random_password" "db_password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+# VPC for EKS and other resources
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+
+  name = local.vpc_name
+  cidr = var.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for i, az in local.azs : cidrsubnet(var.vpc_cidr, 4, i)]
+  public_subnets  = [for i, az in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 48)]
   
+  # Database subnets
+  database_subnets = [for i, az in local.azs : cidrsubnet(var.vpc_cidr, 8, i + 16)]
+  
+  # Enable DNS hostnames and support for NAT Gateway
+  enable_nat_gateway   = true
+  single_nat_gateway   = var.environment != "prod" # Use single NAT except in prod
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  # EKS-specific tags for subnets
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                      = "1"
+  }
+  
+  private_subnet_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"             = "1"
+  }
+  
+  # Add common tags
+  tags = local.common_tags
+}
+
+# RDS PostgreSQL for TerraFusion data
+module "db" {
+  source  = "terraform-aws-modules/rds/aws"
+  version = "6.1.0"
+
   identifier = "terrafusion-${var.environment}"
   
-  engine                = "postgres"
-  engine_version        = "15.3"
-  family                = "postgres15"
-  major_engine_version  = "15"
-  instance_class        = var.db_instance_class
-  allocated_storage     = var.db_allocated_storage
+  # Database settings
+  engine               = "postgres"
+  engine_version       = "15"
+  family               = "postgres15"
+  major_engine_version = "15"
+  instance_class       = var.db_instance_type
+  allocated_storage    = var.db_allocated_storage
   
-  db_name               = "terrafusion"
-  username              = "tfadmin"
-  port                  = 5432
+  # Credentials
+  db_name  = "terrafusion"
+  username = "terrafusion_admin"
+  port     = 5432
+  password = random_password.db_password.result
   
-  # Use KMS for password management
-  manage_master_user_password = true
+  # Subnet group and security group
+  subnet_ids             = module.vpc.database_subnets
+  vpc_security_group_ids = [aws_security_group.db.id]
   
-  multi_az               = var.environment == "prod"
-  subnet_ids             = module.vpc.private_subnets
-  vpc_security_group_ids = [aws_security_group.postgres.id]
+  # Maintenance and backup settings
+  maintenance_window       = "Mon:00:00-Mon:03:00"
+  backup_window            = "03:00-06:00"
+  backup_retention_period  = 7
   
-  maintenance_window              = "Mon:00:00-Mon:03:00"
-  backup_window                   = "03:00-06:00"
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  create_cloudwatch_log_group     = true
+  # Security settings
+  storage_encrypted   = true
+  multi_az            = var.environment == "prod"
+  skip_final_snapshot = var.environment != "prod"
   
-  backup_retention_period = var.db_backup_retention_period
-  skip_final_snapshot     = var.environment != "prod"
-  deletion_protection     = var.environment == "prod"
-  
+  # Performance insights
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
-  create_monitoring_role                = true
-  monitoring_interval                   = 60
   
+  # Deletion protection
+  deletion_protection = var.environment == "prod"
+  
+  # Parameters
   parameters = [
     {
-      name  = "autovacuum"
-      value = 1
+      name  = "log_connections"
+      value = "1"
     },
     {
-      name  = "client_encoding"
-      value = "utf8"
+      name  = "log_min_duration_statement"
+      value = "1000"
     }
   ]
+  
+  tags = local.common_tags
 }
 
-# Security group for PostgreSQL
-resource "aws_security_group" "postgres" {
-  name        = "terrafusion-${var.environment}-postgres-sg"
-  description = "Allow PostgreSQL traffic from EKS"
+# Security group for database
+resource "aws_security_group" "db" {
+  name        = "terrafusion-db-${var.environment}"
+  description = "Security group for TerraFusion database"
   vpc_id      = module.vpc.vpc_id
   
+  # Ingress rules - allow only from EKS cluster nodes and bastion
   ingress {
-    description = "PostgreSQL from EKS"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = module.vpc.private_subnets_cidr_blocks
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [module.eks.node_security_group_id]
+    description     = "Allow PostgreSQL access from EKS nodes"
   }
   
+  # Egress rules - allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
   }
+  
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "terrafusion-db-${var.environment}"
+    }
+  )
 }
 
-# ECR Repositories for Docker images
-module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
-  version = "~> 1.4"
+# EKS cluster for TerraFusion
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "19.15.1"
+
+  cluster_name    = local.cluster_name
+  cluster_version = var.kubernetes_version
+
+  # VPC configuration
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
   
-  for_each = toset([
-    "terrafusion-backend",
-    "terrafusion-frontend",
-    "terrafusion-agent-base",
-    "terrafusion-factor-tuner",
-    "terrafusion-benchmark-guard",
-    "terrafusion-curve-trainer",
-    "terrafusion-scenario-agent",
-    "terrafusion-boe-arguer"
-  ])
+  # Cluster encryption
+  cluster_encryption_config = [{
+    provider_key_arn = aws_kms_key.eks.arn
+    resources        = ["secrets"]
+  }]
   
-  repository_name = each.key
-  repository_lifecycle_policy = jsonencode({
-    rules = [
-      {
-        rulePriority = 1,
-        description  = "Keep last 30 images",
-        selection = {
-          tagStatus     = "tagged",
-          tagPrefixList = ["v"],
-          countType     = "imageCountMoreThan",
-          countNumber   = 30
-        },
-        action = {
-          type = "expire"
+  # Control plane logging
+  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  
+  # Managed node groups
+  eks_managed_node_groups = {
+    # System node group for core services
+    system = {
+      name            = "system"
+      instance_types  = ["t3.medium"]
+      min_size        = 2
+      max_size        = 4
+      desired_size    = 2
+      capacity_type   = "ON_DEMAND"
+      disk_size       = 50
+      
+      # System label and taint
+      labels = {
+        role = "system"
+      }
+      
+      taints = {
+        dedicated = {
+          key    = "dedicated"
+          value  = "system"
+          effect = "NO_SCHEDULE"
         }
       }
-    ]
-  })
-}
-
-# Install core infrastructure using Helm
-resource "helm_release" "metrics_server" {
-  name       = "metrics-server"
-  repository = "https://kubernetes-sigs.github.io/metrics-server/"
-  chart      = "metrics-server"
-  namespace  = "kube-system"
-  
-  set {
-    name  = "apiService.create"
-    value = "true"
-  }
-}
-
-resource "helm_release" "aws_load_balancer_controller" {
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  namespace  = "kube-system"
-  
-  set {
-    name  = "clusterName"
-    value = module.eks.cluster_name
-  }
-  
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-  
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.load_balancer_controller_irsa_role.iam_role_arn
-  }
-}
-
-module "load_balancer_controller_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  
-  role_name                              = "terrafusion-${var.environment}-lb-controller"
-  attach_load_balancer_controller_policy = true
-  
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+    }
+    
+    # Application node group for backend and frontend
+    application = {
+      name            = "application"
+      instance_types  = ["t3.large"]
+      min_size        = 2
+      max_size        = 6
+      desired_size    = 2
+      capacity_type   = "ON_DEMAND"
+      disk_size       = 50
+      
+      # Application label
+      labels = {
+        role = "application"
+      }
+    }
+    
+    # AI Agents node group for agent workloads
+    agents = {
+      name            = "agents"
+      instance_types  = ["c5.xlarge"]
+      min_size        = 1
+      max_size        = 5
+      desired_size    = 2
+      capacity_type   = var.environment == "prod" ? "ON_DEMAND" : "SPOT"
+      disk_size       = 100
+      
+      # Agent label
+      labels = {
+        role = "agent"
+      }
     }
   }
-}
-
-resource "helm_release" "cert_manager" {
-  name       = "cert-manager"
-  repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  namespace  = "cert-manager"
-  create_namespace = true
   
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
-  
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.cert_manager_irsa_role.iam_role_arn
-  }
-}
-
-module "cert_manager_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  
-  role_name                     = "terrafusion-${var.environment}-cert-manager"
-  attach_cert_manager_policy    = true
-  cert_manager_hosted_zone_arns = var.route53_zone_arns
-  
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["cert-manager:cert-manager"]
+  # Node IAM role additional policies
+  node_security_group_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
     }
   }
-}
-
-# External DNS for Route53 integration
-resource "helm_release" "external_dns" {
-  name       = "external-dns"
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "external-dns"
-  namespace  = "kube-system"
   
-  set {
-    name  = "provider"
-    value = "aws"
-  }
-  
-  set {
-    name  = "aws.region"
-    value = var.aws_region
-  }
-  
-  set {
-    name  = "aws.zoneType"
-    value = "public"
-  }
-  
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.external_dns_irsa_role.iam_role_arn
-  }
-  
-  set {
-    name  = "policy"
-    value = "sync"
-  }
-}
-
-module "external_dns_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  
-  role_name                     = "terrafusion-${var.environment}-external-dns"
-  attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = var.route53_zone_arns
-  
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:external-dns"]
+  # AWS auth configuration 
+  manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::${local.account_id}:role/TerraFusionDevOpsRole"
+      username = "terraform"
+      groups   = ["system:masters"]
     }
-  }
-}
-
-# Monitoring stack
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = "monitoring"
-  }
-}
-
-resource "helm_release" "prometheus_stack" {
-  name       = "prometheus"
-  repository = "https://prometheus-community.github.io/helm-charts"
-  chart      = "kube-prometheus-stack"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
-  
-  values = [
-    file("${path.module}/values/prometheus-values.yaml")
   ]
   
-  set {
-    name  = "prometheus.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.prometheus_irsa_role.iam_role_arn
-  }
+  tags = local.common_tags
 }
 
-module "prometheus_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+# ECR repositories for TerraFusion container images
+resource "aws_ecr_repository" "backend" {
+  name                 = "terrafusion-backend"
+  image_tag_mutability = "MUTABLE"
   
-  role_name             = "terrafusion-${var.environment}-prometheus"
-  attach_cloudwatch_policy = true
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = local.common_tags
+}
+
+resource "aws_ecr_repository" "frontend" {
+  name                 = "terrafusion-frontend"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = local.common_tags
+}
+
+resource "aws_ecr_repository" "agent_base" {
+  name                 = "terrafusion-agent-base"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = local.common_tags
+}
+
+# Create ECR repositories for each agent
+resource "aws_ecr_repository" "agents" {
+  for_each = toset(local.agents)
+
+  name                 = "terrafusion-${each.key}"
+  image_tag_mutability = "MUTABLE"
+  
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  
+  tags = merge(
+    local.common_tags,
+    {
+      AgentType = each.key
+    }
+  )
+}
+
+# IAM roles for EKS service accounts
+module "backend_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-account-eks"
+  version = "5.30.0"
+  
+  role_name = "terrafusion-backend-${var.environment}"
   
   oidc_providers = {
     main = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["monitoring:prometheus-kube-prometheus-prometheus"]
+      namespace_service_accounts = ["default:terrafusion-backend"]
     }
   }
+  
+  role_policy_arns = {
+    AmazonS3ReadOnlyAccess      = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+    AmazonSESFullAccess         = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+    CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  }
+  
+  tags = local.common_tags
 }
 
-# Loki for logging
-resource "helm_release" "loki_stack" {
-  name       = "loki"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "loki-stack"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+module "agents_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-account-eks"
+  version = "5.30.0"
   
-  set {
-    name  = "grafana.enabled"
-    value = "false"  # Using the grafana instance from prometheus stack
-  }
-  
-  set {
-    name  = "prometheus.enabled"
-    value = "false"  # Using prometheus from prometheus stack
-  }
-  
-  set {
-    name  = "loki.persistence.enabled"
-    value = "true"
-  }
-  
-  set {
-    name  = "loki.persistence.size"
-    value = "50Gi"
-  }
-  
-  set {
-    name  = "loki.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = module.loki_irsa_role.iam_role_arn
-  }
-}
-
-module "loki_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  
-  role_name                  = "terrafusion-${var.environment}-loki"
-  attach_cloudwatch_policy   = true
+  role_name = "terrafusion-agents-${var.environment}"
   
   oidc_providers = {
     main = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["monitoring:loki"]
+      namespace_service_accounts = ["terrafusion-agents:terrafusion-agent"]
+    }
+  }
+  
+  role_policy_arns = {
+    AmazonS3ReadOnlyAccess      = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+    CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  }
+  
+  tags = local.common_tags
+}
+
+# S3 bucket for logs and data
+resource "aws_s3_bucket" "logs" {
+  bucket = "terrafusion-${var.environment}-logs"
+  
+  tags = local.common_tags
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "logs_lifecycle" {
+  bucket = aws_s3_bucket.logs.id
+  
+  rule {
+    id     = "log-expiration"
+    status = "Enabled"
+    
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+    
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+    
+    expiration {
+      days = 365
     }
   }
 }
 
-# HashiCorp Vault for secrets management
-resource "kubernetes_namespace" "vault" {
-  metadata {
-    name = "vault"
+resource "aws_s3_bucket" "data" {
+  bucket = "terrafusion-${var.environment}-data"
+  
+  tags = local.common_tags
+}
+
+resource "aws_s3_bucket_versioning" "data_versioning" {
+  bucket = aws_s3_bucket.data.id
+  
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
-resource "helm_release" "vault" {
-  name       = "vault"
-  repository = "https://helm.releases.hashicorp.com"
-  chart      = "vault"
-  namespace  = kubernetes_namespace.vault.metadata[0].name
+# CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "eks_cluster" {
+  name              = "/aws/eks/${local.cluster_name}/cluster"
+  retention_in_days = 90
   
-  values = [
-    file("${path.module}/values/vault-values.yaml")
-  ]
+  tags = local.common_tags
 }
 
-# API Gateway using Kong
-resource "kubernetes_namespace" "api_gateway" {
-  metadata {
-    name = "api-gateway"
-  }
+resource "aws_cloudwatch_log_group" "application" {
+  name              = "/terrafusion/${var.environment}/application"
+  retention_in_days = 90
+  
+  tags = local.common_tags
 }
 
-resource "helm_release" "kong" {
-  name       = "kong"
-  repository = "https://charts.konghq.com"
-  chart      = "kong"
-  namespace  = kubernetes_namespace.api_gateway.metadata[0].name
+resource "aws_cloudwatch_log_group" "agents" {
+  for_each = toset(local.agents)
   
-  values = [
-    file("${path.module}/values/kong-values.yaml")
-  ]
+  name              = "/terrafusion/${var.environment}/agents/${each.key}"
+  retention_in_days = 90
   
-  set {
-    name  = "ingressController.installCRDs"
-    value = "false"  # Already installed via cert-manager
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      AgentType = each.key
+    }
+  )
 }
-
-# Additional outputs and resources can be added as needed

@@ -1,17 +1,58 @@
-/**
- * TerraFusion Infrastructure as Code
- * Terraform Outputs
- */
+# TerraFusion Infrastructure Outputs
+# Outputs from the Terraform configuration
 
-# VPC Outputs
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = module.vpc.vpc_id
+# EKS cluster outputs
+output "eks_cluster_id" {
+  description = "The name of the EKS cluster"
+  value       = module.eks.cluster_id
 }
 
-output "vpc_cidr" {
-  description = "The CIDR block of the VPC"
-  value       = module.vpc.vpc_cidr_block
+output "eks_cluster_endpoint" {
+  description = "Endpoint for EKS control plane"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_security_group_id" {
+  description = "Security group ID attached to the EKS cluster"
+  value       = module.eks.cluster_security_group_id
+}
+
+output "eks_node_security_group_id" {
+  description = "Security group ID attached to the EKS nodes"
+  value       = module.eks.node_security_group_id
+}
+
+output "eks_oidc_provider_arn" {
+  description = "The ARN of the OIDC Provider for EKS"
+  value       = module.eks.oidc_provider_arn
+}
+
+# RDS database outputs
+output "db_instance_address" {
+  description = "The address of the RDS instance"
+  value       = module.db.db_instance_address
+}
+
+output "db_instance_port" {
+  description = "The port of the RDS instance"
+  value       = module.db.db_instance_port
+}
+
+output "db_instance_name" {
+  description = "The database name"
+  value       = module.db.db_instance_name
+}
+
+output "db_instance_username" {
+  description = "The master username for the database"
+  value       = module.db.db_instance_username
+  sensitive   = true
+}
+
+# VPC outputs
+output "vpc_id" {
+  description = "The ID of the VPC"
+  value       = module.vpc.vpc_id
 }
 
 output "private_subnets" {
@@ -24,140 +65,84 @@ output "public_subnets" {
   value       = module.vpc.public_subnets
 }
 
-# EKS Outputs
-output "cluster_id" {
-  description = "EKS cluster ID"
-  value       = module.eks.cluster_id
+output "database_subnets" {
+  description = "List of IDs of database subnets"
+  value       = module.vpc.database_subnets
 }
 
-output "cluster_endpoint" {
-  description = "Endpoint for EKS control plane"
-  value       = module.eks.cluster_endpoint
+output "nat_public_ips" {
+  description = "List of public Elastic IPs created for AWS NAT Gateway"
+  value       = module.vpc.nat_public_ips
 }
 
-output "cluster_security_group_id" {
-  description = "Security group ID attached to the EKS cluster"
-  value       = module.eks.cluster_security_group_id
+# IAM roles for Kubernetes service accounts
+output "backend_irsa_role_arn" {
+  description = "ARN of IAM role for backend service account"
+  value       = module.backend_irsa.iam_role_arn
 }
 
-output "cluster_iam_role_name" {
-  description = "IAM role name associated with EKS cluster"
-  value       = module.eks.cluster_iam_role_name
+output "agents_irsa_role_arn" {
+  description = "ARN of IAM role for agent service accounts"
+  value       = module.agents_irsa.iam_role_arn
 }
 
-output "cluster_iam_role_arn" {
-  description = "IAM role ARN associated with EKS cluster"
-  value       = module.eks.cluster_iam_role_arn
+# ECR repositories
+output "backend_ecr_repository_url" {
+  description = "URL of the backend ECR repository"
+  value       = aws_ecr_repository.backend.repository_url
 }
 
-output "cluster_oidc_issuer_url" {
-  description = "URL of the OIDC Provider from the EKS cluster"
-  value       = module.eks.cluster_oidc_issuer_url
+output "frontend_ecr_repository_url" {
+  description = "URL of the frontend ECR repository"
+  value       = aws_ecr_repository.frontend.repository_url
 }
 
-output "cluster_certificate_authority_data" {
-  description = "Base64 encoded certificate data for the EKS cluster"
-  value       = module.eks.cluster_certificate_authority_data
+output "agent_base_ecr_repository_url" {
+  description = "URL of the agent base ECR repository"
+  value       = aws_ecr_repository.agent_base.repository_url
 }
 
-output "cluster_version" {
-  description = "The Kubernetes version for the EKS cluster"
-  value       = module.eks.cluster_version
+output "agent_ecr_repository_urls" {
+  description = "Map of agent names to their ECR repository URLs"
+  value       = { for k, v in aws_ecr_repository.agents : k => v.repository_url }
 }
 
-# RDS Outputs
-output "db_instance_address" {
-  description = "The address of the RDS instance"
-  value       = module.postgres.db_instance_address
+# S3 buckets
+output "logs_bucket_name" {
+  description = "Name of the S3 bucket for logs"
+  value       = aws_s3_bucket.logs.id
 }
 
-output "db_instance_port" {
-  description = "The port of the RDS instance"
-  value       = module.postgres.db_instance_port
+output "data_bucket_name" {
+  description = "Name of the S3 bucket for data"
+  value       = aws_s3_bucket.data.id
 }
 
-output "db_instance_name" {
-  description = "The database name"
-  value       = module.postgres.db_instance_name
+# CloudWatch log groups
+output "eks_log_group_name" {
+  description = "Name of the CloudWatch log group for EKS"
+  value       = aws_cloudwatch_log_group.eks_cluster.name
 }
 
-output "db_instance_username" {
-  description = "The master username for the database"
-  value       = module.postgres.db_instance_username
+output "application_log_group_name" {
+  description = "Name of the CloudWatch log group for the application"
+  value       = aws_cloudwatch_log_group.application.name
+}
+
+output "agent_log_group_names" {
+  description = "Map of agent names to their CloudWatch log group names"
+  value       = { for k, v in aws_cloudwatch_log_group.agents : k => v.name }
+}
+
+# kubectl configuration command
+output "kubectl_config_command" {
+  description = "Command to configure kubectl"
+  value       = "aws eks update-kubeconfig --name ${module.eks.cluster_id} --region ${var.aws_region}"
+}
+
+# Database connection string (for reference only, password is in Secrets Manager)
+output "database_url_template" {
+  description = "Template of PostgreSQL connection string (without password)"
+  value       = "postgresql://${module.db.db_instance_username}:PASSWORD@${module.db.db_instance_address}:${module.db.db_instance_port}/${module.db.db_instance_name}"
   sensitive   = true
-}
-
-output "db_instance_resource_id" {
-  description = "The RDS resource ID"
-  value       = module.postgres.db_instance_resource_id
-}
-
-# ECR Repository Outputs
-output "ecr_repositories" {
-  description = "Map of ECR repository URLs"
-  value = {
-    for name, repo in module.ecr : name => repo.repository_url
-  }
-}
-
-# Monitoring Outputs
-output "grafana_endpoint" {
-  description = "URL of the Grafana dashboard"
-  value       = "https://grafana.${var.domain_name}"
-}
-
-output "prometheus_endpoint" {
-  description = "URL of the Prometheus dashboard (internal)"
-  value       = "https://prometheus.${var.domain_name}"
-}
-
-# Load Balancer Outputs
-output "api_gateway_endpoint" {
-  description = "URL of the API Gateway"
-  value       = "https://api.${var.domain_name}"
-}
-
-output "app_endpoint" {
-  description = "URL of the main application"
-  value       = "https://${var.domain_name}"
-}
-
-# Vault Outputs
-output "vault_endpoint" {
-  description = "URL of the Vault server"
-  value       = var.vault_address
-}
-
-# Agent Infrastructure Outputs
-output "agent_namespace" {
-  description = "Kubernetes namespace for AI agents"
-  value       = "terrafusion-agents"
-}
-
-# Terraform Backend Info
-output "terraform_backend_config" {
-  description = "Information about the Terraform backend configuration"
-  value = {
-    bucket = "terrafusion-${var.environment}-terraform-state"
-    region = var.aws_region
-    key    = "terraform.tfstate"
-  }
-}
-
-# For DevOps Automation
-output "ci_cd_role_arn" {
-  description = "IAM role ARN for CI/CD pipelines"
-  value       = aws_iam_role.ci_cd_role.arn
-}
-
-# IRSA Roles
-output "irsa_roles" {
-  description = "Map of IAM roles for service accounts"
-  value = {
-    "load_balancer_controller" = module.load_balancer_controller_irsa_role.iam_role_arn
-    "cert_manager"             = module.cert_manager_irsa_role.iam_role_arn
-    "external_dns"             = module.external_dns_irsa_role.iam_role_arn
-    "prometheus"               = module.prometheus_irsa_role.iam_role_arn
-    "loki"                     = module.loki_irsa_role.iam_role_arn
-  }
 }
