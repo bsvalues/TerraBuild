@@ -1,114 +1,97 @@
-# TerraFusion AI Agent Base Dockerfile
-# This is the base image for all AI Agents
+# TerraFusion Agent Base Dockerfile
+# This is the base image for all AI agents, containing common dependencies and code
 
-# ---- Base Node Stage ----
-FROM node:20-slim AS base
-WORKDIR /app
-ENV NODE_ENV=production
-ENV AGENT_PORT=4000
-
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    python3 \
-    python3-pip \
-    build-essential \
-    git \
-    procps \
-    tzdata \
-    tini \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir \
-    numpy \
-    pandas \
-    scikit-learn \
-    psycopg2-binary
-
-# ---- Dependencies Stage ----
-FROM base AS dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev && \
-    # Install additional agent dependencies
-    npm install --no-save \
-    @anthropic-ai/sdk@latest \
-    openai@latest \
-    langchain@latest \
-    @tensorflow/tfjs-node@latest \
-    uuid@latest \
-    pino@latest \
-    pino-pretty@latest
-
-# ---- Security Stage ----
-FROM dependencies AS security
-# Create non-root user
-RUN groupadd -r terrafusion && \
-    useradd -r -g terrafusion -G audio,video terrafusion && \
-    mkdir -p /home/terrafusion && \
-    mkdir -p /app/temp /app/storage /app/config && \
-    chown -R terrafusion:terrafusion /home/terrafusion && \
-    chown -R terrafusion:terrafusion /app
-
-# ---- Health Check Stage ----
-FROM security AS healthcheck
-# Add health check script
-COPY --chown=terrafusion:terrafusion scripts/agent-healthcheck.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/agent-healthcheck.sh
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD /usr/local/bin/agent-healthcheck.sh || exit 1
-
-# ---- Final Stage ----
-FROM healthcheck AS final
-
-# Copy agent framework code
-COPY --chown=terrafusion:terrafusion server/mcp/agents/baseAgent.ts ./server/mcp/agents/
-COPY --chown=terrafusion:terrafusion server/mcp/agents/customAgentBase.ts ./server/mcp/agents/
-COPY --chown=terrafusion:terrafusion server/mcp/agents/eventBus.ts ./server/mcp/agents/
-COPY --chown=terrafusion:terrafusion server/mcp/schemas ./server/mcp/schemas/
-COPY --chown=terrafusion:terrafusion shared/schemas ./shared/schemas/
-
-# Copy common utils
-COPY --chown=terrafusion:terrafusion server/utils ./server/utils/
-COPY --chown=terrafusion:terrafusion server/types ./server/types/
-
-# Create required directories with proper permissions
-RUN mkdir -p /app/logs /app/data /app/temp /app/models && \
-    chown -R terrafusion:terrafusion /app
+# ---- Build Stage ----
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
+# Build arguments
+ARG BUILD_VERSION=dev
+
+# Environment variables
+ENV NODE_ENV=production
+ENV BUILD_VERSION=${BUILD_VERSION}
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --production --no-audit
+
+# Copy source code (only the necessary files)
+COPY tsconfig.json ./
+COPY shared/ ./shared/
+COPY server/mcp/framework/ ./server/mcp/framework/
+COPY server/services/common/ ./server/services/common/
+COPY server/lib/ ./server/lib/
+COPY data/common/ ./data/common/
+COPY scripts/agent-runner.js ./scripts/
+
+# Build the TypeScript code
+RUN npm run build
+
+# ---- Production Stage ----
+FROM node:20-alpine AS production
+
+# Set working directory
+WORKDIR /app
+
+# Build arguments
+ARG BUILD_VERSION=dev
+
+# Environment variables
+ENV NODE_ENV=production
+ENV BUILD_VERSION=${BUILD_VERSION}
+
+# Install system dependencies
+RUN apk --no-cache add curl bash ca-certificates \
+    && update-ca-certificates \
+    && apk --no-cache add --virtual builds-deps build-base python3
+
+# Create non-root user
+RUN addgroup -S terrafusion && adduser -S -G terrafusion terrafusion
+
+# Copy built files from build stage
+COPY --from=build --chown=terrafusion:terrafusion /app/node_modules ./node_modules
+COPY --from=build --chown=terrafusion:terrafusion /app/dist ./dist
+COPY --from=build --chown=terrafusion:terrafusion /app/shared ./shared
+COPY --from=build --chown=terrafusion:terrafusion /app/server/mcp/framework ./server/mcp/framework
+COPY --from=build --chown=terrafusion:terrafusion /app/server/services/common ./server/services/common
+COPY --from=build --chown=terrafusion:terrafusion /app/server/lib ./server/lib
+COPY --from=build --chown=terrafusion:terrafusion /app/data/common ./data/common
+COPY --from=build --chown=terrafusion:terrafusion /app/scripts/agent-runner.js ./scripts/
+
+# Create necessary directories
+RUN mkdir -p /app/data/models /app/data/training /app/logs \
+    && chown -R terrafusion:terrafusion /app/data /app/logs
+
+# Setup healthcheck
+COPY --chown=terrafusion:terrafusion terrafusion-devops-kit/docker/healthcheck.js /app/healthcheck.js
+RUN chmod +x /app/healthcheck.js
+
+# Set permissions
+RUN chown -R terrafusion:terrafusion /app
+
 # Switch to non-root user
 USER terrafusion
 
-# Expose port
-EXPOSE ${AGENT_PORT}
+# Expose ports
+EXPOSE 4000
+EXPOSE 9090
 
-# Use tini as entrypoint to handle signals properly
-ENTRYPOINT ["/usr/bin/tini", "--"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD node /app/healthcheck.js
 
-# Set default command
-CMD ["node", "server/agents/index.js"]
+# Default command (will be overridden by specific agent images)
+CMD ["node", "server/lib/agent-runner.js"]
 
-# Build args and labels
-ARG BUILD_DATE
-ARG VCS_REF
-ARG BUILD_VERSION
-
-# Add standardized labels
-LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.authors="TerraFusion Team" \
-      org.opencontainers.image.url="https://github.com/bentoncounty/terrafusion" \
-      org.opencontainers.image.source="https://github.com/bentoncounty/terrafusion" \
-      org.opencontainers.image.version="${BUILD_VERSION}" \
-      org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.vendor="Benton County" \
-      org.opencontainers.image.title="TerraFusion Agent Base" \
-      org.opencontainers.image.description="Base image for TerraFusion AI Agents" \
-      org.opencontainers.image.licenses="Proprietary"
+# Add labels for better tracking
+LABEL org.opencontainers.image.title="TerraFusion Agent Base"
+LABEL org.opencontainers.image.description="Base image for TerraFusion AI agents"
+LABEL org.opencontainers.image.version="${BUILD_VERSION}"
+LABEL org.opencontainers.image.vendor="Benton County"
+LABEL com.terrafusion.component="agent-base"
+LABEL com.terrafusion.mcp.version="1.0"

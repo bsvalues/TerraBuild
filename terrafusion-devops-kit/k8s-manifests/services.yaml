@@ -1,0 +1,316 @@
+---
+# TerraFusion Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: terrafusion-backend
+  namespace: default
+  labels:
+    app.kubernetes.io/name: terrafusion-backend
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "5000"
+spec:
+  ports:
+  - port: 5000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: terrafusion-backend
+  type: ClusterIP
+
+---
+# TerraFusion Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: terrafusion-frontend
+  namespace: default
+  labels:
+    app.kubernetes.io/name: terrafusion-frontend
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: ui
+spec:
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: terrafusion-frontend
+  type: ClusterIP
+
+---
+# TerraFusion Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terrafusion-backend
+  namespace: default
+  labels:
+    app.kubernetes.io/name: terrafusion-backend
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: terrafusion-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: terrafusion-backend
+        app.kubernetes.io/part-of: terrafusion
+        app.kubernetes.io/component: api
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-status: "update"
+        vault.hashicorp.com/role: "backend"
+        vault.hashicorp.com/agent-inject-secret-db-creds: "secret/data/terrafusion/databases/terrafusion"
+        vault.hashicorp.com/agent-inject-template-db-creds: |
+          {{- with secret "secret/data/terrafusion/databases/terrafusion" -}}
+          export DATABASE_URL="postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@{{ .Data.data.host }}:{{ .Data.data.port }}/{{ .Data.data.dbname }}"
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-ai-keys: "secret/data/terrafusion/ai-providers"
+        vault.hashicorp.com/agent-inject-template-ai-keys: |
+          {{- with secret "secret/data/terrafusion/ai-providers/openai" -}}
+          export OPENAI_API_KEY="{{ .Data.data.key }}"
+          {{- end -}}
+          {{- with secret "secret/data/terrafusion/ai-providers/anthropic" -}}
+          export ANTHROPIC_API_KEY="{{ .Data.data.key }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: terrafusion-backend
+      containers:
+      - name: backend
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-backend:${VERSION}
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          source /vault/secrets/db-creds
+          source /vault/secrets/ai-keys
+          node server/index.js
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "5000"
+        - name: LOG_LEVEL
+          value: info
+        - name: CORS_ORIGIN
+          value: "https://terrafusion.example.com"
+        - name: ENABLE_MCP
+          value: "true"
+        - name: AGENT_NAMESPACE
+          value: terrafusion-agents
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: terrafusion-auth
+              key: jwt-secret
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 2
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        persistentVolumeClaim:
+          claimName: backend-logs
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+---
+# TerraFusion Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terrafusion-frontend
+  namespace: default
+  labels:
+    app.kubernetes.io/name: terrafusion-frontend
+    app.kubernetes.io/part-of: terrafusion
+    app.kubernetes.io/component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: terrafusion-frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: terrafusion-frontend
+        app.kubernetes.io/part-of: terrafusion
+        app.kubernetes.io/component: ui
+    spec:
+      containers:
+      - name: frontend
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/terrafusion-frontend:${VERSION}
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: API_URL
+          value: "https://api.terrafusion.example.com"
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 2
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+---
+# Persistent Volume Claim for Backend Logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-logs
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Service Account for Backend
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: terrafusion-backend
+  namespace: default
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/terrafusion-backend-${ENVIRONMENT}"
+
+---
+# Horizontal Pod Autoscaler for Backend
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: terrafusion-backend-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: terrafusion-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 60
+
+---
+# Horizontal Pod Autoscaler for Frontend
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: terrafusion-frontend-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: terrafusion-frontend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 60
