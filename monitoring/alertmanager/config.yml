@@ -1,67 +1,85 @@
 global:
   resolve_timeout: 5m
-  smtp_smarthost: 'smtp.example.com:587'
-  smtp_from: 'alertmanager@terrafusion.example.com'
-  smtp_auth_username: 'alertmanager'
-  smtp_auth_password: 'password'
-  smtp_require_tls: true
+  # Slack settings are defined through environment variables
+  slack_api_url: '${SLACK_API_URL}'
 
-templates:
-  - '/etc/alertmanager/templates/*.tmpl'
-
+# The root route on which each incoming alert enters.
 route:
-  group_by: ['alertname', 'service', 'severity']
+  # The default receiver
+  receiver: 'ops-team'
+  
+  # How long to wait to group alerts of the same group
   group_wait: 30s
+  
+  # How long to wait before sending a notification for grouped alerts
   group_interval: 5m
+  
+  # How long to wait before sending a notification again if it has already been sent
   repeat_interval: 4h
-  receiver: 'team-email'
+  
+  # A default grouping if no other match
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # All the above attributes are inherited by all child routes and can 
+  # be overwritten on each.
   routes:
+    # Route for critical alerts
     - match:
         severity: critical
-      receiver: 'team-pager'
-      continue: true
+      receiver: 'ops-team'
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: true  # Send to multiple receivers
+      
+    # Route for developer alerts
     - match:
-        service: database
-      receiver: 'db-team'
-      continue: true
-    - match:
-        service: api
-      receiver: 'api-team'
-      continue: true
-    - match:
-        service: agents
-      receiver: 'ai-team'
-      continue: true
+        component: agent
+      receiver: 'dev-team'
+      group_by: ['alertname', 'agent']
 
+# Inhibition rules define when some alerts should not be fired if some other
+# alerts are already firing.
 inhibit_rules:
+  # Inhibit agent warnings if there are critical infrastructure issues
   - source_match:
       severity: 'critical'
+      component: 'infrastructure'
     target_match:
       severity: 'warning'
-    equal: ['alertname', 'service']
+      component: 'agent'
+    # Apply inhibition if the source and target have the same cluster and service
+    equal: ['cluster', 'service']
 
+# The receivers block defines notification receivers
 receivers:
-  - name: 'team-email'
-    email_configs:
-      - to: 'team@terrafusion.example.com'
+  - name: 'ops-team'
+    slack_configs:
+      - channel: '#ops-alerts'
         send_resolved: true
-  
-  - name: 'team-pager'
-    pagerduty_configs:
-      - service_key: '<PAGERDUTY_SERVICE_KEY>'
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        footer: '{{ template "slack.default.footer" . }}'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: '${GRAFANA_URL}/d/agent-activity/agent-swarm-activity'
+
+  - name: 'dev-team'
+    slack_configs:
+      - channel: '#dev-alerts'
         send_resolved: true
-  
-  - name: 'db-team'
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        footer: '{{ template "slack.default.footer" . }}'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: '${GRAFANA_URL}/d/agent-activity/agent-swarm-activity'
+    
     email_configs:
-      - to: 'db-team@terrafusion.example.com'
+      - to: 'dev-team@terrafusion.io'
         send_resolved: true
 
-  - name: 'api-team'
-    email_configs:
-      - to: 'api-team@terrafusion.example.com'
-        send_resolved: true
-
-  - name: 'ai-team'
-    email_configs:
-      - to: 'ai-team@terrafusion.example.com'
-        send_resolved: true
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
