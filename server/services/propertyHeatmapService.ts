@@ -631,7 +631,11 @@ export class PropertyHeatmapService {
         FROM 
           geographic_regions gr
         LEFT JOIN 
-          properties p ON p.meta_data->>'region_id' = gr.id::text
+          geographic_municipalities gm ON gm.region_id = gr.id
+        LEFT JOIN 
+          geographic_neighborhoods gn ON gn.municipality_id = gm.id  
+        LEFT JOIN 
+          properties p ON p.hood_cd = gn.hood_cd
         LEFT JOIN 
           property_value_history pvh ON pvh.property_id = p.id
         WHERE 
@@ -683,7 +687,9 @@ export class PropertyHeatmapService {
         FROM 
           geographic_municipalities gm
         LEFT JOIN 
-          properties p ON p.meta_data->>'municipality_id' = gm.id::text
+          geographic_neighborhoods gn ON gn.municipality_id = gm.id  
+        LEFT JOIN 
+          properties p ON p.hood_cd = gn.hood_cd
         LEFT JOIN 
           property_value_history pvh ON pvh.property_id = p.id
         WHERE 
@@ -736,7 +742,7 @@ export class PropertyHeatmapService {
         FROM 
           geographic_neighborhoods gn
         LEFT JOIN 
-          properties p ON p.meta_data->>'hood_cd' = gn.hood_cd
+          properties p ON p.hood_cd = gn.hood_cd
         LEFT JOIN 
           property_value_history pvh ON pvh.property_id = p.id
         WHERE 
