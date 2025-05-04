@@ -387,8 +387,11 @@ function App() {
                 <AuthProvider>
                   <DataFlowProvider>
                     <SidebarProvider>
-                      <Router />
-                      <Toaster />
+                      {/* Workflow Provider for task-based navigation */}
+                      <WorkflowProvider tasks={TASKS}>
+                        <Router />
+                        <Toaster />
+                      </WorkflowProvider>
                     </SidebarProvider>
                   </DataFlowProvider>
                 </AuthProvider>

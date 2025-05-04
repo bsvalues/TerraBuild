@@ -9,6 +9,36 @@ import { Loader2, AlertTriangle, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useDataFlow } from "@/contexts/DataFlowContext";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "wouter";
+import WorkflowStatusBar from "../workflow/WorkflowStatusBar";
+import { useWorkflow } from "@/contexts/WorkflowContext";
+
+// Component to conditionally render workflow status bar
+const WorkflowStatusBarSection = () => {
+  const { currentTaskId, currentCategoryId } = useWorkflow();
+  
+  // Only show workflow status bar for property assessment tasks
+  if (currentCategoryId === 'property-assessment') {
+    return (
+      <div className="mt-4">
+        <WorkflowStatusBar 
+          taskIds={[
+            'property-search',
+            'building-details',
+            'condition-assessment',
+            'cost-calculation',
+            'review-assessment',
+            'generate-report'
+          ]}
+          showLabels={true}
+          size="md"
+        />
+      </div>
+    );
+  }
+  
+  return null;
+};
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -130,6 +160,9 @@ export default function MainLayout({
               >
                 {pageTitle && <h1 className="text-2xl md:text-3xl font-bold text-[#243E4D]">{pageTitle}</h1>}
                 {pageDescription && <p className="mt-2 text-gray-600">{pageDescription}</p>}
+                
+                {/* Add workflow status bar for property assessment related pages */}
+                <WorkflowStatusBarSection />
               </motion.div>
             )}
             
