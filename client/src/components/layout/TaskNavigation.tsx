@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { TASKS } from '@/config/tasks';
 import { 
   Building2,
   Calculator,
@@ -57,113 +58,8 @@ export default function TaskNavigation({ className }: TaskNavigationProps) {
   const { isExpanded } = useSidebar();
   const [location] = useLocation();
 
-  // Get all available tasks from the workflow context
-  const tasks = [
-    // Assessment Tasks
-    {
-      id: 'property_selection',
-      label: 'Property Selection',
-      description: 'Find and select properties for assessment',
-      route: '/properties',
-      category: 'assessment',
-      icon: <Building2 />
-    },
-    {
-      id: 'assessment_parameters',
-      label: 'Building Parameters',
-      description: 'Set assessment parameters',
-      route: '/calculator-v2',
-      requiredTasks: ['property_selection'],
-      requiredData: ['propertyId'],
-      category: 'assessment',
-      icon: <Calculator />
-    },
-    {
-      id: 'calculate_costs',
-      label: 'Calculate Costs',
-      description: 'Perform cost calculations',
-      route: '/calculator-v2/results',
-      requiredTasks: ['assessment_parameters'],
-      category: 'assessment',
-      icon: <Calculator />
-    },
-    {
-      id: 'review_results',
-      label: 'Review Results',
-      description: 'Review calculation results',
-      route: '/calculator-v2/summary',
-      requiredTasks: ['calculate_costs'],
-      category: 'assessment',
-      icon: <FileText />
-    },
-    {
-      id: 'geo_assessment',
-      label: 'GeoAssessment',
-      description: 'Geographic property assessment',
-      route: '/geo-assessment',
-      category: 'assessment',
-      icon: <Map />
-    },
-    // Analysis Tasks
-    {
-      id: 'regional_comparison',
-      label: 'Regional Comparison',
-      description: 'Compare costs across regions',
-      route: '/regional-cost-comparison',
-      category: 'analysis',
-      icon: <Map />
-    },
-    {
-      id: 'cost_trend_analysis',
-      label: 'Cost Trends',
-      description: 'Analyze cost trends over time',
-      route: '/cost-trend-analysis',
-      category: 'analysis',
-      icon: <BarChart3 />
-    },
-    {
-      id: 'predictive_analysis',
-      label: 'Predictive Analysis',
-      description: 'Predict future cost trends',
-      route: '/predictive-cost-analysis',
-      category: 'analysis',
-      icon: <BarChart3 />
-    },
-    // Data Management Tasks
-    {
-      id: 'data_import',
-      label: 'Data Import',
-      description: 'Import property and cost data',
-      route: '/data-import',
-      category: 'management',
-      icon: <Database />
-    },
-    {
-      id: 'data_connections',
-      label: 'Data Connections',
-      description: 'Configure external data connections',
-      route: '/data-connections',
-      category: 'management',
-      icon: <Database />
-    },
-    // Visualization Tasks
-    {
-      id: 'visualizations',
-      label: 'Visualization Lab',
-      description: 'Interactive data visualizations',
-      route: '/visualizations',
-      category: 'visualization',
-      icon: <BarChart3 />
-    },
-    {
-      id: 'mcp_visualizations',
-      label: 'MCP Visualizations',
-      description: 'Advanced MCP visualizations',
-      route: '/mcp-visualizations',
-      category: 'visualization',
-      icon: <BarChart3 />
-    }
-  ] as const;
+  // Import tasks from the workflow configuration
+  const tasks = TASKS;
 
   // Group tasks by category
   const tasksByCategory = tasks.reduce((acc, task) => {
