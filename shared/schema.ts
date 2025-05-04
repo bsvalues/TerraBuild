@@ -409,19 +409,19 @@ export const agentStatus = pgTable('agent_status', {
 // Property Value History Table - for tracking property value changes over time
 export const propertyValueHistory = pgTable('property_value_history', {
   id: serial('id').primaryKey(),
-  propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
+  propertyId: integer('property_id').notNull(),
   valuationDate: timestamp('valuation_date').notNull(),
-  appraisedValue: integer('appraised_value'),
-  assessedValue: integer('assessed_value'),
-  marketValue: integer('market_value'),
-  landValue: integer('land_value'),
-  improvementValue: integer('improvement_value'),
+  appraisedValue: real('appraised_value'),
+  assessedValue: real('assessed_value'),
+  marketValue: real('market_value'),
+  landValue: real('land_value'),
+  improvementValue: real('improvement_value'),
   source: text('source').notNull(),
   assessmentYear: integer('assessment_year'),
   taxYear: integer('tax_year'),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  createdBy: text('created_by').references(() => users.id),
+  createdBy: integer('created_by').references(() => users.id),
   metadata: json('metadata').$type<Record<string, any>>(),
 });
 
