@@ -548,6 +548,7 @@ router.use('/analytics', analyticsRoutes);
 router.use('/reports', reportRoutes);
 router.use('/what-if-scenarios', whatIfScenariosRoutes);
 router.use('/stories', storytellingRoutes);
+router.use('/geography', geographicRoutes);
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 

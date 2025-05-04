@@ -1,35 +1,40 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from "ws";
 import * as schema from "../shared/schema";
-import { log } from "./vite";
+import { logger } from './utils/logger';
 
-// Database client setup - initialize with default values
-let connectionString = process.env.DATABASE_URL || '';
-let client = postgres(connectionString);
-let db = drizzle(client, { schema });
+neonConfig.webSocketConstructor = ws;
 
-// Initialize database connection and verify it works
-export async function initDatabase() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable not provided");
-  }
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
 
+logger.info('Initializing database connection');
+
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
+
+// Health check function
+export async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    // Re-initialize with the proper connection string
-    connectionString = process.env.DATABASE_URL;
-    client = postgres(connectionString);
-    db = drizzle(client, { schema });
-    
-    // Test the connection by executing a simple query
-    await client`SELECT 1`;
-    log("Database connection established successfully");
-    
+    await pool.query('SELECT 1');
     return true;
   } catch (error) {
-    log(`Database connection error: ${error}`, 'error');
-    throw error;
+    logger.error('Database connection check failed:', error);
+    return false;
   }
 }
 
-// Export initialized database client
-export { db };
+// Initialize function to run on startup
+export async function initDatabase(): Promise<void> {
+  try {
+    await checkDatabaseConnection();
+    logger.info('Database connection established successfully');
+  } catch (error) {
+    logger.error('Error initializing database:', error);
+    throw error;
+  }
+}
