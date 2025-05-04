@@ -470,9 +470,119 @@ export class GisImportService {
    * @returns Number of municipalities imported
    */
   private async processMunicipalityData(data: any): Promise<number> {
-    // Implementation similar to processRegionData but for municipalities
-    // Would handle linking to the parent regions
-    return 0; // Placeholder
+    try {
+      let importCount = 0;
+      
+      // Handle GeoJSON format
+      if (data.type === 'FeatureCollection') {
+        for (const feature of data.features) {
+          if (feature.properties) {
+            // Find associated region
+            let regionId: number | null = null;
+            const regionCode = feature.properties.region_code;
+            
+            if (regionCode) {
+              const region = await this.geographicService.getRegionByCode(regionCode);
+              if (region) {
+                regionId = region.id;
+              }
+            }
+            
+            const municipalityData: InsertGeographicMunicipality = {
+              municipalityCode: feature.properties.municipality_code || feature.properties.code || 
+                               `BC-${feature.properties.name?.toUpperCase().replace(/\s+/g, '-')}`,
+              name: feature.properties.name || feature.properties.NAME || feature.properties.MUNICIPALITY_NAME,
+              regionId: regionId,
+              description: feature.properties.description || `${feature.properties.name || feature.properties.NAME} in Benton County`,
+              isActive: true,
+              // Store geometry as JSON if present
+              metadata: feature.geometry ? { geometry: feature.geometry } : null
+            };
+            
+            // Skip if missing required fields
+            if (!municipalityData.name || !municipalityData.municipalityCode) {
+              console.warn('Skipping municipality import due to missing name or code:', feature.properties);
+              continue;
+            }
+            
+            // Check if municipality already exists
+            const existingMunicipality = await this.geographicService.getMunicipalityByCode(municipalityData.municipalityCode);
+            
+            if (existingMunicipality) {
+              // Update existing municipality
+              await this.geographicService.updateMunicipality(existingMunicipality.id, {
+                name: municipalityData.name,
+                regionId: municipalityData.regionId,
+                description: municipalityData.description,
+                isActive: true,
+                metadata: municipalityData.metadata
+              });
+            } else {
+              // Create new municipality
+              await this.geographicService.createMunicipality(municipalityData);
+            }
+            
+            importCount++;
+          }
+        }
+      } 
+      // Handle plain JSON array
+      else if (Array.isArray(data)) {
+        for (const item of data) {
+          // Find associated region
+          let regionId: number | null = null;
+          const regionCode = item.region_code;
+          
+          if (regionCode) {
+            const region = await this.geographicService.getRegionByCode(regionCode);
+            if (region) {
+              regionId = region.id;
+            }
+          }
+          
+          const municipalityData: InsertGeographicMunicipality = {
+            municipalityCode: item.municipality_code || item.code || 
+                             `BC-${item.name?.toUpperCase().replace(/\s+/g, '-')}`,
+            name: item.name || item.NAME || item.municipality_name,
+            regionId: regionId,
+            description: item.description || `${item.name || item.NAME} in Benton County`,
+            isActive: true,
+            metadata: item.metadata || item.geometry ? { geometry: item.geometry } : null
+          };
+          
+          // Skip if missing required fields
+          if (!municipalityData.name || !municipalityData.municipalityCode) {
+            console.warn('Skipping municipality import due to missing name or code:', item);
+            continue;
+          }
+          
+          // Check if municipality already exists
+          const existingMunicipality = await this.geographicService.getMunicipalityByCode(municipalityData.municipalityCode);
+          
+          if (existingMunicipality) {
+            // Update existing municipality
+            await this.geographicService.updateMunicipality(existingMunicipality.id, {
+              name: municipalityData.name,
+              regionId: municipalityData.regionId,
+              description: municipalityData.description,
+              isActive: true,
+              metadata: municipalityData.metadata
+            });
+          } else {
+            // Create new municipality
+            await this.geographicService.createMunicipality(municipalityData);
+          }
+          
+          importCount++;
+        }
+      }
+      
+      console.log(`Imported ${importCount} municipalities`);
+      return importCount;
+    } catch (error) {
+      console.error('Error processing municipality data:', error);
+      return 0;
+    }
   }
   
   /**
@@ -481,9 +591,121 @@ export class GisImportService {
    * @returns Number of neighborhoods imported
    */
   private async processNeighborhoodData(data: any): Promise<number> {
-    // Implementation similar to processRegionData but for neighborhoods
-    // Would handle linking to the parent municipalities
-    return 0; // Placeholder
+    try {
+      let importCount = 0;
+      
+      // Handle GeoJSON format
+      if (data.type === 'FeatureCollection') {
+        for (const feature of data.features) {
+          if (feature.properties) {
+            // Find associated municipality
+            let municipalityId: number | null = null;
+            const municipalityCode = feature.properties.municipality_code;
+            
+            if (municipalityCode) {
+              const municipality = await this.geographicService.getMunicipalityByCode(municipalityCode);
+              if (municipality) {
+                municipalityId = municipality.id;
+              }
+            }
+            
+            const neighborhoodData: InsertGeographicNeighborhood = {
+              hoodCd: feature.properties.hood_cd || feature.properties.code || 
+                     `BC-NH-${feature.properties.name?.toUpperCase().replace(/\s+/g, '-')}`,
+              name: feature.properties.name || feature.properties.NAME || feature.properties.NEIGHBORHOOD_NAME,
+              municipalityId: municipalityId,
+              description: feature.properties.description || 
+                          `${feature.properties.name || feature.properties.NAME} neighborhood in Benton County`,
+              isActive: true,
+              // Store geometry as JSON if present
+              metadata: feature.geometry ? { geometry: feature.geometry } : null
+            };
+            
+            // Skip if missing required fields
+            if (!neighborhoodData.name || !neighborhoodData.hoodCd) {
+              console.warn('Skipping neighborhood import due to missing name or code:', feature.properties);
+              continue;
+            }
+            
+            // Check if neighborhood already exists
+            const existingNeighborhood = await this.geographicService.getNeighborhoodByHoodCd(neighborhoodData.hoodCd);
+            
+            if (existingNeighborhood) {
+              // Update existing neighborhood
+              await this.geographicService.updateNeighborhood(existingNeighborhood.id, {
+                name: neighborhoodData.name,
+                municipalityId: neighborhoodData.municipalityId,
+                description: neighborhoodData.description,
+                isActive: true,
+                metadata: neighborhoodData.metadata
+              });
+            } else {
+              // Create new neighborhood
+              await this.geographicService.createNeighborhood(neighborhoodData);
+            }
+            
+            importCount++;
+          }
+        }
+      } 
+      // Handle plain JSON array
+      else if (Array.isArray(data)) {
+        for (const item of data) {
+          // Find associated municipality
+          let municipalityId: number | null = null;
+          const municipalityCode = item.municipality_code;
+          
+          if (municipalityCode) {
+            const municipality = await this.geographicService.getMunicipalityByCode(municipalityCode);
+            if (municipality) {
+              municipalityId = municipality.id;
+            }
+          }
+          
+          const neighborhoodData: InsertGeographicNeighborhood = {
+            hoodCd: item.hood_cd || item.code || 
+                   `BC-NH-${item.name?.toUpperCase().replace(/\s+/g, '-')}`,
+            name: item.name || item.NAME || item.neighborhood_name,
+            municipalityId: municipalityId,
+            description: item.description || 
+                        `${item.name || item.NAME} neighborhood in Benton County`,
+            isActive: true,
+            metadata: item.metadata || item.geometry ? { geometry: item.geometry } : null
+          };
+          
+          // Skip if missing required fields
+          if (!neighborhoodData.name || !neighborhoodData.hoodCd) {
+            console.warn('Skipping neighborhood import due to missing name or code:', item);
+            continue;
+          }
+          
+          // Check if neighborhood already exists
+          const existingNeighborhood = await this.geographicService.getNeighborhoodByHoodCd(neighborhoodData.hoodCd);
+          
+          if (existingNeighborhood) {
+            // Update existing neighborhood
+            await this.geographicService.updateNeighborhood(existingNeighborhood.id, {
+              name: neighborhoodData.name,
+              municipalityId: neighborhoodData.municipalityId,
+              description: neighborhoodData.description,
+              isActive: true,
+              metadata: neighborhoodData.metadata
+            });
+          } else {
+            // Create new neighborhood
+            await this.geographicService.createNeighborhood(neighborhoodData);
+          }
+          
+          importCount++;
+        }
+      }
+      
+      console.log(`Imported ${importCount} neighborhoods`);
+      return importCount;
+    } catch (error) {
+      console.error('Error processing neighborhood data:', error);
+      return 0;
+    }
   }
   
   /**
@@ -492,8 +714,163 @@ export class GisImportService {
    * @returns Number of mappings imported
    */
   private async processTownshipRangeData(data: any): Promise<number> {
-    // Implementation for township/range mappings
-    return 0; // Placeholder
+    try {
+      let importCount = 0;
+      
+      // Handle GeoJSON format
+      if (data.type === 'FeatureCollection') {
+        for (const feature of data.features) {
+          if (feature.properties) {
+            // Find associated region and municipality if provided
+            let regionId: number | null = null;
+            let municipalityId: number | null = null;
+            
+            if (feature.properties.region_code) {
+              const region = await this.geographicService.getRegionByCode(feature.properties.region_code);
+              if (region) {
+                regionId = region.id;
+              }
+            }
+            
+            if (feature.properties.municipality_code) {
+              const municipality = await this.geographicService.getMunicipalityByCode(feature.properties.municipality_code);
+              if (municipality) {
+                municipalityId = municipality.id;
+              }
+            }
+            
+            const townshipRangeData: InsertTownshipRangeMap = {
+              townshipCode: feature.properties.township_code,
+              rangeCode: feature.properties.range_code,
+              regionId: regionId,
+              municipalityId: municipalityId,
+              hoodCd: feature.properties.hood_cd || null,
+              description: feature.properties.description || 
+                          `Township ${feature.properties.township_code} Range ${feature.properties.range_code}`,
+              isActive: true,
+              // Store geometry as JSON if present
+              metadata: feature.geometry ? { geometry: feature.geometry } : null
+            };
+            
+            // Skip if missing required fields
+            if (!townshipRangeData.townshipCode || !townshipRangeData.rangeCode) {
+              console.warn('Skipping township/range mapping import due to missing codes:', feature.properties);
+              continue;
+            }
+            
+            // Check if mapping already exists
+            const [existingMapping] = await db
+              .select()
+              .from(schema.townshipRangeMapping)
+              .where(
+                and(
+                  eq(schema.townshipRangeMapping.townshipCode, townshipRangeData.townshipCode),
+                  eq(schema.townshipRangeMapping.rangeCode, townshipRangeData.rangeCode)
+                )
+              );
+            
+            if (existingMapping) {
+              // Update existing mapping
+              await db
+                .update(schema.townshipRangeMapping)
+                .set({
+                  regionId: townshipRangeData.regionId,
+                  municipalityId: townshipRangeData.municipalityId,
+                  hoodCd: townshipRangeData.hoodCd,
+                  description: townshipRangeData.description,
+                  isActive: true,
+                  updatedAt: new Date(),
+                  metadata: townshipRangeData.metadata
+                })
+                .where(eq(schema.townshipRangeMapping.id, existingMapping.id));
+            } else {
+              // Create new mapping
+              await this.geographicService.createTownshipRangeMapping(townshipRangeData);
+            }
+            
+            importCount++;
+          }
+        }
+      } 
+      // Handle plain JSON array
+      else if (Array.isArray(data)) {
+        for (const item of data) {
+          // Find associated region and municipality if provided
+          let regionId: number | null = null;
+          let municipalityId: number | null = null;
+          
+          if (item.region_code) {
+            const region = await this.geographicService.getRegionByCode(item.region_code);
+            if (region) {
+              regionId = region.id;
+            }
+          }
+          
+          if (item.municipality_code) {
+            const municipality = await this.geographicService.getMunicipalityByCode(item.municipality_code);
+            if (municipality) {
+              municipalityId = municipality.id;
+            }
+          }
+          
+          const townshipRangeData: InsertTownshipRangeMap = {
+            townshipCode: item.township_code,
+            rangeCode: item.range_code,
+            regionId: regionId,
+            municipalityId: municipalityId,
+            hoodCd: item.hood_cd || null,
+            description: item.description || 
+                        `Township ${item.township_code} Range ${item.range_code}`,
+            isActive: true,
+            metadata: item.metadata || item.geometry ? { geometry: item.geometry } : null
+          };
+          
+          // Skip if missing required fields
+          if (!townshipRangeData.townshipCode || !townshipRangeData.rangeCode) {
+            console.warn('Skipping township/range mapping import due to missing codes:', item);
+            continue;
+          }
+          
+          // Check if mapping already exists
+          const [existingMapping] = await db
+            .select()
+            .from(schema.townshipRangeMapping)
+            .where(
+              and(
+                eq(schema.townshipRangeMapping.townshipCode, townshipRangeData.townshipCode),
+                eq(schema.townshipRangeMapping.rangeCode, townshipRangeData.rangeCode)
+              )
+            );
+          
+          if (existingMapping) {
+            // Update existing mapping
+            await db
+              .update(schema.townshipRangeMapping)
+              .set({
+                regionId: townshipRangeData.regionId,
+                municipalityId: townshipRangeData.municipalityId,
+                hoodCd: townshipRangeData.hoodCd,
+                description: townshipRangeData.description,
+                isActive: true,
+                updatedAt: new Date(),
+                metadata: townshipRangeData.metadata
+              })
+              .where(eq(schema.townshipRangeMapping.id, existingMapping.id));
+          } else {
+            // Create new mapping
+            await this.geographicService.createTownshipRangeMapping(townshipRangeData);
+          }
+          
+          importCount++;
+        }
+      }
+      
+      console.log(`Imported ${importCount} township/range mappings`);
+      return importCount;
+    } catch (error) {
+      console.error('Error processing township/range data:', error);
+      return 0;
+    }
   }
   
   /**
@@ -502,8 +879,151 @@ export class GisImportService {
    * @returns Number of mappings imported
    */
   private async processTaxCodeAreaData(data: any): Promise<number> {
-    // Implementation for tax code area mappings
-    return 0; // Placeholder
+    try {
+      let importCount = 0;
+      
+      // Handle GeoJSON format
+      if (data.type === 'FeatureCollection') {
+        for (const feature of data.features) {
+          if (feature.properties) {
+            // Find associated region and municipality if provided
+            let regionId: number | null = null;
+            let municipalityId: number | null = null;
+            
+            if (feature.properties.region_code) {
+              const region = await this.geographicService.getRegionByCode(feature.properties.region_code);
+              if (region) {
+                regionId = region.id;
+              }
+            }
+            
+            if (feature.properties.municipality_code) {
+              const municipality = await this.geographicService.getMunicipalityByCode(feature.properties.municipality_code);
+              if (municipality) {
+                municipalityId = municipality.id;
+              }
+            }
+            
+            const taxCodeData: InsertTaxCodeAreaMap = {
+              tca: feature.properties.tca,
+              regionId: regionId,
+              municipalityId: municipalityId,
+              description: feature.properties.description || 
+                          `Tax Code Area ${feature.properties.tca}`,
+              taxRate: feature.properties.tax_rate || 0.0,
+              isActive: true,
+              // Store geometry as JSON if present
+              metadata: feature.geometry ? { geometry: feature.geometry } : null
+            };
+            
+            // Skip if missing required fields
+            if (!taxCodeData.tca) {
+              console.warn('Skipping tax code area mapping import due to missing TCA:', feature.properties);
+              continue;
+            }
+            
+            // Check if mapping already exists
+            const [existingMapping] = await db
+              .select()
+              .from(schema.taxCodeAreaMapping)
+              .where(eq(schema.taxCodeAreaMapping.tca, taxCodeData.tca));
+            
+            if (existingMapping) {
+              // Update existing mapping
+              await db
+                .update(schema.taxCodeAreaMapping)
+                .set({
+                  regionId: taxCodeData.regionId,
+                  municipalityId: taxCodeData.municipalityId,
+                  description: taxCodeData.description,
+                  taxRate: taxCodeData.taxRate,
+                  isActive: true,
+                  updatedAt: new Date(),
+                  metadata: taxCodeData.metadata
+                })
+                .where(eq(schema.taxCodeAreaMapping.id, existingMapping.id));
+            } else {
+              // Create new mapping
+              await this.geographicService.createTaxCodeAreaMapping(taxCodeData);
+            }
+            
+            importCount++;
+          }
+        }
+      } 
+      // Handle plain JSON array
+      else if (Array.isArray(data)) {
+        for (const item of data) {
+          // Find associated region and municipality if provided
+          let regionId: number | null = null;
+          let municipalityId: number | null = null;
+          
+          if (item.region_code) {
+            const region = await this.geographicService.getRegionByCode(item.region_code);
+            if (region) {
+              regionId = region.id;
+            }
+          }
+          
+          if (item.municipality_code) {
+            const municipality = await this.geographicService.getMunicipalityByCode(item.municipality_code);
+            if (municipality) {
+              municipalityId = municipality.id;
+            }
+          }
+          
+          const taxCodeData: InsertTaxCodeAreaMap = {
+            tca: item.tca,
+            regionId: regionId,
+            municipalityId: municipalityId,
+            description: item.description || 
+                        `Tax Code Area ${item.tca}`,
+            taxRate: item.tax_rate || 0.0,
+            isActive: true,
+            metadata: item.metadata || item.geometry ? { geometry: item.geometry } : null
+          };
+          
+          // Skip if missing required fields
+          if (!taxCodeData.tca) {
+            console.warn('Skipping tax code area mapping import due to missing TCA:', item);
+            continue;
+          }
+          
+          // Check if mapping already exists
+          const [existingMapping] = await db
+            .select()
+            .from(schema.taxCodeAreaMapping)
+            .where(eq(schema.taxCodeAreaMapping.tca, taxCodeData.tca));
+          
+          if (existingMapping) {
+            // Update existing mapping
+            await db
+              .update(schema.taxCodeAreaMapping)
+              .set({
+                regionId: taxCodeData.regionId,
+                municipalityId: taxCodeData.municipalityId,
+                description: taxCodeData.description,
+                taxRate: taxCodeData.taxRate,
+                isActive: true,
+                updatedAt: new Date(),
+                metadata: taxCodeData.metadata
+              })
+              .where(eq(schema.taxCodeAreaMapping.id, existingMapping.id));
+          } else {
+            // Create new mapping
+            await this.geographicService.createTaxCodeAreaMapping(taxCodeData);
+          }
+          
+          importCount++;
+        }
+      }
+      
+      console.log(`Imported ${importCount} tax code area mappings`);
+      return importCount;
+    } catch (error) {
+      console.error('Error processing tax code area data:', error);
+      return 0;
+    }
   }
 }
 

@@ -236,6 +236,15 @@ export class GeographicService {
       .where(eq(schema.geographicNeighborhoods.hoodCd, hoodCd));
     return neighborhood || null;
   }
+  
+  /**
+   * Alias for getNeighborhoodByHoodCd to maintain compatibility with import code
+   * @param code Neighborhood code (hood_cd)
+   * @returns Neighborhood or null if not found
+   */
+  async getNeighborhoodByCode(code: string): Promise<GeographicNeighborhood | null> {
+    return this.getNeighborhoodByHoodCd(code);
+  }
 
   /**
    * Create a new neighborhood
