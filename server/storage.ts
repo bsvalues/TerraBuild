@@ -14,10 +14,14 @@ import {
   // Entity types
   User, Property, Improvement, CostMatrix, Calculation, Project,
   BuildingType, Region, QualityFactor, ConditionFactor, AgeFactor, MatrixDetail,
+  GeographicRegion, GeographicMunicipality, GeographicNeighborhood, 
+  TownshipRangeMap, TaxCodeAreaMap, EnhancedCostMatrix, Setting, AgentStatus,
   
   // Insert types
   InsertUser, InsertProperty, InsertImprovement, InsertCostMatrix,
-  InsertCalculation, InsertProject,
+  InsertCalculation, InsertProject, InsertGeographicRegion, InsertGeographicMunicipality,
+  InsertGeographicNeighborhood, InsertTownshipRangeMap, InsertTaxCodeAreaMap,
+  InsertEnhancedCostMatrix, InsertSetting, InsertAgentStatus
 } from '../shared/schema';
 
 /**

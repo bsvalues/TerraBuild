@@ -403,6 +403,88 @@ export const agentStatus = pgTable('agent_status', {
 });
 
 /*********************
+ * GEOGRAPHIC DATA MODEL
+ *********************/
+
+// Geographic Regions Table (East, Central, West Benton)
+export const geographicRegions = pgTable('geographic_regions', {
+  id: serial('id').primaryKey(),
+  regionCode: text('region_code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Geographic Municipalities Table (Richland, Kennewick, Prosser, etc.)
+export const geographicMunicipalities = pgTable('geographic_municipalities', {
+  id: serial('id').primaryKey(),
+  municipalityCode: text('municipality_code').notNull().unique(),
+  name: text('name').notNull(),
+  regionId: integer('region_id').references(() => geographicRegions.id),
+  description: text('description'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Geographic Neighborhoods Table (maps to hood_cd values)
+export const geographicNeighborhoods = pgTable('geographic_neighborhoods', {
+  id: serial('id').primaryKey(),
+  hoodCd: text('hood_cd').notNull().unique(),
+  name: text('name'),
+  municipalityId: integer('municipality_id').references(() => geographicMunicipalities.id),
+  description: text('description'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Township/Range Mapping Table
+export const townshipRangeMapping = pgTable('township_range_mapping', {
+  id: serial('id').primaryKey(),
+  townshipCode: text('township_code').notNull(),
+  rangeCode: text('range_code').notNull(),
+  regionId: integer('region_id').references(() => geographicRegions.id),
+  municipalityId: integer('municipality_id').references(() => geographicMunicipalities.id),
+  hoodCd: text('hood_cd').references(() => geographicNeighborhoods.hoodCd),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Tax Code Area Mapping Table
+export const taxCodeAreaMapping = pgTable('tax_code_area_mapping', {
+  id: serial('id').primaryKey(),
+  tca: text('tca').notNull().unique(),
+  regionId: integer('region_id').references(() => geographicRegions.id),
+  municipalityId: integer('municipality_id').references(() => geographicMunicipalities.id),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Enhanced Cost Matrix Table for Geography
+export const enhancedCostMatrix = pgTable('enhanced_cost_matrix', {
+  id: serial('id').primaryKey(),
+  matrixYear: integer('matrix_year').notNull(),
+  buildingTypeId: text('building_type_id').references(() => buildingTypes.code),
+  regionId: integer('region_id').references(() => geographicRegions.id),
+  municipalityId: integer('municipality_id').references(() => geographicMunicipalities.id),
+  baseCost: real('base_cost').notNull(),
+  description: text('description'),
+  minCost: real('min_cost'),
+  maxCost: real('max_cost'),
+  dataPoints: integer('data_points'),
+  complexityFactor: real('complexity_factor').default(1.0),
+  qualityFactor: real('quality_factor').default(1.0),
+  conditionFactor: real('condition_factor').default(1.0),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/*********************
  * RELATIONS
  *********************/
 
@@ -415,11 +497,16 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 // Properties relations
-export const propertiesRelations = relations(properties, ({ many }) => ({
+export const propertiesRelations = relations(properties, ({ many, one }) => ({
   improvements: many(improvements),
   landDetails: many(landDetails),
   calculations: many(calculations),
   projectAssociations: many(projectProperties),
+  neighborhood: one(geographicNeighborhoods, {
+    fields: [properties.metaData],
+    references: [geographicNeighborhoods.hoodCd],
+    relationName: 'propertyNeighborhood'
+  }),
 }));
 
 // Improvements relations
@@ -455,6 +542,78 @@ export const costMatrixRelations = relations(costMatrix, ({ one, many }) => ({
     references: [regions.code],
   }),
   details: many(matrixDetail),
+}));
+
+// Geographic Regions relations
+export const geographicRegionsRelations = relations(geographicRegions, ({ many }) => ({
+  municipalities: many(geographicMunicipalities),
+  townshipRangeMappings: many(townshipRangeMapping),
+  taxCodeAreaMappings: many(taxCodeAreaMapping),
+  costMatrices: many(enhancedCostMatrix),
+}));
+
+// Geographic Municipalities relations
+export const geographicMunicipalitiesRelations = relations(geographicMunicipalities, ({ one, many }) => ({
+  region: one(geographicRegions, {
+    fields: [geographicMunicipalities.regionId],
+    references: [geographicRegions.id],
+  }),
+  neighborhoods: many(geographicNeighborhoods),
+  townshipRangeMappings: many(townshipRangeMapping),
+  taxCodeAreaMappings: many(taxCodeAreaMapping),
+  costMatrices: many(enhancedCostMatrix),
+}));
+
+// Geographic Neighborhoods relations
+export const geographicNeighborhoodsRelations = relations(geographicNeighborhoods, ({ one }) => ({
+  municipality: one(geographicMunicipalities, {
+    fields: [geographicNeighborhoods.municipalityId],
+    references: [geographicMunicipalities.id],
+  }),
+}));
+
+// Township Range Mapping relations
+export const townshipRangeMappingRelations = relations(townshipRangeMapping, ({ one }) => ({
+  region: one(geographicRegions, {
+    fields: [townshipRangeMapping.regionId],
+    references: [geographicRegions.id],
+  }),
+  municipality: one(geographicMunicipalities, {
+    fields: [townshipRangeMapping.municipalityId],
+    references: [geographicMunicipalities.id],
+  }),
+  neighborhood: one(geographicNeighborhoods, {
+    fields: [townshipRangeMapping.hoodCd],
+    references: [geographicNeighborhoods.hoodCd],
+  }),
+}));
+
+// Tax Code Area Mapping relations
+export const taxCodeAreaMappingRelations = relations(taxCodeAreaMapping, ({ one }) => ({
+  region: one(geographicRegions, {
+    fields: [taxCodeAreaMapping.regionId],
+    references: [geographicRegions.id],
+  }),
+  municipality: one(geographicMunicipalities, {
+    fields: [taxCodeAreaMapping.municipalityId],
+    references: [geographicMunicipalities.id],
+  }),
+}));
+
+// Enhanced Cost Matrix relations
+export const enhancedCostMatrixRelations = relations(enhancedCostMatrix, ({ one }) => ({
+  buildingType: one(buildingTypes, {
+    fields: [enhancedCostMatrix.buildingTypeId],
+    references: [buildingTypes.code],
+  }),
+  region: one(geographicRegions, {
+    fields: [enhancedCostMatrix.regionId],
+    references: [geographicRegions.id],
+  }),
+  municipality: one(geographicMunicipalities, {
+    fields: [enhancedCostMatrix.municipalityId],
+    references: [geographicMunicipalities.id],
+  }),
 }));
 
 // Projects relations
@@ -538,3 +697,33 @@ export type InsertSetting = z.infer<typeof insertSettingSchema>;
 
 export type AgentStatus = typeof agentStatus.$inferSelect;
 export type InsertAgentStatus = z.infer<typeof insertAgentStatusSchema>;
+
+// Geographic Types
+export type GeographicRegion = typeof geographicRegions.$inferSelect;
+export type GeographicMunicipality = typeof geographicMunicipalities.$inferSelect;
+export type GeographicNeighborhood = typeof geographicNeighborhoods.$inferSelect;
+export type TownshipRangeMap = typeof townshipRangeMapping.$inferSelect;
+export type TaxCodeAreaMap = typeof taxCodeAreaMapping.$inferSelect;
+export type EnhancedCostMatrix = typeof enhancedCostMatrix.$inferSelect;
+
+// Insert Schemas for Geographic Types
+export const insertGeographicRegionSchema = createInsertSchema(geographicRegions)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGeographicMunicipalitySchema = createInsertSchema(geographicMunicipalities)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGeographicNeighborhoodSchema = createInsertSchema(geographicNeighborhoods)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTownshipRangeMapSchema = createInsertSchema(townshipRangeMapping)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTaxCodeAreaMapSchema = createInsertSchema(taxCodeAreaMapping)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEnhancedCostMatrixSchema = createInsertSchema(enhancedCostMatrix)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Insert Types
+export type InsertGeographicRegion = z.infer<typeof insertGeographicRegionSchema>;
+export type InsertGeographicMunicipality = z.infer<typeof insertGeographicMunicipalitySchema>;
+export type InsertGeographicNeighborhood = z.infer<typeof insertGeographicNeighborhoodSchema>;
+export type InsertTownshipRangeMap = z.infer<typeof insertTownshipRangeMapSchema>;
+export type InsertTaxCodeAreaMap = z.infer<typeof insertTaxCodeAreaMapSchema>;
+export type InsertEnhancedCostMatrix = z.infer<typeof insertEnhancedCostMatrixSchema>;
