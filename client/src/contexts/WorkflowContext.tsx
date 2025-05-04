@@ -149,7 +149,8 @@ export interface WorkflowTask {
   route: string;
   requiredTasks?: string[];
   requiredData?: string[];
-  category: 'assessment' | 'analysis' | 'management' | 'visualization';
+  dependencies?: string[]; // For the property assessment workflow
+  category: 'property-assessment' | 'assessment' | 'analysis' | 'management' | 'visualization';
   icon?: React.ReactNode;
 }
 

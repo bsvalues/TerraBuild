@@ -25,6 +25,7 @@ import {
 
 // Define the task categories and their icons
 const categoryIcons = {
+  'property-assessment': <Building2 className="h-5 w-5" />,
   'assessment': <ClipboardList className="h-5 w-5" />,
   'analysis': <BarChart3 className="h-5 w-5" />,
   'management': <Settings className="h-5 w-5" />,
@@ -33,7 +34,8 @@ const categoryIcons = {
 
 // Define category titles
 const categoryTitles = {
-  'assessment': 'Assessment Tasks',
+  'property-assessment': 'Property Assessment',
+  'assessment': 'Assessment Tools',
   'analysis': 'Analysis Tools',
   'management': 'Data Management',
   'visualization': 'Visualization'
@@ -174,7 +176,7 @@ export default function TaskNavigation({ className }: TaskNavigationProps) {
   }, {} as Record<string, typeof tasks>);
 
   // Sort categories in specific order
-  const categories = ['assessment', 'analysis', 'visualization', 'management'];
+  const categories = ['property-assessment', 'assessment', 'analysis', 'visualization', 'management'];
 
   // Render a task item
   const renderTaskItem = (task: typeof tasks[0], isCollapsed: boolean) => {
