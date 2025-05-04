@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { WorkflowProvider } from "@/contexts/WorkflowContext";
+import { TASKS } from "@/config/tasks";
 
 // Import all page components
 import DashboardPage from "@/pages/DashboardPage";
