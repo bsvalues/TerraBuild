@@ -279,7 +279,7 @@ export class PropertyHeatmapService {
         FROM 
           geographic_neighborhoods gn
         LEFT JOIN 
-          properties p ON p.meta_data->>'hood_cd' = gn.hood_cd
+          properties p ON p.hood_cd = gn.hood_cd
         LEFT JOIN 
           property_value_history pvh ON pvh.property_id = p.id
         WHERE 
@@ -342,33 +342,76 @@ export class PropertyHeatmapService {
 
       // Get properties in the specified area
       if (areaType === 'region') {
-        const properties = await db.execute(sql`
-          SELECT p.id
-          FROM properties p
-          WHERE p.meta_data->>'region_id' = ${areaId.toString()}
-        `);
-        propertyIds = properties.rows.map(row => row.id);
+        // For region, we need to find all municipalities in the region, then all neighborhoods in those municipalities
+        const municipalities = await db
+          .select({
+            id: geographicMunicipalities.id
+          })
+          .from(geographicMunicipalities)
+          .where(eq(geographicMunicipalities.regionId, areaId));
+        
+        const municipalityIds = municipalities.map(m => m.id);
+        
+        if (municipalityIds.length > 0) {
+          const neighborhoods = await db
+            .select({
+              hoodCd: geographicNeighborhoods.hoodCd
+            })
+            .from(geographicNeighborhoods)
+            .where(inArray(geographicNeighborhoods.municipalityId, municipalityIds));
+          
+          const hoodCds = neighborhoods.map(n => n.hoodCd);
+          
+          if (hoodCds.length > 0) {
+            const properties = await db
+              .select({
+                id: properties.id
+              })
+              .from(properties)
+              .where(inArray(properties.hoodCd, hoodCds));
+            
+            propertyIds = properties.map(p => p.id);
+          }
+        }
       } else if (areaType === 'municipality') {
-        const properties = await db.execute(sql`
-          SELECT p.id
-          FROM properties p
-          WHERE p.meta_data->>'municipality_id' = ${areaId.toString()}
-        `);
-        propertyIds = properties.rows.map(row => row.id);
+        // For municipality, we need to find all neighborhoods in the municipality
+        const neighborhoods = await db
+          .select({
+            hoodCd: geographicNeighborhoods.hoodCd
+          })
+          .from(geographicNeighborhoods)
+          .where(eq(geographicNeighborhoods.municipalityId, areaId));
+        
+        const hoodCds = neighborhoods.map(n => n.hoodCd);
+        
+        if (hoodCds.length > 0) {
+          const properties = await db
+            .select({
+              id: properties.id
+            })
+            .from(properties)
+            .where(inArray(properties.hoodCd, hoodCds));
+          
+          propertyIds = properties.map(p => p.id);
+        }
       } else if (areaType === 'neighborhood') {
         const neighborhood = await db
-          .select()
+          .select({
+            hoodCd: geographicNeighborhoods.hoodCd
+          })
           .from(geographicNeighborhoods)
           .where(eq(geographicNeighborhoods.id, areaId))
           .limit(1);
 
         if (neighborhood && neighborhood.length > 0) {
-          const properties = await db.execute(sql`
-            SELECT p.id
-            FROM properties p
-            WHERE p.meta_data->>'hood_cd' = ${neighborhood[0].hoodCd}
-          `);
-          propertyIds = properties.rows.map(row => row.id);
+          const properties = await db
+            .select({
+              id: properties.id
+            })
+            .from(properties)
+            .where(eq(properties.hoodCd, neighborhood[0].hoodCd));
+          
+          propertyIds = properties.map(p => p.id);
         }
       }
 
