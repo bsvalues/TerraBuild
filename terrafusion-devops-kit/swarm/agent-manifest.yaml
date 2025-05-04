@@ -1,107 +1,211 @@
-version: "1.0.0"
-environment: dev
+# TerraFusion Agent Swarm Manifest
+# This file defines the configuration for all agents in the TerraFusion swarm
 
-# Default settings applied to all agents unless overridden
-default_settings:
-  memory: persistent
-  feedback_loop: true
-  log_level: info
-  metrics_enabled: true
-  sensitivity: medium
+version: '1.0.0'
+apiVersion: 'terrafusion.io/v1'
+kind: 'AgentSwarm'
+metadata:
+  name: 'terrafusion-agent-swarm'
+  description: 'TerraFusion AI Agent Swarm'
+  environment: 'production'
+  owner: 'TerraFusion Team'
+
+# Global configuration applied to all agents
+global:
+  namespace: 'terrafusion'
+  registry: 'terrafusion.registry.io'
+  imageTag: 'latest'
+  pullPolicy: 'IfNotPresent'
+  resources:
+    default:
+      memory: '256Mi'
+      cpu: '0.1'
+  logging:
+    level: 'info'
+    format: 'json'
+  monitoring:
+    enabled: true
+    scrapeInterval: '30s'
+  security:
+    seccompProfile: 'runtime/default'
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
 
 # Agent definitions
 agents:
-  - name: factor-tuner
-    version: 1.0.0
-    description: Optimizes adjustment factors for cost calculations
-    mode: autonomous
-    schedule: "0 */6 * * *" # Every 6 hours
-    memory: persistent
-    sensitivity: medium
-    on_anomaly: suggest_correction
-    settings:
-      optimization_algorithm: bayesian
-      convergence_threshold: "0.01"
-      max_iterations: 100
+  - name: 'data-quality-agent'
+    description: 'Data quality validation and enforcement agent'
+    type: 'service'
+    image: '${global.registry}/data-quality-agent:${global.imageTag}'
+    replicas: 2
+    capabilities:
+      - 'data-validation'
+      - 'data-cleaning'
+      - 'schema-enforcement'
+    runtime:
+      memory: '512Mi'
+      cpu: '0.2'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/quality'
+      grpc:
+        port: 9090
+    scaling:
+      minReplicas: 1
+      maxReplicas: 5
+      targetCPUUtilization: 80
+    config:
+      validationRules: '/etc/config/validation-rules.yaml'
+      strictMode: false
+    dependencies:
+      - name: 'database'
+        type: 'postgresql'
+        required: true
 
-  - name: benchmark-guard
-    version: 1.0.0
-    description: Monitors and validates benchmark data accuracy
-    mode: watchdog
-    alert_threshold: "0.15"
-    sensitivity: high
-    on_anomaly: log_and_notify
-    settings:
-      benchmark_dataset: historical_benchmarks
-      detection_algorithm: isolation_forest
-      confidence_threshold: "0.85"
+  - name: 'model-inference'
+    description: 'AI model inference agent with GPU support'
+    type: 'inference'
+    image: '${global.registry}/model-inference:${global.imageTag}'
+    replicas: 1
+    capabilities:
+      - 'model-inference'
+      - 'prediction'
+    runtime:
+      memory: '2Gi'
+      cpu: '1.0'
+      gpu: '1'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/predict'
+    scaling:
+      minReplicas: 1
+      maxReplicas: 3
+      targetGPUUtilization: 70
+    config:
+      modelPath: '/models/main'
+      batchSize: 32
+      precision: 'fp16'
 
-  - name: curve-trainer
-    version: 1.0.0
-    description: Trains and updates cost prediction curves
-    mode: autonomous
-    schedule: "0 0 * * 1" # Every Monday at midnight
-    max_outputs: 5
-    settings:
-      training_algorithm: gradient_boost
-      cross_validation: "true"
-      feature_selection: auto
+  - name: 'task-scheduler'
+    description: 'Task scheduling and orchestration agent'
+    type: 'scheduler'
+    image: '${global.registry}/task-scheduler:${global.imageTag}'
+    replicas: 1
+    capabilities:
+      - 'task-scheduling'
+      - 'workflow-management'
+    runtime:
+      memory: '256Mi'
+      cpu: '0.1'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/scheduler'
+    config:
+      cronEnabled: true
+      maxConcurrentTasks: 50
+      timezone: 'UTC'
+    dependencies:
+      - name: 'database'
+        type: 'postgresql'
+        required: true
+      - name: 'redis'
+        type: 'redis'
+        required: true
+        
+  - name: 'data-processor'
+    description: 'Specialized agent for data processing tasks'
+    type: 'processor'
+    image: '${global.registry}/data-processor:${global.imageTag}'
+    replicas: 2
+    capabilities:
+      - 'data-processing'
+      - 'data-transformation'
+      - 'data-aggregation'
+    runtime:
+      memory: '1Gi'
+      cpu: '0.5'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/process'
+    scaling:
+      minReplicas: 1
+      maxReplicas: 8
+      targetCPUUtilization: 75
+    config:
+      batchSize: 1000
+      processingTimeout: 300
+      retryCount: 3
+      
+  - name: 'document-processing-agent'
+    description: 'Document analysis and processing agent'
+    type: 'service'
+    image: '${global.registry}/document-processor:${global.imageTag}'
+    replicas: 1
+    capabilities:
+      - 'text-extraction'
+      - 'document-classification'
+      - 'entity-recognition'
+    runtime:
+      memory: '1Gi'
+      cpu: '0.5'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/documents'
+    config:
+      supportedFormats: ['pdf', 'docx', 'txt', 'html']
+      maxDocumentSize: '20MB'
+      modelType: 'transformer'
+      
+  - name: 'geospatial-analysis-agent'
+    description: 'Geospatial data analysis and processing agent'
+    type: 'service'
+    image: '${global.registry}/geospatial-agent:${global.imageTag}'
+    replicas: 1
+    capabilities:
+      - 'geospatial-analysis'
+      - 'map-generation'
+      - 'spatial-queries'
+    runtime:
+      memory: '2Gi'
+      cpu: '1.0'
+    endpoints:
+      http:
+        port: 8080
+        path: '/api/v1/geo'
+    config:
+      defaultProjection: 'EPSG:4326'
+      cacheEnabled: true
+      maxCacheSize: '512MB'
 
-  - name: scenario-agent
-    version: 1.0.0
-    description: Creates what-if scenarios for cost impact analysis
-    mode: suggestive
-    trigger_on: user_request
-    settings:
-      scenario_types: market,regulatory,environmental
-      max_variations: 5
-      probability_weighting: "true"
-
-  - name: boe-arguer
-    version: 1.0.0
-    description: Generates arguments and evidence for BOE hearings
-    mode: collaborative
-    settings:
-      case_database: precedent_db
-      evidence_threshold: substantial
-      legal_framework: washington_state
-
-# Coordination settings
-coordination:
-  conflict_resolution: priority_based
-  agent_priorities:
-    - benchmark-guard
-    - factor-tuner
-    - curve-trainer
-    - scenario-agent
-    - boe-arguer
-  communication_allowed: true
-  shared_memory_enabled: true
-  orchestrator: default
-  max_concurrent_agents: 3
-  health_check_interval: 30s
-  retry_policy:
-    max_retries: 3
-    backoff_factor: 2
-    initial_delay: 1s
-
-# Observability settings
-observability:
-  metrics_endpoint: /metrics
-  logging:
-    format: json
-    destination: stdout
-    additional_outputs:
-      - type: file
-        url: /var/log/terrafusion/agents.log
-  tracing:
-    enabled: true
-    sampler_type: probabilistic
-    sampler_param: 0.1
-    exporter: jaeger
-  alerting:
-    channels:
-      - name: ops_team
-        webhook: https://hooks.slack.com/services/TXXXXXXXX/BXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX
-      - name: emergency
-        recipients: oncall@benton-county.org
+# Connections between agents
+connections:
+  - source: 'data-quality-agent'
+    target: 'data-processor'
+    protocol: 'http'
+    type: 'sync'
+    
+  - source: 'data-processor'
+    target: 'model-inference'
+    protocol: 'grpc'
+    type: 'async'
+    
+  - source: 'task-scheduler'
+    target: 'data-processor'
+    protocol: 'http'
+    type: 'async'
+    
+  - source: 'document-processing-agent'
+    target: 'model-inference'
+    protocol: 'http'
+    type: 'sync'
+    
+  - source: 'geospatial-analysis-agent'
+    target: 'model-inference'
+    protocol: 'http'
+    type: 'sync'

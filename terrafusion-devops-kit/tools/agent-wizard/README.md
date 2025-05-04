@@ -1,200 +1,158 @@
-# TerraFusion Agent Configuration Wizard
+# TerraFusion Agent Control CLI (agentctl)
 
-A user-friendly command-line tool for configuring, deploying, and managing AI agents in the TerraFusion platform.
+A powerful command-line interface for managing and monitoring TerraFusion AI agent swarms.
 
-## 🌟 Features
+## Overview
 
-- **Interactive Configuration**: Configure agents through an intuitive CLI wizard
-- **Agent Management**: Add, edit, and remove agents from the manifest
-- **Validation**: Validate agent manifests against schema requirements
-- **Deployment**: Deploy agents to different environments
-- **Status Checking**: Monitor the status of deployed agents
-- **Environment Support**: Configure agents differently for dev, staging, and prod environments
+The TerraFusion Agent Control CLI (`agentctl`) provides a comprehensive set of tools for managing AI agent swarms within the TerraFusion platform. It enables DevOps engineers and platform administrators to deploy, monitor, and control AI agents across different environments.
 
-## 📋 Requirements
+## Features
 
-- Node.js 18 or higher
-- Access to TerraFusion deployment environment
+- **Agent Configuration**: Interactive wizard for creating and configuring agent manifests
+- **Validation**: Validate agent manifests against schema and best practices
+- **Deployment**: Deploy agents to Kubernetes clusters
+- **Monitoring**: Check agent status and health
+- **Log Access**: View and follow agent logs
+- **Execution**: Execute actions on specific agents
+- **Training**: Trigger model training for agents
+- **Benchmarking**: Run performance benchmarks
+- **Configuration Management**: Import and export configuration
 
-## 🚀 Installation
+## Installation
 
-### Option 1: Install from NPM
+### Using npm
 
 ```bash
-npm install -g terrafusion-agent-wizard
+npm install -g agentctl
 ```
 
-### Option 2: Download pre-built binary
-
-Download the appropriate binary for your platform from the [releases page](https://github.com/benton-county/terrafusion-devops-kit/releases).
-
-### Option 3: Build from source
+### Building from Source
 
 ```bash
-# Clone the repository (if you haven't already)
-git clone https://github.com/benton-county/terrafusion-devops-kit
-
-# Navigate to the agent wizard directory
-cd terrafusion-devops-kit/tools/agent-wizard
-
-# Install dependencies
+git clone https://github.com/terrafusion/agent-control.git
+cd agent-control
 npm install
-
-# Build the tool
 npm run build
+npm link
 ```
 
-## 🛠️ Usage
+## Usage
 
-The agent wizard provides several commands for managing agents:
-
-### Interactive Wizard
-
-The easiest way to configure agents is through the interactive wizard:
+### Basic Commands
 
 ```bash
+# Display help
+agentctl --help
+
+# Check agent status
+agentctl status
+
+# View agent logs
+agentctl logs --agent data-processor
+
+# Validate agent manifest
+agentctl validate --path ./agent-manifest.yaml
+
+# Deploy agents
+agentctl deploy
+
+# Execute an action on an agent
+agentctl execute data-processor process --data '{"input": "example"}'
+```
+
+### Interactive Agent Configuration
+
+```bash
+# Start the interactive agent configuration wizard
 agentctl wizard
 ```
 
-This will guide you through the process of configuring agents.
-
-### Validate Manifest
-
-To validate an existing agent manifest:
+### Agent Training
 
 ```bash
-agentctl validate
+# Train all agents
+agentctl train
+
+# Train a specific agent
+agentctl train --agent model-inference
+
+# Perform full retraining
+agentctl train --full
 ```
 
-### List Configured Agents
-
-To list all agents configured in the manifest:
+### Performance Benchmarking
 
 ```bash
-agentctl list
+# Run benchmarks on all agents
+agentctl benchmark
+
+# Benchmark a specific agent with custom settings
+agentctl benchmark --agent data-processor --concurrency 10 --iterations 1000
 ```
 
-For detailed information about each agent:
+### Configuration Management
 
 ```bash
-agentctl list --details
+# Export configuration to a file
+agentctl export --output config.yaml --format yaml
+
+# Import configuration from a file
+agentctl import config.yaml --merge
 ```
 
-### Check Agent Status
+## Environment Configuration
 
-To check the status of deployed agents:
+`agentctl` supports multiple environments (dev, staging, prod) with different settings for each. The current environment can be specified with the `--environment` flag, or by setting it in the configuration.
 
 ```bash
-agentctl status
+# Set the target environment
+agentctl --environment staging status
+
+# Configure a new environment
+agentctl config set-environment prod --api-url https://api.terrafusion.io
 ```
 
-To check a specific agent:
+## Directory Structure
+
+```
+├── bin/                # Compiled binary
+├── src/                # Source code
+│   ├── commands/       # Command implementations
+│   ├── lib/            # Utility libraries
+│   └── index.ts        # Main entry point
+├── dist/               # Compiled JavaScript
+├── package.json        # npm package configuration
+└── tsconfig.json       # TypeScript configuration
+```
+
+## Development
+
+### Setting Up a Development Environment
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Run in development mode: `npm run dev`
+
+### Running Tests
 
 ```bash
-agentctl status --agent factor-tuner
+npm test
 ```
 
-### Deploy Agents
-
-To deploy a specific agent:
+### Building for Production
 
 ```bash
-agentctl deploy --agent factor-tuner
+npm run build
 ```
 
-To deploy all agents:
+## Contributing
 
-```bash
-agentctl deploy
-```
+Contributions are welcome! Please see the contributing guidelines for more information.
 
-By default, agents are deployed to the `dev` environment. To specify a different environment:
+## License
 
-```bash
-agentctl deploy --environment prod
-```
+MIT
 
-## 🔄 Agent Lifecycle
+## Support
 
-1. **Configure**: Create or modify agent configuration in the manifest
-2. **Validate**: Ensure the manifest is valid
-3. **Deploy**: Deploy the agent to the target environment
-4. **Monitor**: Check agent status and performance
-5. **Update**: Modify configuration and redeploy as needed
-
-## 🤖 Available Agent Types
-
-The TerraFusion platform supports several specialized agent types:
-
-- **factor-tuner**: Optimizes adjustment factors for cost calculations
-- **benchmark-guard**: Monitors and validates benchmark data accuracy
-- **curve-trainer**: Trains and updates cost prediction curves
-- **scenario-agent**: Creates what-if scenarios for cost impact analysis
-- **boe-arguer**: Generates arguments and evidence for BOE hearings
-
-## ⚙️ Agent Modes
-
-Agents can operate in different modes:
-
-- **autonomous**: Runs on a schedule (requires `schedule` parameter)
-- **suggestive**: Triggered by events (requires `trigger_on` parameter)
-- **watchdog**: Monitors system health (requires `alert_threshold` parameter)
-- **collaborative**: Works with other agents
-
-## 📊 Agent Manifest Structure
-
-The agent manifest is a YAML file that defines all aspects of agent behavior:
-
-```yaml
-version: "1.0.0"
-environment: dev
-
-default_settings:
-  memory: persistent
-  feedback_loop: true
-  log_level: info
-  metrics_enabled: true
-  sensitivity: medium
-
-agents:
-  - name: factor-tuner
-    version: 1.0.0
-    description: Optimizes adjustment factors for cost calculations
-    mode: autonomous
-    schedule: "0 */6 * * *"
-    # Additional settings...
-
-coordination:
-  conflict_resolution: priority_based
-  agent_priorities:
-    - benchmark-guard
-    - factor-tuner
-    # Other priorities...
-  # Additional coordination settings...
-
-observability:
-  # Observability settings...
-```
-
-See the [Agent Manifest Schema](https://docs.terrafusion.io/agent-manifest-schema) documentation for a complete reference.
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-- **Agent deployment fails**: Ensure the agent configuration is valid and the deployment environment is accessible
-- **Agent not responding**: Check network connectivity and agent logs
-- **Validation errors**: Review the manifest structure against the schema requirements
-- **Status command fails**: Verify that you have permission to access the agent orchestrator
-
-### Getting Help
-
-If you encounter issues not covered here, please:
-
-1. Check the [TerraFusion Documentation](https://docs.terrafusion.io)
-2. Contact the TerraFusion DevOps team at devops@benton-county.org
-3. Open an issue on the [GitHub repository](https://github.com/benton-county/terrafusion-devops-kit/issues)
-
-## 📝 License
-
-This tool is part of the TerraFusion DevOps Kit, licensed under the MIT License.
+For support or feature requests, please open an issue on the GitHub repository or contact the TerraFusion team.
