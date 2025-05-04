@@ -115,7 +115,7 @@ export class GisImportService {
     const defaultOptions = {
       clearExisting: false,
       repoOwner: 'bsvalues',
-      repoName: 'bcbspacsmapping',
+      repoName: 'TerraFusionMono',
       branch: 'main'
     };
     

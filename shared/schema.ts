@@ -438,6 +438,7 @@ export const geographicRegions = pgTable('geographic_regions', {
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: json('metadata').$type<Record<string, any>>(),
 });
 
 // Geographic Municipalities Table (Richland, Kennewick, Prosser, etc.)

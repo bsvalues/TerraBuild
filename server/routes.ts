@@ -16,6 +16,7 @@ import calculationRoutes from './routes/calculationRoutes';
 import storytellingRoutes from './routes/storytelling-routes';
 import { geographicRoutes } from './routes/geographicRoutes';
 import { propertyHeatmapRoutes } from './routes/propertyHeatmapRoutes';
+import { gisImportRoutes } from './routes/gisImportRoutes';
 
 import {
   insertUserSchema,
@@ -551,6 +552,7 @@ router.use('/what-if-scenarios', whatIfScenariosRoutes);
 router.use('/stories', storytellingRoutes);
 router.use('/geography', geographicRoutes);
 router.use('/property-heatmap', propertyHeatmapRoutes);
+router.use('/gis-import', gisImportRoutes);
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 
