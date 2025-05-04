@@ -20,7 +20,62 @@ import React from 'react';
 
 // Define all application tasks with their relationships and requirements
 export const TASKS: WorkflowTask[] = [
-  // Dashboard
+  // Property Assessment Tasks
+  {
+    id: 'property-search',
+    label: 'Property Search',
+    description: 'Search and select a property for assessment',
+    route: '/property-assessment/search',
+    category: 'property-assessment',
+    icon: React.createElement(Map)
+  },
+  {
+    id: 'building-details',
+    label: 'Building Details',
+    description: 'Enter building details and specifications',
+    route: '/property-assessment/building-details',
+    category: 'property-assessment',
+    icon: React.createElement(Building2),
+    dependencies: ['property-search']
+  },
+  {
+    id: 'condition-assessment',
+    label: 'Condition Assessment',
+    description: 'Assess the condition of the property',
+    route: '/property-assessment/condition',
+    category: 'property-assessment',
+    icon: React.createElement(ClipboardList),
+    dependencies: ['building-details']
+  },
+  {
+    id: 'cost-calculation',
+    label: 'Cost Calculation',
+    description: 'Calculate property value based on building details',
+    route: '/property-assessment/cost-calculation',
+    category: 'property-assessment',
+    icon: React.createElement(Calculator),
+    dependencies: ['condition-assessment']
+  },
+  {
+    id: 'review-assessment',
+    label: 'Review Assessment',
+    description: 'Review the assessment before finalizing',
+    route: '/property-assessment/review',
+    category: 'property-assessment',
+    icon: React.createElement(FileBarChart),
+    dependencies: ['cost-calculation']
+  },
+  {
+    id: 'generate-report',
+    label: 'Generate Report',
+    description: 'Generate final assessment report',
+    route: '/property-assessment/report',
+    category: 'property-assessment',
+    icon: React.createElement(FileText),
+    dependencies: ['review-assessment']
+  },
+  
+  // Dashboard - General management tasks
   {
     id: 'dashboard',
     label: 'Dashboard',
@@ -234,11 +289,18 @@ export const TASKS_BY_CATEGORY = TASKS.reduce((acc, task) => {
 // Define category metadata
 export const CATEGORIES = [
   {
+    id: 'property-assessment',
+    label: 'Property Assessment',
+    description: 'Comprehensive property assessment workflow',
+    icon: React.createElement(Building2),
+    priority: 1
+  },
+  {
     id: 'assessment',
-    label: 'Assessment',
+    label: 'Assessment Tools',
     description: 'Property assessment workflows',
     icon: React.createElement(ClipboardList),
-    priority: 1
+    priority: 2
   },
   {
     id: 'analysis',
@@ -278,7 +340,15 @@ export const getNextTask = (currentTaskId: string): WorkflowTask | undefined => 
   const currentTask = getTaskById(currentTaskId);
   if (!currentTask) return undefined;
   
-  // For assessment tasks, look for tasks that require the current task
+  // For property assessment workflow, we can use the dependencies
+  if (currentTask.category === 'property-assessment') {
+    return TASKS.find(task => 
+      task.dependencies?.includes(currentTaskId) && 
+      task.category === 'property-assessment'
+    );
+  }
+  
+  // For older assessment tasks, look for tasks that require the current task
   if (currentTask.category === 'assessment') {
     return TASKS.find(task => 
       task.requiredTasks?.includes(currentTaskId) && 
