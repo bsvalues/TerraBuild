@@ -403,6 +403,29 @@ export const agentStatus = pgTable('agent_status', {
 });
 
 /*********************
+ * PROPERTY VALUE HISTORY
+ *********************/
+
+// Property Value History Table - for tracking property value changes over time
+export const propertyValueHistory = pgTable('property_value_history', {
+  id: serial('id').primaryKey(),
+  propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
+  valuationDate: timestamp('valuation_date').notNull(),
+  appraisedValue: integer('appraised_value'),
+  assessedValue: integer('assessed_value'),
+  marketValue: integer('market_value'),
+  landValue: integer('land_value'),
+  improvementValue: integer('improvement_value'),
+  source: text('source').notNull(),
+  assessmentYear: integer('assessment_year'),
+  taxYear: integer('tax_year'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdBy: text('created_by').references(() => users.id),
+  metadata: json('metadata').$type<Record<string, any>>(),
+});
+
+/*********************
  * GEOGRAPHIC DATA MODEL
  *********************/
 
@@ -502,6 +525,7 @@ export const propertiesRelations = relations(properties, ({ many, one }) => ({
   landDetails: many(landDetails),
   calculations: many(calculations),
   projectAssociations: many(projectProperties),
+  valueHistory: many(propertyValueHistory),
   neighborhood: one(geographicNeighborhoods, {
     fields: [properties.metaData],
     references: [geographicNeighborhoods.hoodCd],
@@ -616,6 +640,18 @@ export const enhancedCostMatrixRelations = relations(enhancedCostMatrix, ({ one 
   }),
 }));
 
+// Property Value History relations
+export const propertyValueHistoryRelations = relations(propertyValueHistory, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyValueHistory.propertyId],
+    references: [properties.propertyId],
+  }),
+  user: one(users, {
+    fields: [propertyValueHistory.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // Projects relations
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   owner: one(users, {
@@ -697,6 +733,12 @@ export type InsertSetting = z.infer<typeof insertSettingSchema>;
 
 export type AgentStatus = typeof agentStatus.$inferSelect;
 export type InsertAgentStatus = z.infer<typeof insertAgentStatusSchema>;
+
+// Property Value History Types
+export type PropertyValueHistory = typeof propertyValueHistory.$inferSelect;
+export const insertPropertyValueHistorySchema = createInsertSchema(propertyValueHistory)
+  .omit({ id: true, createdAt: true });
+export type InsertPropertyValueHistory = z.infer<typeof insertPropertyValueHistorySchema>;
 
 // Geographic Types
 export type GeographicRegion = typeof geographicRegions.$inferSelect;
