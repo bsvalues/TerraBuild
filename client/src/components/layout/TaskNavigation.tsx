@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocation } from "wouter";
-import { useWorkflow } from '@/contexts/WorkflowContext';
+import { useWorkflow, WorkflowTask } from '@/contexts/WorkflowContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { TASKS } from '@/config/tasks';
@@ -58,24 +58,24 @@ export default function TaskNavigation({ className }: TaskNavigationProps) {
   const { isExpanded } = useSidebar();
   const [location] = useLocation();
 
-  // Import tasks from the workflow configuration
-  const tasks = TASKS;
+  // Use tasks from the tasks configuration
+  const tasks = TASKS.map(task => task);
 
   // Group tasks by category
-  const tasksByCategory = tasks.reduce((acc, task) => {
+  const tasksByCategory = tasks.reduce<Record<string, WorkflowTask[]>>((acc, task) => {
     const { category } = task;
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(task);
     return acc;
-  }, {} as Record<string, typeof tasks>);
+  }, {});
 
   // Sort categories in specific order
   const categories = ['property-assessment', 'assessment', 'analysis', 'visualization', 'management'];
 
   // Render a task item
-  const renderTaskItem = (task: typeof tasks[0], isCollapsed: boolean) => {
+  const renderTaskItem = (task: WorkflowTask, isCollapsed: boolean) => {
     const taskStatus = getTaskStatus(task.id);
     const isActive = location === task.route;
     
@@ -188,7 +188,7 @@ export default function TaskNavigation({ className }: TaskNavigationProps) {
             </Tooltip>
           </TooltipProvider>
           <div>
-            {tasksByCategory[categoryId].map((task) => renderTaskItem(task, true))}
+            {tasksByCategory[categoryId].map((task: WorkflowTask) => renderTaskItem(task, true))}
           </div>
         </div>
       );
@@ -208,7 +208,7 @@ export default function TaskNavigation({ className }: TaskNavigationProps) {
           </span>
         </div>
         <div className="space-y-1">
-          {tasksByCategory[categoryId].map((task) => renderTaskItem(task, false))}
+          {tasksByCategory[categoryId].map((task: WorkflowTask) => renderTaskItem(task, false))}
         </div>
       </div>
     );
