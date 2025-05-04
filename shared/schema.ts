@@ -644,7 +644,7 @@ export const enhancedCostMatrixRelations = relations(enhancedCostMatrix, ({ one 
 export const propertyValueHistoryRelations = relations(propertyValueHistory, ({ one }) => ({
   property: one(properties, {
     fields: [propertyValueHistory.propertyId],
-    references: [properties.propertyId],
+    references: [properties.id],
   }),
   user: one(users, {
     fields: [propertyValueHistory.createdBy],

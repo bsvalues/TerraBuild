@@ -5,102 +5,102 @@
  * including aggregated property values and trend indicators.
  */
 
-import { Router } from 'express';
+import express from 'express';
 import { z } from 'zod';
 import { propertyHeatmapService } from '../services/propertyHeatmapService';
-import { logger } from '../utils/logger';
-import { errorHandler, GeographicServiceError } from '../utils/errors';
 
-const router = Router();
-
-// Validation schemas
-const areaParamSchema = z.object({
-  type: z.enum(['region', 'municipality', 'neighborhood']),
-  id: z.string().or(z.number()).transform(val => 
-    typeof val === 'string' ? parseInt(val, 10) : val
-  )
-});
-
-const trendParamSchema = z.object({
-  months: z.coerce.number().int().positive().default(12)
-});
+const router = express.Router();
 
 /**
  * Get property value heatmap data for regions
  */
-router.get('/regions', async (req, res, next) => {
+router.get('/regions', async (req, res) => {
   try {
-    const heatmapData = await propertyHeatmapService.getRegionalHeatmap();
-    res.json({
-      success: true,
-      data: heatmapData
-    });
+    const data = await propertyHeatmapService.getRegionalHeatmap();
+    return res.json(data);
   } catch (error) {
-    next(error);
+    console.error('Error in regional heatmap route:', error);
+    return res.status(500).json({
+      error: 'Failed to retrieve regional heatmap data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
 /**
  * Get property value heatmap data for municipalities
  */
-router.get('/municipalities', async (req, res, next) => {
+router.get('/municipalities', async (req, res) => {
   try {
-    const heatmapData = await propertyHeatmapService.getMunicipalHeatmap();
-    res.json({
-      success: true,
-      data: heatmapData
-    });
+    const data = await propertyHeatmapService.getMunicipalHeatmap();
+    return res.json(data);
   } catch (error) {
-    next(error);
+    console.error('Error in municipal heatmap route:', error);
+    return res.status(500).json({
+      error: 'Failed to retrieve municipal heatmap data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
 /**
  * Get property value heatmap data for neighborhoods
  */
-router.get('/neighborhoods', async (req, res, next) => {
+router.get('/neighborhoods', async (req, res) => {
   try {
-    const heatmapData = await propertyHeatmapService.getNeighborhoodHeatmap();
-    res.json({
-      success: true,
-      data: heatmapData
-    });
+    const data = await propertyHeatmapService.getNeighborhoodHeatmap();
+    return res.json(data);
   } catch (error) {
-    next(error);
+    console.error('Error in neighborhood heatmap route:', error);
+    return res.status(500).json({
+      error: 'Failed to retrieve neighborhood heatmap data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
 /**
  * Get property value trend data for a specific area
  */
-router.get('/trends/:type/:id', async (req, res, next) => {
+router.get('/trends/:areaType/:areaId', async (req, res) => {
   try {
-    const { type, id } = areaParamSchema.parse({
-      type: req.params.type,
-      id: req.params.id
-    });
-    
-    const { months } = trendParamSchema.parse(req.query);
-    
-    const trendData = await propertyHeatmapService.getAreaValueTrend(
-      type as 'region' | 'municipality' | 'neighborhood',
-      id,
-      months
-    );
-    
-    res.json({
-      success: true,
-      data: trendData
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+    const areaTypeSchema = z.enum(['region', 'municipality', 'neighborhood']);
+    const areaIdSchema = z.coerce.number().positive();
+    const monthsSchema = z.coerce.number().positive().default(12);
+
+    const validatedAreaType = areaTypeSchema.safeParse(req.params.areaType);
+    const validatedAreaId = areaIdSchema.safeParse(req.params.areaId);
+    const validatedMonths = monthsSchema.safeParse(req.query.months);
+
+    if (!validatedAreaType.success) {
       return res.status(400).json({
-        success: false,
-        message: 'Invalid request parameters',
-        errors: error.errors
+        error: 'Invalid area type',
+        message: 'Area type must be one of: region, municipality, neighborhood'
       });
     }
-    next(error);
+
+    if (!validatedAreaId.success) {
+      return res.status(400).json({
+        error: 'Invalid area ID',
+        message: 'Area ID must be a positive number'
+      });
+    }
+
+    const months = validatedMonths.success ? validatedMonths.data : 12;
+
+    const trends = await propertyHeatmapService.getAreaValueTrend(
+      validatedAreaType.data,
+      validatedAreaId.data,
+      months
+    );
+
+    return res.json(trends);
+  } catch (error) {
+    console.error('Error in value trend route:', error);
+    return res.status(500).json({
+      error: 'Failed to retrieve property value trends',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -108,15 +108,29 @@ router.get('/trends/:type/:id', async (req, res, next) => {
  * Initialize property value history
  * This is an administrative endpoint that should be protected
  */
-router.post('/history/initialize', async (req, res, next) => {
+router.post('/initialize-history', async (req, res) => {
   try {
+    // This should be protected by admin authentication
+    // For now, we'll check for an admin flag in the request
+    // In production, this would use proper authentication middleware
+    if (req.body.adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(403).json({
+        error: 'Unauthorized',
+        message: 'This endpoint requires administrative privileges'
+      });
+    }
+
     await propertyHeatmapService.initializePropertyValueHistory();
-    res.json({
+    return res.json({
       success: true,
       message: 'Property value history initialized successfully'
     });
   } catch (error) {
-    next(error);
+    console.error('Error initializing property value history:', error);
+    return res.status(500).json({
+      error: 'Failed to initialize property value history',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -124,19 +138,30 @@ router.post('/history/initialize', async (req, res, next) => {
  * Clear heatmap caches
  * This is an administrative endpoint that should be protected
  */
-router.post('/cache/clear', async (req, res, next) => {
+router.post('/clear-cache', async (req, res) => {
   try {
+    // This should be protected by admin authentication
+    // For now, we'll check for an admin flag in the request
+    // In production, this would use proper authentication middleware
+    if (req.body.adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(403).json({
+        error: 'Unauthorized',
+        message: 'This endpoint requires administrative privileges'
+      });
+    }
+
     propertyHeatmapService.clearCaches();
-    res.json({
+    return res.json({
       success: true,
-      message: 'Property heatmap caches cleared successfully'
+      message: 'Heatmap caches cleared successfully'
     });
   } catch (error) {
-    next(error);
+    console.error('Error clearing heatmap caches:', error);
+    return res.status(500).json({
+      error: 'Failed to clear heatmap caches',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
-
-// Apply error handling middleware
-router.use(errorHandler);
 
 export const propertyHeatmapRoutes = router;
