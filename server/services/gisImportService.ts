@@ -151,8 +151,17 @@ export class GisImportService {
         params: { ref: mergedOptions.branch }
       });
       
-      // Find relevant GIS data files
+      // Find relevant GIS data files in the TerraFusionMono repo
       const gisFiles = response.data.filter((file: any) => {
+        // Filter based on directory first
+        if (file.type === 'dir' && 
+           (file.name === 'geo_data' || file.name === 'geographic' || 
+            file.name === 'benton' || file.name === 'gis')) {
+          // This is a directory of interest, we'll need to fetch its contents
+          return true;
+        }
+        
+        // For regular files, check filename patterns
         const filename = file.name.toLowerCase();
         return (
           filename.endsWith('.geojson') || 

@@ -451,6 +451,7 @@ export const geographicMunicipalities = pgTable('geographic_municipalities', {
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: json('metadata').$type<Record<string, any>>(),
 });
 
 // Geographic Neighborhoods Table (maps to hood_cd values)
@@ -463,6 +464,7 @@ export const geographicNeighborhoods = pgTable('geographic_neighborhoods', {
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: json('metadata').$type<Record<string, any>>(),
 });
 
 // Township/Range Mapping Table
