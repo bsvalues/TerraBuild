@@ -14,6 +14,7 @@ import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';
 import importRoutes from './routes/importRoutes';
 import calculationRoutes from './routes/calculationRoutes';
 import storytellingRoutes from './routes/storytelling-routes';
+import { geographicRoutes } from './routes/geographicRoutes';
 
 import {
   insertUserSchema,

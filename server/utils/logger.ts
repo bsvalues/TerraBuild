@@ -1,96 +1,60 @@
 /**
- * Logger Utility
+ * Logger Utility for Benton County Building System
  * 
- * This file provides a simple logging utility for the application.
+ * This module provides a standardized logging interface for the application.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
-export class Logger {
-  private static instance: Logger;
-  private logLevel: LogLevel = 'info';
-
-  private constructor() {}
-
+/**
+ * Simple logger for the application
+ */
+class Logger {
   /**
-   * Get the logger instance (singleton)
-   * 
-   * @returns The logger instance
+   * Log an informational message
+   * @param message The main message to log
+   * @param meta Optional metadata to include
    */
-  public static getInstance(): Logger {
-    if (!Logger.instance) {
-      Logger.instance = new Logger();
-    }
-    return Logger.instance;
-  }
-
-  /**
-   * Set the log level
-   * 
-   * @param level The log level to set
-   */
-  public setLogLevel(level: LogLevel): void {
-    this.logLevel = level;
-  }
-
-  /**
-   * Log a debug message
-   * 
-   * @param message The message to log
-   */
-  public debug(message: string): void {
-    if (this.shouldLog('debug')) {
-      console.debug(`[DEBUG] ${message}`);
-    }
-  }
-
-  /**
-   * Log an info message
-   * 
-   * @param message The message to log
-   */
-  public info(message: string): void {
-    if (this.shouldLog('info')) {
-      console.info(`[INFO] ${message}`);
-    }
+  info(message: string, meta?: any): void {
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, meta ? meta : '');
   }
 
   /**
    * Log a warning message
-   * 
-   * @param message The message to log
+   * @param message The warning message to log
+   * @param meta Optional metadata to include
    */
-  public warn(message: string): void {
-    if (this.shouldLog('warn')) {
-      console.warn(`[WARN] ${message}`);
-    }
+  warn(message: string, meta?: any): void {
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, meta ? meta : '');
   }
 
   /**
    * Log an error message
-   * 
-   * @param message The message to log
+   * @param message The error message to log
+   * @param error Optional error object to include
    */
-  public error(message: string): void {
-    if (this.shouldLog('error')) {
-      console.error(`[ERROR] ${message}`);
+  error(message: string, error?: any): void {
+    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error ? error : '');
+  }
+
+  /**
+   * Log a debug message (only in development)
+   * @param message The debug message to log
+   * @param meta Optional metadata to include
+   */
+  debug(message: string, meta?: any): void {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, meta ? meta : '');
     }
   }
 
   /**
-   * Check if the current log level allows logging
-   * 
-   * @param level The level to check
-   * @returns Whether the level should be logged
+   * Log a success message
+   * @param message The success message to log
+   * @param meta Optional metadata to include
    */
-  private shouldLog(level: LogLevel): boolean {
-    const levels: {[key in LogLevel]: number} = {
-      debug: 0,
-      info: 1,
-      warn: 2,
-      error: 3
-    };
-
-    return levels[level] >= levels[this.logLevel];
+  success(message: string, meta?: any): void {
+    console.log(`[SUCCESS] ${new Date().toISOString()} - ${message}`, meta ? meta : '');
   }
 }
+
+// Export a singleton instance
+export const logger = new Logger();
