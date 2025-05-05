@@ -198,6 +198,14 @@ export const TASKS: WorkflowTask[] = [
     category: 'analysis',
     icon: React.createElement(FileBarChart)
   },
+  {
+    id: 'xreg_dashboard',
+    label: 'XREG Dashboard',
+    description: 'Explainable AI cost valuation insights',
+    route: '/xreg',
+    category: 'analysis',
+    icon: React.createElement(BrainCircuit)
+  },
   
   // Data Management Tasks
   {
