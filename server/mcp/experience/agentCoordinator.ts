@@ -6,11 +6,17 @@
  * It serves as the "Replit AI Agent" role described in the collaborative system.
  */
 
-import { agentRegistry } from '../agents';
 import { AgentEventType, AgentEvent } from '../agents/baseAgent';
 import { experienceReplayBuffer } from './replayBuffer';
 import { trainingCoordinator } from './trainingCoordinator';
 import { v4 as uuidv4 } from 'uuid';
+import * as agentModule from '../agents';
+
+// Use the agentRegistry from index.ts or create a local reference
+const agentRegistry = (agentModule as any).agentRegistry || {
+  getAgent: (id: string) => null,
+  getAllAgentIds: () => []
+};
 
 /**
  * Task Type enum

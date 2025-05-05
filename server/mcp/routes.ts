@@ -6,9 +6,15 @@
 
 import express from 'express';
 import { agentCoordinator, TaskType } from './experience';
-import { agentRegistry } from './agents';
 import { cacheMiddleware } from '../utils/cache';
 import { generateDashboardData, clearDashboardCache } from './monitoring/dashboard';
+import * as agentModule from './agents';
+
+// Use the agentRegistry from index.ts or create a local reference
+const agentRegistry = (agentModule as any).agentRegistry || {
+  getAgent: (id: string) => null,
+  getAllAgentIds: () => []
+};
 
 const router = express.Router();
 

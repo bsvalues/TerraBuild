@@ -7,8 +7,13 @@
  */
 
 import { experienceReplayBuffer, TrainingBatch } from './replayBuffer';
-import { agentRegistry } from '../agents';
 import { AgentEventType } from '../agents/baseAgent';
+import * as agentModule from '../agents';
+// Use the agentRegistry from index.ts or create a local reference
+const agentRegistry = (agentModule as any).agentRegistry || {
+  getAgent: (id: string) => null,
+  getAllAgentIds: () => []
+};
 
 /**
  * Training Options interface

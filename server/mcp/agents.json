@@ -1,0 +1,32 @@
+{
+  "agents": [
+    {
+      "id": "costEstimationAgent",
+      "description": "Performs valuation prediction based on building type, region, and cost matrix",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "dataQualityAgent",
+      "description": "Scans dataset for missing or invalid fields and reports anomalies",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": false
+    },
+    {
+      "id": "geospatialAnalysisAgent",
+      "description": "Validates spatial data for parcels and overlays valuation deltas",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "documentProcessingAgent",
+      "description": "Extracts and summarizes building data from scanned PDFs or documents",
+      "status": "inactive",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    }
+  ]
+}
