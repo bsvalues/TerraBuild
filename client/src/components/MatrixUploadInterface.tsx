@@ -326,7 +326,7 @@ export default function MatrixUploadInterface() {
                   <div className="mt-2">
                     <Badge variant={
                       insight.severity === 'warning' ? 'destructive' : 
-                      insight.severity === 'info' ? 'secondary' : 'outline'
+                      insight.severity === 'info' ? 'default' : 'outline'
                     }>
                       {insight.severity}
                     </Badge>

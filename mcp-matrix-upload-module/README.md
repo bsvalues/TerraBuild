@@ -19,7 +19,21 @@ The MCP Matrix Upload Module provides a complete solution for uploading, validat
 
 ### 1. Installation
 
-Copy the module files to your project:
+#### Option A: Using the Archive
+
+Extract the module archive to your project:
+
+```bash
+tar -xzf mcp-matrix-upload-module.tar.gz -C temp_dir/
+cp -r temp_dir/components/* your-project/src/components/
+cp -r temp_dir/hooks/* your-project/src/hooks/
+cp -r temp_dir/config/* your-project/server/mcp/
+rm -rf temp_dir
+```
+
+#### Option B: Manual Copy
+
+If you have the unarchived module, copy the files directly:
 
 ```bash
 cp -r mcp-matrix-upload-module/components/* your-project/src/components/
