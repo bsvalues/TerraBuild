@@ -15,10 +15,11 @@ import { useWorkflow } from "@/contexts/WorkflowContext";
 
 // Component to conditionally render workflow status bar
 const WorkflowStatusBarSection = () => {
-  const { currentTaskId, currentCategoryId } = useWorkflow();
+  const { state } = useWorkflow();
+  const [location] = useLocation();
   
-  // Only show workflow status bar for property assessment tasks
-  if (currentCategoryId === 'property-assessment') {
+  // Only show workflow status bar for property assessment paths
+  if (location.startsWith('/property-assessment')) {
     return (
       <div className="mt-4">
         <WorkflowStatusBar 
