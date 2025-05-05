@@ -59,6 +59,7 @@ import CostCalculator from "@/pages/CostCalculator";
 import SwarmPage from "@/pages/SwarmPage";
 import MatrixUploadPage from "@/pages/MatrixUploadPage";
 import XREGPage from "@/pages/XREGPage";
+import MatrixXREGIntegrationPage from "@/pages/MatrixXREGIntegrationPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -340,6 +341,8 @@ function Router() {
       <ProtectedRouteWrapper path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
       <ProtectedRouteWrapper path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
       <ProtectedRouteWrapper path="/matrix-upload" component={MatrixUploadPage} />
+      <ProtectedRouteWrapper path="/xreg" component={XREGPage} />
+      <ProtectedRouteWrapper path="/matrix-xreg-integration" component={MatrixXREGIntegrationPage} />
       <ProtectedRouteWrapper path="/contextual-data" component={ContextualDataPage} />
       <ProtectedRouteWrapper path="/data-connections" component={DataConnectionsPage} />
       <ProtectedRouteWrapper path="/data-connections/ftp" component={FTPConnectionPage} />
@@ -351,7 +354,6 @@ function Router() {
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
       <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
       <ProtectedRouteWrapper path="/ai-swarm" component={SwarmPage} />
-      <ProtectedRouteWrapper path="/xreg" component={XREGPage} />
       
       <Route component={NotFound} />
     </Switch>

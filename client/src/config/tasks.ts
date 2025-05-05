@@ -206,6 +206,14 @@ export const TASKS: WorkflowTask[] = [
     category: 'analysis',
     icon: React.createElement(BrainCircuit)
   },
+  {
+    id: 'matrix_xreg_integration',
+    label: 'Matrix-XREG Integration',
+    description: 'Connect cost matrix uploads to explainable AI valuation',
+    route: '/matrix-xreg-integration',
+    category: 'analysis',
+    icon: React.createElement(BrainCircuit)
+  },
   
   // Data Management Tasks
   {
