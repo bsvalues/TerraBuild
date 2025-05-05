@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useMCPAgent } from '@/hooks/use-mcp';
 
 export default function MatrixUploadInterface() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -13,6 +14,11 @@ export default function MatrixUploadInterface() {
   const [insights, setInsights] = useState<any>(null);
   const [errors, setErrors] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  
+  // Initialize agents using the useMCPAgent hook
+  const inquisitorAgent = useMCPAgent('inquisitorAgent');
+  const interpreterAgent = useMCPAgent('interpreterAgent');
+  const visualizerAgent = useMCPAgent('visualizerAgent');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -36,93 +42,80 @@ export default function MatrixUploadInterface() {
     }
     
     try {
-      // In a real implementation, we would send the file to the backend
-      // For now, we'll simulate the responses
+      // Read the file as an ArrayBuffer
+      const fileBuffer = await readFileAsArrayBuffer(file);
       
-      // Simulate Inquisitor Agent validation
+      // Convert ArrayBuffer to Base64 for transmission
+      const base64File = arrayBufferToBase64(fileBuffer);
+      
+      // Step 1: Use Inquisitor Agent to validate the file
       setLoading('validating');
       
-      // Instead of actually calling the agent, we'll simulate a successful validation
-      setTimeout(() => {
-        const mockValidation = {
-          success: true,
-          message: 'File validated successfully',
-          summary: {
-            regions: ['Kennewick', 'Richland', 'West Richland', 'Prosser'],
-            buildingTypes: ['Residential', 'Commercial', 'Industrial', 'Agricultural'],
-            costRanges: {
-              min: 120,
-              max: 450,
-              avg: 220
-            }
-          },
-          details: [
-            { type: 'info', message: 'File structure is valid' },
-            { type: 'info', message: 'All required sheets found' },
-            { type: 'info', message: 'Matrix contains 4 building types' }
-          ]
-        };
+      try {
+        // Set the payload for the inquisitor agent
+        inquisitorAgent.setPayload({
+          fileName: file.name,
+          fileType: file.type,
+          content: base64File
+        });
         
-        setValidationResult(mockValidation);
+        // Run the inquisitor agent to validate the file
+        const validationResponse = await inquisitorAgent.runAgent();
+        
+        if (!validationResponse.success) {
+          throw new Error(validationResponse.message || 'Validation failed');
+        }
+        
+        setValidationResult(validationResponse);
         setLoading('interpreting');
-
-        // Simulate Interpreter Agent parsing
-        setTimeout(() => {
-          const mockParsed = {
-            data: [
-              { id: 1, buildingType: 'Residential', region: 'Kennewick', cost: 225, unit: 'sqft' },
-              { id: 2, buildingType: 'Commercial', region: 'Richland', cost: 335, unit: 'sqft' },
-              { id: 3, buildingType: 'Industrial', region: 'West Richland', cost: 410, unit: 'sqft' },
-              { id: 4, buildingType: 'Agricultural', region: 'Prosser', cost: 145, unit: 'sqft' }
-            ],
-            preview: "Cost matrix parsed with 4 rows",
-            rawData: {
-              matrixCount: 4,
-              regionCount: 4,
-              buildingTypeCount: 4
-            }
-          };
-          
-          setParsedData(mockParsed);
-          setLoading('visualizing');
-
-          // Simulate Visualizer Agent insights
-          setTimeout(() => {
-            const mockInsights = {
-              insights: [
-                {
-                  type: 'cost_trend',
-                  title: 'Cost Variation by Region',
-                  description: 'Richland shows 15% higher costs than Kennewick for similar building types.',
-                  severity: 'info'
-                },
-                {
-                  type: 'anomaly',
-                  title: 'Potential Cost Anomaly',
-                  description: 'Industrial building costs in West Richland are 20% above county average.',
-                  severity: 'warning'
-                },
-                {
-                  type: 'recommendation',
-                  title: 'Data Improvement',
-                  description: 'Consider adding more granular cost categories for Agricultural buildings.',
-                  severity: 'info'
-                }
-              ]
-            };
-            
-            setInsights(mockInsights);
-            setLoading(null);
-            
-            toast({
-              title: "Processing complete",
-              description: "Matrix file analyzed successfully",
-              variant: "default"
-            });
-          }, 1000);
-        }, 1500);
-      }, 2000);
-
+        
+        // Step 2: Use Interpreter Agent to parse the file
+        interpreterAgent.setPayload({
+          fileName: file.name,
+          content: base64File,
+          validationResult: validationResponse
+        });
+        
+        const interpretationResponse = await interpreterAgent.runAgent();
+        
+        if (!interpretationResponse.success) {
+          throw new Error(interpretationResponse.message || 'Parsing failed');
+        }
+        
+        setParsedData(interpretationResponse);
+        setLoading('visualizing');
+        
+        // Step 3: Use Visualizer Agent to analyze the data
+        visualizerAgent.setPayload({
+          parsedData: interpretationResponse,
+          fileName: file.name
+        });
+        
+        const insightsResponse = await visualizerAgent.runAgent();
+        
+        if (!insightsResponse.success) {
+          throw new Error(insightsResponse.message || 'Analysis failed');
+        }
+        
+        setInsights(insightsResponse);
+        setLoading(null);
+        
+        toast({
+          title: "Processing complete",
+          description: "Matrix file analyzed successfully",
+          variant: "default"
+        });
+      } catch (agentError: any) {
+        console.error('Agent error:', agentError);
+        setErrors(`Error: ${agentError.message || 'Unknown agent error'}`);
+        setLoading(null);
+        
+        toast({
+          title: "Processing error",
+          description: agentError.message || 'An error occurred while processing your file',
+          variant: "destructive"
+        });
+      }
     } catch (err) {
       console.error(err);
       setErrors('Upload or processing failed.');
@@ -135,6 +128,35 @@ export default function MatrixUploadInterface() {
     }
   };
 
+  // Helper function to read a file as ArrayBuffer
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as ArrayBuffer);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  };
+  
+  // Helper function to convert ArrayBuffer to Base64
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  };
+  
   // Generate loading message based on current step
   const loadingMessage = () => {
     switch(loading) {
