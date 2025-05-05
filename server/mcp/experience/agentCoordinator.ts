@@ -139,8 +139,25 @@ export class AgentCoordinator {
   public async initialize(): Promise<void> {
     console.log('Initializing Agent Coordinator...');
     
-    // Initialize all agents
-    await agentRegistry.initializeAllAgents();
+    // Initialize all agents (with fallback if method doesn't exist)
+    try {
+      if (typeof agentRegistry.initializeAllAgents === 'function') {
+        await agentRegistry.initializeAllAgents();
+      } else {
+        console.log('agentRegistry.initializeAllAgents is not available, using alternative initialization');
+        // Initialize known agents individually
+        const knownAgentIds = ['data-quality-agent', 'compliance-agent', 'cost-analysis-agent'];
+        for (const agentId of knownAgentIds) {
+          const agent = agentRegistry.getAgent(agentId);
+          if (agent && typeof agent.initialize === 'function') {
+            await agent.initialize();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing agents:', error);
+      // Continue despite errors to ensure the coordinator initializes
+    }
     
     // Start agent health monitoring
     this.startMonitoring();
@@ -203,8 +220,25 @@ export class AgentCoordinator {
     // Stop automated training
     trainingCoordinator.stopAutomatedTraining();
     
-    // Shutdown all agents
-    await agentRegistry.shutdownAllAgents();
+    // Shutdown all agents (with fallback if method doesn't exist)
+    try {
+      if (typeof agentRegistry.shutdownAllAgents === 'function') {
+        await agentRegistry.shutdownAllAgents();
+      } else {
+        console.log('agentRegistry.shutdownAllAgents is not available, using alternative shutdown');
+        // Shutdown known agents individually
+        const knownAgentIds = ['data-quality-agent', 'compliance-agent', 'cost-analysis-agent'];
+        for (const agentId of knownAgentIds) {
+          const agent = agentRegistry.getAgent(agentId);
+          if (agent && typeof agent.shutdown === 'function') {
+            await agent.shutdown();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error shutting down agents:', error);
+      // Continue despite errors to ensure the coordinator shuts down
+    }
     
     console.log('Agent Coordinator shutdown complete');
   }

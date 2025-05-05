@@ -6,6 +6,7 @@ import { designAgent } from './agents/designAgent';
 import { dataAnalysisAgent } from './agents/dataAnalysisAgent';
 import { mcpOrchestrator } from './orchestrator';
 import { bentonCountyConversionAgent } from './agents/conversionAgent';
+import { mcpDevOpsKit } from './devops';
 
 /**
  * Initialize the Model Content Protocol (MCP) framework
