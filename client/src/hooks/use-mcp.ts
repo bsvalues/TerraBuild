@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 /**
@@ -86,6 +86,107 @@ interface CalculationExplanationParams {
 interface MCPStatusResponse {
   status: "ready" | "api_key_missing" | "error";
   message: string;
+}
+
+/**
+ * MCP Agent status
+ */
+export type MCPAgentStatus = 'idle' | 'loading' | 'success' | 'error';
+
+/**
+ * Hook for interacting with a specific MCP agent
+ * 
+ * This hook provides functions to invoke a specific MCP agent with a payload
+ * and track its execution status.
+ * 
+ * @param agentId The ID of the agent to invoke
+ * @param initialPayload Optional initial payload for the agent
+ */
+export function useMCPAgent(agentId: string, initialPayload?: any) {
+  const [status, setStatus] = useState<MCPAgentStatus>('idle');
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<any>(null);
+  const [payload, setPayload] = useState<any>(initialPayload);
+
+  /**
+   * Run the agent with the current payload
+   */
+  const runAgent = async () => {
+    setStatus('loading');
+    try {
+      const response = await fetch(`/api/mcp/agent/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent: agentId, input: payload })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error running agent ${agentId}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+      setStatus('success');
+      return data;
+    } catch (err) {
+      console.error(`Agent ${agentId} run failed:`, err);
+      setError(err);
+      setStatus('error');
+      throw err;
+    }
+  };
+
+  /**
+   * Run the agent with a new payload
+   * @param newPayload The new payload to use
+   */
+  const runAgentWithPayload = async (newPayload: any) => {
+    setPayload(newPayload);
+    setStatus('loading');
+    try {
+      const response = await fetch(`/api/mcp/agent/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent: agentId, input: newPayload })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error running agent ${agentId}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+      setStatus('success');
+      return data;
+    } catch (err) {
+      console.error(`Agent ${agentId} run failed:`, err);
+      setError(err);
+      setStatus('error');
+      throw err;
+    }
+  };
+
+  /**
+   * Reset the agent state
+   */
+  const reset = () => {
+    setStatus('idle');
+    setResult(null);
+    setError(null);
+  };
+
+  return {
+    status,
+    result,
+    error,
+    payload,
+    runAgent,
+    runAgentWithPayload,
+    reset,
+    setPayload
+  };
 }
 
 /**
@@ -196,6 +297,16 @@ export function useMCP() {
       }
     }
   });
+
+  /**
+   * Query for getting MCP agent definitions
+   */
+  const agentsQuery = useQuery({
+    queryKey: ['/api/mcp/devops/agents'],
+    refetchOnWindowFocus: false,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   
   return {
     // Status
@@ -213,5 +324,10 @@ export function useMCP() {
     
     explainCalculation: calculationExplanationMutation.mutate,
     isExplaining: calculationExplanationMutation.isPending,
+
+    // Agent definitions
+    agents: agentsQuery.data?.agents || [],
+    isLoadingAgents: agentsQuery.isLoading,
+    agentsError: agentsQuery.isError,
   };
 }
