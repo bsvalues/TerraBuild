@@ -1,0 +1,34 @@
+
+# Replit Agent Pipeline: Cost Matrix Import System
+
+## Workflow Name
+"Matrix Import and Insight Generator"
+
+## Trigger
+When user uploads a .xlsx file to /matrix-upload
+
+## Steps
+
+1. 🕵️‍♂️ InquisitorAgent
+   - Function: `validateMatrix(file)`
+   - Validates sheet names: "matrix", "matrix_detail", "region_codes"
+   - Checks required columns: "matrix_id", "base_cost", "region", "building_type"
+   - Emits: `ValidationReport` (JSON)
+
+2. 📖 InterpreterAgent
+   - Function: `parseMatrix(file)`
+   - Converts all sheets into structured JSON
+   - Maps building type codes
+   - Emits: `ParsedMatrixData` (JSON)
+
+3. 📊 VisualizerAgent
+   - Function: `generateInsights(matrixJson)`
+   - Computes:
+     - Average cost by type
+     - Top 3 increases/decreases
+     - Anomalies
+   - Emits: `InsightReport` (cards + visual objects)
+
+## Output
+- Pushes validation + insight logs to `/matrix-upload/status`
+- Displays insights on `/dashboard?matrix_id=X`

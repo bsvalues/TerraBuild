@@ -110,7 +110,7 @@ class MCPDevOpsKit {
       if (agentId) {
         this.updateAgentStatus(agentId, 'active');
       }
-    });
+    }, 'devops-kit');
     
     // Subscribe to agent shutdown events
     agentEventBus.subscribe('agent:shutdown', (event: any, topic: string, id: string) => {
@@ -119,13 +119,13 @@ class MCPDevOpsKit {
       if (agentId) {
         this.updateAgentStatus(agentId, 'inactive');
       }
-    });
+    }, 'devops-kit');
     
     // Subscribe to agent error events
     agentEventBus.subscribe('agent:error', (event: any, topic: string, id: string) => {
       const { agentId, error } = event.payload || {};
       console.error(`DevOpsKit: Agent ${agentId} reported error:`, error);
-    });
+    }, 'devops-kit');
   }
   
   /**

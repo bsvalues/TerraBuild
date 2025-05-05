@@ -1,0 +1,25 @@
+{
+  "agents": [
+    {
+      "id": "inquisitorAgent",
+      "name": "Inquisitor Agent",
+      "description": "Validates matrix structure and expected fields",
+      "endpoint": "/mcp/agent/run",
+      "status": "active"
+    },
+    {
+      "id": "interpreterAgent",
+      "name": "Interpreter Agent",
+      "description": "Parses Excel file into JSON matrix representation",
+      "endpoint": "/mcp/agent/run",
+      "status": "active"
+    },
+    {
+      "id": "visualizerAgent",
+      "name": "Visualizer Agent",
+      "description": "Generates insights and cost comparisons",
+      "endpoint": "/mcp/agent/run",
+      "status": "active"
+    }
+  ]
+}
