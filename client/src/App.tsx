@@ -58,6 +58,7 @@ import CostWizardPage from "@/pages/CostWizardPage";
 import CostCalculator from "@/pages/CostCalculator";
 import SwarmPage from "@/pages/SwarmPage";
 import MatrixUploadPage from "@/pages/MatrixUploadPage";
+import XREGPage from "@/pages/XREGPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -350,6 +351,7 @@ function Router() {
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
       <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
       <ProtectedRouteWrapper path="/ai-swarm" component={SwarmPage} />
+      <ProtectedRouteWrapper path="/xreg" component={XREGPage} />
       
       <Route component={NotFound} />
     </Switch>
