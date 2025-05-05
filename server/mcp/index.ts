@@ -26,6 +26,12 @@ export function initMCP(app: Express): void {
     // Initialize the MCP orchestrator
     mcpOrchestrator.initialize();
     
+    // Initialize the MCP DevOps Kit
+    mcpDevOpsKit.initialize().catch(error => {
+      console.error('Error initializing MCP DevOps Kit:', error);
+      // Continue despite DevOps Kit errors to maintain core functionality
+    });
+    
     console.log('MCP framework initialized successfully');
   } catch (error) {
     console.error('Error initializing MCP framework:', error);

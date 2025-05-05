@@ -9,6 +9,7 @@ import { agentCoordinator, TaskType } from './experience';
 import { cacheMiddleware } from '../utils/cache';
 import { generateDashboardData, clearDashboardCache } from './monitoring/dashboard';
 import * as agentModule from './agents';
+import { mcpDevOpsKit } from './devops';
 
 // Use the agentRegistry from index.ts or create a local reference
 const agentRegistry = (agentModule as any).agentRegistry || {
@@ -461,6 +462,127 @@ router.get('/dashboard/html', cacheMiddleware(30), (req, res) => {
       </body>
     </html>
   `);
+});
+
+// DevOps Kit Routes
+
+// GET /api/mcp/devops/agents - Get all agent definitions from DevOps Kit
+router.get('/devops/agents', (req, res) => {
+  try {
+    const agents = mcpDevOpsKit.getAgentDefinitions();
+    
+    res.json({
+      agents,
+      count: agents.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching agent definitions from DevOps Kit:', error);
+    res.status(500).json({
+      error: 'Error fetching agent definitions',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// GET /api/mcp/devops/agents/:agentId - Get specific agent definition
+router.get('/devops/agents/:agentId', (req, res) => {
+  try {
+    const agentId = req.params.agentId;
+    const agent = mcpDevOpsKit.getAgentDefinition(agentId);
+    
+    if (!agent) {
+      return res.status(404).json({
+        error: 'Agent not found',
+        message: `No agent found with ID: ${agentId}`
+      });
+    }
+    
+    res.json({
+      agent,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`Error fetching agent ${req.params.agentId} definition:`, error);
+    res.status(500).json({
+      error: 'Error fetching agent definition',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// GET /api/mcp/devops/status - Get DevOps Kit status
+router.get('/devops/status', (req, res) => {
+  try {
+    const isInitialized = mcpDevOpsKit.isDevOpsKitInitialized();
+    const statuses = mcpDevOpsKit.getAgentStatuses();
+    
+    res.json({
+      initialized: isInitialized,
+      agentCount: Object.keys(statuses).length,
+      agentStatuses: statuses,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching DevOps Kit status:', error);
+    res.status(500).json({
+      error: 'Error fetching DevOps Kit status',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/devops/agents/:agentId/restart - Restart an agent
+router.post('/devops/agents/:agentId/restart', async (req, res) => {
+  try {
+    const agentId = req.params.agentId;
+    const success = await mcpDevOpsKit.restartAgent(agentId);
+    
+    if (!success) {
+      return res.status(404).json({
+        error: 'Agent restart failed',
+        message: `Unable to restart agent with ID: ${agentId}`
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Agent ${agentId} restarted successfully`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`Error restarting agent ${req.params.agentId}:`, error);
+    res.status(500).json({
+      error: 'Error restarting agent',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/devops/shutdown - Shutdown all agents
+router.post('/devops/shutdown', async (req, res) => {
+  try {
+    const success = await mcpDevOpsKit.shutdownAllAgents();
+    
+    if (!success) {
+      return res.status(500).json({
+        error: 'Shutdown failed',
+        message: 'Failed to shutdown all agents'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'All agents shut down successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error shutting down agents:', error);
+    res.status(500).json({
+      error: 'Error shutting down agents',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
 });
 
 export default router;

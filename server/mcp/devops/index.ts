@@ -61,12 +61,34 @@ class MCPDevOpsKit {
    */
   private loadAgentRegistry(): void {
     try {
-      const registryPath = path.join(__dirname, '..', 'agents.json');
+      // Handle ESM environment where __dirname is not defined
+      // Try to find the agents.json file in several possible locations
+      const possiblePaths = [
+        './server/mcp/agents.json',
+        '../agents.json',
+        './agents.json',
+        '../../agents.json'
+      ];
       
-      if (fs.existsSync(registryPath)) {
-        const registryData = fs.readFileSync(registryPath, 'utf-8');
+      let registryData: string | null = null;
+      let registryPath: string | null = null;
+      
+      // Try each path
+      for (const tryPath of possiblePaths) {
+        try {
+          if (fs.existsSync(tryPath)) {
+            registryPath = tryPath;
+            registryData = fs.readFileSync(tryPath, 'utf-8');
+            break;
+          }
+        } catch (e) {
+          // Continue to the next path
+        }
+      }
+      
+      if (registryData && registryPath) {
         this.agentRegistry = JSON.parse(registryData);
-        console.log(`Loaded ${this.agentRegistry.agents.length} agents from registry`);
+        console.log(`Loaded ${this.agentRegistry.agents.length} agents from registry at ${registryPath}`);
       } else {
         console.warn('Agent registry file not found, using empty registry');
       }
@@ -82,21 +104,25 @@ class MCPDevOpsKit {
    */
   private subscribeToAgentEvents(): void {
     // Subscribe to agent initialization events
-    agentEventBus.subscribe('agent:initialized', (event) => {
+    agentEventBus.subscribe('agent:initialized', (event: any, topic: string, id: string) => {
       const { agentId, agentName } = event.payload || {};
       console.log(`DevOpsKit: Agent ${agentName} (${agentId}) initialized`);
-      this.updateAgentStatus(agentId, 'active');
+      if (agentId) {
+        this.updateAgentStatus(agentId, 'active');
+      }
     });
     
     // Subscribe to agent shutdown events
-    agentEventBus.subscribe('agent:shutdown', (event) => {
+    agentEventBus.subscribe('agent:shutdown', (event: any, topic: string, id: string) => {
       const { agentId, agentName } = event.payload || {};
       console.log(`DevOpsKit: Agent ${agentName} (${agentId}) shutdown`);
-      this.updateAgentStatus(agentId, 'inactive');
+      if (agentId) {
+        this.updateAgentStatus(agentId, 'inactive');
+      }
     });
     
     // Subscribe to agent error events
-    agentEventBus.subscribe('agent:error', (event) => {
+    agentEventBus.subscribe('agent:error', (event: any, topic: string, id: string) => {
       const { agentId, error } = event.payload || {};
       console.error(`DevOpsKit: Agent ${agentId} reported error:`, error);
     });
