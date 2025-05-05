@@ -1,0 +1,23 @@
+{
+  "prediction": 241320,
+  "base_value": 180000,
+  "features": {
+    "living_area": {
+      "value": 1950,
+      "impact": "+31000"
+    },
+    "roof_type": {
+      "value": "Metal",
+      "impact": "+7800"
+    },
+    "year_built": {
+      "value": 1974,
+      "impact": "-12480"
+    },
+    "condition": {
+      "value": "Fair",
+      "impact": "-5000"
+    }
+  },
+  "explanation": "The model increased the predicted value primarily due to high living area and durable roof type. Age and condition reduced the value."
+}
