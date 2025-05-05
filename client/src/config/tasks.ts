@@ -214,6 +214,14 @@ export const TASKS: WorkflowTask[] = [
     category: 'analysis',
     icon: React.createElement(BrainCircuit)
   },
+  {
+    id: 'valuation_dashboard',
+    label: 'Valuation Dashboard',
+    description: 'Comprehensive valuation control center with explainable AI insights',
+    route: '/valuation-dashboard',
+    category: 'analysis',
+    icon: React.createElement(BarChart3)
+  },
   
   // Data Management Tasks
   {
