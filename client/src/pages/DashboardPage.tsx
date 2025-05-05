@@ -7,6 +7,7 @@ import DataCard from '@/components/ui/data-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DataFlowVisualizer } from '@/contexts/DataFlowContext';
 import { 
   RefreshCw, 
   FileBarChart, 
@@ -202,6 +203,19 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Data Flow Debug Visualizer */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <FileBarChart className="h-5 w-5 text-blue-500 mr-2" />
+                  Data Flow Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataFlowVisualizer show={true} showHistory={true} showActivity={true} />
+              </CardContent>
+            </Card>
 
             {/* Quick Access Tools */}
             <Card className="shadow-sm">
