@@ -1,0 +1,84 @@
+{
+  "agents": [
+    {
+      "id": "costEstimationAgent",
+      "name": "Cost Estimation Agent",
+      "description": "Performs valuation prediction based on building type, region, and cost matrix",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "dataQualityAgent",
+      "name": "Data Quality Agent",
+      "description": "Scans dataset for missing or invalid fields and reports anomalies",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": false
+    },
+    {
+      "id": "geospatialAnalysisAgent",
+      "name": "Geospatial Analysis Agent",
+      "description": "Validates spatial data for parcels and overlays valuation deltas",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "documentProcessingAgent",
+      "name": "Document Processing Agent",
+      "description": "Extracts and summarizes building data from scanned PDFs or documents",
+      "status": "inactive",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "inquisitorAgent",
+      "name": "Inquisitor Agent",
+      "description": "Validates matrix structure and expected fields",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "interpreterAgent",
+      "name": "Interpreter Agent",
+      "description": "Parses Excel file into JSON matrix representation",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "visualizerAgent",
+      "name": "Visualizer Agent",
+      "description": "Generates insights and cost comparisons",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "data-quality-agent",
+      "name": "Legacy Data Quality Agent",
+      "description": "Legacy agent for data quality checks",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "compliance-agent",
+      "name": "Legacy Compliance Agent",
+      "description": "Legacy agent for compliance checks",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    },
+    {
+      "id": "cost-analysis-agent",
+      "name": "Legacy Cost Analysis Agent",
+      "description": "Legacy agent for cost analysis",
+      "status": "active",
+      "endpoint": "/mcp/agent/run",
+      "requiresInput": true
+    }
+  ]
+}

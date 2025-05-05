@@ -1,0 +1,78 @@
+version: "1.0"
+name: "Matrix Upload Pipeline"
+description: "Processing pipeline for cost matrix file uploads"
+
+# Agent definitions
+agents:
+  inquisitorAgent:
+    name: "Inquisitor Agent"
+    description: "Validates matrix structure and expected fields"
+    endpoint: "/api/mcp/agent/run"
+    timeout: 30000  # 30 seconds
+
+  interpreterAgent:
+    name: "Interpreter Agent"
+    description: "Parses Excel file into JSON matrix representation"
+    endpoint: "/api/mcp/agent/run"
+    timeout: 60000  # 60 seconds
+
+  visualizerAgent:
+    name: "Visualizer Agent"
+    description: "Generates insights and cost comparisons"
+    endpoint: "/api/mcp/agent/run"
+    timeout: 30000  # 30 seconds
+
+# Pipeline stages
+pipeline:
+  - name: "validation"
+    agent: "inquisitorAgent"
+    description: "Validate matrix file structure"
+    next_on_success: "interpretation"
+    next_on_failure: null
+    input_mapping:
+      fileName: "$.fileName"
+      fileType: "$.fileType"
+      content: "$.content"
+
+  - name: "interpretation"
+    agent: "interpreterAgent"
+    description: "Parse matrix data from Excel file"
+    next_on_success: "visualization"
+    next_on_failure: null
+    input_mapping:
+      fileName: "$.fileName"
+      content: "$.content"
+      validationResult: "$.validationResult"
+
+  - name: "visualization"
+    agent: "visualizerAgent"
+    description: "Generate insights from matrix data"
+    next_on_success: null
+    next_on_failure: null
+    input_mapping:
+      parsedData: "$.parsedData"
+      fileName: "$.fileName"
+
+# Error handling
+error_handling:
+  retry_count: 2
+  retry_delay: 1000  # 1 second
+  fallback: "error_report"
+
+# Events
+events:
+  - name: "pipeline_start"
+    description: "Pipeline execution started"
+    target: "ui"
+  
+  - name: "stage_complete"
+    description: "Pipeline stage completed"
+    target: "ui"
+    
+  - name: "pipeline_complete"
+    description: "Pipeline execution completed"
+    target: "ui"
+    
+  - name: "pipeline_error"
+    description: "Pipeline execution error"
+    target: "ui"
