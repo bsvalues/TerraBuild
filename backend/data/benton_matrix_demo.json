@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "jurisdiction": "Benton County, WA",
+    "region": "Eastern Washington",
+    "year": 2025,
+    "version": "1.0.0",
+    "created_at": "2025-03-15T10:30:45Z",
+    "last_updated": "2025-05-02T15:22:18Z",
+    "session_id": "20250502-BC-12345"
+  },
+  "matrix_data": [
+    {
+      "matrix_id": "SFR-EAST-2025",
+      "building_type": "Single Family Residential",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [145.75, 132.50, 118.25, 103.80],
+      "comments": "Updated based on recent material cost increases in the region."
+    },
+    {
+      "matrix_id": "MFR-EAST-2025",
+      "building_type": "Multi-Family Residential",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [135.25, 122.75, 110.50, 98.25],
+      "comments": "Lower than Single Family due to economies of scale."
+    },
+    {
+      "matrix_id": "COM-OFF-EAST-2025",
+      "building_type": "Commercial Office",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [175.30, 158.45, 142.60, 125.80],
+      "comments": "Higher commercial standards and code requirements reflect increased costs."
+    },
+    {
+      "matrix_id": "COM-RET-EAST-2025",
+      "building_type": "Commercial Retail",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [165.20, 149.75, 135.30, 119.80],
+      "comments": "Retail spaces have specialized requirements affecting cost."
+    },
+    {
+      "matrix_id": "IND-EAST-2025",
+      "building_type": "Industrial",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [125.40, 113.60, 102.75, 90.50],
+      "comments": "Simplified construction methods reduce costs."
+    },
+    {
+      "matrix_id": "AGR-EAST-2025",
+      "building_type": "Agricultural",
+      "region": "Eastern Washington",
+      "quality_classes": ["Class A", "Class B", "Class C", "Class D"],
+      "values": [95.25, 85.80, 77.45, 68.20],
+      "comments": "Basic construction requirements and different code standards."
+    }
+  ],
+  "insights": [
+    {
+      "insight_id": "INS-2025-0001",
+      "type": "info",
+      "message": "Residential rates are consistent with regional trends for Eastern Washington.",
+      "source": "Regional Comparison Agent",
+      "timestamp": "2025-05-01T14:25:18Z",
+      "confidence": 0.92
+    },
+    {
+      "insight_id": "INS-2025-0002",
+      "type": "warning",
+      "message": "Commercial Office rates are 12.5% above the regional average, potentially due to increased material costs.",
+      "source": "Cost Analysis Agent",
+      "timestamp": "2025-05-01T14:26:05Z",
+      "confidence": 0.85
+    },
+    {
+      "insight_id": "INS-2025-0003",
+      "type": "info",
+      "message": "Agricultural building costs have risen 7.2% compared to 2024 values, consistent with commodity price increases.",
+      "source": "Trend Analysis Agent",
+      "timestamp": "2025-05-01T14:27:30Z",
+      "confidence": 0.89
+    },
+    {
+      "insight_id": "INS-2025-0004",
+      "type": "success",
+      "message": "Matrix validation completed successfully with 98.2% confidence rating.",
+      "source": "Data Validation Agent",
+      "timestamp": "2025-05-02T09:15:42Z",
+      "confidence": 0.98
+    }
+  ],
+  "history": [
+    {
+      "timestamp": "2025-03-15T10:30:45Z",
+      "action": "Initial matrix created",
+      "user": "system",
+      "changes": []
+    },
+    {
+      "timestamp": "2025-04-10T13:45:22Z",
+      "action": "Commercial Office rates adjusted +3.2%",
+      "user": "jsmith",
+      "changes": [
+        {
+          "matrix_id": "COM-OFF-EAST-2025",
+          "old_values": [169.85, 153.55, 138.20, 121.90],
+          "new_values": [175.30, 158.45, 142.60, 125.80]
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-04-28T09:12:08Z",
+      "action": "Agricultural rates adjusted +2.5%",
+      "user": "mwilliams",
+      "changes": [
+        {
+          "matrix_id": "AGR-EAST-2025",
+          "old_values": [92.95, 83.70, 75.55, 66.55],
+          "new_values": [95.25, 85.80, 77.45, 68.20]
+        }
+      ]
+    },
+    {
+      "timestamp": "2025-05-02T15:22:18Z",
+      "action": "Validated and finalized all matrix values",
+      "user": "ljohnson",
+      "changes": []
+    }
+  ]
+}
