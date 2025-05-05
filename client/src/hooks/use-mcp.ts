@@ -121,10 +121,49 @@ export function useMCP() {
     }
   }, []);
   
+  // Function to rerun analysis on an already analyzed matrix with updates
+  const rerunAnalysis = useCallback(async (options: { matrixId: string, matrixData: any }) => {
+    setIsLoading(true);
+    setIsError(false);
+    setError(null);
+    
+    try {
+      // Simulate rerunning analysis process
+      console.log('Rerunning analysis for matrix:', options.matrixId);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return {
+        success: true,
+        data: {
+          matrixId: options.matrixId,
+          analysis: {
+            quality: 'high',
+            coverage: '99%',
+            updatedAt: new Date().toISOString(),
+            recommendations: [
+              'Quality factor for high-end properties may need adjustment',
+              'Consider reviewing the age depreciation curve'
+            ],
+            impact: {
+              valuationDelta: 2.4,
+              confidence: 0.94
+            }
+          }
+        }
+      };
+    } catch (err) {
+      setIsError(true);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      return { success: false, error: 'Reanalysis failed' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
   return {
     analyzeMatrix,
     predictCost,
     explainCalculation,
+    rerunAnalysis,
     isAnalyzing: isLoading,
     isPredicting: isLoading,
     isExplaining: isLoading,

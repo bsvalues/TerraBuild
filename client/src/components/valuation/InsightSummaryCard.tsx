@@ -1,23 +1,139 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  AlertTriangle, 
+  Check, 
+  Clock, 
+  Lightbulb, 
+  TrendingUp, 
+  BarChart2 
+} from 'lucide-react';
 
-export default function InsightSummaryCard() {
-  const summary = {
+interface InsightSummaryCardProps {
+  matrixId?: string;
+}
+
+export default function InsightSummaryCard({ matrixId }: InsightSummaryCardProps) {
+  const [summary, setSummary] = useState({
     agent: "ExplainerAgent",
     flagged: 4,
+    severity: "medium",
     topDriver: "Living Area",
     avgDeviation: 9203,
-    time: "3 minutes ago"
+    recommendation: "Consider adjusting the quality multiplier for residential buildings.",
+    time: "3 minutes ago",
+    confidence: 87
+  });
+  
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Simulate loading insights data when matrixId changes
+  useEffect(() => {
+    if (matrixId) {
+      setIsLoading(true);
+      // In a real implementation, this would be an API call to fetch insights
+      setTimeout(() => {
+        setSummary({
+          agent: "ExplainerAgent",
+          flagged: 4,
+          severity: "medium",
+          topDriver: "Living Area",
+          avgDeviation: 9203,
+          recommendation: "Consider adjusting the quality multiplier for residential buildings.",
+          time: "3 minutes ago",
+          confidence: 87
+        });
+        setIsLoading(false);
+      }, 1200);
+    }
+  }, [matrixId]);
+
+  // Get badge color based on severity
+  const getSeverityColor = (severity: string) => {
+    switch(severity) {
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
   };
 
   return (
-    <div className="bg-yellow-100 p-4 rounded shadow border">
-      <h3 className="text-md font-semibold mb-2">📣 Insight Summary</h3>
-      <p><strong>Agent:</strong> {summary.agent}</p>
-      <p><strong>Records Flagged:</strong> {summary.flagged}</p>
-      <p><strong>Top Driver:</strong> {summary.topDriver}</p>
-      <p><strong>Avg Deviation:</strong> ${summary.avgDeviation}</p>
-      <p className="text-sm text-gray-600">{summary.time}</p>
-    </div>
+    <Card className={`overflow-hidden border ${
+      summary.severity === 'high' ? 'border-red-200' : 
+      summary.severity === 'medium' ? 'border-yellow-200' : 'border-green-200'
+    }`}>
+      <div className={`h-2 ${
+        summary.severity === 'high' ? 'bg-red-500' : 
+        summary.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+      }`}></div>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg flex items-center">
+            <Lightbulb className="mr-2 h-5 w-5" />
+            Insight Summary
+          </CardTitle>
+          <Badge variant="outline" className={getSeverityColor(summary.severity)}>
+            {summary.severity.toUpperCase()} PRIORITY
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {isLoading ? (
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-1 text-yellow-600" />
+                <span className="text-gray-600">Records Flagged:</span>
+                <span className="ml-1 font-medium">{summary.flagged}</span>
+              </div>
+              <div className="flex items-center">
+                <TrendingUp className="h-4 w-4 mr-1 text-blue-600" />
+                <span className="text-gray-600">Top Driver:</span>
+                <span className="ml-1 font-medium">{summary.topDriver}</span>
+              </div>
+              <div className="flex items-center">
+                <BarChart2 className="h-4 w-4 mr-1 text-purple-600" />
+                <span className="text-gray-600">Avg Deviation:</span>
+                <span className="ml-1 font-medium">${summary.avgDeviation.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-4 w-4 mr-1 text-green-600" />
+                <span className="text-gray-600">Confidence:</span>
+                <span className="ml-1 font-medium">{summary.confidence}%</span>
+              </div>
+            </div>
+            
+            <div className="text-sm py-2 px-3 bg-blue-50 rounded-md border border-blue-100">
+              <p className="font-medium text-blue-700 mb-1">Recommendation:</p>
+              <p className="text-gray-700">{summary.recommendation}</p>
+            </div>
+            
+            <div className="flex items-center justify-between pt-2 text-xs text-gray-500 border-t">
+              <div className="flex items-center">
+                <span>Generated by {summary.agent}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>{summary.time}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
