@@ -57,6 +57,7 @@ import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
 import CostCalculator from "@/pages/CostCalculator";
 import SwarmPage from "@/pages/SwarmPage";
+import MatrixUploadPage from "@/pages/MatrixUploadPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -337,6 +338,7 @@ function Router() {
       <ProtectedRouteWrapper path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
       <ProtectedRouteWrapper path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
       <ProtectedRouteWrapper path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
+      <ProtectedRouteWrapper path="/matrix-upload" component={MatrixUploadPage} />
       <ProtectedRouteWrapper path="/contextual-data" component={ContextualDataPage} />
       <ProtectedRouteWrapper path="/data-connections" component={DataConnectionsPage} />
       <ProtectedRouteWrapper path="/data-connections/ftp" component={FTPConnectionPage} />

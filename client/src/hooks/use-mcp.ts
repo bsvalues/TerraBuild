@@ -326,7 +326,7 @@ export function useMCP() {
     isExplaining: calculationExplanationMutation.isPending,
 
     // Agent definitions
-    agents: agentsQuery.data?.agents || [],
+    agents: (agentsQuery.data as { agents: any[] } | undefined)?.agents || [],
     isLoadingAgents: agentsQuery.isLoading,
     agentsError: agentsQuery.isError,
   };

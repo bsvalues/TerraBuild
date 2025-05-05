@@ -124,7 +124,7 @@ export default function ImportStatusPanel({ status }: ImportStatusPanelProps) {
         )}
       </CardContent>
       
-      {summary && (summary.regions?.length > 0 || summary.buildingTypes?.length > 0) && (
+      {summary && ((summary.regions && summary.regions.length > 0) || (summary.buildingTypes && summary.buildingTypes.length > 0)) && (
         <CardFooter className="border-t pt-4 flex-col items-start">
           {summary.regions && summary.regions.length > 0 && (
             <div className="mb-2">
