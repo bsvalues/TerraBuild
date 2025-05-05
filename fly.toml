@@ -1,0 +1,31 @@
+app = "benton-county-valuation"
+primary_region = "sea" # Seattle region for best performance for WA users
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 5001
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+[env]
+  PORT = "5001"
+  ENVIRONMENT = "production"
+
+[mounts]
+  source = "benton_data"
+  destination = "/app/data"
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  path = "/health"
+  timeout = "5s"
+
+[metrics]
+  port = 5001
+  path = "/metrics"

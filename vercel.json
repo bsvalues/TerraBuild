@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://benton-valuation-api.fly.dev/api/$1"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://benton-valuation-api.fly.dev",
+    "REACT_APP_JURISDICTION": "Benton County, WA",
+    "REACT_APP_REGION": "Eastern Washington"
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "session_id": "benton-2025-demo-001",
+  "file_name": "Benton_County_Cost_Matrix_2025.xlsx",
+  "created_at": "2025-05-05T10:30:00Z",
+  "rows": [
+    {
+      "id": 1,
+      "building_type": "R1-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Single Family Residential - High Quality",
+      "base_cost": 223.45,
+      "permit_count": 47,
+      "year": 2025
+    },
+    {
+      "id": 2,
+      "building_type": "R1-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Single Family Residential - Average Quality",
+      "base_cost": 187.89,
+      "permit_count": 129,
+      "year": 2025
+    },
+    {
+      "id": 3,
+      "building_type": "R1-C",
+      "region": "EAST-WA",
+      "quality": "Low",
+      "description": "Single Family Residential - Economy Quality",
+      "base_cost": 152.30,
+      "permit_count": 84,
+      "year": 2025
+    },
+    {
+      "id": 4,
+      "building_type": "R2-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Multi-Family Residential - High Quality",
+      "base_cost": 198.75,
+      "permit_count": 12,
+      "year": 2025
+    },
+    {
+      "id": 5,
+      "building_type": "R2-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Multi-Family Residential - Average Quality",
+      "base_cost": 165.40,
+      "permit_count": 38,
+      "year": 2025
+    },
+    {
+      "id": 6,
+      "building_type": "R3-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Townhomes/Condos - High Quality",
+      "base_cost": 193.25,
+      "permit_count": 23,
+      "year": 2025
+    },
+    {
+      "id": 7,
+      "building_type": "R3-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Townhomes/Condos - Average Quality",
+      "base_cost": 173.15,
+      "permit_count": 41,
+      "year": 2025
+    },
+    {
+      "id": 8,
+      "building_type": "C1-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Retail/Commercial - High Quality",
+      "base_cost": 212.80,
+      "permit_count": 8,
+      "year": 2025
+    },
+    {
+      "id": 9,
+      "building_type": "C1-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Retail/Commercial - Average Quality",
+      "base_cost": 183.90,
+      "permit_count": 17,
+      "year": 2025
+    },
+    {
+      "id": 10,
+      "building_type": "C2-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Office Space - High Quality",
+      "base_cost": 205.50,
+      "permit_count": 6,
+      "year": 2025
+    },
+    {
+      "id": 11,
+      "building_type": "C2-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Office Space - Average Quality",
+      "base_cost": 178.25,
+      "permit_count": 11,
+      "year": 2025
+    },
+    {
+      "id": 12,
+      "building_type": "I1-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Warehouse/Industrial - High Quality",
+      "base_cost": 167.35,
+      "permit_count": 5,
+      "year": 2025
+    },
+    {
+      "id": 13,
+      "building_type": "I1-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Warehouse/Industrial - Average Quality",
+      "base_cost": 144.80,
+      "permit_count": 9,
+      "year": 2025
+    },
+    {
+      "id": 14,
+      "building_type": "AG-A",
+      "region": "EAST-WA",
+      "quality": "Good",
+      "description": "Agricultural Buildings - High Quality",
+      "base_cost": 128.90,
+      "permit_count": 14,
+      "year": 2025
+    },
+    {
+      "id": 15,
+      "building_type": "AG-B",
+      "region": "EAST-WA",
+      "quality": "Average",
+      "description": "Agricultural Buildings - Average Quality",
+      "base_cost": 102.75,
+      "permit_count": 27,
+      "year": 2025
+    }
+  ],
+  "insights": [
+    {
+      "agent": "cost-analysis-agent",
+      "severity": "info",
+      "message": "Eastern WA R3 building types show a cost increase of 12.4% compared to last year, based on recent permits #9302-#9319 in the Tri-Cities area.",
+      "timestamp": "2025-05-05T10:31:05Z"
+    },
+    {
+      "agent": "data-quality-agent",
+      "severity": "warning",
+      "message": "Agricultural building costs in Benton County appear to be rising faster than the state average (+8.2% vs +5.9%), potentially due to increased vineyard construction around Red Mountain AVA.",
+      "timestamp": "2025-05-05T10:31:10Z"
+    },
+    {
+      "agent": "compliance-agent",
+      "severity": "info",
+      "message": "All building types conform to Washington state assessment guidelines. Regional modifiers for Eastern WA are correctly applied for Benton County jurisdictions.",
+      "timestamp": "2025-05-05T10:31:15Z"
+    },
+    {
+      "agent": "cost-analysis-agent",
+      "severity": "info",
+      "message": "RSMeans comparison shows Benton County residential values at 97.2% of national averages, consistent with regional economic indicators.",
+      "timestamp": "2025-05-05T10:31:20Z"
+    }
+  ],
+  "history": [
+    {
+      "timestamp": "2025-04-28T14:22:33Z",
+      "matrix_id": "benton-2025-prelim",
+      "avg_residential_cost": 186.01,
+      "avg_commercial_cost": 195.11,
+      "modified_by": "system"
+    },
+    {
+      "timestamp": "2025-05-01T09:45:12Z",
+      "matrix_id": "benton-2025-adj1",
+      "avg_residential_cost": 183.45,
+      "avg_commercial_cost": 195.11,
+      "modified_by": "jsmith"
+    },
+    {
+      "timestamp": "2025-05-05T10:30:00Z",
+      "matrix_id": "benton-2025-final",
+      "avg_residential_cost": 186.01,
+      "avg_commercial_cost": 195.11,
+      "modified_by": "system"
+    }
+  ],
+  "region_data": {
+    "EAST-WA": {
+      "name": "Eastern Washington",
+      "counties": ["Benton", "Franklin", "Walla Walla", "Columbia", "Garfield", "Asotin"],
+      "modifier": 0.94
+    }
+  },
+  "permit_trends": {
+    "year_over_year_growth": 0.086,
+    "hotspot_areas": ["West Richland", "South Kennewick", "Prosser Wine Region"],
+    "permit_volume_change": "+14.2% residential, +3.5% commercial"
+  }
+}

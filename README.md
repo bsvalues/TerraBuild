@@ -1,178 +1,152 @@
-# TerraFusion Platform
+# TerraBuild - County Valuation Platform
 
-TerraFusion is a cutting-edge AI-powered infrastructure optimization platform designed to transform government infrastructure lifecycle management for Benton County, Washington, through intelligent decision support and advanced predictive modeling.
+<div align="center">
+  <h3>Transparent, Intelligent, Defensible Property Valuation</h3>
+  <p><em>Developed for and with Benton County, Washington</em></p>
+</div>
 
-## Overview
+## 🏢 Overview
 
-TerraFusion offers a comprehensive solution for infrastructure cost management with advanced AI capabilities:
+TerraBuild is a comprehensive property valuation platform designed to replace black-box cost systems with explainable, transparent, and agent-assisted assessments. Initially developed for Benton County, the system is configurable for any jurisdiction.
 
-- AI-powered cost assessment and prediction system
-- Multi-agent AI architecture with specialized components
-- Complete API with import and calculation endpoints
-- React-based UI with modular, responsive components
-- Pre-configured PostgreSQL database integration
-- Advanced data analysis and visualization tools
-- Comprehensive DevOps infrastructure with CI/CD
-- Docker containerization and AWS deployment support
+### Key Features
 
-## Getting Started
+- **Matrix Data Upload**: Import and validate cost matrix data
+- **Smart Analysis**: Get AI agent insights on cost anomalies and trends
+- **Visual Explanations**: Understand valuation factors with SHAP-style visualization
+- **Editable Interface**: Make expert adjustments with full audit trails
+- **Defensible Exports**: Generate PDF and JSON documentation for appeals and audits
+- **Jurisdiction Flexibility**: Deploy for any county with simple configuration
+
+## 📋 Project Structure
+
+```
+terrabuild/
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── components/       # UI components
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API services
+│   │   ├── utils/            # Utility functions
+│   │   ├── config.ts         # Environment configuration
+│   │   └── App.tsx           # Main application component
+│   ├── public/               # Static assets
+│   └── package.json          # Frontend dependencies
+├── backend/                  # FastAPI backend service
+│   ├── app/
+│   │   ├── api/              # API endpoints
+│   │   ├── core/             # Core functionality
+│   │   ├── models/           # Data models
+│   │   ├── services/         # Business logic services
+│   │   └── utils/            # Utility functions
+│   ├── requirements.txt      # Python dependencies
+│   ├── Dockerfile            # Backend container definition
+│   └── terrabuild_api.py     # Main API entry point
+├── docs/                     # Documentation
+│   ├── demo/                 # Demo scripts and guides
+│   ├── deployment/           # Deployment guides
+│   └── development/          # Development guides
+├── docker/                   # Docker configurations
+│   ├── docker-compose.yml    # Local development setup
+│   └── Dockerfile.dev        # Development container
+├── fly.toml                  # Fly.io deployment configuration
+├── vercel.json               # Vercel frontend deployment configuration
+└── README.md                 # Project documentation
+```
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- Docker and Docker Compose (for containerized development)
-- Git
+- Node.js 18+ (Frontend)
+- Python 3.9+ (Backend)
+- Docker (optional, for containerized development)
 
-### Installation
+### Local Development Setup
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/your-org/terrabuild-devkit.git
-   cd terrabuild-devkit
-   ```
+1. **Clone the repository**
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Start the development environment:
-   ```
-   npm run dev
-   ```
-
-### Using Docker (Recommended)
-
-For a completely isolated development environment:
-
-1. Build and start the containers:
-   ```
-   docker-compose -f dev-compose.yml up -d
-   ```
-
-2. The application will be available at http://localhost:5000
-
-## Key Components
-
-### API Routes
-
-The TerraBuild Developer Kit provides several key API routes:
-
-- `/api/calculate` - POST endpoint for cost calculations
-- `/api/import/parcels` - POST endpoint for importing property data
-- `/api/import/factors` - POST endpoint for importing cost factors
-
-### Data Import
-
-Sample data can be imported using the provided script:
-
-```
-chmod +x scripts/import_sample.sh
-./scripts/import_sample.sh
+```bash
+git clone https://github.com/your-org/terrabuild.git
+cd terrabuild
 ```
 
-This will populate your database with:
-- Cost factors from `data/factors-2025.json`
-- Property data from `sample/parcel_data.csv`
+2. **Set up the frontend**
 
-### React Components
-
-The kit includes a React-based cost calculator component:
-
-- CostCalculator - A form-based calculator for estimating building costs
-
-Access the calculator at: `/cost-calculator`
-
-## Cost Calculation
-
-The system uses a factor-based approach to calculate building costs:
-
-1. Base cost determined by building type (e.g., residential, commercial)
-2. Adjustments applied based on:
-   - Region
-   - Building quality
-   - Condition
-   - Age
-   - Design complexity
-
-The calculation follows this formula:
-```
-Total Cost = Base Cost × Region Factor × Quality Factor × Condition Factor × Age Factor × Complexity Factor
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-## Development
+3. **Set up the backend**
 
-### Project Structure
-
-```
-terrafusion/
-├── client/                 # React frontend
-│   └── src/
-│       ├── components/     # Reusable UI components
-│       └── pages/          # Application pages
-├── data/                   # Cost factor data
-├── sample/                 # Sample data for import
-├── scripts/                # Utility scripts
-│   ├── backup_and_restore.sh    # Database backup/restore
-│   ├── db-migration.sh          # Database migration
-│   ├── init-terraform-backend.sh # Terraform backend setup
-│   ├── setup-aws-profiles.sh    # AWS profile setup
-│   └── terraform-cmd.sh         # Terraform command wrapper
-├── server/                 # Express API server
-│   ├── routes/             # API route definitions
-│   └── storage/            # Database integration
-├── terraform/              # Infrastructure as Code
-│   └── environments/       # Environment-specific configurations
-│       ├── dev/            # Development environment
-│       ├── staging/        # Staging environment
-│       └── prod/           # Production environment
-├── docker-compose.yml      # Docker configuration
-├── .github/workflows/      # CI/CD pipelines
-│   ├── ci.yml              # Continuous Integration
-│   └── deploy.yml          # Deployment workflow
-└── DEVOPS_README.md        # DevOps documentation
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn terrabuild_api:app --reload --port 5001
 ```
 
-### Adding Custom Factors
+4. **Access the application**
 
-To customize the cost factors:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+- API Documentation: http://localhost:5001/docs
 
-1. Edit the `data/factors-2025.json` file
-2. Add or modify the factors as needed
-3. Run the import script to update the database
+### Environment Configuration
 
-### Extending the API
+The system is configurable through environment variables:
 
-To add new API endpoints:
-
-1. Create a new route file in `server/routes/`
-2. Implement your custom logic
-3. Register the route in `server/routes.ts`
-
-### DevOps Infrastructure
-
-The project includes a comprehensive DevOps setup:
-
-1. **Environment Management**: Configure dev, staging, and production environments
-2. **CI/CD Pipelines**: Automated testing, building, and deployment
-3. **Database Operations**: Migration, backup, and restore scripts
-4. **Infrastructure as Code**: AWS resources managed with Terraform
-
-For detailed instructions, see the [DevOps Guide](DEVOPS_README.md)
-
-## Testing
-
-Run the API tests:
+#### Frontend (.env file)
 
 ```
-chmod +x scripts/test-api.sh
-./scripts/test-api.sh
+REACT_APP_API_URL=http://localhost:5001
+REACT_APP_JURISDICTION=Benton County, WA
+REACT_APP_REGION=Eastern Washington
 ```
 
-## License
+#### Backend (.env file)
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+```
+PORT=5001
+DATABASE_URL=your_database_url
+ENVIRONMENT=development
+```
 
-## Support
+## 🏗️ Deployment
 
-For questions and support, please open an issue on the GitHub repository or contact the TerraBuild team.
+### Backend Deployment (Fly.io)
+
+1. Install the Fly.io CLI
+2. Authenticate with `flyctl auth login`
+3. Deploy with `flyctl deploy`
+
+```bash
+cd backend
+flyctl deploy
+```
+
+### Frontend Deployment (Vercel)
+
+1. Connect your GitHub repository to Vercel
+2. Set the following environment variables in Vercel:
+   - `REACT_APP_API_URL`: URL of your deployed backend
+   - `REACT_APP_JURISDICTION`: County/jurisdiction name
+   - `REACT_APP_REGION`: Region name
+3. Deploy using the Vercel CLI or GitHub integration
+
+## 🧪 Demo
+
+See the [demo guide](docs/demo/Benton_County_Demo_Script.md) for a complete walkthrough of the system's capabilities and presentation script.
+
+## 📄 License
+
+This project is proprietary and confidential. © 2025 TerraBuild.
+
+## 🙏 Acknowledgements
+
+- Benton County Assessor's Office for initial requirements and testing
+- All contributors to the open source libraries used in this project
