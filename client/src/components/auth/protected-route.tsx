@@ -1,6 +1,6 @@
 import React from 'react';
 import { Redirect } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert, LogIn } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
