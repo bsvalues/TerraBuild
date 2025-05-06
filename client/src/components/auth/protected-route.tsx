@@ -25,28 +25,9 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to auth page if not authenticated
   if (!isAuthenticated) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-md border-amber-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-amber-700">
-              <LogIn className="mr-2 h-5 w-5" />
-              Authentication Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            <p>You need to sign in to access this page. Please log in to continue.</p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => window.location.href = '/login'} className="w-full">
-              Go to Login
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
+    return <Redirect to="/auth" />;
   }
 
   // Check role-based access if requiredRole is provided
@@ -75,7 +56,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
             <CardFooter>
               <Button 
                 variant="outline" 
-                onClick={() => window.location.href = '/'} 
+                onClick={() => window.location.replace('/')} 
                 className="border-red-300 hover:bg-red-100"
               >
                 Go to Home

@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -269,95 +269,311 @@ const ErrorHandlerWrapper = () => {
   return <GlobalErrorHandler />;
 };
 
-// Create a wrapper component to combine Route and ProtectedRoute
-interface ProtectedRouteWrapperProps {
-  path: string;
-  component: React.ComponentType<any>;
-  requiredRole?: string | string[];
-}
-
-const ProtectedRouteWrapper = ({ path, component: Component, requiredRole }: ProtectedRouteWrapperProps) => {
-  return (
-    <Route path={path}>
-      <ProtectedRoute requiredRole={requiredRole}>
-        <Component />
-      </ProtectedRoute>
-    </Route>
-  );
-};
+// We've refactored to use the ProtectedRoute component directly within each Route definition
 
 function Router() {
   return (
     <Switch>
-      {/* Use LandingPage as the root route without authentication */}
-      <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/documentation" component={DocumentationPage} />
-      <Route path="/tutorials" component={TutorialsPage} />
-      <Route path="/faq" component={FAQPage} />
+      {/* Public routes - no authentication required */}
+      <Route path="/" >
+        <LandingPage />
+      </Route>
       
-      {/* Supabase test route - without protection for easier testing */}
-      <Route path="/supabase-test" component={SupabaseTestPage} />
-      <Route path="/cost-wizard" component={CostWizardPage} />
+      <Route path="/auth">
+        <AuthPage />
+      </Route>
       
-      {/* Collaborative routes - without CollaborationProvider at this level */}
+      <Route path="/documentation">
+        <DocumentationPage />
+      </Route>
+      
+      <Route path="/tutorials">
+        <TutorialsPage />
+      </Route>
+      
+      <Route path="/faq">
+        <FAQPage />
+      </Route>
+      
+      {/* Test routes - without protection for easier testing */}
+      <Route path="/supabase-test">
+        <SupabaseTestPage />
+      </Route>
+      
+      <Route path="/cost-wizard">
+        <CostWizardPage />
+      </Route>
+      
+      {/* Protected routes */}
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <DashboardPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/calculator">
+        <ProtectedRoute>
+          <EnhancedCalculatorPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/calculator-v2">
+        <ProtectedRoute>
+          <EnhancedCalculatorPageV2 />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/workflows">
+        <ProtectedRoute>
+          <WorkflowDashboardPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/calculator-old">
+        <ProtectedRoute>
+          <CalculatorPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/analytics">
+        <ProtectedRoute>
+          <AnalyticsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/users">
+        <ProtectedRoute>
+          <UsersPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/ai-tools">
+        <ProtectedRoute>
+          <AIToolsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/ai-cost-wizard">
+        <ProtectedRoute>
+          <AICostWizardPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/ar-visualization">
+        <ProtectedRoute>
+          <ARVisualizationPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/data-import">
+        <ProtectedRoute>
+          <DataImportPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/benchmarking">
+        <ProtectedRoute>
+          <BenchmarkingPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/mcp-overview">
+        <ProtectedRoute>
+          <MCPOverviewPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/mcp-dashboard">
+        <ProtectedRoute>
+          <MCPDashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/what-if-scenarios">
+        <ProtectedRoute>
+          <WhatIfScenariosPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/reports">
+        <ProtectedRoute>
+          <ReportsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/visualizations">
+        <ProtectedRoute>
+          <VisualizationsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/data-exploration">
+        <ProtectedRoute>
+          <DataExplorationDemo />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/infrastructure-lifecycle">
+        <ProtectedRoute>
+          <InfrastructureLifecyclePage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/comparative-analysis">
+        <ProtectedRoute>
+          <ComparativeAnalysisDemo />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/statistical-analysis">
+        <ProtectedRoute>
+          <StatisticalAnalysisDemo />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/cost-trend-analysis">
+        <ProtectedRoute>
+          <CostTrendAnalysisDemo />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/predictive-cost-analysis">
+        <ProtectedRoute>
+          <PredictiveCostAnalysisDemo />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/regional-cost-comparison">
+        <ProtectedRoute>
+          <RegionalCostComparisonPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/matrix-upload">
+        <ProtectedRoute>
+          <MatrixUploadPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/xreg">
+        <ProtectedRoute>
+          <XREGPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/matrix-xreg-integration">
+        <ProtectedRoute>
+          <MatrixXREGIntegrationPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/valuation-dashboard">
+        <ProtectedRoute>
+          <ValuationDashboardPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/contextual-data">
+        <ProtectedRoute>
+          <ContextualDataPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/data-connections">
+        <ProtectedRoute>
+          <DataConnectionsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/data-connections/ftp">
+        <ProtectedRoute>
+          <FTPConnectionPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/data-connections/ftp/test">
+        <ProtectedRoute>
+          <FTPConnectionTestPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/settings/ftp-sync">
+        <ProtectedRoute>
+          <FTPSyncSchedulePage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/properties">
+        <ProtectedRoute>
+          <PropertyBrowserPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/properties/:id">
+        <ProtectedRoute>
+          <PropertyDetailsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/geo-assessment">
+        <ProtectedRoute>
+          <GeoAssessmentPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/mcp-visualizations">
+        <ProtectedRoute>
+          <MCPVisualizationsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/cost-calculator">
+        <ProtectedRoute>
+          <CostCalculator />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/ai-swarm">
+        <ProtectedRoute>
+          <SwarmPage />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* Collaborative routes */}
       <Route path="/shared-projects">
-        <Switch>
-          <ProtectedRouteWrapper path="/shared-projects" component={SharedProjectsPage} />
-          <ProtectedRouteWrapper path="/shared-projects/create" component={CreateProjectPage} />
-          <ProtectedRouteWrapper path="/shared-projects/:id" component={ProjectDetailsPage} />
-          <ProtectedRouteWrapper path="/shared-projects/:id/dashboard" component={SharedProjectDashboardPage} />
-        </Switch>
+        <ProtectedRoute>
+          <SharedProjectsPage />
+        </ProtectedRoute>
       </Route>
       
-      <Route path="/projects">
-        <Switch>
-          <ProtectedRouteWrapper path="/projects/:id" component={ProjectDetailsPage} />
-        </Switch>
+      <Route path="/shared-projects/create">
+        <ProtectedRoute>
+          <CreateProjectPage />
+        </ProtectedRoute>
       </Route>
       
-      {/* Other protected routes */}
-      <ProtectedRouteWrapper path="/dashboard" component={DashboardPage} />
-      <ProtectedRouteWrapper path="/calculator" component={EnhancedCalculatorPage} />
-      <ProtectedRouteWrapper path="/calculator-v2" component={EnhancedCalculatorPageV2} />
-      <ProtectedRouteWrapper path="/workflows" component={WorkflowDashboardPage} />
-      <ProtectedRouteWrapper path="/calculator-old" component={CalculatorPage} />
-      <ProtectedRouteWrapper path="/analytics" component={AnalyticsPage} />
-      <ProtectedRouteWrapper path="/users" component={UsersPage} />
-      <ProtectedRouteWrapper path="/ai-tools" component={AIToolsPage} />
-      <ProtectedRouteWrapper path="/ai-cost-wizard" component={AICostWizardPage} />
-      <ProtectedRouteWrapper path="/ar-visualization" component={ARVisualizationPage} />
-      <ProtectedRouteWrapper path="/data-import" component={DataImportPage} />
-      <ProtectedRouteWrapper path="/benchmarking" component={BenchmarkingPage} />
-      <ProtectedRouteWrapper path="/mcp-overview" component={MCPOverviewPage} />
-      <ProtectedRouteWrapper path="/mcp-dashboard" component={MCPDashboard} />
-      <ProtectedRouteWrapper path="/what-if-scenarios" component={WhatIfScenariosPage} />
-      <ProtectedRouteWrapper path="/reports" component={ReportsPage} />
-      <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
-      <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
-      <ProtectedRouteWrapper path="/infrastructure-lifecycle" component={InfrastructureLifecyclePage} />
-      <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />
-      <ProtectedRouteWrapper path="/statistical-analysis" component={StatisticalAnalysisDemo} />
-      <ProtectedRouteWrapper path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
-      <ProtectedRouteWrapper path="/predictive-cost-analysis" component={PredictiveCostAnalysisDemo} />
-      <ProtectedRouteWrapper path="/regional-cost-comparison" component={RegionalCostComparisonPage} />
-      <ProtectedRouteWrapper path="/matrix-upload" component={MatrixUploadPage} />
-      <ProtectedRouteWrapper path="/xreg" component={XREGPage} />
-      <ProtectedRouteWrapper path="/matrix-xreg-integration" component={MatrixXREGIntegrationPage} />
-      <ProtectedRouteWrapper path="/valuation-dashboard" component={ValuationDashboardPage} />
-      <ProtectedRouteWrapper path="/contextual-data" component={ContextualDataPage} />
-      <ProtectedRouteWrapper path="/data-connections" component={DataConnectionsPage} />
-      <ProtectedRouteWrapper path="/data-connections/ftp" component={FTPConnectionPage} />
-      <ProtectedRouteWrapper path="/data-connections/ftp/test" component={FTPConnectionTestPage} />
-      <ProtectedRouteWrapper path="/settings/ftp-sync" component={FTPSyncSchedulePage} />
-      <ProtectedRouteWrapper path="/properties" component={PropertyBrowserPage} />
-      <ProtectedRouteWrapper path="/properties/:id" component={PropertyDetailsPage} />
-      <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
-      <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
-      <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
-      <ProtectedRouteWrapper path="/ai-swarm" component={SwarmPage} />
+      <Route path="/shared-projects/:id">
+        <ProtectedRoute>
+          <ProjectDetailsPage />
+        </ProtectedRoute>
+      </Route>
       
-      <Route component={NotFound} />
+      <Route path="/shared-projects/:id/dashboard">
+        <ProtectedRoute>
+          <SharedProjectDashboardPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/projects/:id">
+        <ProtectedRoute>
+          <ProjectDetailsPage />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* 404 route */}
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
