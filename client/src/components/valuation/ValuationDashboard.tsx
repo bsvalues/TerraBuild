@@ -10,6 +10,7 @@ import InsightSummaryCard from './InsightSummaryCard';
 import ValuationTimelineChart from './ValuationTimelineChart';
 import ValueScenarioCompare from './ValueScenarioCompare';
 import ExportJustification from './ExportJustification';
+import AgentFeed from '../xreg/AgentFeed';
 
 interface ValuationDashboardProps {
   matrixId?: string;
@@ -205,29 +206,41 @@ export function ValuationDashboard({ matrixId, propertyId }: ValuationDashboardP
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle>AI Insights</CardTitle>
+                    <CardTitle>Agent Insight Feed</CardTitle>
                     <CardDescription>
-                      AI agent insights and recommendations
+                      Live AI agent insights and recommendations
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="p-3 bg-yellow-50 rounded-md">
-                        <p className="font-medium">Anomaly Detected</p>
-                        <p className="text-sm text-gray-700">Commercial building costs in zone A3 are 18% higher than surrounding areas</p>
-                      </div>
-                      <div className="p-3 bg-blue-50 rounded-md">
-                        <p className="font-medium">Cost Efficiency</p>
-                        <p className="text-sm text-gray-700">Residential class R2 costs can be harmonized with recent regional updates</p>
-                      </div>
-                      <div className="p-3 bg-green-50 rounded-md">
-                        <p className="font-medium">Recommendation</p>
-                        <p className="text-sm text-gray-700">Consider updating depreciation schedule for buildings older than 50 years</p>
-                      </div>
-                    </div>
+                    <AgentFeed />
                   </CardContent>
                 </Card>
               </div>
+              
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>AI Analysis Insights</CardTitle>
+                  <CardDescription>
+                    Detailed analysis and recommendations from AI agents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-yellow-50 rounded-md">
+                      <p className="font-medium">Anomaly Detected</p>
+                      <p className="text-sm text-gray-700">Commercial building costs in zone A3 are 18% higher than surrounding areas</p>
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded-md">
+                      <p className="font-medium">Cost Efficiency</p>
+                      <p className="text-sm text-gray-700">Residential class R2 costs can be harmonized with recent regional updates</p>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-md">
+                      <p className="font-medium">Recommendation</p>
+                      <p className="text-sm text-gray-700">Consider updating depreciation schedule for buildings older than 50 years</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="export">
