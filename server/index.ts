@@ -10,6 +10,7 @@ import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 import { storage } from "./storage";
 import { setStorage } from "./ai/shap_agent";
+import { seedProperties } from "./data/seed-properties";
 
 const app = express();
 app.use(express.json());
@@ -50,6 +51,18 @@ app.use((req, res, next) => {
   try {
     await initDatabase();
     log('Database initialized successfully');
+    
+    // Seed the database with sample properties
+    try {
+      const result = await seedProperties();
+      if (result.success) {
+        log('Sample properties seeded successfully');
+      } else {
+        log(`Property seeding warning: ${result.message}`, 'warn');
+      }
+    } catch (seedError) {
+      log(`Property seeding error: ${seedError}`, 'error');
+    }
     
     // Initialize SHAP agent with the storage
     setStorage(storage);
