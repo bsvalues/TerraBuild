@@ -51,6 +51,24 @@ export interface IStorage {
   getImprovements(propertyId?: string): Promise<Improvement[]>;
   getImprovementById(id: number | string): Promise<Improvement | null>;
   createImprovement(improvement: InsertImprovement): Promise<Improvement>;
+  
+  // Sessions
+  createSession(sessionData: InsertSession): Promise<Session>;
+  getSession(id: string): Promise<Session | null>;
+  updateSession(id: string, data: Partial<Session>): Promise<Session | null>;
+  
+  // Session History
+  createSessionHistory(historyData: InsertSessionHistory): Promise<SessionHistory>;
+  getSessionHistory(sessionId: string): Promise<SessionHistory[]>;
+  
+  // Insights
+  createInsight(insightData: InsertInsight): Promise<Insight>;
+  getInsights(sessionId: string): Promise<Insight[]>;
+  
+  // Matrix Items
+  saveMatrixItem(sessionId: string, item: any): Promise<any>;
+  getMatrixItems(sessionId: string): Promise<any[]>;
+  updateMatrixItem(sessionId: string, itemId: number, updates: any): Promise<any>;
   updateImprovement(id: number | string, improvement: Partial<Improvement>): Promise<Improvement | null>;
   deleteImprovement(id: number | string): Promise<boolean>;
 
@@ -109,23 +127,11 @@ export interface IStorage {
   getSetting(key: string): Promise<Setting | undefined>;
   setSetting(key: string, value: string): Promise<boolean>;
   
-  // Session Management
-  createSession(sessionData: InsertSession): Promise<Session>;
-  getSession(id: string): Promise<Session | null>;
-  updateSession(id: string, data: Partial<Session>): Promise<Session | null>;
-  
-  // Session History
-  createSessionHistory(historyData: InsertSessionHistory): Promise<SessionHistory>;
-  getSessionHistory(sessionId: string): Promise<SessionHistory[]>;
-  
-  // Insights
-  createInsight(insightData: InsertInsight): Promise<Insight>;
-  getInsights(sessionId: string): Promise<Insight[]>;
-  
-  // Matrix Items
-  saveMatrixItem(sessionId: string, item: any): Promise<any>;
-  getMatrixItems(sessionId: string): Promise<any[]>;
-  updateMatrixItem(sessionId: string, itemId: number, updates: any): Promise<any>;
+  // System Health
+  checkDatabaseConnection(): Promise<boolean>;
+  getAgentStatuses(): Promise<Record<string, any>>;
+  getAgentStatus(agentId: string): Promise<any | null>;
+  updateAgentStatus(agentId: string, status: string, metadata?: Record<string, any>, errorMessage?: string): Promise<boolean>;
   
   // System Health
   checkDatabaseConnection(): Promise<boolean>;

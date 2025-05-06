@@ -2,10 +2,15 @@ import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SQLiteStorage } from '../sqlite_storage';
+import { IStorage } from '../storage';
 
-// The SQLite storage instance
-let storage: SQLiteStorage | null = null;
+// The storage instance will be injected
+let storage: IStorage | null = null;
+
+// Function to set the storage instance
+export function setStorage(storageInstance: IStorage) {
+  storage = storageInstance;
+}
 
 export interface ShapResult {
   topFeatures: Array<[string, number]>;
@@ -50,26 +55,29 @@ function virtualShapAnalysis(data: any[]): ShapResult {
 
 export async function generateShapInsight(sessionId: string, matrixData: any[]): Promise<string> {
   if (!storage) {
-    storage = new SQLiteStorage();
+    throw new Error('Storage not initialized. Call setStorage() before using the SHAP agent.');
   }
   
   try {
     // Convert matrix data to feature format
     const featureData = convertToMatrixFormat(matrixData);
     
-    // For now, we'll use the virtual SHAP analysis since we couldn't install the Python dependencies
+    // For now, we'll use the virtual SHAP analysis since we can't install Python dependencies in this environment
     const shapResult = virtualShapAnalysis(featureData);
     
     // Format the insight message
     const insightMessage = formatShapInsight(shapResult);
     
-    // Store this insight in the database
+    // Store this insight in the database using IStorage
     await storage.createInsight({
       sessionId,
       agentId: 'shap-agent',
       agentName: 'SHAP Feature Analysis Agent',
-      message: insightMessage,
-      metadata: shapResult
+      insightType: 'feature-importance',
+      content: insightMessage,
+      data: shapResult,
+      confidence: 'high',
+      status: 'active'
     });
     
     return insightMessage;
