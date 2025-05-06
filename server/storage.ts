@@ -16,12 +16,14 @@ import {
   BuildingType, Region, QualityFactor, ConditionFactor, AgeFactor, MatrixDetail,
   GeographicRegion, GeographicMunicipality, GeographicNeighborhood, 
   TownshipRangeMap, TaxCodeAreaMap, EnhancedCostMatrix, Setting, AgentStatus,
+  Session, SessionHistory, Insight,
   
   // Insert types
   InsertUser, InsertProperty, InsertImprovement, InsertCostMatrix,
   InsertCalculation, InsertProject, InsertGeographicRegion, InsertGeographicMunicipality,
   InsertGeographicNeighborhood, InsertTownshipRangeMap, InsertTaxCodeAreaMap,
-  InsertEnhancedCostMatrix, InsertSetting, InsertAgentStatus
+  InsertEnhancedCostMatrix, InsertSetting, InsertAgentStatus,
+  InsertSession, InsertSessionHistory, InsertInsight
 } from '../shared/schema';
 
 /**
@@ -107,6 +109,24 @@ export interface IStorage {
   getSetting(key: string): Promise<Setting | undefined>;
   setSetting(key: string, value: string): Promise<boolean>;
   
+  // Session Management
+  createSession(sessionData: InsertSession): Promise<Session>;
+  getSession(id: string): Promise<Session | null>;
+  updateSession(id: string, data: Partial<Session>): Promise<Session | null>;
+  
+  // Session History
+  createSessionHistory(historyData: InsertSessionHistory): Promise<SessionHistory>;
+  getSessionHistory(sessionId: string): Promise<SessionHistory[]>;
+  
+  // Insights
+  createInsight(insightData: InsertInsight): Promise<Insight>;
+  getInsights(sessionId: string): Promise<Insight[]>;
+  
+  // Matrix Items
+  saveMatrixItem(sessionId: string, item: any): Promise<any>;
+  getMatrixItems(sessionId: string): Promise<any[]>;
+  updateMatrixItem(sessionId: string, itemId: number, updates: any): Promise<any>;
+  
   // System Health
   checkDatabaseConnection(): Promise<boolean>;
   getAgentStatuses(): Promise<Record<string, any>>;
@@ -133,6 +153,10 @@ export class MemStorage implements IStorage {
   private projectMembers: { projectId: string; userId: string; role: string }[] = [];
   private projectProperties: { projectId: string; propertyId: string }[] = [];
   private settings: { key: string; value: string; type?: string }[] = [];
+  private sessions: Session[] = [];
+  private sessionHistory: SessionHistory[] = [];
+  private insights: Insight[] = [];
+  private matrixItems: { sessionId: string; id: number; data: any }[] = [];
 
   // User methods
   async getUsers(): Promise<User[]> {
