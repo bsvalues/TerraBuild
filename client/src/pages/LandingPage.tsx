@@ -4,6 +4,7 @@ import { Link } from 'wouter';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth-context';
 import bentonSeal from '@assets/BC.png';
 import arizonaSunset from '@assets/Arizona-sunset.jpg';
 import vineyardHeader from '@assets/Header-Vineyard-BC.png';
@@ -28,9 +29,9 @@ export default function LandingPage() {
   const [_, navigate] = useLocation();
   const [loading, setLoading] = useState(false);
   
-  // Mock authenticated state - always set to true to bypass login
-  const isAuthenticated = true;
-  const user = { name: "Admin User", username: "admin" };
+  // Use the authenticated state from the auth context
+  const { user, isLoading: authLoading } = useAuth();
+  const isAuthenticated = !!user;
 
   return (
     <MainLayout loading={loading} isLanding={true}>
@@ -92,10 +93,21 @@ export default function LandingPage() {
                 </>
               )}
             </div>
-            {isAuthenticated && user && (
+            {isAuthenticated && user ? (
               <div className="mt-4 bg-white/10 px-4 py-2 rounded-full flex items-center">
                 <User className="h-4 w-4 mr-2 text-white/80" />
-                <span className="text-white/80 text-sm">Welcome, {user.name || user.username}</span>
+                <span className="text-white/80 text-sm">Welcome, {user.username}</span>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-transparent border-white text-white hover:bg-white/10"
+                  onClick={() => navigate('/auth')}
+                >
+                  <User className="mr-2 h-4 w-4" /> Sign In
+                </Button>
               </div>
             )}
           </div>
@@ -547,8 +559,13 @@ export default function LandingPage() {
               {isAuthenticated && (
                 <button 
                   onClick={() => {
-                    // This will trigger logout when implemented in auth context
-                    navigate('/');
+                    // Use logoutMutation from auth context
+                    const { logoutMutation } = useAuth();
+                    if (logoutMutation) {
+                      logoutMutation.mutate(undefined, {
+                        onSuccess: () => navigate('/')
+                      });
+                    }
                   }} 
                   className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent"
                 >
