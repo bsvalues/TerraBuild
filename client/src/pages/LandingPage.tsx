@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
-import { Link } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,47 +57,52 @@ export default function LandingPage() {
             <div className="flex flex-wrap gap-4 justify-center">
               {isAuthenticated ? (
                 <>
-                  <Button 
-                    size="lg" 
-                    className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="bg-transparent border-white text-white hover:bg-white/10"
-                    onClick={() => navigate('/calculator')}
-                  >
-                    <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="bg-transparent border-white text-white hover:bg-white/10"
-                    onClick={() => navigate('/data-import')}
-                  >
-                    <Upload className="mr-2 h-5 w-5" /> Import Data
-                  </Button>
+                  <Link href="/dashboard">
+                    <Button 
+                      size="lg" 
+                      className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                    >
+                      <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/calculator">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="bg-transparent border-white text-white hover:bg-white/10"
+                    >
+                      <Calculator className="mr-2 h-5 w-5" /> Launch Calculator
+                    </Button>
+                  </Link>
+                  <Link href="/data-import">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="bg-transparent border-white text-white hover:bg-white/10"
+                    >
+                      <Upload className="mr-2 h-5 w-5" /> Import Data
+                    </Button>
+                  </Link>
                 </>
               ) : (
                 <>
-                  <Button 
-                    size="lg" 
-                    className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
-                    onClick={() => navigate('/cost-wizard')}
-                  >
-                    <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="bg-transparent border-white text-white hover:bg-white/10"
-                    onClick={() => navigate('/calculator')}
-                  >
-                    <Calculator className="mr-2 h-5 w-5" /> Try Calculator
-                  </Button>
+                  <Link href="/cost-wizard">
+                    <Button 
+                      size="lg" 
+                      className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                    >
+                      <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
+                    </Button>
+                  </Link>
+                  <Link href="/calculator">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="bg-transparent border-white text-white hover:bg-white/10"
+                    >
+                      <Calculator className="mr-2 h-5 w-5" /> Try Calculator
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -109,14 +113,15 @@ export default function LandingPage() {
               </div>
             ) : (
               <div className="mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-transparent border-white text-white hover:bg-white/10"
-                  onClick={() => navigate('/auth')}
-                >
-                  <User className="mr-2 h-4 w-4" /> Sign In
-                </Button>
+                <Link href="/auth">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="bg-transparent border-white text-white hover:bg-white/10"
+                  >
+                    <User className="mr-2 h-4 w-4" /> Sign In
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
@@ -145,13 +150,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#29B7D3] px-0 hover:bg-transparent hover:text-[#29B7D3]/80"
-                  onClick={() => navigate('/calculator')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/calculator">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#29B7D3] px-0 hover:bg-transparent hover:text-[#29B7D3]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
             
