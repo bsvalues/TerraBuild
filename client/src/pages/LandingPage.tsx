@@ -525,38 +525,50 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-lg mb-4">Resources</h4>
                 <ul className="space-y-2">
                   <li>
-                    <button onClick={() => navigate('/documentation')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      Documentation
-                    </button>
+                    <Link href="/documentation">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        Documentation
+                      </span>
+                    </Link>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/tutorials')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      Tutorials
-                    </button>
+                    <Link href="/tutorials">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        Tutorials
+                      </span>
+                    </Link>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/faq')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      FAQ
-                    </button>
+                    <Link href="/faq">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        FAQ
+                      </span>
+                    </Link>
                   </li>
                   {isAuthenticated ? (
                     <>
                       <li>
-                        <button onClick={() => navigate('/dashboard')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                          My Dashboard
-                        </button>
+                        <Link href="/dashboard">
+                          <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                            My Dashboard
+                          </span>
+                        </Link>
                       </li>
                       <li>
-                        <button onClick={() => navigate('/account')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                          Account Settings
-                        </button>
+                        <Link href="/account">
+                          <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                            Account Settings
+                          </span>
+                        </Link>
                       </li>
                     </>
                   ) : (
                     <li>
-                      <button onClick={() => navigate('/auth')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                        Sign In
-                      </button>
+                      <Link href="/auth">
+                        <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                          Sign In
+                        </span>
+                      </Link>
                     </li>
                   )}
                 </ul>
@@ -576,15 +588,21 @@ export default function LandingPage() {
           <div className="border-t border-gray-700 pt-6 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">© 2025 Benton County. All rights reserved.</p>
             <div className="flex space-x-4">
-              <button onClick={() => navigate('/privacy')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
-                Privacy Policy
-              </button>
-              <button onClick={() => navigate('/terms')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
-                Terms of Use
-              </button>
-              <button onClick={() => navigate('/accessibility')} className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent">
-                Accessibility
-              </button>
+              <Link href="/privacy">
+                <span className="text-gray-400 text-sm hover:text-white transition-colors cursor-pointer">
+                  Privacy Policy
+                </span>
+              </Link>
+              <Link href="/terms">
+                <span className="text-gray-400 text-sm hover:text-white transition-colors cursor-pointer">
+                  Terms of Use
+                </span>
+              </Link>
+              <Link href="/accessibility">
+                <span className="text-gray-400 text-sm hover:text-white transition-colors cursor-pointer">
+                  Accessibility
+                </span>
+              </Link>
               {isAuthenticated && (
                 <button 
                   onClick={handleLogout} 
