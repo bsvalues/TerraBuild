@@ -118,6 +118,17 @@ export interface IStorage {
   createFileUpload(fileUpload: InsertFileUpload): Promise<FileUpload>;
   updateFileUpload(id: number, fileUploadData: Partial<FileUpload>): Promise<FileUpload | null>;
   deleteFileUpload(id: number): Promise<boolean>;
+  
+  // Monitoring and diagnostics
+  checkDatabaseConnection(): Promise<boolean>;
+  getAgentStatuses(): Promise<Record<string, any>>;
+  getAgentStatus(agentId: string): Promise<any | null>;
+  updateAgentStatus(
+    agentId: string,
+    status: string,
+    metadata?: Record<string, any>,
+    errorMessage?: string
+  ): Promise<boolean>;
 }
 
 /**
@@ -798,11 +809,47 @@ export class MemStorage implements IStorage {
     this.fileUploads = this.fileUploads.filter(upload => upload.id !== id);
     return this.fileUploads.length < initialLength;
   }
+  
+  // Monitoring and diagnostics methods
+  async checkDatabaseConnection(): Promise<boolean> {
+    // In memory storage is always connected
+    return true;
+  }
+  
+  async getAgentStatuses(): Promise<Record<string, any>> {
+    return {
+      'data-quality-agent': {
+        status: 'healthy',
+        lastUpdated: new Date(),
+        metadata: {}
+      },
+      'cost-analysis-agent': {
+        status: 'healthy',
+        lastUpdated: new Date(),
+        metadata: {}
+      },
+      'compliance-agent': {
+        status: 'healthy',
+        lastUpdated: new Date(),
+        metadata: {}
+      }
+    };
+  }
+  
+  async getAgentStatus(agentId: string): Promise<any | null> {
+    const statuses = await this.getAgentStatuses();
+    return statuses[agentId] || null;
+  }
+  
+  async updateAgentStatus(
+    agentId: string,
+    status: string,
+    metadata?: Record<string, any>,
+    errorMessage?: string
+  ): Promise<boolean> {
+    return true;
+  }
 }
 
-// Create and export a storage instance
-// Import the storage instance from storage-factory.ts
-import { storage as factoryStorage } from './storage-factory';
-
-// Export the storage instance
-export const storage = factoryStorage;
+// No direct export here - use storage from storage-factory.ts
+// Don't create a circular reference

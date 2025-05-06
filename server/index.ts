@@ -8,7 +8,7 @@ import { initMCP } from "./mcp";
 import { setupAuth } from "./replitAuth";
 import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
-import { storage } from "./storage";
+import { storage } from "./storage-factory";
 import { setStorage } from "./ai/shap_agent";
 import { seedProperties } from "./data/seed-properties";
 

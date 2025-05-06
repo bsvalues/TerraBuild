@@ -7,7 +7,7 @@
 
 import express from 'express';
 import { z } from 'zod';
-import { storage } from './storage';
+import { storage } from './storage-factory';
 import analyticsRoutes from './routes/analyticsRoutes';
 import reportRoutes from './routes/reportRoutes';
 import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';
@@ -112,8 +112,8 @@ router.get('/properties/:id', asyncHandler(async (req, res) => {
   res.json(property);
 }));
 
-router.get('/properties/parcel/:parcelId', asyncHandler(async (req, res) => {
-  const property = await storage.getPropertyByParcelId(req.params.parcelId);
+router.get('/properties/geo/:geoId', asyncHandler(async (req, res) => {
+  const property = await storage.getPropertyByGeoId(req.params.geoId);
   if (!property) {
     return res.status(404).json({ message: 'Property not found' });
   }

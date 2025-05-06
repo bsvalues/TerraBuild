@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import { storage } from './storage';
+import { storage } from './storage-factory';
 import { z } from 'zod';
 
 // Simple utility function for async route handling
