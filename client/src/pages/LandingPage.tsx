@@ -30,8 +30,17 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   
   // Use the authenticated state from the auth context
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, logoutMutation } = useAuth();
   const isAuthenticated = !!user;
+  
+  // Handle logout
+  const handleLogout = () => {
+    if (logoutMutation) {
+      logoutMutation.mutate(undefined, {
+        onSuccess: () => navigate('/')
+      });
+    }
+  };
 
   return (
     <MainLayout loading={loading} isLanding={true}>
@@ -558,15 +567,7 @@ export default function LandingPage() {
               </button>
               {isAuthenticated && (
                 <button 
-                  onClick={() => {
-                    // Use logoutMutation from auth context
-                    const { logoutMutation } = useAuth();
-                    if (logoutMutation) {
-                      logoutMutation.mutate(undefined, {
-                        onSuccess: () => navigate('/')
-                      });
-                    }
-                  }} 
+                  onClick={handleLogout} 
                   className="text-gray-400 text-sm hover:text-white transition-colors bg-transparent"
                 >
                   Sign Out
