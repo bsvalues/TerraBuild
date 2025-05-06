@@ -19,6 +19,7 @@ import { propertyHeatmapRoutes } from './routes/propertyHeatmapRoutes';
 import { gisImportRoutes } from './routes/gisImportRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
+import propertiesRouter from './routes/properties';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
@@ -896,5 +897,8 @@ router.get('/user', (req, res) => {
   }
   res.json(req.user);
 });
+
+// Mount the properties router
+router.use('/properties', propertiesRouter);
 
 export default router;
