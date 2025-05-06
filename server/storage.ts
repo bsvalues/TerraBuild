@@ -730,6 +730,96 @@ export class MemStorage implements IStorage {
     console.log(`MemStorage: Updating status for agent ${agentId} to ${status}`);
     return true;
   }
+
+  // Session Management
+  async createSession(sessionData: InsertSession): Promise<Session> {
+    const newSession: Session = {
+      ...sessionData,
+      id: sessionData.id || crypto.randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: sessionData.status || 'active',
+    };
+    this.sessions.push(newSession);
+    return newSession;
+  }
+
+  async getSession(id: string): Promise<Session | null> {
+    return this.sessions.find(s => s.id === id) || null;
+  }
+
+  async updateSession(id: string, data: Partial<Session>): Promise<Session | null> {
+    const index = this.sessions.findIndex(s => s.id === id);
+    if (index === -1) return null;
+
+    const updatedSession = { 
+      ...this.sessions[index], 
+      ...data, 
+      updatedAt: new Date() 
+    };
+    this.sessions[index] = updatedSession;
+    return updatedSession;
+  }
+  
+  // Session History
+  async createSessionHistory(historyData: InsertSessionHistory): Promise<SessionHistory> {
+    const newHistory: SessionHistory = {
+      ...historyData,
+      id: this.sessionHistory.length + 1,
+      createdAt: new Date(),
+    };
+    this.sessionHistory.push(newHistory);
+    return newHistory;
+  }
+
+  async getSessionHistory(sessionId: string): Promise<SessionHistory[]> {
+    return this.sessionHistory.filter(h => h.sessionId === sessionId);
+  }
+  
+  // Insights
+  async createInsight(insightData: InsertInsight): Promise<Insight> {
+    const newInsight: Insight = {
+      ...insightData,
+      id: this.insights.length + 1,
+      createdAt: new Date(),
+      status: insightData.status || 'active',
+    };
+    this.insights.push(newInsight);
+    return newInsight;
+  }
+
+  async getInsights(sessionId: string): Promise<Insight[]> {
+    return this.insights.filter(i => i.sessionId === sessionId);
+  }
+  
+  // Matrix Items
+  async saveMatrixItem(sessionId: string, item: any): Promise<any> {
+    const newItem = {
+      ...item,
+      id: this.matrixItems.length + 1,
+      sessionId,
+    };
+    this.matrixItems.push(newItem);
+    return newItem;
+  }
+
+  async getMatrixItems(sessionId: string): Promise<any[]> {
+    return this.matrixItems.filter(i => i.sessionId === sessionId);
+  }
+
+  async updateMatrixItem(sessionId: string, itemId: number, updates: any): Promise<any> {
+    const index = this.matrixItems.findIndex(i => i.sessionId === sessionId && i.id === itemId);
+    if (index === -1) {
+      throw new Error(`Matrix item with id ${itemId} not found in session ${sessionId}`);
+    }
+    
+    const updatedItem = { 
+      ...this.matrixItems[index], 
+      ...updates 
+    };
+    this.matrixItems[index] = updatedItem;
+    return updatedItem;
+  }
 }
 
 /**
