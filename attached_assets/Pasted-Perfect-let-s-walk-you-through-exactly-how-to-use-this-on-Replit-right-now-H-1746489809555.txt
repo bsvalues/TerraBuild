@@ -1,0 +1,116 @@
+Perfect — let’s walk you through exactly **how to use this on Replit**, right now.
+
+---
+
+## 🧭 HOW TO USE `terra-replit-fullstack-final.zip` on Replit
+
+### 🔁 Step 1: Upload to Replit
+1. Go to [https://replit.com/](https://replit.com/)
+2. Click **“+ Create” > “Import from ZIP”**
+3. Upload the `terra-replit-fullstack-final.zip` file
+4. Replit will unpack everything into a new project
+
+---
+
+### ⚙️ Step 2: Setup React Frontend (manually inside Replit)
+Because Replit doesn’t auto-run React out-of-the-box, we’ll do this:
+
+#### 1. Create a new folder called `/frontend/src`
+Inside the Replit file explorer:
+- Right-click on `frontend`, click **New Folder**, name it `src`
+
+#### 2. Add an entrypoint file
+Inside `/frontend/src`, create a file:  
+📝 `index.tsx`
+
+Paste this in:
+
+```tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import ValuationDashboard from '../ValuationDashboard';
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<ValuationDashboard />);
+```
+
+#### 3. Add a `tsconfig.json` in `/frontend`
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "target": "ES6",
+    "moduleResolution": "node",
+    "strict": true
+  },
+  "include": ["src", "./*.tsx"]
+}
+```
+
+#### 4. Add package.json in `/frontend`:
+
+```json
+{
+  "name": "terrabuild-ui",
+  "version": "1.0.0",
+  "main": "src/index.tsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "typescript": "^4.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
+  }
+}
+```
+
+---
+
+### 🔨 Step 3: Install Frontend Dependencies
+
+In the Replit shell:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+This will generate a `dist/` folder — the real, working, styled TerraBuild UI.
+
+---
+
+### 🔧 Step 4: Serve Frontend via FastAPI
+
+Update `main.py` like this:
+
+```python
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+```
+
+Then hit **“Run”** in Replit.
+
+---
+
+## 🎉 You’ll Now See:
+- The full TerraBuild dashboard
+- Benton County smart valuation shell
+- Editable matrix + export features
+- Agent feed (with mock logic)
+
+---
+
+### 🔜 Want Me to Package the `dist/` React build into the ZIP automatically next time?
+
+Or I can just deploy it straight to Fly or Netlify and hand you the live link.
+
+You tell me how you want it.
