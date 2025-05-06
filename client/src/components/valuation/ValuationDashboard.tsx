@@ -4,13 +4,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, Upload, ChevronRight, ChevronDown, FileText, BarChart3 } from 'lucide-react';
+import { InfoIcon, Upload, ChevronRight, ChevronDown, FileText, BarChart3, Building } from 'lucide-react';
 import EditableMatrixView from './EditableMatrixView';
 import InsightSummaryCard from './InsightSummaryCard';
 import ValuationTimelineChart from './ValuationTimelineChart';
 import ValueScenarioCompare from './ValueScenarioCompare';
 import ExportJustification from './ExportJustification';
 import AgentFeed from '../xreg/AgentFeed';
+import PropertySearch from './PropertySearch';
+
+interface Property {
+  id: string;
+  parcelId: string;
+  address: string;
+  state?: string;
+  county?: string;
+  zone?: string;
+  propertyType?: string;
+  yearBuilt?: number;
+}
 
 interface ValuationDashboardProps {
   matrixId?: string;
@@ -31,14 +43,27 @@ export function ValuationDashboard({ matrixId, propertyId }: ValuationDashboardP
   const [activeSection, setActiveSection] = useState<string>('overview');
   const [matrixLoaded, setMatrixLoaded] = useState<boolean>(!!matrixId);
   const [analysisComplete, setAnalysisComplete] = useState<boolean>(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const { analyzeMatrix, isAnalyzing, isError, error } = useMCP();
+
+  // Handler for selecting a property
+  const handleSelectProperty = (property: Property) => {
+    setSelectedProperty(property);
+  };
 
   // Handler for analyzing a matrix
   const handleAnalyzeMatrix = async () => {
     if (!matrixId) return;
     
     try {
-      const result = await analyzeMatrix({ matrixId, propertyId });
+      // Use the selected property ID if available, otherwise use the one from props
+      const propertyIdToUse = selectedProperty?.id || propertyId;
+      
+      const result = await analyzeMatrix({ 
+        matrixId, 
+        propertyId: propertyIdToUse 
+      });
+      
       if (result.success) {
         setAnalysisComplete(true);
       }
@@ -54,39 +79,48 @@ export function ValuationDashboard({ matrixId, propertyId }: ValuationDashboardP
         {matrixLoaded && (
           <div className="flex items-center space-x-2">
             <span className="text-sm text-muted-foreground">Matrix ID: {matrixId}</span>
-            {propertyId && <span className="text-sm text-muted-foreground">Property ID: {propertyId}</span>}
+            {(propertyId || selectedProperty?.id) && (
+              <span className="text-sm text-muted-foreground">
+                Property ID: {selectedProperty?.id || propertyId}
+              </span>
+            )}
           </div>
         )}
       </div>
 
       {!matrixLoaded ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Get Started</CardTitle>
-            <CardDescription>
-              Upload or select a cost matrix to begin the valuation process
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <InfoIcon className="h-4 w-4" />
-              <AlertDescription>
-                The XREG system uses AI agents to analyze cost matrices and provide explainable valuations
-              </AlertDescription>
-            </Alert>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button className="flex items-center space-x-2" onClick={() => setMatrixLoaded(true)}>
-                <ChevronRight className="h-4 w-4" />
-                <span>Select Existing Matrix</span>
-              </Button>
-              <Button className="flex items-center space-x-2" variant="outline">
-                <Upload className="h-4 w-4" />
-                <span>Upload New Matrix</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Get Started</CardTitle>
+              <CardDescription>
+                Upload or select a cost matrix to begin the valuation process
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <InfoIcon className="h-4 w-4" />
+                <AlertDescription>
+                  The XREG system uses AI agents to analyze cost matrices and provide explainable valuations
+                </AlertDescription>
+              </Alert>
+              
+              <div className="grid grid-cols-1 gap-4">
+                <Button className="flex items-center space-x-2" onClick={() => setMatrixLoaded(true)}>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Select Existing Matrix</span>
+                </Button>
+                <Button className="flex items-center space-x-2" variant="outline">
+                  <Upload className="h-4 w-4" />
+                  <span>Upload New Matrix</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Add the property search component */}
+          <PropertySearch onSelectProperty={handleSelectProperty} />
+        </div>
       ) : (
         <>
           <Tabs defaultValue="overview" className="space-y-4">

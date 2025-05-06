@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Command, 
-  CommandEmpty, 
-  CommandGroup, 
-  CommandInput, 
-  CommandItem, 
-  CommandList 
-} from '@/components/ui/command';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, MapPin, Home, Building, Check } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
+import { Building, MapPin, Search } from 'lucide-react';
+import axios from 'axios';
 
 interface Property {
   id: string;
@@ -30,39 +22,31 @@ interface PropertySearchProps {
 }
 
 export default function PropertySearch({ onSelectProperty }: PropertySearchProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  // Query to fetch properties from the API
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ['properties', searchTerm],
-    queryFn: async () => {
-      if (!searchTerm || searchTerm.length < 3) return [];
-      
-      try {
-        // In a real implementation, this would call the API with the search term
-        const response = await fetch(`/api/properties?search=${encodeURIComponent(searchTerm)}`);
-        if (!response.ok) throw new Error('Failed to fetch properties');
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching properties:', error);
-        return [];
-      }
-    },
-    enabled: searchTerm.length >= 3
-  });
-
-  const handleSelectProperty = (property: Property) => {
-    setSelectedProperty(property);
-    setOpen(false);
-    onSelectProperty(property);
+  // Search for properties based on the query
+  const searchProperties = async () => {
+    if (!searchQuery || searchQuery.length < 3) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/properties?search=${encodeURIComponent(searchQuery)}`);
+      setProperties(response.data);
+    } catch (error) {
+      console.error('Error searching properties:', error);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const buildingTypeIcon = (propertyType?: string) => {
-    if (propertyType?.toLowerCase().includes('commercial')) return <Building className="h-4 w-4 mr-2" />;
-    if (propertyType?.toLowerCase().includes('industrial')) return <Building className="h-4 w-4 mr-2" />;
-    return <Home className="h-4 w-4 mr-2" />;
+  // Handle property selection
+  const handleSelectProperty = (property: Property) => {
+    setSelectedProperty(property);
+    onSelectProperty(property);
   };
 
   return (
@@ -70,99 +54,76 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
       <CardHeader>
         <CardTitle>Property Search</CardTitle>
         <CardDescription>
-          Enter an address or parcel ID to find a specific property
+          Search for a property by address or parcel ID
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full justify-between"
-                role="combobox"
-                aria-expanded={open}
-              >
-                {selectedProperty ? selectedProperty.address : "Search for a property..."}
-                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
-              <Command shouldFilter={false}>
-                <CommandInput 
-                  placeholder="Enter address or parcel ID..." 
-                  value={searchTerm}
-                  onValueChange={setSearchTerm}
-                />
-                {searchTerm.length < 3 && (
-                  <p className="p-2 text-sm text-muted-foreground">
-                    Enter at least 3 characters to search
-                  </p>
-                )}
-                {searchTerm.length >= 3 && (
-                  <CommandList>
-                    {isLoading ? (
-                      <CommandEmpty>Searching...</CommandEmpty>
-                    ) : properties.length === 0 ? (
-                      <CommandEmpty>No properties found</CommandEmpty>
-                    ) : (
-                      <CommandGroup heading="Properties">
-                        {properties.map((property: Property) => (
-                          <CommandItem
-                            key={property.id}
-                            value={property.id}
-                            onSelect={() => handleSelectProperty(property)}
-                          >
-                            <div className="flex items-center">
-                              {buildingTypeIcon(property.propertyType)}
-                              <div className="flex flex-col">
-                                <span>{property.address}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Parcel ID: {property.parcelId} • {property.county}, {property.state}
-                                </span>
-                              </div>
-                            </div>
-                            {selectedProperty?.id === property.id && (
-                              <Check className="h-4 w-4 ml-auto" />
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                )}
-              </Command>
-            </PopoverContent>
-          </Popover>
+        <div className="flex space-x-2">
+          <Input
+            placeholder="Enter address or parcel ID"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && searchProperties()}
+          />
+          <Button
+            variant="secondary"
+            onClick={searchProperties}
+            disabled={isLoading || searchQuery.length < 3}
+          >
+            <Search className="h-4 w-4 mr-1" />
+            Search
+          </Button>
         </div>
 
         {selectedProperty && (
-          <div className="mt-4 p-4 border rounded-md bg-muted/30">
-            <h3 className="font-medium mb-2 flex items-center">
-              <MapPin className="h-4 w-4 mr-2" /> Selected Property
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className="font-medium">Address:</span> {selectedProperty.address}
+          <div className="p-3 border rounded-md bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Building className="h-4 w-4 text-primary" />
+                <span className="font-medium">{selectedProperty.address}</span>
+              </div>
+              <Badge variant="outline">Selected</Badge>
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Parcel ID: {selectedProperty.parcelId}
+              {selectedProperty.county && <span> | {selectedProperty.county} County</span>}
+              {selectedProperty.propertyType && <span> | {selectedProperty.propertyType}</span>}
+            </div>
+          </div>
+        )}
+
+        {!selectedProperty && properties.length > 0 && (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            <p className="text-sm font-medium text-muted-foreground">Search Results</p>
+            {properties.map((property) => (
+              <div
+                key={property.id}
+                className="p-2 border rounded-md hover:bg-accent cursor-pointer"
+                onClick={() => handleSelectProperty(property)}
+              >
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-primary/60" />
+                  <span>{property.address}</span>
                 </div>
-                <div>
-                  <span className="font-medium">Parcel ID:</span> {selectedProperty.parcelId}
-                </div>
-                <div>
-                  <span className="font-medium">County:</span> {selectedProperty.county || 'N/A'}
-                </div>
-                <div>
-                  <span className="font-medium">State:</span> {selectedProperty.state || 'N/A'}
-                </div>
-                <div>
-                  <span className="font-medium">Zone:</span> {selectedProperty.zone || 'N/A'}
-                </div>
-                <div>
-                  <span className="font-medium">Year Built:</span> {selectedProperty.yearBuilt || 'N/A'}
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Parcel ID: {property.parcelId}
+                  {property.county && <span> | {property.county} County</span>}
+                  {property.propertyType && <span> | {property.propertyType}</span>}
                 </div>
               </div>
-            </div>
+            ))}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="text-center p-4">
+            <p className="text-sm text-muted-foreground">Searching properties...</p>
+          </div>
+        )}
+
+        {!isLoading && searchQuery.length >= 3 && properties.length === 0 && (
+          <div className="text-center p-4">
+            <p className="text-sm text-muted-foreground">No properties found. Try a different search term.</p>
           </div>
         )}
       </CardContent>

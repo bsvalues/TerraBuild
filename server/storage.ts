@@ -46,7 +46,7 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
   updateProperty(id: number | string, property: Partial<Property>): Promise<Property | null>;
   deleteProperty(id: number | string): Promise<boolean>;
-  searchProperties(options: { searchTerm: string; county?: string; limit?: number }): Promise<Property[]>;
+  searchProperties(search: string, filter?: Record<string, any>, limit?: number): Promise<Property[]>;
 
   // Improvements
   getImprovements(propertyId?: string): Promise<Improvement[]>;
@@ -256,9 +256,8 @@ export class MemStorage implements IStorage {
     return true;
   }
 
-  async searchProperties(options: { searchTerm: string; county?: string; limit?: number }): Promise<Property[]> {
-    const { searchTerm, county, limit = 10 } = options;
-    const normalizedSearchTerm = searchTerm.toLowerCase();
+  async searchProperties(search: string, filter: Record<string, any> = {}, limit: number = 10): Promise<Property[]> {
+    const normalizedSearchTerm = search.toLowerCase();
     
     let results = this.properties.filter(property => {
       // Search by address, parcel ID, or any other relevant field
@@ -266,10 +265,16 @@ export class MemStorage implements IStorage {
       const matchesParcelId = property.parcelId?.toLowerCase().includes(normalizedSearchTerm);
       const matchesCity = property.city?.toLowerCase().includes(normalizedSearchTerm);
       
-      // Check county filter if provided
-      const matchesCounty = !county || property.county === county;
+      // Check additional filters if provided
+      let matchesFilters = true;
+      for (const [key, value] of Object.entries(filter)) {
+        if (property[key as keyof Property] !== value) {
+          matchesFilters = false;
+          break;
+        }
+      }
       
-      return (matchesAddress || matchesParcelId || matchesCity) && matchesCounty;
+      return (matchesAddress || matchesParcelId || matchesCity) && matchesFilters;
     });
     
     // Apply limit
