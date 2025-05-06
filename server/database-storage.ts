@@ -24,14 +24,19 @@ import { IStorage } from './storage';
  */
 export class DatabaseStorage implements IStorage {
   // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | null> {
     const result = await db.select().from(schema.users).where(eq(schema.users.id, id));
-    return result[0];
+    return result[0] || null;
+  }
+  
+  // Alias for getUser to maintain compatibility with IStorage interface
+  async getUserById(id: number): Promise<User | null> {
+    return this.getUser(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByUsername(username: string): Promise<User | null> {
     const result = await db.select().from(schema.users).where(eq(schema.users.username, username));
-    return result[0];
+    return result[0] || null;
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -39,26 +44,98 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+  async updateUser(id: number, userData: Partial<User>): Promise<User | null> {
     const [result] = await db
       .update(schema.users)
       .set({ ...userData, updatedAt: new Date() })
       .where(eq(schema.users.id, id))
       .returning();
-    return result;
+    return result || null;
   }
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(schema.users);
   }
-
-  // Cost Matrix methods
-  async getCostMatrix(id: number): Promise<CostMatrix | undefined> {
-    const result = await db.select().from(schema.costMatrices).where(eq(schema.costMatrices.id, id));
-    return result[0];
+  
+  // Alias for getAllUsers to maintain compatibility with IStorage interface
+  async getUsers(): Promise<User[]> {
+    return this.getAllUsers();
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      await db.delete(schema.users).where(eq(schema.users.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+  }
+  
+  // Property methods
+  async getProperties(filter?: Record<string, any>): Promise<Property[]> {
+    // Implement when Property schema is available
+    return [];
+  }
+  
+  async getPropertyById(id: number): Promise<Property | null> {
+    // Implement when Property schema is available
+    return null;
+  }
+  
+  async getPropertyByGeoId(geoId: string): Promise<Property | null> {
+    // Implement when Property schema is available
+    return null;
+  }
+  
+  async createProperty(property: InsertProperty): Promise<Property> {
+    // Implement when Property schema is available
+    throw new Error("Method not implemented");
+  }
+  
+  async updateProperty(id: number, propertyData: Partial<Property>): Promise<Property | null> {
+    // Implement when Property schema is available
+    return null;
+  }
+  
+  async deleteProperty(id: number): Promise<boolean> {
+    // Implement when Property schema is available
+    return false;
+  }
+  
+  // Building type methods
+  async getBuildingTypes(): Promise<BuildingType[]> {
+    // Implement when BuildingType schema is available
+    return [];
+  }
+  
+  async getBuildingTypeByCode(code: string): Promise<BuildingType | null> {
+    // Implement when BuildingType schema is available
+    return null;
+  }
+  
+  async createBuildingType(buildingType: InsertBuildingType): Promise<BuildingType> {
+    // Implement when BuildingType schema is available
+    throw new Error("Method not implemented");
+  }
+  
+  async updateBuildingType(code: string, buildingTypeData: Partial<BuildingType>): Promise<BuildingType | null> {
+    // Implement when BuildingType schema is available
+    return null;
+  }
+  
+  async deleteBuildingType(code: string): Promise<boolean> {
+    // Implement when BuildingType schema is available
+    return false;
   }
 
-  async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | undefined> {
+  // Cost Matrix methods
+  async getCostMatrix(id: number): Promise<CostMatrix | null> {
+    const result = await db.select().from(schema.costMatrices).where(eq(schema.costMatrices.id, id));
+    return result[0] || null;
+  }
+
+  async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | null> {
     const result = await db.select().from(schema.costMatrices).where(
       and(
         eq(schema.costMatrices.buildingTypeCode, buildingTypeCode),
@@ -66,7 +143,7 @@ export class DatabaseStorage implements IStorage {
         eq(schema.costMatrices.year, year)
       )
     );
-    return result[0];
+    return result[0] || null;
   }
 
   async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
@@ -74,13 +151,13 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateCostMatrix(id: number, matrixData: Partial<CostMatrix>): Promise<CostMatrix | undefined> {
+  async updateCostMatrix(id: number, matrixData: Partial<CostMatrix>): Promise<CostMatrix | null> {
     const [result] = await db
       .update(schema.costMatrices)
       .set({ ...matrixData, updatedAt: new Date() })
       .where(eq(schema.costMatrices.id, id))
       .returning();
-    return result;
+    return result || null;
   }
 
   async getAllCostMatrices(): Promise<CostMatrix[]> {
@@ -92,9 +169,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Session methods
-  async getSession(id: string): Promise<Session | undefined> {
+  async getSession(id: string): Promise<Session | null> {
     const result = await db.select().from(schema.sessions).where(eq(schema.sessions.id, id));
-    return result[0];
+    return result[0] || null;
   }
 
   async createSession(session: InsertSession): Promise<Session> {
@@ -102,13 +179,13 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateSession(id: string, sessionData: Partial<Session>): Promise<Session | undefined> {
+  async updateSession(id: string, sessionData: Partial<Session>): Promise<Session | null> {
     const [result] = await db
       .update(schema.sessions)
       .set({ ...sessionData, updatedAt: new Date() })
       .where(eq(schema.sessions.id, id))
       .returning();
-    return result;
+    return result || null;
   }
 
   async getUserSessions(userId: number): Promise<Session[]> {
@@ -147,13 +224,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(schema.insights.createdAt));
   }
 
-  async updateInsight(id: number, insightData: Partial<Insight>): Promise<Insight | undefined> {
+  async updateInsight(id: number, insightData: Partial<Insight>): Promise<Insight | null> {
     const [result] = await db
       .update(schema.insights)
       .set(insightData)
       .where(eq(schema.insights.id, id))
       .returning();
-    return result;
+    return result || null;
   }
 
   // Export methods
