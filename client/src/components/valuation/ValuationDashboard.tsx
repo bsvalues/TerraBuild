@@ -162,25 +162,64 @@ export function ValuationDashboard({ matrixId, propertyId }: ValuationDashboardP
                 
                 <InsightSummaryCard />
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full flex justify-between items-center">
-                      <span>Edit Matrix Data</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full flex justify-between items-center">
-                      <span>View Explanation Factors</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full flex justify-between items-center">
-                      <span>Export Report</span>
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                {/* Display property details if available */}
+                {selectedProperty ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Building className="h-4 w-4 mr-2" />
+                        Property Details
+                      </CardTitle>
+                      <CardDescription>
+                        Selected property information
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">{selectedProperty.address}</div>
+                        <div className="text-xs text-muted-foreground">Parcel ID: {selectedProperty.parcelId}</div>
+                        {selectedProperty.county && (
+                          <div className="text-xs text-muted-foreground">County: {selectedProperty.county}</div>
+                        )}
+                        {selectedProperty.propertyType && (
+                          <div className="text-xs text-muted-foreground">Type: {selectedProperty.propertyType}</div>
+                        )}
+                        {selectedProperty.yearBuilt && (
+                          <div className="text-xs text-muted-foreground">Year Built: {selectedProperty.yearBuilt}</div>
+                        )}
+                      </div>
+                      <hr className="my-2" />
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex justify-between items-center"
+                        onClick={() => setSelectedProperty(null)}
+                      >
+                        <span>Change Property</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button variant="outline" className="w-full flex justify-between items-center">
+                        <span>Edit Matrix Data</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" className="w-full flex justify-between items-center">
+                        <span>View Explanation Factors</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" className="w-full flex justify-between items-center">
+                        <span>Export Report</span>
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
