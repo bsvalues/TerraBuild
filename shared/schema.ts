@@ -78,28 +78,33 @@ export const geographicNeighborhoods = pgTable("geographic_neighborhoods", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Properties table
+// Properties table - Updated to match actual database schema
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
-  parcelId: text("parcel_id").notNull().unique(),
-  address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zip: text("zip"),
-  county: text("county"),
-  hoodCd: text("hood_cd").references(() => geographicNeighborhoods.hoodCd),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  landArea: real("land_area"),
-  landValue: real("land_value"),
-  totalValue: real("total_value"),
-  assessedValue: real("assessed_value"),
-  zoning: text("zoning"),
-  yearBuilt: integer("year_built"),
-  details: jsonb("details"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  lastAssessment: timestamp("last_assessment"),
+  prop_id: integer("prop_id"),
+  geo_id: text("geo_id"),
+  legal_desc: text("legal_desc"),
+  legal_desc_2: text("legal_desc_2"),
+  legal_acreage: real("legal_acreage"),
+  property_use_cd: text("property_use_cd"),
+  property_use_desc: text("property_use_desc"),
+  hood_cd: text("hood_cd"),
+  appraised_val: real("appraised_val"),
+  assessed_val: real("assessed_val"),
+  market: real("market"),
+  land_hstd_val: real("land_hstd_val"),
+  land_non_hstd_val: real("land_non_hstd_val"),
+  imprv_hstd_val: real("imprv_hstd_val"),
+  imprv_non_hstd_val: real("imprv_non_hstd_val"),
+  township_section: text("township_section"),
+  township_code: text("township_code"),
+  range_code: text("range_code"),
+  tract_or_lot: text("tract_or_lot"),
+  block: text("block"),
+  image_path: text("image_path"),
+  is_active: boolean("is_active").default(true),
+  imported_at: timestamp("imported_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 // Property value history table
@@ -519,7 +524,7 @@ export const settingsRelations = relations(settings, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBuildingTypeSchema = createInsertSchema(buildingTypes).omit({ id: true, lastUpdated: true });
 export const insertRegionSchema = createInsertSchema(regions).omit({ id: true, lastUpdated: true });
-export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true, updatedAt: true, lastAssessment: true });
+export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, imported_at: true, updated_at: true });
 export const insertImprovementSchema = createInsertSchema(improvements).omit({ id: true, lastUpdated: true });
 export const insertImprovementDetailSchema = createInsertSchema(improvementDetails).omit({ id: true, lastUpdated: true });
 export const insertCostMatrixSchema = createInsertSchema(costMatrices).omit({ id: true, importedAt: true, updatedAt: true });

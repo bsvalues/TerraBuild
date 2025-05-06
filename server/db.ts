@@ -4,37 +4,36 @@ import ws from "ws";
 import * as schema from "../shared/schema";
 import { logger } from './utils/logger';
 
+// Configure neon to use ws for WebSocket
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
-
-logger.info('Initializing database connection');
-
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
-
-// Health check function
-export async function checkDatabaseConnection(): Promise<boolean> {
-  try {
-    await pool.query('SELECT 1');
-    return true;
-  } catch (error) {
-    logger.error('Database connection check failed:', error);
-    return false;
+/**
+ * Initialize the database connection
+ */
+export function initDatabase() {
+  // Check for DATABASE_URL environment variable
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL must be set. Did you forget to provision a database?"
+    );
   }
+
+  logger.info('Initializing database connection');
+
+  // Create a connection pool
+  const poolInstance = new Pool({ connectionString: process.env.DATABASE_URL });
+
+  // Create a drizzle instance with the schema
+  const dbInstance = drizzle(poolInstance, { schema });
+
+  logger.debug('Database connection initialized');
+  
+  return { poolInstance, dbInstance };
 }
 
-// Initialize function to run on startup
-export async function initDatabase(): Promise<void> {
-  try {
-    await checkDatabaseConnection();
-    logger.info('Database connection established successfully');
-  } catch (error) {
-    logger.error('Error initializing database:', error);
-    throw error;
-  }
-}
+// Initialize the database and export the connections
+const { poolInstance, dbInstance } = initDatabase();
+
+// Export the database connections
+export const pool = poolInstance;
+export const db = dbInstance;

@@ -1,20 +1,34 @@
 import express from 'express';
-import storage from '../storage';
+import { db } from '../db';
+import { eq, like, or } from 'drizzle-orm';
+import { logger } from '../utils/logger';
+
+// Define a type that matches the actual properties table in the database
+interface Property {
+  id: number;
+  legal_desc?: string;
+  geo_id?: string;
+  property_use_desc?: string;
+  assessed_val?: number;
+  appraised_val?: number;
+  property_use_cd?: string;
+  hood_cd?: string;
+}
 
 const router = express.Router();
 
 /**
  * GET /api/properties
  * 
- * Search for properties by address or parcel ID
+ * Search for properties by legal description, geo_id, or property ID
  * Query parameters:
- *   search: string - Search term for address or parcel ID
- *   county: string - Optional filter by county
+ *   search: string - Search term for property fields
+ *   county: string - Optional filter by county (not used in current schema)
  *   limit: number - Maximum number of results to return (default: 10)
  */
 router.get('/', async (req, res) => {
   try {
-    const { search, county, limit = 10 } = req.query;
+    const { search, limit = 10 } = req.query;
     
     // Validate search term
     if (!search || typeof search !== 'string' || search.length < 3) {
@@ -23,27 +37,27 @@ router.get('/', async (req, res) => {
       });
     }
     
-    // Construct filter based on query params
-    const filter: Record<string, any> = {};
-    
-    if (county && typeof county === 'string') {
-      filter.county = county;
-    }
-    
     // Set limit for results
     const parsedLimit = parseInt(limit as string);
     const resultsLimit = isNaN(parsedLimit) ? 10 : Math.min(parsedLimit, 50);
     
-    // Call storage method
-    const properties = await storage.searchProperties(
-      search, 
-      filter, 
-      resultsLimit
-    );
+    // Query directly using db instance since the schema in storage.ts doesn't match
+    const searchPattern = `%${search}%`;
+    
+    // Run the query against the actual schema in the database
+    const properties = await db.query.properties.findMany({
+      where: or(
+        like(db.query.properties.legal_desc, searchPattern),
+        like(db.query.properties.geo_id, searchPattern),
+        like(db.query.properties.property_use_desc, searchPattern),
+        like(db.query.properties.hood_cd, searchPattern)
+      ),
+      limit: resultsLimit
+    });
     
     res.json(properties);
   } catch (error) {
-    console.error('Error searching properties:', error);
+    logger.error('Error searching properties:', error);
     res.status(500).json({ message: 'Failed to search properties' });
   }
 });
@@ -55,7 +69,16 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const property = await storage.getPropertyById(req.params.id);
+    const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid property ID' });
+    }
+    
+    const [property] = await db.query.properties.findMany({
+      where: eq(db.query.properties.id, id),
+      limit: 1
+    });
     
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
@@ -63,19 +86,24 @@ router.get('/:id', async (req, res) => {
     
     res.json(property);
   } catch (error) {
-    console.error('Error fetching property:', error);
+    logger.error('Error fetching property:', error);
     res.status(500).json({ message: 'Failed to fetch property' });
   }
 });
 
 /**
- * GET /api/properties/parcel/:parcelId
+ * GET /api/properties/geo/:geoId
  * 
- * Get a property by parcel ID
+ * Get a property by geo_id
  */
-router.get('/parcel/:parcelId', async (req, res) => {
+router.get('/geo/:geoId', async (req, res) => {
   try {
-    const property = await storage.getPropertyByParcelId(req.params.parcelId);
+    const geoId = req.params.geoId;
+    
+    const [property] = await db.query.properties.findMany({
+      where: eq(db.query.properties.geo_id, geoId),
+      limit: 1
+    });
     
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
@@ -83,7 +111,7 @@ router.get('/parcel/:parcelId', async (req, res) => {
     
     res.json(property);
   } catch (error) {
-    console.error('Error fetching property by parcel ID:', error);
+    logger.error('Error fetching property by geo_id:', error);
     res.status(500).json({ message: 'Failed to fetch property' });
   }
 });

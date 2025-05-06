@@ -6,26 +6,52 @@ import { Badge } from '@/components/ui/badge';
 import { Building, MapPin, Search } from 'lucide-react';
 import axios from 'axios';
 
+// Define property interfaces locally since we can't directly import from shared/models
 interface Property {
-  id: string;
+  id: number;
+  legal_desc?: string;
+  geo_id?: string;
+  property_use_desc?: string;
+  assessed_val?: number;
+  appraised_val?: number;
+  property_use_cd?: string;
+  hood_cd?: string;
+}
+
+interface PropertyViewModel {
+  id: number;
   parcelId: string;
   address: string;
-  state?: string;
   county?: string;
-  zone?: string;
+  state?: string;
   propertyType?: string;
-  yearBuilt?: number;
+  assessedValue?: number;
+  totalValue?: number;
+}
+
+// Convert database property to view model
+function toPropertyViewModel(property: Property): PropertyViewModel {
+  return {
+    id: property.id,
+    parcelId: property.geo_id || `BC-${property.id}`,
+    address: property.legal_desc || `Property #${property.id}`,
+    county: "Benton",
+    state: "WA",
+    propertyType: property.property_use_desc,
+    assessedValue: property.assessed_val,
+    totalValue: property.appraised_val
+  };
 }
 
 interface PropertySearchProps {
-  onSelectProperty: (property: Property) => void;
+  onSelectProperty: (property: PropertyViewModel) => void;
 }
 
 export default function PropertySearch({ onSelectProperty }: PropertySearchProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<PropertyViewModel[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertyViewModel | null>(null);
 
   // Search for properties based on the query
   const searchProperties = async () => {
@@ -34,7 +60,11 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
     setIsLoading(true);
     try {
       const response = await axios.get(`/api/properties?search=${encodeURIComponent(searchQuery)}`);
-      setProperties(response.data);
+      // Convert database properties to view models
+      const propertyViewModels = response.data.map((property: Property) => 
+        toPropertyViewModel(property)
+      );
+      setProperties(propertyViewModels);
     } catch (error) {
       console.error('Error searching properties:', error);
       setProperties([]);
@@ -44,7 +74,7 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
   };
 
   // Handle property selection
-  const handleSelectProperty = (property: Property) => {
+  const handleSelectProperty = (property: PropertyViewModel) => {
     setSelectedProperty(property);
     onSelectProperty(property);
   };
@@ -54,13 +84,13 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
       <CardHeader>
         <CardTitle>Property Search</CardTitle>
         <CardDescription>
-          Search for a property by address or parcel ID
+          Search for a property by address or ID
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex space-x-2">
           <Input
-            placeholder="Enter address or parcel ID"
+            placeholder="Enter legal description or property ID"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && searchProperties()}
@@ -88,6 +118,9 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
               Parcel ID: {selectedProperty.parcelId}
               {selectedProperty.county && <span> | {selectedProperty.county} County</span>}
               {selectedProperty.propertyType && <span> | {selectedProperty.propertyType}</span>}
+              {selectedProperty.assessedValue && (
+                <span> | Assessed Value: ${selectedProperty.assessedValue.toLocaleString()}</span>
+              )}
             </div>
           </div>
         )}
@@ -109,6 +142,9 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
                   Parcel ID: {property.parcelId}
                   {property.county && <span> | {property.county} County</span>}
                   {property.propertyType && <span> | {property.propertyType}</span>}
+                  {property.assessedValue && (
+                    <span> | Assessed: ${property.assessedValue.toLocaleString()}</span>
+                  )}
                 </div>
               </div>
             ))}

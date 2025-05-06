@@ -1,223 +1,145 @@
-import { db } from '../db';
-import { properties } from '../../shared/schema';
-import { sql } from 'drizzle-orm';
-
 /**
  * Seed script to add sample properties to the database for testing 
  */
+import { db } from '../db';
+import { logger } from '../utils/logger';
+
+const sampleProperties = [
+  {
+    prop_id: 100001,
+    geo_id: "BC-100001",
+    legal_desc: "123 Main St, Kennewick, WA 99336",
+    property_use_desc: "Single Family Residence",
+    property_use_cd: "RES",
+    hood_cd: "KEN-01",
+    assessed_val: 250000,
+    appraised_val: 275000,
+    land_hstd_val: 80000,
+    land_non_hstd_val: 0,
+    imprv_hstd_val: 195000,
+    imprv_non_hstd_val: 0,
+    legal_acreage: 0.25,
+    township_section: "SW-12",
+    township_code: "8N",
+    range_code: "29E",
+    tract_or_lot: "Lot 5",
+    block: "Block A",
+    is_active: true
+  },
+  {
+    prop_id: 100002,
+    geo_id: "BC-100002",
+    legal_desc: "456 Oak Ave, Richland, WA 99352",
+    property_use_desc: "Commercial - Retail",
+    property_use_cd: "COM",
+    hood_cd: "RICH-05",
+    assessed_val: 425000,
+    appraised_val: 450000,
+    land_hstd_val: 0,
+    land_non_hstd_val: 150000,
+    imprv_hstd_val: 0,
+    imprv_non_hstd_val: 300000,
+    legal_acreage: 0.75,
+    township_section: "NE-24",
+    township_code: "9N",
+    range_code: "28E",
+    tract_or_lot: "Lot 12",
+    block: "Block C",
+    is_active: true
+  },
+  {
+    prop_id: 100003,
+    geo_id: "BC-100003",
+    legal_desc: "789 Vineyard Dr, Prosser, WA 99350",
+    property_use_desc: "Agricultural - Vineyard",
+    property_use_cd: "AG-V",
+    hood_cd: "PROS-02",
+    assessed_val: 850000,
+    appraised_val: 900000,
+    land_hstd_val: 0,
+    land_non_hstd_val: 650000,
+    imprv_hstd_val: 0,
+    imprv_non_hstd_val: 250000,
+    legal_acreage: 15.5,
+    township_section: "SW-18",
+    township_code: "7N",
+    range_code: "25E",
+    tract_or_lot: "Tract 3",
+    block: "",
+    is_active: true
+  },
+  {
+    prop_id: 100004,
+    geo_id: "BC-100004",
+    legal_desc: "321 River Rd, Benton City, WA 99320",
+    property_use_desc: "Multi-Family Residence",
+    property_use_cd: "MFR",
+    hood_cd: "BENT-03",
+    assessed_val: 350000,
+    appraised_val: 375000,
+    land_hstd_val: 0,
+    land_non_hstd_val: 100000,
+    imprv_hstd_val: 0,
+    imprv_non_hstd_val: 275000,
+    legal_acreage: 0.5,
+    township_section: "NW-30",
+    township_code: "8N",
+    range_code: "26E",
+    tract_or_lot: "Lot 22",
+    block: "Block F",
+    is_active: true
+  },
+  {
+    prop_id: 100005,
+    geo_id: "BC-100005",
+    legal_desc: "555 Industrial Way, Richland, WA 99352",
+    property_use_desc: "Industrial - Manufacturing",
+    property_use_cd: "IND-M",
+    hood_cd: "RICH-08",
+    assessed_val: 1200000,
+    appraised_val: 1250000,
+    land_hstd_val: 0,
+    land_non_hstd_val: 350000,
+    imprv_hstd_val: 0,
+    imprv_non_hstd_val: 900000,
+    legal_acreage: 3.2,
+    township_section: "SE-05",
+    township_code: "9N",
+    range_code: "28E",
+    tract_or_lot: "Lot 3",
+    block: "Block A",
+    is_active: true
+  }
+];
+
+/**
+ * Seed the database with sample properties
+ */
 export async function seedProperties() {
   try {
-    console.log('Seeding sample properties...');
+    logger.info('Checking for existing properties...');
     
-    // Sample Benton County properties for testing
-    const sampleProperties = [
-      {
-        parcelId: 'BC-10042-001',
-        address: '123 Main Street',
-        city: 'Kennewick',
-        state: 'WA',
-        zip: '99336',
-        county: 'Benton',
-        hoodCd: 'KEN001',
-        latitude: 46.2087,
-        longitude: -119.1360,
-        landArea: 10500,
-        landValue: 125000,
-        totalValue: 325000,
-        assessedValue: 320000,
-        zoning: 'R1',
-        yearBuilt: 1992,
-        details: { bedrooms: 4, bathrooms: 2.5, garageSpaces: 2 }
-      },
-      {
-        parcelId: 'BC-10158-042',
-        address: '456 Oak Avenue',
-        city: 'Richland',
-        state: 'WA',
-        zip: '99352',
-        county: 'Benton',
-        hoodCd: 'RIC003',
-        latitude: 46.2826,
-        longitude: -119.2917,
-        landArea: 8750,
-        landValue: 110000,
-        totalValue: 290000,
-        assessedValue: 285000,
-        zoning: 'R1',
-        yearBuilt: 1985,
-        details: { bedrooms: 3, bathrooms: 2, garageSpaces: 2 }
-      },
-      {
-        parcelId: 'BC-10236-105',
-        address: '789 Pine Lane',
-        city: 'Prosser',
-        state: 'WA',
-        zip: '99350',
-        county: 'Benton',
-        hoodCd: 'PRO002',
-        latitude: 46.2070,
-        longitude: -119.7689,
-        landArea: 15000,
-        landValue: 95000,
-        totalValue: 275000,
-        assessedValue: 270000,
-        zoning: 'R2',
-        yearBuilt: 1978,
-        details: { bedrooms: 3, bathrooms: 1.5, garageSpaces: 1 }
-      },
-      {
-        parcelId: 'BC-10369-026',
-        address: '1001 Washington Street',
-        city: 'Kennewick',
-        state: 'WA',
-        zip: '99336',
-        county: 'Benton',
-        hoodCd: 'KEN002',
-        latitude: 46.2153,
-        longitude: -119.1442,
-        landArea: 7500,
-        landValue: 105000,
-        totalValue: 255000,
-        assessedValue: 250000,
-        zoning: 'R1',
-        yearBuilt: 1975,
-        details: { bedrooms: 3, bathrooms: 1, garageSpaces: 1 }
-      },
-      {
-        parcelId: 'BC-10481-093',
-        address: '234 Columbia Drive',
-        city: 'Richland',
-        state: 'WA',
-        zip: '99352',
-        county: 'Benton',
-        hoodCd: 'RIC005',
-        latitude: 46.2729,
-        longitude: -119.2742,
-        landArea: 9000,
-        landValue: 115000,
-        totalValue: 310000,
-        assessedValue: 305000,
-        zoning: 'R1',
-        yearBuilt: 1995,
-        details: { bedrooms: 4, bathrooms: 2, garageSpaces: 2 }
-      },
-      {
-        parcelId: 'BC-10529-118',
-        address: '567 River Road',
-        city: 'Benton City',
-        state: 'WA',
-        zip: '99320',
-        county: 'Benton',
-        hoodCd: 'BEN001',
-        latitude: 46.2632,
-        longitude: -119.4915,
-        landArea: 20000,
-        landValue: 85000,
-        totalValue: 225000,
-        assessedValue: 220000,
-        zoning: 'R2',
-        yearBuilt: 1972,
-        details: { bedrooms: 2, bathrooms: 1, garageSpaces: 1 }
-      },
-      {
-        parcelId: 'BC-10675-034',
-        address: '890 Vineyard Way',
-        city: 'Prosser',
-        state: 'WA',
-        zip: '99350',
-        county: 'Benton',
-        hoodCd: 'PRO003',
-        latitude: 46.2047,
-        longitude: -119.7592,
-        landArea: 25000,
-        landValue: 100000,
-        totalValue: 295000,
-        assessedValue: 290000,
-        zoning: 'R2',
-        yearBuilt: 1983,
-        details: { bedrooms: 3, bathrooms: 2, garageSpaces: 2 }
-      },
-      {
-        parcelId: 'BC-10789-057',
-        address: '1234 Valley View Drive',
-        city: 'Kennewick',
-        state: 'WA',
-        zip: '99336',
-        county: 'Benton',
-        hoodCd: 'KEN004',
-        latitude: 46.2110,
-        longitude: -119.1510,
-        landArea: 12000,
-        landValue: 130000,
-        totalValue: 340000,
-        assessedValue: 335000,
-        zoning: 'R1',
-        yearBuilt: 2001,
-        details: { bedrooms: 4, bathrooms: 2.5, garageSpaces: 3 }
-      },
-      {
-        parcelId: 'BC-10842-071',
-        address: '432 Sunset Boulevard',
-        city: 'Richland',
-        state: 'WA',
-        zip: '99352',
-        county: 'Benton',
-        hoodCd: 'RIC007',
-        latitude: 46.2875,
-        longitude: -119.2845,
-        landArea: 9500,
-        landValue: 120000,
-        totalValue: 315000,
-        assessedValue: 310000,
-        zoning: 'R1',
-        yearBuilt: 1997,
-        details: { bedrooms: 3, bathrooms: 2.5, garageSpaces: 2 }
-      },
-      {
-        parcelId: 'BC-10923-089',
-        address: '789 Orchard Lane',
-        city: 'Benton City',
-        state: 'WA',
-        zip: '99320',
-        county: 'Benton',
-        hoodCd: 'BEN002',
-        latitude: 46.2685,
-        longitude: -119.4876,
-        landArea: 30000,
-        landValue: 90000,
-        totalValue: 235000,
-        assessedValue: 230000,
-        zoning: 'R2',
-        yearBuilt: 1968,
-        details: { bedrooms: 3, bathrooms: 1, garageSpaces: 1 }
-      }
-    ];
-
-    // Insert properties into the database
-    const insertResult = await db.insert(properties).values(sampleProperties)
-      .onConflictDoUpdate({
-        target: properties.parcelId,
-        set: {
-          address: sql`EXCLUDED.address`,
-          city: sql`EXCLUDED.city`,
-          state: sql`EXCLUDED.state`,
-          zip: sql`EXCLUDED.zip`,
-          county: sql`EXCLUDED.county`,
-          landArea: sql`EXCLUDED.land_area`,
-          landValue: sql`EXCLUDED.land_value`,
-          totalValue: sql`EXCLUDED.total_value`,
-          assessedValue: sql`EXCLUDED.assessed_value`,
-          zoning: sql`EXCLUDED.zoning`,
-          yearBuilt: sql`EXCLUDED.year_built`,
-          details: sql`EXCLUDED.details`,
-          updatedAt: sql`now()`
-        }
-      });
-
-    console.log('Successfully seeded sample properties');
-    return { success: true, message: 'Sample properties seeded successfully' };
+    // Check if properties already exist to avoid duplicates
+    const existingProperties = await db.query.properties.findMany({
+      limit: 1
+    });
+    
+    if (existingProperties.length > 0) {
+      logger.info('Properties already exist, skipping seed');
+      return { success: true, message: 'Properties already exist' };
+    }
+    
+    logger.info('Seeding sample properties...');
+    
+    // Insert all sample properties
+    for (const property of sampleProperties) {
+      await db.insert(db.query.properties).values(property);
+    }
+    
+    logger.info(`Successfully seeded ${sampleProperties.length} sample properties`);
+    return { success: true, message: `Added ${sampleProperties.length} properties` };
   } catch (error) {
-    console.error('Error seeding properties:', error);
-    return { success: false, message: 'Failed to seed properties', error };
+    logger.error('Failed to seed properties:', error);
+    return { success: false, message: error.message || 'Failed to seed properties' };
   }
 }
