@@ -174,13 +174,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#47AD55] px-0 hover:bg-transparent hover:text-[#47AD55]/80"
-                  onClick={() => navigate('/visualizations')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/visualizations">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#47AD55] px-0 hover:bg-transparent hover:text-[#47AD55]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
             
@@ -197,13 +198,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#7C5295] px-0 hover:bg-transparent hover:text-[#7C5295]/80"
-                  onClick={() => navigate('/regional-cost-comparison')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/regional-cost-comparison">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#7C5295] px-0 hover:bg-transparent hover:text-[#7C5295]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
             
@@ -223,13 +225,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#EA7317] px-0 hover:bg-transparent hover:text-[#EA7317]/80"
-                  onClick={() => navigate('/data-import')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/data-import">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#EA7317] px-0 hover:bg-transparent hover:text-[#EA7317]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
             
@@ -246,13 +249,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#5C7AEA] px-0 hover:bg-transparent hover:text-[#5C7AEA]/80"
-                  onClick={() => navigate('/what-if-scenarios')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/what-if-scenarios">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#5C7AEA] px-0 hover:bg-transparent hover:text-[#5C7AEA]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
             
@@ -269,13 +273,14 @@ export default function LandingPage() {
                 </p>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="text-[#E63946] px-0 hover:bg-transparent hover:text-[#E63946]/80"
-                  onClick={() => navigate('/data-import')}
-                >
-                  Learn more
-                </Button>
+                <Link href="/data-import">
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#E63946] px-0 hover:bg-transparent hover:text-[#E63946]/80"
+                  >
+                    Learn more
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           </div>
@@ -385,14 +390,15 @@ export default function LandingPage() {
           </div>
           
           <div className="flex justify-center mt-10">
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-[#243E4D] text-[#243E4D]"
-              onClick={() => navigate('/geo-assessment')}
-            >
-              <Map className="mr-2 h-5 w-5" /> View County Map
-            </Button>
+            <Link href="/geo-assessment">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-[#243E4D] text-[#243E4D]"
+              >
+                <Map className="mr-2 h-5 w-5" /> View County Map
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -438,19 +444,21 @@ export default function LandingPage() {
               </ul>
               
               <div className="flex flex-wrap gap-4 mt-8">
-                <Button 
-                  className="bg-[#243E4D] hover:bg-[#1a2c38] text-white"
-                  onClick={() => navigate('/data-exploration')}
-                >
-                  <Database className="mr-2 h-5 w-5" /> Explore Data
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-[#243E4D] text-[#243E4D]"
-                  onClick={() => navigate('/benchmarking')}
-                >
-                  <BarChart3 className="mr-2 h-5 w-5" /> View Benchmarks
-                </Button>
+                <Link href="/data-exploration">
+                  <Button 
+                    className="bg-[#243E4D] hover:bg-[#1a2c38] text-white"
+                  >
+                    <Database className="mr-2 h-5 w-5" /> Explore Data
+                  </Button>
+                </Link>
+                <Link href="/benchmarking">
+                  <Button 
+                    variant="outline" 
+                    className="border-[#243E4D] text-[#243E4D]"
+                  >
+                    <BarChart3 className="mr-2 h-5 w-5" /> View Benchmarks
+                  </Button>
+                </Link>
               </div>
             </div>
             
@@ -490,19 +498,25 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-lg mb-4">Tools</h4>
                 <ul className="space-y-2">
                   <li>
-                    <button onClick={() => navigate('/calculator')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      Calculator
-                    </button>
+                    <Link href="/calculator">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        Calculator
+                      </span>
+                    </Link>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/visualizations')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      Visualizations
-                    </button>
+                    <Link href="/visualizations">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        Visualizations
+                      </span>
+                    </Link>
                   </li>
                   <li>
-                    <button onClick={() => navigate('/data-import')} className="text-gray-300 hover:text-white transition-colors bg-transparent">
-                      Data Import
-                    </button>
+                    <Link href="/data-import">
+                      <span className="text-gray-300 hover:text-white transition-colors bg-transparent cursor-pointer">
+                        Data Import
+                      </span>
+                    </Link>
                   </li>
                 </ul>
               </div>
