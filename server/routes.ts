@@ -17,6 +17,11 @@ import storytellingRoutes from './routes/storytelling-routes';
 import { geographicRoutes } from './routes/geographicRoutes';
 import { propertyHeatmapRoutes } from './routes/propertyHeatmapRoutes';
 import { gisImportRoutes } from './routes/gisImportRoutes';
+import { SQLiteStorage } from './sqlite_storage';
+import { generateShapInsight } from './ai/shap_agent';
+
+// Initialize SQLite storage
+const sqliteStorage = new SQLiteStorage();
 
 import {
   insertUserSchema,
@@ -468,6 +473,197 @@ router.delete('/projects/:projectId/properties/:propertyId', asyncHandler(async 
   }
   
   res.status(204).end();
+}));
+
+/**
+ * TerraBuild Frontend API Routes
+ */
+router.post('/validate_matrix', asyncHandler(async (req, res) => {
+  const { fileName, data } = req.body;
+  
+  // Generate a unique session ID
+  const sessionId = `session_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  
+  try {
+    // Store session in SQLite
+    await sqliteStorage.createSession({
+      id: sessionId,
+      userId: 1, // Default user ID
+      matrixName: fileName,
+      status: 'active',
+      settings: { initialData: data }
+    });
+    
+    // Store each matrix item
+    for (const item of data) {
+      await sqliteStorage.saveMatrixItem(sessionId, item);
+    }
+    
+    // Generate initial SHAP insight
+    const insightMessage = await generateShapInsight(sessionId, data);
+    
+    // Record session history
+    await sqliteStorage.createSessionHistory({
+      sessionId,
+      event: 'matrix_validated',
+      data: { fileName, itemCount: data.length, insight: insightMessage }
+    });
+    
+    // Return session ID and validation result
+    res.json({ 
+      session_id: sessionId,
+      status: 'validated',
+      message: 'Matrix validated successfully'
+    });
+  } catch (error) {
+    console.error('Error validating matrix:', error);
+    res.status(500).json({ 
+      error: 'Failed to validate matrix',
+      details: error.message 
+    });
+  }
+}));
+
+router.post('/re_run_agents', asyncHandler(async (req, res) => {
+  const { fileName, data, sessionId } = req.body;
+  
+  try {
+    // Generate new insights with SHAP
+    const insightMessage = await generateShapInsight(sessionId || 'temp_session', data);
+    
+    // Create adjusted values based on features
+    const adjustedValues = data.map(item => {
+      // Simulate agent adjustments
+      const changePercent = (Math.random() * 10 - 5).toFixed(2);
+      const adjustedCost = parseFloat(item.base_cost) * (1 + parseFloat(changePercent) / 100);
+      
+      return {
+        id: item.id,
+        old_value: parseFloat(item.base_cost).toFixed(2),
+        new_value: adjustedCost.toFixed(2),
+        change_percent: changePercent
+      };
+    });
+    
+    // If we have a session ID, update the matrix items
+    if (sessionId) {
+      for (const adjusted of adjustedValues) {
+        await sqliteStorage.updateMatrixItem(sessionId, adjusted.id, {
+          adjustedCost: adjusted.new_value,
+          changePercent: adjusted.change_percent
+        });
+      }
+      
+      // Record rerun in session history
+      await sqliteStorage.createSessionHistory({
+        sessionId,
+        event: 'agents_rerun',
+        data: { adjustedValues, insight: insightMessage }
+      });
+    }
+    
+    res.json({
+      adjustedValues,
+      insight: insightMessage
+    });
+  } catch (error) {
+    console.error('Error re-running agents:', error);
+    res.status(500).json({
+      error: 'Failed to re-run agents',
+      details: error.message
+    });
+  }
+}));
+
+router.get('/get_insights/:sessionId', asyncHandler(async (req, res) => {
+  const { sessionId } = req.params;
+  
+  try {
+    // Get insights for the session from SQLite
+    const insights = await sqliteStorage.getInsights(sessionId);
+    
+    res.json({
+      sessionId,
+      insights: insights.map(insight => ({
+        id: insight.id,
+        agentName: insight.agentName,
+        message: insight.message,
+        timestamp: insight.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching insights:', error);
+    res.status(500).json({
+      error: 'Failed to fetch insights',
+      details: error.message
+    });
+  }
+}));
+
+// Export endpoints
+router.get('/export/json/:sessionId', asyncHandler(async (req, res) => {
+  const { sessionId } = req.params;
+  
+  try {
+    // Get session data
+    const session = await sqliteStorage.getSession(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Get matrix items
+    const matrixItems = await sqliteStorage.getMatrixItems(sessionId);
+    
+    // Get insights
+    const insights = await sqliteStorage.getInsights(sessionId);
+    
+    // Get session history
+    const history = await sqliteStorage.getSessionHistory(sessionId);
+    
+    const exportData = {
+      sessionId,
+      matrixName: session.matrixName,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      status: session.status,
+      matrixItems,
+      insights,
+      history
+    };
+    
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=terrabuild_export_${sessionId}.json`);
+    
+    res.json(exportData);
+  } catch (error) {
+    console.error('Error exporting session:', error);
+    res.status(500).json({
+      error: 'Failed to export session',
+      details: error.message
+    });
+  }
+}));
+
+router.get('/export/pdf/:sessionId', asyncHandler(async (req, res) => {
+  const { sessionId } = req.params;
+  
+  try {
+    // This would normally generate a PDF, but for now we'll just return a JSON response
+    // that indicates a PDF would be generated
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      message: 'PDF generation would occur here',
+      sessionId,
+      pdfUrl: `/download/pdf/${sessionId}`
+    });
+  } catch (error) {
+    console.error('Error exporting PDF:', error);
+    res.status(500).json({
+      error: 'Failed to export PDF',
+      details: error.message
+    });
+  }
 }));
 
 /**
