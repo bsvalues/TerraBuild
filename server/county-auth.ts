@@ -8,7 +8,7 @@
 import { Strategy } from 'passport-local';
 import passport from 'passport';
 import { Express } from 'express';
-import { storage } from './storage-implementation';
+import { storage } from './storage-factory';
 import { log } from './vite';
 import { User, InsertUser } from '../shared/schema';
 
