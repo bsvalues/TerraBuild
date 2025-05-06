@@ -1,0 +1,126 @@
+groups:
+- name: terrafusion-alerts
+  rules:
+  # Application health alerts
+  - alert: TerraFusionInstanceDown
+    expr: up{job="terrafusion"} == 0
+    for: 2m
+    labels:
+      severity: critical
+      environment: '{{ $labels.environment }}'
+      service: terrafusion
+    annotations:
+      summary: "TerraFusion instance down"
+      description: "TerraFusion instance {{ $labels.instance }} has been down for more than 2 minutes."
+
+  - alert: TerraFusionHighCPUUsage
+    expr: sum(rate(process_cpu_seconds_total{job="terrafusion"}[5m])) by (instance) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: terrafusion
+    annotations:
+      summary: "High CPU usage detected"
+      description: "TerraFusion instance {{ $labels.instance }} has high CPU usage (>80%) for more than 5 minutes."
+
+  - alert: TerraFusionHighMemoryUsage
+    expr: (sum(process_resident_memory_bytes{job="terrafusion"}) by (instance) / sum(node_memory_MemTotal_bytes) by (instance)) * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: terrafusion
+    annotations:
+      summary: "High memory usage detected"
+      description: "TerraFusion instance {{ $labels.instance }} has high memory usage (>85%) for more than 5 minutes."
+
+  - alert: TerraFusionAPIHighErrorRate
+    expr: sum(rate(http_requests_total{job="terrafusion",status=~"5.."}[5m])) by (instance) / sum(rate(http_requests_total{job="terrafusion"}[5m])) by (instance) * 100 > 5
+    for: 2m
+    labels:
+      severity: critical
+      environment: '{{ $labels.environment }}'
+      service: terrafusion
+    annotations:
+      summary: "High error rate detected"
+      description: "TerraFusion instance {{ $labels.instance }} has a high error rate (>5%) in the last 2 minutes."
+
+  - alert: TerraFusionAPIHighResponseTime
+    expr: http_request_duration_seconds{job="terrafusion",quantile="0.95"} > 2
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: terrafusion
+    annotations:
+      summary: "Slow API response time"
+      description: "TerraFusion instance {{ $labels.instance }} has high response time (>2s at 95th percentile) for more than 5 minutes."
+
+  # Database alerts
+  - alert: PostgreSQLHighConnectionUsage
+    expr: sum(pg_stat_activity_count{datname="terrafusion"}) / pg_settings_max_connections * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: postgresql
+    annotations:
+      summary: "High PostgreSQL connection usage"
+      description: "PostgreSQL connection usage is at {{ printf \"%.0f\" $value }}% (>80%) for more than 5 minutes."
+
+  - alert: PostgreSQLHighCPUUsage
+    expr: rate(process_cpu_seconds_total{job="postgresql"}[5m]) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: postgresql
+    annotations:
+      summary: "High PostgreSQL CPU usage"
+      description: "PostgreSQL instance has high CPU usage (>80%) for more than 5 minutes."
+
+  - alert: PostgreSQLHighDiskUsage
+    expr: (1 - node_filesystem_avail_bytes{mountpoint="/var/lib/postgresql/data"} / node_filesystem_size_bytes{mountpoint="/var/lib/postgresql/data"}) * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: postgresql
+    annotations:
+      summary: "High PostgreSQL disk usage"
+      description: "PostgreSQL disk usage is at {{ printf \"%.0f\" $value }}% (>85%). Consider increasing disk capacity."
+
+  # Infrastructure alerts
+  - alert: InstanceHighCPUUsage
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: infrastructure
+    annotations:
+      summary: "High CPU usage on instance"
+      description: "Instance {{ $labels.instance }} has high CPU usage (>80%) for more than 5 minutes."
+
+  - alert: InstanceLowDiskSpace
+    expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: infrastructure
+    annotations:
+      summary: "Low disk space on instance"
+      description: "Instance {{ $labels.instance }} has low disk space (>85% used) on {{ $labels.mountpoint }} for more than 5 minutes."
+
+  - alert: InstanceLowMemory
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+    for: 5m
+    labels:
+      severity: warning
+      environment: '{{ $labels.environment }}'
+      service: infrastructure
+    annotations:
+      summary: "Low memory on instance"
+      description: "Instance {{ $labels.instance }} has low memory (>90% used) for more than 5 minutes."

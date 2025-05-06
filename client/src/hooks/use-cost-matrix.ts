@@ -9,13 +9,13 @@ import type { CostMatrix } from "@shared/schema";
 export function useCostMatrix() {
   // Get all cost matrix entries
   const getAll = useQuery({
-    queryKey: ["/api/cost-matrix"],
+    queryKey: ["/cost-matrices"],
   });
 
   // Get cost matrix entry by ID
   const getById = (id: number) => {
     return useQuery({
-      queryKey: ["/api/cost-matrix", id],
+      queryKey: ["/cost-matrices", id],
       enabled: !!id,
     });
   };
@@ -23,7 +23,12 @@ export function useCostMatrix() {
   // Get cost matrix entries by region
   const getByRegion = (region: string) => {
     return useQuery({
-      queryKey: ["/api/cost-matrix/region", region],
+      queryKey: ["/cost-matrices"],
+      queryFn: () => 
+        apiRequest({ 
+          method: "GET", 
+          url: `/cost-matrices?region=${encodeURIComponent(region)}` 
+        }),
       enabled: !!region,
     });
   };
@@ -31,7 +36,12 @@ export function useCostMatrix() {
   // Get cost matrix entries by building type
   const getByBuildingType = (buildingType: string) => {
     return useQuery({
-      queryKey: ["/api/cost-matrix/building-type", buildingType],
+      queryKey: ["/cost-matrices"],
+      queryFn: () => 
+        apiRequest({ 
+          method: "GET", 
+          url: `/cost-matrices?buildingType=${encodeURIComponent(buildingType)}` 
+        }),
       enabled: !!buildingType,
     });
   };
@@ -39,7 +49,12 @@ export function useCostMatrix() {
   // Get cost matrix entry by region and building type
   const getByRegionAndBuildingType = (region: string, buildingType: string) => {
     return useQuery({
-      queryKey: ["/api/cost-matrix/region", region, "building-type", buildingType],
+      queryKey: ["/cost-matrices"],
+      queryFn: () => 
+        apiRequest({ 
+          method: "GET", 
+          url: `/cost-matrices?region=${encodeURIComponent(region)}&buildingType=${encodeURIComponent(buildingType)}` 
+        }),
       enabled: !!region && !!buildingType,
     });
   };
@@ -49,12 +64,12 @@ export function useCostMatrix() {
     mutationFn: async (data: any[]) => {
       return apiRequest({
         method: "POST", 
-        url: "/api/cost-matrix/import", 
+        url: "/cost-matrices/import", 
         body: { data }
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
+      queryClient.invalidateQueries({ queryKey: ["/cost-matrices"] });
       toast({
         title: "Cost matrix imported",
         description: "The cost matrix entries have been successfully imported.",
@@ -74,12 +89,12 @@ export function useCostMatrix() {
     mutationFn: async ({ id, data }: { id: number; data: Partial<CostMatrix> }) => {
       return apiRequest({
         method: "PATCH", 
-        url: `/api/cost-matrix/${id}`, 
+        url: `/cost-matrices/${id}`, 
         body: data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
+      queryClient.invalidateQueries({ queryKey: ["/cost-matrices"] });
       toast({
         title: "Cost matrix updated",
         description: "The cost matrix entry has been successfully updated.",
@@ -99,11 +114,11 @@ export function useCostMatrix() {
     mutationFn: async (id: number) => {
       return apiRequest({
         method: "DELETE",
-        url: `/api/cost-matrix/${id}`
+        url: `/cost-matrices/${id}`
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
+      queryClient.invalidateQueries({ queryKey: ["/cost-matrices"] });
       toast({
         title: "Cost matrix deleted",
         description: "The cost matrix entry has been successfully deleted.",
@@ -123,12 +138,12 @@ export function useCostMatrix() {
     mutationFn: async (data: Omit<CostMatrix, "id" | "createdAt" | "updatedAt">) => {
       return apiRequest({
         method: "POST",
-        url: "/api/cost-matrix",
+        url: "/cost-matrices",
         body: data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cost-matrix"] });
+      queryClient.invalidateQueries({ queryKey: ["/cost-matrices"] });
       toast({
         title: "Cost matrix created",
         description: "A new cost matrix entry has been successfully created.",

@@ -1,0 +1,236 @@
+name: 'Terraform CI/CD Pipeline'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terrafusion/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terrafusion/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      version:
+        description: 'Version tag to deploy'
+        required: false
+        default: 'latest'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: true
+
+jobs:
+  terraform-lint:
+    name: 'Terraform Format and Validation'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Format Check
+        id: fmt
+        run: cd terrafusion && terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Initialize Terraform
+        id: init
+        run: cd terrafusion && terraform init -backend=false
+
+      - name: Validate Terraform
+        id: validate
+        run: cd terrafusion && terraform validate
+
+      - name: TFLint
+        uses: terraform-linters/tflint-action@v3
+        with:
+          working_directory: terrafusion
+
+  terraform-plan:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    needs: terraform-lint
+    if: success() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Determine Environment
+        id: environment
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=dev" >> $GITHUB_OUTPUT
+            echo "ACTION=plan" >> $GITHUB_OUTPUT
+            echo "VERSION=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Terraform Setup Script
+        id: terraform
+        run: |
+          cd terrafusion
+          ./terraform-setup.sh ${{ steps.environment.outputs.ENV }} plan ${{ steps.environment.outputs.VERSION }}
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-${{ steps.environment.outputs.ENV }}-plan
+          path: |
+            terrafusion/terraform.${{ steps.environment.outputs.ENV }}.plan
+            terrafusion/terraform.${{ steps.environment.outputs.ENV }}.log
+          retention-days: 5
+
+      - name: Comment Plan on PR
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('terrafusion/terraform.${{ steps.environment.outputs.ENV }}.log', 'utf8');
+            const comment = `## Terraform Plan for \`${{ steps.environment.outputs.ENV }}\` Environment
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${planOutput}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ steps.environment.outputs.ACTION }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  terraform-apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Run Terraform Apply
+        id: terraform
+        run: |
+          cd terrafusion
+          ./terraform-setup.sh ${{ github.event.inputs.environment }} apply ${{ github.event.inputs.version }}
+
+      - name: Upload Apply Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-${{ github.event.inputs.environment }}-apply
+          path: terrafusion/terraform.${{ github.event.inputs.environment }}.log
+          retention-days: 10
+
+  terraform-destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Confirm Destroy
+        run: |
+          echo "⚠️ DANGER: You are about to destroy the ${{ github.event.inputs.environment }} environment!"
+          echo "Waiting 10 seconds before proceeding..."
+          sleep 10
+
+      - name: Run Terraform Destroy
+        id: terraform
+        run: |
+          cd terrafusion
+          ./terraform-setup.sh ${{ github.event.inputs.environment }} destroy ${{ github.event.inputs.version }}
+
+      - name: Upload Destroy Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-${{ github.event.inputs.environment }}-destroy
+          path: terrafusion/terraform.${{ github.event.inputs.environment }}.log
+          retention-days: 30

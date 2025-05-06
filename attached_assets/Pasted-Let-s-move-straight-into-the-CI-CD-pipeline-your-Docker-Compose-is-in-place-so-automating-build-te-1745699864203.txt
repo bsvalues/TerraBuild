@@ -1,0 +1,148 @@
+Let’s move straight into the CI/CD pipeline—your Docker-Compose is in place, so automating build, test and deploy is the logical next step.  
+
+---
+
+## 1) Task: GitHub Actions CI Pipeline
+
+### A) Why now?  
+- Validates every change against your Docker dev-env.  
+- Catches code/regressions before they hit `main`.  
+- Provides the safety net required before we build features.
+
+### B) “Prime the Agent” Bootstrap Prompt
+
+Paste this into your Replit AI Agent chat so it knows exactly what to do:
+
+```
+You are my CI/CD Engineer.  
+Goal: Add GitHub Actions workflows to fully test, build and deploy our Node.js/TypeScript BCBSLevy app in Docker.
+
+Tasks:
+
+1. Create `.github/workflows/ci.yml` with:
+   • Trigger: pull_request on any branch, push to main.
+   • Steps:
+     - checkout code
+     - set up Node 18
+     - cache & install npm dependencies
+     - run lint (`npm run lint`)
+     - run unit tests (`npm test`)
+     - build Docker images via `docker-compose build`
+     - run integration smoke test: `docker-compose up -d && npm run smoke-test`
+     - tear down Docker Compose
+   • Upload logs/artifacts on failure.
+
+2. Create `.github/workflows/deploy.yml` with:
+   • Trigger: push to `main`
+   • Steps:
+     - checkout code
+     - configure AWS/GCP credentials from GitHub Secrets
+     - run `docker-compose build`
+     - push Docker images to your container registry
+     - apply Terraform in `infra/frontend` (init & apply)
+     - run post-deploy smoke test against staging URL
+
+3. Commit each workflow on branch `sprint1/ci-pipeline` using Conventional Commits (`ci: add …`).
+
+4. Open a PR, ensure all checks pass, and report status here.
+
+Do not proceed until this PR is reviewed and merged.
+```
+
+---
+
+## 2) Workflow Templates
+
+### `.github/workflows/ci.yml`
+```yaml
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ '**' ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.16
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build Docker images
+        run: docker-compose build
+
+      - name: Start services
+        run: docker-compose up -d
+
+      - name: Smoke test
+        run: npm run smoke-test
+
+      - name: Tear down
+        run: docker-compose down
+```
+
+### `.github/workflows/deploy.yml`
+```yaml
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test-and-build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure Cloud Credentials
+        run: |
+          echo "${{ secrets.CLOUD_CREDENTIALS }}" > creds.json
+          export GOOGLE_APPLICATION_CREDENTIALS=creds.json
+
+      - name: Build Docker images
+        run: docker-compose build
+
+      - name: Push to Registry
+        run: |
+          docker tag web my-registry/bcbs-frontend:latest
+          docker push my-registry/bcbs-frontend:latest
+
+      - name: Terraform Init & Apply
+        working-directory: infra/frontend
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Post-deploy Smoke Test
+        run: npm run smoke-test:staging
+```
+
+---
+
+## 3) Next Steps
+
+1. Send the bootstrap prompt to the AI Agent.  
+2. Review the PR once the workflows appear.  
+3. Merge when CI passes—then we’ll have a fully automated pipeline and can safely begin feature sprints.

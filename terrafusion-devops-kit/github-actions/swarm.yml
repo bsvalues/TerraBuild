@@ -1,0 +1,446 @@
+name: AI Agent Swarm CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'server/agents/**'
+      - 'server/mcp/**'
+      - 'server/services/**'
+      - 'data/models/**'
+      - 'data/training/**'
+      - '.github/workflows/swarm.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'server/agents/**'
+      - 'server/mcp/**'
+      - 'server/services/**'
+      - 'data/models/**'
+      - 'data/training/**'
+      - '.github/workflows/swarm.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      agentFilter:
+        description: 'Specific agent to deploy (comma-separated, leave empty for all)'
+        required: false
+        default: ''
+      forceRetrain:
+        description: 'Force agent retraining'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  AWS_REGION: us-west-2
+  BASE_IMAGE_REPOSITORY: terrafusion-agent-base
+  BASE_IMAGE_TAG: ${{ github.sha }}
+  
+jobs:
+  determine-agents:
+    name: Determine Agents to Build
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.set-agents.outputs.agents }}
+      matrix: ${{ steps.set-agents.outputs.matrix }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Determine changed agents
+        id: set-agents
+        run: |
+          # Default list of all agents
+          ALL_AGENTS="factor-tuner,benchmark-guard,curve-trainer,scenario-agent,boe-arguer"
+          
+          # If specific agent filter is provided, use that
+          if [[ -n "${{ github.event.inputs.agentFilter }}" ]]; then
+            AGENTS="${{ github.event.inputs.agentFilter }}"
+          else
+            # Otherwise, check which agents have changes
+            if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "push" ]]; then
+              CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+              
+              # Check for changes in agent-specific directories
+              if grep -q "server/agents/factor-tuner" <<< "$CHANGED_FILES" || 
+                 grep -q "server/mcp/agents/costAnalysisAgent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/models/factor-tuner" <<< "$CHANGED_FILES" || 
+                 grep -q "data/training/factor-tuner" <<< "$CHANGED_FILES"; then
+                AGENTS="${AGENTS:-}${AGENTS:+,}factor-tuner"
+              fi
+              
+              if grep -q "server/agents/benchmark-guard" <<< "$CHANGED_FILES" || 
+                 grep -q "server/mcp/agents/benchmarkAgent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/models/benchmark-guard" <<< "$CHANGED_FILES" || 
+                 grep -q "data/training/benchmark-guard" <<< "$CHANGED_FILES"; then
+                AGENTS="${AGENTS:-}${AGENTS:+,}benchmark-guard"
+              fi
+              
+              if grep -q "server/agents/curve-trainer" <<< "$CHANGED_FILES" || 
+                 grep -q "server/mcp/agents/curveAgent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/models/curve-trainer" <<< "$CHANGED_FILES" || 
+                 grep -q "data/training/curve-trainer" <<< "$CHANGED_FILES"; then
+                AGENTS="${AGENTS:-}${AGENTS:+,}curve-trainer"
+              fi
+              
+              if grep -q "server/agents/scenario-agent" <<< "$CHANGED_FILES" || 
+                 grep -q "server/mcp/agents/scenarioAgent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/models/scenario-agent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/training/scenario-agent" <<< "$CHANGED_FILES"; then
+                AGENTS="${AGENTS:-}${AGENTS:+,}scenario-agent"
+              fi
+              
+              if grep -q "server/agents/boe-arguer" <<< "$CHANGED_FILES" || 
+                 grep -q "server/mcp/agents/boeAgent" <<< "$CHANGED_FILES" || 
+                 grep -q "data/models/boe-arguer" <<< "$CHANGED_FILES" || 
+                 grep -q "data/training/boe-arguer" <<< "$CHANGED_FILES"; then
+                AGENTS="${AGENTS:-}${AGENTS:+,}boe-arguer"
+              fi
+              
+              # If shared agent code changed, include all agents
+              if grep -q "server/mcp/framework" <<< "$CHANGED_FILES" || 
+                 grep -q "server/services/" <<< "$CHANGED_FILES" ||
+                 grep -q "shared/schema.ts" <<< "$CHANGED_FILES"; then
+                AGENTS="$ALL_AGENTS"
+              fi
+            fi
+            
+            # If no specific agents identified or workflow dispatch without filter, use all
+            if [[ -z "$AGENTS" || "${{ github.event_name }}" == "workflow_dispatch" && -z "${{ github.event.inputs.agentFilter }}" ]]; then
+              AGENTS="$ALL_AGENTS"
+            fi
+          fi
+          
+          echo "Building agents: $AGENTS"
+          echo "agents=$AGENTS" >> $GITHUB_OUTPUT
+          
+          # Create JSON matrix for the build jobs
+          MATRIX_JSON="{\"agent\":["
+          IFS=',' read -ra AGENT_ARRAY <<< "$AGENTS"
+          for i in "${!AGENT_ARRAY[@]}"; do
+            if [[ $i -gt 0 ]]; then
+              MATRIX_JSON+=","
+            fi
+            MATRIX_JSON+="\"${AGENT_ARRAY[$i]}\""
+          done
+          MATRIX_JSON+="]}"
+          
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+  
+  build-base:
+    name: Build Base Agent Image
+    runs-on: ubuntu-latest
+    outputs:
+      base_image: ${{ steps.build-base-image.outputs.base_image }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-agent-base-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-agent-base-
+      
+      - name: Build and push base image
+        id: build-base-image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: terrafusion-devops-kit/docker/agent-base.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_IMAGE_REPOSITORY }}:${{ env.BASE_IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_IMAGE_REPOSITORY }}:latest
+          build-args: |
+            BUILD_VERSION=${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+      
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+      
+      - name: Set base image output
+        run: echo "base_image=${{ steps.login-ecr.outputs.registry }}/${{ env.BASE_IMAGE_REPOSITORY }}:${{ env.BASE_IMAGE_TAG }}" >> $GITHUB_OUTPUT
+  
+  test-agents:
+    name: Test Agents
+    runs-on: ubuntu-latest
+    needs: determine-agents
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run agent tests
+        run: |
+          IFS=',' read -ra AGENT_ARRAY <<< "${{ needs.determine-agents.outputs.agents }}"
+          for agent in "${AGENT_ARRAY[@]}"; do
+            echo "Running tests for $agent agent"
+            npm run test:agent -- --agent=$agent
+          done
+  
+  build-agents:
+    name: Build Agent Images
+    runs-on: ubuntu-latest
+    needs: [determine-agents, build-base, test-agents]
+    strategy:
+      matrix: ${{ fromJson(needs.determine-agents.outputs.matrix) }}
+      fail-fast: false
+    outputs:
+      image_${{ matrix.agent }}: ${{ steps.build-agent-image.outputs.agent_image }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-${{ matrix.agent }}
+          key: ${{ runner.os }}-buildx-${{ matrix.agent }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.agent }}-
+      
+      - name: Build and push agent image
+        id: build-agent-image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: terrafusion-devops-kit/docker/agents/${{ matrix.agent }}.Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:latest
+          build-args: |
+            BASE_IMAGE=${{ needs.build-base.outputs.base_image }}
+            BUILD_VERSION=${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.agent }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.agent }}-new
+      
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache-${{ matrix.agent }}
+          mv /tmp/.buildx-cache-${{ matrix.agent }}-new /tmp/.buildx-cache-${{ matrix.agent }}
+      
+      - name: Set agent image output
+        run: echo "agent_image=${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+      
+      - name: Scan agent image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/terrafusion-${{ matrix.agent }}:${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.agent }}-results.sarif
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-${{ matrix.agent }}-results.sarif
+  
+  deploy-agents:
+    name: Deploy Agents
+    runs-on: ubuntu-latest
+    needs: [determine-agents, build-agents]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') || github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set environment
+        run: echo "ENVIRONMENT=${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}" >> $GITHUB_ENV
+      
+      - name: Extract agent list
+        run: |
+          IFS=',' read -ra AGENT_ARRAY <<< "${{ needs.determine-agents.outputs.agents }}"
+          echo "AGENTS=${AGENT_ARRAY[*]}" >> $GITHUB_ENV
+      
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name terrafusion-${ENVIRONMENT} --region ${AWS_REGION}
+      
+      - name: Deploy agents
+        run: |
+          # Setup variables used in manifests
+          export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          export AWS_REGION=${AWS_REGION}
+          export AGENT_VERSION=${GITHUB_SHA}
+          export ENVIRONMENT=${ENVIRONMENT}
+          
+          # Create the namespace if it doesn't exist yet
+          kubectl apply -f terrafusion-devops-kit/k8s-manifests/agents-deployment.yaml
+          
+          for agent in ${AGENTS}; do
+            echo "Deploying agent: $agent"
+            
+            # Check if the deployment already exists
+            if kubectl get deployment ${agent} -n terrafusion-agents &>/dev/null; then
+              # Update existing deployment
+              kubectl set image deployment/${agent} ${agent}=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/terrafusion-${agent}:${GITHUB_SHA} -n terrafusion-agents
+              kubectl rollout status deployment/${agent} -n terrafusion-agents --timeout=300s
+            else
+              # Create new deployment 
+              envsubst < terrafusion-devops-kit/k8s-manifests/agents-deployment.yaml | kubectl apply -f -
+            fi
+          done
+      
+      - name: Trigger agent retraining
+        if: github.event.inputs.forceRetrain == 'true'
+        run: |
+          # Get API gateway URL
+          API_GATEWAY=$(kubectl get service -n api-gateway kong-kong-proxy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          
+          for agent in ${AGENTS}; do
+            echo "Triggering retraining for $agent"
+            curl -X POST "http://${API_GATEWAY}/api/agents/${agent}/retrain" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
+              -d '{"force": true}'
+          done
+      
+      - name: Notify on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ AI Agent Swarm deployment to ${{ env.ENVIRONMENT }} successful!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ AI Agent Swarm Deployment Successful"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ env.ENVIRONMENT }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Agents:*\n${{ env.AGENTS }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deployed by:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<${{ github.event.repository.html_url }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ AI Agent Swarm deployment to ${{ env.ENVIRONMENT }} failed!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ AI Agent Swarm Deployment Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ env.ENVIRONMENT }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Agents:*\n${{ env.AGENTS }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Attempted by:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<${{ github.event.repository.html_url }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

@@ -10,8 +10,12 @@ import { RefreshCw } from "lucide-react";
 // Import all page components
 import DashboardPage from "@/pages/DashboardPage";
 import CalculatorPage from "@/pages/CalculatorPage";
+import EnhancedCalculatorPage from "@/pages/EnhancedCalculatorPage";
+import EnhancedCalculatorPageV2 from "@/pages/EnhancedCalculatorPageV2";
+import WorkflowDashboardPage from "@/pages/WorkflowDashboardPage";
 import UsersPage from "@/pages/users-page";
 import LandingPage from "@/pages/LandingPage";
+import AuthPage from "@/pages/auth-page";
 import AIToolsPage from "@/pages/AIToolsPage";
 import AICostWizardPage from "@/pages/AICostWizardPage";
 import ARVisualizationPage from "@/pages/ARVisualizationPage";
@@ -44,22 +48,26 @@ import FTPConnectionTestPage from "@/pages/FTPConnectionTestPage";
 import ContextualDataPage from "@/pages/contextual-data";
 import PropertyBrowserPage from "@/pages/PropertyBrowserPage";
 import PropertyDetailsPage from "@/pages/PropertyDetailsPage";
+import InfrastructureLifecyclePage from "@/pages/InfrastructureLifecyclePage";
 import GeoAssessmentPage from "@/pages/GeoAssessmentPage";
 import MCPVisualizationsPage from "@/pages/MCPVisualizationsPage";
 import SupabaseTestPage from "@/pages/SupabaseTestPage";
 import CostWizardPage from "@/pages/CostWizardPage";
+import CostCalculator from "@/pages/CostCalculator";
+import SwarmPage from "@/pages/SwarmPage";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider } from "./contexts/auth-context";
 import { CollaborationProvider } from "./contexts/CollaborationContext";
 import { SidebarProvider } from "./contexts/SidebarContext";
 import { WindowProvider } from "./contexts/WindowContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import DataFlowProvider from "@/contexts/DataFlowContext";
 import TerraBuildThemeProvider from "./components/TerraBuildThemeProvider";
 // Import for NavigationMenuProvider has been removed
 import SupabaseProvider from "@/components/supabase/SupabaseProvider";
 import { EnhancedSupabaseProvider } from "@/components/supabase/EnhancedSupabaseProvider";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // Add TypeScript declaration for our custom window property
 declare global {
@@ -213,8 +221,9 @@ const ErrorHandlerWrapper = () => {
   // For development mode, set mock admin user directly in the query cache
   useEffect(() => {
     try {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Setting up mock admin user for development");
+        // Set mock user data directly to avoid HTML parsing issues
         queryClient.setQueryData(["/api/user"], {
           id: 1,
           username: "admin",
@@ -222,6 +231,29 @@ const ErrorHandlerWrapper = () => {
           role: "admin",
           isActive: true
         });
+        
+        // Set up a mock implementation for fetch when requesting user data
+        const originalFetch = window.fetch;
+        window.fetch = function(input, init) {
+          // Check if this is a request to /api/user or /api/auth/user
+          if (typeof input === 'string' && 
+              (input.endsWith('/api/user') || input.endsWith('/api/auth/user'))) {
+            console.log("Intercepting auth request in development mode");
+            return Promise.resolve({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve({
+                id: 1,
+                username: "admin",
+                name: "Admin User",
+                role: "admin",
+                isActive: true
+              })
+            } as Response);
+          }
+          // Otherwise, use the original fetch
+          return originalFetch(input as RequestInfo, init);
+        };
       }
     } catch (error) {
       console.error("Error setting up mock user:", error);
@@ -253,6 +285,7 @@ function Router() {
     <Switch>
       {/* Use LandingPage as the root route without authentication */}
       <Route path="/" component={LandingPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/documentation" component={DocumentationPage} />
       <Route path="/tutorials" component={TutorialsPage} />
       <Route path="/faq" component={FAQPage} />
@@ -279,7 +312,10 @@ function Router() {
       
       {/* Other protected routes */}
       <ProtectedRouteWrapper path="/dashboard" component={DashboardPage} />
-      <ProtectedRouteWrapper path="/calculator" component={CalculatorPage} />
+      <ProtectedRouteWrapper path="/calculator" component={EnhancedCalculatorPage} />
+      <ProtectedRouteWrapper path="/calculator-v2" component={EnhancedCalculatorPageV2} />
+      <ProtectedRouteWrapper path="/workflows" component={WorkflowDashboardPage} />
+      <ProtectedRouteWrapper path="/calculator-old" component={CalculatorPage} />
       <ProtectedRouteWrapper path="/analytics" component={AnalyticsPage} />
       <ProtectedRouteWrapper path="/users" component={UsersPage} />
       <ProtectedRouteWrapper path="/ai-tools" component={AIToolsPage} />
@@ -293,6 +329,7 @@ function Router() {
       <ProtectedRouteWrapper path="/reports" component={ReportsPage} />
       <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
       <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
+      <ProtectedRouteWrapper path="/infrastructure-lifecycle" component={InfrastructureLifecyclePage} />
       <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />
       <ProtectedRouteWrapper path="/statistical-analysis" component={StatisticalAnalysisDemo} />
       <ProtectedRouteWrapper path="/cost-trend-analysis" component={CostTrendAnalysisDemo} />
@@ -307,6 +344,8 @@ function Router() {
       <ProtectedRouteWrapper path="/properties/:id" component={PropertyDetailsPage} />
       <ProtectedRouteWrapper path="/geo-assessment" component={GeoAssessmentPage} />
       <ProtectedRouteWrapper path="/mcp-visualizations" component={MCPVisualizationsPage} />
+      <ProtectedRouteWrapper path="/cost-calculator" component={CostCalculator} />
+      <ProtectedRouteWrapper path="/ai-swarm" component={SwarmPage} />
       
       <Route component={NotFound} />
     </Switch>
@@ -341,14 +380,17 @@ function App() {
             <RemixIconLink />
             <ErrorHandlerWrapper />
             <EnhancedSupabaseProvider>
-              <AuthProvider>
-                <SidebarProvider>
-                  <WindowProvider>
-                    <Router />
-                    <Toaster />
-                  </WindowProvider>
-                </SidebarProvider>
-              </AuthProvider>
+              <WindowProvider>
+                {/* Using only the AuthProvider to prevent duplicate context issues */}
+                <AuthProvider>
+                  <DataFlowProvider>
+                    <SidebarProvider>
+                      <Router />
+                      <Toaster />
+                    </SidebarProvider>
+                  </DataFlowProvider>
+                </AuthProvider>
+              </WindowProvider>
             </EnhancedSupabaseProvider>
           </ThemeProvider>
         </TerraBuildThemeProvider>

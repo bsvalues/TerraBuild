@@ -51,7 +51,7 @@ interface QuickExportButtonProps {
  */
 export default function QuickExportButton({
   contentSelector = '.dashboard-content',
-  filename = 'benton-county-export',
+  filename = 'terrabuild-export',
   data,
   showExportAnimation = true,
   variant = 'outline',
@@ -134,7 +134,7 @@ export default function QuickExportButton({
         pdf.rect(0, 0, pdfWidth, 20, 'F');
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(16);
-        pdf.text('Benton County Building Cost System', margin, 14);
+        pdf.text('TerraBuild', margin, 14);
         
         // Set y position after header
         let yPosition = 30;
@@ -293,7 +293,7 @@ export default function QuickExportButton({
         pdf.setTextColor(100, 100, 100);
         pdf.setFontSize(8);
         pdf.text(`Generated: ${timestamp}`, margin, pdfHeight - 5);
-        pdf.text(`© Benton County, Washington`, pdfWidth - 60, pdfHeight - 5);
+        pdf.text(`© TerraBuild - Benton County`, pdfWidth - 60, pdfHeight - 5);
         
         // Save the PDF
         pdf.save(`${filename}.pdf`);
@@ -410,7 +410,7 @@ export default function QuickExportButton({
       const colWidths = Object.keys(exportData[0]).map(key => ({ wch: Math.max(key.length, 10) }));
       ws['!cols'] = colWidths;
       
-      XLSX.utils.book_append_sheet(wb, ws, 'Benton County Data');
+      XLSX.utils.book_append_sheet(wb, ws, 'TerraBuild Data');
       
       // Generate the Excel file as a blob
       const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -572,7 +572,7 @@ export default function QuickExportButton({
       printWindow.document.write(`
         <html>
           <head>
-            <title>Benton County Building Cost System - Print</title>
+            <title>TerraBuild - Print</title>
             <style>
               body { 
                 font-family: Arial, sans-serif;
@@ -652,7 +652,7 @@ export default function QuickExportButton({
           <body>
             <div class="print-header">
               <div class="print-logo">
-                <span class="logo-text">Benton County Building Cost System</span>
+                <span class="logo-text">TerraBuild</span>
               </div>
             </div>
             
@@ -663,7 +663,7 @@ export default function QuickExportButton({
             
             <div class="print-footer">
               <p>Generated: ${new Date().toLocaleString()}</p>
-              <p>© Benton County, Washington</p>
+              <p>© TerraBuild - Benton County</p>
             </div>
           </body>
         </html>

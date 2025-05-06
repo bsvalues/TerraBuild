@@ -72,7 +72,7 @@ export function FilterControlPanel({
   
   // Fetch building cost data for max cost value calculation
   const { data: costMatrixData } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
   
   // Update max cost value based on data

@@ -18,11 +18,31 @@ export * from './fileUploadSchema';
  *********************/
 
 // Users Table
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: text("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [
+    {
+      name: "IDX_session_expire",
+      columns: [table.expire],
+    },
+  ]
+);
+
+// User storage table for Replit Auth
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  userId: uuid('user_id').defaultRandom().notNull().unique(),
-  email: text('email').notNull().unique(),
-  name: text('name'),
+  id: text('id').primaryKey().notNull(),
+  username: text('username').unique().notNull(),
+  email: text('email').unique(),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  bio: text('bio'),
+  profileImageUrl: text('profile_image_url'),
   role: text('role').default('user').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -31,10 +51,10 @@ export const users = pgTable('users', {
   preferences: json('preferences').$type<{ theme?: string; notifications?: boolean }>(),
 });
 
-// User Sessions Table
+// User Sessions Table (legacy - replaced by sessions table for OIDC)
 export const userSessions = pgTable('user_sessions', {
   id: serial('id').primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.userId, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   sessionToken: text('session_token').notNull().unique(),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -261,7 +281,7 @@ export const ageFactors = pgTable('age_factors', {
 // Calculation History Table
 export const calculations = pgTable('calculation_history', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id'),
+  userId: text('user_id').references(() => users.id),
   squareFootage: integer('square_footage'),
   createdAt: timestamp('created_at').defaultNow(),
   buildingType: text('building_type'),
@@ -291,7 +311,7 @@ export const projects = pgTable('projects', {
   projectId: uuid('project_id').defaultRandom().notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
-  ownerId: uuid('owner_id').notNull().references(() => users.userId),
+  ownerId: text('owner_id').notNull().references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   status: text('status').default('active').notNull(),
@@ -303,10 +323,10 @@ export const projects = pgTable('projects', {
 export const projectMembers = pgTable('project_members', {
   id: serial('id').primaryKey(),
   projectId: uuid('project_id').notNull().references(() => projects.projectId, { onDelete: 'cascade' }),
-  userId: uuid('user_id').notNull().references(() => users.userId, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   role: text('role').default('member').notNull(),
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
-  invitedBy: uuid('invited_by').references(() => users.userId),
+  invitedBy: text('invited_by').references(() => users.id),
   lastActivity: timestamp('last_activity'),
 });
 
@@ -316,7 +336,7 @@ export const projectProperties = pgTable('project_properties', {
   projectId: uuid('project_id').notNull().references(() => projects.projectId, { onDelete: 'cascade' }),
   propertyId: uuid('property_id').notNull().references(() => properties.propertyId, { onDelete: 'cascade' }),
   addedAt: timestamp('added_at').defaultNow().notNull(),
-  addedBy: uuid('added_by').references(() => users.userId),
+  addedBy: text('added_by').references(() => users.id),
   notes: text('notes'),
 });
 
@@ -339,7 +359,7 @@ export const matrixImports = pgTable('matrix_imports', {
   fileName: text('file_name').notNull(),
   fileSize: integer('file_size'),
   importDate: timestamp('import_date').defaultNow().notNull(),
-  importedBy: uuid('imported_by').references(() => users.userId),
+  importedBy: text('imported_by').references(() => users.id),
   status: text('status').notNull(),
   recordsProcessed: integer('records_processed'),
   recordsImported: integer('records_imported'),
@@ -356,7 +376,7 @@ export const dataImports = pgTable('data_imports', {
   importType: text('import_type').notNull(),
   fileName: text('file_name'),
   importDate: timestamp('import_date').defaultNow().notNull(),
-  importedBy: uuid('imported_by').references(() => users.userId),
+  importedBy: text('imported_by').references(() => users.id),
   status: text('status').notNull(),
   recordsProcessed: integer('records_processed'),
   recordsImported: integer('records_imported'),
@@ -364,6 +384,22 @@ export const dataImports = pgTable('data_imports', {
   errors: json('errors').$type<string[]>(),
   source: text('source'),
   notes: text('notes'),
+});
+
+/*********************
+ * MONITORING
+ *********************/
+
+// Agent Status Table for monitoring
+export const agentStatus = pgTable('agent_status', {
+  id: serial('id').primaryKey(),
+  agentId: text('agent_id').notNull().unique(),
+  status: text('status').notNull().default('offline'),
+  lastActive: timestamp('last_active').defaultNow(),
+  metadata: json('metadata').$type<Record<string, any>>().default({}),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 /*********************
@@ -425,7 +461,7 @@ export const costMatrixRelations = relations(costMatrix, ({ one, many }) => ({
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   owner: one(users, {
     fields: [projects.ownerId],
-    references: [users.userId],
+    references: [users.id],
     relationName: 'projectOwner',
   }),
   members: many(projectMembers),
@@ -454,7 +490,7 @@ export const insertCostMatrixSchema = createInsertSchema(costMatrix)
 
 // Calculation Insert Schema
 export const insertCalculationSchema = createInsertSchema(calculations)
-  .omit({ id: true, calculationDate: true });
+  .omit({ id: true, createdAt: true });
 
 // Project Insert Schema
 export const insertProjectSchema = createInsertSchema(projects)
@@ -463,6 +499,10 @@ export const insertProjectSchema = createInsertSchema(projects)
 // Settings Insert Schema
 export const insertSettingSchema = createInsertSchema(settings)
   .omit({ id: true });
+
+// Agent Status Insert Schema  
+export const insertAgentStatusSchema = createInsertSchema(agentStatus)
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 /*********************
  * TYPES
@@ -495,3 +535,6 @@ export type AgeFactor = typeof ageFactors.$inferSelect;
 export type MatrixDetail = typeof matrixDetail.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+
+export type AgentStatus = typeof agentStatus.$inferSelect;
+export type InsertAgentStatus = z.infer<typeof insertAgentStatusSchema>;

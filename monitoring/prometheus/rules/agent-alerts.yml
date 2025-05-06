@@ -1,0 +1,62 @@
+groups:
+- name: TerraFusion-Agent-Alerts
+  rules:
+  - alert: AgentDown
+    expr: up{job="terrafusion-agents"} == 0
+    for: 5m
+    labels:
+      severity: critical
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} is down"
+      description: "Agent {{ $labels.agent }} has been down for more than 5 minutes."
+      
+  - alert: AgentHighErrorRate
+    expr: rate(agent_errors_total{job="terrafusion-agents"}[5m]) > 0.1
+    for: 10m
+    labels:
+      severity: warning
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} has high error rate"
+      description: "Agent {{ $labels.agent }} has a high error rate (>10%) over the last 10 minutes."
+      
+  - alert: AgentLowSuccessRate
+    expr: agent_success_rate{job="terrafusion-agents"} < 0.8
+    for: 15m
+    labels:
+      severity: warning
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} has low success rate"
+      description: "Agent {{ $labels.agent }} has a success rate below 80% over the last 15 minutes."
+      
+  - alert: AgentHighLatency
+    expr: histogram_quantile(0.95, sum(rate(agent_request_duration_seconds_bucket{job="terrafusion-agents"}[5m])) by (agent, le)) > 10
+    for: 10m
+    labels:
+      severity: warning
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} has high latency"
+      description: "Agent {{ $labels.agent }} has a 95th percentile latency above 10 seconds over the last 10 minutes."
+      
+  - alert: AgentMemoryHigh
+    expr: process_resident_memory_bytes{job="terrafusion-agents"} > 2000 * 1024 * 1024
+    for: 10m
+    labels:
+      severity: warning
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} has high memory usage"
+      description: "Agent {{ $labels.agent }} is using more than 2GB of memory for more than 10 minutes."
+      
+  - alert: AgentNoActivity
+    expr: rate(agent_executions_total{job="terrafusion-agents"}[1h]) == 0
+    for: 1h
+    labels:
+      severity: warning
+      component: agent
+    annotations:
+      summary: "Agent {{ $labels.agent }} has no activity"
+      description: "Agent {{ $labels.agent }} has not executed any tasks for the last hour."

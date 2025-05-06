@@ -39,8 +39,8 @@ const ExportPdfDialog = ({ calculation, trigger }: ExportPdfDialogProps) => {
   const [showLogo, setShowLogo] = useState(true);
   const [includeDate, setIncludeDate] = useState(true);
   const [includeMaterials, setIncludeMaterials] = useState(true);
-  const [title, setTitle] = useState('Benton County Building Cost Report');
-  const [contactInfo, setContactInfo] = useState('Benton County Building Department • (555) 123-4567 • building@bentoncounty.gov');
+  const [title, setTitle] = useState('TerraBuild - Building Cost Report');
+  const [contactInfo, setContactInfo] = useState('TerraBuild - Benton County • (555) 123-4567 • support@terrabuild.gov');
   const [includeNotes, setIncludeNotes] = useState(false);
   const [notes, setNotes] = useState('');
 

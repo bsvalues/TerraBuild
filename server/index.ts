@@ -1,9 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
+import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
+import { setupAuth } from "./replitAuth";
+import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 
 const app = express();
@@ -56,15 +59,42 @@ app.use((req, res, next) => {
     log(`MCP initialization error: ${error}`, 'error');
   }
   
+  // Setup authentication with Replit Auth
+  try {
+    await setupAuth(app);
+    // Setup County Network Authentication
+    setupCountyNetworkAuth(app);
+    log('Authentication system initialized successfully');
+  } catch (error) {
+    log(`Authentication initialization error: ${error}`, 'error');
+  }
+  
   // Apply Benton County format middleware to API responses
   app.use(bentonCountyFormatMiddleware());
   app.use(bentonCountyHeadersMiddleware());
   
-  // Register API routes
-  app.use('/api', routes);
-  
   // Create HTTP server
   const server = createServer(app);
+
+  // Create specific monitoring routes that must be accessible even in development
+  // These routes should be prioritized over Vite's middleware
+  app.use('/api', monitoringRoutes);
+  
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (app.get("env") === "development") {
+    // In development, we need to register API routes AFTER Vite setup
+    // This is because of how Vite handles requests in middleware mode
+    await setupVite(app, server);
+    
+    // Register remaining API routes after Vite middleware
+    app.use('/api', routes);
+  } else {
+    // In production, register routes first, then serve static files
+    app.use('/api', routes);
+    serveStatic(app);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -73,15 +103,6 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.

@@ -1,0 +1,107 @@
+version: "1.0.0"
+environment: dev
+
+# Default settings applied to all agents unless overridden
+default_settings:
+  memory: persistent
+  feedback_loop: true
+  log_level: info
+  metrics_enabled: true
+  sensitivity: medium
+
+# Agent definitions
+agents:
+  - name: factor-tuner
+    version: 1.0.0
+    description: Optimizes adjustment factors for cost calculations
+    mode: autonomous
+    schedule: "0 */6 * * *" # Every 6 hours
+    memory: persistent
+    sensitivity: medium
+    on_anomaly: suggest_correction
+    settings:
+      optimization_algorithm: bayesian
+      convergence_threshold: "0.01"
+      max_iterations: 100
+
+  - name: benchmark-guard
+    version: 1.0.0
+    description: Monitors and validates benchmark data accuracy
+    mode: watchdog
+    alert_threshold: "0.15"
+    sensitivity: high
+    on_anomaly: log_and_notify
+    settings:
+      benchmark_dataset: historical_benchmarks
+      detection_algorithm: isolation_forest
+      confidence_threshold: "0.85"
+
+  - name: curve-trainer
+    version: 1.0.0
+    description: Trains and updates cost prediction curves
+    mode: autonomous
+    schedule: "0 0 * * 1" # Every Monday at midnight
+    max_outputs: 5
+    settings:
+      training_algorithm: gradient_boost
+      cross_validation: "true"
+      feature_selection: auto
+
+  - name: scenario-agent
+    version: 1.0.0
+    description: Creates what-if scenarios for cost impact analysis
+    mode: suggestive
+    trigger_on: user_request
+    settings:
+      scenario_types: market,regulatory,environmental
+      max_variations: 5
+      probability_weighting: "true"
+
+  - name: boe-arguer
+    version: 1.0.0
+    description: Generates arguments and evidence for BOE hearings
+    mode: collaborative
+    settings:
+      case_database: precedent_db
+      evidence_threshold: substantial
+      legal_framework: washington_state
+
+# Coordination settings
+coordination:
+  conflict_resolution: priority_based
+  agent_priorities:
+    - benchmark-guard
+    - factor-tuner
+    - curve-trainer
+    - scenario-agent
+    - boe-arguer
+  communication_allowed: true
+  shared_memory_enabled: true
+  orchestrator: default
+  max_concurrent_agents: 3
+  health_check_interval: 30s
+  retry_policy:
+    max_retries: 3
+    backoff_factor: 2
+    initial_delay: 1s
+
+# Observability settings
+observability:
+  metrics_endpoint: /metrics
+  logging:
+    format: json
+    destination: stdout
+    additional_outputs:
+      - type: file
+        url: /var/log/terrafusion/agents.log
+  tracing:
+    enabled: true
+    sampler_type: probabilistic
+    sampler_param: 0.1
+    exporter: jaeger
+  alerting:
+    channels:
+      - name: ops_team
+        webhook: https://hooks.slack.com/services/TXXXXXXXX/BXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX
+      - name: emergency
+        recipients: oncall@benton-county.org

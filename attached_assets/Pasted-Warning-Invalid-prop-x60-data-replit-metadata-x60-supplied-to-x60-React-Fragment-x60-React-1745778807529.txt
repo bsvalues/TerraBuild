@@ -1,0 +1,19 @@
+Warning: Invalid prop &#x60;data-replit-metadata&#x60; supplied to &#x60;React.Fragment&#x60;. React.Fragment can only have &#x60;key&#x60; and &#x60;children&#x60; props.
+    at PageShell (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/layout/PageShell.tsx:29:3)
+    at WorkflowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/TerraBuildUserFlow.tsx:50:3)
+    at EnhancedCalculatorPage (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/pages/EnhancedCalculatorPage.tsx:1759:24)
+    at ProtectedRoute (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/auth/protected-route.tsx:21:42)
+    at Route (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8341f921:323:16)
+    at ProtectedRouteWrapper (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/App.tsx?t=1745777133777&v=iz6St3aDLgeK0PR0ykuBb:188:34)
+    at Switch (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=8341f921:379:17)
+    at Router
+    at WindowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at SidebarProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/SidebarContext.tsx:38:35)
+    at DataFlowProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/DataFlowContext.tsx:26:29)
+    at AuthProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/auth-context.tsx:22:32)
+    at EnhancedSupabaseProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/supabase/EnhancedSupabaseProvider.tsx:52:3)
+    at ThemeProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/contexts/ThemeContext.tsx:30:33)
+    at TerraBuildThemeProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/TerraBuildThemeProvider.tsx:31:3)
+    at QueryClientProvider (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=8341f921:2805:3)
+    at ErrorBoundary (https://cf52961e-57b1-49f9-8566-789d05aeb278-00-3e7a8h5ivjt46.kirk.replit.dev/src/components/ErrorBoundary.tsx:10:5)
+    at App

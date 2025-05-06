@@ -33,7 +33,7 @@ export interface PDFOptions {
 }
 
 const defaultOptions: PDFOptions = {
-  title: 'Benton County Building Cost Report',
+  title: 'TerraBuild - Building Cost Report',
   showLogo: true,
   includeDate: true,
   includeMaterials: true,

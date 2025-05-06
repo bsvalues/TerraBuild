@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { 
   User, 
@@ -35,17 +36,31 @@ interface HeaderProps {
 
 export default function Header({ isLanding = false }: HeaderProps) {
   const [, navigate] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const { toggleSidebar } = useSidebar();
+  const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [hasNotifications, setHasNotifications] = React.useState(true);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+    if (logout) {
+      try {
+        await logout();
+        toast({
+          description: "You have been logged out successfully",
+        });
+        // The redirect will be handled by the Auth Provider
+      } catch (error) {
+        console.error('Logout error:', error);
+        toast({
+          variant: "destructive",
+          title: "Logout failed",
+          description: "There was a problem logging you out. Please try again.",
+        });
+      }
+    } else {
+      // Fallback for direct redirect if the logout method is not available
+      window.location.href = '/api/logout';
     }
   };
 

@@ -186,7 +186,7 @@ export function PredictiveCostAnalysis({ className = '' }: PredictiveCostAnalysi
 
   // Fetch cost matrix data for available options
   const { data: costMatrixData } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Extract available options from cost matrix data

@@ -120,7 +120,7 @@ export function ComparativeAnalysis({
 
   // Fetch cost matrix data
   const { data: costMatrixData, isLoading } = useQuery({
-    queryKey: ['/api/cost-matrix'],
+    queryKey: ['/cost-matrices'],
   });
 
   // Extract available regions and building types from data

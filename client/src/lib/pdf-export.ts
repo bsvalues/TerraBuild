@@ -14,7 +14,7 @@ function ensureString(value: string | undefined | null): string {
 }
 
 // Logo and branding
-const COMPANY_NAME = "Benton County Building Cost System";
+const COMPANY_NAME = "TerraBuild - Benton County Property Assessment Platform";
 const REPORT_TITLE = "Building Cost Report";
 
 // Blue theme colors for PDF

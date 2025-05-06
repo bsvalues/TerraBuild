@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import TerraBuildAppBar from "@/components/TerraBuildAppBar";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { BentonColors } from '@/components/BentonBranding';
 import { SidebarProvider } from '@/contexts/SidebarContext';

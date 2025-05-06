@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/data/constants";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/hooks/use-auth";
 import BentonBranding, { BentonColors } from '@/components/BentonBranding';
 import {
   BarChart3,
@@ -35,7 +35,8 @@ import {
   PinOff,
   ExternalLink,
   Maximize2,
-  MinusSquare
+  MinusSquare,
+  RefreshCw
 } from "lucide-react";
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useWindow } from '@/contexts/WindowContext';
@@ -358,8 +359,20 @@ export default function Sidebar({ className }: SidebarProps) {
                 href="/calculator"
                 title="Cost Calculator"
                 icon={<Calculator />}
+              />
+              <SidebarItem
+                href="/calculator-v2"
+                title="Enhanced Calculator"
+                icon={<Calculator />}
                 badge="New"
                 badgeColor="bg-[#e6eef2] text-[#243E4D]"
+              />
+              <SidebarItem
+                href="/workflows"
+                title="Workflow Dashboard"
+                icon={<RefreshCw />}
+                badge="New"
+                badgeColor="bg-blue-100 text-blue-800"
               />
               <SidebarItem
                 href="/analytics"
@@ -410,9 +423,23 @@ export default function Sidebar({ className }: SidebarProps) {
                 icon={<LineChart />}
               />
               <SidebarItem
+                href="/infrastructure-lifecycle"
+                title="Infrastructure Lifecycle"
+                icon={<RefreshCw />}
+                badge="New"
+                badgeColor="bg-[#e8f8fb] text-[#29B7D3]"
+              />
+              <SidebarItem
                 href="/what-if-scenarios"
                 title="What-If Scenarios"
                 icon={<Activity />}
+              />
+              <SidebarItem
+                href="/ai-swarm"
+                title="AI Swarm"
+                icon={<BrainCircuit />}
+                badge="New"
+                badgeColor="bg-[#f0e6e6] text-[#8B3D3D]"
               />
             </SidebarSection>
             

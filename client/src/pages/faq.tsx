@@ -19,8 +19,8 @@ export default function FAQPage() {
       category: "General Questions",
       items: [
         {
-          question: "What is the Benton County Building Cost System?",
-          answer: "The Benton County Building Cost System (BCBS) is the official tool used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington. It uses real construction data to provide accurate cost estimations based on building type, size, and location."
+          question: "What is TerraBuild?",
+          answer: "TerraBuild (formerly BCBS) is the official property assessment platform used by county assessors, property managers, and construction professionals to accurately estimate building costs across Benton County, Washington. It uses real construction data to provide accurate cost estimations based on building type, size, and location."
         },
         {
           question: "Who can access and use the BCBS?",
@@ -120,7 +120,7 @@ export default function FAQPage() {
               Frequently Asked Questions
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Find answers to common questions about the Benton County Building Cost System
+              Find answers to common questions about TerraBuild - Benton County's Property Assessment Platform
             </p>
           </motion.div>
           
