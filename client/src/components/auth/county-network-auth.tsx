@@ -19,11 +19,22 @@ export function CountyNetworkAuth() {
     onNetwork: boolean;
   }>({ checking: true, onNetwork: false });
   const [error, setError] = useState<string | null>(null);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Check if user is on county network
   useEffect(() => {
     async function checkCountyNetwork() {
       try {
+        // In development mode, automatically set onNetwork to true
+        if (isDevelopment) {
+          console.log("Development mode: Auto-enabling county network access");
+          setNetworkStatus({
+            checking: false,
+            onNetwork: true
+          });
+          return;
+        }
+
         const response = await fetch('/api/county-network-status');
         const data = await response.json();
         setNetworkStatus({
@@ -34,13 +45,24 @@ export function CountyNetworkAuth() {
         console.error('Error checking county network status:', err);
         setNetworkStatus({
           checking: false,
-          onNetwork: false
+          // Always allow network access in development mode, even on error
+          onNetwork: isDevelopment
         });
       }
     }
 
     checkCountyNetwork();
-  }, []);
+  }, [isDevelopment]);
+
+  // Auto-login in development mode
+  useEffect(() => {
+    // If we're in development mode and the component has determined we're on the network,
+    // automatically log in without requiring button click
+    if (isDevelopment && networkStatus.onNetwork && !isLoading && !error) {
+      console.log("Development mode: Auto-logging in with county credentials");
+      handleCountyNetworkLogin();
+    }
+  }, [networkStatus.onNetwork, isDevelopment, isLoading]);
 
   // Function to handle county network login
   const handleCountyNetworkLogin = async () => {
