@@ -372,6 +372,7 @@ export type Calculation = typeof calculations.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type ProjectMember = typeof projectMembers.$inferSelect;
 export type ProjectProperty = typeof projectProperties.$inferSelect;
+export type FileUpload = typeof fileUploads.$inferSelect;
 
 // Calculation table
 export const calculations = pgTable("calculations", {
@@ -402,6 +403,34 @@ export const projects = pgTable("projects", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   completedAt: timestamp("completed_at"),
+});
+
+// File uploads table
+export const fileUploads = pgTable("file_uploads", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  filename: text("filename").notNull(),
+  originalFilename: text("original_filename"),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size"),
+  status: text("status").default("pending"),
+  processingDetails: jsonb("processing_details"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
+// Settings table for application and user settings
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(),
+  key: text("key").notNull(),
+  value: jsonb("value"),
+  userId: integer("user_id").references(() => users.id),
+  description: text("description"),
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Project members table
@@ -472,6 +501,20 @@ export const projectPropertiesRelations = relations(projectProperties, ({ one })
   }),
 }));
 
+export const fileUploadsRelations = relations(fileUploads, ({ one }) => ({
+  user: one(users, {
+    fields: [fileUploads.userId],
+    references: [users.id],
+  }),
+}));
+
+export const settingsRelations = relations(settings, ({ one }) => ({
+  user: one(users, {
+    fields: [settings.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBuildingTypeSchema = createInsertSchema(buildingTypes).omit({ id: true, lastUpdated: true });
@@ -490,6 +533,8 @@ export const insertCalculationSchema = createInsertSchema(calculations).omit({ i
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true, updatedAt: true, completedAt: true });
 export const insertProjectMemberSchema = createInsertSchema(projectMembers).omit({ id: true, addedAt: true });
 export const insertProjectPropertySchema = createInsertSchema(projectProperties).omit({ id: true, addedAt: true });
+export const insertFileUploadSchema = createInsertSchema(fileUploads).omit({ id: true, createdAt: true, processedAt: true });
+export const insertSettingSchema = createInsertSchema(settings).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -509,3 +554,6 @@ export type InsertCalculation = z.infer<typeof insertCalculationSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
 export type InsertProjectProperty = z.infer<typeof insertProjectPropertySchema>;
+export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type Setting = typeof settings.$inferSelect;
