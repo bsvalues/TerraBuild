@@ -7,7 +7,7 @@
 
 import express from 'express';
 import { z } from 'zod';
-import storage from './storage';
+import { storage } from './storage';
 import analyticsRoutes from './routes/analyticsRoutes';
 import reportRoutes from './routes/reportRoutes';
 import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';

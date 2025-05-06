@@ -14,7 +14,7 @@
  */
 
 import { Request, Response } from 'express';
-import storage from '../storage';
+import { storage } from '../storage';
 
 /**
  * Generate time series data for cost trends
