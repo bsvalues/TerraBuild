@@ -8,6 +8,8 @@ import { initMCP } from "./mcp";
 import { setupAuth } from "./replitAuth";
 import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
+import { storage } from "./storage";
+import { setStorage } from "./ai/shap_agent";
 
 const app = express();
 app.use(express.json());
@@ -48,6 +50,10 @@ app.use((req, res, next) => {
   try {
     await initDatabase();
     log('Database initialized successfully');
+    
+    // Initialize SHAP agent with the storage
+    setStorage(storage);
+    log('SHAP agent initialized with storage');
   } catch (error) {
     log(`Database initialization error: ${error}`, 'error');
   }

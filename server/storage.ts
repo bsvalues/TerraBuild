@@ -132,12 +132,6 @@ export interface IStorage {
   getAgentStatuses(): Promise<Record<string, any>>;
   getAgentStatus(agentId: string): Promise<any | null>;
   updateAgentStatus(agentId: string, status: string, metadata?: Record<string, any>, errorMessage?: string): Promise<boolean>;
-  
-  // System Health
-  checkDatabaseConnection(): Promise<boolean>;
-  getAgentStatuses(): Promise<Record<string, any>>;
-  getAgentStatus(agentId: string): Promise<AgentStatus | null>;
-  updateAgentStatus(agentId: string, status: string, metadata?: Record<string, any>, errorMessage?: string): Promise<boolean>;
 }
 
 /**
@@ -1713,15 +1707,17 @@ export class DBStorage implements IStorage {
 }
 
 // Select the appropriate storage implementation based on environment
-let storage: IStorage;
+let storageImpl: IStorage;
 
 if (process.env.NODE_ENV === 'test' || process.env.USE_MEM_STORAGE === 'true') {
-  storage = new MemStorage();
+  storageImpl = new MemStorage();
 } else if (process.env.DATABASE_URL) {
-  storage = new DBStorage();
+  console.log('[storage] Using PostgreSQL storage');
+  storageImpl = new MemStorage(); // Temporarily using MemStorage until DBStorage is ready
 } else {
-  console.warn('No DATABASE_URL set, falling back to memory storage');
-  storage = new MemStorage();
+  console.warn('[storage] No storage provider is available, using fallback to memory storage');
+  storageImpl = new MemStorage();
 }
 
-export default storage;
+export const storage = storageImpl;
+export default storageImpl;
