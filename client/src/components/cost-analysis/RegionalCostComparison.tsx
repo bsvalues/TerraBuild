@@ -133,32 +133,54 @@ const RegionalCostComparison: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<number | null>(null);
 
-  // For now, we'll use static data based on the database findings
-  // This represents the actual data from the geographic_regions table
-  const regionsData = [
-    { id: 1, name: 'East Benton', regionCode: 'BC-EAST', description: 'Eastern region of Benton County' },
-    { id: 2, name: 'Central Benton', regionCode: 'BC-CENTRAL', description: 'Central region of Benton County' },
-    { id: 3, name: 'West Benton', regionCode: 'BC-WEST', description: 'Western region of Benton County' }
-  ];
+  // Fetch geographic regions from the database
+  const { data: regionsData = [], isLoading: isLoadingRegions, error: regionsError } = useQuery({
+    queryKey: ['/api/geography/regions'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('/api/geography/regions');
+        console.log('Regions API response:', response);
+        return response.success ? response.data : [];
+      } catch (error) {
+        console.error('Error fetching regions:', error);
+        return [];
+      }
+    }
+  });
+
+  // Fetch municipalities based on selected region
+  const { data: municipalitiesData = [], isLoading: isLoadingMunicipalities } = useQuery({
+    queryKey: ['/api/geography/municipalities', selectedRegionId],
+    queryFn: async () => {
+      if (!selectedRegionId) return [];
+      try {
+        const response = await apiRequest(`/api/geography/municipalities?regionId=${selectedRegionId}`);
+        console.log('Municipalities API response:', response);
+        return response.success ? response.data : [];
+      } catch (error) {
+        console.error('Error fetching municipalities:', error);
+        return [];
+      }
+    },
+    enabled: !!selectedRegionId
+  });
   
-  // Static data for municipalities based on database findings
-  const allMunicipalities = [
-    { id: 1, name: 'Kennewick', municipalityCode: 'KENNEWICK', regionId: 1 },
-    { id: 2, name: 'Finley', municipalityCode: 'FINLEY', regionId: 1 },
-    { id: 3, name: 'Benton City', municipalityCode: 'BENTON_CITY', regionId: 2 },
-    { id: 4, name: 'Prosser', municipalityCode: 'PROSSER', regionId: 2 },
-    { id: 5, name: 'Richland', municipalityCode: 'RICHLAND', regionId: 3 },
-    { id: 6, name: 'West Richland', municipalityCode: 'WEST_RICHLAND', regionId: 3 }
-  ];
-  
-  // Filter municipalities based on selected region
-  const municipalitiesData = useMemo(() => {
-    if (selectedRegionId === null) return [];
-    return allMunicipalities.filter(m => m.regionId === selectedRegionId);
-  }, [selectedRegionId]);
-  
-  // We don't have neighborhood data in the database yet, so we'll use an empty array
-  const neighborhoodsData = [];
+  // Fetch neighborhoods based on selected municipality
+  const { data: neighborhoodsData = [], isLoading: isLoadingNeighborhoods } = useQuery({
+    queryKey: ['/api/geography/neighborhoods', selectedMunicipalityId],
+    queryFn: async () => {
+      if (!selectedMunicipalityId) return [];
+      try {
+        const response = await apiRequest(`/api/geography/neighborhoods?municipalityId=${selectedMunicipalityId}`);
+        console.log('Neighborhoods API response:', response);
+        return response.success ? response.data : [];
+      } catch (error) {
+        console.error('Error fetching neighborhoods:', error);
+        return [];
+      }
+    },
+    enabled: !!selectedMunicipalityId
+  });
 
   // Fetch cost matrix data - note: using mock data in development since the cost_matrices table doesn't exist yet
   const { data: costMatrixData, isLoading, error } = useQuery({
