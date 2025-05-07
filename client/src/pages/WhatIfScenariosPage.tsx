@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import ScenarioResults from "../components/scenarios/ScenarioResults";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle, Edit, Trash2, Save, BarChartHorizontal } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 // Define scenario types for TypeScript
 interface Scenario {
@@ -93,6 +94,7 @@ export default function WhatIfScenariosPage() {
   // Fetch scenarios from API
   const { data: scenarios, isLoading, error } = useQuery<Scenario[]>({
     queryKey: ["/api/what-if-scenarios"],
+    queryFn: () => apiRequest("/api/what-if-scenarios"),
     refetchOnWindowFocus: false,
   });
   
