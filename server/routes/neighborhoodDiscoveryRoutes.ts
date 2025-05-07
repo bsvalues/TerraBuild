@@ -235,24 +235,22 @@ router.get('/codes', async (req, res) => {
  */
 async function getBasicHoodCdData() {
   try {
-    // First try to get property counts by hood_cd
-    const properties = await db.select({
-      hood_cd: schema.properties.hood_cd,
-    })
-    .from(schema.properties)
-    .where(
-      schema.properties.hood_cd.neq('').and(
-        schema.properties.hood_cd.is.not.null()
-      )
+    // First try to get property counts by hood_cd using raw SQL for compatibility
+    const properties = await db.execute(
+      `SELECT hood_cd FROM properties WHERE hood_cd IS NOT NULL AND hood_cd != ''`
     );
     
     // Group by hood_cd and count
     const hoodCdCounts: Record<string, number> = {};
-    properties.forEach(p => {
-      if (p.hood_cd) {
-        hoodCdCounts[p.hood_cd] = (hoodCdCounts[p.hood_cd] || 0) + 1;
-      }
-    });
+    
+    // Handle the raw result from execute which is an array of objects
+    if (Array.isArray(properties.rows)) {
+      properties.rows.forEach(p => {
+        if (p.hood_cd) {
+          hoodCdCounts[p.hood_cd] = (hoodCdCounts[p.hood_cd] || 0) + 1;
+        }
+      });
+    }
     
     // Convert to array of objects
     const result = Object.entries(hoodCdCounts)
@@ -280,12 +278,13 @@ async function getBasicHoodCdData() {
  */
 async function getBasicNeighborhoodData(hood_cd: string) {
   try {
-    const properties = await db.select()
-      .from(schema.properties)
-      .where(schema.properties.hood_cd.eq(hood_cd))
-      .limit(100);
+    const properties = await db.execute(
+      `SELECT * FROM properties WHERE hood_cd = $1 LIMIT 100`,
+      [hood_cd]
+    );
     
-    if (properties.length === 0) {
+    // Check if we have any properties
+    if (!properties.rows || properties.rows.length === 0) {
       return null;
     }
     
@@ -294,7 +293,7 @@ async function getBasicNeighborhoodData(hood_cd: string) {
     return {
       hood_cd,
       prefix,
-      propertyCount: properties.length,
+      propertyCount: properties.rows.length,
       name: `Neighborhood ${hood_cd}`,
       confidence: 0.5
     };

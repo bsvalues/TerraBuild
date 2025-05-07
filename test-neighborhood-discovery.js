@@ -50,7 +50,7 @@ async function main() {
     console.error('Neighborhood codes request failed:', error.message);
   }
   
-  // Test the neighborhood discovery endpoint
+  // Test the neighborhood discovery endpoint with a timeout
   try {
     console.log('\nTesting neighborhood discovery...');
     const discoveryParams = {
@@ -59,12 +59,21 @@ async function main() {
       limitResults: 5
     };
     
-    const discoveryResponse = await fetch(`${API_URL}/neighborhoods/discover`, {
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
+    });
+    
+    // Create the actual fetch promise
+    const fetchPromise = fetch(`${API_URL}/neighborhoods/discover`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(discoveryParams)
     });
     
+    // Race the fetch against the timeout
+    console.log('Sending discovery request (with 5 second timeout)...');
+    const discoveryResponse = await Promise.race([fetchPromise, timeoutPromise]);
     const discoveryData = await discoveryResponse.json();
     
     if (discoveryData.success) {
@@ -86,9 +95,11 @@ async function main() {
     }
   } catch (error) {
     console.error('Neighborhood discovery request failed:', error.message);
+    console.log('This may be expected if the agent processing is still running');
+    console.log('You can check the agent logs for processing status');
   }
   
-  // Test the neighborhood analysis endpoint with a sample hood_cd
+  // Test the neighborhood analysis endpoint with a sample hood_cd and timeout
   try {
     console.log('\nTesting neighborhood analysis...');
     
@@ -100,7 +111,17 @@ async function main() {
       const sampleHoodCd = encodeURIComponent(hoodData.data[0].hood_cd);
       console.log(`Analyzing neighborhood with hood_cd: ${sampleHoodCd}`);
       
-      const analysisResponse = await fetch(`${API_URL}/neighborhoods/analyze/${sampleHoodCd}`);
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out after 5 seconds')), 5000);
+      });
+      
+      // Create the actual fetch promise
+      const fetchPromise = fetch(`${API_URL}/neighborhoods/analyze/${sampleHoodCd}`);
+      
+      // Race the fetch against the timeout
+      console.log('Sending analysis request (with 5 second timeout)...');
+      const analysisResponse = await Promise.race([fetchPromise, timeoutPromise]);
       const analysisData = await analysisResponse.json();
       
       if (analysisData.success) {
@@ -120,6 +141,8 @@ async function main() {
     }
   } catch (error) {
     console.error('Neighborhood analysis request failed:', error.message);
+    console.log('This may be expected if the agent processing is still running');
+    console.log('You can check the agent logs for processing status');
   }
   
   console.log('\nNeighborhood Discovery API test completed');

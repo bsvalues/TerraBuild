@@ -19,6 +19,7 @@ import { propertyHeatmapRoutes } from './routes/propertyHeatmapRoutes';
 import { gisImportRoutes } from './routes/gisImportRoutes';
 import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
+import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
@@ -762,6 +763,7 @@ router.use('/property-heatmap', propertyHeatmapRoutes);
 router.use('/gis-import', gisImportRoutes);
 router.use('/geo-mapping', geoMappingRoutes);
 router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
+router.use('/search', smartSearchRoutes);
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 
