@@ -201,6 +201,19 @@ export class GeoMappingAgent {
   }
 
   /**
+   * Convert a GeographicNeighborhood to Neighborhood for our use
+   */
+  private convertToNeighborhood(geoNeighborhood: any): Neighborhood {
+    return {
+      id: geoNeighborhood.id,
+      municipalityId: geoNeighborhood.municipalityId || 0, // Default to 0 if null to match type
+      hood_cd: geoNeighborhood.hoodCd,
+      name: geoNeighborhood.name,
+      description: geoNeighborhood.description
+    };
+  }
+
+  /**
    * Get neighborhood by hood_cd
    */
   private async getNeighborhoodByHoodCd(hood_cd: string): Promise<Neighborhood | undefined> {
@@ -211,7 +224,7 @@ export class GeoMappingAgent {
         .from(schema.geographicNeighborhoods)
         .where(eq(schema.geographicNeighborhoods.hoodCd, hood_cd));
       
-      return neighborhood;
+      return neighborhood ? this.convertToNeighborhood(neighborhood) : undefined;
     } catch (error) {
       console.error(`Error getting neighborhood by hood_cd ${hood_cd}:`, error);
       return undefined;
@@ -433,10 +446,7 @@ export class GeoMappingAgent {
       // Check if neighborhood already exists
       const existing = await this.getNeighborhoodByHoodCd(hood_cd);
       if (existing) {
-        return {
-          ...existing,
-          hood_cd: existing.hoodCd // Map to our type structure
-        };
+        return existing; // Already converted by getNeighborhoodByHoodCd
       }
       
       // Create new neighborhood
@@ -444,17 +454,14 @@ export class GeoMappingAgent {
         .insert(schema.geographicNeighborhoods)
         .values({
           hoodCd: hood_cd,
-          municipalityId,
+          municipalityId: municipalityId || 0, // Ensure we never insert null
           name: name || `Neighborhood ${hood_cd}`,
           description: `Auto-mapped from property data with hood_cd ${hood_cd}`
         })
         .returning();
       
-      // Convert to our Neighborhood type
-      return {
-        ...neighborhood,
-        hood_cd: neighborhood.hoodCd // Map to our type structure
-      };
+      // Convert to our Neighborhood type using our converter
+      return this.convertToNeighborhood(neighborhood);
     } catch (error) {
       console.error(`Error creating neighborhood mapping for hood_cd ${hood_cd}:`, error);
       throw new Error(`Failed to create neighborhood mapping: ${error.message}`);
