@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import {
   BarChart,
   Bar,
@@ -136,12 +137,13 @@ const RegionalCostComparison: React.FC = () => {
   const { data: regionsData } = useQuery({
     queryKey: ['/api/geography/regions'],
     queryFn: async () => {
-      const response = await fetch('/api/geography/regions');
-      if (!response.ok) {
-        throw new Error('Failed to fetch regions');
+      try {
+        const data = await apiRequest('/api/geography/regions');
+        return data.success ? data.data : [];
+      } catch (error) {
+        console.error('Error fetching regions:', error);
+        return [];
       }
-      const data = await response.json();
-      return data.success ? data.data : [];
     }
   });
 
@@ -150,12 +152,13 @@ const RegionalCostComparison: React.FC = () => {
     queryKey: ['/api/geography/municipalities', selectedRegionId],
     enabled: selectedRegionId !== null,
     queryFn: async () => {
-      const response = await fetch(`/api/geography/municipalities?regionId=${selectedRegionId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch municipalities');
+      try {
+        const data = await apiRequest(`/api/geography/municipalities?regionId=${selectedRegionId}`);
+        return data.success ? data.data : [];
+      } catch (error) {
+        console.error('Error fetching municipalities:', error);
+        return [];
       }
-      const data = await response.json();
-      return data.success ? data.data : [];
     }
   });
 
@@ -164,12 +167,13 @@ const RegionalCostComparison: React.FC = () => {
     queryKey: ['/api/geography/neighborhoods', selectedMunicipalityId],
     enabled: selectedMunicipalityId !== null,
     queryFn: async () => {
-      const response = await fetch(`/api/geography/neighborhoods?municipalityId=${selectedMunicipalityId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch neighborhoods');
+      try {
+        const data = await apiRequest(`/api/geography/neighborhoods?municipalityId=${selectedMunicipalityId}`);
+        return data.success ? data.data : [];
+      } catch (error) {
+        console.error('Error fetching neighborhoods:', error);
+        return [];
       }
-      const data = await response.json();
-      return data.success ? data.data : [];
     }
   });
 
