@@ -71,22 +71,15 @@ router.get('/', async (req, res) => {
     // Get property suggestions if requested
     if (property) {
       try {
-        // Find properties that match the query (address, geo_id, prop_id, etc.)
+        // Find properties that match the query (simpler query that will work with our current schema)
         const propertyResults = await db.execute(
-          `SELECT id, hood_cd, geo_id, prop_id, address, legal_description 
+          `SELECT id, hood_cd, geo_id, legal_desc, prop_id
            FROM properties 
-           WHERE (geo_id ILIKE $1 OR 
-                 prop_id ILIKE $1 OR 
-                 address ILIKE $1 OR 
-                 legal_description ILIKE $1)
-           ORDER BY 
-             CASE WHEN geo_id ILIKE $2 THEN 0
-                  WHEN prop_id ILIKE $2 THEN 1
-                  WHEN address ILIKE $2 THEN 2
-                  ELSE 3
-             END
-           LIMIT $3`,
-          [`%${query}%`, `${query}%`, limit]
+           WHERE (geo_id::text LIKE $1 OR 
+                 prop_id::text LIKE $1 OR 
+                 legal_desc::text LIKE $1)
+           LIMIT $2`,
+          [`%${query}%`, limit]
         );
 
         if (propertyResults.rows && propertyResults.rows.length > 0) {
@@ -94,13 +87,13 @@ router.get('/', async (req, res) => {
             id: row.id,
             geo_id: row.geo_id,
             prop_id: row.prop_id,
-            address: row.address || 'No address',
+            address: row.legal_desc || `Property ID: ${row.prop_id || row.geo_id || row.id}`,
             neighborhood: row.hood_cd,
-            description: row.legal_description ? 
-              (row.legal_description.length > 100 ? 
-                `${row.legal_description.substring(0, 100)}...` : 
-                row.legal_description) : 
-              'No description'
+            description: row.legal_desc ? 
+              (row.legal_desc.length > 100 ? 
+                `${row.legal_desc.substring(0, 100)}...` : 
+                row.legal_desc) : 
+              'No description available'
           }));
         }
       } catch (error) {
@@ -129,10 +122,9 @@ router.get('/', async (req, res) => {
  */
 router.get('/neighborhoods', async (req, res) => {
   try {
-    const { query, limit } = searchQuerySchema.parse({
-      query: req.query.query,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10
-    });
+    const { query = "", limit = 10 } = req.query;
+    const queryStr = query as string;
+    const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit as number;
 
     // Find neighborhoods that match the query
     const neighborhoodResults = await db.execute(
@@ -144,7 +136,7 @@ router.get('/neighborhoods', async (req, res) => {
        GROUP BY hood_cd 
        ORDER BY property_count DESC 
        LIMIT $2`,
-      [`%${query}%`, limit]
+      [`%${queryStr}%`, limitNum]
     );
 
     const neighborhoods = [];
@@ -179,27 +171,19 @@ router.get('/neighborhoods', async (req, res) => {
  */
 router.get('/properties', async (req, res) => {
   try {
-    const { query, limit } = searchQuerySchema.parse({
-      query: req.query.query,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 10
-    });
+    const { query = "", limit = 10 } = req.query;
+    const queryStr = query as string;
+    const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit as number;
 
-    // Find properties that match the query
+    // Find properties that match the query (simpler query that will work with our current schema)
     const propertyResults = await db.execute(
-      `SELECT id, hood_cd, geo_id, prop_id, address, legal_description 
+      `SELECT id, hood_cd, geo_id, legal_desc, prop_id
        FROM properties 
-       WHERE (geo_id ILIKE $1 OR 
-             prop_id ILIKE $1 OR 
-             address ILIKE $1 OR 
-             legal_description ILIKE $1)
-       ORDER BY 
-         CASE WHEN geo_id ILIKE $2 THEN 0
-              WHEN prop_id ILIKE $2 THEN 1
-              WHEN address ILIKE $2 THEN 2
-              ELSE 3
-         END
-       LIMIT $3`,
-      [`%${query}%`, `${query}%`, limit]
+       WHERE (geo_id::text LIKE $1 OR 
+             prop_id::text LIKE $1 OR 
+             legal_desc::text LIKE $1)
+       LIMIT $2`,
+      [`%${queryStr}%`, limitNum]
     );
 
     const properties = [];
@@ -209,13 +193,13 @@ router.get('/properties', async (req, res) => {
         id: row.id,
         geo_id: row.geo_id,
         prop_id: row.prop_id,
-        address: row.address || 'No address',
+        address: row.legal_desc || `Property ID: ${row.prop_id || row.geo_id || row.id}`,
         neighborhood: row.hood_cd,
-        description: row.legal_description ? 
-          (row.legal_description.length > 100 ? 
-            `${row.legal_description.substring(0, 100)}...` : 
-            row.legal_description) : 
-          'No description'
+        description: row.legal_desc ? 
+          (row.legal_desc.length > 100 ? 
+            `${row.legal_desc.substring(0, 100)}...` : 
+            row.legal_desc) : 
+          'No description available'
       })));
     }
 
