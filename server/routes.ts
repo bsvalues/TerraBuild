@@ -183,6 +183,7 @@ router.delete('/improvements/:id', asyncHandler(async (req, res) => {
  * Cost Matrix Routes
  */
 router.get('/cost-matrices', asyncHandler(async (req, res) => {
+  console.log('[DEBUG] GET /cost-matrices endpoint called');
   const { buildingType, region, year } = req.query;
   const filter: Record<string, any> = {};
   
@@ -190,8 +191,15 @@ router.get('/cost-matrices', asyncHandler(async (req, res) => {
   if (region) filter.region = region;
   if (year) filter.year = parseInt(year as string);
   
-  const matrices = await storage.getCostMatrices(Object.keys(filter).length ? filter : undefined);
-  res.json(matrices);
+  console.log('[DEBUG] Fetching cost matrices with filter:', filter);
+  try {
+    const matrices = await storage.getCostMatrices(Object.keys(filter).length ? filter : undefined);
+    console.log(`[DEBUG] Found ${matrices ? matrices.length : 0} matrices`);
+    res.json(matrices || []);
+  } catch (error) {
+    console.error('[ERROR] Failed to get cost matrices:', error);
+    res.status(500).json({ message: 'Failed to fetch cost matrices', error: error.message });
+  }
 }));
 
 router.get('/cost-matrices/:id', asyncHandler(async (req, res) => {

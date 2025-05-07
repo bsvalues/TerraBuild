@@ -99,10 +99,115 @@ const RegionalCostComparison: React.FC = () => {
   const [useAdjustedCosts, setUseAdjustedCosts] = useState(true);
   const [chartType, setChartType] = useState('bar'); // 'bar', 'line', 'pie'
 
-  // Fetch cost matrix data
+  // Fetch cost matrix data - note: using mock data in development since the cost_matrices table doesn't exist yet
   const { data: costMatrixData, isLoading, error } = useQuery({
     queryKey: ['/api/cost-matrices'],
     staleTime: 60000, // 1 minute
+    queryFn: async () => {
+      // In development, return mock data since the table doesn't exist yet
+      // This will be replaced with actual API data once the database is set up
+      return [
+        {
+          id: 1,
+          region: 'West Benton',
+          buildingType: 'RES1',
+          buildingTypeDescription: 'Single Family Residence',
+          baseCost: 110.25,
+          matrixYear: 2025,
+          complexityFactorBase: 1.0,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 2,
+          region: 'East Benton',
+          buildingType: 'RES1',
+          buildingTypeDescription: 'Single Family Residence',
+          baseCost: 105.75,
+          matrixYear: 2025,
+          complexityFactorBase: 1.0,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 3,
+          region: 'Central Benton',
+          buildingType: 'RES1',
+          buildingTypeDescription: 'Single Family Residence',
+          baseCost: 115.50,
+          matrixYear: 2025,
+          complexityFactorBase: 1.0,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 4,
+          region: 'West Benton',
+          buildingType: 'COM1',
+          buildingTypeDescription: 'Commercial Office',
+          baseCost: 130.75,
+          matrixYear: 2025,
+          complexityFactorBase: 1.2,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 5,
+          region: 'East Benton',
+          buildingType: 'COM1',
+          buildingTypeDescription: 'Commercial Office',
+          baseCost: 125.25,
+          matrixYear: 2025,
+          complexityFactorBase: 1.2,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 6,
+          region: 'Central Benton',
+          buildingType: 'COM1',
+          buildingTypeDescription: 'Commercial Office',
+          baseCost: 135.00,
+          matrixYear: 2025,
+          complexityFactorBase: 1.2,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 7,
+          region: 'West Benton',
+          buildingType: 'IND1',
+          buildingTypeDescription: 'Light Industrial',
+          baseCost: 95.50,
+          matrixYear: 2025,
+          complexityFactorBase: 1.1,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 8,
+          region: 'East Benton',
+          buildingType: 'IND1',
+          buildingTypeDescription: 'Light Industrial',
+          baseCost: 90.25,
+          matrixYear: 2025,
+          complexityFactorBase: 1.1,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        },
+        {
+          id: 9,
+          region: 'Central Benton',
+          buildingType: 'IND1',
+          buildingTypeDescription: 'Light Industrial',
+          baseCost: 98.75,
+          matrixYear: 2025,
+          complexityFactorBase: 1.1,
+          qualityFactorBase: 1.0,
+          conditionFactorBase: 1.0
+        }
+      ];
+    }
   });
 
   // Get unique regions and building types for filters
