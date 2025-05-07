@@ -134,9 +134,9 @@ const RegionalCostComparison: React.FC = () => {
 
   // Fetch geographic regions
   const { data: regionsData } = useQuery({
-    queryKey: ['/api/geographic/regions'],
+    queryKey: ['/api/geography/regions'],
     queryFn: async () => {
-      const response = await fetch('/api/geographic/regions');
+      const response = await fetch('/api/geography/regions');
       if (!response.ok) {
         throw new Error('Failed to fetch regions');
       }
@@ -147,10 +147,10 @@ const RegionalCostComparison: React.FC = () => {
 
   // Fetch municipalities when a region is selected
   const { data: municipalitiesData } = useQuery({
-    queryKey: ['/api/geographic/municipalities', selectedRegionId],
+    queryKey: ['/api/geography/municipalities', selectedRegionId],
     enabled: selectedRegionId !== null,
     queryFn: async () => {
-      const response = await fetch(`/api/geographic/municipalities?regionId=${selectedRegionId}`);
+      const response = await fetch(`/api/geography/municipalities?regionId=${selectedRegionId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch municipalities');
       }
@@ -161,10 +161,10 @@ const RegionalCostComparison: React.FC = () => {
 
   // Fetch neighborhoods when a municipality is selected
   const { data: neighborhoodsData } = useQuery({
-    queryKey: ['/api/geographic/neighborhoods', selectedMunicipalityId],
+    queryKey: ['/api/geography/neighborhoods', selectedMunicipalityId],
     enabled: selectedMunicipalityId !== null,
     queryFn: async () => {
-      const response = await fetch(`/api/geographic/neighborhoods?municipalityId=${selectedMunicipalityId}`);
+      const response = await fetch(`/api/geography/neighborhoods?municipalityId=${selectedMunicipalityId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch neighborhoods');
       }
