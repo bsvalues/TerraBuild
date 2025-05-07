@@ -497,10 +497,17 @@ const RegionalCostComparison: React.FC = () => {
     );
     
     // Find the selected region's ID for fetching municipalities
-    if (regionsData) {
+    if (regionsData && Array.isArray(regionsData)) {
       const selectedRegion = regionsData.find((r: GeographicRegion) => r.name === region);
       if (selectedRegion) {
-        setSelectedRegionId(selectedRegion.id);
+        setSelectedRegionId(prev => prev === selectedRegion.id ? null : selectedRegion.id);
+        
+        // Clear selected municipality and neighborhoods when changing regions
+        if (selectedRegionId !== selectedRegion.id) {
+          setSelectedMunicipalityId(null);
+          setSelectedMunicipalities([]);
+          setSelectedNeighborhoods([]);
+        }
       }
     }
   };
@@ -514,10 +521,15 @@ const RegionalCostComparison: React.FC = () => {
     );
     
     // Find the selected municipality's ID for fetching neighborhoods
-    if (municipalitiesData) {
+    if (municipalitiesData && Array.isArray(municipalitiesData)) {
       const selectedMunicipality = municipalitiesData.find((m: GeographicMunicipality) => m.name === municipality);
       if (selectedMunicipality) {
-        setSelectedMunicipalityId(selectedMunicipality.id);
+        setSelectedMunicipalityId(prev => prev === selectedMunicipality.id ? null : selectedMunicipality.id);
+        
+        // Clear selected neighborhoods when changing municipalities
+        if (selectedMunicipalityId !== selectedMunicipality.id) {
+          setSelectedNeighborhoods([]);
+        }
       }
     }
   };
@@ -599,18 +611,30 @@ const RegionalCostComparison: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {regions.map(region => (
-                  <Badge 
-                    key={region} 
-                    variant={selectedRegions.includes(region) ? "default" : "outline"}
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => handleRegionChange(region)}
-                  >
-                    {region}
-                  </Badge>
-                ))}
-              </div>
+              {isLoadingRegions ? (
+                <div className="flex flex-wrap gap-2">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-8 w-28" />
+                </div>
+              ) : regionsData && Array.isArray(regionsData) && regionsData.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {regionsData.map((region: GeographicRegion) => (
+                    <Badge 
+                      key={region.id} 
+                      variant={selectedRegions.includes(region.name) ? "default" : "outline"}
+                      className="cursor-pointer hover:opacity-80"
+                      onClick={() => handleRegionChange(region.name)}
+                    >
+                      {region.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground py-2">
+                  No regions found
+                </div>
+              )}
             </CardContent>
           </Card>
 
