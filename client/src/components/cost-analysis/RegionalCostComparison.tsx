@@ -43,7 +43,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Building2,
-  Map
+  Map,
+  Home,
+  MapPin,
+  Landmark
 } from 'lucide-react';
 import { 
   Table, 
@@ -70,6 +73,30 @@ const COLORS = [
   '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'
 ];
 
+// Types for geographic data
+interface GeographicRegion {
+  id: number;
+  name: string;
+  regionCode: string;
+  description?: string | null;
+}
+
+interface GeographicMunicipality {
+  id: number;
+  name: string;
+  municipalityCode: string;
+  regionId: number;
+  description?: string | null;
+}
+
+interface GeographicNeighborhood {
+  id: number;
+  name: string;
+  hoodCd: string;
+  municipalityId: number;
+  description?: string | null;
+}
+
 // Types for cost matrix data from the API
 interface CostMatrixData {
   id: number;
@@ -81,6 +108,8 @@ interface CostMatrixData {
   complexityFactorBase: number;
   qualityFactorBase: number;
   conditionFactorBase: number;
+  municipality?: string;
+  neighborhood?: string;
 }
 
 // Type for our data with calculated properties
@@ -92,12 +121,57 @@ interface EnhancedCostMatrixData extends CostMatrixData {
 const RegionalCostComparison: React.FC = () => {
   // State for filters
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedMunicipalities, setSelectedMunicipalities] = useState<string[]>([]);
+  const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([]);
   const [selectedBuildingTypes, setSelectedBuildingTypes] = useState<string[]>([]);
   const [complexityFactor, setComplexityFactor] = useState(1);
   const [qualityFactor, setQualityFactor] = useState(1);
   const [conditionFactor, setConditionFactor] = useState(1);
   const [useAdjustedCosts, setUseAdjustedCosts] = useState(true);
   const [chartType, setChartType] = useState('bar'); // 'bar', 'line', 'pie'
+  const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
+  const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<number | null>(null);
+
+  // Fetch geographic regions
+  const { data: regionsData } = useQuery({
+    queryKey: ['/api/geographic/regions'],
+    queryFn: async () => {
+      const response = await fetch('/api/geographic/regions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch regions');
+      }
+      const data = await response.json();
+      return data.success ? data.data : [];
+    }
+  });
+
+  // Fetch municipalities when a region is selected
+  const { data: municipalitiesData } = useQuery({
+    queryKey: ['/api/geographic/municipalities', selectedRegionId],
+    enabled: selectedRegionId !== null,
+    queryFn: async () => {
+      const response = await fetch(`/api/geographic/municipalities?regionId=${selectedRegionId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch municipalities');
+      }
+      const data = await response.json();
+      return data.success ? data.data : [];
+    }
+  });
+
+  // Fetch neighborhoods when a municipality is selected
+  const { data: neighborhoodsData } = useQuery({
+    queryKey: ['/api/geographic/neighborhoods', selectedMunicipalityId],
+    enabled: selectedMunicipalityId !== null,
+    queryFn: async () => {
+      const response = await fetch(`/api/geographic/neighborhoods?municipalityId=${selectedMunicipalityId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch neighborhoods');
+      }
+      const data = await response.json();
+      return data.success ? data.data : [];
+    }
+  });
 
   // Fetch cost matrix data - note: using mock data in development since the cost_matrices table doesn't exist yet
   const { data: costMatrixData, isLoading, error } = useQuery({
@@ -260,9 +334,11 @@ const RegionalCostComparison: React.FC = () => {
   const filteredData = useMemo(() => {
     return enhancedData.filter(item => 
       (selectedRegions.length === 0 || selectedRegions.includes(item.region)) &&
-      (selectedBuildingTypes.length === 0 || selectedBuildingTypes.includes(item.buildingType))
+      (selectedBuildingTypes.length === 0 || selectedBuildingTypes.includes(item.buildingType)) &&
+      (selectedMunicipalities.length === 0 || (item.municipality && selectedMunicipalities.includes(item.municipality))) &&
+      (selectedNeighborhoods.length === 0 || (item.neighborhood && selectedNeighborhoods.includes(item.neighborhood)))
     );
-  }, [enhancedData, selectedRegions, selectedBuildingTypes]);
+  }, [enhancedData, selectedRegions, selectedBuildingTypes, selectedMunicipalities, selectedNeighborhoods]);
 
   // Calculate region averages
   const regionAverages = useMemo(() => {
@@ -409,6 +485,40 @@ const RegionalCostComparison: React.FC = () => {
       prev.includes(region) 
         ? prev.filter(r => r !== region)
         : [...prev, region]
+    );
+    
+    // Find the selected region's ID for fetching municipalities
+    if (regionsData) {
+      const selectedRegion = regionsData.find((r: GeographicRegion) => r.name === region);
+      if (selectedRegion) {
+        setSelectedRegionId(selectedRegion.id);
+      }
+    }
+  };
+
+  // Handle municipality selection
+  const handleMunicipalityChange = (municipality: string) => {
+    setSelectedMunicipalities(prev => 
+      prev.includes(municipality) 
+        ? prev.filter(m => m !== municipality)
+        : [...prev, municipality]
+    );
+    
+    // Find the selected municipality's ID for fetching neighborhoods
+    if (municipalitiesData) {
+      const selectedMunicipality = municipalitiesData.find((m: GeographicMunicipality) => m.name === municipality);
+      if (selectedMunicipality) {
+        setSelectedMunicipalityId(selectedMunicipality.id);
+      }
+    }
+  };
+
+  // Handle neighborhood selection
+  const handleNeighborhoodChange = (neighborhood: string) => {
+    setSelectedNeighborhoods(prev => 
+      prev.includes(neighborhood) 
+        ? prev.filter(n => n !== neighborhood)
+        : [...prev, neighborhood]
     );
   };
 
@@ -570,6 +680,75 @@ const RegionalCostComparison: React.FC = () => {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Geographic Filters - Municipalities and Neighborhoods */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Municipalities Filter */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Landmark className="mr-2 h-4 w-4" /> 
+                Municipalities
+              </CardTitle>
+              <CardDescription>
+                {selectedRegionId ? 'Select municipalities from the chosen region' : 'Select a region first to see municipalities'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {municipalitiesData && municipalitiesData.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {municipalitiesData.map((municipality: GeographicMunicipality) => (
+                    <Badge 
+                      key={municipality.id} 
+                      variant={selectedMunicipalities.includes(municipality.name) ? "default" : "outline"}
+                      className="cursor-pointer hover:opacity-80"
+                      onClick={() => handleMunicipalityChange(municipality.name)}
+                    >
+                      {municipality.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground py-2">
+                  {selectedRegionId ? 'No municipalities found for the selected region' : 'Please select a region first'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Neighborhoods Filter */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Home className="mr-2 h-4 w-4" /> 
+                Neighborhoods
+              </CardTitle>
+              <CardDescription>
+                {selectedMunicipalityId ? 'Select neighborhoods from the chosen municipality' : 'Select a municipality first to see neighborhoods'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {neighborhoodsData && neighborhoodsData.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {neighborhoodsData.map((neighborhood: GeographicNeighborhood) => (
+                    <Badge 
+                      key={neighborhood.id} 
+                      variant={selectedNeighborhoods.includes(neighborhood.name) ? "default" : "outline"}
+                      className="cursor-pointer hover:opacity-80"
+                      onClick={() => handleNeighborhoodChange(neighborhood.name)}
+                    >
+                      {neighborhood.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground py-2">
+                  {selectedMunicipalityId ? 'No neighborhoods found for the selected municipality' : 'Please select a municipality first'}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
