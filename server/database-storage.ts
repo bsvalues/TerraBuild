@@ -217,11 +217,12 @@ export class DatabaseStorage implements IStorage {
 
   async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | null> {
     // Using costMatrix (singular) which is the correct table name
+    // Field names match the actual database schema columns
     const result = await db.select().from(schema.costMatrix).where(
       and(
-        eq(schema.costMatrix.buildingType, buildingTypeCode), // field name should match schema
-        eq(schema.costMatrix.region, county), // field name should match schema
-        eq(schema.costMatrix.year, year)
+        eq(schema.costMatrix.building_type, buildingTypeCode), 
+        eq(schema.costMatrix.county, county),
+        eq(schema.costMatrix.matrix_year, year) // Using matrix_year which is the field in the database
       )
     );
     return result[0] || null;
@@ -235,9 +236,10 @@ export class DatabaseStorage implements IStorage {
 
   async updateCostMatrix(id: number, matrixData: Partial<CostMatrix>): Promise<CostMatrix | null> {
     // Using costMatrix (singular) which is the correct table name
+    // Using updated_at which is the field in the database
     const [result] = await db
       .update(schema.costMatrix)
-      .set({ ...matrixData, updatedAt: new Date() })
+      .set({ ...matrixData, updated_at: new Date() })
       .where(eq(schema.costMatrix.id, id))
       .returning();
     return result || null;
