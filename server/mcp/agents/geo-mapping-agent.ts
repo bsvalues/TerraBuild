@@ -228,11 +228,24 @@ export class GeoMappingAgent {
         .from(schema.geographicMunicipalities)
         .where(eq(schema.geographicMunicipalities.id, id));
       
-      return municipality;
+      return municipality ? this.convertToMunicipality(municipality) : undefined;
     } catch (error) {
       console.error(`Error getting municipality by ID ${id}:`, error);
       return undefined;
     }
+  }
+
+  /**
+   * Convert a GeographicMunicipality to Municipality for our use
+   */
+  private convertToMunicipality(geoMunicipality: any): Municipality {
+    return {
+      id: geoMunicipality.id,
+      regionId: geoMunicipality.regionId,
+      name: geoMunicipality.name,
+      code: geoMunicipality.municipalityCode, // Use municipalityCode as code
+      description: geoMunicipality.description
+    };
   }
 
   /**
@@ -254,11 +267,24 @@ export class GeoMappingAgent {
         lowercaseName.includes(m.name.toLowerCase())
       );
       
-      return match;
+      return match ? this.convertToMunicipality(match) : undefined;
     } catch (error) {
       console.error(`Error getting municipality by name ${name}:`, error);
       return undefined;
     }
+  }
+
+  /**
+   * Convert a GeographicRegion to Region for our use
+   */
+  private convertToRegion(geoRegion: any): Region {
+    return {
+      id: geoRegion.id,
+      code: geoRegion.regionCode, // Use regionCode as code
+      name: geoRegion.name,
+      description: geoRegion.description,
+      county: geoRegion.countyCode || 'Benton' // Add required county field
+    };
   }
 
   /**
@@ -268,16 +294,19 @@ export class GeoMappingAgent {
     try {
       const [municipality] = await db
         .select()
-        .from(schema.municipalities)
-        .where(eq(schema.municipalities.id, municipalityId));
+        .from(schema.geographicMunicipalities)
+        .where(eq(schema.geographicMunicipalities.id, municipalityId));
       
       if (municipality && municipality.regionId) {
         const [region] = await db
           .select()
-          .from(schema.regions)
-          .where(eq(schema.regions.id, municipality.regionId));
+          .from(schema.geographicRegions)
+          .where(eq(schema.geographicRegions.id, municipality.regionId));
         
-        return region;
+        // Convert to our Region type
+        if (region) {
+          return this.convertToRegion(region);
+        }
       }
       
       return undefined;
@@ -404,21 +433,28 @@ export class GeoMappingAgent {
       // Check if neighborhood already exists
       const existing = await this.getNeighborhoodByHoodCd(hood_cd);
       if (existing) {
-        return existing;
+        return {
+          ...existing,
+          hood_cd: existing.hoodCd // Map to our type structure
+        };
       }
       
       // Create new neighborhood
       const [neighborhood] = await db
-        .insert(schema.neighborhoods)
+        .insert(schema.geographicNeighborhoods)
         .values({
-          hood_cd,
+          hoodCd: hood_cd,
           municipalityId,
           name: name || `Neighborhood ${hood_cd}`,
           description: `Auto-mapped from property data with hood_cd ${hood_cd}`
         })
         .returning();
       
-      return neighborhood;
+      // Convert to our Neighborhood type
+      return {
+        ...neighborhood,
+        hood_cd: neighborhood.hoodCd // Map to our type structure
+      };
     } catch (error) {
       console.error(`Error creating neighborhood mapping for hood_cd ${hood_cd}:`, error);
       throw new Error(`Failed to create neighborhood mapping: ${error.message}`);

@@ -6,14 +6,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-
-// Define the event interface
-export interface MCPEvent {
-  id: string;
-  topic: string;
-  timestamp: number;
-  payload?: any;
-}
+import { MCPEvent } from './types';
 
 // Define the event handler type
 type EventHandler = (event: MCPEvent) => void | Promise<void>;

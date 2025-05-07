@@ -4,10 +4,13 @@
  * This module defines types used throughout the MCP framework.
  */
 
-import { MCPEvent } from './event-bus';
-
-// Re-export MCPEvent from event-bus
-export { MCPEvent };
+// Define the event interface (instead of importing from event-bus to avoid circular dependency)
+export interface MCPEvent {
+  id: string;
+  topic: string;
+  timestamp: number;
+  payload?: any;
+}
 
 // Agent status type
 export type AgentStatus = 'active' | 'inactive' | 'error';
