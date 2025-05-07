@@ -8,7 +8,9 @@ import { mcpOrchestrator } from './orchestrator';
 import { bentonCountyConversionAgent } from './agents/conversionAgent';
 import { mcpDevOpsKit } from './devops';
 import { geoMappingAgent } from './agents/geo-mapping-agent';
+import { neighborhoodDiscoveryAgent } from './agents/neighborhood-discovery-agent';
 import { initGeoMappingAgent } from './handlers/geo-mapping-handler';
+import { registerNeighborhoodDiscoveryAgent } from './handlers/neighborhood-discovery-handler';
 
 /**
  * Initialize the Model Content Protocol (MCP) framework
@@ -58,6 +60,15 @@ function initializeAgents(): void {
       console.log('Geographic Mapping Agent registered successfully');
     } catch (geoError) {
       console.error('Error initializing Geographic Mapping Agent:', geoError);
+      // Continue despite errors to maintain core functionality
+    }
+    
+    // Initialize our neighborhood discovery agent
+    try {
+      registerNeighborhoodDiscoveryAgent();
+      console.log('Neighborhood Discovery Agent registered successfully');
+    } catch (neiError) {
+      console.error('Error initializing Neighborhood Discovery Agent:', neiError);
       // Continue despite errors to maintain core functionality
     }
     
