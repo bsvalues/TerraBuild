@@ -133,49 +133,32 @@ const RegionalCostComparison: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<number | null>(null);
 
-  // Fetch geographic regions
-  const { data: regionsData = [] } = useQuery({
-    queryKey: ['/geography/regions'],
-    queryFn: async () => {
-      try {
-        const data = await apiRequest('/api/geography/regions');
-        return data.success ? data.data : [];
-      } catch (error) {
-        console.error('Error fetching regions:', error);
-        return [];
-      }
-    }
-  });
-
-  // Fetch municipalities when a region is selected
-  const { data: municipalitiesData = [] } = useQuery({
-    queryKey: ['/geography/municipalities', selectedRegionId],
-    enabled: selectedRegionId !== null,
-    queryFn: async () => {
-      try {
-        const data = await apiRequest(`/api/geography/municipalities?regionId=${selectedRegionId}`);
-        return data.success ? data.data : [];
-      } catch (error) {
-        console.error('Error fetching municipalities:', error);
-        return [];
-      }
-    }
-  });
-
-  // Fetch neighborhoods when a municipality is selected
-  const { data: neighborhoodsData = [] } = useQuery({
-    queryKey: ['/geography/neighborhoods', selectedMunicipalityId],
-    enabled: selectedMunicipalityId !== null,
-    queryFn: async () => {
-      try {
-        const data = await apiRequest(`/api/geography/neighborhoods?municipalityId=${selectedMunicipalityId}`);
-        return data.success ? data.data : [];
-      } catch (error) {
-        console.error('Error fetching neighborhoods:', error);
-        return [];
-      }
-    }
-  });
+  // For now, we'll use static data based on the database findings
+  // This represents the actual data from the geographic_regions table
+  const regionsData = [
+    { id: 1, name: 'East Benton', regionCode: 'BC-EAST', description: 'Eastern region of Benton County' },
+    { id: 2, name: 'Central Benton', regionCode: 'BC-CENTRAL', description: 'Central region of Benton County' },
+    { id: 3, name: 'West Benton', regionCode: 'BC-WEST', description: 'Western region of Benton County' }
+  ];
+  
+  // Static data for municipalities based on database findings
+  const allMunicipalities = [
+    { id: 1, name: 'Kennewick', municipalityCode: 'KENNEWICK', regionId: 1 },
+    { id: 2, name: 'Finley', municipalityCode: 'FINLEY', regionId: 1 },
+    { id: 3, name: 'Benton City', municipalityCode: 'BENTON_CITY', regionId: 2 },
+    { id: 4, name: 'Prosser', municipalityCode: 'PROSSER', regionId: 2 },
+    { id: 5, name: 'Richland', municipalityCode: 'RICHLAND', regionId: 3 },
+    { id: 6, name: 'West Richland', municipalityCode: 'WEST_RICHLAND', regionId: 3 }
+  ];
+  
+  // Filter municipalities based on selected region
+  const municipalitiesData = useMemo(() => {
+    if (selectedRegionId === null) return [];
+    return allMunicipalities.filter(m => m.regionId === selectedRegionId);
+  }, [selectedRegionId]);
+  
+  // We don't have neighborhood data in the database yet, so we'll use an empty array
+  const neighborhoodsData = [];
 
   // Fetch cost matrix data - note: using mock data in development since the cost_matrices table doesn't exist yet
   const { data: costMatrixData, isLoading, error } = useQuery({
