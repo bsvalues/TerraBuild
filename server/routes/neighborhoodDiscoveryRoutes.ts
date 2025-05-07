@@ -240,7 +240,11 @@ async function getBasicHoodCdData() {
       hood_cd: schema.properties.hood_cd,
     })
     .from(schema.properties)
-    .where(schema.properties.hood_cd.isNotNull());
+    .where(
+      schema.properties.hood_cd.neq('').and(
+        schema.properties.hood_cd.is.not.null()
+      )
+    );
     
     // Group by hood_cd and count
     const hoodCdCounts: Record<string, number> = {};
@@ -278,7 +282,7 @@ async function getBasicNeighborhoodData(hood_cd: string) {
   try {
     const properties = await db.select()
       .from(schema.properties)
-      .where(schema.properties.hood_cd.equals(hood_cd))
+      .where(schema.properties.hood_cd.eq(hood_cd))
       .limit(100);
     
     if (properties.length === 0) {

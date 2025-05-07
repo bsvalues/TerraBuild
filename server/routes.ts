@@ -761,6 +761,7 @@ router.use('/geography', geographicRoutes);
 router.use('/property-heatmap', propertyHeatmapRoutes);
 router.use('/gis-import', gisImportRoutes);
 router.use('/geo-mapping', geoMappingRoutes);
+router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 
