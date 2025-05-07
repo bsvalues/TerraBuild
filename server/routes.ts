@@ -17,6 +17,7 @@ import storytellingRoutes from './routes/storytelling-routes';
 import { geographicRoutes } from './routes/geographicRoutes';
 import { propertyHeatmapRoutes } from './routes/propertyHeatmapRoutes';
 import { gisImportRoutes } from './routes/gisImportRoutes';
+import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';

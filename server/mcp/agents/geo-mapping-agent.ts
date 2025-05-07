@@ -6,14 +6,14 @@
  */
 
 import { db } from '../../db';
-import { eq, like, and, or } from 'drizzle-orm';
 import * as schema from '../../../shared/schema';
+import { GeographicMapping, Municipality, Neighborhood, Region } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
+import { eq, and, like, or } from 'drizzle-orm';
 
-// Initialize Anthropic client
-// the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
+// Initialize Anthropic AI
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 /**
@@ -21,7 +21,7 @@ const anthropic = new Anthropic({
  */
 export class GeoMappingAgent {
   constructor() {
-    console.log('Geographic Mapping Agent initialized');
+    console.log('Initializing Geographic Mapping Agent');
   }
 
   /**
@@ -29,39 +29,46 @@ export class GeoMappingAgent {
    * @param property Property data
    * @returns Geographic hierarchy
    */
-  async mapPropertyToGeography(property: any) {
+  async mapPropertyToGeography(property: any): Promise<GeographicMapping> {
+    console.log(`Mapping property geography for: ${JSON.stringify(property)}`);
+    
     try {
-      const {
+      const { prop_id, geo_id, hood_cd } = property;
+      
+      // Start with confidence of 0
+      let confidence = 0;
+      
+      // Build mapping using available property data
+      const mapping = await this.buildGeographicMapping({
+        prop_id,
+        geo_id,
         hood_cd,
-        township_code,
-        range_code,
-        property_use_cd,
-        tca,
-        city,
-        geo_id
-      } = property;
-
-      // Build comprehensive geographic mapping
-      const result = await this.buildGeographicMapping(
-        hood_cd,
-        city,
-        township_code,
-        range_code,
-        tca,
-        property_use_cd,
-        geo_id
-      );
-
+        township_code: property.township_code,
+        range_code: property.range_code,
+        city: property.city,
+        county: property.county || 'Benton',
+        property // Pass along full property record for AI analysis if needed
+      });
+      
+      // Calculate confidence based on the completeness of the mapping
+      if (mapping.neighborhood) confidence += 0.4;
+      if (mapping.municipality) confidence += 0.3;
+      if (mapping.region) confidence += 0.3;
+      
       return {
-        success: true,
-        data: result
+        property: {
+          prop_id: prop_id,
+          geo_id: geo_id,
+          hood_cd: hood_cd
+        },
+        neighborhood: mapping.neighborhood,
+        municipality: mapping.municipality,
+        region: mapping.region,
+        confidence
       };
     } catch (error) {
-      console.error('Error mapping property to geography:', error);
-      return {
-        success: false,
-        error: error.message || 'Unknown error in geographic mapping'
-      };
+      console.error('Error in geographic mapping:', error);
+      throw new Error(`Geographic mapping failed: ${error.message}`);
     }
   }
 
@@ -69,264 +76,354 @@ export class GeoMappingAgent {
    * Build a complete geographic mapping using available property identifiers
    */
   private async buildGeographicMapping(
-    hood_cd: string | null,
-    city: string | null,
-    township_code: string | null,
-    range_code: string | null,
-    tca: string | null,
-    property_use_cd: string | null,
-    geo_id: string | null
-  ) {
-    // First try to get existing mapping from database if hood_cd is available
+    propertyInfo: {
+      prop_id?: string;
+      geo_id?: string;
+      hood_cd?: string;
+      township_code?: string;
+      range_code?: string;
+      city?: string;
+      county?: string;
+      property?: any;
+    }
+  ): Promise<{
+    neighborhood?: Neighborhood;
+    municipality?: Municipality;
+    region?: Region;
+  }> {
+    const { hood_cd, city, county, township_code, range_code, property } = propertyInfo;
+    
+    // Initialize result
+    const result: {
+      neighborhood?: Neighborhood;
+      municipality?: Municipality;
+      region?: Region;
+    } = {};
+    
+    // Try to find neighborhood by hood_cd
     if (hood_cd) {
-      const neighborhood = await this.getNeighborhoodByHoodCd(hood_cd);
-      if (neighborhood) {
-        return {
-          neighborhood: neighborhood,
-          municipality: await this.getMunicipalityById(neighborhood.municipalityId),
-          region: await this.getRegionForMunicipalityId(neighborhood.municipalityId)
-        };
+      result.neighborhood = await this.getNeighborhoodByHoodCd(hood_cd);
+      
+      // If neighborhood found, get municipality and region
+      if (result.neighborhood) {
+        const municipalityId = result.neighborhood.municipalityId;
+        const municipality = await this.getMunicipalityById(municipalityId);
+        
+        if (municipality) {
+          result.municipality = municipality;
+          
+          // Get region from municipality
+          const region = await this.getRegionForMunicipalityId(municipalityId);
+          if (region) {
+            result.region = region;
+          }
+        }
+        
+        // We've found the complete hierarchy, return it
+        if (result.neighborhood && result.municipality && result.region) {
+          return result;
+        }
       }
     }
-
-    // If not found by hood_cd, try to determine using city
-    if (city) {
+    
+    // Try to find municipality by city name
+    if (city && !result.municipality) {
       const municipality = await this.getMunicipalityByName(city);
       if (municipality) {
-        return {
-          neighborhood: null, // No specific neighborhood
-          municipality: municipality,
-          region: await this.getRegionForMunicipalityId(municipality.id)
-        };
+        result.municipality = municipality;
+        
+        // Get region from municipality
+        const region = await this.getRegionForMunicipalityId(municipality.id);
+        if (region) {
+          result.region = region;
+        }
       }
     }
-
-    // If not found by city, try by township/range
-    if (township_code && range_code) {
-      const mapping = await this.mapByTownshipRange(township_code, range_code);
-      if (mapping) {
-        return mapping;
+    
+    // Try township/range mapping
+    if (township_code && range_code && (!result.neighborhood || !result.municipality)) {
+      const townshipRangeMapping = await this.mapByTownshipRange(township_code, range_code);
+      
+      if (townshipRangeMapping.municipality && !result.municipality) {
+        result.municipality = townshipRangeMapping.municipality;
+        
+        // Get region if not already found
+        if (!result.region && townshipRangeMapping.municipality.id) {
+          const region = await this.getRegionForMunicipalityId(townshipRangeMapping.municipality.id);
+          if (region) {
+            result.region = region;
+          }
+        }
       }
     }
-
-    // If nothing else works, use AI to analyze the property data for geographic context
-    return await this.analyzePropertyGeographyWithAI({
-      hood_cd,
-      city,
-      township_code,
-      range_code,
-      tca,
-      property_use_cd,
-      geo_id
-    });
+    
+    // If we have full property data but still couldn't map it, try AI analysis
+    if (property && (!result.neighborhood || !result.municipality || !result.region)) {
+      try {
+        const aiAnalysis = await this.analyzePropertyGeographyWithAI(property);
+        
+        // Update any missing pieces with AI suggestions
+        if (aiAnalysis.municipalityName && !result.municipality) {
+          const municipality = await this.getMunicipalityByName(aiAnalysis.municipalityName);
+          if (municipality) {
+            result.municipality = municipality;
+            
+            // Get region if not already found
+            if (!result.region) {
+              const region = await this.getRegionForMunicipalityId(municipality.id);
+              if (region) {
+                result.region = region;
+              }
+            }
+          }
+        }
+        
+        // If we have hood_cd but no neighborhood match, create a new one
+        if (hood_cd && !result.neighborhood && result.municipality) {
+          // Create a new neighborhood mapping based on AI suggestions
+          const newNeighborhood = await this.createNeighborhoodMapping(
+            hood_cd,
+            result.municipality.id,
+            aiAnalysis.neighborhoodName || `Neighborhood ${hood_cd}`
+          );
+          
+          if (newNeighborhood) {
+            result.neighborhood = newNeighborhood;
+          }
+        }
+      } catch (error) {
+        console.warn('AI analysis of property geography failed:', error);
+        // Continue with what we have - AI is just an enhancement
+      }
+    }
+    
+    return result;
   }
 
   /**
    * Get neighborhood by hood_cd
    */
-  private async getNeighborhoodByHoodCd(hood_cd: string) {
-    const neighborhoods = await db.select().from(schema.geographicNeighborhoods)
-      .where(eq(schema.geographicNeighborhoods.hoodCd, hood_cd));
-    
-    return neighborhoods.length > 0 ? neighborhoods[0] : null;
+  private async getNeighborhoodByHoodCd(hood_cd: string): Promise<Neighborhood | undefined> {
+    try {
+      // Use the schema's geographicNeighborhoods table
+      const [neighborhood] = await db
+        .select()
+        .from(schema.geographicNeighborhoods)
+        .where(eq(schema.geographicNeighborhoods.hoodCd, hood_cd));
+      
+      return neighborhood;
+    } catch (error) {
+      console.error(`Error getting neighborhood by hood_cd ${hood_cd}:`, error);
+      return undefined;
+    }
   }
 
   /**
    * Get municipality by ID
    */
-  private async getMunicipalityById(id: number) {
-    const municipalities = await db.select().from(schema.geographicMunicipalities)
-      .where(eq(schema.geographicMunicipalities.id, id));
-    
-    return municipalities.length > 0 ? municipalities[0] : null;
+  private async getMunicipalityById(id: number): Promise<Municipality | undefined> {
+    try {
+      const [municipality] = await db
+        .select()
+        .from(schema.geographicMunicipalities)
+        .where(eq(schema.geographicMunicipalities.id, id));
+      
+      return municipality;
+    } catch (error) {
+      console.error(`Error getting municipality by ID ${id}:`, error);
+      return undefined;
+    }
   }
-  
+
   /**
    * Get municipality by name (case insensitive)
    */
-  private async getMunicipalityByName(name: string) {
-    // Convert lookup name to lowercase for comparison
-    const lookupName = name.toLowerCase();
-    
-    // Get all municipalities
-    const municipalities = await db.select().from(schema.geographicMunicipalities);
-    
-    // Find municipality with matching name (case insensitive)
-    for (const municipality of municipalities) {
-      if (municipality.name.toLowerCase() === lookupName) {
-        return municipality;
-      }
+  private async getMunicipalityByName(name: string): Promise<Municipality | undefined> {
+    try {
+      // Convert to lowercase for comparison
+      const lowercaseName = name.toLowerCase();
+      
+      // Get all municipalities and find one that matches case-insensitive
+      const municipalities = await db
+        .select()
+        .from(schema.geographicMunicipalities);
+      
+      const match = municipalities.find(m => 
+        m.name.toLowerCase() === lowercaseName ||
+        m.name.toLowerCase().includes(lowercaseName) ||
+        lowercaseName.includes(m.name.toLowerCase())
+      );
+      
+      return match;
+    } catch (error) {
+      console.error(`Error getting municipality by name ${name}:`, error);
+      return undefined;
     }
-    
-    return null;
   }
 
   /**
    * Get region for a municipality
    */
-  private async getRegionForMunicipalityId(municipalityId: number) {
-    const municipality = await this.getMunicipalityById(municipalityId);
-    if (!municipality || !municipality.regionId) return null;
-    
-    const regions = await db.select().from(schema.geographicRegions)
-      .where(eq(schema.geographicRegions.id, municipality.regionId));
-    
-    return regions.length > 0 ? regions[0] : null;
+  private async getRegionForMunicipalityId(municipalityId: number): Promise<Region | undefined> {
+    try {
+      const [municipality] = await db
+        .select()
+        .from(schema.municipalities)
+        .where(eq(schema.municipalities.id, municipalityId));
+      
+      if (municipality && municipality.regionId) {
+        const [region] = await db
+          .select()
+          .from(schema.regions)
+          .where(eq(schema.regions.id, municipality.regionId));
+        
+        return region;
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error(`Error getting region for municipality ID ${municipalityId}:`, error);
+      return undefined;
+    }
   }
 
   /**
    * Map by township and range
    */
-  private async mapByTownshipRange(township_code: string, range_code: string) {
-    // Query township_range_mapping table
-    const mappings = await db.query.township_range_mapping.findMany({
-      where: and(
-        eq(schema.township_range_mapping.townshipCode, township_code),
-        eq(schema.township_range_mapping.rangeCode, range_code)
-      )
-    });
+  private async mapByTownshipRange(township_code: string, range_code: string): Promise<{
+    municipality?: Municipality;
+    region?: Region;
+  }> {
+    // Since we don't have a township_range_mapping table yet, use hard-coded mappings
+    // based on known patterns in Benton County
     
-    if (mappings.length > 0) {
-      const mapping = mappings[0];
-      
-      return {
-        neighborhood: null,
-        municipality: mapping.municipalityId ? 
-          await this.getMunicipalityById(mapping.municipalityId) : null,
-        region: mapping.regionId ? 
-          await db.query.geographicRegions.findFirst({
-            where: eq(schema.geographicRegions.id, mapping.regionId)
-          }) : null
-      };
+    // This would ideally be replaced with a proper database table
+    const townshipRangeMappings: {[key: string]: string} = {
+      // Format is township_code-range_code: municipalityName
+      '9N-24E': 'Richland',
+      '9N-25E': 'Richland',
+      '9N-26E': 'Richland',
+      '9N-27E': 'Richland',
+      '9N-28E': 'Richland',
+      '9N-29E': 'Richland',
+      '10N-26E': 'West Richland',
+      '10N-27E': 'West Richland',
+      '10N-28E': 'Benton City',
+      '8N-24E': 'Kennewick',
+      '8N-28E': 'Kennewick',
+      '8N-29E': 'Kennewick',
+      '8N-30E': 'Kennewick',
+      '7N-29E': 'Finley',
+      '7N-30E': 'Finley',
+      '6N-25E': 'Prosser',
+      '6N-26E': 'Prosser',
+      '6N-27E': 'Prosser'
+    };
+    
+    const key = `${township_code}-${range_code}`;
+    const municipalityName = townshipRangeMappings[key];
+    
+    if (!municipalityName) {
+      return {};
     }
     
-    return null;
+    // Look up the municipality by name
+    const municipality = await this.getMunicipalityByName(municipalityName);
+    
+    return { municipality };
   }
 
   /**
    * Use Anthropic AI to analyze property data for geographic context
    */
-  private async analyzePropertyGeographyWithAI(propertyData: any) {
+  private async analyzePropertyGeographyWithAI(propertyData: any): Promise<{
+    municipalityName?: string;
+    neighborhoodName?: string;
+    regionName?: string;
+  }> {
+    // Skip if no API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.warn('ANTHROPIC_API_KEY not set, skipping AI analysis');
+      return {};
+    }
+    
     try {
-      // Get all municipalities and regions for reference
-      const municipalities = await db.select().from(schema.geographicMunicipalities);
-      const regions = await db.select().from(schema.geographicRegions);
+      console.log('Analyzing property geography with Anthropic Claude');
       
-      // Prepare context information
-      const municipalityInfo = municipalities.map(m => 
-        `${m.name} (${m.municipalityCode}): ${m.description || 'No description'}`
-      ).join('\n');
-      
-      const regionInfo = regions.map(r => 
-        `${r.name} (${r.regionCode}): ${r.description || 'No description'}`
-      ).join('\n');
-      
-      // Create prompt with property data and available geographic entities
-      const prompt = `
-I need to determine the most likely geographic location in Benton County, Washington for a property with these characteristics:
-
-Property Data:
-${Object.entries(propertyData)
-  .filter(([_, value]) => value !== null && value !== undefined)
-  .map(([key, value]) => `- ${key}: ${value}`)
-  .join('\n')}
-
-Available Municipalities in Benton County:
-${municipalityInfo}
-
-Available Regions in Benton County:
-${regionInfo}
-
-Based only on the property data provided, please determine:
-1. The most likely municipality (city) this property belongs to
-2. Which region it should be classified under
-
-Explain your reasoning, then provide the final answer in this JSON format:
-{
-  "municipality": "name of municipality",
-  "municipalityCode": "code of municipality", 
-  "region": "name of region",
-  "regionCode": "code of region",
-  "confidence": 0.X (between 0-1)
-}
-`;
-
-      // Call Anthropic API
       const response = await anthropic.messages.create({
-        model: 'claude-3-7-sonnet-20250219',
-        max_tokens: 1000,
-        temperature: 0.2,
-        messages: [{ role: 'user', content: prompt }]
+        model: 'claude-3-7-sonnet-20250219', // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
+        max_tokens: 1024,
+        system: `You are a geographic data analyst specializing in Benton County, Washington property records. 
+        Your task is to analyze property records and extract the most likely municipality, neighborhood name, and region.
+        Return your analysis as a JSON object with fields: municipalityName, neighborhoodName, and regionName.
+        
+        Common municipalities in Benton County include:
+        - Richland
+        - Kennewick
+        - West Richland
+        - Prosser
+        - Benton City
+        - Finley`,
+        messages: [
+          {
+            role: 'user',
+            content: `Analyze this Benton County property record and determine the municipality, neighborhood, and region:
+            ${JSON.stringify(propertyData, null, 2)}
+            
+            Return only a JSON object with municipalityName, neighborhoodName, and regionName fields.`
+          }
+        ],
       });
-
-      // Extract JSON from response
-      const match = response.content[0].text.match(/\{[\s\S]*\}/);
-      if (!match) {
-        throw new Error('Could not extract JSON from AI response');
+      
+      // Extract JSON from the response
+      const content = response.content[0].text;
+      
+      // Try to parse JSON from the response
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0];
+          return JSON.parse(jsonStr);
+        }
+      } catch (parseError) {
+        console.error('Failed to parse AI response as JSON:', parseError);
       }
-
-      const result = JSON.parse(match[0]);
       
-      // Find the actual municipality and region objects
-      const municipality = municipalities.find(m => 
-        m.name.toLowerCase() === result.municipality.toLowerCase() || 
-        m.municipalityCode === result.municipalityCode
-      );
-      
-      const region = regions.find(r => 
-        r.name.toLowerCase() === result.region.toLowerCase() || 
-        r.regionCode === result.regionCode
-      );
-      
-      return {
-        neighborhood: null,
-        municipality: municipality || null,
-        region: region || null,
-        confidence: result.confidence,
-        aiAnalysis: result
-      };
+      return {};
     } catch (error) {
-      console.error('AI analysis error:', error);
-      return {
-        neighborhood: null,
-        municipality: null,
-        region: null,
-        confidence: 0,
-        error: error.message
-      };
+      console.error('Error analyzing property with AI:', error);
+      return {};
     }
   }
 
   /**
    * Create a new neighborhood mapping
    */
-  async createNeighborhoodMapping(hood_cd: string, municipalityId: number, name?: string) {
+  async createNeighborhoodMapping(hood_cd: string, municipalityId: number, name?: string): Promise<Neighborhood> {
     try {
-      const neighborhood = {
-        hoodCd: hood_cd,
-        name: name || `Neighborhood ${hood_cd}`,
-        municipalityId: municipalityId,
-        description: `Neighborhood with hood_cd ${hood_cd}`,
-        isActive: true
-      };
+      // Check if neighborhood already exists
+      const existing = await this.getNeighborhoodByHoodCd(hood_cd);
+      if (existing) {
+        return existing;
+      }
       
-      const [created] = await db.insert(schema.geographicNeighborhoods)
-        .values(neighborhood)
+      // Create new neighborhood
+      const [neighborhood] = await db
+        .insert(schema.neighborhoods)
+        .values({
+          hood_cd,
+          municipalityId,
+          name: name || `Neighborhood ${hood_cd}`,
+          description: `Auto-mapped from property data with hood_cd ${hood_cd}`
+        })
         .returning();
       
-      return {
-        success: true,
-        data: created
-      };
+      return neighborhood;
     } catch (error) {
-      console.error('Error creating neighborhood mapping:', error);
-      return {
-        success: false,
-        error: error.message || 'Unknown error creating neighborhood'
-      };
+      console.error(`Error creating neighborhood mapping for hood_cd ${hood_cd}:`, error);
+      throw new Error(`Failed to create neighborhood mapping: ${error.message}`);
     }
   }
 }
 
-// Export singleton instance
 export const geoMappingAgent = new GeoMappingAgent();

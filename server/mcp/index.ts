@@ -7,6 +7,8 @@ import { dataAnalysisAgent } from './agents/dataAnalysisAgent';
 import { mcpOrchestrator } from './orchestrator';
 import { bentonCountyConversionAgent } from './agents/conversionAgent';
 import { mcpDevOpsKit } from './devops';
+import { geoMappingAgent } from './agents/geo-mapping-agent';
+import { initGeoMappingAgent } from './handlers/geo-mapping-handler';
 
 /**
  * Initialize the Model Content Protocol (MCP) framework
@@ -49,6 +51,15 @@ function initializeAgents(): void {
     
     // Let the MCP framework know about the Benton County Conversion Agent
     console.log('Registering Benton County Conversion Agent with MCP framework');
+    
+    // Initialize our geographic mapping agent
+    try {
+      initGeoMappingAgent();
+      console.log('Geographic Mapping Agent registered successfully');
+    } catch (geoError) {
+      console.error('Error initializing Geographic Mapping Agent:', geoError);
+      // Continue despite errors to maintain core functionality
+    }
     
     // We don't need to explicitly register agents - they're already in the registry
     // Instead, we'll update the agentRegistry with our new agents by having the 
