@@ -99,19 +99,17 @@ app.use((req, res, next) => {
   // These routes should be prioritized over Vite's middleware
   app.use('/api', monitoringRoutes);
   
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Register API routes first, so they take precedence over Vite
+  app.use('/api', routes);
+  
+  // importantly only setup vite in development after
+  // setting up all the API routes so the catch-all route
+  // doesn't interfere with the API routes
   if (app.get("env") === "development") {
-    // In development, we need to register API routes AFTER Vite setup
-    // This is because of how Vite handles requests in middleware mode
+    // In development, setup Vite after API routes are registered
     await setupVite(app, server);
-    
-    // Register remaining API routes after Vite middleware
-    app.use('/api', routes);
   } else {
-    // In production, register routes first, then serve static files
-    app.use('/api', routes);
+    // In production, serve static files
     serveStatic(app);
   }
 
