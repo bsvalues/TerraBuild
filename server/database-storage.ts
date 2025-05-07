@@ -210,41 +210,48 @@ export class DatabaseStorage implements IStorage {
 
   // Cost Matrix methods
   async getCostMatrix(id: number): Promise<CostMatrix | null> {
-    const result = await db.select().from(schema.costMatrices).where(eq(schema.costMatrices.id, id));
+    // Using costMatrix (singular) which is the correct table name
+    const result = await db.select().from(schema.costMatrix).where(eq(schema.costMatrix.id, id));
     return result[0] || null;
   }
 
   async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | null> {
-    const result = await db.select().from(schema.costMatrices).where(
+    // Using costMatrix (singular) which is the correct table name
+    const result = await db.select().from(schema.costMatrix).where(
       and(
-        eq(schema.costMatrices.buildingTypeCode, buildingTypeCode),
-        eq(schema.costMatrices.county, county),
-        eq(schema.costMatrices.year, year)
+        eq(schema.costMatrix.buildingType, buildingTypeCode), // field name should match schema
+        eq(schema.costMatrix.region, county), // field name should match schema
+        eq(schema.costMatrix.year, year)
       )
     );
     return result[0] || null;
   }
 
   async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
-    const [result] = await db.insert(schema.costMatrices).values(matrix).returning();
+    // Using costMatrix (singular) which is the correct table name
+    const [result] = await db.insert(schema.costMatrix).values(matrix).returning();
     return result;
   }
 
   async updateCostMatrix(id: number, matrixData: Partial<CostMatrix>): Promise<CostMatrix | null> {
+    // Using costMatrix (singular) which is the correct table name
     const [result] = await db
-      .update(schema.costMatrices)
+      .update(schema.costMatrix)
       .set({ ...matrixData, updatedAt: new Date() })
-      .where(eq(schema.costMatrices.id, id))
+      .where(eq(schema.costMatrix.id, id))
       .returning();
     return result || null;
   }
 
   async getAllCostMatrices(): Promise<CostMatrix[]> {
-    return await db.select().from(schema.costMatrices);
+    // Using costMatrix (singular) which is the correct table name
+    return await db.select().from(schema.costMatrix);
   }
 
   async getCostMatricesByCounty(county: string): Promise<CostMatrix[]> {
-    return await db.select().from(schema.costMatrices).where(eq(schema.costMatrices.county, county));
+    // Using costMatrix (singular) which is the correct table name
+    // and 'county' field from the actual database structure
+    return await db.select().from(schema.costMatrix).where(eq(schema.costMatrix.county, county));
   }
   
   // Alias for compatibility with IStorage interface
@@ -268,7 +275,8 @@ export class DatabaseStorage implements IStorage {
   
   async deleteCostMatrix(id: number): Promise<boolean> {
     try {
-      await db.delete(schema.costMatrices).where(eq(schema.costMatrices.id, id));
+      // Using costMatrix (singular) which is the correct table name
+      await db.delete(schema.costMatrix).where(eq(schema.costMatrix.id, id));
       return true;
     } catch (error) {
       console.error('Error deleting cost matrix:', error);
