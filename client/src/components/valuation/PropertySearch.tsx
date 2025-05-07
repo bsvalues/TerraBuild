@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building, MapPin, Search } from 'lucide-react';
 import axios from 'axios';
+import { SmartSearch } from '@/components/search/SmartSearch';
 
 // Define property interfaces locally since we can't directly import from shared/models
 interface Property {
@@ -79,31 +80,50 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
     onSelectProperty(property);
   };
 
+  // Convert property from the Smart Search format to the PropertyViewModel format
+  const convertToPropertyViewModel = (property: any): PropertyViewModel => {
+    return {
+      id: property.id,
+      parcelId: property.prop_id || property.geo_id || `BC-${property.id}`,
+      address: property.address || property.legal_desc || `Property #${property.id}`,
+      county: "Benton",
+      state: "WA",
+      propertyType: property.property_use_desc || "Unknown",
+      assessedValue: property.assessed_val || 0,
+      totalValue: property.appraised_val || 0
+    };
+  };
+
+  // Handle property selection from SmartSearch
+  const handleSmartSearchPropertySelect = (property: any) => {
+    const propertyViewModel = convertToPropertyViewModel(property);
+    setSelectedProperty(propertyViewModel);
+    onSelectProperty(propertyViewModel);
+  };
+
+  // Handle neighborhood selection from SmartSearch
+  const handleSmartSearchNeighborhoodSelect = (neighborhood: any) => {
+    // Set neighborhood in state or context if needed
+    console.log("Selected neighborhood:", neighborhood);
+    
+    // Here we could potentially load properties from this neighborhood
+    // or just display neighborhood information
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Property Search</CardTitle>
+        <CardTitle>Smart Property Search</CardTitle>
         <CardDescription>
-          Search for a property by address or ID
+          Search for properties and neighborhoods with predictive suggestions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex space-x-2">
-          <Input
-            placeholder="Enter legal description or property ID"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && searchProperties()}
-          />
-          <Button
-            variant="secondary"
-            onClick={searchProperties}
-            disabled={isLoading || searchQuery.length < 3}
-          >
-            <Search className="h-4 w-4 mr-1" />
-            Search
-          </Button>
-        </div>
+        <SmartSearch 
+          onSelectProperty={handleSmartSearchPropertySelect}
+          onSelectNeighborhood={handleSmartSearchNeighborhoodSelect}
+          placeholder="Search by address, property ID, or neighborhood..."
+        />
 
         {selectedProperty && (
           <div className="p-3 border rounded-md bg-muted/20">
@@ -124,6 +144,27 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
             </div>
           </div>
         )}
+
+        {/* Legacy search UI - keeping as fallback */}
+        <div className="border-t pt-4 mt-4">
+          <p className="text-sm font-medium mb-2">Advanced Search</p>
+          <div className="flex space-x-2">
+            <Input
+              placeholder="Enter legal description or property ID"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && searchProperties()}
+            />
+            <Button
+              variant="secondary"
+              onClick={searchProperties}
+              disabled={isLoading || searchQuery.length < 3}
+            >
+              <Search className="h-4 w-4 mr-1" />
+              Search
+            </Button>
+          </div>
+        </div>
 
         {!selectedProperty && properties.length > 0 && (
           <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -159,7 +200,7 @@ export default function PropertySearch({ onSelectProperty }: PropertySearchProps
 
         {!isLoading && searchQuery.length >= 3 && properties.length === 0 && (
           <div className="text-center p-4">
-            <p className="text-sm text-muted-foreground">No properties found. Try a different search term.</p>
+            <p className="text-sm text-muted-foreground">No properties found in advanced search. Try using the smart search above.</p>
           </div>
         )}
       </CardContent>

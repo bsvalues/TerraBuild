@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
            FROM properties 
            WHERE hood_cd IS NOT NULL 
              AND hood_cd != '' 
-             AND hood_cd ILIKE $1
+             AND hood_cd::text LIKE $1
            GROUP BY hood_cd 
            ORDER BY property_count DESC 
            LIMIT $2`,
@@ -140,7 +140,7 @@ router.get('/neighborhoods', async (req, res) => {
        FROM properties 
        WHERE hood_cd IS NOT NULL 
          AND hood_cd != '' 
-         AND hood_cd ILIKE $1
+         AND hood_cd::text LIKE $1
        GROUP BY hood_cd 
        ORDER BY property_count DESC 
        LIMIT $2`,
