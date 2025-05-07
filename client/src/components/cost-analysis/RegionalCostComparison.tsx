@@ -101,7 +101,7 @@ const RegionalCostComparison: React.FC = () => {
 
   // Fetch cost matrix data
   const { data: costMatrixData, isLoading, error } = useQuery({
-    queryKey: ['/cost-matrices'],
+    queryKey: ['/api/cost-matrices'],
     staleTime: 60000, // 1 minute
   });
 
