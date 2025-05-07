@@ -134,8 +134,8 @@ const RegionalCostComparison: React.FC = () => {
   const [selectedMunicipalityId, setSelectedMunicipalityId] = useState<number | null>(null);
 
   // Fetch geographic regions
-  const { data: regionsData } = useQuery({
-    queryKey: ['/api/geography/regions'],
+  const { data: regionsData = [] } = useQuery({
+    queryKey: ['/geography/regions'],
     queryFn: async () => {
       try {
         const data = await apiRequest('/api/geography/regions');
@@ -148,8 +148,8 @@ const RegionalCostComparison: React.FC = () => {
   });
 
   // Fetch municipalities when a region is selected
-  const { data: municipalitiesData } = useQuery({
-    queryKey: ['/api/geography/municipalities', selectedRegionId],
+  const { data: municipalitiesData = [] } = useQuery({
+    queryKey: ['/geography/municipalities', selectedRegionId],
     enabled: selectedRegionId !== null,
     queryFn: async () => {
       try {
@@ -163,8 +163,8 @@ const RegionalCostComparison: React.FC = () => {
   });
 
   // Fetch neighborhoods when a municipality is selected
-  const { data: neighborhoodsData } = useQuery({
-    queryKey: ['/api/geography/neighborhoods', selectedMunicipalityId],
+  const { data: neighborhoodsData = [] } = useQuery({
+    queryKey: ['/geography/neighborhoods', selectedMunicipalityId],
     enabled: selectedMunicipalityId !== null,
     queryFn: async () => {
       try {
