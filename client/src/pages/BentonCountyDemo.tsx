@@ -125,41 +125,81 @@ const TREND_DATA = [
 ];
 
 // Format data for our chart components
-const formatRegionalDataForPieChart = (data) => {
+interface RegionChartData {
+  name: string;
+  value: number;
+  fill?: string;
+  color?: string;
+  [key: string]: any;
+}
+
+const formatRegionalDataForPieChart = (data: RegionChartData[]) => {
   return data.map(region => ({
     name: region.name,
     value: region.value,
-    color: region.fill // Using color instead of fill to match our new component props
+    color: region.fill || region.color // Using color instead of fill to match our new component props
   }));
 };
 
-const formatBuildingTypeDataForBarChart = (data, selectedBuildingType) => {
+interface BuildingTypeData {
+  id: string;
+  name: string;
+  description?: string;
+  baseRate: number;
+  centralRate?: number;
+  westRate?: number;
+  eastRate?: number;
+  [key: string]: any;
+}
+
+const formatBuildingTypeDataForBarChart = (data: BuildingTypeData[], selectedBuildingType: string) => {
   // Prepare data for the bar chart format
   return data.map(type => ({
-    name: type.name,
-    value: selectedBuildingType ? type.centralRate : type.baseRate,
-    description: type.description
+    name: type.name || `Type ${type.id}`,
+    value: parseFloat((selectedBuildingType ? type.centralRate : type.baseRate) as any) || 0,
+    description: type.description,
+    fill: type.id === selectedBuildingType ? '#4338ca' : '#60a5fa',
+    id: type.id
   }));
 };
 
-const formatTrendDataForLineChart = (data) => {
+interface YearlyTrendData {
+  year: number;
+  residential?: number;
+  commercial?: number;
+  agricultural?: number;
+  value?: number;
+  [key: string]: any;
+}
+
+const formatTrendDataForLineChart = (data: YearlyTrendData[]) => {
   // Transform for line chart
   return data.map(year => ({
     name: year.year.toString(),
-    residential: year.residential,
-    commercial: year.commercial,
-    agricultural: year.agricultural
+    value: parseFloat((year.residential || year.value || 0).toString()),
+    date: `${year.year}-01-01`,
+    residential: parseFloat((year.residential || 0).toString()),
+    commercial: parseFloat((year.commercial || 0).toString()),
+    agricultural: parseFloat((year.agricultural || 0).toString())
   }));
 };
 
+// Define interface for radar chart data
+interface ValuationFactorData {
+  subject: string;
+  value: number;
+  benchmark: number;
+  [key: string]: any;
+}
+
 // Create data for radar chart to show valuation factors
-const VALUATION_FACTORS = [
-  { subject: 'Location', value: 0.8, benchmark: 0.7 },
-  { subject: 'Quality', value: 0.9, benchmark: 0.6 },
-  { subject: 'Condition', value: 0.75, benchmark: 0.7 },
-  { subject: 'Size', value: 0.85, benchmark: 0.8 },
-  { subject: 'Age', value: 0.65, benchmark: 0.6 },
-  { subject: 'Features', value: 0.7, benchmark: 0.5 }
+const VALUATION_FACTORS: ValuationFactorData[] = [
+  { subject: 'Location', value: 85, benchmark: 75 },
+  { subject: 'Quality', value: 90, benchmark: 65 },
+  { subject: 'Condition', value: 75, benchmark: 70 },
+  { subject: 'Size', value: 85, benchmark: 80 }, 
+  { subject: 'Age', value: 65, benchmark: 60 },
+  { subject: 'Features', value: 78, benchmark: 70 }
 ];
 
 export default function BentonCountyDemo() {
@@ -1040,3 +1080,4 @@ export default function BentonCountyDemo() {
     </div>
   );
 }
+
