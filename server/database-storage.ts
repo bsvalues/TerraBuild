@@ -219,19 +219,48 @@ export class DatabaseStorage implements IStorage {
     console.log(`[DEBUG] Getting cost matrix for buildingType: ${buildingTypeCode}, county: ${county}, year: ${year}`);
     
     try {
-      // Execute a raw SQL query to handle the complex query correctly
-      const query = `
-        SELECT * FROM cost_matrix 
-        WHERE building_type = $1 
-        AND county = $2 
-        AND matrix_year = $3
-      `;
+      // First try exact match
+      const exactQuery = await db.execute(
+        sql`SELECT * FROM cost_matrix 
+            WHERE building_type = ${buildingTypeCode} 
+            AND (county = ${county} OR county = ${county + ' County'} OR county ILIKE ${`%${county}%`})
+            AND matrix_year = ${year}`
+      );
       
-      const result = await db.execute(query, [buildingTypeCode, county, year]);
-      console.log(`[DEBUG] Raw SQL query result:`, result.rows);
+      if (exactQuery.rowCount > 0) {
+        console.log(`[DEBUG] Found exact match for ${buildingTypeCode}`);
+        return exactQuery.rows[0];
+      }
       
-      if (result.rowCount > 0) {
-        return result.rows[0];
+      // If no exact match, try prefix match for building type (e.g., R1 should match R1-A, R1-B, etc.)
+      const prefixQuery = await db.execute(
+        sql`SELECT * FROM cost_matrix 
+            WHERE building_type LIKE ${buildingTypeCode + '%'} 
+            AND (county = ${county} OR county = ${county + ' County'} OR county ILIKE ${`%${county}%`})
+            AND matrix_year = ${year}
+            ORDER BY building_type ASC
+            LIMIT 1`
+      );
+      
+      console.log(`[DEBUG] Building type prefix query result:`, prefixQuery.rows);
+      
+      if (prefixQuery.rowCount > 0) {
+        console.log(`[DEBUG] Found prefix match for ${buildingTypeCode}`);
+        return prefixQuery.rows[0];
+      }
+      
+      // As a fallback, try other years if the specific year isn't available
+      const fallbackYearQuery = await db.execute(
+        sql`SELECT * FROM cost_matrix 
+            WHERE building_type = ${buildingTypeCode} 
+            AND (county = ${county} OR county = ${county + ' County'} OR county ILIKE ${`%${county}%`})
+            ORDER BY ABS(matrix_year - ${year}) ASC
+            LIMIT 1`
+      );
+      
+      if (fallbackYearQuery.rowCount > 0) {
+        console.log(`[DEBUG] Found fallback year match for ${buildingTypeCode}`);
+        return fallbackYearQuery.rows[0];
       }
       
       return null;
