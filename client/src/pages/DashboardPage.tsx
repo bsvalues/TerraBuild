@@ -289,12 +289,26 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-gray-400">
-                      {isApiKeyConfigured ? 
-                        "AI-powered cost prediction insights" : 
-                        "API key required for AI-powered insights"}
-                    </div>
+                  <div className="h-64">
+                    {isApiKeyConfigured ? (
+                      <RadarChartComponent 
+                        data={valuationFactors}
+                        dataKeyPrimary="value"
+                        dataKeySecondary="benchmark"
+                        nameKey="subject"
+                        title="Valuation Factor Analysis"
+                        primaryTitle="Property"
+                        secondaryTitle="Benchmark"
+                        primaryColor="#3482F6"
+                        secondaryColor="#8B5CF6"
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center bg-gray-50 rounded">
+                        <div className="text-gray-400">
+                          API key required for AI-powered insights
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
