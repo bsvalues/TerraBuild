@@ -89,21 +89,22 @@ async function importProperties(csvFilePath, limit = 0) {
             updated_at = NOW()
         `;
         
+        // Map CSV field names to database columns based on the file header
         const values = [
-          parseInt(record.PROP_ID || '0'),
-          record.GEO_ID || record.PARCEL_ID || null,
-          record.LEGAL_DESC || null,
-          record.HOOD_CD || record.NEIGHBORHOOD_CD || null,
-          record.PROPERTY_USE_CD || null,
-          record.PROPERTY_USE_DESC || null,
-          record.TOWNSHIP || record.TOWNSHIP_CODE || null,
-          record.RANGE || record.RANGE_CODE || null,
-          record.SECTION || record.TOWNSHIP_SECTION || null,
-          parseFloat(record.LEGAL_ACREAGE || '0'),
-          parseFloat(record.ASSESSED_VAL || '0'),
-          parseFloat(record.APPRAISED_VAL || '0'),
-          record.TOWNSHIP_Q_SECTION || null,
-          true
+          parseInt(record.prop_id || '0'),
+          record.geo_id || null,
+          record.legal_desc || null,
+          record.hood_cd || null,
+          record.property_use_cd?.trim() || null,
+          record.property_use_desc?.trim() || null,
+          record.township_code || null,
+          record.range_code || null,
+          record.township_section || null,
+          parseFloat(record.legal_acreage || '0'),
+          parseFloat(record.assessed_val || '0'),
+          parseFloat(record.appraised_val || '0'),
+          record.township_q_section || null,
+          record.isactive === '1' || true
         ];
         
         // Execute the query
