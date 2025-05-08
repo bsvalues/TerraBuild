@@ -17,7 +17,13 @@ import {
   BASE_CHART_CONFIG, 
   formatters 
 } from './ChartTheme';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { InfoCircle } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import SampleSizeIndicator from './SampleSizeIndicator';
+import ConfidenceIntervalArea from './ConfidenceIntervalArea';
+import MethodologyPanel from './MethodologyPanel';
+import { calculateCOD, calculateStandardDeviation, calculateConfidenceInterval, formatStatistic } from '../../utils/statistics';
 
 // Define data structure for line chart
 interface DataPoint {
@@ -42,6 +48,24 @@ interface LineChartComponentProps {
   yAxisDataKey?: string;
   height?: number;
   className?: string;
+  
+  // IAAO Statistical Properties
+  showConfidenceInterval?: boolean;
+  confidenceLevel?: number;
+  showMethodology?: boolean;
+  methodologyDescription?: string;
+  methodologyDataSource?: string;
+  methodologyReferenceDate?: string;
+  showSampleSize?: boolean;
+  sampleSize?: number;
+  populationSize?: number;
+  
+  // Additional statistics
+  cod?: number; // Coefficient of Dispersion
+  prd?: number; // Price-Related Differential
+  meanValue?: number;
+  medianValue?: number;
+  standardDeviation?: number;
 }
 
 // Enhanced custom tooltip with more detailed information
@@ -82,7 +106,23 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
   xAxisDataKey = "name",
   yAxisDataKey = "value",
   height = 300,
-  className = ''
+  className = '',
+  // Statistical properties
+  showConfidenceInterval = false,
+  confidenceLevel = 0.95,
+  showMethodology = false,
+  methodologyDescription = "Time series analysis of building costs with IAAO-compliant statistical methods.",
+  methodologyDataSource = "Benton County Cost Matrix Database",
+  methodologyReferenceDate,
+  showSampleSize = false,
+  sampleSize,
+  populationSize,
+  // Additional statistics
+  cod,
+  prd,
+  meanValue,
+  medianValue,
+  standardDeviation
 }) => {
   // For interactive features
   const [activeDot, setActiveDot] = useState<number | null>(null);
@@ -90,11 +130,87 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
   // Create gradient definition for area under the line
   const gradientId = "colorGradient";
   
+  // Extract values for calculations if not provided
+  const values = data.map(item => parseFloat(item[yAxisDataKey])).filter(val => !isNaN(val));
+  
+  // Calculate statistics if not provided
+  const calculatedMean = meanValue || (values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0);
+  const calculatedStdDev = standardDeviation || calculateStandardDeviation(values);
+  const calculatedMedian = medianValue || calculateMedian(values);
+  const calculatedCOD = cod || calculateCOD(values.map(v => v / calculatedMedian));
+  const calculatedSampleSize = sampleSize || values.length;
+  
+  // Generate statistics for methodology panel
+  const statistics = [
+    {
+      name: "Sample Size",
+      description: "Number of data points used in this analysis",
+      value: calculatedSampleSize,
+      format: "count"
+    },
+    {
+      name: "Mean",
+      description: "Average cost value across all data points",
+      value: calculatedMean,
+      format: "currency",
+      formula: "Σ(values) / n"
+    },
+    {
+      name: "Median",
+      description: "Middle value in the dataset (50th percentile)",
+      value: calculatedMedian,
+      format: "currency"
+    },
+    {
+      name: "Standard Deviation",
+      description: "Measure of dispersion in the dataset",
+      value: calculatedStdDev,
+      format: "currency",
+      formula: "√(Σ(x - μ)² / n)"
+    }
+  ];
+  
+  // Add COD if available
+  if (calculatedCOD) {
+    statistics.push({
+      name: "Coefficient of Dispersion (COD)",
+      description: "IAAO measure of horizontal equity (assessment uniformity)",
+      value: calculatedCOD,
+      format: "percentage",
+      formula: "100 × (Σ|R - Median(R)| / n) / Median(R)",
+      standard: "IAAO standard: COD ≤ 15.0 for residential, ≤ 20.0 for other property classes"
+    });
+  }
+  
+  // Add PRD if available
+  if (prd) {
+    statistics.push({
+      name: "Price-Related Differential (PRD)",
+      description: "IAAO measure of vertical equity (assessment progressivity)",
+      value: prd,
+      format: "ratio",
+      formula: "Mean(R) / Weighted Mean(R)",
+      standard: "IAAO standard: 0.98 ≤ PRD ≤ 1.03"
+    });
+  }
+  
   return (
     <Card className={`overflow-hidden ${className}`}>
-      {title && (
-        <div className="px-4 pt-4 font-medium text-base">{title}</div>
-      )}
+      <div className="px-4 pt-4 flex justify-between items-center">
+        {title && (
+          <div className="font-medium text-base">{title}</div>
+        )}
+        
+        {/* Sample size indicator */}
+        {showSampleSize && (
+          <SampleSizeIndicator 
+            sampleSize={calculatedSampleSize} 
+            populationSize={populationSize}
+            confidenceLevel={confidenceLevel}
+          />
+        )}
+      </div>
+      
       <CardContent className="p-4">
         <ResponsiveContainer width="100%" height={height}>
           <LineChart
@@ -155,6 +271,19 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
             
             {showLegend && <Legend />}
             
+            {/* Confidence Interval Area */}
+            {showConfidenceInterval && (
+              <ConfidenceIntervalArea
+                dataKey={yAxisDataKey}
+                data={data}
+                xAxisKey={xAxisDataKey}
+                confidenceLevel={confidenceLevel}
+                fillColor="rgba(66, 133, 244, 0.1)"
+                strokeColor="rgba(66, 133, 244, 0.3)"
+                show={true}
+              />
+            )}
+            
             {/* Optional reference line (e.g., average or target) */}
             {referenceLine !== undefined && (
               <ReferenceLine 
@@ -165,6 +294,21 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
                   value: referenceLineLabel || `Reference: ${formatters.currency(referenceLine)}`,
                   position: 'right',
                   fill: CHART_COLORS.highlight,
+                  fontSize: 12
+                }}
+              />
+            )}
+            
+            {/* Mean reference line */}
+            {calculatedMean && !referenceLine && (
+              <ReferenceLine 
+                y={calculatedMean} 
+                stroke={CHART_COLORS.secondary}
+                strokeDasharray="3 3"
+                label={{
+                  value: `Mean: ${formatters.currency(calculatedMean)}`,
+                  position: 'right',
+                  fill: CHART_COLORS.secondary,
                   fontSize: 12
                 }}
               />
@@ -224,6 +368,32 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
+      
+      {/* Methodology Panel */}
+      {showMethodology && (
+        <CardFooter className="px-4 py-2">
+          <MethodologyPanel
+            title={title || "Cost Trend Analysis"}
+            description={methodologyDescription}
+            dataSource={methodologyDataSource}
+            referenceDate={methodologyReferenceDate || new Date().toLocaleDateString()}
+            methodDescription={`Analysis of ${calculatedSampleSize} data points using IAAO-compliant statistical methods, including mean, median, and measures of dispersion. ${showConfidenceInterval ? `Confidence intervals shown at ${confidenceLevel * 100}% confidence level.` : ''}`}
+            statistics={statistics}
+            references={[
+              {
+                title: "IAAO Standard on Ratio Studies",
+                url: "https://www.iaao.org/media/standards/Standard_on_Ratio_Studies.pdf"
+              },
+              {
+                title: "USPAP Standard 6: Mass Appraisal, Development and Reporting",
+                url: "https://www.appraisalfoundation.org/"
+              }
+            ]}
+            uspap={true}
+            iaao={true}
+          />
+        </CardFooter>
+      )}
     </Card>
   );
 };
