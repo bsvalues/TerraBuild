@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Download, Info, Clipboard } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Info, Clipboard, InfoIcon } from 'lucide-react';
 import { 
   Collapsible,
   CollapsibleContent,

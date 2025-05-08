@@ -303,12 +303,12 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
             {calculatedMean && !referenceLine && (
               <ReferenceLine 
                 y={calculatedMean} 
-                stroke={CHART_COLORS.secondary}
+                stroke={CHART_COLORS.tertiary}
                 strokeDasharray="3 3"
                 label={{
                   value: `Mean: ${formatters.currency(calculatedMean)}`,
                   position: 'right',
-                  fill: CHART_COLORS.secondary,
+                  fill: CHART_COLORS.tertiary,
                   fontSize: 12
                 }}
               />

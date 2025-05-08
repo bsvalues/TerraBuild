@@ -1,5 +1,5 @@
 import React from 'react';
-import { InfoCircle } from 'lucide-react';
+import { InfoIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { checkSampleSizeValidity } from '../../utils/statistics';
 
@@ -70,7 +70,7 @@ const SampleSizeIndicator: React.FC<SampleSizeIndicatorProps> = ({
             </p>
             {status === 'low' && (
               <p className="text-xs text-red-500 flex items-center mt-1">
-                <InfoCircle className="h-3 w-3 mr-1" />
+                <InfoIcon className="h-3 w-3 mr-1" />
                 Interpret results with caution
               </p>
             )}
