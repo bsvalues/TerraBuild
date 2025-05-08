@@ -117,7 +117,7 @@
     "react-hook-form": "^7.53.1",
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.4",
-    "recharts": "^2.15.1",
+    "recharts": "^2.15.3",
     "rest-express": "file:",
     "sinon": "^20.0.0",
     "sqlite": "^5.1.1",

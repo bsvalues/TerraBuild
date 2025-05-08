@@ -14,6 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
+// Import recharts components
+import {
+  BarChart, Bar, PieChart as RechartsPieChart, Pie, LineChart, Line, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  Cell, Area, AreaChart
+} from 'recharts';
+
 // Import icons
 import { 
   Building, Building2, Home, FileText, BarChart3, PieChart, 
@@ -91,25 +98,110 @@ const EDIT_HISTORY = [
   }
 ];
 
-// Chart simulation - this would be replaced with actual chart components in production
-const ChartSimulation = ({ type }: { type: string }) => {
+// Chart data for visualizations
+const REGIONAL_DATA = [
+  { name: 'West Benton', value: 6514, fill: BentonColors.green },
+  { name: 'Central Benton', value: 11204, fill: BentonColors.lightBlue },
+  { name: 'East Benton', value: 7134, fill: BentonColors.orange },
+];
+
+const BUILDING_TYPE_DATA = BUILDING_TYPES.map(type => ({
+  name: type.id,
+  description: type.name,
+  baseRate: type.baseRate,
+  westRate: type.baseRate * BENTON_REGIONS.find(r => r.id === 'west')!.factor,
+  centralRate: type.baseRate * BENTON_REGIONS.find(r => r.id === 'central')!.factor,
+  eastRate: type.baseRate * BENTON_REGIONS.find(r => r.id === 'east')!.factor,
+}));
+
+const TREND_DATA = [
+  { year: 2020, residential: 155.2, commercial: 189.5, agricultural: 131.8 },
+  { year: 2021, residential: 163.7, commercial: 198.2, agricultural: 138.4 },
+  { year: 2022, residential: 175.2, commercial: 212.7, agricultural: 142.5 },
+  { year: 2023, residential: 184.9, commercial: 222.3, agricultural: 143.2 },
+  { year: 2024, residential: 193.6, commercial: 229.4, agricultural: 146.8 },
+  { year: 2025, residential: 205.7, commercial: 237.5, agricultural: 148.4 },
+];
+
+// Chart components
+const PieChartComponent = ({ data }: { data: Array<{ name: string; value: number; fill: string }> }) => {
   return (
-    <div className="bg-gray-100 rounded-md p-4 h-64 flex items-center justify-center">
-      <div className="text-center">
-        <div className="mb-2">
-          {type === 'bar' && <BarChart3 className="h-10 w-10 mx-auto text-accent" />}
-          {type === 'pie' && <PieChart className="h-10 w-10 mx-auto text-accent" />}
-          {type === 'line' && <TrendingUp className="h-10 w-10 mx-auto text-accent" />}
-          {type === 'map' && <MapPin className="h-10 w-10 mx-auto text-accent" />}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {type === 'bar' && 'Cost Distribution by Building Type'}
-          {type === 'pie' && 'Regional Value Distribution'}
-          {type === 'line' && 'Cost Trend Analysis (2020-2025)'}
-          {type === 'map' && 'Geographic Value Heatmap'}
-        </p>
-      </div>
-    </div>
+    <ResponsiveContainer width="100%" height={300}>
+      <RechartsPieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          labelLine={true}
+          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          outerRadius={80}
+          fill="#8884d8"
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
+          ))}
+        </Pie>
+        <Tooltip formatter={(value: number) => [`${value} properties`, 'Count']} />
+        <Legend />
+      </RechartsPieChart>
+    </ResponsiveContainer>
+  );
+};
+
+const BarChartComponent = ({ data, selectedBuildingType }: { data: any[]; selectedBuildingType?: string }) => {
+  // Filter to show only selected building type if provided
+  const chartData = selectedBuildingType 
+    ? data.filter(item => item.name === selectedBuildingType)
+    : data;
+    
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Rate per sq.ft.']} />
+        <Legend />
+        <Bar dataKey="westRate" name="West Benton" fill={BentonColors.green} />
+        <Bar dataKey="centralRate" name="Central Benton" fill={BentonColors.lightBlue} />
+        <Bar dataKey="eastRate" name="East Benton" fill={BentonColors.orange} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
+const LineChartComponent = () => {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={TREND_DATA}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="year" />
+        <YAxis />
+        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Cost per sq.ft.']} />
+        <Legend />
+        <Line type="monotone" dataKey="residential" name="Residential" stroke={BentonColors.lightBlue} activeDot={{ r: 8 }} />
+        <Line type="monotone" dataKey="commercial" name="Commercial" stroke={BentonColors.darkTeal} />
+        <Line type="monotone" dataKey="agricultural" name="Agricultural" stroke={BentonColors.green} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+};
+
+const AreaChartComponent = () => {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart data={TREND_DATA}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="year" />
+        <YAxis />
+        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Cost per sq.ft.']} />
+        <Legend />
+        <Area type="monotone" dataKey="residential" name="Residential" stackId="1" stroke={BentonColors.lightBlue} fill={BentonColors.lightBlue + '80'} />
+        <Area type="monotone" dataKey="commercial" name="Commercial" stackId="1" stroke={BentonColors.darkTeal} fill={BentonColors.darkTeal + '80'} />
+        <Area type="monotone" dataKey="agricultural" name="Agricultural" stackId="1" stroke={BentonColors.green} fill={BentonColors.green + '80'} />
+      </AreaChart>
+    </ResponsiveContainer>
   );
 };
 
@@ -232,7 +324,7 @@ export default function BentonCountyDemo() {
                     
                     <div className="mt-6">
                       <h3 className="text-lg font-medium mb-3">Regional Distribution</h3>
-                      <ChartSimulation type="pie" />
+                      <PieChartComponent data={REGIONAL_DATA} />
                     </div>
                   </CardContent>
                 </Card>
@@ -633,7 +725,7 @@ export default function BentonCountyDemo() {
                     </div>
                     
                     <div className="space-y-6">
-                      <ChartSimulation type="bar" />
+                      <BarChartComponent data={BUILDING_TYPE_DATA} selectedBuildingType={selectedBuildingType} />
                       
                       <div className="grid grid-cols-3 gap-4">
                         {BENTON_REGIONS.map((region) => {
@@ -665,7 +757,7 @@ export default function BentonCountyDemo() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartSimulation type="line" />
+                    <LineChartComponent data={TREND_DATA} />
                     
                     <div className="mt-6">
                       <h3 className="font-medium mb-3">Trend Insights</h3>
