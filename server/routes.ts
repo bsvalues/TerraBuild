@@ -247,19 +247,20 @@ router.get('/cost-matrices/lookup', asyncHandler(async (req, res) => {
   }
   
   // Map database fields to API response fields for consistency
+  // Handle both raw SQL query results and ORM object results
   const mappedMatrix = {
     id: matrix.id,
-    buildingType: matrix.buildingType,
-    buildingTypeDescription: matrix.buildingTypeDescription,
+    buildingType: matrix.building_type || matrix.buildingType,
+    buildingTypeDescription: matrix.building_type_description || matrix.buildingTypeDescription,
     region: matrix.region,
-    year: matrix.matrix_year,
-    baseRate: matrix.base_cost,
+    year: matrix.matrix_year || matrix.year,
+    baseRate: matrix.base_cost || matrix.baseRate,
     county: matrix.county,
     state: matrix.state,
-    description: matrix.matrix_description,
-    isActive: matrix.is_active,
-    createdAt: matrix.createdAt,
-    updatedAt: matrix.updatedAt
+    description: matrix.matrix_description || matrix.description,
+    isActive: matrix.is_active !== undefined ? matrix.is_active : matrix.isActive,
+    createdAt: matrix.created_at || matrix.createdAt,
+    updatedAt: matrix.updated_at || matrix.updatedAt
   };
   
   res.json(mappedMatrix);
@@ -273,19 +274,20 @@ router.get('/cost-matrices/:id', asyncHandler(async (req, res) => {
   }
   
   // Map database fields to API response fields for consistency
+  // Handle both raw SQL query results and ORM object results
   const mappedMatrix = {
     id: matrix.id,
-    buildingType: matrix.buildingType,
-    buildingTypeDescription: matrix.buildingTypeDescription,
+    buildingType: matrix.building_type || matrix.buildingType,
+    buildingTypeDescription: matrix.building_type_description || matrix.buildingTypeDescription,
     region: matrix.region,
-    year: matrix.matrix_year,
-    baseRate: matrix.base_cost,
+    year: matrix.matrix_year || matrix.year,
+    baseRate: matrix.base_cost || matrix.baseRate,
     county: matrix.county,
     state: matrix.state,
-    description: matrix.matrix_description,
-    isActive: matrix.is_active,
-    createdAt: matrix.createdAt,
-    updatedAt: matrix.updatedAt
+    description: matrix.matrix_description || matrix.description,
+    isActive: matrix.is_active !== undefined ? matrix.is_active : matrix.isActive,
+    createdAt: matrix.created_at || matrix.createdAt,
+    updatedAt: matrix.updated_at || matrix.updatedAt
   };
   
   res.json(mappedMatrix);
