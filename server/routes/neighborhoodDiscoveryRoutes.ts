@@ -29,8 +29,39 @@ const hoodCdSchema = z.object({
 
 /**
  * Discover neighborhoods based on property data patterns
- * POST /api/neighborhoods/discover
+ * GET & POST /api/neighborhoods/discover
  */
+router.get('/discover', async (req, res) => {
+  try {
+    // For GET requests, use default parameters
+    const parameters = {
+      minimumProperties: 1,
+      distanceThreshold: 0.1,
+      useAI: false,
+      limitResults: 100
+    };
+    
+    // Generate a fallback response with basic data
+    const hoodCds = await getBasicHoodCdData();
+    
+    res.json({
+      success: true,
+      data: {
+        neighborhoods: hoodCds,
+        source: 'direct',
+        message: 'Generated from database query'
+      }
+    });
+  } catch (error) {
+    logger.error(`Error in neighborhood discovery GET: ${error.message}`);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || 'Error in neighborhood discovery',
+      error: error.toString()
+    });
+  }
+});
+
 router.post('/discover', async (req, res) => {
   try {
     // Validate and parse parameters
