@@ -726,14 +726,25 @@ export default function BentonCountyDemo() {
                     </div>
                     
                     <div className="space-y-6">
-                      <BarChartComponent 
-                        data={formatBuildingTypeDataForBarChart(BUILDING_TYPE_DATA, selectedBuildingType)} 
-                        title="Regional Cost Comparison"
-                        xAxisLabel="Building Type"
-                        yAxisLabel="Cost per sq.ft."
-                        selectedBuildingType={selectedBuildingType}
-                        showGrid={true}
-                      />
+                      <div className="flex space-x-4">
+                        <div className="w-1/2">
+                          <BarChartComponent 
+                            data={formatBuildingTypeDataForBarChart(BUILDING_TYPE_DATA, selectedBuildingType)} 
+                            title="Regional Cost Comparison"
+                            xAxisLabel="Building Type"
+                            yAxisLabel="Cost per sq.ft."
+                            selectedBuildingType={selectedBuildingType}
+                            showGrid={true}
+                          />
+                        </div>
+                        <div className="w-1/2">
+                          <PieChartComponent 
+                            data={formatRegionalDataForPieChart(REGIONAL_DATA)}
+                            title="Property Distribution by Region"
+                            showLegend={true}
+                          />
+                        </div>
+                      </div>
                       
                       <div className="grid grid-cols-3 gap-4">
                         {BENTON_REGIONS.map((region) => {
@@ -765,17 +776,33 @@ export default function BentonCountyDemo() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <LineChartComponent
-                      data={formatTrendDataForLineChart(TREND_DATA)}
-                      title="Benton County Cost Trends (2020-2025)"
-                      xAxisLabel="Year"
-                      yAxisLabel="Cost per sq.ft."
-                      showArea={true}
-                      showGradient={true}
-                      xAxisDataKey="name"
-                      referenceLine={195}
-                      referenceLineLabel="County Average"
-                    />
+                    <div className="flex space-x-4">
+                      <div className="w-1/2">
+                        <LineChartComponent
+                          data={formatTrendDataForLineChart(TREND_DATA)}
+                          title="Benton County Cost Trends (2020-2025)"
+                          xAxisLabel="Year"
+                          yAxisLabel="Cost per sq.ft."
+                          showArea={true}
+                          showGradient={true}
+                          xAxisDataKey="name"
+                          referenceLine={195}
+                          referenceLineLabel="County Average"
+                        />
+                      </div>
+                      <div className="w-1/2">
+                        <RadarChartComponent
+                          data={VALUATION_FACTORS}
+                          title="Property Valuation Factors"
+                          showLegend={true}
+                          metrics={[
+                            { key: 'value', name: 'Current Property', color: '#4f46e5' },
+                            { key: 'benchmark', name: 'County Average', color: '#60a5fa' }
+                          ]}
+                          fillOpacity={0.4}
+                        />
+                      </div>
+                    </div>
                     
                     <div className="mt-6">
                       <h3 className="font-medium mb-3">Trend Insights</h3>
