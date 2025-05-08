@@ -261,13 +261,29 @@ export class DatabaseStorage implements IStorage {
     if (!filter) {
       return this.getAllCostMatrices();
     }
+
+    // Build the query with proper field mappings
+    let query = db.select().from(schema.costMatrix);
     
-    if (filter.county) {
-      return this.getCostMatricesByCounty(filter.county);
+    // Map API field names to database column names
+    if (filter.buildingType) {
+      query = query.where(eq(schema.costMatrix.buildingType, filter.buildingType));
     }
     
-    // Implement more filters as needed
-    return this.getAllCostMatrices();
+    if (filter.region) {
+      query = query.where(eq(schema.costMatrix.region, filter.region));
+    }
+    
+    if (filter.year) {
+      query = query.where(eq(schema.costMatrix.matrix_year, filter.year));
+    }
+    
+    if (filter.county) {
+      query = query.where(eq(schema.costMatrix.county, filter.county));
+    }
+    
+    console.log('[DEBUG] Executing cost matrix query with filters:', filter);
+    return await query;
   }
   
   // Alias for compatibility with IStorage interface
