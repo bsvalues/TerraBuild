@@ -1,138 +1,119 @@
 /**
- * Chart Theme Configuration
+ * Chart Theme System for TerraBuild
  * 
- * This file defines consistent styling for all chart components in the TerraBuild platform,
- * following design principles that emphasize clarity, trustworthiness, and professionalism.
+ * This file contains theme settings and helpers for consistent chart styling
+ * across the application, following Apple-inspired design principles with
+ * a focus on clarity, deference, and depth.
  */
 
+// Color palette for charts (based on Benton County branding with professional blues)
 export const CHART_COLORS = {
-  // Primary palette (for main data series)
-  primary: "#0A559E", // Trustworthy blue
-  secondary: "#2E8A99", // Supporting teal
-  tertiary: "#4FB0C6", // Light blue accent
-  
-  // Regional color palette (for geographic data)
-  west: "#1F78B4",    // West region blue
-  central: "#33A02C", // Central region green
-  east: "#E31A1C",    // East region red
-  
-  // Supporting colors for charts
-  positive: "#2E8B57", // Success/positive green
-  negative: "#CC3333", // Error/negative red
-  neutral: "#888888",  // Neutral gray
-  
-  // Highlight colors for selection/focus
-  highlight: "#FFA500", // Orange highlight
-  selection: "#FFD700", // Gold selection
-  
-  // Background and surface colors
-  background: "#FFFFFF",
-  surface: "#F9FAFB", 
-  gridLine: "#EEEEEE",
-  
+  // Primary application colors
+  primary: '#0070F3', // Primary blue
+  secondary: '#4E44CE', // Secondary blue/purple
+  tertiary: '#00A3BF', // Tertiary teal  
+  highlight: '#FF6B00', // Orange highlight
+  success: '#10B981', // Success green
+  warning: '#F59E0B', // Warning amber
+  error: '#EF4444', // Error red
+  neutral: '#64748B', // Neutral gray
+
   // Text colors
-  textPrimary: "#333333",
-  textSecondary: "#666666",
-  textMuted: "#999999"
+  textPrimary: '#111827', // Near black
+  textSecondary: '#6B7280', // Gray
+  textTertiary: '#9CA3AF', // Light gray
+
+  // Background/surface colors
+  background: '#FFFFFF', // White
+  surface: '#F9FAFB', // Off-white
+  gridLine: '#E5E7EB', // Light gray for grid lines
+  
+  // Special case colors
+  increase: '#10B981', // For value increases (green)
+  decrease: '#EF4444', // For value decreases (red)
+  
+  // Chart specific colors
+  chartBackground: 'rgba(249, 250, 251, 0.8)' // Semi-transparent background
 };
 
-// Color arrays for consistent data series
+// Color series for multiple data points in the same chart
 export const DATA_SERIES_COLORS = [
-  CHART_COLORS.primary,
-  CHART_COLORS.secondary,
-  CHART_COLORS.tertiary,
-  "#6B5B95", // Purple
-  "#88B04B", // Green
-  "#EFC050", // Yellow
-  "#7B9EA8", // Slate blue
-  "#9B2335", // Dark red
-  "#5B5EA6", // Blue purple
-  "#45B8AC"  // Turquoise
+  '#0070F3', // Primary Blue
+  '#00A3BF', // Teal
+  '#4E44CE', // Purple
+  '#10B981', // Green
+  '#F59E0B', // Amber
+  '#FF6B00', // Orange
+  '#EF4444', // Red
+  '#64748B', // Gray
 ];
 
-// Base chart configuration
+// Base chart configuration for consistent styling
 export const BASE_CHART_CONFIG = {
-  margin: { top: 20, right: 30, bottom: 40, left: 50 },
-  animationDuration: 500,
-  gridStrokeDasharray: "3 3",
+  animationDuration: 800,
   fontSize: {
+    title: 16,
+    subtitle: 14,
     xAxis: 12,
     yAxis: 12,
-    label: 14,
-    title: 16
+    label: 12,
+    tooltip: 12
   },
-  borderRadius: 4
+  borderRadius: 4, // For bar charts, buttons, etc.
+  padding: {
+    card: 16,
+    chart: 20
+  },
+  margin: {
+    top: 10,
+    right: 30,
+    bottom: 30,
+    left: 20
+  },
+  gridStrokeDasharray: '3 3'
 };
 
-// Default tooltip styling
-export const TOOLTIP_STYLE = {
-  background: "#FFFFFF",
-  border: `1px solid ${CHART_COLORS.gridLine}`,
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-  borderRadius: "4px",
-  padding: "8px 12px",
-  fontFamily: "'Inter', system-ui, sans-serif",
-  fontSize: "12px",
-  color: CHART_COLORS.textPrimary
-};
-
-// Responsive sizing
-export const RESPONSIVE_CHART_SIZES = {
-  small: {
-    height: 200,
-    paddingX: 16,
-    fontSize: {
-      xAxis: 10,
-      yAxis: 10,
-      label: 12,
-      title: 14
-    }
-  },
-  medium: {
-    height: 300,
-    paddingX: 20,
-    fontSize: {
-      xAxis: 12,
-      yAxis: 12,
-      label: 14,
-      title: 16
-    }
-  },
-  large: {
-    height: 400,
-    paddingX: 24,
-    fontSize: {
-      xAxis: 14,
-      yAxis: 14,
-      label: 16,
-      title: 18
-    }
-  }
-};
-
-// Formatter functions
+// Formatter functions for consistent data display
 export const formatters = {
-  currency: (value: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
+  // Format currency values
+  currency: (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value),
-    
-  percent: (value: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'percent', 
+    }).format(value);
+  },
+  
+  // Format percentage values
+  percent: (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
       minimumFractionDigits: 1,
       maximumFractionDigits: 1
-    }).format(value / 100),
-    
-  number: (value: number) => 
-    new Intl.NumberFormat('en-US').format(value),
-    
-  compact: (value: number) => 
-    new Intl.NumberFormat('en-US', {
+    }).format(value / 100);
+  },
+  
+  // Format large numbers with K/M/B suffixes
+  compact: (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
       notation: 'compact',
       compactDisplay: 'short'
-    }).format(value)
+    }).format(value);
+  },
+  
+  // Format plain numbers with thousands separators
+  number: (value: number): string => {
+    return new Intl.NumberFormat('en-US').format(value);
+  },
+  
+  // Format dates (simple)
+  date: (date: Date | string): string => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
 };
