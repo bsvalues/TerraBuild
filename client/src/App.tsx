@@ -61,6 +61,7 @@ import MatrixUploadPage from "@/pages/MatrixUploadPage";
 import XREGPage from "@/pages/XREGPage";
 import MatrixXREGIntegrationPage from "@/pages/MatrixXREGIntegrationPage";
 import ValuationDashboardPage from "@/pages/ValuationDashboardPage";
+import BentonCountyDemo from "@/pages/BentonCountyDemo";
 import Header from "@/components/layout/header";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { AuthProvider } from "./contexts/auth-context";
@@ -302,6 +303,10 @@ function Router() {
       
       <Route path="/cost-wizard">
         <CostWizardPage />
+      </Route>
+
+      <Route path="/benton-demo">
+        <BentonCountyDemo />
       </Route>
       
       {/* Protected routes */}
