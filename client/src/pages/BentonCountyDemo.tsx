@@ -14,12 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
-// Import recharts components
+// Import enhanced chart components
 import {
-  BarChart, Bar, PieChart as RechartsPieChart, Pie, LineChart, Line, 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  Cell, Area, AreaChart
-} from 'recharts';
+  PieChartComponent,
+  BarChartComponent,
+  LineChartComponent,
+  RadarChartComponent
+} from '@/components/charts';
 
 // Import icons
 import { 
@@ -123,87 +124,43 @@ const TREND_DATA = [
   { year: 2025, residential: 205.7, commercial: 237.5, agricultural: 148.4 },
 ];
 
-// Chart components
-const PieChartComponent = ({ data }: { data: Array<{ name: string; value: number; fill: string }> }) => {
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <RechartsPieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          labelLine={true}
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.fill} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number) => [`${value} properties`, 'Count']} />
-        <Legend />
-      </RechartsPieChart>
-    </ResponsiveContainer>
-  );
+// Format data for our chart components
+const formatRegionalDataForPieChart = (data) => {
+  return data.map(region => ({
+    name: region.name,
+    value: region.value,
+    color: region.fill // Using color instead of fill to match our new component props
+  }));
 };
 
-const BarChartComponent = ({ data, selectedBuildingType }: { data: any[]; selectedBuildingType?: string }) => {
-  // Filter to show only selected building type if provided
-  const chartData = selectedBuildingType 
-    ? data.filter(item => item.name === selectedBuildingType)
-    : data;
-    
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Rate per sq.ft.']} />
-        <Legend />
-        <Bar dataKey="westRate" name="West Benton" fill={BentonColors.green} />
-        <Bar dataKey="centralRate" name="Central Benton" fill={BentonColors.lightBlue} />
-        <Bar dataKey="eastRate" name="East Benton" fill={BentonColors.orange} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+const formatBuildingTypeDataForBarChart = (data, selectedBuildingType) => {
+  // Prepare data for the bar chart format
+  return data.map(type => ({
+    name: type.name,
+    value: selectedBuildingType ? type.centralRate : type.baseRate,
+    description: type.description
+  }));
 };
 
-const LineChartComponent = () => {
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={TREND_DATA}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="year" />
-        <YAxis />
-        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Cost per sq.ft.']} />
-        <Legend />
-        <Line type="monotone" dataKey="residential" name="Residential" stroke={BentonColors.lightBlue} activeDot={{ r: 8 }} />
-        <Line type="monotone" dataKey="commercial" name="Commercial" stroke={BentonColors.darkTeal} />
-        <Line type="monotone" dataKey="agricultural" name="Agricultural" stroke={BentonColors.green} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
+const formatTrendDataForLineChart = (data) => {
+  // Transform for line chart
+  return data.map(year => ({
+    name: year.year.toString(),
+    residential: year.residential,
+    commercial: year.commercial,
+    agricultural: year.agricultural
+  }));
 };
 
-const AreaChartComponent = () => {
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={TREND_DATA}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="year" />
-        <YAxis />
-        <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Cost per sq.ft.']} />
-        <Legend />
-        <Area type="monotone" dataKey="residential" name="Residential" stackId="1" stroke={BentonColors.lightBlue} fill={BentonColors.lightBlue + '80'} />
-        <Area type="monotone" dataKey="commercial" name="Commercial" stackId="1" stroke={BentonColors.darkTeal} fill={BentonColors.darkTeal + '80'} />
-        <Area type="monotone" dataKey="agricultural" name="Agricultural" stackId="1" stroke={BentonColors.green} fill={BentonColors.green + '80'} />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-};
+// Create data for radar chart to show valuation factors
+const VALUATION_FACTORS = [
+  { subject: 'Location', value: 0.8, benchmark: 0.7 },
+  { subject: 'Quality', value: 0.9, benchmark: 0.6 },
+  { subject: 'Condition', value: 0.75, benchmark: 0.7 },
+  { subject: 'Size', value: 0.85, benchmark: 0.8 },
+  { subject: 'Age', value: 0.65, benchmark: 0.6 },
+  { subject: 'Features', value: 0.7, benchmark: 0.5 }
+];
 
 export default function BentonCountyDemo() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -324,7 +281,11 @@ export default function BentonCountyDemo() {
                     
                     <div className="mt-6">
                       <h3 className="text-lg font-medium mb-3">Regional Distribution</h3>
-                      <PieChartComponent data={REGIONAL_DATA} />
+                      <PieChartComponent 
+                        data={formatRegionalDataForPieChart(REGIONAL_DATA)} 
+                        title="Property Distribution by Region"
+                        showLegend={true}
+                      />
                     </div>
                   </CardContent>
                 </Card>
