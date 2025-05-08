@@ -25,6 +25,12 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+// Import chart components
+import LineChartComponent from '@/components/charts/LineChartComponent';
+import BarChartComponent from '@/components/charts/BarChartComponent';
+import PieChartComponent from '@/components/charts/PieChartComponent';
+import RadarChartComponent from '@/components/charts/RadarChartComponent';
+
 export default function DashboardPage() {
   // Reference to the dashboard content for screenshot functionality
   const dashboardContentRef = useRef<HTMLDivElement>(null);
@@ -42,6 +48,69 @@ export default function DashboardPage() {
     typeof apiKeyStatus === 'object' && 
     'value' in apiKeyStatus && 
     apiKeyStatus.value === 'configured';
+    
+  // Chart data - type definitions
+  interface RegionChartData {
+    name: string;
+    value: number;
+    [key: string]: any;
+  }
+  
+  interface BuildingTypeData {
+    name: string;
+    residential: number;
+    commercial: number;
+    [key: string]: any;
+  }
+  
+  interface YearlyTrendData {
+    name: string;
+    residential: number;
+    commercial: number;
+    agricultural: number;
+    [key: string]: any;
+  }
+  
+  interface ValuationFactorData {
+    subject: string;
+    value: number;
+    benchmark: number;
+    [key: string]: any;
+  }
+  
+  // Sample data for charts
+  const regionalData: RegionChartData[] = [
+    { name: 'West Benton', value: 38 },
+    { name: 'Central Benton', value: 42 },
+    { name: 'East Benton', value: 20 }
+  ];
+  
+  const buildingTypeData: BuildingTypeData[] = [
+    { name: 'R1', residential: 125, commercial: 0 },
+    { name: 'R2', residential: 145, commercial: 0 },
+    { name: 'R3', residential: 165, commercial: 0 },
+    { name: 'C1', residential: 0, commercial: 180 },
+    { name: 'C2', residential: 0, commercial: 210 },
+    { name: 'C3', residential: 0, commercial: 240 }
+  ];
+  
+  const trendData: YearlyTrendData[] = [
+    { name: '2020', residential: 120, commercial: 170, agricultural: 85 },
+    { name: '2021', residential: 132, commercial: 175, agricultural: 90 },
+    { name: '2022', residential: 141, commercial: 190, agricultural: 95 },
+    { name: '2023', residential: 154, commercial: 210, agricultural: 100 },
+    { name: '2024', residential: 162, commercial: 215, agricultural: 110 },
+    { name: '2025', residential: 178, commercial: 225, agricultural: 120 }
+  ];
+  
+  const valuationFactors: ValuationFactorData[] = [
+    { subject: 'Location', value: 85, benchmark: 75 },
+    { subject: 'Quality', value: 90, benchmark: 65 },
+    { subject: 'Condition', value: 75, benchmark: 70 },
+    { subject: 'Size', value: 85, benchmark: 80 }, 
+    { subject: 'Age', value: 65, benchmark: 60 },
+    { subject: 'Features', value: 78, benchmark: 70 }
+  ];
 
   const stats = [
     { 
@@ -148,8 +217,19 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-gray-400">Cost trend visualization</div>
+                  <div className="h-64">
+                    <LineChartComponent 
+                      data={trendData}
+                      xAxisKey="name"
+                      yAxisKey="residential" 
+                      lines={[
+                        { dataKey: "residential", name: "Residential", color: "#3482F6" },
+                        { dataKey: "commercial", name: "Commercial", color: "#10B981" },
+                        { dataKey: "agricultural", name: "Agricultural", color: "#8B5CF6" }
+                      ]}
+                      title="Building Cost Trends Over Time"
+                      toolTipTitle="Yearly Average Costs"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -162,8 +242,17 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-gray-400">Regional cost comparison visualization</div>
+                  <div className="h-64">
+                    <BarChartComponent 
+                      data={buildingTypeData}
+                      xAxisKey="name"
+                      bars={[
+                        { dataKey: "residential", name: "Residential", color: "#3482F6" },
+                        { dataKey: "commercial", name: "Commercial", color: "#10B981" }
+                      ]}
+                      title="Building Type Cost Comparison"
+                      toolTipTitle="Cost Per Square Foot ($)"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -179,8 +268,15 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <div className="text-gray-400">Building type cost breakdown visualization</div>
+                  <div className="h-64">
+                    <PieChartComponent 
+                      data={regionalData}
+                      nameKey="name"
+                      dataKey="value"
+                      colors={["#3482F6", "#10B981", "#8B5CF6"]} 
+                      title="Regional Cost Distribution"
+                      tooltipLabel="Regional Share"
+                    />
                   </div>
                 </CardContent>
               </Card>
