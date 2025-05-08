@@ -40,14 +40,8 @@ async function importProperties(csvFilePath, limit = 0) {
       return;
     }
     
-    // First, clear existing property data if needed
-    try {
-      const deleteQuery = `DELETE FROM properties`;
-      await db.execute(deleteQuery);
-      console.log('Cleared existing property data');
-    } catch (error) {
-      console.error(`Error clearing existing data: ${error.message}`);
-    }
+    // Using upsert operation instead of clearing existing data
+    console.log('Using upsert operation to update existing records and add new ones');
     
     // Insert the new data
     let imported = 0;
@@ -58,7 +52,8 @@ async function importProperties(csvFilePath, limit = 0) {
       
       try {
         // Map CSV fields to database columns based on the actual schema
-        const insertQuery = `
+        // Use upsert (INSERT ... ON CONFLICT DO UPDATE) to handle duplicate keys
+        const upsertQuery = `
           INSERT INTO properties (
             prop_id,
             geo_id,
@@ -77,6 +72,21 @@ async function importProperties(csvFilePath, limit = 0) {
           ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
           )
+          ON CONFLICT (prop_id) DO UPDATE SET
+            geo_id = $2,
+            legal_desc = $3,
+            hood_cd = $4,
+            property_use_cd = $5,
+            property_use_desc = $6,
+            township_code = $7,
+            range_code = $8,
+            township_section = $9,
+            legal_acreage = $10,
+            assessed_val = $11,
+            appraised_val = $12,
+            township_q_section = $13,
+            is_active = $14,
+            updated_at = NOW()
         `;
         
         const values = [
@@ -97,7 +107,7 @@ async function importProperties(csvFilePath, limit = 0) {
         ];
         
         // Execute the query
-        await db.execute(insertQuery, values);
+        await db.execute(upsertQuery, values);
         imported++;
         
         // Log progress periodically
