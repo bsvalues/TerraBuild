@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { logger } from '../utils/logger';
 import * as schema from '../../shared/schema';
+import format from 'pg-format';
 
 const router = Router();
 
@@ -42,18 +43,22 @@ router.get('/', async (req, res) => {
     // Get neighborhood suggestions if requested
     if (neighborhood) {
       try {
-        // Find neighborhoods that match the query (hood_cd or prefix)
-        const neighborhoodResults = await db.execute(
+        // Find neighborhoods that match the query using pg-format
+        const searchPattern = `%${query}%`;
+        const neighborhoodQuery = format(
           `SELECT DISTINCT hood_cd, COUNT(*) as property_count 
            FROM properties 
            WHERE hood_cd IS NOT NULL 
              AND hood_cd != '' 
-             AND hood_cd::text LIKE $1
+             AND hood_cd::text LIKE %L
            GROUP BY hood_cd 
            ORDER BY property_count DESC 
-           LIMIT $2`,
-          [`%${query}%`, limit]
+           LIMIT %s`,
+          searchPattern,
+          limit
         );
+        
+        const neighborhoodResults = await db.execute(neighborhoodQuery);
 
         if (neighborhoodResults.rows && neighborhoodResults.rows.length > 0) {
           results.neighborhoods = neighborhoodResults.rows.map(row => ({
@@ -71,16 +76,22 @@ router.get('/', async (req, res) => {
     // Get property suggestions if requested
     if (property) {
       try {
-        // Find properties that match the query (simpler query that will work with our current schema)
-        const propertyResults = await db.execute(
+        // Find properties that match the query using pg-format
+        const searchPattern = `%${query}%`;
+        const propertyQuery = format(
           `SELECT id, hood_cd, geo_id, legal_desc, prop_id
            FROM properties 
-           WHERE (geo_id::text LIKE $1 OR 
-                 prop_id::text LIKE $1 OR 
-                 legal_desc::text LIKE $1)
-           LIMIT $2`,
-          [`%${query}%`, limit]
+           WHERE (geo_id::text LIKE %L OR 
+                 prop_id::text LIKE %L OR 
+                 legal_desc::text LIKE %L)
+           LIMIT %s`,
+          searchPattern,
+          searchPattern,
+          searchPattern,
+          limit
         );
+        
+        const propertyResults = await db.execute(propertyQuery);
 
         if (propertyResults.rows && propertyResults.rows.length > 0) {
           results.properties = propertyResults.rows.map(row => ({
@@ -126,18 +137,22 @@ router.get('/neighborhoods', async (req, res) => {
     const queryStr = query as string;
     const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit as number;
 
-    // Find neighborhoods that match the query
-    const neighborhoodResults = await db.execute(
+    // Find neighborhoods that match the query using pg-format
+    const searchPattern = `%${queryStr}%`;
+    const formattedQuery = format(
       `SELECT DISTINCT hood_cd, COUNT(*) as property_count 
        FROM properties 
        WHERE hood_cd IS NOT NULL 
          AND hood_cd != '' 
-         AND hood_cd::text LIKE $1
+         AND hood_cd::text LIKE %L
        GROUP BY hood_cd 
        ORDER BY property_count DESC 
-       LIMIT $2`,
-      [`%${queryStr}%`, limitNum]
+       LIMIT %s`,
+      searchPattern,
+      limitNum
     );
+    
+    const neighborhoodResults = await db.execute(formattedQuery);
 
     const neighborhoods = [];
     
@@ -175,16 +190,22 @@ router.get('/properties', async (req, res) => {
     const queryStr = query as string;
     const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit as number;
 
-    // Find properties that match the query (simpler query that will work with our current schema)
-    const propertyResults = await db.execute(
+    // Find properties that match the query using pg-format
+    const searchPattern = `%${queryStr}%`;
+    const formattedQuery = format(
       `SELECT id, hood_cd, geo_id, legal_desc, prop_id
        FROM properties 
-       WHERE (geo_id::text LIKE $1 OR 
-             prop_id::text LIKE $1 OR 
-             legal_desc::text LIKE $1)
-       LIMIT $2`,
-      [`%${queryStr}%`, limitNum]
+       WHERE (geo_id::text LIKE %L OR 
+             prop_id::text LIKE %L OR 
+             legal_desc::text LIKE %L)
+       LIMIT %s`,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      limitNum
     );
+    
+    const propertyResults = await db.execute(formattedQuery);
 
     const properties = [];
     
