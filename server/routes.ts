@@ -227,10 +227,13 @@ router.get('/cost-matrices', asyncHandler(async (req, res) => {
 router.get('/cost-matrices/lookup', asyncHandler(async (req, res) => {
   const { buildingType, region, year, county } = req.query;
   
-  if (!buildingType || !region || !year) {
-    return res.status(400).json({ message: 'Missing required query parameters: buildingType, region, year' });
+  console.log(`[DEBUG] Lookup params: buildingType=${buildingType}, region=${region}, year=${year}, county=${county}`);
+  
+  if (!buildingType || !year) {
+    return res.status(400).json({ message: 'Missing required query parameters: buildingType, year' });
   }
   
+  // These parameters are configured for Benton County data specifically
   const countyVal = county || 'Benton'; // Default to Benton County if not specified
   
   const matrix = await storage.getCostMatrixByBuildingType(
@@ -239,6 +242,32 @@ router.get('/cost-matrices/lookup', asyncHandler(async (req, res) => {
     parseInt(year as string)
   );
   
+  if (!matrix) {
+    return res.status(404).json({ message: 'Cost matrix not found' });
+  }
+  
+  // Map database fields to API response fields for consistency
+  const mappedMatrix = {
+    id: matrix.id,
+    buildingType: matrix.buildingType,
+    buildingTypeDescription: matrix.buildingTypeDescription,
+    region: matrix.region,
+    year: matrix.matrix_year,
+    baseRate: matrix.base_cost,
+    county: matrix.county,
+    state: matrix.state,
+    description: matrix.matrix_description,
+    isActive: matrix.is_active,
+    createdAt: matrix.createdAt,
+    updatedAt: matrix.updatedAt
+  };
+  
+  res.json(mappedMatrix);
+}));
+
+// Route for getting a specific cost matrix by ID
+router.get('/cost-matrices/:id', asyncHandler(async (req, res) => {
+  const matrix = await storage.getCostMatrixById(parseInt(req.params.id));
   if (!matrix) {
     return res.status(404).json({ message: 'Cost matrix not found' });
   }

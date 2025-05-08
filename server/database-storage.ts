@@ -216,16 +216,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | null> {
-    // Using costMatrix (singular) which is the correct table name
-    // Field names match the actual database schema columns
-    const result = await db.select().from(schema.costMatrix).where(
-      and(
-        eq(schema.costMatrix.building_type, buildingTypeCode), 
-        eq(schema.costMatrix.county, county),
-        eq(schema.costMatrix.matrix_year, year) // Using matrix_year which is the field in the database
-      )
-    );
-    return result[0] || null;
+    console.log(`[DEBUG] Getting cost matrix for buildingType: ${buildingTypeCode}, county: ${county}, year: ${year}`);
+    
+    try {
+      // Execute a raw SQL query to handle the complex query correctly
+      const query = `
+        SELECT * FROM cost_matrix 
+        WHERE building_type = $1 
+        AND county = $2 
+        AND matrix_year = $3
+      `;
+      
+      const result = await db.execute(query, [buildingTypeCode, county, year]);
+      console.log(`[DEBUG] Raw SQL query result:`, result.rows);
+      
+      if (result.rowCount > 0) {
+        return result.rows[0];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('[ERROR] Failed to execute cost matrix query:', error);
+      return null;
+    }
   }
 
   async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
