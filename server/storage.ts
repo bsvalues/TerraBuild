@@ -175,11 +175,13 @@ export class MemStorage implements IStorage {
     const adminUser: InsertUser = {
       username: 'admin',
       password: '$2a$10$oCf5fSRnZiXEPRz9/AQzT.CYnG1KPNnEMJQQjswFktoPq76UjLwFG', // hashed 'admin123'
-      email: 'admin@terrafusion.build',
       name: 'Admin User', // Using name to match actual DB column
       role: 'admin',
-      county: null,
-      department: null
+      is_active: true
+      // Removed fields that don't exist in the actual database schema
+      // email: 'admin@terrafusion.build',
+      // county: null,
+      // department: null
     };
     
     // Only add if no users exist yet

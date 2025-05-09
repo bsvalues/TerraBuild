@@ -97,7 +97,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
           <DropdownMenuContent className="w-56 bg-blue-900 border-blue-800 text-blue-100" align="end">
             <div className="px-4 py-3 border-b border-blue-800/40">
               <p className="text-sm font-medium text-blue-100">{user?.name || user?.username}</p>
-              <p className="text-xs text-blue-400 mt-0.5">{user?.email}</p>
+              <p className="text-xs text-blue-400 mt-0.5">{user?.role}</p>
             </div>
             <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
               <User className="mr-2 h-4 w-4 text-blue-400" />
