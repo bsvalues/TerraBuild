@@ -165,6 +165,30 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
+    
+    // Create default user for testing
+    this.seedDefaultUser();
+  }
+  
+  private async seedDefaultUser() {
+    // Create a default admin user
+    const adminUser: InsertUser = {
+      username: 'admin',
+      password: '$2a$10$oCf5fSRnZiXEPRz9/AQzT.CYnG1KPNnEMJQQjswFktoPq76UjLwFG', // hashed 'admin123'
+      email: 'admin@terrafusion.build',
+      fullName: 'Admin User',
+      role: 'admin',
+      county: null,
+      department: null
+    };
+    
+    // Only add if no users exist yet
+    if (this.users.length === 0) {
+      console.log('Creating default admin user: username="admin", password="admin123"');
+      this.createUser(adminUser).catch(err => {
+        console.error('Failed to create default user:', err);
+      });
+    }
   }
 
   // User operations
