@@ -18,12 +18,18 @@ import {
   formatters 
 } from './ChartTheme';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { InfoCircle } from 'lucide-react';
+import { InfoIcon } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SampleSizeIndicator from './SampleSizeIndicator';
 import ConfidenceIntervalArea from './ConfidenceIntervalArea';
 import MethodologyPanel from './MethodologyPanel';
-import { calculateCOD, calculateStandardDeviation, calculateConfidenceInterval, formatStatistic } from '../../utils/statistics';
+import { 
+  calculateCOD, 
+  calculateStandardDeviation, 
+  calculateConfidenceInterval, 
+  formatStatistic,
+  calculateMedian 
+} from '../../utils/statistics';
 
 // Define data structure for line chart
 interface DataPoint {
