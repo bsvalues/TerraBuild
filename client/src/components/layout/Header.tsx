@@ -1,32 +1,18 @@
-import React from 'react';
-import { Link } from 'wouter';
-import { 
-  Bell, 
-  Search, 
-  User, 
-  LogOut, 
-  Settings,
-  ChevronDown, 
-  Sun, 
-  Moon,
-  Database,
-  HelpCircle,
-  ExternalLink
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Bell, HelpCircle, Menu, Settings, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import TerraFusionLogo from '@/components/TerraFusionLogo';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/auth-context';
-import TerraFusionLogo from '@/components/TerraFusionLogo';
+import { Button } from '@/components/ui/button';
+import { Link } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -34,128 +20,103 @@ interface HeaderProps {
 
 export function Header({ toggleSidebar }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
   
   const handleLogout = () => {
     logoutMutation.mutate();
   };
   
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
+  const userInitials = user ? getInitials(user.fullName || user.username || '') : 'U';
+
   return (
-    <header className="border-b border-blue-800/40 bg-blue-950 py-2 px-4 sticky top-0 z-10">
-      <div className="flex items-center justify-between">
-        {/* Left section - search */}
-        <div className="flex items-center">
-          <div className="relative w-72">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-blue-300" />
-            <Input
-              type="search"
-              placeholder="Search properties, calculations..."
-              className="pl-8 bg-blue-900/50 border-blue-700 placeholder:text-blue-300/50 text-blue-100 focus-visible:ring-cyan-400"
-            />
-          </div>
+    <header className="h-16 z-30 bg-gradient-to-r from-blue-950 to-blue-900 border-b border-blue-800/40 flex items-center px-4 justify-between">
+      <div className="flex items-center">
+        <Button 
+          variant="ghost" 
+          onClick={toggleSidebar} 
+          className="mr-2 text-blue-300 hover:text-blue-100 hover:bg-blue-800/30 lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+        
+        <div className="mr-6 hidden lg:flex">
+          <TerraFusionLogo variant="with-text" textContent="TerraFusion Build" size="sm" className="h-8" />
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <div className="hidden md:flex">
+          <Button variant="outline" size="sm" className="text-blue-300 border-blue-800 bg-blue-900/40 hover:bg-blue-800/60 mr-2">
+            <HelpCircle className="h-4 w-4 mr-1" />
+            Help
+          </Button>
         </div>
         
-        {/* Right section - user info & actions */}
-        <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-blue-400 hover:text-blue-200 hover:bg-blue-900/40">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-medium text-white">3</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative p-1 rounded-full text-blue-300 hover:text-blue-100 hover:bg-blue-800/30">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-cyan-500"></span>
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80 bg-blue-900 border-blue-800 text-blue-100" align="end">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-blue-800/40">
+              <span className="font-semibold">Notifications</span>
+              <Button variant="link" className="text-cyan-400 hover:text-cyan-300 h-auto p-0">
+                Mark all as read
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 bg-blue-900 border-blue-700 text-blue-200">
-              <DropdownMenuLabel className="text-cyan-300">Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <div className="max-h-80 overflow-y-auto">
-                {[1, 2, 3].map((item) => (
-                  <DropdownMenuItem key={item} className="py-3 flex flex-col items-start cursor-pointer hover:bg-blue-800/50">
-                    <div className="flex justify-between w-full">
-                      <span className="font-medium text-blue-100">Cost matrix updated</span>
-                      <span className="text-xs text-blue-400">2h ago</span>
-                    </div>
-                    <p className="text-sm text-blue-300 mt-1">New regional cost factors available for downtown area</p>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <DropdownMenuItem className="justify-center text-cyan-400 hover:bg-blue-800/50 hover:text-cyan-300">
-                View all notifications
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="flex items-center gap-2 text-blue-300 hover:bg-blue-900/40 hover:text-blue-100"
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/70 to-blue-700/70 flex items-center justify-center border border-blue-700/50">
-                  <User className="h-4 w-4 text-blue-100" />
-                </div>
-                {user && (
-                  <>
-                    <div className="text-left">
-                      <p className="text-sm font-medium">{user.fullName || user.username}</p>
-                      <p className="text-xs text-blue-400">{user.role || "Analyst"}</p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-blue-400" />
-                  </>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-blue-900 border-blue-700 text-blue-100">
-              <DropdownMenuLabel className="text-cyan-300">My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <User className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <Settings className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <Database className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>My Data</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <Sun className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Light Mode</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <Moon className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Dark Mode</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <HelpCircle className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Help & Support</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-800/50">
-                  <ExternalLink className="mr-2 h-4 w-4 text-blue-300" />
-                  <span>Documentation</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-blue-800/60" />
-              <DropdownMenuItem 
-                onClick={handleLogout}
-                className="text-red-300 hover:bg-red-900/20 hover:text-red-200"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            </div>
+            <div className="py-2 px-4 text-blue-400 text-sm">
+              No new notifications
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center space-x-2 rounded-full hover:bg-blue-800/30 p-1">
+              <Avatar className="h-8 w-8 border border-blue-800 bg-blue-800">
+                <AvatarFallback className="bg-gradient-to-br from-cyan-500/20 to-blue-700/40 text-blue-100 font-medium">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-blue-900 border-blue-800 text-blue-100" align="end">
+            <div className="px-4 py-3 border-b border-blue-800/40">
+              <p className="text-sm font-medium text-blue-100">{user?.fullName || user?.username}</p>
+              <p className="text-xs text-blue-400 mt-0.5">{user?.email}</p>
+            </div>
+            <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
+              <User className="mr-2 h-4 w-4 text-blue-400" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
+              <Settings className="mr-2 h-4 w-4 text-blue-400" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-blue-800/40" />
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100"
+            >
+              <LogOut className="mr-2 h-4 w-4 text-blue-400" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

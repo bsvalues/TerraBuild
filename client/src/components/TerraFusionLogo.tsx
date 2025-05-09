@@ -1,13 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type LogoVariant = 'default' | 'circular' | 'minimal' | 'text-only';
+type LogoVariant = 'default' | 'circular' | 'minimal' | 'text-only' | 'with-text';
 type LogoSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface TerraFusionLogoProps {
   variant?: LogoVariant;
   size?: LogoSize;
   className?: string;
+  textContent?: string;
 }
 
 const sizeMap = {
@@ -36,7 +37,8 @@ const sizeMap = {
 const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
   variant = 'default',
   size = 'md',
-  className
+  className,
+  textContent = 'TerraFusion Build'
 }) => {
   const { container, icon, text } = sizeMap[size];
 
