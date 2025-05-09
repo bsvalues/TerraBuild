@@ -79,7 +79,7 @@ const HomePage = () => {
         <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-blue-100 mb-2">
-              Welcome back, {user?.fullName || user?.username || 'User'}
+              Welcome back, {user?.full_name || user?.username || 'User'}
             </h1>
             <p className="text-blue-300 max-w-xl">
               TerraFusion Build provides powerful tools for property valuation, cost analysis, and data-driven insights. Explore the platform to discover how it can streamline your assessment workflows.
