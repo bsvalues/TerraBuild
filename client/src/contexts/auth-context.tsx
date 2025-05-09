@@ -23,6 +23,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  register: (userData: any) => Promise<User>;
   error: Error | null;
   // County network specific props
   authMethod: AuthMethod;
@@ -30,6 +31,7 @@ export interface AuthContextType {
   // Convenience methods for mutations
   loginMutation: any;
   logoutMutation: any;
+  registerMutation: any;
 }
 
 interface AuthProviderProps {
@@ -196,6 +198,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   });
 
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      try {
+        if (isDevelopment) {
+          console.log("Intercepting register request in development mode");
+          // In development, just return a mock user
+          return {
+            id: 1,
+            username: userData.username,
+            name: `${userData.firstName} ${userData.lastName}` || "New User",
+            role: "user",
+            is_active: true
+          };
+        }
+
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Registration failed' }));
+          throw new Error(errorData.message || 'Registration failed');
+        }
+        
+        return await response.json();
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Registration failed'));
+        throw err;
+      }
+    },
+    onSuccess: (userData) => {
+      setUser(userData);
+      setError(null);
+      queryClient.setQueryData(['/api/user'], userData);
+      toast({
+        description: "Account created successfully. You are now logged in.",
+      });
+    },
+    onError: (error: Error) => {
+      setError(error);
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error.message || "Could not create account. Please try again.",
+      });
+    }
+  });
+
   // Convenience methods that use the mutations
   const login = async (username: string, password: string) => {
     return await loginMutation.mutateAsync({ username, password });
@@ -205,18 +259,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await logoutMutation.mutateAsync();
   };
 
+  const register = async (userData: any) => {
+    return await registerMutation.mutateAsync(userData);
+  };
+
   // Create the auth context value
   const value: AuthContextType = {
     user,
-    isLoading: isLoading || loginMutation.isPending || logoutMutation.isPending,
+    isLoading: isLoading || loginMutation.isPending || logoutMutation.isPending || registerMutation.isPending,
     isAuthenticated: !!user,
     login,
     logout,
+    register,
     error,
     authMethod,
     setAuthMethod,
     loginMutation,
-    logoutMutation
+    logoutMutation,
+    registerMutation
   };
 
   return (

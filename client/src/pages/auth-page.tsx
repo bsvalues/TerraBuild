@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Redirect } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
-import { CountyNetworkAuth } from "@/components/auth/county-network-auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AuthForms } from "@/components/auth/auth-forms";
 import { APP_NAME } from "@/data/constants";
 
 // Import Benton County logo directly
@@ -34,21 +33,12 @@ export default function AuthPage() {
             <h1 className="text-3xl font-bold text-[#243E4D]">{APP_NAME}</h1>
             <h2 className="text-xl font-medium text-[#47AD55] mt-1">Benton County, Washington</h2>
             <p className="text-muted-foreground mt-2">
-              Sign in using your county network credentials
+              Sign in to access the building cost assessment system
             </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>County Network Authentication</CardTitle>
-              <CardDescription>
-                Sign in with your Benton County network credentials to access the system
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CountyNetworkAuth />
-            </CardContent>
-          </Card>
+          {/* New tabbed authentication forms */}
+          <AuthForms />
         </div>
       </div>
 
