@@ -6,15 +6,17 @@ import { z } from "zod";
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  is_active: boolean("is_active").default(true),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  name: text("name"),  // Updated to match actual DB column
+  name: text("name"),
   role: text("role").default("user"),
-  county: text("county"),
-  department: text("department"),
-  email: text("email"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  // Note: The following fields don't exist in the actual DB schema
+  // county: text("county"),
+  // department: text("department"),
+  // email: text("email"),
+  // createdAt: timestamp("created_at").defaultNow(),
+  // updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Building types table
