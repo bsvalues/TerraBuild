@@ -5,7 +5,7 @@ import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
-import { setupAuth } from "./replitAuth";
+import { setupAuth } from "./auth";
 import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 import { storage } from "./storage-factory";
