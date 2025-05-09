@@ -1,294 +1,138 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { AuthErrorBoundary } from '@/components/auth/auth-error-boundary';
+import { createContext, ReactNode, useContext } from "react";
+import {
+  useQuery,
+  useMutation,
+  UseMutationResult,
+} from "@tanstack/react-query";
+import { queryClient, apiRequest, getQueryFn } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-// Define authentication methods available in the system
-type AuthMethod = "county-network" | "local";
-
-// Define User interface
 export interface User {
   id: number;
   username: string;
-  name: string | null;
-  role: string;
-  is_active: boolean;
+  email: string | null;
+  role: string | null;
+  fullName: string | null;
+  county: string | null;
+  department: string | null;
+  profileImage: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Define the auth context type
-export interface AuthContextType {
+type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<User>;
-  logout: () => Promise<void>;
-  register: (userData: any) => Promise<User>;
   error: Error | null;
-  // County network specific props
-  authMethod: AuthMethod;
-  setAuthMethod: (method: AuthMethod) => void;
-  // Convenience methods for mutations
-  loginMutation: any;
-  logoutMutation: any;
-  registerMutation: any;
-}
+  loginMutation: UseMutationResult<User, Error, LoginData>;
+  logoutMutation: UseMutationResult<void, Error, void>;
+  registerMutation: UseMutationResult<User, Error, RegisterData>;
+};
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+type LoginData = {
+  username: string;
+  password: string;
+};
+
+type RegisterData = {
+  username: string;
+  password: string;
+  email?: string;
+  fullName?: string;
+};
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-/**
- * Main Authentication Provider
- * Provides authentication functionality with county network support
- */
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [authMethod, setAuthMethod] = useState<AuthMethod>("county-network");
-  const queryClient = useQueryClient();
+export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-
-  // Check if in development environment for mock auth
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
-  // Query for current user
-  const { isLoading, data: fetchedUser, error: fetchError } = useQuery({
-    queryKey: ['/api/user'],
-    queryFn: async () => {
-      try {
-        if (isDevelopment) {
-          console.log("Setting up mock admin user for development");
-          // Use mock user in development to simplify testing
-          const mockUser: User = {
-            id: 1,
-            username: "admin",
-            name: "Admin User",
-            role: "admin",
-            is_active: true
-          };
-          return mockUser;
-        }
-        
-        console.log("Fetching current user");
-        const response = await fetch('/api/user', {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Not authenticated, return null
-            return null;
-          }
-          throw new Error('Failed to fetch user');
-        }
-        
-        return await response.json();
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        throw err;
-      }
-    },
-    retry: false,
-    refetchOnWindowFocus: false,
+  
+  const {
+    data: user,
+    error,
+    isLoading,
+  } = useQuery<User | null, Error>({
+    queryKey: ["/api/user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  // Update user state when fetched user changes
-  useEffect(() => {
-    if (fetchedUser) {
-      setUser(fetchedUser);
-    }
-    if (fetchError) {
-      setError(fetchError instanceof Error ? fetchError : new Error('Unknown error'));
-    }
-  }, [fetchedUser, fetchError]);
-
-  // Login mutation
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      try {
-        if (isDevelopment) {
-          console.log("Intercepting auth request in development mode");
-          return {
-            id: 1,
-            username: "admin",
-            name: "Admin User",
-            role: "admin",
-            is_active: true
-          };
-        }
-
-        // Use the appropriate endpoint based on auth method
-        const endpoint = authMethod === 'county-network' ? '/api/county-login' : '/api/login';
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Authentication failed' }));
-          throw new Error(errorData.message || 'Authentication failed');
-        }
-        
-        return await response.json();
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Login failed'));
-        throw err;
-      }
+    mutationFn: async (credentials: LoginData) => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      return await res.json();
     },
-    onSuccess: (userData) => {
-      setUser(userData);
-      setError(null);
-      queryClient.setQueryData(['/api/user'], userData);
+    onSuccess: (user: User) => {
+      queryClient.setQueryData(["/api/user"], user);
       toast({
-        description: `Successfully logged in ${authMethod === 'county-network' ? 'via County Network' : ''}`,
+        title: "Login successful",
+        description: `Welcome back, ${user.username}!`,
       });
     },
     onError: (error: Error) => {
-      setError(error);
       toast({
+        title: "Login failed",
+        description: error.message,
         variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
       });
-    }
+    },
   });
 
-  // Logout mutation
+  const registerMutation = useMutation({
+    mutationFn: async (credentials: RegisterData) => {
+      const res = await apiRequest("POST", "/api/register", credentials);
+      return await res.json();
+    },
+    onSuccess: (user: User) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Registration successful",
+        description: `Welcome to TerraFusion, ${user.username}!`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      try {
-        if (isDevelopment) {
-          return; // No-op in development
-        }
-        
-        const response = await fetch('/api/logout', {
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Logout failed');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Logout failed'));
-        throw err;
-      }
+      await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      setUser(null);
-      setError(null);
-      queryClient.setQueryData(['/api/user'], null);
+      queryClient.setQueryData(["/api/user"], null);
       toast({
-        description: "Successfully logged out",
+        title: "Logout successful",
+        description: "You have been logged out successfully.",
       });
     },
     onError: (error: Error) => {
-      setError(error);
       toast({
+        title: "Logout failed",
+        description: error.message,
         variant: "destructive",
-        title: "Logout Failed",
-        description: error.message || "There was a problem logging you out. Please try again.",
-      });
-    }
-  });
-
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: async (userData: any) => {
-      try {
-        if (isDevelopment) {
-          console.log("Intercepting register request in development mode");
-          // In development, just return a mock user
-          return {
-            id: 1,
-            username: userData.username,
-            name: `${userData.firstName} ${userData.lastName}` || "New User",
-            role: "user",
-            is_active: true
-          };
-        }
-
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData),
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Registration failed' }));
-          throw new Error(errorData.message || 'Registration failed');
-        }
-        
-        return await response.json();
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Registration failed'));
-        throw err;
-      }
-    },
-    onSuccess: (userData) => {
-      setUser(userData);
-      setError(null);
-      queryClient.setQueryData(['/api/user'], userData);
-      toast({
-        description: "Account created successfully. You are now logged in.",
       });
     },
-    onError: (error: Error) => {
-      setError(error);
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: error.message || "Could not create account. Please try again.",
-      });
-    }
   });
-
-  // Convenience methods that use the mutations
-  const login = async (username: string, password: string) => {
-    return await loginMutation.mutateAsync({ username, password });
-  };
-
-  const logout = async () => {
-    await logoutMutation.mutateAsync();
-  };
-
-  const register = async (userData: any) => {
-    return await registerMutation.mutateAsync(userData);
-  };
-
-  // Create the auth context value
-  const value: AuthContextType = {
-    user,
-    isLoading: isLoading || loginMutation.isPending || logoutMutation.isPending || registerMutation.isPending,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    register,
-    error,
-    authMethod,
-    setAuthMethod,
-    loginMutation,
-    logoutMutation,
-    registerMutation
-  };
 
   return (
-    <AuthErrorBoundary>
-      <AuthContext.Provider value={value}>
-        {children}
-      </AuthContext.Provider>
-    </AuthErrorBoundary>
+    <AuthContext.Provider
+      value={{
+        user: user ?? null,
+        isLoading,
+        error,
+        loginMutation,
+        logoutMutation,
+        registerMutation,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-// Export useAuth hook from this context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

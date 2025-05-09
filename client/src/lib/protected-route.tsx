@@ -1,46 +1,38 @@
-import React from "react";
-import { Route, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { Loader2 } from "lucide-react";
+import { Redirect, Route } from "wouter";
 
 export function ProtectedRoute({
   path,
   component: Component,
 }: {
   path: string;
-  component: React.ComponentType<any>;
+  component: () => React.JSX.Element;
 }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [_, navigate] = useLocation();
+  const { user, isLoading } = useAuth();
 
-  /**
-   * Enhanced ProtectedRoute with authentication
-   * 
-   * In production: redirects to auth page if not authenticated
-   * In development: still allows access (with mock admin user)
-   */
-  const ProtectedComponent = (props: any) => {
-    React.useEffect(() => {
-      // Skip authentication checks in development mode
-      if (process.env.NODE_ENV === 'development') {
-        return;
-      }
-      
-      if (!isLoading && !isAuthenticated) {
-        navigate('/auth', { replace: true });
-      }
-    }, [isAuthenticated, isLoading]);
-
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+  if (isLoading) {
+    return (
+      <Route path={path}>
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-950 to-blue-900">
+          <div className="p-8 rounded-lg flex flex-col items-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-700/40 flex items-center justify-center border border-cyan-500/30 shadow-glow">
+              <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+            </div>
+            <p className="text-blue-100 font-medium mt-4">Loading...</p>
+          </div>
         </div>
-      );
-    }
+      </Route>
+    );
+  }
 
-    // User is authenticated, render the protected component
-    return <Component {...props} />;
-  };
+  if (!user) {
+    return (
+      <Route path={path}>
+        <Redirect to="/auth" />
+      </Route>
+    );
+  }
 
-  return <Route path={path} component={ProtectedComponent} />;
+  return <Route path={path} component={Component} />;
 }

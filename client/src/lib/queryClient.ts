@@ -1,60 +1,69 @@
 import { QueryClient } from '@tanstack/react-query';
 
-/**
- * Configure the React Query client 
- */
+// Create a client
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
 
+type FetchOptions = {
+  on401?: 'throw' | 'returnNull';
+  on404?: 'throw' | 'returnNull';
+};
+
 /**
- * Utility to make API requests
- * @param url - API endpoint
- * @param options - Fetch options
- * @returns Promise with the response data
+ * Get a query function that fetches from the API
  */
-export async function apiRequest(url: string, options: RequestInit = {}) {
-  const response = await fetch(url, {
-    ...options,
+export const getQueryFn = (options: FetchOptions = {}) => {
+  return async ({ queryKey }: { queryKey: string[] }) => {
+    const path = queryKey[0];
+    const res = await fetch(path);
+
+    if (res.status === 401 && options.on401 === 'returnNull') {
+      return null;
+    }
+
+    if (res.status === 404 && options.on404 === 'returnNull') {
+      return null;
+    }
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch ${path}: ${res.statusText}`);
+    }
+
+    return res.json();
+  };
+};
+
+/**
+ * Make an API request with the given method and body
+ */
+export const apiRequest = async (
+  method: 'POST' | 'PATCH' | 'DELETE', 
+  url: string, 
+  body?: unknown
+) => {
+  const options: RequestInit = {
+    method,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+    }
+  };
 
-  const data = await response.json();
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || 'API request failed');
+    const errorText = await response.text();
+    throw new Error(errorText || `API request failed: ${response.statusText}`);
   }
 
-  return data;
-}
-
-/**
- * Utility to check if secrets are available
- * @param keys - Array of secret keys to check
- * @returns Promise with the check result
- */
-export async function check_secrets(keys: string[]) {
-  try {
-    const response = await fetch('/api/check-secrets', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ keys }),
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error checking secrets:', error);
-    return { available: false };
-  }
-}
+  return response;
+};
