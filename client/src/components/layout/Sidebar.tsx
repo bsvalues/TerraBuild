@@ -67,7 +67,7 @@ function NavItem({ icon, title, path, isCollapsed, badge, isActive }: NavItemPro
   );
 }
 
-export function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const [location] = useLocation();
 
   const isActiveRoute = (path: string) => {

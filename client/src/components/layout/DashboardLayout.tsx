@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
-import { Header } from "./header";
+import Sidebar from "./Sidebar";
+import Header from "./header";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";

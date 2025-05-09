@@ -37,7 +37,7 @@ interface HeaderProps {
   isSidebarOpen: boolean;
 }
 
-export function Header({ user, toggleSidebar, isSidebarOpen }: HeaderProps) {
+export default function Header({ user, toggleSidebar, isSidebarOpen }: HeaderProps) {
   const [, navigate] = useLocation();
   const { logout } = useAuth();
   const { toast } = useToast();
