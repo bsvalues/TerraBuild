@@ -788,6 +788,17 @@ export default function BentonCountyDemo() {
                           xAxisDataKey="name"
                           referenceLine={195}
                           referenceLineLabel="County Average"
+                          showConfidenceInterval={true}
+                          confidenceLevel={0.95}
+                          showMethodology={true}
+                          methodologyDescription="Time series analysis of building costs with IAAO-compliant statistical methods."
+                          methodologyDataSource="Benton County Cost Matrix Database"
+                          methodologyReferenceDate="2025-05-01"
+                          showSampleSize={true}
+                          sampleSize={24}
+                          cod={12.4}
+                          prd={1.01}
+                          meanValue={205.7}
                         />
                       </div>
                       <div className="w-1/2">
