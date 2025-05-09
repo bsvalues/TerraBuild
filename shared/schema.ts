@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  full_name: text("full_name"),  // Using full_name to match actual DB column
+  name: text("name"),  // Updated to match actual DB column
   role: text("role").default("user"),
   county: text("county"),
   department: text("department"),

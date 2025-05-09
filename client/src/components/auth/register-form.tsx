@@ -19,7 +19,7 @@ const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   email: z.string().email('Please enter a valid email').optional().or(z.literal('')),
-  full_name: z.string().min(2, 'Full name must be at least 2 characters').optional().or(z.literal('')),
+  name: z.string().min(2, 'Full name must be at least 2 characters').optional().or(z.literal('')),
 });
 
 type RegisterValues = z.infer<typeof registerSchema>;
@@ -38,7 +38,7 @@ export default function RegisterForm({ onSuccess, onLoginClick }: RegisterFormPr
       username: '',
       password: '',
       email: '',
-      full_name: '',
+      name: '',
     },
   });
 
@@ -73,7 +73,7 @@ export default function RegisterForm({ onSuccess, onLoginClick }: RegisterFormPr
         
         <FormField
           control={form.control}
-          name="full_name"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-blue-200">Full Name</FormLabel>
