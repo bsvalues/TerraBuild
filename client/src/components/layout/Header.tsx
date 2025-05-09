@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { useSidebar } from '@/hooks/use-sidebar';
+import { useSidebarState } from '@/hooks/useSidebarState';
 import { Badge } from '@/components/ui/badge';
 
 interface HeaderProps {
@@ -37,7 +37,7 @@ interface HeaderProps {
 export default function Header({ toggleSidebar }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
-  const { isExpanded, toggle } = useSidebar();
+  const { isExpanded, toggle } = useSidebarState();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   
   const handleLogout = () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { useSidebar } from '@/hooks/use-sidebar';
+import { useSidebarState } from '@/hooks/useSidebarState';
 import {
   ChevronLeft, ChevronRight,
   Home, Calculator, BarChart2,
@@ -24,7 +24,7 @@ import TerraFusionLogo from '../TerraFusionLogo';
 
 export default function Sidebar() {
   const { user } = useAuth();
-  const { isExpanded, toggle } = useSidebar();
+  const { isExpanded, toggle } = useSidebarState();
   const [location] = useLocation();
 
   const isActiveRoute = (path: string) => {
