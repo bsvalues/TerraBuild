@@ -1,39 +1,32 @@
 import React, { ReactNode } from "react";
-import Sidebar from "./Sidebar";
-import Footer from "./Footer";
-import TerraBuildAppBar from "@/components/TerraBuildAppBar";
-import { useAuth } from "@/hooks/use-auth";
+import { Sidebar } from "./Sidebar";
+import { Header } from "./header";
+import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
-import { BentonColors } from '@/components/BentonBranding';
-import { SidebarProvider } from '@/contexts/SidebarContext';
-import { WindowProvider } from '@/contexts/WindowContext';
 import { cn } from "@/lib/utils";
-import { useSidebar } from '@/contexts/SidebarContext';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-function DashboardLayoutContent({ children }: DashboardLayoutProps) {
-  const { isLoading } = useAuth();
-  const { isExpanded, toggleSidebar } = useSidebar();
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, isLoading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-        <div className="p-6 bg-white rounded-lg shadow-lg flex flex-col items-center" 
-          style={{ 
-            perspective: '1000px',
-            transformStyle: 'preserve-3d' 
-          }}
-        >
-          <div className="w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-[#243E4D] to-[#29B7D3] flex items-center justify-center"
-            style={{ transform: 'translateZ(10px)', boxShadow: '0 6px 16px -8px rgba(0, 0, 0, 0.2)' }}
-          >
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="p-8 bg-card rounded-lg shadow-lg flex flex-col items-center">
+          <div className="w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-          <p className="text-[#243E4D] font-medium" style={{ transform: 'translateZ(5px)' }}>
-            Loading application...
+          <p className="text-primary-foreground font-medium">
+            Loading TerraBuild...
           </p>
         </div>
       </div>
@@ -41,41 +34,36 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-      <TerraBuildAppBar userName="Benton County Assessor" userRole="Administrator" toggleSidebar={toggleSidebar} />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <div 
-          className={cn(
-            "flex-1 flex flex-col transition-all duration-300",
-            isExpanded ? "ml-0" : "ml-0" // We're not shifting the content here but could if needed
-          )}
-        >
-          <main className="flex-1 overflow-auto p-6" 
-            style={{ 
-              perspective: '1000px',
-              transformStyle: 'preserve-3d'
-            }}
-          >
-            <div className="relative" style={{ transform: 'translateZ(2px)' }}>
-              {children}
-            </div>
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Sidebar */}
+      <div 
+        className={cn(
+          "h-screen transition-all duration-300 ease-in-out bg-card border-r",
+          isSidebarOpen ? "w-64" : "w-20"
+        )}
+      >
+        <Sidebar 
+          isCollapsed={!isSidebarOpen} 
+          onToggle={toggleSidebar} 
+          user={user}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 h-screen overflow-hidden">
+        <Header user={user} toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        
+        <ScrollArea className="flex-1 p-6">
+          <main className="container mx-auto max-w-7xl">
+            {children}
           </main>
-          <Footer />
-        </div>
+        </ScrollArea>
+        
+        <footer className="p-4 border-t bg-card text-center text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Benton County, Washington. All rights reserved.</p>
+          <p className="text-xs mt-1">TerraBuild Building Cost Assessment System v1.0</p>
+        </footer>
       </div>
     </div>
-  );
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  return (
-    <SidebarProvider>
-      <WindowProvider>
-        <DashboardLayoutContent>
-          {children}
-        </DashboardLayoutContent>
-      </WindowProvider>
-    </SidebarProvider>
   );
 }
