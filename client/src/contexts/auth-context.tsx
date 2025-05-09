@@ -18,7 +18,7 @@ type RegisterData = {
   username: string;
   password: string;
   email?: string;
-  full_name?: string; // Updated to match DB schema
+  fullName?: string; // Updated to match DB schema
 };
 
 export type AuthContextType = {
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], userData);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${userData.full_name || userData.username}!`,
+        description: `Welcome back, ${userData.fullName || userData.username}!`,
       });
     },
     onError: (error) => {
