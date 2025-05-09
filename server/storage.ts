@@ -176,7 +176,7 @@ export class MemStorage implements IStorage {
       username: 'admin',
       password: '$2a$10$oCf5fSRnZiXEPRz9/AQzT.CYnG1KPNnEMJQQjswFktoPq76UjLwFG', // hashed 'admin123'
       email: 'admin@terrafusion.build',
-      full_name: 'Admin User', // Using full_name to match actual DB column
+      name: 'Admin User', // Using name to match actual DB column
       role: 'admin',
       county: null,
       department: null

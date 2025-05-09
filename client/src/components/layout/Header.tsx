@@ -36,7 +36,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
       .toUpperCase();
   };
 
-  const userInitials = user ? getInitials(user.full_name || user.username || '') : 'U';
+  const userInitials = user ? getInitials(user.name || user.username || '') : 'U';
 
   return (
     <header className="h-16 z-30 bg-gradient-to-r from-blue-950 to-blue-900 border-b border-blue-800/40 flex items-center px-4 justify-between">
@@ -96,7 +96,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-blue-900 border-blue-800 text-blue-100" align="end">
             <div className="px-4 py-3 border-b border-blue-800/40">
-              <p className="text-sm font-medium text-blue-100">{user?.full_name || user?.username}</p>
+              <p className="text-sm font-medium text-blue-100">{user?.name || user?.username}</p>
               <p className="text-xs text-blue-400 mt-0.5">{user?.email}</p>
             </div>
             <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
