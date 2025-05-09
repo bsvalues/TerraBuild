@@ -874,7 +874,7 @@ export default function BentonCountyDemo() {
                             <SelectValue placeholder="Select Property" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All Properties</SelectItem>
+                            <SelectItem value="all">All Properties</SelectItem>
                             {PROPERTIES.map((property) => (
                               <SelectItem key={property.id} value={property.id}>
                                 {property.address}, {property.city}
