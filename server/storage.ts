@@ -14,12 +14,18 @@ import {
   FileUpload, InsertFileUpload,
   Setting, InsertSetting
 } from "../shared/schema";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { db, pool } from "./db";
 
 /**
  * Storage Interface for TerraBuild platform.
  * Defines all data access operations throughout the application.
  */
 export interface IStorage {
+  // Session store for authentication
+  sessionStore: session.Store;
+  
   // User operations
   getUsers(): Promise<User[]>;
   getUserById(id: number): Promise<User | null>;
@@ -136,6 +142,8 @@ export interface IStorage {
  * Used for development and testing
  */
 export class MemStorage implements IStorage {
+  sessionStore: session.Store;
+  
   private users: User[] = [];
   private properties: Property[] = [];
   private buildingTypes: BuildingType[] = [];
@@ -150,6 +158,14 @@ export class MemStorage implements IStorage {
   private projectProperties: ProjectProperty[] = [];
   private settings: Setting[] = [];
   private fileUploads: FileUpload[] = [];
+  
+  constructor() {
+    // Use memory store for development
+    const MemoryStore = require('memorystore')(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+  }
 
   // User operations
   async getUsers(): Promise<User[]> {
