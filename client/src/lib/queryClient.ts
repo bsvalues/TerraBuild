@@ -1,69 +1,102 @@
 import { QueryClient } from '@tanstack/react-query';
 
-// Create a client
+/**
+ * QueryClient instance for React Query
+ * This provides caching and state management for API requests
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (was cacheTime in v4)
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },
 });
 
-type FetchOptions = {
-  on401?: 'throw' | 'returnNull';
-  on404?: 'throw' | 'returnNull';
-};
-
 /**
- * Get a query function that fetches from the API
+ * Default query function for React Query
+ * @param input - URL or Request object
+ * @param init - Request init object
+ * @returns - Fetch promise
  */
-export const getQueryFn = (options: FetchOptions = {}) => {
-  return async ({ queryKey }: { queryKey: string[] }) => {
-    const path = queryKey[0];
-    const res = await fetch(path);
-
-    if (res.status === 401 && options.on401 === 'returnNull') {
+export function getQueryFn({ on401 = 'throw' }: { on401?: 'throw' | 'returnNull' } = {}) {
+  return async (context: { queryKey: string | readonly unknown[] }) => {
+    // Handle queryKey that might be an array or string
+    const queryKey = Array.isArray(context.queryKey) ? context.queryKey[0] : context.queryKey;
+    
+    if (typeof queryKey !== 'string') {
+      throw new Error(`Invalid query key: ${String(queryKey)}`);
+    }
+    
+    const response = await fetch(queryKey);
+    
+    if (response.status === 401) {
+      if (on401 === 'returnNull') {
+        return null;
+      }
+      throw new Error('Unauthorized');
+    }
+    
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    
+    // Handle empty responses
+    const text = await response.text();
+    if (!text) {
       return null;
     }
-
-    if (res.status === 404 && options.on404 === 'returnNull') {
-      return null;
+    
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return text;
     }
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch ${path}: ${res.statusText}`);
-    }
-
-    return res.json();
   };
-};
+}
 
 /**
- * Make an API request with the given method and body
+ * Helper function for API requests
+ * @param method - HTTP method
+ * @param url - API endpoint
+ * @param data - Request data
+ * @returns - Fetch response
  */
-export const apiRequest = async (
-  method: 'POST' | 'PATCH' | 'DELETE', 
-  url: string, 
-  body?: unknown
-) => {
+export async function apiRequest(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  url: string,
+  data?: any
+): Promise<Response> {
   const options: RequestInit = {
     method,
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
-    }
+    },
+    credentials: 'include',
   };
 
-  if (body) {
-    options.body = JSON.stringify(body);
+  if (data) {
+    options.body = JSON.stringify(data);
   }
 
   const response = await fetch(url, options);
-
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `API request failed: ${response.statusText}`);
+    // Try to parse error as JSON first
+    try {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `API Error: ${response.status} ${response.statusText}`);
+    } catch (e) {
+      // If parsing as JSON fails, throw generic error
+      if (e instanceof Error && e.message.includes('API Error')) {
+        throw e;
+      }
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
   }
-
+  
   return response;
-};
+}

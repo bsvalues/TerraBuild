@@ -1,40 +1,34 @@
-import { useCostFactorsByType } from "@/hooks/use-cost-factors";
+import { useCostFactorsByType } from '@/hooks/use-cost-factors';
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface CostFactorTableProps {
-  factorType: string;
+  buildingType: string;
   title?: string;
-  description?: string;
+  caption?: string;
+  showQualityGradeColumn?: boolean;
 }
 
-export function CostFactorTable({
-  factorType,
-  title,
-  description,
+/**
+ * Table component for displaying cost factors for a specific building type
+ */
+export default function CostFactorTable({
+  buildingType,
+  title = 'Cost Factors',
+  caption = 'Cost factors for the selected building type',
+  showQualityGradeColumn = true,
 }: CostFactorTableProps) {
-  const { factors, source, isLoading, error } = useCostFactorsByType(factorType);
-
-  // Clean up factor type name for display
-  const formatFactorType = (type: string) => {
-    return type
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  };
-
-  const displayTitle = title || `${formatFactorType(factorType)} Factors`;
+  const { factors, isLoading, error } = useCostFactorsByType(buildingType);
 
   if (error) {
     return (
@@ -42,54 +36,77 @@ export function CostFactorTable({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          Failed to load {factorType} factors: {error.message}
+          {error instanceof Error ? error.message : 'Failed to load cost factors'}
         </AlertDescription>
       </Alert>
     );
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex flex-row justify-between items-center">
-          <CardTitle>{displayTitle}</CardTitle>
-          {source && (
-            <Badge variant="outline" className="ml-2">
-              {source}
-            </Badge>
-          )}
-        </div>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Factor Value</TableHead>
+    <div className="rounded-md border">
+      <Table>
+        <TableCaption>{caption}</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead colSpan={4} className="text-center text-lg font-bold">
+              {title}
+            </TableHead>
+          </TableRow>
+          <TableRow>
+            <TableHead>Category</TableHead>
+            <TableHead>Name</TableHead>
+            {showQualityGradeColumn && <TableHead>Quality Grade</TableHead>}
+            <TableHead className="text-right">Value</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            // Loading skeleton
+            Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={`loading-row-${index}`}>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-32" />
+                </TableCell>
+                {showQualityGradeColumn && (
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                )}
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-16 ml-auto" />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {factors &&
-                Object.entries(factors).map(([code, value]) => (
-                  <TableRow key={code}>
-                    <TableCell className="font-medium">{code}</TableCell>
-                    <TableCell>{value.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+            ))
+          ) : factors && factors.length > 0 ? (
+            // Actual data
+            factors.map((factor, index) => (
+              <TableRow key={`factor-${factor.id}-${index}`}>
+                <TableCell className="font-medium">{factor.category}</TableCell>
+                <TableCell>{factor.name}</TableCell>
+                {showQualityGradeColumn && <TableCell>{factor.qualityGrade}</TableCell>}
+                <TableCell className="text-right">
+                  {typeof factor.value === 'number'
+                    ? factor.value.toFixed(2)
+                    : factor.value?.toString() || 'N/A'}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            // No data
+            <TableRow>
+              <TableCell
+                colSpan={showQualityGradeColumn ? 4 : 3}
+                className="text-center text-muted-foreground py-6"
+              >
+                No cost factors available for this building type
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

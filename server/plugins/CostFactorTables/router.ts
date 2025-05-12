@@ -1,25 +1,26 @@
 import express from 'express';
-import { CostFactorController } from './controller';
+import { getCostFactorSources, 
+         getCostFactorsBySource, 
+         getCostFactorsByType, 
+         getCostFactorValue, 
+         getRatingTable } from './controller';
 
-const router = express.Router();
-const controller = new CostFactorController();
+/**
+ * Router for CostFactorTables plugin endpoints
+ */
+export const costFactorRouter = express.Router();
 
-// Get all cost factors
-router.get('/', controller.getAllFactors);
+// Get all cost factor sources (e.g., "Benton County 2025")
+costFactorRouter.get('/sources', getCostFactorSources);
 
-// Get cost factor sources
-router.get('/sources', controller.getSources);
+// Get all cost factors for a specific source
+costFactorRouter.get('/source/:sourceId', getCostFactorsBySource);
 
-// Get current source
-router.get('/source', controller.getCurrentSource);
+// Get all cost factors for a specific building type
+costFactorRouter.get('/type/:buildingType', getCostFactorsByType);
 
-// Set current source
-router.post('/source', controller.setCurrentSource);
+// Get a specific cost factor value
+costFactorRouter.get('/value/:category/:name/:qualityGrade', getCostFactorValue);
 
-// Get cost factors by type
-router.get('/type/:factorType', controller.getFactorsByType);
-
-// Get specific factor value
-router.get('/value/:factorType/:code', controller.getFactorValue);
-
-export const costFactorRouter = router;
+// Get rating table (quality, condition, etc)
+costFactorRouter.get('/rating-table/:tableType', getRatingTable);

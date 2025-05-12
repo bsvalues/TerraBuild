@@ -1,122 +1,166 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, UseQueryResult } from '@tanstack/react-query';
+import { queryClient, getQueryFn, apiRequest } from '@/lib/queryClient';
 
-export type CostFactors = {
-  version: string;
+// Cost factor types
+export interface CostFactor {
+  id: number;
   source: string;
   year: number;
-  lastUpdated: string;
-  regionFactors: Record<string, number>;
-  qualityFactors: Record<string, number>;
-  conditionFactors: Record<string, number>;
-  baseRates: Record<string, number>;
-  complexityFactors: {
-    STORIES: Record<string, number>;
-    FOUNDATION: Record<string, number>;
-    ROOF: Record<string, number>;
-    HVAC: Record<string, number>;
-  };
-  agingFactors: Record<string, number>;
-};
+  category: string;
+  name: string;
+  code: string;
+  qualityGrade: string;
+  region: string;
+  buildingType: string;
+  value: number;
+  description?: string;
+}
 
-export type CostFactorResponse = {
-  success: boolean;
-  source: string;
+export interface CostFactorSource {
+  id: string;
+  name: string;
   year: number;
-  data: CostFactors;
-};
+  description: string;
+}
 
-export type FactorTypeResponse = {
-  success: boolean;
-  source: string;
-  factorType: string;
-  data: Record<string, number>;
-};
+export interface RatingTable {
+  id: string;
+  name: string;
+  values: Record<string, number>;
+  description?: string;
+}
 
-export type SourcesResponse = {
-  success: boolean;
-  data: string[];
-  current: string;
-};
-
+/**
+ * Hook for accessing cost factor data
+ * Provides methods for fetching, creating, updating, and deleting cost factors
+ */
 export function useCostFactors() {
+  // Fetch all cost factors
   const {
-    data,
-    isLoading,
-    error,
-  } = useQuery<CostFactorResponse>({
-    queryKey: ['/api/cost-factors'],
-    refetchOnWindowFocus: false,
+    data: costFactors,
+    isLoading: isLoadingFactors,
+    error: factorsError,
+  } = useQuery<{ data: CostFactor[] }>({
+    queryKey: ['/api/cost-factors/all'],
+    queryFn: getQueryFn(),
+    select: (response) => response?.data,
   });
 
-  return {
-    source: data?.source,
-    year: data?.year,
-    factors: data?.data,
-    isLoading,
-    error,
+  // Get cost factor by region and type
+  const getCostFactorByRegionAndType = (region: string, buildingType: string): UseQueryResult<CostFactor[]> => {
+    return useQuery<CostFactor[]>({
+      queryKey: ['/api/cost-factors/region-type', region, buildingType],
+      queryFn: getQueryFn(),
+      enabled: !!region && !!buildingType,
+      select: (data) => data.data,
+    });
   };
-}
 
-export function useCostFactorsByType(factorType: string) {
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery<FactorTypeResponse>({
-    queryKey: ['/api/cost-factors/type', factorType],
-    refetchOnWindowFocus: false,
-  });
-
-  let factors: Record<string, number> | Record<string, Record<string, number>> | null = null;
-
-  if (data?.data) {
-    if (factorType === 'complexity') {
-      // For complexity factors, the structure is nested
-      factors = data.data as unknown as Record<string, Record<string, number>>;
-    } else {
-      // For other factor types, it's a flat structure
-      factors = data.data;
-    }
-  }
-
-  return {
-    factors,
-    source: data?.source,
-    isLoading,
-    error,
-  };
-}
-
-export function useCostFactorSources() {
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery<SourcesResponse>({
-    queryKey: ['/api/cost-factors/sources'],
-    refetchOnWindowFocus: false,
-  });
-
-  const queryClient = useQueryClient();
-
-  const setCurrentSourceMutation = useMutation({
-    mutationFn: async (source: string) => {
-      const response = await apiRequest('POST', '/api/cost-factors/source', { source });
+  // Create a new cost factor
+  const createCostFactor = useMutation({
+    mutationFn: async (costFactor: Omit<CostFactor, 'id'>) => {
+      const response = await apiRequest('POST', '/api/cost-factors', costFactor);
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all cost factor queries when source changes
-      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/sources'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/type'] });
+      // Invalidate relevant queries to refetch data
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/all'] });
+    },
+  });
+
+  // Update an existing cost factor
+  const updateCostFactor = useMutation({
+    mutationFn: async (costFactor: CostFactor) => {
+      const response = await apiRequest('PUT', `/api/cost-factors/${costFactor.id}`, costFactor);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/all'] });
+    },
+  });
+
+  // Delete a cost factor
+  const deleteCostFactor = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/cost-factors/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/all'] });
     },
   });
 
   return {
-    sources: data?.data || [],
-    currentSource: data?.current,
-    setCurrentSource: setCurrentSourceMutation.mutate,
+    costFactors,
+    isLoadingFactors,
+    factorsError,
+    getCostFactorByRegionAndType,
+    createCostFactor,
+    updateCostFactor,
+    deleteCostFactor,
+  };
+}
+
+/**
+ * Hook for accessing cost factor sources
+ */
+export function useCostFactorSources() {
+  const {
+    data: sources,
+    isLoading,
+    error,
+  } = useQuery<CostFactorSource[]>({
+    queryKey: ['/api/cost-factors/sources'],
+    queryFn: getQueryFn(),
+    select: (data) => data.data,
+  });
+
+  return {
+    sources,
+    isLoading,
+    error,
+  };
+}
+
+/**
+ * Hook for accessing cost factors by building type
+ */
+export function useCostFactorsByType(buildingType: string) {
+  const {
+    data: factors,
+    isLoading,
+    error,
+  } = useQuery<CostFactor[]>({
+    queryKey: [`/api/cost-factors/type/${buildingType}`],
+    queryFn: getQueryFn(),
+    enabled: !!buildingType,
+    select: (data) => data.data,
+  });
+
+  return {
+    factors,
+    isLoading,
+    error,
+  };
+}
+
+/**
+ * Hook for accessing rating tables (quality grades, condition ratings, etc.)
+ */
+export function useRatingTable(tableType: string) {
+  const {
+    data: table,
+    isLoading,
+    error,
+  } = useQuery<RatingTable>({
+    queryKey: [`/api/cost-factors/rating-table/${tableType}`],
+    queryFn: getQueryFn(),
+    enabled: !!tableType,
+    select: (data) => data.data,
+  });
+
+  return {
+    table,
     isLoading,
     error,
   };

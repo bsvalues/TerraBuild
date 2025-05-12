@@ -11,7 +11,8 @@ import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./m
 import { storage } from "./storage-factory";
 import { setStorage } from "./ai/shap_agent";
 import { seedProperties } from "./data/seed-properties";
-import { costFactorTables } from "./services/costEngine/CostFactorTables";
+// Import cost factor plugin
+import { register as registerCostFactorPlugin } from "./plugins/CostFactorTables";
 
 const app = express();
 app.use(express.json());
@@ -79,16 +80,12 @@ app.use((req, res, next) => {
     log(`MCP initialization error: ${error}`, 'error');
   }
   
-  // Initialize CostFactorTables for building cost calculations
+  // Initialize CostFactorTables plugin for building cost calculations
   try {
-    const initialized = await costFactorTables.initialize();
-    if (initialized) {
-      log(`CostFactorTables initialized successfully from source: ${costFactorTables.getSource()}`);
-    } else {
-      log('CostFactorTables initialization failed', 'warn');
-    }
+    registerCostFactorPlugin(app);
+    log('CostFactorTables plugin registered successfully');
   } catch (error) {
-    log(`CostFactorTables initialization error: ${error}`, 'error');
+    log(`CostFactorTables plugin registration error: ${error}`, 'error');
   }
   
   // Setup authentication with Replit Auth

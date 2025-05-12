@@ -1,187 +1,150 @@
 import { Request, Response } from 'express';
 import { CostFactorTables } from '../../services/costEngine/CostFactorTables';
 
-export class CostFactorController {
-  private costFactorTables: CostFactorTables;
-  private static currentSource: string = 'bentonCounty'; // Default source
+// Create a singleton instance of CostFactorTables service
+const costFactorTablesService = new CostFactorTables();
 
-  constructor() {
-    this.costFactorTables = new CostFactorTables();
-
-    // Bind methods to ensure 'this' context
-    this.getAllFactors = this.getAllFactors.bind(this);
-    this.getSources = this.getSources.bind(this);
-    this.getCurrentSource = this.getCurrentSource.bind(this);
-    this.setCurrentSource = this.setCurrentSource.bind(this);
-    this.getFactorsByType = this.getFactorsByType.bind(this);
-    this.getFactorValue = this.getFactorValue.bind(this);
+/**
+ * Initialize the CostFactorTables service
+ * This should be called during application startup
+ */
+export const initialize = async () => {
+  try {
+    await costFactorTablesService.initialize();
+    return true;
+  } catch (error) {
+    console.error('Error initializing CostFactorTables service:', error);
+    return false;
   }
+};
 
-  // Get all cost factors
-  public getAllFactors(req: Request, res: Response): void {
-    try {
-      const allFactors = this.costFactorTables.getAllFactors(CostFactorController.currentSource);
-      res.status(200).json({
-        success: true,
-        source: CostFactorController.currentSource,
-        year: allFactors.year || new Date().getFullYear(),
-        data: allFactors
-      });
-    } catch (error) {
-      console.error('Error getting cost factors:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving cost factors',
-        error: (error as Error).message
-      });
-    }
+/**
+ * Get all available cost factor sources
+ * @param req - Express request object
+ * @param res - Express response object
+ */
+export const getCostFactorSources = async (req: Request, res: Response) => {
+  try {
+    const sources = await costFactorTablesService.getSources();
+    return res.status(200).json({
+      success: true,
+      data: sources
+    });
+  } catch (error) {
+    console.error('Error fetching cost factor sources:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching cost factor sources',
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
+};
 
-  // Get available cost factor sources
-  public getSources(req: Request, res: Response): void {
-    try {
-      const sources = this.costFactorTables.getAvailableSources();
-      res.status(200).json({
-        success: true,
-        data: sources,
-        current: CostFactorController.currentSource
-      });
-    } catch (error) {
-      console.error('Error getting cost factor sources:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving cost factor sources',
-        error: (error as Error).message
-      });
-    }
+/**
+ * Get all cost factors for a specific source
+ * @param req - Express request object with sourceId parameter
+ * @param res - Express response object
+ */
+export const getCostFactorsBySource = async (req: Request, res: Response) => {
+  try {
+    const { sourceId } = req.params;
+    const factors = await costFactorTablesService.getFactorsBySource(sourceId);
+    return res.status(200).json({
+      success: true,
+      data: factors
+    });
+  } catch (error) {
+    console.error(`Error fetching cost factors for source ${req.params.sourceId}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: `Error fetching cost factors for source ${req.params.sourceId}`,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
+};
 
-  // Get current cost factor source
-  public getCurrentSource(req: Request, res: Response): void {
-    try {
-      res.status(200).json({
-        success: true,
-        data: CostFactorController.currentSource
-      });
-    } catch (error) {
-      console.error('Error getting current source:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error retrieving current cost factor source',
-        error: (error as Error).message
-      });
-    }
+/**
+ * Get all cost factors for a specific building type
+ * @param req - Express request object with buildingType parameter
+ * @param res - Express response object
+ */
+export const getCostFactorsByType = async (req: Request, res: Response) => {
+  try {
+    const { buildingType } = req.params;
+    const factors = await costFactorTablesService.getFactorsByType(buildingType);
+    return res.status(200).json({
+      success: true,
+      data: factors
+    });
+  } catch (error) {
+    console.error(`Error fetching cost factors for building type ${req.params.buildingType}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: `Error fetching cost factors for building type ${req.params.buildingType}`,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
+};
 
-  // Set current cost factor source
-  public setCurrentSource(req: Request, res: Response): void {
-    try {
-      const { source } = req.body;
-
-      if (!source) {
-        return res.status(400).json({
-          success: false,
-          message: 'Source parameter is required'
-        });
-      }
-
-      const availableSources = this.costFactorTables.getAvailableSources();
-      if (!availableSources.includes(source)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid source. Available sources: ${availableSources.join(', ')}`
-        });
-      }
-
-      CostFactorController.currentSource = source;
-      
-      res.status(200).json({
-        success: true,
-        message: `Cost factor source set to ${source}`,
-        data: source
-      });
-    } catch (error) {
-      console.error('Error setting source:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error setting cost factor source',
-        error: (error as Error).message
-      });
-    }
-  }
-
-  // Get cost factors by type
-  public getFactorsByType(req: Request, res: Response): void {
-    try {
-      const { factorType } = req.params;
-      
-      if (!factorType) {
-        return res.status(400).json({
-          success: false,
-          message: 'Factor type parameter is required'
-        });
-      }
-
-      const factors = this.costFactorTables.getFactorsByType(
-        CostFactorController.currentSource,
-        factorType
-      );
-      
-      res.status(200).json({
-        success: true,
-        source: CostFactorController.currentSource,
-        factorType,
-        data: factors
-      });
-    } catch (error) {
-      console.error(`Error getting ${req.params.factorType} factors:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error retrieving ${req.params.factorType} factors`,
-        error: (error as Error).message
-      });
-    }
-  }
-
-  // Get specific factor value
-  public getFactorValue(req: Request, res: Response): void {
-    try {
-      const { factorType, code } = req.params;
-      
-      if (!factorType || !code) {
-        return res.status(400).json({
-          success: false,
-          message: 'Factor type and code parameters are required'
-        });
-      }
-
-      const value = this.costFactorTables.getFactorValue(
-        CostFactorController.currentSource,
-        factorType,
-        code
-      );
-      
-      if (value === null || value === undefined) {
-        return res.status(404).json({
-          success: false,
-          message: `Factor value not found for ${factorType}/${code}`
-        });
-      }
-      
-      res.status(200).json({
-        success: true,
-        source: CostFactorController.currentSource,
-        factorType,
-        code,
+/**
+ * Get a specific cost factor value
+ * @param req - Express request object with category, name, and qualityGrade parameters
+ * @param res - Express response object
+ */
+export const getCostFactorValue = async (req: Request, res: Response) => {
+  try {
+    const { category, name, qualityGrade } = req.params;
+    const region = req.query.region as string || 'default';
+    const buildingType = req.query.buildingType as string || 'default';
+    
+    const value = await costFactorTablesService.getCostFactorValue(
+      category, 
+      name, 
+      qualityGrade, 
+      region, 
+      buildingType
+    );
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        category,
+        name,
+        qualityGrade,
+        region,
+        buildingType,
         value
-      });
-    } catch (error) {
-      console.error(`Error getting factor value for ${req.params.factorType}/${req.params.code}:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error retrieving factor value`,
-        error: (error as Error).message
-      });
-    }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching cost factor value:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching cost factor value',
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
-}
+};
+
+/**
+ * Get rating table (quality, condition, etc.)
+ * @param req - Express request object with tableType parameter
+ * @param res - Express response object
+ */
+export const getRatingTable = async (req: Request, res: Response) => {
+  try {
+    const { tableType } = req.params;
+    const table = await costFactorTablesService.getRatingTable(tableType);
+    return res.status(200).json({
+      success: true,
+      data: table
+    });
+  } catch (error) {
+    console.error(`Error fetching rating table ${req.params.tableType}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: `Error fetching rating table ${req.params.tableType}`,
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+};

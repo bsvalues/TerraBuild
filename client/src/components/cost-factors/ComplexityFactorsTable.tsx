@@ -1,29 +1,32 @@
-import { useCostFactorsByType } from "@/hooks/use-cost-factors";
+import { useRatingTable } from '@/hooks/use-cost-factors';
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ComplexityFactorsTableProps {
+  category: string;
   title?: string;
-  description?: string;
+  caption?: string;
 }
 
-export function ComplexityFactorsTable({
-  title = "Complexity Factors",
-  description,
+/**
+ * Table component for displaying complexity factors (stories, foundation, etc.)
+ */
+export default function ComplexityFactorsTable({
+  category,
+  title = 'Complexity Factors',
+  caption = 'Adjustment factors based on building complexity',
 }: ComplexityFactorsTableProps) {
-  const { factors, source, isLoading, error } = useCostFactorsByType("complexity");
+  const { ratingTable, isLoading, error } = useRatingTable(category);
 
   if (error) {
     return (
@@ -31,84 +34,63 @@ export function ComplexityFactorsTable({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          Failed to load complexity factors: {error.message}
+          {error instanceof Error ? error.message : 'Failed to load complexity factors'}
         </AlertDescription>
       </Alert>
     );
   }
 
-  // Generate category labels
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "STORIES":
-        return "Number of Stories";
-      case "FOUNDATION":
-        return "Foundation Type";
-      case "ROOF":
-        return "Roof Type";
-      case "HVAC":
-        return "HVAC System";
-      default:
-        return category;
-    }
-  };
-
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex flex-row justify-between items-center">
-          <CardTitle>{title}</CardTitle>
-          {source && (
-            <Badge variant="outline" className="ml-2">
-              {source}
-            </Badge>
+    <div className="rounded-md border">
+      <Table>
+        <TableCaption>{caption}</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead colSpan={2} className="text-center text-lg font-bold">
+              {title}
+            </TableHead>
+          </TableRow>
+          <TableRow>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Factor</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            // Loading skeleton
+            Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={`loading-row-${index}`}>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-16 ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : ratingTable && ratingTable.values ? (
+            // Actual data
+            Object.entries(ratingTable.values).map(([key, value], index) => (
+              <TableRow key={`${category}-factor-${index}`}>
+                <TableCell className="font-medium">{key}</TableCell>
+                <TableCell className="text-right">
+                  {typeof value === 'number' ? value.toFixed(2) : String(value)}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            // No data
+            <TableRow>
+              <TableCell
+                colSpan={2}
+                className="text-center text-muted-foreground py-6"
+              >
+                No {category.toLowerCase()} factors available
+              </TableCell>
+            </TableRow>
           )}
-        </div>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : factors ? (
-          <Tabs defaultValue="STORIES">
-            <TabsList className="grid grid-cols-4">
-              {Object.keys(factors).map((category) => (
-                <TabsTrigger key={category} value={category}>
-                  {getCategoryLabel(category)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {Object.entries(factors).map(([category, values]) => (
-              <TabsContent key={category} value={category}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Factor Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(values).map(([code, value]) => (
-                      <TableRow key={code}>
-                        <TableCell className="font-medium">{code}</TableCell>
-                        <TableCell>{Number(value).toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-            ))}
-          </Tabs>
-        ) : (
-          <p>No complexity factors available</p>
-        )}
-      </CardContent>
-    </Card>
+        </TableBody>
+      </Table>
+    </div>
   );
 }
