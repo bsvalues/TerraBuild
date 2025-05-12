@@ -967,16 +967,11 @@ router.post('/agents/:agentId/status', asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Agent status updated successfully' });
 }));
 
-// Current authenticated user
-router.get('/user', (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
-  res.json(req.user);
-});
-
 // Mount the properties router
 router.use('/properties', propertiesRouter);
+
+// Mount the auth routes - this will handle login, register, logout, and user routes
+router.use('/', authRoutes);
 
 // Mount the cost factor tables router
 router.use(costFactorTablesRouter);
