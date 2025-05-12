@@ -1,126 +1,245 @@
-import React, { useState } from 'react';
-import { Redirect } from 'wouter';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TerraFusionLogo from '@/components/TerraFusionLogo';
-import { useAuth } from '@/contexts/auth-context';
-import { Building2, BarChart2, Map, Database } from 'lucide-react';
-import LoginForm from '@/components/auth/login-form';
-import RegisterForm from '@/components/auth/register-form';
+import { useState } from "react";
+import { Redirect } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { insertUserSchema } from "@shared/schema";
 
-const AuthPage = () => {
-  const { user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('login');
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
-  // Redirect if user is already logged in
-  if (!isLoading && user) {
+const registerSchema = insertUserSchema.extend({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+export default function AuthPage() {
+  const [activeTab, setActiveTab] = useState<string>("login");
+  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      role: "user",
+      is_active: true,
+    },
+  });
+
+  const onLoginSubmit = (values: LoginFormValues) => {
+    loginMutation.mutate(values);
+  };
+
+  const onRegisterSubmit = (values: RegisterFormValues) => {
+    // Remove confirmPassword as it's not part of the API
+    const { confirmPassword, ...userData } = values;
+    registerMutation.mutate(userData);
+  };
+
+  // Redirect to home if user is already logged in
+  if (user) {
     return <Redirect to="/" />;
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-b from-blue-950 to-blue-900">
-      {/* Left column - Auth forms */}
-      <div className="w-full md:w-1/2 px-4 lg:px-8 xl:px-12 py-10 flex flex-col justify-center">
-        <div className="w-full max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <TerraFusionLogo variant="default" size="lg" className="mx-auto mb-6" />
-            <h1 className="text-2xl font-bold text-blue-100">Welcome to TerraFusion Build</h1>
-            <p className="text-blue-300 mt-2">Advanced geospatial property valuation platform</p>
-          </div>
-          
-          <Tabs 
-            defaultValue="login" 
-            value={activeTab}
-            onValueChange={setActiveTab} 
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-2 mb-8 w-full">
-              <TabsTrigger value="login" className="text-base py-3">
-                Sign In
-              </TabsTrigger>
-              <TabsTrigger value="register" className="text-base py-3">
-                Create Account
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="mt-0">
-              <LoginForm onSuccess={() => {}} onRegisterClick={() => setActiveTab('register')} />
-            </TabsContent>
-            
-            <TabsContent value="register" className="mt-0">
-              <RegisterForm onSuccess={() => {}} onLoginClick={() => setActiveTab('login')} />
-            </TabsContent>
-          </Tabs>
-        </div>
+    <div className="flex min-h-screen">
+      {/* Left column - Login/Register form */}
+      <div className="flex-1 flex items-center justify-center bg-background px-4 py-12">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">TerraBuild</CardTitle>
+            <CardDescription className="text-center">
+              Sign in to your account or create a new one
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input placeholder="johndoe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={loginMutation.isPending}
+                    >
+                      {loginMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input placeholder="johndoe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={registerMutation.isPending}
+                    >
+                      {registerMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex justify-center text-sm text-muted-foreground">
+            <p>
+              {activeTab === "login"
+                ? "Don't have an account? Click Register above"
+                : "Already have an account? Click Login above"}
+            </p>
+          </CardFooter>
+        </Card>
       </div>
       
-      {/* Right column - Hero */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-900 to-blue-950 border-l border-blue-800/40 relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute h-[500px] w-[800px] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center opacity-10">
-            <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-400 via-cyan-700/30 to-transparent"></div>
-          </div>
-          <div className="absolute inset-0 bg-blue-950/30"></div>
-        </div>
-        
-        <div className="relative flex flex-col items-center justify-center w-full z-10 px-8">
-          <h2 className="text-3xl font-bold mb-8 text-blue-100 text-center">
-            Powerful Property Valuation & Analysis
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-            <div className="bg-blue-900/30 border border-blue-800/40 p-6 rounded-lg flex">
-              <div className="mr-4 p-3 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-700/20 border border-cyan-400/20">
-                <Building2 className="h-6 w-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-100 mb-1">Precision Valuations</h3>
-                <p className="text-sm text-blue-300">AI-powered property assessment with statistical validity</p>
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 border border-blue-800/40 p-6 rounded-lg flex">
-              <div className="mr-4 p-3 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-700/20 border border-cyan-400/20">
-                <Map className="h-6 w-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-100 mb-1">Geospatial Intelligence</h3>
-                <p className="text-sm text-blue-300">Dynamic 3D visualizations and regional analysis</p>
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 border border-blue-800/40 p-6 rounded-lg flex">
-              <div className="mr-4 p-3 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-700/20 border border-cyan-400/20">
-                <BarChart2 className="h-6 w-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-100 mb-1">Advanced Analytics</h3>
-                <p className="text-sm text-blue-300">Comprehensive data insights and trend forecasting</p>
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 border border-blue-800/40 p-6 rounded-lg flex">
-              <div className="mr-4 p-3 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-700/20 border border-cyan-400/20">
-                <Database className="h-6 w-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-100 mb-1">Integrated Data</h3>
-                <p className="text-sm text-blue-300">Unified property records and cost matrices</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-12 text-center">
-            <p className="text-blue-200 font-medium">Trusted by assessors and municipal offices nationwide</p>
-            <div className="mt-4 flex justify-center space-x-8">
-              <div className="text-blue-400/50">County Logo</div>
-              <div className="text-blue-400/50">County Logo</div>
-              <div className="text-blue-400/50">County Logo</div>
-            </div>
-          </div>
+      {/* Right column - Hero/Branding section */}
+      <div className="hidden lg:flex flex-1 bg-primary p-12 text-primary-foreground flex-col justify-center">
+        <div className="space-y-6 max-w-lg">
+          <h1 className="text-4xl font-bold">Benton County Building Cost Assessment System</h1>
+          <p className="text-xl">
+            Advanced geospatial property valuation platform with intelligent technologies
+            for comprehensive data analysis.
+          </p>
+          <ul className="space-y-2 list-disc list-inside">
+            <li>AI-Powered Valuation Insights</li>
+            <li>Dynamic Geographic Configuration</li>
+            <li>Enhanced Type-Safe Data Visualization</li>
+            <li>Regional Cost Factor Analysis</li>
+            <li>Integrated Cost Modeling</li>
+          </ul>
         </div>
       </div>
     </div>
   );
-};
-
-export default AuthPage;
+}
