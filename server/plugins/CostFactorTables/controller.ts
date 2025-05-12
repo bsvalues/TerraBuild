@@ -1,137 +1,193 @@
 /**
  * Cost Factor Tables Plugin Controller
  * 
- * Handles API requests for cost factor tables
+ * This file implements the controller functions for the Cost Factor Tables plugin
  */
 
 import { Request, Response } from 'express';
-import * as CostFactorTables from '../../services/costEngine/CostFactorTables';
-import { 
-  getCostSource, 
-  setCostSource, 
-  getAvailableSources, 
-  isCostSourceAvailable 
-} from '../../services/costEngine/costFactorLoader';
+import {
+  getCostFactors as getFactors,
+  getCostFactorValue as getFactorValue,
+  getCostSource,
+  setCostSource,
+  getAvailableSources,
+  COST_SOURCES
+} from '../../services/costEngine/CostFactorTables';
 
 /**
- * Get cost factors for the specified source
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
+ * Get all cost factors with optional filtering
  */
-export const getCostFactors = (req: Request, res: Response) => {
+export function getCostFactors(req: Request, res: Response) {
+  const { source, propertyType, region } = req.query;
+  
   try {
-    // Get source from query params or use current source
-    const source = req.query.source as string || getCostSource();
-    
-    // Get optional property type and region filters
-    const propertyType = req.query.propertyType as string;
-    const region = req.query.region as string;
-    
-    // Get cost factors with optional filters
-    const factors = CostFactorTables.getCostFactors(source, propertyType, region);
+    const factors = getFactors(
+      source as string, 
+      propertyType as string, 
+      region as string
+    );
     
     res.json({
       success: true,
-      source,
-      factors
+      source: source || getCostSource(),
+      data: factors
     });
   } catch (error) {
     console.error('Error getting cost factors:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get cost factors'
+      message: 'Failed to get cost factors',
+      error: (error as Error).message
     });
   }
-};
+}
 
 /**
- * Get the current cost source
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
+ * Get cost factors for a specific type
  */
-export const getCurrentSource = (req: Request, res: Response) => {
+export function getCostFactorsByType(req: Request, res: Response) {
+  const { factorType } = req.params;
+  const { source } = req.query;
+  
   try {
-    const source = getCostSource();
+    const factors = getFactors(source as string || getCostSource());
+    
+    // Filter factors by type
+    const filteredFactors = factors.filter(factor => 
+      factor.factorType === factorType
+    );
     
     res.json({
       success: true,
-      source
+      source: source || getCostSource(),
+      factorType,
+      data: filteredFactors
     });
   } catch (error) {
-    console.error('Error getting current cost source:', error);
+    console.error(`Error getting ${factorType} factors:`, error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get current cost source'
+      message: `Failed to get ${factorType} factors`,
+      error: (error as Error).message
     });
   }
-};
+}
 
 /**
- * Get available cost sources
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
+ * Get available cost factor sources
  */
-export const getAvailableCostSources = (req: Request, res: Response) => {
+export function getCostFactorSources(req: Request, res: Response) {
   try {
     const sources = getAvailableSources();
     
     res.json({
       success: true,
-      sources
+      data: sources,
+      current: getCostSource()
     });
   } catch (error) {
-    console.error('Error getting available cost sources:', error);
+    console.error('Error getting cost factor sources:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get available cost sources'
+      message: 'Failed to get cost factor sources',
+      error: (error as Error).message
     });
   }
-};
+}
 
 /**
- * Update the current cost source
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
+ * Get the current cost factor source
  */
-export const updateCostSource = (req: Request, res: Response) => {
+export function getCurrentSource(req: Request, res: Response) {
   try {
-    const { source } = req.body;
+    const source = getCostSource();
     
-    // Validate source
-    if (!source) {
-      return res.status(400).json({
-        success: false,
-        error: 'Source is required'
-      });
-    }
-    
-    // Check if source is available
-    if (!isCostSourceAvailable(source)) {
-      return res.status(400).json({
-        success: false,
-        error: `Source "${source}" is not available`
-      });
-    }
-    
-    // Update the cost source
-    const success = setCostSource(source);
-    
-    if (success) {
-      res.json({
-        success: true,
-        source
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update cost source'
-      });
-    }
+    res.json({
+      success: true,
+      data: source
+    });
   } catch (error) {
-    console.error('Error updating cost source:', error);
+    console.error('Error getting current cost factor source:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update cost source'
+      message: 'Failed to get current cost factor source',
+      error: (error as Error).message
     });
   }
-};
+}
+
+/**
+ * Set the current cost factor source
+ */
+export function setCurrentSource(req: Request, res: Response) {
+  const { source } = req.body;
+  
+  if (!source) {
+    return res.status(400).json({
+      success: false,
+      message: 'Source is required'
+    });
+  }
+  
+  try {
+    const success = setCostSource(source);
+    
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid or unavailable source: ${source}`
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Cost factor source set to ${source}`,
+      data: source
+    });
+  } catch (error) {
+    console.error('Error setting cost factor source:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to set cost factor source',
+      error: (error as Error).message
+    });
+  }
+}
+
+/**
+ * Get a specific cost factor value
+ */
+export function getCostFactorValue(req: Request, res: Response) {
+  const { source, factorType, code } = req.params;
+  
+  try {
+    const factors = getFactors(source);
+    
+    // Find the specific factor
+    const factor = factors.find(f => 
+      f.factorType === factorType && f.code === code
+    );
+    
+    if (!factor) {
+      return res.status(404).json({
+        success: false,
+        message: `Factor not found for source=${source}, type=${factorType}, code=${code}`
+      });
+    }
+    
+    res.json({
+      success: true,
+      source,
+      factorType,
+      code,
+      data: factor
+    });
+  } catch (error) {
+    console.error('Error getting cost factor value:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get cost factor value',
+      error: (error as Error).message
+    });
+  }
+}
