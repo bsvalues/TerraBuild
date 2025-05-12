@@ -23,6 +23,7 @@ import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
+import { router as costFactorTablesRouter } from './plugins/CostFactorTables';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
@@ -824,6 +825,7 @@ router.use('/gis-import', gisImportRoutes);
 router.use('/geo-mapping', geoMappingRoutes);
 router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
 router.use('/search', smartSearchRoutes);
+router.use('/', costFactorTablesRouter); // Add the Cost Factor Tables plugin
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 
