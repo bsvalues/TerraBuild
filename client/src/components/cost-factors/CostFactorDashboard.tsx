@@ -1,4 +1,4 @@
-import { useCostFactorSources } from '@/hooks/use-cost-factors';
+import { useCostFactorSources } from '@/hooks/use-cost-factors.tsx';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CostFactorTable from './CostFactorTable';
