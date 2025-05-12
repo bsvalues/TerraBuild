@@ -9,6 +9,12 @@ import * as controller from './controller';
 
 export const router = express.Router();
 
+// Add middleware for logging requests
+router.use((req, res, next) => {
+  console.log(`CostFactorTables API: ${req.method} ${req.path}`);
+  next();
+});
+
 // Get all cost factors
 router.get('/factors', controller.getCostFactors);
 
