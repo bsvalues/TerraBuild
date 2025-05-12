@@ -24,6 +24,7 @@ import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
 import { router as costFactorTablesRouter } from './plugins/CostFactorTables';
+import authRoutes from './routes/auth';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
