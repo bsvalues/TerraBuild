@@ -1,4 +1,4 @@
-import { useCostFactorSources } from '@/hooks/use-cost-factors.tsx';
+import { useCostFactorSources } from '@/hooks/use-cost-factors';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CostFactorTable from './CostFactorTable';
@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, FileText, HelpCircle } from 'lucide-react';
 import ComplexityFactorsTable from './ComplexityFactorsTable';
 
-export default function CostFactorDashboard() {
+export function CostFactorDashboard() {
   // Get available cost factor sources
   const { sources, isLoading, error } = useCostFactorSources();
 

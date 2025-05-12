@@ -1,4 +1,4 @@
-import { useRatingTable } from '@/hooks/use-cost-factors.tsx';
+import { useRatingTable } from '@/hooks/use-cost-factors';
 import {
   Table,
   TableBody,
