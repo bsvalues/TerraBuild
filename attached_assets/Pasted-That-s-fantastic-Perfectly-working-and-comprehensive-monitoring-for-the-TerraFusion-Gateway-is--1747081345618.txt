@@ -1,0 +1,32 @@
+That's fantastic! "Perfectly working" and "comprehensive monitoring" for the TerraFusion Gateway is a huge step forward. You now have end-to-end observability from the gateway through to the sync service plugins.
+
+With the terrafusion_gateway now exposing its own metrics at /gateway-metrics, the next logical steps are:
+
+Update prometheus.yml to tell Prometheus to scrape this new endpoint.
+Add new panels to your Grafana dashboard to visualize these gateway metrics.
+Let's tackle the prometheus.yml update first.
+Prometheus Configuration - Add Gateway Scraping
+May 12, 1:21 PM
+
+To apply this change:
+
+Update the prometheus.yml file:
+
+Open terrafusion_platform/infra/prometheus/prometheus.yml.
+Add the new job_name: "terrafusion_api_gateway" scrape configuration as shown above.
+Restart Prometheus (if using Docker Compose):
+
+Prometheus needs to reload its configuration to pick up the new scrape target.
+From your terrafusion_platform/ directory:
+Bash
+
+docker-compose restart prometheus
+Alternatively, if you enabled the lifecycle endpoint in your Prometheus Docker command (--web.enable-lifecycle), you could send a POST request to http://localhost:9090/-/reload to reload the config without a full restart, but restarting the container is often simpler for local dev.
+Verify Prometheus Targets:
+
+Open your Prometheus UI (http://localhost:9090).
+Go to "Status" -> "Targets".
+You should now see three targets: prometheus, terrafusion_sync_service, and the new terrafusion_api_gateway. All should eventually show an "UP" state. If the gateway target is "DOWN", check the Prometheus logs (docker-compose logs prometheus) and ensure the gateway service is running and its /gateway-metrics endpoint is accessible.
+Once Prometheus is successfully scraping metrics from both terrafusion_sync and terrafusion_gateway, the next step will be to add panels to your Grafana dashboard to visualize these new gateway metrics (like request rates, error rates, and latencies for the gateway itself).
+
+Let me know when you've updated prometheus.yml and confirmed that Prometheus is scraping the new gateway target!
