@@ -68,6 +68,11 @@ export function Sidebar({}: SidebarProps) {
       icon: Calculator
     },
     {
+      title: "Cost Factors",
+      href: "/cost-factors",
+      icon: Layers
+    },
+    {
       title: "Trend Analysis",
       href: "/trend-analysis",
       icon: AreaChart

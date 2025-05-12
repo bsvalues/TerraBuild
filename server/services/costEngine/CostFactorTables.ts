@@ -6,7 +6,14 @@
  * data sources like Marshall & Swift and RS Means.
  */
 
-import { loadCostFactorData, getCostSource } from './costFactorLoader';
+import { 
+  loadCostFactorData, 
+  getCostSource, 
+  setCostSource,
+  isCostSourceAvailable,
+  getAvailableSources,
+  COST_SOURCES
+} from './costFactorLoader';
 
 interface CostFactor {
   factorClass: string;
@@ -24,98 +31,31 @@ interface CostFactor {
  * @returns {CostFactor[]} Standardized cost factors
  */
 function transformCostFactors(source: string, rawData: any): CostFactor[] {
-  if (!rawData) return [];
+  const result: CostFactor[] = [];
   
-  const factors: CostFactor[] = [];
-  
-  // Process building types as base rates
-  if (rawData.buildingTypes) {
-    rawData.buildingTypes.forEach((type: any) => {
-      factors.push({
-        factorClass: 'building',
-        factorType: 'baseRate',
-        code: type.code,
-        description: type.name || type.description || `Building Type ${type.code}`,
-        value: parseFloat(type.baseCost) || 0,
-        source
-      });
-    });
+  if (!rawData) {
+    return result;
   }
   
-  // Process regions as regional factors
-  if (rawData.regions) {
-    rawData.regions.forEach((region: any) => {
-      factors.push({
-        factorClass: 'location',
-        factorType: 'region',
-        code: region.code,
-        description: region.name || `Region ${region.code}`,
-        value: parseFloat(region.factor) || 1.0,
-        source
-      });
-    });
-  }
-  
-  // Process quality levels
-  if (rawData.quality) {
-    rawData.quality.forEach((quality: any) => {
-      factors.push({
-        factorClass: 'building',
-        factorType: 'quality',
-        code: quality.level,
-        description: quality.description || `Quality Level ${quality.level}`,
-        value: parseFloat(quality.factor) || 1.0,
-        source
-      });
-    });
-  }
-  
-  // Process condition factors
-  if (rawData.condition) {
-    rawData.condition.forEach((condition: any) => {
-      factors.push({
-        factorClass: 'building',
-        factorType: 'condition',
-        code: condition.level,
-        description: condition.description || `Condition ${condition.level}`,
-        value: parseFloat(condition.factor) || 1.0,
-        source
-      });
-    });
-  }
-  
-  // Process age factors
-  if (rawData.ageBrackets) {
-    rawData.ageBrackets.forEach((age: any) => {
-      factors.push({
-        factorClass: 'building',
-        factorType: 'age',
-        code: age.bracket,
-        description: age.description || `Age ${age.bracket}`,
-        value: parseFloat(age.factor) || 1.0,
-        source
-      });
-    });
-  }
-  
-  // Process any other factor types
-  const processedTypes = ['buildingTypes', 'regions', 'quality', 'condition', 'ageBrackets'];
-  Object.keys(rawData).forEach(key => {
-    if (processedTypes.includes(key) || !Array.isArray(rawData[key])) return;
+  // Process each factor type (baseRates, region, quality, condition, age)
+  Object.keys(rawData).forEach(factorType => {
+    const factors = rawData[factorType];
     
-    rawData[key].forEach((factor: any) => {
-      factors.push({
-        factorClass: 'other',
-        factorType: key,
-        code: factor.code || factor.id || factor.name || key,
-        description: factor.description || factor.name || `${key} Factor`,
-        value: parseFloat(factor.value || factor.factor) || 1.0,
-        source
+    if (Array.isArray(factors)) {
+      factors.forEach(factor => {
+        result.push({
+          factorClass: 'cost',
+          factorType: factorType === 'baseRates' ? 'baseRate' : factorType,
+          code: factor.code,
+          description: factor.description,
+          value: factor.value,
+          source
+        });
       });
-    });
+    }
   });
   
-  return factors;
+  return result;
 }
 
 /**
@@ -125,36 +65,28 @@ function transformCostFactors(source: string, rawData: any): CostFactor[] {
  * @param {string} region - Optional region filter
  * @returns {CostFactor[]} Cost factors matching the criteria
  */
-export function getCostFactors(source: string, propertyType?: string, region?: string): CostFactor[] {
-  // If no source is provided, use the current source
-  if (!source) {
-    source = getCostSource();
+export function getCostFactors(source: string = getCostSource(), propertyType?: string, region?: string): CostFactor[] {
+  const data = loadCostFactorData(source);
+  
+  if (!data) {
+    console.warn(`No cost factor data available for source: ${source}`);
+    return [];
   }
   
-  // Load raw data from the source
-  const rawFactors = loadCostFactorData(source);
-  
-  // Transform raw data to standardized format
-  const factors = transformCostFactors(source, rawFactors);
+  const factors = transformCostFactors(source, data);
   
   // Apply filters if provided
   let filteredFactors = factors;
   
   if (propertyType) {
-    // For property type, we want exact match on code for base rates
-    // but we want all other factor types regardless of code
     filteredFactors = filteredFactors.filter(factor => 
-      (factor.factorType === 'baseRate' && factor.code === propertyType) ||
-      (factor.factorType !== 'baseRate')
+      factor.factorType === 'baseRate' && factor.code === propertyType
     );
   }
   
   if (region) {
-    // For region, we want exact match on code for regional factors
-    // but we want all other factor types regardless of code
     filteredFactors = filteredFactors.filter(factor => 
-      (factor.factorType === 'region' && factor.code === region) ||
-      (factor.factorType !== 'region')
+      factor.factorType === 'region' && factor.code === region
     );
   }
   
@@ -170,7 +102,11 @@ export function getCostFactors(source: string, propertyType?: string, region?: s
  */
 export function getCostFactorValue(source: string, factorType: string, code: string): number {
   const factors = getCostFactors(source);
-  const factor = factors.find(f => f.factorType === factorType && f.code === code);
+  
+  const factor = factors.find(f => 
+    f.factorType === factorType && f.code === code
+  );
+  
   return factor ? factor.value : 1.0;
 }
 
@@ -191,5 +127,44 @@ export function getBaseRate(source: string, buildingType: string): number {
  * @returns {number} The regional factor (or 1.0 for not found)
  */
 export function getRegionalFactor(source: string, region: string): number {
-  return getCostFactorValue(source, 'region', region) || 1.0;
+  return getCostFactorValue(source, 'region', region);
 }
+
+/**
+ * Get the quality factor for a quality code
+ * @param {string} source - The cost data source (marshallSwift, rsMeans) 
+ * @param {string} quality - The quality code
+ * @returns {number} The quality factor (or 1.0 for not found)
+ */
+export function getQualityFactor(source: string, quality: string): number {
+  return getCostFactorValue(source, 'quality', quality);
+}
+
+/**
+ * Get the condition factor for a condition code
+ * @param {string} source - The cost data source (marshallSwift, rsMeans)
+ * @param {string} condition - The condition code
+ * @returns {number} The condition factor (or 1.0 for not found)
+ */
+export function getConditionFactor(source: string, condition: string): number {
+  return getCostFactorValue(source, 'condition', condition);
+}
+
+/**
+ * Get the age factor for an age code
+ * @param {string} source - The cost data source (marshallSwift, rsMeans)
+ * @param {string} age - The age code
+ * @returns {number} The age factor (or 1.0 for not found)
+ */
+export function getAgeFactor(source: string, age: string): number {
+  return getCostFactorValue(source, 'age', age);
+}
+
+// Export other utilities from costFactorLoader for convenience
+export { 
+  getCostSource, 
+  setCostSource, 
+  isCostSourceAvailable, 
+  getAvailableSources,
+  COST_SOURCES
+};

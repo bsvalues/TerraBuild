@@ -1,177 +1,163 @@
 {
-  "version": "2025.1",
-  "lastUpdated": "2025-05-12",
-  "description": "Cost Factors for TerraFusion",
   "marshallSwift": {
-    "buildingTypes": [
-      {
-        "code": "RES",
-        "name": "Residential",
-        "description": "Single family residential homes",
-        "baseCost": 150.00
-      },
-      {
-        "code": "COM",
-        "name": "Commercial",
-        "description": "Commercial buildings (office, retail)",
-        "baseCost": 180.00
-      },
-      {
-        "code": "IND",
-        "name": "Industrial",
-        "description": "Industrial buildings (manufacturing, warehouse)",
-        "baseCost": 120.00
-      },
-      {
-        "code": "AGR",
-        "name": "Agricultural",
-        "description": "Agricultural buildings and structures",
-        "baseCost": 80.00
-      },
-      {
-        "code": "MUL",
-        "name": "Multi-family",
-        "description": "Multi-family residential (apartments, duplexes)",
-        "baseCost": 165.00
-      }
+    "baseRates": [
+      { "code": "SFR", "description": "Single Family Residential", "value": 125.50 },
+      { "code": "MFR", "description": "Multi-Family Residential", "value": 115.75 },
+      { "code": "COM", "description": "Commercial", "value": 185.25 },
+      { "code": "RET", "description": "Retail", "value": 165.50 },
+      { "code": "IND", "description": "Industrial", "value": 95.25 }
     ],
-    "regions": [
-      {
-        "code": "BC-NORTH",
-        "name": "North Benton County",
-        "factor": 1.10
-      },
-      {
-        "code": "BC-CENTRAL",
-        "name": "Central Benton County",
-        "factor": 1.00
-      },
-      {
-        "code": "BC-SOUTH",
-        "name": "South Benton County",
-        "factor": 0.95
-      }
+    "region": [
+      { "code": "NW", "description": "Northwest Region", "value": 1.15 },
+      { "code": "SW", "description": "Southwest Region", "value": 1.08 },
+      { "code": "NE", "description": "Northeast Region", "value": 1.05 },
+      { "code": "SE", "description": "Southeast Region", "value": 1.02 },
+      { "code": "MID", "description": "Midwest Region", "value": 1.00 }
     ],
     "quality": [
-      {
-        "level": "ECONOMY",
-        "description": "Basic finishes, minimal amenities",
-        "factor": 0.85
-      },
-      {
-        "level": "STANDARD",
-        "description": "Standard materials and fixtures",
-        "factor": 1.00
-      },
-      {
-        "level": "CUSTOM",
-        "description": "Some upgraded materials and fixtures",
-        "factor": 1.15
-      },
-      {
-        "level": "PREMIUM",
-        "description": "High-quality materials throughout",
-        "factor": 1.30
-      },
-      {
-        "level": "LUXURY",
-        "description": "Highest quality materials and craftsmanship",
-        "factor": 1.50
-      }
+      { "code": "LOW", "description": "Low Quality", "value": 0.85 },
+      { "code": "AVG", "description": "Average Quality", "value": 1.00 },
+      { "code": "GD", "description": "Good Quality", "value": 1.10 },
+      { "code": "VG", "description": "Very Good Quality", "value": 1.20 },
+      { "code": "EX", "description": "Excellent Quality", "value": 1.35 }
     ],
     "condition": [
-      {
-        "level": "POOR",
-        "description": "Major repairs needed, significant deterioration",
-        "factor": 0.70
-      },
-      {
-        "level": "FAIR",
-        "description": "Some repairs needed, noticeable wear",
-        "factor": 0.85
-      },
-      {
-        "level": "AVERAGE",
-        "description": "Normal wear for age, well maintained",
-        "factor": 1.00
-      },
-      {
-        "level": "GOOD",
-        "description": "Well maintained, minor wear",
-        "factor": 1.10
-      },
-      {
-        "level": "EXCELLENT",
-        "description": "Like new condition, no defects",
-        "factor": 1.20
-      }
+      { "code": "PR", "description": "Poor Condition", "value": 0.70 },
+      { "code": "FR", "description": "Fair Condition", "value": 0.85 },
+      { "code": "AV", "description": "Average Condition", "value": 1.00 },
+      { "code": "GD", "description": "Good Condition", "value": 1.15 },
+      { "code": "EX", "description": "Excellent Condition", "value": 1.30 }
     ],
     "age": [
-      {
-        "range": "0-5",
-        "description": "New to 5 years old",
-        "factor": 1.00
-      },
-      {
-        "range": "6-10",
-        "description": "6 to 10 years old",
-        "factor": 0.95
-      },
-      {
-        "range": "11-20",
-        "description": "11 to 20 years old",
-        "factor": 0.90
-      },
-      {
-        "range": "21-30",
-        "description": "21 to 30 years old",
-        "factor": 0.85
-      },
-      {
-        "range": "31-50",
-        "description": "31 to 50 years old",
-        "factor": 0.80
-      },
-      {
-        "range": "51+",
-        "description": "51 years or older",
-        "factor": 0.75
-      }
-    ],
-    "complexity": [
-      {
-        "level": "SIMPLE",
-        "description": "Basic design, rectangular footprint",
-        "factor": 0.90
-      },
-      {
-        "level": "STANDARD",
-        "description": "Typical design complexity",
-        "factor": 1.00
-      },
-      {
-        "level": "MODERATE",
-        "description": "Moderate complexity with some unique features",
-        "factor": 1.10
-      },
-      {
-        "level": "COMPLEX",
-        "description": "Complex design with multiple levels or unique features",
-        "factor": 1.25
-      },
-      {
-        "level": "VERY_COMPLEX",
-        "description": "Highly complex design with custom features",
-        "factor": 1.40
-      }
+      { "code": "NEW", "description": "New Construction (0-5 years)", "value": 1.00 },
+      { "code": "RECENT", "description": "Recent (6-15 years)", "value": 0.95 },
+      { "code": "ESTABLISHED", "description": "Established (16-30 years)", "value": 0.90 },
+      { "code": "OLDER", "description": "Older (31-50 years)", "value": 0.80 },
+      { "code": "HISTORIC", "description": "Historic (51+ years)", "value": 0.70 }
     ]
   },
-  "rsmeans": {
-    "buildingTypes": [],
-    "regions": [],
-    "quality": [],
-    "condition": [],
-    "age": [],
-    "complexity": []
+  "rsMeans": {
+    "baseRates": [
+      { "code": "SFR", "description": "Single Family Residential", "value": 130.25 },
+      { "code": "MFR", "description": "Multi-Family Residential", "value": 120.50 },
+      { "code": "COM", "description": "Commercial", "value": 190.75 },
+      { "code": "RET", "description": "Retail", "value": 170.25 },
+      { "code": "IND", "description": "Industrial", "value": 100.50 }
+    ],
+    "region": [
+      { "code": "NW", "description": "Northwest Region", "value": 1.18 },
+      { "code": "SW", "description": "Southwest Region", "value": 1.10 },
+      { "code": "NE", "description": "Northeast Region", "value": 1.08 },
+      { "code": "SE", "description": "Southeast Region", "value": 1.05 },
+      { "code": "MID", "description": "Midwest Region", "value": 1.02 }
+    ],
+    "quality": [
+      { "code": "LOW", "description": "Low Quality", "value": 0.80 },
+      { "code": "AVG", "description": "Average Quality", "value": 1.00 },
+      { "code": "GD", "description": "Good Quality", "value": 1.15 },
+      { "code": "VG", "description": "Very Good Quality", "value": 1.25 },
+      { "code": "EX", "description": "Excellent Quality", "value": 1.40 }
+    ],
+    "condition": [
+      { "code": "PR", "description": "Poor Condition", "value": 0.65 },
+      { "code": "FR", "description": "Fair Condition", "value": 0.80 },
+      { "code": "AV", "description": "Average Condition", "value": 1.00 },
+      { "code": "GD", "description": "Good Condition", "value": 1.20 },
+      { "code": "EX", "description": "Excellent Condition", "value": 1.35 }
+    ],
+    "age": [
+      { "code": "NEW", "description": "New Construction (0-5 years)", "value": 1.00 },
+      { "code": "RECENT", "description": "Recent (6-15 years)", "value": 0.93 },
+      { "code": "ESTABLISHED", "description": "Established (16-30 years)", "value": 0.85 },
+      { "code": "OLDER", "description": "Older (31-50 years)", "value": 0.75 },
+      { "code": "HISTORIC", "description": "Historic (51+ years)", "value": 0.65 }
+    ]
+  },
+  "costFacto": {
+    "baseRates": [
+      { "code": "R1", "description": "Single Family Residence", "value": 130.25 },
+      { "code": "R2", "description": "Multi-Family Residence", "value": 110.50 },
+      { "code": "C1", "description": "Commercial Office Building", "value": 195.75 },
+      { "code": "C2", "description": "Commercial Retail", "value": 175.25 },
+      { "code": "I1", "description": "Light Industrial", "value": 98.50 },
+      { "code": "I2", "description": "Heavy Industrial", "value": 115.75 },
+      { "code": "A1", "description": "Agricultural Structure", "value": 75.25 }
+    ],
+    "region": [
+      { "code": "BING", "description": "Bingham County", "value": 1.18 },
+      { "code": "BENN", "description": "Benton County", "value": 1.27 },
+      { "code": "FRAN", "description": "Franklin County", "value": 1.08 },
+      { "code": "ADAM", "description": "Adams County", "value": 1.12 },
+      { "code": "GRAN", "description": "Grant County", "value": 1.15 }
+    ],
+    "quality": [
+      { "code": "LOW", "description": "Low Quality", "value": 0.85 },
+      { "code": "BEL", "description": "Below Average Quality", "value": 0.92 },
+      { "code": "AVG", "description": "Average Quality", "value": 1.0 },
+      { "code": "ABO", "description": "Above Average Quality", "value": 1.1 },
+      { "code": "HIGH", "description": "High Quality", "value": 1.22 },
+      { "code": "PREMIUM", "description": "Premium Quality", "value": 1.38 }
+    ],
+    "condition": [
+      { "code": "POOR", "description": "Poor Condition", "value": 0.7 },
+      { "code": "FAIR", "description": "Fair Condition", "value": 0.85 },
+      { "code": "AVG", "description": "Average Condition", "value": 0.95 },
+      { "code": "GOOD", "description": "Good Condition", "value": 1.0 },
+      { "code": "EXC", "description": "Excellent Condition", "value": 1.15 },
+      { "code": "NEW", "description": "New Construction", "value": 1.2 }
+    ],
+    "age": [
+      { "code": "0-5", "description": "0-5 Years", "value": 1.0 },
+      { "code": "6-10", "description": "6-10 Years", "value": 0.97 },
+      { "code": "11-20", "description": "11-20 Years", "value": 0.93 },
+      { "code": "21-30", "description": "21-30 Years", "value": 0.88 },
+      { "code": "31-40", "description": "31-40 Years", "value": 0.82 },
+      { "code": "41-50", "description": "41-50 Years", "value": 0.76 },
+      { "code": "51+", "description": "51+ Years", "value": 0.7 }
+    ]
+  },
+  "bentonCounty": {
+    "baseRates": [
+      { "code": "SFR", "description": "Single Family Residence", "value": 135.75 },
+      { "code": "MFR", "description": "Multi-Family Residence", "value": 115.25 },
+      { "code": "COM", "description": "Commercial Building", "value": 185.50 },
+      { "code": "RET", "description": "Retail Store", "value": 172.25 },
+      { "code": "IND", "description": "Industrial Building", "value": 105.75 },
+      { "code": "AGR", "description": "Agricultural Structure", "value": 78.50 },
+      { "code": "STO", "description": "Storage Building", "value": 65.25 }
+    ],
+    "region": [
+      { "code": "BENT-N", "description": "Benton County - North", "value": 1.30 },
+      { "code": "BENT-C", "description": "Benton County - Central", "value": 1.27 },
+      { "code": "BENT-S", "description": "Benton County - South", "value": 1.23 },
+      { "code": "RICH", "description": "Richland", "value": 1.35 },
+      { "code": "KENN", "description": "Kennewick", "value": 1.32 },
+      { "code": "PASCO", "description": "Pasco", "value": 1.28 },
+      { "code": "WSRC", "description": "West Richland", "value": 1.30 }
+    ],
+    "quality": [
+      { "code": "ECO", "description": "Economy Quality", "value": 0.80 },
+      { "code": "STD", "description": "Standard Quality", "value": 1.0 },
+      { "code": "CUS", "description": "Custom Quality", "value": 1.25 },
+      { "code": "LUX", "description": "Luxury Quality", "value": 1.45 }
+    ],
+    "condition": [
+      { "code": "VP", "description": "Very Poor", "value": 0.65 },
+      { "code": "PR", "description": "Poor", "value": 0.75 },
+      { "code": "FR", "description": "Fair", "value": 0.85 },
+      { "code": "AV", "description": "Average", "value": 0.95 },
+      { "code": "GD", "description": "Good", "value": 1.0 },
+      { "code": "VG", "description": "Very Good", "value": 1.1 },
+      { "code": "EX", "description": "Excellent", "value": 1.2 }
+    ],
+    "age": [
+      { "code": "0-5", "description": "0-5 Years", "value": 1.0 },
+      { "code": "6-10", "description": "6-10 Years", "value": 0.95 },
+      { "code": "11-20", "description": "11-20 Years", "value": 0.90 },
+      { "code": "21-30", "description": "21-30 Years", "value": 0.85 },
+      { "code": "31-40", "description": "31-40 Years", "value": 0.80 },
+      { "code": "41-50", "description": "41-50 Years", "value": 0.75 },
+      { "code": "51+", "description": "51+ Years", "value": 0.70 }
+    ]
   }
 }
