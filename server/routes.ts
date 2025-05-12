@@ -826,7 +826,7 @@ router.use('/gis-import', gisImportRoutes);
 router.use('/geo-mapping', geoMappingRoutes);
 router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
 router.use('/search', smartSearchRoutes);
-router.use('/', costFactorTablesRouter); // Add the Cost Factor Tables plugin
+router.use('/cost-factors', costFactorTablesRouter); // Add the Cost Factor Tables plugin
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 

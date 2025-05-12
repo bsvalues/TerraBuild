@@ -8,5 +8,8 @@
 import { router } from './router';
 import * as controller from './controller';
 
+// Add a debug log
+console.log('CostFactorTables plugin loaded, router:', router);
+
 // Export the router for use in the main application
 export { router, controller };
