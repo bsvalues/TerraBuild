@@ -65,33 +65,11 @@ export function CostFactorTable({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-bold">Cost Factors</CardTitle>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">Source:</span>
-          <Select
+          <CostSourceSelector
             value={source}
-            onValueChange={handleSourceChange}
-            disabled={sourcesQuery.isLoading}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select source" />
-            </SelectTrigger>
-            <SelectContent>
-              {sourcesQuery.isLoading ? (
-                <SelectItem value="loading">Loading...</SelectItem>
-              ) : sourcesQuery.isError ? (
-                <SelectItem value="error">Error loading sources</SelectItem>
-              ) : (
-                sourcesQuery.data?.data?.map((src: string) => (
-                  <SelectItem key={src} value={src}>
-                    {src === 'marshallSwift' ? 'Marshall & Swift' : 
-                     src === 'rsMeans' ? 'RS Means' :
-                     src === 'costFacto' ? 'CostFacto' :
-                     src === 'bentonCounty' ? 'Benton County' : 
-                     src}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            onChange={handleSourceChange}
+            label="Source"
+          />
         </div>
       </CardHeader>
       <CardContent>
