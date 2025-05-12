@@ -15,8 +15,8 @@ export default function CostFactorTablesPage() {
   const currentSourceQuery = useQuery({
     queryKey: ['/api/cost-factors/source'],
     onSuccess: (data) => {
-      if (data.source && !currentSource) {
-        setCurrentSource(data.source);
+      if (data.data && !currentSource) {
+        setCurrentSource(data.data);
       }
     }
   });
@@ -24,10 +24,7 @@ export default function CostFactorTablesPage() {
   // Mutation to update the current source
   const updateSourceMutation = useMutation({
     mutationFn: (source: string) => {
-      return apiRequest('/api/cost-factors/source', {
-        method: 'PUT',
-        body: JSON.stringify({ source }),
-      });
+      return apiRequest('POST', '/api/cost-factors/source', { source });
     },
     onSuccess: () => {
       toast({
@@ -96,8 +93,8 @@ export default function CostFactorTablesPage() {
               <span className="font-medium">
                 {currentSourceQuery.isLoading 
                   ? 'Loading...' 
-                  : currentSourceQuery.data?.source 
-                    ? formatSourceName(currentSourceQuery.data.source)
+                  : currentSourceQuery.data?.data 
+                    ? formatSourceName(currentSourceQuery.data.data)
                     : 'Not set'
                 }
               </span>.

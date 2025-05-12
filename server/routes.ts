@@ -974,6 +974,6 @@ router.use('/properties', propertiesRouter);
 router.use('/', authRoutes);
 
 // Mount the cost factor tables router
-router.use(costFactorTablesRouter);
+// Cost Factor Tables router is already registered
 
 export default router;

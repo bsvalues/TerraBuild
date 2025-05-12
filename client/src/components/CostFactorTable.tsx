@@ -62,13 +62,13 @@ export function CostFactorTable({
   };
 
   // Get factors of the current type
-  const currentFactors = factorsQuery.data?.factors
-    ? factorsQuery.data.factors.filter((factor: CostFactor) => factor.factorType === activeTab)
+  const currentFactors = factorsQuery.data?.data
+    ? factorsQuery.data.data.filter((factor: CostFactor) => factor.factorType === activeTab)
     : [];
 
   // Get unique factor types
-  const factorTypes = factorsQuery.data?.factors
-    ? [...new Set(factorsQuery.data.factors.map((factor: CostFactor) => factor.factorType))]
+  const factorTypes = factorsQuery.data?.data
+    ? [...new Set(factorsQuery.data.data.map((factor: CostFactor) => factor.factorType))]
     : [];
 
   return (
@@ -91,7 +91,7 @@ export function CostFactorTable({
               ) : sourcesQuery.isError ? (
                 <SelectItem value="error">Error loading sources</SelectItem>
               ) : (
-                sourcesQuery.data?.sources?.map((src: string) => (
+                sourcesQuery.data?.data?.map((src: string) => (
                   <SelectItem key={src} value={src}>
                     {src === 'marshallSwift' ? 'Marshall & Swift' : 
                      src === 'rsMeans' ? 'RS Means' :
