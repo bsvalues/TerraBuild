@@ -1,0 +1,128 @@
+# Remix Implementation Plan
+
+This document lays out a structured, phase‑by‑phase plan for the Replit AI Agent to take our existing **TerraFusionBuild** codebase and refactor in the new cost‑modelling plugin—replacing the hard‑wired Marshall & Swift implementation with a fully data‑driven engine.
+
+---
+
+## Phase 1: Preparation & Environment Validation
+
+1. **Clone & Branch**
+
+   * Clone the repository and checkout a new branch, e.g., `remix/cost-model-plugin`.
+   * Run `docker-compose up -d` and `pnpm dev` to confirm the existing setup still boots without errors.
+
+2. **Baseline Tests**
+
+   * Execute the full test suite (`npm test` / `pytest`) and record passing tests.
+   * Save logs for reference in case of regressions.
+
+---
+
+## Phase 2: Externalize Cost Data
+
+1. **Data Schema Definition**
+
+   * Create `data/costFactors.json` with two top‑level keys: `marshallSwift` and `rsmeans`.
+   * Under each key, define an array of factor objects (`classId`, `quality`, `size`, `locality`, `factorValue`).
+
+2. **Populate Initial Data Pack**
+
+   * Extract the 2,000‑line array from `server/services/costEngine/marshallSwift.ts` and serialize it into `data/costFactors.json.marshallSwift`.
+   * Create an empty skeleton for `data/costFactors.json.rsmeans` (ready for future RSMeans data).
+
+3. **Configuration Toggle**
+
+   * Extend `terra.json` with a new field:
+
+     ```json
+     {
+       "costSource": "marshallSwift" // or "rsmeans"
+     }
+     ```
+
+---
+
+## Phase 3: Refactor Cost Engine Service
+
+1. **Abstract Loader**
+
+   * In `server/services/costEngine/index.ts`, replace the hard‑coded arrays with a loader function:
+
+     ```ts
+     import costData from '../../../data/costFactors.json';
+     export function loadCostFactors(source: string) {
+       return costData[source] || [];
+     }
+     ```
+
+2. **Switch Logic**
+
+   * Refactor all calls to the old `marshallSwift` class to use `loadCostFactors(config.costSource)`.
+   * Ensure backwards compatibility when `costSource` is missing or invalid.
+
+3. **Unit Tests**
+
+   * Update or add tests to verify that:
+
+     * The loader correctly returns `marshallSwift` data.
+     * Switching to `rsmeans` returns an empty array (placeholder behavior).
+
+---
+
+## Phase 4: Plugin Scaffolding & API Exposure
+
+1. **Plugin Module**
+
+   * Scaffold a new module at `server/plugins/CostFactorTables` containing:
+
+     * `router.ts` (Express/FastAPI routes)
+     * `controller.ts` (logic to fetch and return factors)
+     * `index.ts` (module bootstrap)
+
+2. **API Endpoint**
+
+   * Expose a new endpoint: `GET /api/cost-factors?source=<costSource>`.
+   * Wire it into the main API gateway and validate with Swagger/OpenAPI.
+
+3. **Integration Tests**
+
+   * Write an integration test to `GET /api/cost-factors`, asserting correct JSON shape and data for both sources.
+
+---
+
+## Phase 5: UI Updates & Verification
+
+1. **UI Component**
+
+   * In `client/`, add a new view under `/src/components/CostFactorTable.tsx` that fetches `/api/cost-factors` and displays a table.
+   * Add a toggle control for switching between Marshall & Swift vs. RSMeans in the dashboard.
+
+2. **E2E Smoke Test**
+
+   * Add a Cypress or Playwright scenario that:
+
+     1. Opens the dashboard.
+     2. Switches `costSource` toggle.
+     3. Verifies the cost table updates accordingly.
+
+---
+
+## Phase 6: Agent-Orchestrated Workflow & Commit
+
+1. **Agent Task List**
+
+   * Clone & branch repository.
+   * Apply all file and code refactors as specified in Phases 2–5.
+   * Run and validate tests, reporting failures if any.
+   * Start Docker/Dev environment and perform a smoke check of UI.
+   * Commit with message: `feat(cost-model): integrate data-driven CostFactorTables plugin`.
+   * Push branch to remote.
+
+2. **Quality Checks**
+
+   * Ensure no hallucinated code or citations in comments.
+   * Capture logs for review.
+
+---
+
+> **Next Steps for You:** Review this plan, then I’ll craft the exact Replit AI Agent prompt to execute it automatically. Let me know if any phase needs adjusting or additional detail!

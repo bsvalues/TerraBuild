@@ -1,0 +1,59 @@
+# Product Requirements Document
+
+## 1. Purpose & Scope
+- **Objective:** Integrate a data-driven cost-modeling engine into TerraFusion, replacing the hard-wired Marshall & Swift dependency, and elevate end-user experience with intuitive workflows.
+- **Scope:**  
+  - Externalize cost factors into JSON data packs  
+  - Scaffold a first-class CostFactorTables plugin  
+  - Update API and UI to consume the new engine  
+  - Embed UX research and prototyping phases  
+
+## 2. Goals & Success Metrics
+| Goal                                         | Metric                                    |
+|----------------------------------------------|-------------------------------------------|
+| Replace M&S with JSON-driven RSMeans support | 100% of cost calculations sourced from JSON |
+| Smooth onboarding for assessors              | < 2 hours average time to first valuation |
+| Error-free builds after remix                | Zero CI failures on main branch           |
+| Positive UX feedback                         | ≥ 90% usability score in internal testing |
+
+## 3. User Personas
+1. **County Assessor**  
+   - Needs fast, accurate cost estimates; minimal technical overhead  
+2. **Appraisal Clerk**  
+   - Focuses on batch processing; values clear feedback on errors  
+3. **External Reviewer (AMC)**  
+   - Verifies output; demands standardized, audit-ready reports  
+
+## 4. Key Features
+1. **Data-Driven Cost Engine**  
+   - Load cost factors from `data/costFactors.json`  
+   - Toggle between M&S vs. RSMeans via `terra.json` flag  
+2. **CostFactorTables Plugin**  
+   - First-class integration, discoverable in the main UI  
+3. **UX & Onboarding Flow**  
+   - Guided setup wizard for first-time users  
+   - Inline tooltips and contextual help  
+4. **Testing & Quality**  
+   - Comprehensive unit/integration tests  
+   - CI pipeline checks (lint, build, test)  
+
+## 5. Functional Requirements
+- **FR-1:** System shall load cost factors at runtime from JSON.  
+- **FR-2:** API shall expose `/api/cost/estimate` endpoint.  
+- **FR-3:** UI shall render a “Cost Breakdown” panel.  
+
+## 6. Non-Functional Requirements
+- **Performance:** <100 ms average response for cost API  
+- **Security:** Role-based access control for cost modules  
+- **Maintainability:** < 10% duplicated code; modular code structure  
+
+## 7. UX/UI Requirements
+- Mobile-responsive design  
+- High-contrast, assessor-friendly color scheme  
+- Progress indicator during cost data loads  
+
+## 8. Timeline & Milestones
+1. **Week 1:** Externalize cost data & scaffold plugin  
+2. **Week 2:** API integration & basic UI  
+3. **Week 3:** UX prototype & internal testing  
+4. **Week 4:** Final polish, documentation, and agent-driven CI remixes

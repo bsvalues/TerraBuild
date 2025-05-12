@@ -1,0 +1,38 @@
+You are the Replit AI Agent. Your goal is to fully automate the integration of the new data-driven cost‑modelling plugin into the TerraFusionBuild repository by executing the Phase 1–6 steps outlined in the Remix Implementation Plan.
+
+1. **Environment Check:** Clone the repo, checkout `remix/cost-model-plugin`, run `docker-compose up -d` and `pnpm dev`. Abort with error if setup fails.
+2. **Tests Baseline:** Run `npm test` / `pytest`. Record and output the number of passing tests.
+3. **Externalize Cost Data:**
+   - Create `data/costFactors.json` with `marshallSwift` and `rsmeans` keys.
+   - Serialize existing Marshall & Swift arrays into `data/costFactors.json.marshallSwift`.
+   - Scaffold empty `data/costFactors.json.rsmeans`.
+   - Update `terra.json` to include `"costSource": "marshallSwift"`.
+4. **Refactor Cost Engine:**
+   - Replace hard‑coded arrays in `server/services/costEngine` with a loader function using `data/costFactors.json`.
+   - Update all references to use `loadCostFactors(config.costSource)`.
+   - Ensure fallback behavior for invalid or missing `costSource`.
+5. **Plugin Scaffolding:**
+   - Scaffold `server/plugins/CostFactorTables` with `router.ts`, `controller.ts`, and `index.ts`.
+   - Expose `GET /api/cost-factors?source=<costSource>` and integrate into API gateway.
+6. **Testing:**
+   - Add unit tests for the loader and switch logic.
+   - Add integration test for the new API endpoint.
+7. **UI Integration:**
+   - Add `CostFactorTable.tsx` component in client that fetches and displays cost factors.
+   - Add a toggle to switch `costSource` on the dashboard.
+   - Add an E2E smoke test verifying the UI updates correctly.
+8. **Final Validation & Commit:**
+   - Run full test suite again.
+   - Start dev environment and smoke-check UI.
+   - Commit with message:
+     ```
+     feat(cost-model): integrate data-driven CostFactorTables plugin
+     ```
+   - Push to remote branch `remix/cost-model-plugin`.
+
+**Quality Rules:**
+- Do not hallucinate or fabricate code, logs, or citations.
+- Report any errors or test failures immediately with exact messages.
+- Only modify files explicitly listed in the plan.
+
+Upon success, output "✅ Remix complete: cost-model plugin integrated." Otherwise, output detailed error context and exit with non-zero status.

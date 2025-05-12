@@ -1,0 +1,205 @@
+# Remix Implementation Plan
+
+This document lays out a structured, phase‑by‑phase plan for the Replit AI Agent to take our existing **TerraFusionBuild** codebase and refactor in the new cost‑modelling plugin—replacing the hard‑wired Marshall & Swift implementation with a fully data‑driven engine.
+
+---
+
+## Phase 1: Preparation & Environment Validation
+
+1. **Clone & Branch**
+
+   * Clone the repository and checkout a new branch, e.g., `remix/cost-model-plugin`.
+   * Run `docker-compose up -d` and `pnpm dev` to confirm the existing setup still boots without errors.
+
+2. **Baseline Tests**
+
+   * Execute the full test suite (`npm test` / `pytest`) and record passing tests.
+   * Save logs for reference in case of regressions.
+
+---
+
+## Phase 2: Externalize Cost Data
+
+1. **Data Schema Definition**
+
+   * Create `data/costFactors.json` with two top‑level keys: `marshallSwift` and `rsmeans`.
+   * Under each key, define an array of factor objects (`classId`, `quality`, `size`, `locality`, `factorValue`).
+
+2. **Populate Initial Data Pack**
+
+   * Extract the 2,000‑line array from `server/services/costEngine/marshallSwift.ts` and serialize it into `data/costFactors.json.marshallSwift`.
+   * Create an empty skeleton for `data/costFactors.json.rsmeans` (ready for future RSMeans data).
+
+3. **Configuration Toggle**
+
+   * Extend `terra.json` with a new field:
+
+     ```json
+     {
+       "costSource": "marshallSwift" // or "rsmeans"
+     }
+     ```
+
+---
+
+## Phase 3: Refactor Cost Engine Service
+
+1. **Abstract Loader**
+
+   * In `server/services/costEngine/index.ts`, replace the hard‑coded arrays with a loader function:
+
+     ```ts
+     import costData from '../../../data/costFactors.json';
+     export function loadCostFactors(source: string) {
+       return costData[source] || [];
+     }
+     ```
+
+2. **Switch Logic**
+
+   * Refactor all calls to the old `marshallSwift` class to use `loadCostFactors(config.costSource)`.
+   * Ensure backwards compatibility when `costSource` is missing or invalid.
+
+3. **Unit Tests**
+
+   * Update or add tests to verify that:
+
+     * The loader correctly returns `marshallSwift` data.
+     * Switching to `rsmeans` returns an empty array (placeholder behavior).
+
+---
+
+## Phase 4: Plugin Scaffolding & API Exposure
+
+1. **Plugin Module**
+
+   * Scaffold a new module at `server/plugins/CostFactorTables` containing:
+
+     * `router.ts` (Express/FastAPI routes)
+     * `controller.ts` (logic to fetch and return factors)
+     * `index.ts` (module bootstrap)
+
+2. **API Endpoint**
+
+   * Expose a new endpoint: `GET /api/cost-factors?source=<costSource>`.
+   * Wire it into the main API gateway and validate with Swagger/OpenAPI.
+
+3. **Integration Tests**
+
+   * Write an integration test to `GET /api/cost-factors`, asserting correct JSON shape and data for both sources.
+
+---
+
+## Phase 5: UI Updates & Verification
+
+1. **UI Component**
+
+   * In `client/`, add a new view under `/src/components/CostFactorTable.tsx` that fetches `/api/cost-factors` and displays a table.
+   * Add a toggle control for switching between Marshall & Swift vs. RSMeans in the dashboard.
+
+2. **E2E Smoke Test**
+
+   * Add a Cypress or Playwright scenario that:
+
+     1. Opens the dashboard.
+     2. Switches `costSource` toggle.
+     3. Verifies the cost table updates accordingly.
+
+---
+
+## Phase 5b: UX & Accessibility Audit
+
+1. **Design Consistency**
+
+   * Conduct a UI review against existing TerraFusion design system (colors, typography, spacing).
+   * Ensure the CostFactorTable component matches button styles, card layouts, and data table conventions used elsewhere.
+
+2. **Accessibility Compliance**
+
+   * Run automated accessibility checks (axe-core) on the new view.
+   * Address any issues around color contrast, ARIA roles, focus order, and screen reader labels.
+
+3. **User Feedback Session**
+
+   * Generate a clickable prototype using Storybook for the CostFactorTables component.
+   * Conduct a brief usability test (5–7 users) focusing on clarity of data presentation and toggle control usability.
+   * Compile actionable feedback and iterate on component layout and interactions.
+
+4. **Performance & Responsiveness**
+
+   * Audit network requests to ensure lazy-loading or pagination for large tables.
+   * Verify mobile responsiveness and touch interactions for the toggle control.
+
+5. **Microcopy & Guidance**
+
+   * Add context-sensitive help tooltips explaining the cost source options.
+   * Provide default placeholder messaging when no data is available (e.g., "No cost factors loaded — please select a source").
+
+---
+
+## Phase 6: Agent-Orchestrated Workflow & Commit
+
+1. **Agent Task List**
+
+   * Clone & branch repository.
+   * Apply all file and code refactors as specified in Phases 2–5.
+   * Run and validate tests, reporting failures if any.
+   * Start Docker/Dev environment and perform a smoke check of UI.
+   * Commit with message: `feat(cost-model): integrate data-driven CostFactorTables plugin`.
+   * Push branch to remote.
+
+2. **Quality Checks**
+
+   * Ensure no hallucinated code or citations in comments.
+   * Capture logs for review.
+
+---
+
+> **Next Steps for You:** Review this plan, then I’ll craft the exact Replit AI Agent prompt to execute it automatically. Let me know if any phase needs adjusting or additional detail!
+
+---
+
+## Phase 7: Replit AI Agent Prompt
+
+````markdown
+You are the Replit AI Agent. Your goal is to fully automate the integration of the new data-driven cost‑modelling plugin into the TerraFusionBuild repository by executing the Phase 1–6 steps outlined in the Remix Implementation Plan.
+
+1. **Environment Check:** Clone the repo, checkout `remix/cost-model-plugin`, run `docker-compose up -d` and `pnpm dev`. Abort with error if setup fails.
+2. **Tests Baseline:** Run `npm test` / `pytest`. Record and output the number of passing tests.
+3. **Externalize Cost Data:**
+   - Create `data/costFactors.json` with `marshallSwift` and `rsmeans` keys.
+   - Serialize existing Marshall & Swift arrays into `data/costFactors.json.marshallSwift`.
+   - Scaffold empty `data/costFactors.json.rsmeans`.
+   - Update `terra.json` to include `"costSource": "marshallSwift"`.
+4. **Refactor Cost Engine:**
+   - Replace hard‑coded arrays in `server/services/costEngine` with a loader function using `data/costFactors.json`.
+   - Update all references to use `loadCostFactors(config.costSource)`.
+   - Ensure fallback behavior for invalid or missing `costSource`.
+5. **Plugin Scaffolding:**
+   - Scaffold `server/plugins/CostFactorTables` with `router.ts`, `controller.ts`, and `index.ts`.
+   - Expose `GET /api/cost-factors?source=<costSource>` and integrate into API gateway.
+6. **Testing:**
+   - Add unit tests for the loader and switch logic.
+   - Add integration test for the new API endpoint.
+7. **UI Integration:**
+   - Add `CostFactorTable.tsx` component in client that fetches and displays cost factors.
+   - Add a toggle to switch `costSource` on the dashboard.
+   - Add an E2E smoke test verifying the UI updates correctly.
+8. **Final Validation & Commit:**
+   - Run full test suite again.
+   - Start dev environment and smoke-check UI.
+   - Commit with message:
+     ```
+     feat(cost-model): integrate data-driven CostFactorTables plugin
+     ```
+   - Push to remote branch `remix/cost-model-plugin`.
+
+**Quality Rules:**
+- Do not hallucinate or fabricate code, logs, or citations.
+- Report any errors or test failures immediately with exact messages.
+- Only modify files explicitly listed in the plan.
+
+Upon success, output "✅ Remix complete: cost-model plugin integrated." Otherwise, output detailed error context and exit with non-zero status.
+````
+
+> Once you’re ready, run this prompt as the Replit AI Agent. Let me know if you’d like any adjustments to the instructions or phrasing.

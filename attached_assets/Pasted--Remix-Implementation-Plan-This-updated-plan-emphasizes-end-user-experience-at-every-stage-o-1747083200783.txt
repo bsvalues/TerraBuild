@@ -1,0 +1,173 @@
+# Remix Implementation Plan
+
+This updated plan emphasizes **end‑user experience** at every stage of the remix—ensuring our cost‑modelling plugin is not only technically sound but intuitive, accessible, and aligned with assessor workflows.
+
+---
+
+## Phase 1: Preparation & Setup
+
+1. **Clone & Branch**
+
+   * Clone the repo and create branch `remix/cost-model-ux`.
+   * Verify `docker-compose up -d` and `pnpm dev` start cleanly.
+2. **Baseline Test Results**
+
+   * Run `npm test` / `pytest` and archive passing counts and logs.
+
+---
+
+## Phase 2: End‑User Research & Requirements
+
+1. **Define Personas**
+
+   * Identify primary users: County Assessor, Levy Clerk, and Auditor.
+   * Document their goals, pain points, and technical comfort levels.
+2. **User Stories & Tasks**
+
+   * For each persona, outline key tasks (e.g., “As an Assessor, I want to compare cost factors quickly so I can finalize valuations.”).
+3. **UX Goals**
+
+   * Clarify success metrics: task completion time, error rate, satisfaction score.
+
+---
+
+## Phase 3: UI/UX Prototyping & Validation
+
+1. **Wireframes & Flowcharts**
+
+   * Sketch low‑fidelity wireframes for the Cost Factors view and toggle interaction.
+   * Map user flows for switching sources, filtering, and exporting data.
+2. **Interactive Prototype**
+
+   * Build a clickable prototype using Storybook or Figma.
+   * Include realistic sample data and state transitions.
+3. **Stakeholder Review**
+
+   * Conduct a quick walkthrough with 2–3 end users for initial feedback.
+   * Iterate wireframes based on feedback.
+
+---
+
+## Phase 4: Externalize Cost Data
+
+1. **Data Schema**
+
+   * Create `data/costFactors.json` with `marshallSwift` and `rsmeans` keys.
+   * Define schema: `[{ classId, quality, size, locality, factorValue }]`.
+2. **Data Migration**
+
+   * Extract existing Marshall & Swift arrays into `data/costFactors.json.marshallSwift`.
+   * Scaffold empty `data/costFactors.json.rsmeans` for RSMeans.
+3. **Configuration Flag**
+
+   * Add `"costSource": "marshallSwift"` toggle in `terra.json`.
+
+---
+
+## Phase 5: Refactor Cost Engine
+
+1. **Abstract Loader Function**
+
+   * Implement `loadCostFactors(source: string)` to read from JSON.
+2. **Switch Logic**
+
+   * Replace direct imports of `marshallSwift` with `loadCostFactors(config.costSource)`.
+   * Ensure default/fallback behavior if `costSource` is missing or invalid.
+3. **Unit Tests**
+
+   * Verify loader returns correct data for both sources.
+   * Add edge‑case tests (invalid key, empty JSON).
+
+---
+
+## Phase 6: Plugin Scaffold & API Integration
+
+1. **Module Scaffolding**
+
+   * Create `server/plugins/CostFactorTables` with `router.ts`, `controller.ts`, `index.ts`.
+2. **API Endpoint**
+
+   * Expose `GET /api/cost-factors?source=<costSource>`.
+   * Document in Swagger/OpenAPI with clear parameter descriptions.
+3. **Integration Tests**
+
+   * Test endpoint returns correct JSON structure and status codes.
+
+---
+
+## Phase 7: UI Implementation & Theming
+
+1. **Component Development**
+
+   * Implement `CostFactorTable.tsx` under `client/components` following design system styles (cards, tables, buttons).
+2. **Toggle Control**
+
+   * Add a prominently labeled toggle on the dashboard for `costSource`.
+   * Incorporate help icon with tooltip explaining each source.
+3. **Theming & Consistency**
+
+   * Ensure typography, color contrast, and spacing match TerraFusion’s existing UI library.
+
+---
+
+## Phase 8: UX Testing & Iteration
+
+1. **Usability Sessions**
+
+   * Recruit 5–7 representative users for moderated tests of the new feature.
+   * Observe and record task flows: switching sources, interpreting data, exporting.
+2. **Feedback Analysis**
+
+   * Capture issues, suggestions, and satisfaction ratings.
+   * Prioritize fixes: major blockers first (confusing labels, performance lags).
+3. **Iterate UI**
+
+   * Refine layouts, microcopy, and interactions based on findings.
+
+---
+
+## Phase 9: Accessibility & Performance
+
+1. **Automated A11Y Audit**
+
+   * Run axe-core on the Cost Factors page; address any violations.
+2. **Manual Checks**
+
+   * Test keyboard navigation, screen-reader labels, focus order.
+3. **Performance Optimization**
+
+   * Implement pagination or lazy-loading for large datasets.
+   * Measure load times and adjust as needed.
+
+---
+
+## Phase 10: Onboarding & Documentation
+
+1. **Inline Guidance**
+
+   * Add tooltips, help text, and clear error messages for empty or invalid data.
+2. **User Guide**
+
+   * Extend TerraFusion docs with a “Cost Modelling” section, including screenshots and step-by-step usage.
+3. **Training Video/Walkthrough**
+
+   * Record a brief screencast demoing the feature for assessor teams.
+
+---
+
+## Phase 11: Agent‑Orchestrated Workflow & Commit
+
+1. **Agent Task List**
+
+   * Clone repo, branch off, apply Phases 4–9 changes.
+   * Run full tests and smoke‑check UI.
+   * Commit with message `feat(cost-model-ux): integrate user‑centered CostFactorTables`.
+   * Push branch to remote.
+2. **Quality Rules**
+
+   * No fabricated code or comments.
+   * Document all changes in PR description with links to usability notes.
+
+---
+
+> **Next Step:** Review this enhanced plan focused on end‑user experience. Once approved, I’ll write the precise Replit AI Agent prompt to execute it automatically.
