@@ -1,85 +1,28 @@
 {
-  "name": "TerraBuild",
-  "description": "Benton County Building Cost Assessment System",
   "version": "1.0.0",
-  "costFactors": {
-    "costFacto": {
-      "baseRates": [
-        { "code": "R1", "description": "Single Family Residence", "value": 130.25 },
-        { "code": "R2", "description": "Multi-Family Residence", "value": 110.50 },
-        { "code": "C1", "description": "Commercial Office Building", "value": 195.75 },
-        { "code": "C2", "description": "Commercial Retail", "value": 175.25 },
-        { "code": "I1", "description": "Light Industrial", "value": 98.50 },
-        { "code": "I2", "description": "Heavy Industrial", "value": 115.75 },
-        { "code": "A1", "description": "Agricultural Structure", "value": 75.25 }
-      ],
-      "regionalFactors": [
-        { "code": "BING", "description": "Bingham County", "value": 1.18 },
-        { "code": "BENN", "description": "Benton County", "value": 1.27 },
-        { "code": "FRAN", "description": "Franklin County", "value": 1.08 },
-        { "code": "ADAM", "description": "Adams County", "value": 1.12 },
-        { "code": "GRAN", "description": "Grant County", "value": 1.15 }
-      ],
-      "qualityFactors": [
-        { "code": "LOW", "description": "Low Quality", "value": 0.85 },
-        { "code": "BEL", "description": "Below Average Quality", "value": 0.92 },
-        { "code": "AVG", "description": "Average Quality", "value": 1.0 },
-        { "code": "ABO", "description": "Above Average Quality", "value": 1.1 },
-        { "code": "HIGH", "description": "High Quality", "value": 1.22 },
-        { "code": "PREMIUM", "description": "Premium Quality", "value": 1.38 }
-      ],
-      "conditionFactors": [
-        { "code": "POOR", "description": "Poor Condition", "value": 0.7 },
-        { "code": "FAIR", "description": "Fair Condition", "value": 0.85 },
-        { "code": "AVG", "description": "Average Condition", "value": 0.95 },
-        { "code": "GOOD", "description": "Good Condition", "value": 1.0 },
-        { "code": "EXC", "description": "Excellent Condition", "value": 1.15 },
-        { "code": "NEW", "description": "New Construction", "value": 1.2 }
-      ],
-      "ageBrackets": [
-        { "bracket": "0-5", "description": "0-5 Years", "value": 1.0 },
-        { "bracket": "6-10", "description": "6-10 Years", "value": 0.97 },
-        { "bracket": "11-20", "description": "11-20 Years", "value": 0.93 },
-        { "bracket": "21-30", "description": "21-30 Years", "value": 0.88 },
-        { "bracket": "31-40", "description": "31-40 Years", "value": 0.82 },
-        { "bracket": "41-50", "description": "41-50 Years", "value": 0.76 },
-        { "bracket": "51+", "description": "51+ Years", "value": 0.7 }
-      ]
-    },
-    "bentonCounty": {
-      "baseRates": [
-        { "code": "SFR", "description": "Single Family Residence", "value": 135.75 },
-        { "code": "MFR", "description": "Multi-Family Residence", "value": 115.25 },
-        { "code": "COM", "description": "Commercial Building", "value": 185.50 },
-        { "code": "RET", "description": "Retail Store", "value": 172.25 },
-        { "code": "IND", "description": "Industrial Building", "value": 105.75 },
-        { "code": "AGR", "description": "Agricultural Structure", "value": 78.50 },
-        { "code": "STO", "description": "Storage Building", "value": 65.25 }
-      ],
-      "regionalFactors": [
-        { "code": "BENT-N", "description": "Benton County - North", "value": 1.30 },
-        { "code": "BENT-C", "description": "Benton County - Central", "value": 1.27 },
-        { "code": "BENT-S", "description": "Benton County - South", "value": 1.23 },
-        { "code": "RICH", "description": "Richland", "value": 1.35 },
-        { "code": "KENN", "description": "Kennewick", "value": 1.32 },
-        { "code": "PASCO", "description": "Pasco", "value": 1.28 },
-        { "code": "WSRC", "description": "West Richland", "value": 1.30 }
-      ],
-      "qualityFactors": [
-        { "code": "ECO", "description": "Economy Quality", "value": 0.80 },
-        { "code": "STD", "description": "Standard Quality", "value": 1.0 },
-        { "code": "CUS", "description": "Custom Quality", "value": 1.25 },
-        { "code": "LUX", "description": "Luxury Quality", "value": 1.45 }
-      ],
-      "conditionFactors": [
-        { "code": "VP", "description": "Very Poor", "value": 0.65 },
-        { "code": "PR", "description": "Poor", "value": 0.75 },
-        { "code": "FR", "description": "Fair", "value": 0.85 },
-        { "code": "AV", "description": "Average", "value": 0.95 },
-        { "code": "GD", "description": "Good", "value": 1.0 },
-        { "code": "VG", "description": "Very Good", "value": 1.1 },
-        { "code": "EX", "description": "Excellent", "value": 1.2 }
-      ]
+  "application": "TerraFusion",
+  "environment": "development",
+  "plugins": {
+    "CostFactorTables": {
+      "enabled": true,
+      "source": "data/costFactors.json",
+      "cache": true,
+      "refreshInterval": 3600000
     }
+  },
+  "features": {
+    "useDataDrivenCostModeling": true
+  },
+  "ui": {
+    "showGuidedSetup": true,
+    "showInlineTooltips": true,
+    "accessibilityLevel": "high-contrast",
+    "showDebugInfo": false
+  },
+  "defaults": {
+    "costSource": "Benton County Building Cost Standards",
+    "region": "BENTON",
+    "year": 2025,
+    "qualityGrade": "MEDIUM"
   }
 }

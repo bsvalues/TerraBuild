@@ -5,31 +5,20 @@
  */
 
 import { Request, Response } from 'express';
-import {
-  getCostFactors as getFactors,
-  getCostFactorValue as getFactorValue,
-  getCostSource,
-  setCostSource,
-  getAvailableSources,
-  COST_SOURCES
-} from '../../services/costEngine/CostFactorTables';
+import { costFactorTables } from '../../services/costEngine/CostFactorTables';
+import { costFactorLoader } from '../../services/costEngine/costFactorLoader';
 
 /**
  * Get all cost factors with optional filtering
  */
 export function getCostFactors(req: Request, res: Response) {
-  const { source, propertyType, region } = req.query;
-  
   try {
-    const factors = getFactors(
-      source as string, 
-      propertyType as string, 
-      region as string
-    );
+    const factors = costFactorTables.getAllFactors();
     
     res.json({
       success: true,
-      source: source || getCostSource(),
+      source: costFactorTables.getSource(),
+      year: costFactorTables.getYear(),
       data: factors
     });
   } catch (error) {
@@ -47,21 +36,59 @@ export function getCostFactors(req: Request, res: Response) {
  */
 export function getCostFactorsByType(req: Request, res: Response) {
   const { factorType } = req.params;
-  const { source } = req.query;
   
   try {
-    const factors = getFactors(source as string || getCostSource());
+    const factors = costFactorTables.getAllFactors();
     
-    // Filter factors by type
-    const filteredFactors = factors.filter(factor => 
-      factor.factorType === factorType
-    );
+    if (!factors) {
+      return res.status(500).json({
+        success: false,
+        message: 'Cost factors not initialized'
+      });
+    }
+    
+    // Get the specific factor type data based on the parameter
+    let specificFactors: Record<string, number> = {};
+    
+    switch(factorType.toLowerCase()) {
+      case 'region':
+      case 'regions':
+        specificFactors = factors.regionFactors;
+        break;
+      case 'quality':
+        specificFactors = factors.qualityFactors;
+        break;
+      case 'condition':
+        specificFactors = factors.conditionFactors;
+        break;
+      case 'baserate':
+      case 'baserates':
+        specificFactors = factors.baseRates;
+        break;
+      case 'age':
+      case 'aging':
+        specificFactors = factors.agingFactors;
+        break;
+      case 'complexity':
+        // Return the entire complexity structure
+        return res.json({
+          success: true,
+          source: costFactorTables.getSource(),
+          factorType,
+          data: factors.complexityFactors
+        });
+      default:
+        return res.status(400).json({
+          success: false,
+          message: `Unknown factor type: ${factorType}`
+        });
+    }
     
     res.json({
       success: true,
-      source: source || getCostSource(),
+      source: costFactorTables.getSource(),
       factorType,
-      data: filteredFactors
+      data: specificFactors
     });
   } catch (error) {
     console.error(`Error getting ${factorType} factors:`, error);
@@ -78,12 +105,14 @@ export function getCostFactorsByType(req: Request, res: Response) {
  */
 export function getCostFactorSources(req: Request, res: Response) {
   try {
-    const sources = getAvailableSources();
+    // In the current implementation, we only have one source
+    // When we add more, we can enhance this function
+    const sources = [costFactorTables.getSource()];
     
     res.json({
       success: true,
       data: sources,
-      current: getCostSource()
+      current: costFactorTables.getSource()
     });
   } catch (error) {
     console.error('Error getting cost factor sources:', error);
@@ -100,7 +129,7 @@ export function getCostFactorSources(req: Request, res: Response) {
  */
 export function getCurrentSource(req: Request, res: Response) {
   try {
-    const source = getCostSource();
+    const source = costFactorTables.getSource();
     
     res.json({
       success: true,
@@ -130,18 +159,20 @@ export function setCurrentSource(req: Request, res: Response) {
   }
   
   try {
-    const success = setCostSource(source);
+    // In the current implementation, we don't support changing sources at runtime
+    // This is a placeholder for future enhancement
+    const currentSource = costFactorTables.getSource();
     
-    if (!success) {
+    if (source !== currentSource) {
       return res.status(400).json({
         success: false,
-        message: `Invalid or unavailable source: ${source}`
+        message: `Cannot change source at runtime. Current source: ${currentSource}`
       });
     }
     
     res.json({
       success: true,
-      message: `Cost factor source set to ${source}`,
+      message: `Cost factor source is ${source}`,
       data: source
     });
   } catch (error) {
@@ -158,29 +189,81 @@ export function setCurrentSource(req: Request, res: Response) {
  * Get a specific cost factor value
  */
 export function getCostFactorValue(req: Request, res: Response) {
-  const { source, factorType, code } = req.params;
+  const { factorType, code } = req.params;
   
   try {
-    const factors = getFactors(source);
+    const factors = costFactorTables.getAllFactors();
     
-    // Find the specific factor
-    const factor = factors.find(f => 
-      f.factorType === factorType && f.code === code
-    );
+    if (!factors) {
+      return res.status(500).json({
+        success: false,
+        message: 'Cost factors not initialized'
+      });
+    }
     
-    if (!factor) {
+    let value: number | null = null;
+    
+    // Get the specific factor value based on the type and code
+    switch(factorType.toLowerCase()) {
+      case 'region':
+      case 'regions':
+        value = factors.regionFactors[code] || null;
+        break;
+      case 'quality':
+        value = factors.qualityFactors[code] || null;
+        break;
+      case 'condition':
+        value = factors.conditionFactors[code] || null;
+        break;
+      case 'baserate':
+      case 'baserates':
+        value = factors.baseRates[code] || null;
+        break;
+      case 'age':
+      case 'aging':
+        value = factors.agingFactors[code] || null;
+        break;
+      case 'complexity':
+        // For complexity, we need to determine the subcategory
+        const [subcategory, subcode] = code.split(':');
+        if (subcategory && subcode) {
+          // Check if it's a valid complexity factor category
+          switch(subcategory.toUpperCase()) {
+            case 'STORIES':
+              value = factors.complexityFactors.STORIES[subcode] || null;
+              break;
+            case 'FOUNDATION':
+              value = factors.complexityFactors.FOUNDATION[subcode] || null;
+              break;
+            case 'ROOF':
+              value = factors.complexityFactors.ROOF[subcode] || null;
+              break;
+            case 'HVAC':
+              value = factors.complexityFactors.HVAC[subcode] || null;
+              break;
+          }
+        }
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: `Unknown factor type: ${factorType}`
+        });
+    }
+    
+    if (value === null) {
       return res.status(404).json({
         success: false,
-        message: `Factor not found for source=${source}, type=${factorType}, code=${code}`
+        message: `Factor not found for type=${factorType}, code=${code}`
       });
     }
     
     res.json({
       success: true,
-      source,
+      source: costFactorTables.getSource(),
       factorType,
       code,
-      data: factor
+      value
     });
   } catch (error) {
     console.error('Error getting cost factor value:', error);
