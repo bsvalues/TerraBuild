@@ -28,6 +28,7 @@ export interface IStorage {
   
   // User operations
   getUsers(): Promise<User[]>;
+  getUser(id: number): Promise<User | null>;
   getUserById(id: number): Promise<User | null>;
   getUserByUsername(username: string): Promise<User | null>;
   createUser(user: InsertUser): Promise<User>;
@@ -198,8 +199,12 @@ export class MemStorage implements IStorage {
     return this.users;
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  async getUser(id: number): Promise<User | null> {
     return this.users.find(user => user.id === id) || null;
+  }
+
+  async getUserById(id: number): Promise<User | null> {
+    return this.getUser(id);
   }
 
   async getUserByUsername(username: string): Promise<User | null> {
