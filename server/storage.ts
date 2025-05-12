@@ -174,7 +174,7 @@ export class MemStorage implements IStorage {
     // Create a default admin user
     const adminUser: InsertUser = {
       username: 'admin',
-      password: '$2a$10$oCf5fSRnZiXEPRz9/AQzT.CYnG1KPNnEMJQQjswFktoPq76UjLwFG', // hashed 'admin123'
+      password: 'admin123', // Will be hashed on creation
       name: 'Admin User', // Using name to match actual DB column
       role: 'admin',
       is_active: true

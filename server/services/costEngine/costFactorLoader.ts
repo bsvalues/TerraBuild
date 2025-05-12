@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getStorage } from '../../storage';
+import { storage } from '../../storage-factory';
 
 // Cache for cost factor data to avoid repeated disk reads
 let costFactorCache: Record<string, any> = {};
@@ -63,7 +63,6 @@ export function loadCostFactorData(source: string): any {
  */
 export function getCostSource(): string {
   // Try to get from settings if available
-  const storage = getStorage();
   try {
     const setting = storage.getSetting('costFactorSource');
     if (setting) {
@@ -87,13 +86,12 @@ export function setCostSource(source: string): boolean {
   }
   
   // Try to save to settings if available
-  const storage = getStorage();
   try {
     if (!storage.getSetting('costFactorSource')) {
       storage.createSetting({
         key: 'costFactorSource',
         value: source,
-        type: 'string',
+        category: 'system',
         description: 'Current cost factor data source'
       });
     } else {
