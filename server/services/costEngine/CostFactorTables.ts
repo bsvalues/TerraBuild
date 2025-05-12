@@ -1,276 +1,215 @@
-/**
- * Cost Factor Tables Service
- * 
- * This service provides access to the cost factors for building cost calculations.
- * It replaces the hardcoded Marshall & Swift tables with data-driven factors
- * that can be loaded from JSON files or from the database.
- */
+import fs from 'fs';
+import path from 'path';
 
-import { costFactorLoader, type CostFactors } from './costFactorLoader';
-
-export class CostFactorTables {
-  private costFactors: CostFactors | null = null;
-  private isInitialized = false;
-  
-  constructor() {}
-  
-  /**
-   * Initialize the cost factor tables
-   */
-  async initialize(): Promise<boolean> {
-    try {
-      this.costFactors = await costFactorLoader.load();
-      this.isInitialized = this.costFactors !== null;
-      
-      if (this.isInitialized && this.costFactors) {
-        console.log(`CostFactorTables initialized from source: ${this.costFactors.source}`);
-      } else {
-        console.warn('CostFactorTables failed to initialize');
-      }
-      
-      return this.isInitialized;
-    } catch (error) {
-      console.error('Error initializing CostFactorTables:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Get the base rate for a building type
-   */
-  getBaseRate(buildingType: string): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    const standardizedType = buildingType.toUpperCase();
-    
-    if (this.costFactors.baseRates[standardizedType]) {
-      return this.costFactors.baseRates[standardizedType];
-    }
-    
-    // If building type not found, use residential as fallback
-    console.warn(`Building type '${buildingType}' not found in base rates. Using RESIDENTIAL rate.`);
-    return this.costFactors.baseRates['RESIDENTIAL'];
-  }
-  
-  /**
-   * Get the region factor for a region
-   */
-  getRegionFactor(region: string): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    const standardizedRegion = region.toUpperCase();
-    
-    if (this.costFactors.regionFactors[standardizedRegion]) {
-      return this.costFactors.regionFactors[standardizedRegion];
-    }
-    
-    // If region not found, use central (default factor of 1.0)
-    console.warn(`Region '${region}' not found in region factors. Using CENTRAL factor.`);
-    return this.costFactors.regionFactors['CENTRAL'] || 1.0;
-  }
-  
-  /**
-   * Get the quality factor for a quality level
-   */
-  getQualityFactor(quality: string): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    const standardizedQuality = quality.toUpperCase();
-    
-    if (this.costFactors.qualityFactors[standardizedQuality]) {
-      return this.costFactors.qualityFactors[standardizedQuality];
-    }
-    
-    // If quality not found, use medium (default factor of 1.0)
-    console.warn(`Quality '${quality}' not found in quality factors. Using MEDIUM quality.`);
-    return this.costFactors.qualityFactors['MEDIUM'] || 1.0;
-  }
-  
-  /**
-   * Get the condition factor for a condition level
-   */
-  getConditionFactor(condition: string): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    const standardizedCondition = condition.toUpperCase();
-    
-    if (this.costFactors.conditionFactors[standardizedCondition]) {
-      return this.costFactors.conditionFactors[standardizedCondition];
-    }
-    
-    // If condition not found, use average (default factor of 1.0)
-    console.warn(`Condition '${condition}' not found in condition factors. Using AVERAGE condition.`);
-    return this.costFactors.conditionFactors['AVERAGE'] || 1.0;
-  }
-  
-  /**
-   * Calculate the age factor based on year built
-   */
-  calculateAgeFactor(yearBuilt: number): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    const currentYear = new Date().getFullYear();
-    const age = currentYear - yearBuilt;
-    
-    // Buildings newer than 5 years don't have age depreciation
-    if (age <= 5) {
-      return this.costFactors.agingFactors['NEW_5YRS'] || 1.0;
-    }
-    
-    if (age <= 10) {
-      return this.costFactors.agingFactors['5_10YRS'] || 0.95;
-    }
-    
-    if (age <= 20) {
-      return this.costFactors.agingFactors['10_20YRS'] || 0.9;
-    }
-    
-    if (age <= 30) {
-      return this.costFactors.agingFactors['20_30YRS'] || 0.85;
-    }
-    
-    if (age <= 40) {
-      return this.costFactors.agingFactors['30_40YRS'] || 0.8;
-    }
-    
-    if (age <= 50) {
-      return this.costFactors.agingFactors['40_50YRS'] || 0.75;
-    }
-    
-    // Over 50 years old
-    return this.costFactors.agingFactors['50_PLUS'] || 0.7;
-  }
-  
-  /**
-   * Calculate complexity factor based on building details
-   */
-  calculateComplexityFactor(buildingDetails: any): number {
-    if (!this.isInitialized || !this.costFactors) {
-      throw new Error('CostFactorTables not initialized');
-    }
-    
-    let complexityFactor = 1.0;
-    
-    if (!buildingDetails) {
-      return complexityFactor;
-    }
-    
-    // Adjust for number of stories
-    if (buildingDetails.stories) {
-      const storyFactors = this.costFactors.complexityFactors.STORIES;
-      
-      if (buildingDetails.stories === 1 && storyFactors['1']) {
-        complexityFactor *= storyFactors['1'];
-      } else if (buildingDetails.stories === 2 && storyFactors['2']) {
-        complexityFactor *= storyFactors['2'];
-      } else if (buildingDetails.stories === 3 && storyFactors['3']) {
-        complexityFactor *= storyFactors['3'];
-      } else if (buildingDetails.stories === 4 && storyFactors['4']) {
-        complexityFactor *= storyFactors['4'];
-      } else if (buildingDetails.stories >= 5 && storyFactors['5_PLUS']) {
-        complexityFactor *= storyFactors['5_PLUS'];
-      }
-    }
-    
-    // Adjust for foundation type
-    if (buildingDetails.foundation) {
-      const foundationFactors = this.costFactors.complexityFactors.FOUNDATION;
-      const foundationType = buildingDetails.foundation.toUpperCase();
-      
-      if (foundationFactors[foundationType]) {
-        complexityFactor *= foundationFactors[foundationType];
-      }
-    }
-    
-    // Adjust for roof type
-    if (buildingDetails.roof || buildingDetails.roofType) {
-      const roofFactors = this.costFactors.complexityFactors.ROOF;
-      const roofType = (buildingDetails.roofType || buildingDetails.roof).toUpperCase();
-      
-      if (roofFactors[roofType]) {
-        complexityFactor *= roofFactors[roofType];
-      }
-    }
-    
-    // Adjust for HVAC (heating/cooling)
-    let hvacType = 'BASIC';
-    
-    if (buildingDetails.hvac) {
-      hvacType = buildingDetails.hvac.toUpperCase();
-    } else if (buildingDetails.heating === 'FORCED_AIR' && buildingDetails.cooling === 'CENTRAL') {
-      hvacType = 'CENTRAL';
-    } else if (buildingDetails.heating === 'HEAT_PUMP') {
-      hvacType = 'HEAT_PUMP';
-    } else if (buildingDetails.heating && !buildingDetails.cooling) {
-      hvacType = 'BASIC';
-    } else if (!buildingDetails.heating && !buildingDetails.cooling) {
-      hvacType = 'NONE';
-    }
-    
-    const hvacFactors = this.costFactors.complexityFactors.HVAC;
-    if (hvacFactors[hvacType]) {
-      complexityFactor *= hvacFactors[hvacType];
-    }
-    
-    return complexityFactor;
-  }
-  
-  /**
-   * Get all cost factors
-   */
-  getAllFactors(): CostFactors | null {
-    return this.costFactors;
-  }
-  
-  /**
-   * Get the source of the cost factors
-   */
-  getSource(): string {
-    if (!this.isInitialized || !this.costFactors) {
-      return 'Not initialized';
-    }
-    
-    return this.costFactors.source;
-  }
-  
-  /**
-   * Get the year of the cost factors
-   */
-  getYear(): number {
-    if (!this.isInitialized || !this.costFactors) {
-      return new Date().getFullYear();
-    }
-    
-    return this.costFactors.year;
-  }
-  
-  /**
-   * Reload the cost factors from the source
-   */
-  async reload(): Promise<boolean> {
-    costFactorLoader.clearCache();
-    return this.initialize();
-  }
-  
-  /**
-   * Check if the service is initialized
-   */
-  isReady(): boolean {
-    return this.isInitialized && this.costFactors !== null;
-  }
+export interface CostFactors {
+  version: string;
+  source: string;
+  year: number;
+  lastUpdated: string;
+  regionFactors: Record<string, number>;
+  qualityFactors: Record<string, number>;
+  conditionFactors: Record<string, number>;
+  baseRates: Record<string, number>;
+  complexityFactors: {
+    STORIES: Record<string, number>;
+    FOUNDATION: Record<string, number>;
+    ROOF: Record<string, number>;
+    HVAC: Record<string, number>;
+  };
+  agingFactors: Record<string, number>;
 }
 
-// Singleton instance
-export const costFactorTables = new CostFactorTables();
+export class CostFactorTables {
+  private tables: Record<string, CostFactors> = {};
+  private sources: string[] = [];
+  private dataDir: string = path.join(process.cwd(), 'data');
 
-export default costFactorTables;
+  constructor() {
+    this.loadAllSources();
+    console.log('CostFactorTables initialized from source: Benton County Building Cost Standards');
+  }
+
+  private loadAllSources() {
+    try {
+      // Default to Benton County data if nothing else is available
+      const bentonCountyData: CostFactors = {
+        version: '1.0.0',
+        source: 'bentonCounty',
+        year: 2025,
+        lastUpdated: '2025-01-01',
+        regionFactors: {
+          'R1': 1.05,
+          'R2': 1.00,
+          'R3': 0.95,
+          'R4': 0.90,
+          'R5': 0.85,
+        },
+        qualityFactors: {
+          'AAA': 1.25,
+          'AA': 1.15,
+          'A': 1.10,
+          'B': 1.00,
+          'C': 0.90,
+          'D': 0.80,
+        },
+        conditionFactors: {
+          'EX': 1.10,
+          'VG': 1.05,
+          'GD': 1.00,
+          'AV': 0.90,
+          'FR': 0.80,
+          'PR': 0.70,
+        },
+        baseRates: {
+          'SFR': 135.50,
+          'MFR': 110.25,
+          'COM': 155.75,
+          'IND': 95.50,
+          'AGR': 65.00,
+        },
+        complexityFactors: {
+          STORIES: {
+            '1': 1.0,
+            '1.5': 1.05,
+            '2': 1.10,
+            '2.5': 1.15,
+            '3': 1.20,
+          },
+          FOUNDATION: {
+            'SLAB': 1.0,
+            'CRAWL': 1.05,
+            'BASEMENT': 1.25,
+          },
+          ROOF: {
+            'ASPHALT': 1.0,
+            'METAL': 1.15,
+            'TILE': 1.20,
+            'SLATE': 1.35,
+          },
+          HVAC: {
+            'NONE': 0.85,
+            'BASIC': 1.0,
+            'CENTRAL': 1.15,
+            'ZONED': 1.25,
+          },
+        },
+        agingFactors: {
+          '0': 1.00,
+          '5': 0.98,
+          '10': 0.95,
+          '15': 0.92,
+          '20': 0.89,
+          '25': 0.85,
+          '30': 0.80,
+          '40': 0.75,
+          '50': 0.70,
+        },
+      };
+
+      // Add default Benton County data
+      this.tables['bentonCounty'] = bentonCountyData;
+      this.sources.push('bentonCounty');
+
+      // Look for JSON files in the data directory
+      if (fs.existsSync(this.dataDir)) {
+        const files = fs.readdirSync(this.dataDir);
+        const jsonFiles = files.filter(file => file.endsWith('.json'));
+        
+        for (const file of jsonFiles) {
+          try {
+            const filePath = path.join(this.dataDir, file);
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            const data = JSON.parse(fileContent);
+            
+            if (data.source && !this.sources.includes(data.source)) {
+              this.tables[data.source] = data;
+              this.sources.push(data.source);
+            }
+          } catch (error) {
+            console.error(`Error loading cost factor data from ${file}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing cost factor tables:', error);
+      throw new Error('Failed to initialize cost factor tables');
+    }
+  }
+
+  public getAvailableSources(): string[] {
+    return [...this.sources];
+  }
+
+  public getAllFactors(source: string): CostFactors {
+    if (!this.tables[source]) {
+      throw new Error(`Cost factor source '${source}' not found`);
+    }
+    return { ...this.tables[source] };
+  }
+
+  public getFactorsByType(source: string, factorType: string): Record<string, number> | Record<string, Record<string, number>> {
+    if (!this.tables[source]) {
+      throw new Error(`Cost factor source '${source}' not found`);
+    }
+
+    const factors = this.tables[source];
+    
+    switch(factorType.toLowerCase()) {
+      case 'region':
+        return { ...factors.regionFactors };
+      case 'quality':
+        return { ...factors.qualityFactors };
+      case 'condition':
+        return { ...factors.conditionFactors };
+      case 'baserate':
+        return { ...factors.baseRates };
+      case 'complexity':
+        return { ...factors.complexityFactors };
+      case 'age':
+        return { ...factors.agingFactors };
+      default:
+        throw new Error(`Factor type '${factorType}' not found`);
+    }
+  }
+
+  public getFactorValue(source: string, factorType: string, code: string): number | null {
+    try {
+      if (!this.tables[source]) {
+        throw new Error(`Cost factor source '${source}' not found`);
+      }
+
+      const factors = this.tables[source];
+      
+      // Handle nested complexity factors
+      if (factorType.toLowerCase() === 'complexity') {
+        // The code format for complexity is expected to be CATEGORY.CODE (e.g., STORIES.2)
+        const [category, subCode] = code.split('.');
+        
+        if (!category || !subCode || !factors.complexityFactors[category]) {
+          return null;
+        }
+        
+        return factors.complexityFactors[category][subCode] || null;
+      }
+      
+      // Handle other factor types
+      switch(factorType.toLowerCase()) {
+        case 'region':
+          return factors.regionFactors[code] || null;
+        case 'quality':
+          return factors.qualityFactors[code] || null;
+        case 'condition':
+          return factors.conditionFactors[code] || null;
+        case 'baserate':
+          return factors.baseRates[code] || null;
+        case 'age':
+          return factors.agingFactors[code] || null;
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error(`Error getting factor value for ${factorType}/${code}:`, error);
+      return null;
+    }
+  }
+}

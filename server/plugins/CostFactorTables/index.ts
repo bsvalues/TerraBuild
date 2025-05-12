@@ -1,15 +1,13 @@
+import express from 'express';
+import { costFactorRouter } from './router';
+
 /**
- * Cost Factor Tables Plugin
- * 
- * This plugin provides functionality for working with cost factor tables
- * and supports different data sources.
+ * CostFactorTables plugin - provides access to cost factor data for different building types,
+ * regions, quality grades, etc. for the Benton County Building Cost Assessment System.
  */
-
-import { router } from './router';
-import * as controller from './controller';
-
-// Add a debug log
-console.log('CostFactorTables plugin loaded, router:', router);
-
-// Export the router for use in the main application
-export { router, controller };
+export function register(app: express.Express): void {
+  // Register cost factor API routes
+  app.use('/api/cost-factors', costFactorRouter);
+  
+  console.log('CostFactorTables initialized successfully from source: Benton County Building Cost Standards');
+}

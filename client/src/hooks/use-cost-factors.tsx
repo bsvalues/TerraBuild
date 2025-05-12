@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-// Type for all cost factors
 export type CostFactors = {
   version: string;
   source: string;
@@ -46,28 +45,14 @@ export function useCostFactors() {
     isLoading,
     error,
   } = useQuery<CostFactorResponse>({
-    queryKey: ["/api/cost-factors/factors"],
-    queryFn: async ({ signal }) => {
-      const res = await apiRequest(
-        "GET", 
-        "/api/cost-factors/factors", 
-        undefined, 
-        { 
-          signal,
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      return await res.json();
-    },
+    queryKey: ['/api/cost-factors'],
+    refetchOnWindowFocus: false,
   });
 
   return {
-    factors: data?.data,
     source: data?.source,
     year: data?.year,
+    factors: data?.data,
     isLoading,
     error,
   };
@@ -79,28 +64,25 @@ export function useCostFactorsByType(factorType: string) {
     isLoading,
     error,
   } = useQuery<FactorTypeResponse>({
-    queryKey: ["/api/cost-factors/factors", factorType],
-    queryFn: async ({ signal }) => {
-      const res = await apiRequest(
-        "GET", 
-        `/api/cost-factors/factors/${factorType}`, 
-        undefined, 
-        { 
-          signal,
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-          } 
-        }
-      );
-      return await res.json();
-    },
+    queryKey: ['/api/cost-factors/type', factorType],
+    refetchOnWindowFocus: false,
   });
 
+  let factors: Record<string, number> | Record<string, Record<string, number>> | null = null;
+
+  if (data?.data) {
+    if (factorType === 'complexity') {
+      // For complexity factors, the structure is nested
+      factors = data.data as unknown as Record<string, Record<string, number>>;
+    } else {
+      // For other factor types, it's a flat structure
+      factors = data.data;
+    }
+  }
+
   return {
-    factors: data?.data,
+    factors,
     source: data?.source,
-    factorType: data?.factorType,
     isLoading,
     error,
   };
@@ -112,27 +94,29 @@ export function useCostFactorSources() {
     isLoading,
     error,
   } = useQuery<SourcesResponse>({
-    queryKey: ["/api/cost-factors/sources"],
-    queryFn: async ({ signal }) => {
-      const res = await apiRequest(
-        "GET", 
-        "/api/cost-factors/sources", 
-        undefined, 
-        { 
-          signal,
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-          } 
-        }
-      );
-      return await res.json();
+    queryKey: ['/api/cost-factors/sources'],
+    refetchOnWindowFocus: false,
+  });
+
+  const queryClient = useQueryClient();
+
+  const setCurrentSourceMutation = useMutation({
+    mutationFn: async (source: string) => {
+      const response = await apiRequest('POST', '/api/cost-factors/source', { source });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate all cost factor queries when source changes
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/sources'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/type'] });
     },
   });
 
   return {
-    sources: data?.data,
+    sources: data?.data || [],
     currentSource: data?.current,
+    setCurrentSource: setCurrentSourceMutation.mutate,
     isLoading,
     error,
   };

@@ -1,34 +1,25 @@
-/**
- * Cost Factor Tables Plugin Router
- * 
- * This file defines the routes for the Cost Factor Tables plugin API
- */
-
 import express from 'express';
-import * as controller from './controller';
+import { CostFactorController } from './controller';
 
-export const router = express.Router();
-
-// Add middleware for logging requests
-router.use((req, res, next) => {
-  console.log(`CostFactorTables API: ${req.method} ${req.path}`);
-  next();
-});
+const router = express.Router();
+const controller = new CostFactorController();
 
 // Get all cost factors
-router.get('/factors', controller.getCostFactors);
+router.get('/', controller.getAllFactors);
 
-// Get cost factors of a specific type
-router.get('/factors/:factorType', controller.getCostFactorsByType);
+// Get cost factor sources
+router.get('/sources', controller.getSources);
 
-// Get available cost factor sources
-router.get('/sources', controller.getCostFactorSources);
-
-// Get current cost factor source
+// Get current source
 router.get('/source', controller.getCurrentSource);
 
-// Set current cost factor source
+// Set current source
 router.post('/source', controller.setCurrentSource);
 
-// Get a specific cost factor value
-router.get('/value/:factorType/:code', controller.getCostFactorValue);
+// Get cost factors by type
+router.get('/type/:factorType', controller.getFactorsByType);
+
+// Get specific factor value
+router.get('/value/:factorType/:code', controller.getFactorValue);
+
+export const costFactorRouter = router;
