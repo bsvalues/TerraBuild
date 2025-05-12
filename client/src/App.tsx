@@ -8,6 +8,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import HomePage from '@/pages/home-page';
 import AuthPage from '@/pages/auth-page';
 import NotFoundPage from '@/pages/not-found';
+import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -76,6 +77,12 @@ function Router() {
           <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
             <p className="text-blue-300">Cost calculator coming soon...</p>
           </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/cost-factors" component={() => (
+        <DashboardLayout>
+          <CostFactorTablesPage />
         </DashboardLayout>
       )} />
       

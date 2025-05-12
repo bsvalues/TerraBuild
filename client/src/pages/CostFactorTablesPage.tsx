@@ -1,6 +1,5 @@
 import React from 'react';
 import { CostFactorTable } from '../components/CostFactorTable';
-import { BentonCountyHeader } from '../../BentonCountyHeader';
 
 /**
  * Cost Factor Tables Page
@@ -10,10 +9,8 @@ import { BentonCountyHeader } from '../../BentonCountyHeader';
 export default function CostFactorTablesPage() {
   return (
     <div className="container mx-auto py-6">
-      <BentonCountyHeader />
-      
-      <div className="mt-6">
-        <h1 className="text-3xl font-bold mb-6">Cost Factor Tables</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Cost Factor Tables</h1>
         <p className="text-gray-500 mb-6">
           View and manage the cost factors used in building cost calculations. 
           Toggle between Marshall & Swift and RS Means data sources.
