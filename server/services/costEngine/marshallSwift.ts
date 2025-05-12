@@ -1,160 +1,118 @@
 /**
- * Marshall & Swift Cost Factor Service
- * Provides cost factors and calculations based on Marshall & Swift data
+ * Marshall Swift Cost Service
+ * 
+ * This module provides a facade for the Marshall Swift cost factors
+ * that will be used for building cost calculations. It uses the
+ * CostFactorTables service internally but presents a simpler API
+ * specifically for marshallSwift factors.
  */
 
-import { z } from 'zod';
-import { loadCostFactors } from './costFactorLoader';
+import { getBaseRate, getRegionalFactor, getCostFactorValue } from './CostFactorTables';
 
-// Marshall Swift factor types
-export type MsCostFactorType = 
-  'regionFactor' | 
-  'qualityFactor' | 
-  'conditionFactor' | 
-  'complexityFactor' | 
-  'sizeFactor' | 
-  'heightFactor' | 
-  'ageFactor';
-
-// Marshall Swift class codes
-export enum MsClass {
-  RESIDENTIAL = 'RES',
-  COMMERCIAL = 'COM', 
-  INDUSTRIAL = 'IND',
-  AGRICULTURAL = 'AGR',
-  MULTIFAMILY = 'MUL'
-}
-
-// Marshall Swift factor schema
-export const msFactorSchema = z.object({
-  id: z.number().optional(),
-  msClass: z.nativeEnum(MsClass),
-  factorType: z.string(),
-  code: z.string(),
-  description: z.string(),
-  value: z.number(),
-  yearEffective: z.number().optional(),
-  source: z.string().optional(),
-});
-
-export type MarshallSwiftFactor = z.infer<typeof msFactorSchema>;
-
-// Define a mapping between factor types and data structure
-const factorTypeMapping = {
-  regionFactor: 'regions',
-  qualityFactor: 'quality',
-  conditionFactor: 'condition',
-  complexityFactor: 'complexity',
-  ageFactor: 'age'
-};
+const SOURCE = 'marshallSwift';
 
 /**
- * Get cost factors for a specific property type and region
+ * Get the base cost rate for a building type
+ * @param {string} buildingType - The building type code
+ * @returns {number} The base cost rate
  */
-export function getMsCostFactors(propertyType: string, region: string) {
-  const marshallSwiftData = loadCostFactors('marshallSwift');
-  const factors: MarshallSwiftFactor[] = [];
-  
-  // Building type base cost
-  const buildingType = marshallSwiftData.buildingTypes?.find(
-    (type: any) => type.code === propertyType
-  );
-  
-  if (buildingType) {
-    // Add building type as a factor
-    factors.push({
-      msClass: propertyType as MsClass,
-      factorType: 'baseRate',
-      code: propertyType,
-      description: buildingType.description,
-      value: buildingType.baseCost,
-      source: 'marshallSwift'
-    });
-  }
-  
-  // Region factor
-  const regionFactor = marshallSwiftData.regions?.find(
-    (r: any) => r.code === region
-  );
-  
-  if (regionFactor) {
-    factors.push({
-      msClass: propertyType as MsClass,
-      factorType: 'regionFactor',
-      code: region,
-      description: regionFactor.name,
-      value: regionFactor.factor,
-      source: 'marshallSwift'
-    });
-  }
-  
-  return factors;
+export function getBaseCost(buildingType: string): number {
+  return getBaseRate(SOURCE, buildingType);
 }
 
 /**
- * Get all available factors
+ * Get the regional factor for a region
+ * @param {string} region - The region code
+ * @returns {number} The regional factor
  */
-export function getAllMsFactors() {
-  const marshallSwiftData = loadCostFactors('marshallSwift');
-  const factors: MarshallSwiftFactor[] = [];
-  
-  // Process each factor type
-  Object.entries(factorTypeMapping).forEach(([factorType, dataKey]) => {
-    if (marshallSwiftData[dataKey] && Array.isArray(marshallSwiftData[dataKey])) {
-      marshallSwiftData[dataKey].forEach((item: any) => {
-        factors.push({
-          msClass: item.msClass || 'ALL',
-          factorType,
-          code: item.code || item.level || item.range,
-          description: item.description,
-          value: item.factor,
-          source: 'marshallSwift'
-        });
-      });
-    }
-  });
-  
-  return factors;
+export function getRegionFactor(region: string): number {
+  return getRegionalFactor(SOURCE, region);
 }
 
 /**
- * Calculate the adjusted cost using Marshall Swift factors
+ * Get the quality factor for a quality level
+ * @param {string} quality - The quality level code
+ * @returns {number} The quality factor
  */
-export function calculateMsAdjustedCost(baseCost: number, factors: Record<MsCostFactorType, number>) {
-  let adjustedCost = baseCost;
-  
-  // Apply each factor
-  Object.values(factors).forEach(factor => {
-    adjustedCost *= factor;
-  });
-  
-  return adjustedCost;
+export function getQualityFactor(quality: string): number {
+  return getCostFactorValue(SOURCE, 'quality', quality);
 }
 
 /**
- * MarshallSwift service class
+ * Get the condition factor for a condition level
+ * @param {string} condition - The condition level code
+ * @returns {number} The condition factor
  */
-export class MarshallSwiftService {
-  /**
-   * Get cost factors for property
-   */
-  async getFactors(propertyType: string, region: string) {
-    return getMsCostFactors(propertyType, region);
-  }
-  
-  /**
-   * Get all Marshall Swift factors
-   */
-  async getAllFactors() {
-    return getAllMsFactors();
-  }
-  
-  /**
-   * Calculate cost with Marshall Swift method
-   */
-  calculateCost(baseCost: number, factors: Record<MsCostFactorType, number>) {
-    return calculateMsAdjustedCost(baseCost, factors);
-  }
+export function getConditionFactor(condition: string): number {
+  return getCostFactorValue(SOURCE, 'condition', condition);
 }
 
-export default new MarshallSwiftService();
+/**
+ * Calculate the age factor based on the year built
+ * @param {number} yearBuilt - The year the building was built
+ * @returns {number} The age factor
+ */
+export function calculateAgeFactor(yearBuilt: number): number {
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - yearBuilt;
+  
+  // Define age brackets based on the data
+  if (age <= 5) return getCostFactorValue(SOURCE, 'age', '0-5');
+  if (age <= 10) return getCostFactorValue(SOURCE, 'age', '6-10');
+  if (age <= 20) return getCostFactorValue(SOURCE, 'age', '11-20');
+  if (age <= 30) return getCostFactorValue(SOURCE, 'age', '21-30');
+  if (age <= 40) return getCostFactorValue(SOURCE, 'age', '31-40');
+  if (age <= 50) return getCostFactorValue(SOURCE, 'age', '41-50');
+  if (age <= 75) return getCostFactorValue(SOURCE, 'age', '51-75');
+  
+  // Fallback for very old buildings
+  return getCostFactorValue(SOURCE, 'age', '75+');
+}
+
+/**
+ * Calculate cost estimation for a building
+ * @param {object} request - The cost request object
+ * @returns {object} The cost estimation results
+ */
+export function calculateCostEstimation(request: any): any {
+  try {
+    // Extract request parameters
+    const { buildingType, region, quality, condition, yearBuilt, area } = request;
+    
+    // Get base cost for building type
+    const baseCost = getBaseCost(buildingType);
+    
+    // Get adjustment factors
+    const regionFactor = getRegionFactor(region);
+    const qualityFactor = getQualityFactor(quality);
+    const conditionFactor = getConditionFactor(condition);
+    const ageFactor = calculateAgeFactor(yearBuilt);
+    
+    // Calculate adjusted cost per square foot
+    const adjustedCost = baseCost * regionFactor * qualityFactor * conditionFactor * ageFactor;
+    
+    // Calculate total cost
+    const totalCost = adjustedCost * area;
+    
+    return {
+      success: true,
+      baseCost,
+      adjustments: {
+        region: regionFactor,
+        quality: qualityFactor,
+        condition: conditionFactor,
+        age: ageFactor
+      },
+      costPerSqFt: adjustedCost,
+      totalCost,
+      source: SOURCE
+    };
+  } catch (error) {
+    console.error('Error calculating cost estimation:', error);
+    return {
+      success: false,
+      error: 'Failed to calculate cost estimation',
+      source: SOURCE
+    };
+  }
+}
