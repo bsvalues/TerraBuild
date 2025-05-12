@@ -1,4 +1,4 @@
-import { useRatingTable } from '@/hooks/use-cost-factors';
+import { useRatingTable } from '@/hooks/use-cost-factors.tsx';
 import {
   Table,
   TableBody,
@@ -26,7 +26,7 @@ export default function ComplexityFactorsTable({
   title = 'Complexity Factors',
   caption = 'Adjustment factors based on building complexity',
 }: ComplexityFactorsTableProps) {
-  const { ratingTable, isLoading, error } = useRatingTable(category);
+  const { table: ratingTable, isLoading, error } = useRatingTable(category);
 
   if (error) {
     return (
