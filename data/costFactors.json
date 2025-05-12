@@ -1,0 +1,177 @@
+{
+  "version": "2025.1",
+  "lastUpdated": "2025-05-12",
+  "description": "Cost Factors for TerraFusion",
+  "marshallSwift": {
+    "buildingTypes": [
+      {
+        "code": "RES",
+        "name": "Residential",
+        "description": "Single family residential homes",
+        "baseCost": 150.00
+      },
+      {
+        "code": "COM",
+        "name": "Commercial",
+        "description": "Commercial buildings (office, retail)",
+        "baseCost": 180.00
+      },
+      {
+        "code": "IND",
+        "name": "Industrial",
+        "description": "Industrial buildings (manufacturing, warehouse)",
+        "baseCost": 120.00
+      },
+      {
+        "code": "AGR",
+        "name": "Agricultural",
+        "description": "Agricultural buildings and structures",
+        "baseCost": 80.00
+      },
+      {
+        "code": "MUL",
+        "name": "Multi-family",
+        "description": "Multi-family residential (apartments, duplexes)",
+        "baseCost": 165.00
+      }
+    ],
+    "regions": [
+      {
+        "code": "BC-NORTH",
+        "name": "North Benton County",
+        "factor": 1.10
+      },
+      {
+        "code": "BC-CENTRAL",
+        "name": "Central Benton County",
+        "factor": 1.00
+      },
+      {
+        "code": "BC-SOUTH",
+        "name": "South Benton County",
+        "factor": 0.95
+      }
+    ],
+    "quality": [
+      {
+        "level": "ECONOMY",
+        "description": "Basic finishes, minimal amenities",
+        "factor": 0.85
+      },
+      {
+        "level": "STANDARD",
+        "description": "Standard materials and fixtures",
+        "factor": 1.00
+      },
+      {
+        "level": "CUSTOM",
+        "description": "Some upgraded materials and fixtures",
+        "factor": 1.15
+      },
+      {
+        "level": "PREMIUM",
+        "description": "High-quality materials throughout",
+        "factor": 1.30
+      },
+      {
+        "level": "LUXURY",
+        "description": "Highest quality materials and craftsmanship",
+        "factor": 1.50
+      }
+    ],
+    "condition": [
+      {
+        "level": "POOR",
+        "description": "Major repairs needed, significant deterioration",
+        "factor": 0.70
+      },
+      {
+        "level": "FAIR",
+        "description": "Some repairs needed, noticeable wear",
+        "factor": 0.85
+      },
+      {
+        "level": "AVERAGE",
+        "description": "Normal wear for age, well maintained",
+        "factor": 1.00
+      },
+      {
+        "level": "GOOD",
+        "description": "Well maintained, minor wear",
+        "factor": 1.10
+      },
+      {
+        "level": "EXCELLENT",
+        "description": "Like new condition, no defects",
+        "factor": 1.20
+      }
+    ],
+    "age": [
+      {
+        "range": "0-5",
+        "description": "New to 5 years old",
+        "factor": 1.00
+      },
+      {
+        "range": "6-10",
+        "description": "6 to 10 years old",
+        "factor": 0.95
+      },
+      {
+        "range": "11-20",
+        "description": "11 to 20 years old",
+        "factor": 0.90
+      },
+      {
+        "range": "21-30",
+        "description": "21 to 30 years old",
+        "factor": 0.85
+      },
+      {
+        "range": "31-50",
+        "description": "31 to 50 years old",
+        "factor": 0.80
+      },
+      {
+        "range": "51+",
+        "description": "51 years or older",
+        "factor": 0.75
+      }
+    ],
+    "complexity": [
+      {
+        "level": "SIMPLE",
+        "description": "Basic design, rectangular footprint",
+        "factor": 0.90
+      },
+      {
+        "level": "STANDARD",
+        "description": "Typical design complexity",
+        "factor": 1.00
+      },
+      {
+        "level": "MODERATE",
+        "description": "Moderate complexity with some unique features",
+        "factor": 1.10
+      },
+      {
+        "level": "COMPLEX",
+        "description": "Complex design with multiple levels or unique features",
+        "factor": 1.25
+      },
+      {
+        "level": "VERY_COMPLEX",
+        "description": "Highly complex design with custom features",
+        "factor": 1.40
+      }
+    ]
+  },
+  "rsmeans": {
+    "buildingTypes": [],
+    "regions": [],
+    "quality": [],
+    "condition": [],
+    "age": [],
+    "complexity": []
+  }
+}

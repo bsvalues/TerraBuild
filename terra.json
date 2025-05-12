@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "costEngine": {
+    "costSource": "marshallSwift",
+    "dataFile": "data/costFactors.json"
+  },
+  "api": {
+    "version": "v1",
+    "enableSwagger": true
+  },
+  "features": {
+    "enableCostFactorTables": true
+  }
+}
