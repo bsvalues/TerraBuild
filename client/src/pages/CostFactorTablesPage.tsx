@@ -14,6 +14,7 @@ export default function CostFactorTablesPage() {
   // Get current source
   const currentSourceQuery = useQuery({
     queryKey: ['/api/cost-factors/source'],
+    refetchOnWindowFocus: false,
     onSuccess: (data) => {
       if (data.data && !currentSource) {
         setCurrentSource(data.data);
@@ -23,10 +24,14 @@ export default function CostFactorTablesPage() {
 
   // Mutation to update the current source
   const updateSourceMutation = useMutation({
-    mutationFn: (source: string) => {
-      return apiRequest('POST', '/api/cost-factors/source', { source });
+    mutationFn: async (source: string) => {
+      const response = await apiRequest('POST', '/api/cost-factors/source', { source });
+      if (!response.ok) {
+        throw new Error('Failed to update source');
+      }
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Source Updated',
         description: `Cost factor source has been updated to ${formatSourceName(currentSource)}.`,
@@ -35,10 +40,10 @@ export default function CostFactorTablesPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/cost-factors'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cost-factors/source'] });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to update cost factor source.',
+        description: error.message || 'Failed to update cost factor source.',
         variant: 'destructive',
       });
     },

@@ -46,12 +46,14 @@ export function CostFactorTable({
   const sourcesQuery = useQuery({
     queryKey: ['/api/cost-factors/sources'],
     enabled: true,
+    refetchOnWindowFocus: false
   });
   
   // Get cost factors
   const factorsQuery = useQuery({
     queryKey: ['/api/cost-factors', source],
     enabled: true,
+    refetchOnWindowFocus: false
   });
 
   // Handle source change
