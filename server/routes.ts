@@ -977,4 +977,7 @@ router.get('/user', (req, res) => {
 // Mount the properties router
 router.use('/properties', propertiesRouter);
 
+// Mount the cost factor tables router
+router.use(costFactorTablesRouter);
+
 export default router;

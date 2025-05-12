@@ -1,206 +1,240 @@
 /**
- * Cost Factor Loader
+ * Cost Factor Loader Service
  * 
- * Service for loading cost factors from configuration files
- * Supports dynamic loading of different cost sources (marshallSwift, rsMeans)
+ * This service handles loading cost factor data from different sources
+ * and provides a unified API for accessing cost factors.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Default configuration values
-const DEFAULT_CONFIG = {
-  costEngine: {
-    costSource: 'marshallSwift', // Default cost source
-    dataFile: 'data/costFactors.json' // Default data file location
-  }
+// Define supported cost sources
+export const COST_SOURCES = {
+  MARSHALL_SWIFT: 'marshallSwift',
+  RS_MEANS: 'rsMeans',
+  COST_FACTO: 'costFacto',
+  BENTON_COUNTY: 'bentonCounty'
 };
 
+// Current selected cost source
+let currentCostSource = COST_SOURCES.MARSHALL_SWIFT;
+
+// Cache for loaded cost factor data
+const costFactorCache: Record<string, any> = {};
+
 /**
- * Get the current cost source from configuration
- * @returns {string} The current cost source (marshallSwift, rsMeans)
+ * Load cost factor data from a source
+ * @param {string} source - The cost data source
+ * @returns {any} The cost factor data
  */
-export function getCostSource(): string {
+export function loadCostFactorData(source: string): any {
+  // Check if the data is already in the cache
+  if (costFactorCache[source]) {
+    return costFactorCache[source];
+  }
+
   try {
-    // Get the configuration file path
-    const configPath = path.resolve('terra.json');
-    
-    // Check if the configuration file exists
-    if (!fs.existsSync(configPath)) {
-      console.warn('Configuration file not found, using default cost source');
-      return DEFAULT_CONFIG.costEngine.costSource;
+    // Determine file path based on source
+    let filePath;
+    switch (source) {
+      case COST_SOURCES.MARSHALL_SWIFT:
+        filePath = path.resolve('./data/marshallSwift.json');
+        break;
+      case COST_SOURCES.RS_MEANS:
+        filePath = path.resolve('./data/rsMeans.json');
+        break;
+      case COST_SOURCES.COST_FACTO:
+        filePath = path.resolve('./data/costFacto.json');
+        break;
+      case COST_SOURCES.BENTON_COUNTY:
+        filePath = path.resolve('./data/bentonCounty.json');
+        break;
+      default:
+        throw new Error(`Unsupported cost source: ${source}`);
     }
+
+    // If file doesn't exist, try to load from terra.json
+    if (!fs.existsSync(filePath)) {
+      const terraFilePath = path.resolve('./terra.json');
+      if (fs.existsSync(terraFilePath)) {
+        const terraData = JSON.parse(fs.readFileSync(terraFilePath, 'utf-8'));
+        if (terraData.costFactors && terraData.costFactors[source]) {
+          // Cache the data and return it
+          costFactorCache[source] = terraData.costFactors[source];
+          return terraData.costFactors[source];
+        }
+      }
+      
+      // If source is not found in terra.json, create a fallback data structure
+      if (source === COST_SOURCES.MARSHALL_SWIFT) {
+        // Create directory if it doesn't exist
+        const dataDir = path.resolve('./data');
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+        
+        // Create default data for Marshall Swift
+        const defaultData = {
+          baseRates: [
+            { code: 'R1', description: 'Single Family Residence', value: 125.50 },
+            { code: 'C1', description: 'Commercial Office Building', value: 185.75 },
+            { code: 'I1', description: 'Light Industrial', value: 95.25 }
+          ],
+          regionalFactors: [
+            { code: 'BING', description: 'Bingham County', value: 1.15 },
+            { code: 'BENN', description: 'Benton County', value: 1.25 },
+            { code: 'FRAN', description: 'Franklin County', value: 1.05 }
+          ],
+          qualityFactors: [
+            { code: 'LOW', description: 'Low Quality', value: 0.85 },
+            { code: 'AVG', description: 'Average Quality', value: 1.0 },
+            { code: 'HIGH', description: 'High Quality', value: 1.2 },
+            { code: 'PREMIUM', description: 'Premium Quality', value: 1.35 }
+          ],
+          conditionFactors: [
+            { code: 'POOR', description: 'Poor Condition', value: 0.7 },
+            { code: 'FAIR', description: 'Fair Condition', value: 0.85 },
+            { code: 'GOOD', description: 'Good Condition', value: 1.0 },
+            { code: 'EXC', description: 'Excellent Condition', value: 1.15 }
+          ]
+        };
+        
+        // Save the default data
+        fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2));
+        
+        // Cache the data and return it
+        costFactorCache[source] = defaultData;
+        return defaultData;
+      }
+      
+      // For other sources, return empty data structure
+      const emptyData = {
+        baseRates: [],
+        regionalFactors: [],
+        qualityFactors: [],
+        conditionFactors: []
+      };
+      
+      // Cache the empty data
+      costFactorCache[source] = emptyData;
+      return emptyData;
+    }
+
+    // Read the file and parse the JSON
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     
-    // Read and parse the configuration file
-    const configFile = fs.readFileSync(configPath, 'utf8');
-    const config = JSON.parse(configFile);
+    // Cache the data
+    costFactorCache[source] = data;
     
-    // Return the cost source from configuration or default
-    return config.costEngine?.costSource || DEFAULT_CONFIG.costEngine.costSource;
+    return data;
   } catch (error) {
-    console.error('Error reading cost source configuration:', error);
-    return DEFAULT_CONFIG.costEngine.costSource;
+    console.error(`Error loading cost factor data for source ${source}:`, error);
+    
+    // Return empty data structure on error
+    const emptyData = {
+      baseRates: [],
+      regionalFactors: [],
+      qualityFactors: [],
+      conditionFactors: []
+    };
+    
+    return emptyData;
   }
 }
 
 /**
- * Update the current cost source in configuration
- * @param {string} source - The cost source to set (marshallSwift, rsMeans)
- * @returns {boolean} True if successful, false otherwise
+ * Get the current cost source
+ * @returns {string} The current cost source
+ */
+export function getCostSource(): string {
+  return currentCostSource;
+}
+
+/**
+ * Set the current cost source
+ * @param {string} source - The cost source to set
+ * @returns {boolean} Success status
  */
 export function setCostSource(source: string): boolean {
   try {
-    // Get the configuration file path
-    const configPath = path.resolve('terra.json');
-    
-    // Initialize the configuration object
-    let config = DEFAULT_CONFIG;
-    
-    // Check if the configuration file exists and read it
-    if (fs.existsSync(configPath)) {
-      const configFile = fs.readFileSync(configPath, 'utf8');
-      config = JSON.parse(configFile);
-    }
-    
-    // Ensure costEngine section exists
-    if (!config.costEngine) {
-      config.costEngine = DEFAULT_CONFIG.costEngine;
-    }
-    
-    // Update the cost source
-    config.costEngine.costSource = source;
-    
-    // Write the updated configuration back to the file
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-    
-    return true;
-  } catch (error) {
-    console.error('Error updating cost source configuration:', error);
-    return false;
-  }
-}
-
-/**
- * Load cost factors from the data file for the specified source
- * @param {string} source - The cost source to load (marshallSwift, rsMeans)
- * @returns {object} The cost factors for the specified source
- */
-export function loadCostFactors(source?: string): any {
-  try {
-    // Get the current cost source if not specified
-    const costSource = source || getCostSource();
-    
-    // Get the configuration file path
-    const configPath = path.resolve('terra.json');
-    
-    // Initialize the configuration object
-    let config = DEFAULT_CONFIG;
-    
-    // Check if the configuration file exists and read it
-    if (fs.existsSync(configPath)) {
-      const configFile = fs.readFileSync(configPath, 'utf8');
-      config = JSON.parse(configFile);
-    }
-    
-    // Get the data file path from configuration
-    const dataFilePath = path.resolve(config.costEngine?.dataFile || DEFAULT_CONFIG.costEngine.dataFile);
-    
-    // Check if the data file exists
-    if (!fs.existsSync(dataFilePath)) {
-      console.warn(`Cost factor data file not found: ${dataFilePath}`);
-      return {};
-    }
-    
-    // Read and parse the data file
-    const dataFile = fs.readFileSync(dataFilePath, 'utf8');
-    const factorData = JSON.parse(dataFile);
-    
-    // Return the cost factors for the specified source
-    return factorData[costSource] || {};
-  } catch (error) {
-    console.error('Error loading cost factors:', error);
-    return {};
-  }
-}
-
-/**
- * Check if a cost source is available in the data file
- * @param {string} source - The cost source to check (marshallSwift, rsMeans)
- * @returns {boolean} True if source is available, false otherwise
- */
-export function isCostSourceAvailable(source: string): boolean {
-  try {
-    // Get the configuration file path
-    const configPath = path.resolve('terra.json');
-    
-    // Initialize the configuration object
-    let config = DEFAULT_CONFIG;
-    
-    // Check if the configuration file exists and read it
-    if (fs.existsSync(configPath)) {
-      const configFile = fs.readFileSync(configPath, 'utf8');
-      config = JSON.parse(configFile);
-    }
-    
-    // Get the data file path from configuration
-    const dataFilePath = path.resolve(config.costEngine?.dataFile || DEFAULT_CONFIG.costEngine.dataFile);
-    
-    // Check if the data file exists
-    if (!fs.existsSync(dataFilePath)) {
+    // Validate source
+    if (!Object.values(COST_SOURCES).includes(source)) {
       return false;
     }
     
-    // Read and parse the data file
-    const dataFile = fs.readFileSync(dataFilePath, 'utf8');
-    const factorData = JSON.parse(dataFile);
+    // Update current source
+    currentCostSource = source;
     
-    // Check if the source exists and has data
-    return Boolean(
-      factorData[source] && 
-      Object.keys(factorData[source]).length > 0
-    );
+    // Return success
+    return true;
   } catch (error) {
-    console.error('Error checking cost source availability:', error);
+    console.error('Error setting cost source:', error);
     return false;
   }
 }
 
 /**
- * Get available cost sources from the data file
+ * Check if a cost source is available
+ * @param {string} source - The cost source to check
+ * @returns {boolean} Whether the source is available
+ */
+export function isCostSourceAvailable(source: string): boolean {
+  // Check if source is valid
+  if (!Object.values(COST_SOURCES).includes(source)) {
+    return false;
+  }
+  
+  try {
+    // Try to load the cost factor data for the source
+    const data = loadCostFactorData(source);
+    
+    // If data is empty, return false
+    if (!data || 
+        !data.baseRates || 
+        !data.regionalFactors || 
+        !data.qualityFactors || 
+        !data.conditionFactors) {
+      return false;
+    }
+    
+    // If data is available, return true
+    return true;
+  } catch (error) {
+    console.error(`Error checking if cost source ${source} is available:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get all available cost sources
  * @returns {string[]} Array of available cost sources
  */
 export function getAvailableSources(): string[] {
   try {
-    // Get the configuration file path
-    const configPath = path.resolve('terra.json');
-    
-    // Initialize the configuration object
-    let config = DEFAULT_CONFIG;
-    
-    // Check if the configuration file exists and read it
-    if (fs.existsSync(configPath)) {
-      const configFile = fs.readFileSync(configPath, 'utf8');
-      config = JSON.parse(configFile);
-    }
-    
-    // Get the data file path from configuration
-    const dataFilePath = path.resolve(config.costEngine?.dataFile || DEFAULT_CONFIG.costEngine.dataFile);
-    
-    // Check if the data file exists
-    if (!fs.existsSync(dataFilePath)) {
-      return [];
-    }
-    
-    // Read and parse the data file
-    const dataFile = fs.readFileSync(dataFilePath, 'utf8');
-    const factorData = JSON.parse(dataFile);
-    
-    // Return an array of available sources with data
-    return Object.keys(factorData).filter(source => 
-      factorData[source] && Object.keys(factorData[source]).length > 0
+    // Filter sources to only include available ones
+    const availableSources = Object.values(COST_SOURCES).filter(source => 
+      isCostSourceAvailable(source)
     );
+    
+    return availableSources;
   } catch (error) {
     console.error('Error getting available cost sources:', error);
-    return [];
+    return [COST_SOURCES.MARSHALL_SWIFT]; // Default to Marshall Swift on error
+  }
+}
+
+/**
+ * Clear the cost factor cache
+ * @param {string} source - Optional source to clear from cache
+ */
+export function clearCostFactorCache(source?: string): void {
+  if (source) {
+    // Clear cache for specific source
+    delete costFactorCache[source];
+  } else {
+    // Clear entire cache
+    Object.keys(costFactorCache).forEach(key => {
+      delete costFactorCache[key];
+    });
   }
 }

@@ -6,7 +6,7 @@
  * data sources like Marshall & Swift and RS Means.
  */
 
-import { loadCostFactors } from './costFactorLoader';
+import { loadCostFactorData, getCostSource } from './costFactorLoader';
 
 interface CostFactor {
   factorClass: string;
@@ -126,8 +126,13 @@ function transformCostFactors(source: string, rawData: any): CostFactor[] {
  * @returns {CostFactor[]} Cost factors matching the criteria
  */
 export function getCostFactors(source: string, propertyType?: string, region?: string): CostFactor[] {
+  // If no source is provided, use the current source
+  if (!source) {
+    source = getCostSource();
+  }
+  
   // Load raw data from the source
-  const rawFactors = loadCostFactors(source);
+  const rawFactors = loadCostFactorData(source);
   
   // Transform raw data to standardized format
   const factors = transformCostFactors(source, rawFactors);
