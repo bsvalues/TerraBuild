@@ -7,18 +7,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CostSourceSelector } from './CostSourceSelector';
 
 interface CostFactor {
   factorClass: string;
@@ -41,13 +35,6 @@ export function CostFactorTable({
   onSourceChange
 }: CostFactorTableProps) {
   const [activeTab, setActiveTab] = useState(factorType || 'baseRate');
-  
-  // Get available sources
-  const sourcesQuery = useQuery({
-    queryKey: ['/api/cost-factors/sources'],
-    enabled: true,
-    refetchOnWindowFocus: false
-  });
   
   // Get cost factors
   const factorsQuery = useQuery({

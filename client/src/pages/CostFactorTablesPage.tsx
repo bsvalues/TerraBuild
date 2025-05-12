@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CostFactorTable } from '@/components/CostFactorTable';
+import { CostSourceSelector } from '@/components/CostSourceSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -110,6 +111,22 @@ export default function CostFactorTablesPage() {
               Cost factors are used to calculate building costs based on various characteristics. 
               Different sources may provide different values for these factors.
             </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CostSourceSelector
+                value={currentSource}
+                onChange={handleSourceChange}
+                label="Select Cost Data Source"
+              />
+              <div className="flex items-end">
+                <Button 
+                  onClick={handleSetAsDefault}
+                  disabled={!currentSource || updateSourceMutation.isPending || currentSource === currentSourceQuery.data?.data}
+                  className="w-full md:w-auto"
+                >
+                  {updateSourceMutation.isPending ? 'Updating...' : 'Set as Default Source'}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
