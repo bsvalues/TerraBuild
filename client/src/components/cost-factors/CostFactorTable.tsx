@@ -1,4 +1,4 @@
-import { useCostFactorsByType } from '@/hooks/use-cost-factors.tsx';
+import { useCostFactorsByType } from '@/hooks/use-cost-factors';
 import {
   Table,
   TableBody,
