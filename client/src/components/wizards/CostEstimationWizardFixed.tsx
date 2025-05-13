@@ -250,7 +250,7 @@ const DEFAULT_VALUES = {
   basement: false,
   basementFinished: false,
   yearBuilt: new Date().getFullYear() - 10,
-  region: 'Central Benton',
+  region: '540100 001',
   garageSize: 0,
   complexity: 50,
   roofType: 'ASPHALT',
@@ -1022,15 +1022,17 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Benton County Regions</SelectLabel>
-                <SelectItem value="North Benton">North Benton</SelectItem>
-                <SelectItem value="Central Benton">Central Benton</SelectItem>
-                <SelectItem value="South Benton">South Benton</SelectItem>
-                <SelectItem value="West Benton">West Benton</SelectItem>
-                <SelectItem value="East Benton">East Benton</SelectItem>
-                <SelectItem value="Richland">Richland</SelectItem>
-                <SelectItem value="Kennewick">Kennewick</SelectItem>
-                <SelectItem value="Prosser">Prosser</SelectItem>
+                <SelectLabel>Benton County Regions (by Hood Code)</SelectLabel>
+                <SelectItem value="540100 001">Hood 540100 001 (Standard Rate)</SelectItem>
+                <SelectItem value="550000">Hood 550000 (North Area)</SelectItem>
+                <SelectItem value="530300 002">Hood 530300 002 (Central Area)</SelectItem>
+                <SelectItem value="530300">Hood 530300 (South Area)</SelectItem>
+                <SelectItem value="530300 001">Hood 530300 001 (East Area)</SelectItem>
+                <SelectItem value="52100 001">Hood 52100 001 (West Area)</SelectItem>
+                <SelectItem value="52100 100">Hood 52100 100 (Richland)</SelectItem>
+                <SelectItem value="52100 140">Hood 52100 140 (Kennewick)</SelectItem>
+                <SelectItem value="52100 240">Hood 52100 240 (Prosser)</SelectItem>
+                <SelectItem value="52100 200">Hood 52100 200 (Rural Area)</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
