@@ -8,6 +8,8 @@
 import express from 'express';
 import { z } from 'zod';
 import { storage } from './storage-factory';
+import * as fs from 'fs';
+import * as path from 'path';
 import analyticsRoutes from './routes/analyticsRoutes';
 import reportRoutes from './routes/reportRoutes';
 import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';
@@ -413,18 +415,14 @@ router.get('/age-factors', asyncHandler(async (req, res) => {
  * This route serves the costFactors.json file directly
  */
 router.get('/cost-factors-file', asyncHandler(async (req, res) => {
-  // The import is already defined at the top of the file
-  // Use the synchronous version to read the file
   try {
-    // Use relative path from the project root
-    const filePath = './data/costFactors.json';
+    // Use path.resolve to get the absolute path from the project root
+    const filePath = path.resolve('./data/costFactors.json');
     
-    // Use async/await instead of synchronous methods
-    const fs = await import('fs/promises');
-    
+    // Use fs.promises for async file operations
     try {
       // Read the file and return it as JSON
-      const fileContent = await fs.readFile(filePath, 'utf8');
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
       const jsonData = JSON.parse(fileContent);
       
       res.json(jsonData);
@@ -436,7 +434,7 @@ router.get('/cost-factors-file', asyncHandler(async (req, res) => {
       res.status(500).json({ message: 'Error reading cost factors file', error: error.message });
     }
   } catch (error) {
-    console.error('Error importing fs module:', error);
+    console.error('Server error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 }));
