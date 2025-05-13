@@ -183,7 +183,7 @@ interface RegionInfo {
 }
 
 // Helper function to generate regions based on costFactors
-const getCostFactorRegions = (costFactors: CostFactorsData | undefined): RegionInfo[] => {
+const getCostFactorRegions = (costFactors: CostFactorsData | null | undefined): RegionInfo[] => {
   if (!costFactors) return [];
   
   const regionMappings: Record<string, string> = {
@@ -472,7 +472,7 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
       const buildingTypeInfo = BUILDING_TYPES.find(t => t.id === inputs.buildingType)!;
       const qualityInfo = QUALITY_LEVELS.find(q => q.id === inputs.quality)!;
       const conditionInfo = CONDITION_OPTIONS.find(c => c.id === inputs.condition)!;
-      const regionInfo = REGIONS.find(r => r.id === inputs.region)!;
+      const regionInfo = REGIONS.find((r: RegionInfo) => r.id === inputs.region)!;
       const roofInfo = ROOFING_TYPES.find(r => r.id === inputs.roofType)!;
       const exteriorInfo = EXTERIOR_TYPES.find(e => e.id === inputs.exteriorType)!;
       const hvacInfo = HVAC_TYPES.find(h => h.id === inputs.hvacType)!;
@@ -1162,9 +1162,9 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
           {/* Show the regional factor for the selected region */}
           {inputs.region && (
             <p className="text-xs text-muted-foreground mt-1">
-              Regional Factor: {REGIONS.find(r => r.id === inputs.region)?.factor.toFixed(2)}x
+              Regional Factor: {REGIONS.find((r: RegionInfo) => r.id === inputs.region)?.factor.toFixed(2)}x
               <br />
-              {REGIONS.find(r => r.id === inputs.region)?.description}
+              {REGIONS.find((r: RegionInfo) => r.id === inputs.region)?.description}
             </p>
           )}
           
