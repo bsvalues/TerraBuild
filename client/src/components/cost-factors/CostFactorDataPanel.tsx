@@ -117,14 +117,53 @@ export function CostFactorDataPanel() {
           
           <TabsContent value="regions" className="space-y-4">
             <h3 className="text-lg font-medium">Region Factors</h3>
-            <div className="space-y-2">
-              {Object.entries(costFactors.regionFactors).map(([region, factor]) => (
-                <div key={region} className="flex justify-between border-b pb-1">
-                  <span className="text-muted-foreground">{region}</span>
-                  <span className="font-medium">{factor.toFixed(2)}</span>
+            
+            {/* Group regions by category */}
+            {(() => {
+              // Helper function to determine category
+              const getRegionCategory = (regionId: string): string => {
+                if (regionId.match(/^\d+N-\d+E$/)) {
+                  return 'Township-Range';
+                } else if (regionId.match(/^\d{4}/)) {
+                  return 'TCA';
+                } else if (regionId.includes(' ')) {
+                  return 'Hood Code';
+                } else if (['Richland', 'Kennewick', 'Prosser', 'West Richland', 'Benton City', 'Finley', 'Paterson', 'Plymouth'].includes(regionId)) {
+                  return 'City';
+                } else {
+                  return 'Other';
+                }
+              };
+              
+              // Group regions by category
+              const regionsByCategory: Record<string, Array<[string, number]>> = {};
+              Object.entries(costFactors.regionFactors).forEach(([region, factor]) => {
+                const category = getRegionCategory(region);
+                if (!regionsByCategory[category]) {
+                  regionsByCategory[category] = [];
+                }
+                regionsByCategory[category].push([region, factor as number]);
+              });
+              
+              // Display regions by category
+              return (
+                <div className="space-y-6">
+                  {Object.entries(regionsByCategory).map(([category, regions]) => (
+                    <div key={category} className="space-y-2">
+                      <h4 className="font-medium text-sm border-b border-gray-200 pb-1">{category}</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                        {regions.map(([region, factor]) => (
+                          <div key={region} className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">{region}</span>
+                            <span className="font-medium text-sm">{factor.toFixed(2)}x</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </TabsContent>
           
           <TabsContent value="quality" className="space-y-4">
