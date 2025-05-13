@@ -26,6 +26,17 @@ const TestCostFactorsPage: React.FC = () => {
     retry: 1,
   });
 
+  // Log detailed region data from the API response
+  React.useEffect(() => {
+    if (data) {
+      console.log("TEST PAGE - LOADED COST FACTORS:", {
+        regionFactorsNames: data.regionFactors ? Object.keys(data.regionFactors) : [],
+        regionFactorsValues: data.regionFactors ? Object.entries(data.regionFactors) : [],
+        fullCostFactors: data
+      });
+    }
+  }, [data]);
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -80,6 +91,26 @@ const TestCostFactorsPage: React.FC = () => {
                       <li><strong>Building Types:</strong> {Object.keys(data.baseRates).length} types defined</li>
                       <li><strong>Quality Levels:</strong> {Object.keys(data.qualityFactors).length} levels defined</li>
                     </ul>
+                    
+                    <h3 className="text-sm font-medium mt-4 mb-2">Regions Diagnostic:</h3>
+                    <div className="overflow-x-auto">
+                      <table className="text-xs w-full border-collapse">
+                        <thead>
+                          <tr className="bg-gray-200 dark:bg-gray-700">
+                            <th className="border p-1 text-left">Region Key</th>
+                            <th className="border p-1 text-left">Factor Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(data.regionFactors).map(([key, value]) => (
+                            <tr key={key} className="border-b">
+                              <td className="border p-1 font-mono">{key}</td>
+                              <td className="border p-1">{value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </AlertDescription>
               </Alert>

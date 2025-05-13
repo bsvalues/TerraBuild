@@ -455,11 +455,17 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
       // No need to transform the region key since it now directly matches costFactors.json
       const regionKey = inputs.region;
       
-      // Debug the mapping
-      console.log('Region mapping:', { 
+      // Debug the mapping in much more detail
+      console.log('DETAILED REGION DEBUG:', { 
         selected: inputs.region,
-        availableFactors: costFactors?.regionFactors ? Object.keys(costFactors.regionFactors) : 'none',
-        factor: costFactors?.regionFactors?.[regionKey] || regionInfo.factor
+        regionKey,
+        allRegionsInConstants: REGIONS.map(r => r.id),
+        availableFactorsFromAPI: costFactors?.regionFactors ? Object.keys(costFactors.regionFactors) : 'none',
+        regionInfoFromConstants: regionInfo,
+        factorFromAPI: costFactors?.regionFactors?.[regionKey],
+        factorFromConstants: regionInfo.factor,
+        finalFactorUsed: costFactors?.regionFactors?.[regionKey] || regionInfo.factor,
+        fullCostFactors: costFactors
       });
       
       // Base rate and adjustment factors - prefer API data when available
