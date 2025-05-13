@@ -19,7 +19,8 @@ import {
   Save,
   RefreshCw,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Layers
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CostEstimationWizard from '@/components/wizards/CostEstimationWizardFixed';
@@ -256,6 +257,18 @@ const CostWizardPage: React.FC = () => {
             <BarChart3 className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Cost Estimation Wizard</h1>
           </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => setLocation('/matrix')}
+          >
+            <Layers className="h-4 w-4" />
+            Matrix Explorer
+          </Button>
         </div>
         
         {!wizardCompleted && (
