@@ -54,6 +54,7 @@ import { localDB } from '@/lib/utils/localDatabase';
 import StepGuidancePanel from './StepGuidancePanel';
 import { loadCostFactorsData, CostFactorsData } from '@/lib/utils/loadCostFactors';
 import { useQuery } from '@tanstack/react-query';
+import RegionVisualization from '@/components/matrix/RegionVisualization';
 
 // Wizard steps
 enum WizardStep {
@@ -1168,18 +1169,14 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             </p>
           )}
           
-          {/* Information about Benton County identifiers */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200">
-            <h4 className="text-sm font-semibold mb-2">About Benton County Region Identifiers:</h4>
-            <p className="text-xs text-gray-600 mb-2">
-              Benton County uses several different types of geographic identifiers in their assessment system:
-            </p>
-            <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
-              <li><span className="font-medium">Cities</span> - Incorporated municipalities within the county</li>
-              <li><span className="font-medium">Tax Code Areas (TCA)</span> - Numeric codes designating specific tax jurisdictions</li>
-              <li><span className="font-medium">Hood Codes</span> - Neighborhood identifiers in format "52100 100"</li>
-              <li><span className="font-medium">Township-Range</span> - Public Land Survey System coordinates (e.g., "10N-24E")</li>
-            </ul>
+          {/* Region Visualization Component */}
+          <div className="mt-6">
+            <h4 className="text-sm font-semibold mb-2">Benton County Region Identifiers:</h4>
+            <RegionVisualization 
+              regionId={inputs.region} 
+              compact={true} 
+              showTitle={false}
+            />
             <p className="text-xs text-gray-600 mt-2">
               Each property in Benton County may be associated with multiple identifiers. The system calculates 
               costs based on the specific regional factors tied to these identifiers.
