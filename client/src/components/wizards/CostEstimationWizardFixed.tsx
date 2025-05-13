@@ -46,11 +46,14 @@ import {
   CheckCircle2,
   ClipboardCheck,
   BarChart,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { useEnhancedSupabase } from '@/components/supabase/EnhancedSupabaseProvider';
 import { localDB } from '@/lib/utils/localDatabase';
 import StepGuidancePanel from './StepGuidancePanel';
+import { loadCostFactorsData, CostFactorsData } from '@/lib/utils/loadCostFactors';
+import { useQuery } from '@tanstack/react-query';
 
 // Wizard steps
 enum WizardStep {
@@ -295,6 +298,13 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [estimateHistory, setEstimateHistory] = useState<CalculationResult[]>([]);
   
+  // Query for cost factors data
+  const { data: costFactors, isLoading: isLoadingCostFactors, error: costFactorsError } = useQuery({
+    queryKey: ['costFactorsData'],
+    queryFn: loadCostFactorsData,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
   // Supabase hooks
   const { isOfflineMode, supabase } = useEnhancedSupabase();
   
@@ -411,6 +421,15 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
   // Calculate the cost estimate
   const calculateEstimate = () => {
     try {
+      // If cost factors data is not available, use fallback values
+      if (!costFactors) {
+        toast({
+          title: "Warning",
+          description: "Using default cost factors. Live data unavailable.",
+          variant: "destructive",
+        });
+      }
+
       // Get values from inputs and look up the corresponding factors
       const buildingTypeInfo = BUILDING_TYPES.find(t => t.id === inputs.buildingType)!;
       const qualityInfo = QUALITY_LEVELS.find(q => q.id === inputs.quality)!;
@@ -420,18 +439,66 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
       const exteriorInfo = EXTERIOR_TYPES.find(e => e.id === inputs.exteriorType)!;
       const hvacInfo = HVAC_TYPES.find(h => h.id === inputs.hvacType)!;
       
-      // Base rate and adjustment factors
-      const baseRate = buildingTypeInfo.baseRate;
-      const qualityFactor = qualityInfo.factor;
-      const conditionFactor = conditionInfo.factor;
-      const regionFactor = regionInfo.factor;
+      // Use cost factors from API if available, otherwise use local defaults
+      // Map building type to proper key for cost factors
+      const buildingTypeKey = inputs.buildingType === 'RES' ? 'RESIDENTIAL' : 
+                              inputs.buildingType === 'COMM' ? 'COMMERCIAL' : 
+                              inputs.buildingType === 'IND' ? 'INDUSTRIAL' : 
+                              inputs.buildingType === 'AGR' ? 'AGRICULTURAL' : 'OFFICE';
+      
+      // Map quality to proper key for cost factors
+      const qualityKey = inputs.quality === 'ECO' ? 'ECONOMY' : 
+                         inputs.quality === 'STD' ? 'STANDARD' : 
+                         inputs.quality === 'GOOD' ? 'GOOD' : 
+                         inputs.quality === 'HIGH' ? 'VERY_GOOD' : 
+                         inputs.quality === 'LUX' ? 'LUXURY' : 'PREMIUM';
+      
+      // Map condition to proper key for cost factors
+      const conditionKey = inputs.condition === 'POOR' ? 'POOR' : 
+                           inputs.condition === 'FAIR' ? 'FAIR' : 
+                           inputs.condition === 'AVG' ? 'AVERAGE' : 
+                           inputs.condition === 'GOOD' ? 'GOOD' : 'EXCELLENT';
+      
+      // Map region to proper key for cost factors
+      const regionParts = inputs.region.split('-');
+      const regionKey = regionParts.length > 1 ? regionParts[1] : 'CENTRAL';
+      
+      // Base rate and adjustment factors - prefer API data when available
+      const baseRate = costFactors?.baseRates[buildingTypeKey] || buildingTypeInfo.baseRate;
+      const qualityFactor = costFactors?.qualityFactors[qualityKey] || qualityInfo.factor;
+      const conditionFactor = costFactors?.conditionFactors[conditionKey] || conditionInfo.factor;
+      const regionFactor = costFactors?.regionFactors[regionKey] || regionInfo.factor;
+      
+      // For these factors, we'll still use our local data as they're more specific
       const roofFactor = roofInfo.factor;
       const exteriorFactor = exteriorInfo.factor;
       const hvacFactor = hvacInfo.factor;
       
       // Age factor calculation
       const age = new Date().getFullYear() - inputs.yearBuilt;
-      const ageFactor = calculateAgeFactor(age);
+      
+      // Use API age factors if available
+      let ageFactor;
+      if (costFactors?.agingFactors) {
+        if (age <= 5) {
+          ageFactor = costFactors.agingFactors.NEW_5YRS;
+        } else if (age <= 10) {
+          ageFactor = costFactors.agingFactors['5_10YRS'];
+        } else if (age <= 20) {
+          ageFactor = costFactors.agingFactors['10_20YRS'];
+        } else if (age <= 30) {
+          ageFactor = costFactors.agingFactors['20_30YRS'];
+        } else if (age <= 40) {
+          ageFactor = costFactors.agingFactors['30_40YRS'];
+        } else if (age <= 50) {
+          ageFactor = costFactors.agingFactors['40_50YRS'];
+        } else {
+          ageFactor = costFactors.agingFactors['50_PLUS'];
+        }
+      } else {
+        // Fallback to local calculation
+        ageFactor = calculateAgeFactor(age);
+      }
       
       // Complexity factor - ranges from 0.8 to 1.2
       const complexityFactor = 0.8 + (inputs.complexity / 100) * 0.4;
