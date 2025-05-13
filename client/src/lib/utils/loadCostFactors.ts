@@ -23,16 +23,28 @@ export interface CostFactorsData {
 }
 
 /**
- * Load cost factors data from costFactors.json
+ * Load cost factors data from the API endpoint
  * @returns Promise with the cost factors data
  */
 export async function loadCostFactorsData(): Promise<CostFactorsData | null> {
   try {
-    const response = await fetch('/data/costFactors.json');
-    if (!response.ok) {
-      throw new Error(`Failed to load cost factors: ${response.status} ${response.statusText}`);
+    // Try to load from the API endpoint first
+    try {
+      const response = await fetch('/api/cost-factors-file');
+      if (response.ok) {
+        const data = await response.json();
+        return data as CostFactorsData;
+      }
+    } catch (apiError) {
+      console.warn('Error loading from API, falling back to direct file access:', apiError);
     }
-    const data = await response.json();
+    
+    // Fall back to direct file access if API fails
+    const directResponse = await fetch('/data/costFactors.json');
+    if (!directResponse.ok) {
+      throw new Error(`Failed to load cost factors: ${directResponse.status} ${directResponse.statusText}`);
+    }
+    const data = await directResponse.json();
     return data as CostFactorsData;
   } catch (error) {
     console.error('Error loading cost factors data:', error);

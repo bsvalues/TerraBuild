@@ -413,24 +413,31 @@ router.get('/age-factors', asyncHandler(async (req, res) => {
  * This route serves the costFactors.json file directly
  */
 router.get('/cost-factors-file', asyncHandler(async (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.resolve('./data/costFactors.json');
-  
+  // The import is already defined at the top of the file
+  // Use the synchronous version to read the file
   try {
-    // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'Cost factors file not found' });
+    // Use relative path from the project root
+    const filePath = './data/costFactors.json';
+    
+    // Use async/await instead of synchronous methods
+    const fs = await import('fs/promises');
+    
+    try {
+      // Read the file and return it as JSON
+      const fileContent = await fs.readFile(filePath, 'utf8');
+      const jsonData = JSON.parse(fileContent);
+      
+      res.json(jsonData);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        return res.status(404).json({ message: 'Cost factors file not found' });
+      }
+      console.error('Error reading cost factors file:', error);
+      res.status(500).json({ message: 'Error reading cost factors file', error: error.message });
     }
-    
-    // Read the file and return it as JSON
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const jsonData = JSON.parse(fileContent);
-    
-    res.json(jsonData);
   } catch (error) {
-    console.error('Error reading cost factors file:', error);
-    res.status(500).json({ message: 'Error reading cost factors file', error: error.message });
+    console.error('Error importing fs module:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 }));
 

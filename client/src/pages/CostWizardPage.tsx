@@ -12,6 +12,7 @@ import {
   BarChart3, 
   Building, 
   Calculator, 
+  Database,
   Download, 
   FileText, 
   Home, 
@@ -20,6 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import CostEstimationWizard from '@/components/wizards/CostEstimationWizardFixed';
 import { useQueryClient } from '@tanstack/react-query';
+import { CostFactorDataPanel } from '@/components/cost-factors/CostFactorDataPanel';
 
 const CostWizardPage: React.FC = () => {
   const [_, setLocation] = useLocation();
@@ -243,10 +245,41 @@ const CostWizardPage: React.FC = () => {
             <h1 className="text-2xl font-bold">Cost Estimation Wizard</h1>
           </div>
         </div>
+        
+        {!wizardCompleted && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              toast({
+                title: "Cost Factors",
+                description: "Viewing cost factors data from costFactors.json",
+              });
+            }}
+          >
+            <Database className="h-4 w-4" />
+            Using Benton County Cost Factors
+          </Button>
+        )}
       </div>
       
       <div className="container mx-auto">
         {renderContent()}
+        
+        {wizardCompleted && (
+          <div className="mt-8 border-t pt-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <Database className="h-5 w-5 mr-2 text-primary" />
+              Cost Factors Used in Calculation
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              The following cost factors from Benton County Building Cost Standards were used in the calculation.
+              These factors are loaded directly from data/costFactors.json.
+            </p>
+            <CostFactorDataPanel />
+          </div>
+        )}
       </div>
     </div>
   );
