@@ -16,12 +16,17 @@ import {
   Download, 
   FileText, 
   Home, 
-  Save 
+  Save,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CostEstimationWizard from '@/components/wizards/CostEstimationWizardFixed';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { CostFactorDataPanel } from '@/components/cost-factors/CostFactorDataPanel';
+import { loadCostFactorsData } from '@/lib/utils/loadCostFactors';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CostWizardPage: React.FC = () => {
   const [_, setLocation] = useLocation();
@@ -29,6 +34,13 @@ const CostWizardPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [wizardCompleted, setWizardCompleted] = useState(false);
   const [savedEstimate, setSavedEstimate] = useState<any>(null);
+  
+  // Query cost factors to show status
+  const { data: costFactors, isLoading: isLoadingCostFactors, error: costFactorsError } = useQuery({
+    queryKey: ['costFactorsData'],
+    queryFn: loadCostFactorsData,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
   
   // Handle wizard completion
   const handleWizardComplete = (result: any) => {
