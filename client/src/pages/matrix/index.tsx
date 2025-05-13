@@ -207,14 +207,25 @@ const MatrixExplorerPage: React.FC = () => {
           </div>
         </div>
         
-        <Button 
-          variant="outline" 
-          className="gap-2" 
-          onClick={() => setShowUploadInterface(!showUploadInterface)}
-        >
-          {showUploadInterface ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-          {showUploadInterface ? 'Cancel Upload' : 'Upload Matrix Data'}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2" 
+            onClick={() => navigate('/cost-wizard')}
+          >
+            <Calculator className="h-4 w-4" />
+            Cost Estimation Wizard
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="gap-2" 
+            onClick={() => setShowUploadInterface(!showUploadInterface)}
+          >
+            {showUploadInterface ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
+            {showUploadInterface ? 'Cancel Upload' : 'Upload Matrix Data'}
+          </Button>
+        </div>
       </div>
       
       {showUploadInterface && (

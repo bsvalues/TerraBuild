@@ -1450,6 +1450,21 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
               <div className="text-sm">Complexity: <span className="font-medium">{result.complexityFactor.toFixed(2)}x</span></div>
             </div>
           )}
+          
+          {/* Region Visualization */}
+          {result && (
+            <div className="mt-6">
+              <h3 className="font-medium mb-2">Region Information</h3>
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <p className="text-sm mb-3">Selected Region: <span className="font-medium">{inputs.region}</span></p>
+                <RegionVisualization 
+                  regionId={inputs.region} 
+                  compact={true} 
+                  showTitle={false}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         <Alert className="bg-blue-50 text-blue-800 border-blue-200">
