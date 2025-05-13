@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -174,8 +174,16 @@ const CONDITION_OPTIONS = [
     description: 'Like new condition with all systems recently updated.' },
 ];
 
-// Generate regions based on costFactors with appropriate descriptions
-const getCostFactorRegions = (costFactors: CostFactorsData | undefined) => {
+// Define region interface
+interface RegionInfo {
+  id: string;
+  label: string;
+  factor: number;
+  description: string;
+}
+
+// Helper function to generate regions based on costFactors
+const getCostFactorRegions = (costFactors: CostFactorsData | undefined): RegionInfo[] => {
   if (!costFactors) return [];
   
   const regionMappings: Record<string, string> = {
@@ -231,9 +239,6 @@ const getCostFactorRegions = (costFactors: CostFactorsData | undefined) => {
     description: townshipDesc(id)
   }));
 };
-
-// We'll set up the regions array based on loaded cost factors
-const REGIONS = costFactors ? getCostFactorRegions(costFactors) : [];
 
 // Roofing types data
 const ROOFING_TYPES = [
@@ -334,6 +339,9 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
     queryFn: loadCostFactorsData,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+  
+  // Generate regions array based on loaded cost factors
+  const REGIONS = useMemo(() => getCostFactorRegions(costFactors), [costFactors]);
   
   // Supabase hooks
   const { isOfflineMode, supabase } = useEnhancedSupabase();
