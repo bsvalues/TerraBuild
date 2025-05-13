@@ -174,28 +174,18 @@ const CONDITION_OPTIONS = [
     description: 'Like new condition with all systems recently updated.' },
 ];
 
-// Regions data directly matching costFactors.json
+// Regions data using EXACT names from benton_county_data.json
 const REGIONS = [
-  { id: 'BENTON', label: 'Benton County', factor: 1.0, 
-    description: 'Default Benton County region with standard costs.' },
-  { id: 'CENTRAL', label: 'Central', factor: 1.0, 
-    description: 'Average construction costs for the central region.' },
-  { id: 'NORTH', label: 'North', factor: 1.02, 
-    description: 'Slightly higher costs due to terrain and access in the northern region.' },
-  { id: 'SOUTH', label: 'South', factor: 0.98, 
-    description: 'Slightly lower costs in the more accessible southern region.' },
-  { id: 'EAST', label: 'East', factor: 0.97, 
-    description: 'Near average costs with good contractor availability in the eastern region.' },
-  { id: 'WEST', label: 'West', factor: 1.03, 
-    description: 'Moderately higher costs due to location factors in the western region.' },
-  { id: 'RICHLAND', label: 'Richland', factor: 1.05, 
-    description: 'Higher costs reflecting urban premium in the Richland area.' },
-  { id: 'KENNEWICK', label: 'Kennewick', factor: 1.04, 
-    description: 'Higher costs reflecting urban premium in the Kennewick area.' },
-  { id: 'PROSSER', label: 'Prosser', factor: 0.96, 
-    description: 'Lower costs in the rural Prosser area.' },
-  { id: 'RURAL', label: 'Rural', factor: 0.92, 
-    description: 'Lowest costs in remote rural areas of Benton County.' },
+  { id: 'North Benton', label: 'North Benton', factor: 1.05, 
+    description: 'Northern region of Benton County.' },
+  { id: 'Central Benton', label: 'Central Benton', factor: 1.0, 
+    description: 'Central region of Benton County.' },
+  { id: 'South Benton', label: 'South Benton', factor: 0.95, 
+    description: 'Southern region of Benton County.' },
+  { id: 'West Benton', label: 'West Benton', factor: 1.03, 
+    description: 'Western region of Benton County.' },
+  { id: 'East Benton', label: 'East Benton', factor: 0.97, 
+    description: 'Eastern region of Benton County.' }
 ];
 
 // Roofing types data
