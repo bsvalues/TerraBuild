@@ -175,20 +175,18 @@ export class MemStorage implements IStorage {
     // Create a default admin user
     const adminUser: InsertUser = {
       username: 'admin',
-      password: 'admin123', // Will be hashed on creation
+      // Pre-hashed password equivalent to 'admin123'
+      password: '95e6f1597b56a1c1f3881c8c9dd41825de95e26523f2b6a30b85558cc43f5be6ce34d540a21add73fecbbaeab46bd0037f995719a96a9c8c59ec7adb598d6b1b.b3c0b9a8c29c7b3ab40a694cd0486111',
       name: 'Admin User', // Using name to match actual DB column
       role: 'admin',
       is_active: true
-      // Removed fields that don't exist in the actual database schema
-      // email: 'admin@terrafusion.build',
-      // county: null,
-      // department: null
     };
     
     // Create a default regular user
     const defaultUser: InsertUser = {
       username: 'default',
-      password: 'default123', // Will be hashed on creation
+      // Pre-hashed password equivalent to 'default123'
+      password: '6baa3ff5f70da9c6c3b9000a86e67c0c4b6b2bb4d67cb1d0e7c5b7de6ac24e36a96474f52702c2e67d694215267e58e2cd9b98d5c78c36aa44a4676e1a79b0f0.1e33abcbaa52e7bb0e01a74ee3f73d75',
       name: 'Default User',
       role: 'user',
       is_active: true
@@ -196,15 +194,27 @@ export class MemStorage implements IStorage {
     
     // Only add if no users exist yet
     if (this.users.length === 0) {
-      console.log('Creating default admin user: username="admin", password="admin123"');
-      await this.createUser(adminUser).catch(err => {
-        console.error('Failed to create default admin user:', err);
-      });
+      console.log('Creating default users with pre-hashed passwords:');
+      console.log('- Admin user: username="admin", password="admin123"');
       
-      console.log('Creating default regular user: username="default", password="default123"');
-      await this.createUser(defaultUser).catch(err => {
-        console.error('Failed to create default regular user:', err);
-      });
+      const newAdminUser: User = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...adminUser
+      };
+      this.users.push(newAdminUser);
+      
+      console.log('- Regular user: username="default", password="default123"');
+      const newDefaultUser: User = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...defaultUser
+      };
+      this.users.push(newDefaultUser);
+      
+      console.log('Default users created successfully');
     }
   }
 
