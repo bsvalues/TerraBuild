@@ -1022,17 +1022,55 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Benton County Regions (by Hood Code)</SelectLabel>
-                <SelectItem value="540100 001">Hood 540100 001 (Standard Rate)</SelectItem>
-                <SelectItem value="550000">Hood 550000 (North Area)</SelectItem>
-                <SelectItem value="530300 002">Hood 530300 002 (Central Area)</SelectItem>
-                <SelectItem value="530300">Hood 530300 (South Area)</SelectItem>
-                <SelectItem value="530300 001">Hood 530300 001 (East Area)</SelectItem>
+                <SelectLabel>Hood Codes - 52xxx Series</SelectLabel>
                 <SelectItem value="52100 001">Hood 52100 001 (West Area)</SelectItem>
+                <SelectItem value="52100 010">Hood 52100 010</SelectItem>
                 <SelectItem value="52100 100">Hood 52100 100 (Richland)</SelectItem>
                 <SelectItem value="52100 140">Hood 52100 140 (Kennewick)</SelectItem>
                 <SelectItem value="52100 240">Hood 52100 240 (Prosser)</SelectItem>
                 <SelectItem value="52100 200">Hood 52100 200 (Rural Area)</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Hood Codes - 53xx Series</SelectLabel>
+                <SelectItem value="530300 002">Hood 530300 002 (Central Area)</SelectItem>
+                <SelectItem value="530300">Hood 530300 (South Area)</SelectItem>
+                <SelectItem value="530300 001">Hood 530300 001 (East Area)</SelectItem>
+                <SelectItem value="530300 500">Hood 530300 500</SelectItem>
+                <SelectItem value="530200 001">Hood 530200 001</SelectItem>
+                <SelectItem value="530200 100">Hood 530200 100</SelectItem>
+                <SelectItem value="530200 120">Hood 530200 120</SelectItem>
+                <SelectItem value="530200 140">Hood 530200 140</SelectItem>
+                <SelectItem value="530200 200">Hood 530200 200</SelectItem>
+                <SelectItem value="530200 400">Hood 530200 400</SelectItem>
+                <SelectItem value="530200 401">Hood 530200 401</SelectItem>
+                <SelectItem value="530200 402">Hood 530200 402</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Hood Codes - 54xx Series</SelectLabel>
+                <SelectItem value="540100 001">Hood 540100 001 (Standard Rate)</SelectItem>
+                <SelectItem value="540200 001">Hood 540200 001</SelectItem>
+                <SelectItem value="540200 100">Hood 540200 100</SelectItem>
+                <SelectItem value="550000">Hood 550000 (North Area)</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Hood Codes - 14xx Series</SelectLabel>
+                <SelectItem value="143677 140">Hood 143677 140</SelectItem>
+                <SelectItem value="143677 300">Hood 143677 300</SelectItem>
+                <SelectItem value="143677 320">Hood 143677 320</SelectItem>
+                <SelectItem value="143677 620">Hood 143677 620</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Township-Range Identifiers</SelectLabel>
+                <SelectItem value="10N-24E">Township 10N Range 24E</SelectItem>
+                <SelectItem value="10N-25E">Township 10N Range 25E</SelectItem>
+                <SelectItem value="10N-27E">Township 10N Range 27E</SelectItem>
+                <SelectItem value="11N-24E">Township 11N Range 24E</SelectItem>
+                <SelectItem value="11N-25E">Township 11N Range 25E</SelectItem>
+                <SelectItem value="12N-24E">Township 12N Range 24E</SelectItem>
+                <SelectItem value="12N-25E">Township 12N Range 25E</SelectItem>
+                <SelectItem value="4N-24E">Township 4N Range 24E</SelectItem>
+                <SelectItem value="5N-24E">Township 5N Range 24E</SelectItem>
+                <SelectItem value="5N-25E">Township 5N Range 25E</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
