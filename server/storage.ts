@@ -185,11 +185,25 @@ export class MemStorage implements IStorage {
       // department: null
     };
     
+    // Create a default regular user
+    const defaultUser: InsertUser = {
+      username: 'default',
+      password: 'default123', // Will be hashed on creation
+      name: 'Default User',
+      role: 'user',
+      is_active: true
+    };
+    
     // Only add if no users exist yet
     if (this.users.length === 0) {
       console.log('Creating default admin user: username="admin", password="admin123"');
-      this.createUser(adminUser).catch(err => {
-        console.error('Failed to create default user:', err);
+      await this.createUser(adminUser).catch(err => {
+        console.error('Failed to create default admin user:', err);
+      });
+      
+      console.log('Creating default regular user: username="default", password="default123"');
+      await this.createUser(defaultUser).catch(err => {
+        console.error('Failed to create default regular user:', err);
       });
     }
   }
