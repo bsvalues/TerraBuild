@@ -409,6 +409,32 @@ router.get('/age-factors', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * Direct Cost Factors File Access
+ * This route serves the costFactors.json file directly
+ */
+router.get('/cost-factors-file', asyncHandler(async (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.resolve('./data/costFactors.json');
+  
+  try {
+    // Check if the file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Cost factors file not found' });
+    }
+    
+    // Read the file and return it as JSON
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const jsonData = JSON.parse(fileContent);
+    
+    res.json(jsonData);
+  } catch (error) {
+    console.error('Error reading cost factors file:', error);
+    res.status(500).json({ message: 'Error reading cost factors file', error: error.message });
+  }
+}));
+
+/**
  * Calculation Routes
  */
 router.get('/calculations', asyncHandler(async (req, res) => {
