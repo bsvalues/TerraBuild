@@ -9,6 +9,7 @@ import HomePage from '@/pages/home-page';
 import AuthPage from '@/pages/auth-page';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
+import CostWizardPage from '@/pages/CostWizardPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
