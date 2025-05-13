@@ -20,7 +20,7 @@ costFactorRouter.get('/source/:sourceId', getCostFactorsBySource);
 costFactorRouter.get('/type/:buildingType', getCostFactorsByType);
 
 // Get a specific cost factor value
-costFactorRouter.get('/value/:category/:name/:qualityGrade', getCostFactorValue);
+costFactorRouter.get('/value/:category/:name', getCostFactorValue);
 
 // Get rating table (quality, condition, etc)
 costFactorRouter.get('/rating-table/:tableType', getRatingTable);

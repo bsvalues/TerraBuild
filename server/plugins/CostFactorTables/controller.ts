@@ -62,7 +62,19 @@ export const getCostFactorsBySource = (req: Request, res: Response) => {
     const allFactors = costFactorTablesService.getAllFactors(sourceId);
     
     // Transform the data format to match what the client expects
-    const factors = [];
+    const factors: Array<{
+      id: number;
+      source: string;
+      year: number;
+      category: string;
+      name: string;
+      code: string;
+      qualityGrade: string;
+      region: string;
+      buildingType: string;
+      value: number;
+      description?: string;
+    }> = [];
     
     // Add region factors
     Object.entries(allFactors.regionFactors).forEach(([code, value]) => {
@@ -151,10 +163,83 @@ export const getCostFactorsBySource = (req: Request, res: Response) => {
  * @param req - Express request object with buildingType parameter
  * @param res - Express response object
  */
-export const getCostFactorsByType = async (req: Request, res: Response) => {
+export const getCostFactorsByType = (req: Request, res: Response) => {
   try {
     const { buildingType } = req.params;
-    const factors = await costFactorTablesService.getFactorsByType(buildingType);
+    const sourceParam = req.query.source as string || 'bentonCounty'; // Default to bentonCounty if not specified
+    
+    // Get all factors from the source
+    const allFactors = costFactorTablesService.getAllFactors(sourceParam);
+    
+    // Extract base rate for this building type
+    const baseRate = allFactors.baseRates[buildingType] || null;
+    
+    // Create a standardized response format
+    const factors: Array<{
+      id: number;
+      source: string;
+      year: number;
+      category: string;
+      name: string;
+      code: string;
+      qualityGrade: string;
+      region: string;
+      buildingType: string;
+      value: number;
+      description?: string;
+    }> = [];
+    
+    // Add the base rate if it exists
+    if (baseRate !== null) {
+      factors.push({
+        id: 1,
+        source: sourceParam,
+        year: allFactors.year,
+        category: 'baseRate',
+        name: `Base Rate ${buildingType}`,
+        code: buildingType,
+        qualityGrade: 'N/A',
+        region: 'ALL',
+        buildingType,
+        value: baseRate,
+        description: `Base rate for building type ${buildingType}`
+      });
+    }
+    
+    // Add quality factors that apply to all building types
+    Object.entries(allFactors.qualityFactors).forEach(([code, value], index) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceParam,
+        year: allFactors.year,
+        category: 'quality',
+        name: `Quality ${code}`,
+        code,
+        qualityGrade: code,
+        region: 'ALL',
+        buildingType,
+        value,
+        description: `Quality grade factor for ${code}`
+      });
+    });
+    
+    // Add condition factors that apply to all building types
+    Object.entries(allFactors.conditionFactors).forEach(([code, value]) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceParam,
+        year: allFactors.year,
+        category: 'condition',
+        name: `Condition ${code}`,
+        code,
+        qualityGrade: 'N/A',
+        region: 'ALL',
+        buildingType,
+        value,
+        description: `Condition factor for ${code}`
+      });
+    });
+    
     return res.status(200).json({
       success: true,
       data: factors
@@ -174,28 +259,31 @@ export const getCostFactorsByType = async (req: Request, res: Response) => {
  * @param req - Express request object with category, name, and qualityGrade parameters
  * @param res - Express response object
  */
-export const getCostFactorValue = async (req: Request, res: Response) => {
+export const getCostFactorValue = (req: Request, res: Response) => {
   try {
-    const { category, name, qualityGrade } = req.params;
-    const region = req.query.region as string || 'default';
-    const buildingType = req.query.buildingType as string || 'default';
+    const { category, name } = req.params;
+    const source = req.query.source as string || 'bentonCounty'; // Default source
     
-    const value = await costFactorTablesService.getCostFactorValue(
-      category, 
-      name, 
-      qualityGrade, 
-      region, 
-      buildingType
-    );
+    // Determine the code based on the name or use the name directly if it's a code
+    const code = name;
+    
+    // Get the factor value using the service
+    const value = costFactorTablesService.getFactorValue(source, category, code);
+    
+    if (value === null) {
+      return res.status(404).json({
+        success: false,
+        message: `Cost factor not found for category: ${category}, name: ${name}, source: ${source}`
+      });
+    }
     
     return res.status(200).json({
       success: true,
       data: {
         category,
         name,
-        qualityGrade,
-        region,
-        buildingType,
+        code,
+        source,
         value
       }
     });
@@ -214,13 +302,46 @@ export const getCostFactorValue = async (req: Request, res: Response) => {
  * @param req - Express request object with tableType parameter
  * @param res - Express response object
  */
-export const getRatingTable = async (req: Request, res: Response) => {
+export const getRatingTable = (req: Request, res: Response) => {
   try {
     const { tableType } = req.params;
-    const table = await costFactorTablesService.getRatingTable(tableType);
+    const source = req.query.source as string || 'bentonCounty'; // Default source
+    
+    // Get factors by type from the service
+    const factorsByType = costFactorTablesService.getFactorsByType(source, tableType.toLowerCase());
+    
+    // Format the table data
+    let formattedTable: {
+      id: string;
+      name: string;
+      description: string;
+      values: Record<string, number>;
+    } = {
+      id: `${source}-${tableType}`,
+      name: `${tableType.charAt(0).toUpperCase() + tableType.slice(1)} Factors`,
+      description: `Rating table for ${tableType}`,
+      values: {}
+    };
+    
+    // Handle complex table formats like complexity factors
+    if (tableType.toLowerCase() === 'complexity') {
+      // For complexity factors, we need to format each category
+      // Complexity factors are nested by category
+      const complexityFactors = factorsByType as Record<string, Record<string, number>>;
+      
+      Object.entries(complexityFactors).forEach(([category, values]) => {
+        Object.entries(values).forEach(([key, value]) => {
+          formattedTable.values[`${category}.${key}`] = value;
+        });
+      });
+    } else {
+      // For simple factor types (quality, condition, etc.)
+      formattedTable.values = factorsByType as Record<string, number>;
+    }
+    
     return res.status(200).json({
       success: true,
-      data: table
+      data: formattedTable
     });
   } catch (error) {
     console.error(`Error fetching rating table ${req.params.tableType}:`, error);
