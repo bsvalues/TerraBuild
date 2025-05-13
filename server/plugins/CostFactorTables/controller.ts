@@ -8,9 +8,9 @@ const costFactorTablesService = new CostFactorTables();
  * Initialize the CostFactorTables service
  * This should be called during application startup
  */
-export const initialize = async () => {
+export const initialize = () => {
   try {
-    await costFactorTablesService.initialize();
+    // CostFactorTables is already initialized in the constructor
     return true;
   } catch (error) {
     console.error('Error initializing CostFactorTables service:', error);
@@ -23,12 +23,21 @@ export const initialize = async () => {
  * @param req - Express request object
  * @param res - Express response object
  */
-export const getCostFactorSources = async (req: Request, res: Response) => {
+export const getCostFactorSources = (req: Request, res: Response) => {
   try {
-    const sources = await costFactorTablesService.getSources();
+    const sources = costFactorTablesService.getAvailableSources();
+    
+    // Format the sources as objects with id and name properties
+    const formattedSources = sources.map(source => ({
+      id: source,
+      name: source.charAt(0).toUpperCase() + source.slice(1),
+      year: 2025,
+      description: `Cost factors from ${source.charAt(0).toUpperCase() + source.slice(1)} source`
+    }));
+    
     return res.status(200).json({
       success: true,
-      data: sources
+      data: formattedSources
     });
   } catch (error) {
     console.error('Error fetching cost factor sources:', error);
@@ -45,10 +54,84 @@ export const getCostFactorSources = async (req: Request, res: Response) => {
  * @param req - Express request object with sourceId parameter
  * @param res - Express response object
  */
-export const getCostFactorsBySource = async (req: Request, res: Response) => {
+export const getCostFactorsBySource = (req: Request, res: Response) => {
   try {
     const { sourceId } = req.params;
-    const factors = await costFactorTablesService.getFactorsBySource(sourceId);
+    
+    // Try to get all factors from this source
+    const allFactors = costFactorTablesService.getAllFactors(sourceId);
+    
+    // Transform the data format to match what the client expects
+    const factors = [];
+    
+    // Add region factors
+    Object.entries(allFactors.regionFactors).forEach(([code, value]) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceId,
+        year: allFactors.year,
+        category: 'region',
+        name: `Region ${code}`,
+        code,
+        qualityGrade: 'N/A',
+        region: code,
+        buildingType: 'ALL',
+        value,
+        description: `Regional cost factor for ${code}`
+      });
+    });
+    
+    // Add quality factors
+    Object.entries(allFactors.qualityFactors).forEach(([code, value]) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceId,
+        year: allFactors.year,
+        category: 'quality',
+        name: `Quality ${code}`,
+        code,
+        qualityGrade: code,
+        region: 'ALL',
+        buildingType: 'ALL',
+        value,
+        description: `Quality grade factor for ${code}`
+      });
+    });
+    
+    // Add condition factors
+    Object.entries(allFactors.conditionFactors).forEach(([code, value]) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceId,
+        year: allFactors.year,
+        category: 'condition',
+        name: `Condition ${code}`,
+        code,
+        qualityGrade: 'N/A',
+        region: 'ALL',
+        buildingType: 'ALL',
+        value,
+        description: `Condition factor for ${code}`
+      });
+    });
+    
+    // Add base rates
+    Object.entries(allFactors.baseRates).forEach(([code, value]) => {
+      factors.push({
+        id: factors.length + 1,
+        source: sourceId,
+        year: allFactors.year,
+        category: 'baseRate',
+        name: `Base Rate ${code}`,
+        code,
+        qualityGrade: 'N/A',
+        region: 'ALL',
+        buildingType: code,
+        value,
+        description: `Base rate for building type ${code}`
+      });
+    });
+    
     return res.status(200).json({
       success: true,
       data: factors
