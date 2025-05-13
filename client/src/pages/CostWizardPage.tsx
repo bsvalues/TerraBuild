@@ -28,6 +28,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { CostFactorDataPanel } from '@/components/cost-factors/CostFactorDataPanel';
 import { loadCostFactorsData } from '@/lib/utils/loadCostFactors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import RegionVisualization from '@/components/matrix/RegionVisualization';
 
 const CostWizardPage: React.FC = () => {
   const [_, setLocation] = useLocation();
@@ -175,6 +176,14 @@ const CostWizardPage: React.FC = () => {
                     <div className="flex justify-between border-b pb-1">
                       <span className="text-muted-foreground">Region:</span>
                       <span>{savedEstimate.inputValues.region}</span>
+                    </div>
+                    <div className="mt-4 pt-2 border-t">
+                      <span className="text-sm font-medium block mb-2">Region Visualization:</span>
+                      <RegionVisualization 
+                        regionId={savedEstimate.inputValues.region}
+                        compact={true}
+                        showTitle={false}
+                      />
                     </div>
                   </div>
                 </div>
