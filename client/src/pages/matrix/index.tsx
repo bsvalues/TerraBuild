@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import MatrixUploadInterface from '@/components/matrix/MatrixUploadInterface';
 import { CostFactorDataPanel } from '@/components/cost-factors/CostFactorDataPanel';
+import RegionVisualization from '@/components/matrix/RegionVisualization';
 
 // Type definitions
 interface RegionInfo {
@@ -533,38 +534,21 @@ const MatrixExplorerPage: React.FC = () => {
 
           <Card>
             <CardHeader>
+              <CardTitle>Benton County Region Visualization</CardTitle>
+              <CardDescription>Visual representation of the region identification system</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RegionVisualization showTitle={false} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
               <CardTitle>Matrix Usage Guide</CardTitle>
               <CardDescription>How to use the Benton County matrix data in your valuations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Region Identifiers</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Benton County uses several different types of geographic identifiers in their assessment system:
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-1">Cities</h4>
-                      <p className="text-sm text-muted-foreground">Incorporated municipalities like Richland, Kennewick, etc.</p>
-                    </div>
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-1">Tax Code Areas (TCA)</h4>
-                      <p className="text-sm text-muted-foreground">Numeric codes like 1111H, 1210 designating tax jurisdictions</p>
-                    </div>
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-1">Hood Codes</h4>
-                      <p className="text-sm text-muted-foreground">Neighborhood identifiers in format "52100 100"</p>
-                    </div>
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-1">Township-Range</h4>
-                      <p className="text-sm text-muted-foreground">Public Land Survey System coordinates (e.g., "10N-24E")</p>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
                 <div>
                   <h3 className="text-lg font-medium mb-2">Using the Matrix</h3>
                   <p className="text-sm text-muted-foreground mb-2">
