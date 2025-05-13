@@ -259,24 +259,88 @@ const CostWizardPage: React.FC = () => {
         </div>
         
         {!wizardCompleted && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => {
-              toast({
-                title: "Cost Factors",
-                description: "Viewing cost factors data from costFactors.json",
-              });
-            }}
-          >
-            <Database className="h-4 w-4" />
-            Using Benton County Cost Factors
-          </Button>
+          <>
+            {isLoadingCostFactors ? (
+              <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 bg-muted">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Loading cost factors...</span>
+              </div>
+            ) : costFactorsError ? (
+              <div className="flex items-center gap-2 border border-destructive rounded-md px-3 py-1.5 bg-destructive/10">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-destructive">Error loading cost factors</span>
+              </div>
+            ) : costFactors ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  toast({
+                    title: "Cost Factors Source",
+                    description: `Using ${costFactors.source} (v${costFactors.version})`,
+                  });
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                Using Benton County Cost Factors
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  toast({
+                    title: "Cost Factors",
+                    description: "Using fallback cost factors data",
+                    variant: "destructive"
+                  });
+                }}
+              >
+                <Database className="h-4 w-4" />
+                Using Default Cost Factors
+              </Button>
+            )}
+          </>
         )}
       </div>
       
       <div className="container mx-auto">
+        {isLoadingCostFactors && !wizardCompleted && (
+          <Alert className="mb-4">
+            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            <AlertTitle>Loading Cost Factors</AlertTitle>
+            <AlertDescription>
+              Loading cost factors data from Benton County Building Cost Standards...
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {costFactorsError && !wizardCompleted && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertTitle>Error Loading Cost Factors</AlertTitle>
+            <AlertDescription>
+              There was an error loading the cost factors data. The calculation will use built-in defaults.
+              {costFactorsError instanceof Error && (
+                <div className="mt-2 text-xs">{costFactorsError.message}</div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {costFactors && !isLoadingCostFactors && !wizardCompleted && (
+          <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+            <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+            <AlertTitle>Cost Factors Loaded Successfully</AlertTitle>
+            <AlertDescription>
+              Using {costFactors.source} version {costFactors.version} ({costFactors.year}).
+              Last updated: {new Date(costFactors.lastUpdated).toLocaleDateString()}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {renderContent()}
         
         {wizardCompleted && (
