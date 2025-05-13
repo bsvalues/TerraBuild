@@ -11,6 +11,7 @@ import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import CostWizardPage from '@/pages/CostWizardPage';
 import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
+import MatrixExplorerPage from '@/pages/matrix';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -57,10 +58,7 @@ function Router() {
       
       <ProtectedRoute path="/matrix" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Matrix Explorer</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Matrix explorer coming soon...</p>
-          </div>
+          <MatrixExplorerPage />
         </DashboardLayout>
       )} />
       

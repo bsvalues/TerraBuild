@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { 
   ArrowLeft, 
   BarChart, 
-  Buildings, 
+  Building, 
   CheckCircle2, 
   FileBarChart, 
   Filter, 
@@ -481,7 +481,7 @@ const MatrixExplorerPage: React.FC = () => {
                         Visualize Region Map
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <Buildings className="h-4 w-4 mr-2" />
+                        <Building className="h-4 w-4 mr-2" />
                         Building Type Analysis
                       </DropdownMenuItem>
                     </DropdownMenuContent>
