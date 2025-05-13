@@ -250,7 +250,7 @@ const DEFAULT_VALUES = {
   basement: false,
   basementFinished: false,
   yearBuilt: new Date().getFullYear() - 10,
-  region: 'CENTRAL',
+  region: 'Central Benton',
   garageSize: 0,
   complexity: 50,
   roofType: 'ASPHALT',
@@ -1023,16 +1023,14 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Benton County Regions</SelectLabel>
-                <SelectItem value="BENTON">Benton County</SelectItem>
-                <SelectItem value="CENTRAL">Central</SelectItem>
-                <SelectItem value="NORTH">North</SelectItem>
-                <SelectItem value="SOUTH">South</SelectItem>
-                <SelectItem value="EAST">East</SelectItem>
-                <SelectItem value="WEST">West</SelectItem>
-                <SelectItem value="RICHLAND">Richland</SelectItem>
-                <SelectItem value="KENNEWICK">Kennewick</SelectItem>
-                <SelectItem value="PROSSER">Prosser</SelectItem>
-                <SelectItem value="RURAL">Rural</SelectItem>
+                <SelectItem value="North Benton">North Benton</SelectItem>
+                <SelectItem value="Central Benton">Central Benton</SelectItem>
+                <SelectItem value="South Benton">South Benton</SelectItem>
+                <SelectItem value="West Benton">West Benton</SelectItem>
+                <SelectItem value="East Benton">East Benton</SelectItem>
+                <SelectItem value="Richland">Richland</SelectItem>
+                <SelectItem value="Kennewick">Kennewick</SelectItem>
+                <SelectItem value="Prosser">Prosser</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

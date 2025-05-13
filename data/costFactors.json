@@ -4,16 +4,14 @@
   "year": 2025,
   "lastUpdated": "2025-05-12T00:00:00.000Z",
   "regionFactors": {
-    "BENTON": 1.0,
-    "CENTRAL": 1.0,
-    "NORTH": 1.02,
-    "SOUTH": 0.98,
-    "EAST": 0.97,
-    "WEST": 1.03,
-    "RICHLAND": 1.05,
-    "KENNEWICK": 1.04,
-    "PROSSER": 0.96,
-    "RURAL": 0.92
+    "North Benton": 1.02,
+    "Central Benton": 1.0,
+    "South Benton": 0.98,
+    "East Benton": 0.97,
+    "West Benton": 1.03,
+    "Richland": 1.05,
+    "Kennewick": 1.04,
+    "Prosser": 0.96
   },
   "qualityFactors": {
     "LOW": 0.85,
