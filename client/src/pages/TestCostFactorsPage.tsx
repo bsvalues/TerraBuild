@@ -46,6 +46,11 @@ const TestCostFactorsPage: React.FC = () => {
           </Button>
           <h1 className="text-2xl font-bold">Cost Factors Test Page</h1>
         </div>
+        <div>
+          <Button onClick={() => navigate('/cost/estimate')} variant="default">
+            Open Cost Wizard
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">

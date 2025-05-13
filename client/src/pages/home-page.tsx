@@ -21,9 +21,9 @@ const HomePage = () => {
   const quickAccessItems = [
     {
       icon: Calculator,
-      title: "Cost Calculator",
-      description: "Quick property cost calculations",
-      path: "/cost-calculator"
+      title: "Cost Estimation Wizard",
+      description: "Calculate building costs with Benton County data",
+      path: "/cost/estimate"
     },
     {
       icon: Map,
@@ -86,13 +86,15 @@ const HomePage = () => {
             </p>
           </div>
           <div className="flex-shrink-0">
-            <Button 
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 border-0 shadow-md"
-              size="lg"
-            >
-              <Calculator className="mr-2 h-5 w-5" />
-              New Calculation
-            </Button>
+            <Link href="/cost/estimate">
+              <Button 
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 border-0 shadow-md"
+                size="lg"
+              >
+                <Calculator className="mr-2 h-5 w-5" />
+                Cost Estimation Wizard
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="bg-gradient-to-r from-cyan-500/10 to-blue-600/10 px-8 py-4 border-t border-blue-800/40">
