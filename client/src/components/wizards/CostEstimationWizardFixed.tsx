@@ -174,19 +174,66 @@ const CONDITION_OPTIONS = [
     description: 'Like new condition with all systems recently updated.' },
 ];
 
-// Regions data using EXACT names from benton_county_data.json
-const REGIONS = [
-  { id: 'North Benton', label: 'North Benton', factor: 1.05, 
-    description: 'Northern region of Benton County.' },
-  { id: 'Central Benton', label: 'Central Benton', factor: 1.0, 
-    description: 'Central region of Benton County.' },
-  { id: 'South Benton', label: 'South Benton', factor: 0.95, 
-    description: 'Southern region of Benton County.' },
-  { id: 'West Benton', label: 'West Benton', factor: 1.03, 
-    description: 'Western region of Benton County.' },
-  { id: 'East Benton', label: 'East Benton', factor: 0.97, 
-    description: 'Eastern region of Benton County.' }
-];
+// Generate regions based on costFactors with appropriate descriptions
+const getCostFactorRegions = (costFactors: CostFactorsData | undefined) => {
+  if (!costFactors) return [];
+  
+  const regionMappings: Record<string, string> = {
+    // Cities
+    'Richland': 'City of Richland',
+    'Kennewick': 'City of Kennewick',
+    'Prosser': 'City of Prosser',
+    'West Richland': 'City of West Richland',
+    'Benton City': 'City of Benton City',
+    'Finley': 'Finley area',
+    'Paterson': 'Paterson area',
+    'Plymouth': 'Plymouth area',
+    
+    // Hood codes with known locations
+    '52100 001': 'West Benton area (Hood 52100 001)',
+    '52100 010': 'Plymouth area (Hood 52100 010)',
+    '52100 100': 'Richland area (Hood 52100 100)',
+    '52100 140': 'Kennewick area (Hood 52100 140)',
+    '52100 240': 'Prosser area (Hood 52100 240)',
+    '52100 200': 'Rural area (Hood 52100 200)',
+    '530300 002': 'Benton City area (Hood 530300 002)',
+    '530300': 'South Benton area (Hood 530300)',
+    '530300 001': 'Benton City area (Hood 530300 001)',
+    '530300 500': 'Prosser area (Hood 530300 500)',
+    '530200 100': 'West Richland area (Hood 530200 100)',
+    '530200 120': 'Richland area (Hood 530200 120)',
+    '530200 140': 'Kennewick area (Hood 530200 140)',
+    '530200 401': 'West Richland area (Hood 530200 401)',
+    '540100 001': 'Finley area (Hood 540100 001)',
+    '540200 001': 'Finley area (Hood 540200 001)',
+    '540200 100': 'Paterson area (Hood 540200 100)',
+  };
+  
+  // Township prefixed descriptions
+  const townshipDesc = (id: string) => {
+    if (id.includes('N-') && id.includes('E')) {
+      return `Township/Range ${id} area`;
+    }
+    
+    // TCA prefixed descriptions
+    if (/^\d{4}/.test(id)) {
+      return `Tax Code Area ${id}`;
+    }
+    
+    // Default description for other codes
+    return regionMappings[id] || `Region code ${id}`;
+  };
+  
+  return Object.entries(costFactors.regionFactors).map(([id, factor]) => ({
+    id,
+    label: id,
+    factor: factor as number,
+    description: townshipDesc(id)
+  }));
+};
+
+// We'll set up the regions array based on loaded cost factors
+const REGIONS = costFactors ? getCostFactorRegions(costFactors) : [];
 
 // Roofing types data
 const ROOFING_TYPES = [
@@ -1022,9 +1069,38 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
+                <SelectLabel>Cities</SelectLabel>
+                <SelectItem value="Richland">Richland</SelectItem>
+                <SelectItem value="Kennewick">Kennewick</SelectItem>
+                <SelectItem value="Prosser">Prosser</SelectItem>
+                <SelectItem value="West Richland">West Richland</SelectItem>
+                <SelectItem value="Benton City">Benton City</SelectItem>
+                <SelectItem value="Finley">Finley</SelectItem>
+                <SelectItem value="Paterson">Paterson</SelectItem>
+                <SelectItem value="Plymouth">Plymouth</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Tax Code Areas (TCA)</SelectLabel>
+                <SelectItem value="1111H">TCA 1111H</SelectItem>
+                <SelectItem value="1210">TCA 1210</SelectItem>
+                <SelectItem value="1212">TCA 1212</SelectItem>
+                <SelectItem value="1215">TCA 1215</SelectItem>
+                <SelectItem value="1222">TCA 1222</SelectItem>
+                <SelectItem value="1224">TCA 1224</SelectItem>
+                <SelectItem value="1225">TCA 1225</SelectItem>
+                <SelectItem value="1226">TCA 1226</SelectItem>
+                <SelectItem value="1227">TCA 1227</SelectItem>
+                <SelectItem value="1228">TCA 1228</SelectItem>
+                <SelectItem value="1231">TCA 1231</SelectItem>
+                <SelectItem value="1331">TCA 1331</SelectItem>
+                <SelectItem value="1400">TCA 1400</SelectItem>
+                <SelectItem value="1404">TCA 1404</SelectItem>
+                <SelectItem value="1410">TCA 1410</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
                 <SelectLabel>Hood Codes - 52xxx Series</SelectLabel>
                 <SelectItem value="52100 001">Hood 52100 001 (West Area)</SelectItem>
-                <SelectItem value="52100 010">Hood 52100 010</SelectItem>
+                <SelectItem value="52100 010">Hood 52100 010 (Plymouth)</SelectItem>
                 <SelectItem value="52100 100">Hood 52100 100 (Richland)</SelectItem>
                 <SelectItem value="52100 140">Hood 52100 140 (Kennewick)</SelectItem>
                 <SelectItem value="52100 240">Hood 52100 240 (Prosser)</SelectItem>
@@ -1032,24 +1108,24 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel>Hood Codes - 53xx Series</SelectLabel>
-                <SelectItem value="530300 002">Hood 530300 002 (Central Area)</SelectItem>
+                <SelectItem value="530300 002">Hood 530300 002 (Benton City)</SelectItem>
                 <SelectItem value="530300">Hood 530300 (South Area)</SelectItem>
-                <SelectItem value="530300 001">Hood 530300 001 (East Area)</SelectItem>
-                <SelectItem value="530300 500">Hood 530300 500</SelectItem>
+                <SelectItem value="530300 001">Hood 530300 001 (Benton City)</SelectItem>
+                <SelectItem value="530300 500">Hood 530300 500 (Prosser)</SelectItem>
                 <SelectItem value="530200 001">Hood 530200 001</SelectItem>
-                <SelectItem value="530200 100">Hood 530200 100</SelectItem>
-                <SelectItem value="530200 120">Hood 530200 120</SelectItem>
-                <SelectItem value="530200 140">Hood 530200 140</SelectItem>
+                <SelectItem value="530200 100">Hood 530200 100 (West Richland)</SelectItem>
+                <SelectItem value="530200 120">Hood 530200 120 (Richland)</SelectItem>
+                <SelectItem value="530200 140">Hood 530200 140 (Kennewick)</SelectItem>
                 <SelectItem value="530200 200">Hood 530200 200</SelectItem>
                 <SelectItem value="530200 400">Hood 530200 400</SelectItem>
-                <SelectItem value="530200 401">Hood 530200 401</SelectItem>
+                <SelectItem value="530200 401">Hood 530200 401 (West Richland)</SelectItem>
                 <SelectItem value="530200 402">Hood 530200 402</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel>Hood Codes - 54xx Series</SelectLabel>
-                <SelectItem value="540100 001">Hood 540100 001 (Standard Rate)</SelectItem>
-                <SelectItem value="540200 001">Hood 540200 001</SelectItem>
-                <SelectItem value="540200 100">Hood 540200 100</SelectItem>
+                <SelectItem value="540100 001">Hood 540100 001 (Finley)</SelectItem>
+                <SelectItem value="540200 001">Hood 540200 001 (Finley)</SelectItem>
+                <SelectItem value="540200 100">Hood 540200 100 (Paterson)</SelectItem>
                 <SelectItem value="550000">Hood 550000 (North Area)</SelectItem>
               </SelectGroup>
               <SelectGroup>
@@ -1083,6 +1159,24 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
               {REGIONS.find(r => r.id === inputs.region)?.description}
             </p>
           )}
+          
+          {/* Information about Benton County identifiers */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <h4 className="text-sm font-semibold mb-2">About Benton County Region Identifiers:</h4>
+            <p className="text-xs text-gray-600 mb-2">
+              Benton County uses several different types of geographic identifiers in their assessment system:
+            </p>
+            <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
+              <li><span className="font-medium">Cities</span> - Incorporated municipalities within the county</li>
+              <li><span className="font-medium">Tax Code Areas (TCA)</span> - Numeric codes designating specific tax jurisdictions</li>
+              <li><span className="font-medium">Hood Codes</span> - Neighborhood identifiers in format "52100 100"</li>
+              <li><span className="font-medium">Township-Range</span> - Public Land Survey System coordinates (e.g., "10N-24E")</li>
+            </ul>
+            <p className="text-xs text-gray-600 mt-2">
+              Each property in Benton County may be associated with multiple identifiers. The system calculates 
+              costs based on the specific regional factors tied to these identifiers.
+            </p>
+          </div>
         </div>
         
         <div className="space-y-2 pt-4">
