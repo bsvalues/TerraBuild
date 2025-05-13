@@ -87,7 +87,7 @@ function Router() {
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/cost/estimate" component={() => (
+      <Route path="/cost/estimate" component={() => (
         <DashboardLayout>
           <CostWizardPage />
         </DashboardLayout>
