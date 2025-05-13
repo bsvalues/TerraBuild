@@ -189,7 +189,7 @@ const MatrixExplorerPage: React.FC = () => {
   
   const handleMatrixUploaded = (matrixId: string) => {
     // Refresh data after upload
-    queryClient.invalidateQueries({ queryKey: ['costFactorsData'] });
+    queryClient.invalidateQueries();
     setShowUploadInterface(false);
   };
 
@@ -578,6 +578,22 @@ const MatrixExplorerPage: React.FC = () => {
                   </ol>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          
+          {/* Display the Cost Factor Data Panel */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileBarChart className="h-5 w-5 text-primary" />
+                Cost Factors Data Reference
+              </CardTitle>
+              <CardDescription>
+                Reference information for all cost factors used in Benton County property assessments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CostFactorDataPanel />
             </CardContent>
           </Card>
         </div>

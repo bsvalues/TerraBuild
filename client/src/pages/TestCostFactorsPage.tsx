@@ -46,7 +46,10 @@ const TestCostFactorsPage: React.FC = () => {
           </Button>
           <h1 className="text-2xl font-bold">Cost Factors Test Page</h1>
         </div>
-        <div>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/matrix')} variant="outline">
+            Matrix Explorer
+          </Button>
           <Button onClick={() => navigate('/cost/estimate')} variant="default">
             Open Cost Wizard
           </Button>
