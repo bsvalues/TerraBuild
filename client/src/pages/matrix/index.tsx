@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadCostFactorsData } from '@/lib/utils/loadCostFactors';
 import { useLocation } from 'wouter';
 import { 
@@ -33,7 +33,10 @@ import {
   RefreshCw, 
   Search, 
   Table2,
-  Calculator
+  Calculator,
+  Upload,
+  Plus,
+  X
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -53,6 +56,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import MatrixUploadInterface from '@/components/matrix/MatrixUploadInterface';
+import { CostFactorDataPanel } from '@/components/cost-factors/CostFactorDataPanel';
 
 // Type definitions
 interface RegionInfo {
@@ -64,6 +69,7 @@ interface RegionInfo {
 
 const MatrixExplorerPage: React.FC = () => {
   const [_, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('regions');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -179,6 +185,14 @@ const MatrixExplorerPage: React.FC = () => {
     return counts;
   }, [processedRegions]);
 
+  const [showUploadInterface, setShowUploadInterface] = useState(false);
+  
+  const handleMatrixUploaded = (matrixId: string) => {
+    // Refresh data after upload
+    queryClient.invalidateQueries({ queryKey: ['costFactorsData'] });
+    setShowUploadInterface(false);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -191,7 +205,33 @@ const MatrixExplorerPage: React.FC = () => {
             <h1 className="text-2xl font-bold">Benton County Matrix Explorer</h1>
           </div>
         </div>
+        
+        <Button 
+          variant="outline" 
+          className="gap-2" 
+          onClick={() => setShowUploadInterface(!showUploadInterface)}
+        >
+          {showUploadInterface ? <X className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
+          {showUploadInterface ? 'Cancel Upload' : 'Upload Matrix Data'}
+        </Button>
       </div>
+      
+      {showUploadInterface && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
+              Upload Matrix Data
+            </CardTitle>
+            <CardDescription>
+              Upload a new cost matrix file to replace or extend the current data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MatrixUploadInterface onMatrixUploaded={handleMatrixUploaded} />
+          </CardContent>
+        </Card>
+      )}
       
       {isLoading ? (
         <Alert>
