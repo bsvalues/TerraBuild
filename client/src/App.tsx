@@ -10,6 +10,7 @@ import AuthPage from '@/pages/auth-page';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import CostWizardPage from '@/pages/CostWizardPage';
+import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -92,6 +93,8 @@ function Router() {
           <CostWizardPage />
         </DashboardLayout>
       )} />
+      
+      <Route path="/test-cost-factors" component={TestCostFactorsPage} />
       
       <ProtectedRoute path="/reports" component={() => (
         <DashboardLayout>
