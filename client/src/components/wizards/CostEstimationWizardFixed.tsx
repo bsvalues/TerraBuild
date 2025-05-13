@@ -178,31 +178,22 @@ const CONDITION_OPTIONS = [
 const REGIONS = [
   { id: 'BC-CENTRAL', label: 'Benton County - Central', factor: 1.0, 
     description: 'Average construction costs for the central region of Benton County.' },
-  { id: 'BC-NORTH', label: 'Benton County - North', factor: 1.05, 
+  { id: 'BC-NORTH', label: 'Benton County - North', factor: 1.02, 
     description: 'Slightly higher costs due to terrain and access in the northern region.' },
-  { id: 'BC-SOUTH', label: 'Benton County - South', factor: 0.95, 
+  { id: 'BC-SOUTH', label: 'Benton County - South', factor: 0.98, 
     description: 'Slightly lower costs in the more accessible southern region.' },
-  { id: 'BC-EAST', label: 'Benton County - East', factor: 0.98, 
+  { id: 'BC-EAST', label: 'Benton County - East', factor: 0.97, 
     description: 'Near average costs with good contractor availability in the eastern region.' },
-  { id: 'BC-WEST', label: 'Benton County - West', factor: 1.02, 
+  { id: 'BC-WEST', label: 'Benton County - West', factor: 1.03, 
     description: 'Moderately higher costs due to location factors in the western region.' },
-  { id: 'BC-RICHLAND', label: 'Benton County - Richland', factor: 1.08, 
+  { id: 'BC-RICHLAND', label: 'Benton County - Richland', factor: 1.05, 
     description: 'Higher costs reflecting urban premium in the Richland area.' },
-  { id: 'BC-KENNEWICK', label: 'Benton County - Kennewick', factor: 1.06, 
+  { id: 'BC-KENNEWICK', label: 'Benton County - Kennewick', factor: 1.04, 
     description: 'Higher costs reflecting urban premium in the Kennewick area.' },
-  { id: 'BC-PROSSER', label: 'Benton County - Prosser', factor: 0.93, 
+  { id: 'BC-PROSSER', label: 'Benton County - Prosser', factor: 0.96, 
     description: 'Lower costs in the rural Prosser area.' },
-  // Arkansas regions
-  { id: 'AR-CENTRAL', label: 'Arkansas - Central', factor: 0.9, 
-    description: 'Central Arkansas region including Little Rock area.' },
-  { id: 'AR-NORTHWEST', label: 'Arkansas - Northwest', factor: 0.95, 
-    description: 'Northwest Arkansas including Fayetteville and Bentonville.' },
-  { id: 'AR-NORTHEAST', label: 'Arkansas - Northeast', factor: 0.88, 
-    description: 'Northeast Arkansas including Jonesboro area.' },
-  { id: 'AR-SOUTHWEST', label: 'Arkansas - Southwest', factor: 0.85, 
-    description: 'Southwest Arkansas including Texarkana region.' },
-  { id: 'AR-SOUTHEAST', label: 'Arkansas - Southeast', factor: 0.82, 
-    description: 'Southeast Arkansas including Pine Bluff area.' },
+  { id: 'BC-RURAL', label: 'Benton County - Rural', factor: 0.92, 
+    description: 'Lowest costs in remote rural areas of Benton County.' },
 ];
 
 // Roofing types data
@@ -460,8 +451,17 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
                            inputs.condition === 'GOOD' ? 'GOOD' : 'EXCELLENT';
       
       // Map region to proper key for cost factors
+      // Extract region name from "BC-REGION" format
       const regionParts = inputs.region.split('-');
       const regionKey = regionParts.length > 1 ? regionParts[1] : 'CENTRAL';
+      
+      // Debug the mapping
+      console.log('Region mapping:', { 
+        selected: inputs.region,
+        key: regionKey, 
+        availableFactors: costFactors?.regionFactors ? Object.keys(costFactors.regionFactors) : 'none',
+        factor: costFactors?.regionFactors?.[regionKey] || regionInfo.factor
+      });
       
       // Base rate and adjustment factors - prefer API data when available
       const baseRate = costFactors?.baseRates[buildingTypeKey] || buildingTypeInfo.baseRate;
@@ -1036,14 +1036,7 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
                 <SelectItem value="BC-RICHLAND">Benton County - Richland</SelectItem>
                 <SelectItem value="BC-KENNEWICK">Benton County - Kennewick</SelectItem>
                 <SelectItem value="BC-PROSSER">Benton County - Prosser</SelectItem>
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>Arkansas</SelectLabel>
-                <SelectItem value="AR-CENTRAL">Arkansas - Central</SelectItem>
-                <SelectItem value="AR-NORTHWEST">Arkansas - Northwest</SelectItem>
-                <SelectItem value="AR-NORTHEAST">Arkansas - Northeast</SelectItem>
-                <SelectItem value="AR-SOUTHWEST">Arkansas - Southwest</SelectItem>
-                <SelectItem value="AR-SOUTHEAST">Arkansas - Southeast</SelectItem>
+                <SelectItem value="BC-RURAL">Benton County - Rural</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
