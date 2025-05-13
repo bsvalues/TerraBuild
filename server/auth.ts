@@ -1,13 +1,36 @@
-import { Express } from "express";
-import { storage } from "./storage-factory";
-import { User as SelectUser } from "@shared/schema";
+import { Express, Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser";
 
-// Simplified auth tokens that don't require session
-const authTokens: Map<string, { userId: number, expires: number }> = new Map();
+// Define types
+type User = {
+  id: number;
+  username: string;
+  name: string;
+  role: string;
+  is_active: boolean;
+};
 
-// Default users for testing
-const DEFAULT_USERS = [
+type UserWithPassword = User & { 
+  password: string 
+};
+
+// Extend Request type to include our custom properties
+declare global {
+  namespace Express {
+    interface Request {
+      currentUser?: User;
+      auth?: {
+        authenticated: boolean;
+        isAuthenticated: () => boolean;
+      };
+    }
+  }
+}
+
+// Hardcoded users (no database dependency)
+const USERS: UserWithPassword[] = [
   {
+    id: 1,
     username: 'admin',
     password: 'admin123',
     name: 'Admin User',
@@ -15,6 +38,7 @@ const DEFAULT_USERS = [
     is_active: true
   },
   {
+    id: 2,
     username: 'default',
     password: 'default123',
     name: 'Default User',
@@ -23,136 +47,162 @@ const DEFAULT_USERS = [
   }
 ];
 
-// Ensure default users exist
-async function ensureDefaultUsers() {
-  for (const defaultUser of DEFAULT_USERS) {
-    try {
-      const existingUser = await storage.getUserByUsername(defaultUser.username);
-      if (!existingUser) {
-        await storage.createUser(defaultUser);
-        console.log(`Created default user: ${defaultUser.username}`);
-      }
-    } catch (error) {
-      console.error(`Error creating default user ${defaultUser.username}:`, error);
-    }
-  }
-}
+// Session tokens - simple in-memory store
+const tokens = new Map<string, number>();
 
+/**
+ * Simple authentication setup
+ */
 export function setupAuth(app: Express) {
-  // Seed default users
-  ensureDefaultUsers();
+  // Add cookie parsing middleware
+  app.use(cookieParser());
 
-  // Simple auth middleware
-  const authenticateToken = async (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.authToken;
+  // Add auth middleware to every request
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Initialize auth object
+    req.auth = {
+      authenticated: false,
+      isAuthenticated: () => req.auth?.authenticated || false
+    };
+
+    // Check for token in cookies
+    const token = req.cookies?.authToken;
     
-    if (!token) {
-      return next();
-    }
-    
-    const session = authTokens.get(token);
-    if (!session || session.expires < Date.now()) {
-      if (session) {
-        authTokens.delete(token);
-      }
-      return next();
-    }
-    
-    try {
-      const user = await storage.getUser(session.userId);
+    // If token exists and is valid
+    if (token && tokens.has(token)) {
+      const userId = tokens.get(token);
+      const user = USERS.find(u => u.id === userId);
+      
       if (user) {
-        req.user = user;
-        req.isAuthenticated = () => true;
+        // Add user info to request (excluding password)
+        const { password, ...userInfo } = user;
+        req.currentUser = userInfo;
+        req.auth.authenticated = true;
       }
-    } catch (error) {
-      console.error('Auth error:', error);
     }
+    
+    // Enable authentication status for legacy code 
+    // that might expect req.user and req.isAuthenticated
+    Object.defineProperty(req, 'user', {
+      get: function() { return this.currentUser; }
+    });
+    Object.defineProperty(req, 'isAuthenticated', {
+      get: function() { return () => this.auth?.authenticated || false; }
+    });
     
     next();
-  };
-
-  app.use(authenticateToken);
-
-  app.post("/api/register", async (req, res) => {
-    try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-
-      const user = await storage.createUser({
-        ...req.body,
-      });
-
-      // Create auth token
-      const token = Math.random().toString(36).substring(2);
-      authTokens.set(token, {
-        userId: user.id,
-        expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-      });
-      
-      // Set cookie
-      res.cookie('authToken', token, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
-      });
-
-      const { password, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: "Registration failed" });
-    }
   });
 
-  app.post("/api/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      // Simple direct password matching for testing purposes
-      const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Create auth token
-      const token = Math.random().toString(36).substring(2);
-      authTokens.set(token, {
-        userId: user.id,
-        expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-      });
-      
-      // Set cookie
-      res.cookie('authToken', token, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
-      });
-
-      const { password: _, ...userWithoutPassword } = user;
-      res.status(200).json(userWithoutPassword);
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ message: "Login failed" });
-    }
-  });
-
-  app.post("/api/logout", (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.authToken;
+  // API routes for authentication
+  app.post("/api/register", (req: Request, res: Response) => {
+    const { username, password, name, role = 'user' } = req.body;
     
+    // Validate input
+    if (!username || !password) {
+      return res.status(400).json({ 
+        message: "Username and password are required" 
+      });
+    }
+    
+    // Check if username is taken
+    if (USERS.some(u => u.username === username)) {
+      return res.status(400).json({ 
+        message: "Username already exists" 
+      });
+    }
+    
+    // Create new user
+    const newUser: UserWithPassword = {
+      id: USERS.length + 1,
+      username,
+      password,
+      name: name || username,
+      role,
+      is_active: true
+    };
+    
+    // Add to users list
+    USERS.push(newUser);
+    
+    // Create token
+    const token = Math.random().toString(36).substring(2);
+    tokens.set(token, newUser.id);
+    
+    // Set auth cookie
+    res.cookie('authToken', token, { 
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    // Return user info without password
+    const { password: _, ...userInfo } = newUser;
+    res.status(201).json(userInfo);
+  });
+
+  app.post("/api/login", (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    
+    console.log(`Login attempt: ${username}`);
+    
+    // Find matching user
+    const user = USERS.find(u => 
+      u.username === username && u.password === password
+    );
+    
+    if (!user) {
+      console.log(`Login failed: ${username}`);
+      return res.status(401).json({ 
+        message: "Invalid username or password" 
+      });
+    }
+    
+    console.log(`Login successful: ${username} (${user.role})`);
+    
+    // Create session token
+    const token = Math.random().toString(36).substring(2);
+    tokens.set(token, user.id);
+    
+    // Set auth cookie
+    res.cookie('authToken', token, { 
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    // Return user info without password
+    const { password: _, ...userInfo } = user;
+    res.status(200).json(userInfo);
+  });
+
+  app.post("/api/logout", (req: Request, res: Response) => {
+    // Get token from cookie
+    const token = req.cookies?.authToken;
+    
+    // Clean up if token exists
     if (token) {
-      authTokens.delete(token);
+      tokens.delete(token);
       res.clearCookie('authToken');
     }
     
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ 
+      message: "Logged out successfully" 
+    });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
+  app.get("/api/user", (req: Request, res: Response) => {
+    // Check if user is authenticated
+    if (!req.auth?.authenticated) {
+      return res.status(401).json({ 
+        message: "Not authenticated" 
+      });
     }
     
-    const { password, ...userWithoutPassword } = req.user;
-    res.status(200).json(userWithoutPassword);
+    // Return user info
+    res.status(200).json(req.currentUser);
   });
+  
+  console.log('Authentication system initialized with users:');
+  console.log('- admin/admin123');
+  console.log('- default/default123');
 }
