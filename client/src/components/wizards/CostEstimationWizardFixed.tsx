@@ -174,25 +174,27 @@ const CONDITION_OPTIONS = [
     description: 'Like new condition with all systems recently updated.' },
 ];
 
-// Regions data
+// Regions data directly matching costFactors.json
 const REGIONS = [
-  { id: 'BC-CENTRAL', label: 'Benton County - Central', factor: 1.0, 
-    description: 'Average construction costs for the central region of Benton County.' },
-  { id: 'BC-NORTH', label: 'Benton County - North', factor: 1.02, 
+  { id: 'BENTON', label: 'Benton County', factor: 1.0, 
+    description: 'Default Benton County region with standard costs.' },
+  { id: 'CENTRAL', label: 'Central', factor: 1.0, 
+    description: 'Average construction costs for the central region.' },
+  { id: 'NORTH', label: 'North', factor: 1.02, 
     description: 'Slightly higher costs due to terrain and access in the northern region.' },
-  { id: 'BC-SOUTH', label: 'Benton County - South', factor: 0.98, 
+  { id: 'SOUTH', label: 'South', factor: 0.98, 
     description: 'Slightly lower costs in the more accessible southern region.' },
-  { id: 'BC-EAST', label: 'Benton County - East', factor: 0.97, 
+  { id: 'EAST', label: 'East', factor: 0.97, 
     description: 'Near average costs with good contractor availability in the eastern region.' },
-  { id: 'BC-WEST', label: 'Benton County - West', factor: 1.03, 
+  { id: 'WEST', label: 'West', factor: 1.03, 
     description: 'Moderately higher costs due to location factors in the western region.' },
-  { id: 'BC-RICHLAND', label: 'Benton County - Richland', factor: 1.05, 
+  { id: 'RICHLAND', label: 'Richland', factor: 1.05, 
     description: 'Higher costs reflecting urban premium in the Richland area.' },
-  { id: 'BC-KENNEWICK', label: 'Benton County - Kennewick', factor: 1.04, 
+  { id: 'KENNEWICK', label: 'Kennewick', factor: 1.04, 
     description: 'Higher costs reflecting urban premium in the Kennewick area.' },
-  { id: 'BC-PROSSER', label: 'Benton County - Prosser', factor: 0.96, 
+  { id: 'PROSSER', label: 'Prosser', factor: 0.96, 
     description: 'Lower costs in the rural Prosser area.' },
-  { id: 'BC-RURAL', label: 'Benton County - Rural', factor: 0.92, 
+  { id: 'RURAL', label: 'Rural', factor: 0.92, 
     description: 'Lowest costs in remote rural areas of Benton County.' },
 ];
 
@@ -258,7 +260,7 @@ const DEFAULT_VALUES = {
   basement: false,
   basementFinished: false,
   yearBuilt: new Date().getFullYear() - 10,
-  region: 'BC-CENTRAL',
+  region: 'CENTRAL',
   garageSize: 0,
   complexity: 50,
   roofType: 'ASPHALT',
@@ -450,15 +452,12 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
                            inputs.condition === 'AVG' ? 'AVERAGE' : 
                            inputs.condition === 'GOOD' ? 'GOOD' : 'EXCELLENT';
       
-      // Map region to proper key for cost factors
-      // Extract region name from "BC-REGION" format
-      const regionParts = inputs.region.split('-');
-      const regionKey = regionParts.length > 1 ? regionParts[1] : 'CENTRAL';
+      // No need to transform the region key since it now directly matches costFactors.json
+      const regionKey = inputs.region;
       
       // Debug the mapping
       console.log('Region mapping:', { 
         selected: inputs.region,
-        key: regionKey, 
         availableFactors: costFactors?.regionFactors ? Object.keys(costFactors.regionFactors) : 'none',
         factor: costFactors?.regionFactors?.[regionKey] || regionInfo.factor
       });
@@ -1027,16 +1026,17 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Benton County</SelectLabel>
-                <SelectItem value="BC-CENTRAL">Benton County - Central</SelectItem>
-                <SelectItem value="BC-NORTH">Benton County - North</SelectItem>
-                <SelectItem value="BC-SOUTH">Benton County - South</SelectItem>
-                <SelectItem value="BC-EAST">Benton County - East</SelectItem>
-                <SelectItem value="BC-WEST">Benton County - West</SelectItem>
-                <SelectItem value="BC-RICHLAND">Benton County - Richland</SelectItem>
-                <SelectItem value="BC-KENNEWICK">Benton County - Kennewick</SelectItem>
-                <SelectItem value="BC-PROSSER">Benton County - Prosser</SelectItem>
-                <SelectItem value="BC-RURAL">Benton County - Rural</SelectItem>
+                <SelectLabel>Benton County Regions</SelectLabel>
+                <SelectItem value="BENTON">Benton County</SelectItem>
+                <SelectItem value="CENTRAL">Central</SelectItem>
+                <SelectItem value="NORTH">North</SelectItem>
+                <SelectItem value="SOUTH">South</SelectItem>
+                <SelectItem value="EAST">East</SelectItem>
+                <SelectItem value="WEST">West</SelectItem>
+                <SelectItem value="RICHLAND">Richland</SelectItem>
+                <SelectItem value="KENNEWICK">Kennewick</SelectItem>
+                <SelectItem value="PROSSER">Prosser</SelectItem>
+                <SelectItem value="RURAL">Rural</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
