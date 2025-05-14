@@ -79,7 +79,52 @@ const TestCostFactorsPage = () => {
           </TabsList>
           
           <TabsContent value="regions">
-            <RegionVisualization />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border border-gray-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">City Region Example</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RegionVisualization regionId="Richland" compact={true} />
+                  </CardContent>
+                </Card>
+                
+                <Card className="border border-gray-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Hood Code Example</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RegionVisualization regionId="52100 100" compact={true} />
+                  </CardContent>
+                </Card>
+                
+                <Card className="border border-gray-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Township-Range Example</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RegionVisualization regionId="10N-24E" compact={true} />
+                  </CardContent>
+                </Card>
+                
+                <Card className="border border-gray-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">TCA Example</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RegionVisualization regionId="1210" compact={true} />
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="pt-2">
+                <p className="text-sm text-muted-foreground">
+                  The Benton County region visualization shows examples of different region identifier formats.
+                  The Cost Wizard uses these identifiers to calculate precise regional cost factors.
+                </p>
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="test">

@@ -511,7 +511,7 @@ const MatrixExplorerPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/cost/estimate')}>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate('/cost-wizard')}>
                     <Calculator className="h-4 w-4" />
                     Open Cost Wizard
                   </Button>
