@@ -135,11 +135,25 @@ class MCPDevOpsKit {
    * @param status The new status
    */
   private updateAgentStatus(agentId: string, status: 'active' | 'inactive' | 'development'): void {
-    const agentIndex = this.agentRegistry.agents.findIndex(a => a.id === agentId);
-    
-    if (agentIndex >= 0) {
-      this.agentRegistry.agents[agentIndex].status = status;
-      console.log(`Updated agent ${agentId} status to ${status}`);
+    // Check if agents is an array or object map
+    if (Array.isArray(this.agentRegistry.agents)) {
+      // Legacy array structure
+      const agentIndex = this.agentRegistry.agents.findIndex(a => a.id === agentId);
+      
+      if (agentIndex >= 0) {
+        this.agentRegistry.agents[agentIndex].status = status;
+        console.log(`Updated agent ${agentId} status to ${status} (array method)`);
+      }
+    } else if (typeof this.agentRegistry.agents === 'object') {
+      // Modern object map structure
+      if (this.agentRegistry.agents[agentId]) {
+        this.agentRegistry.agents[agentId].status = status;
+        console.log(`Updated agent ${agentId} status to ${status} (object method)`);
+      } else {
+        console.warn(`Agent ${agentId} not found in registry for status update`);
+      }
+    } else {
+      console.warn(`Cannot update agent status: agents collection has unexpected type: ${typeof this.agentRegistry.agents}`);
     }
   }
   

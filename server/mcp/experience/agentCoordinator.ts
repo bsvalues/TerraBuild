@@ -283,9 +283,14 @@ export class AgentCoordinator {
       }
       
       try {
-        const agentState = agent.getState();
-        const lastUpdatedTime = agentState.lastUpdated || new Date(0);
+        // Get current time for calculations
         const now = new Date();
+        
+        // Use agent object directly as the state
+        const agentState = agent;
+        const lastUpdatedTime = new Date(agent.lastUpdated || 0);
+        
+        // Calculate time since last update
         const timeSinceUpdate = now.getTime() - lastUpdatedTime.getTime();
         
         // Get current health status or create new one
@@ -302,7 +307,7 @@ export class AgentCoordinator {
         
         // Update health status
         health.lastHeartbeat = now;
-        health.memoryUsage = (agentState.memory?.length || 0);
+        health.memoryUsage = 0; // We don't track memory usage for modern agents yet
         
         // Determine status based on metrics
         if (timeSinceUpdate > 60000) { // 1 minute
