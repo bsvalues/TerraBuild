@@ -585,4 +585,152 @@ router.post('/devops/shutdown', async (req, res) => {
   }
 });
 
+// Testing Framework Routes
+
+// Import the testing framework
+import { testRunner } from './testing/test-runner';
+
+// POST /api/mcp/test/run - Run tests for a specific agent
+router.post('/test/run', async (req, res) => {
+  try {
+    const { agentId, agentName } = req.body;
+    
+    // Validate agent ID
+    if (!agentId) {
+      return res.status(400).json({
+        error: 'Missing agent ID',
+        message: 'Agent ID is required'
+      });
+    }
+    
+    // Run tests for the specified agent
+    const results = await testRunner.runTests(
+      agentId,
+      agentName || agentId
+    );
+    
+    res.json({
+      results,
+      message: `Test run completed for ${agentId}: ${results.passed}/${results.total} tests passed (${results.passRate.toFixed(1)}%)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error running tests:', error);
+    res.status(500).json({
+      error: 'Error running tests',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/test/run-all - Run tests for all agents
+router.post('/test/run-all', async (req, res) => {
+  try {
+    // Run tests for all agents
+    const results = await testRunner.runAllTests();
+    
+    // Generate test report
+    const report = testRunner.generateReport(results);
+    
+    // Calculate overall stats
+    const totalTests = results.reduce((sum, r) => sum + r.total, 0);
+    const totalPassed = results.reduce((sum, r) => sum + r.passed, 0);
+    const overallPassRate = totalTests > 0 ? (totalPassed / totalTests) * 100 : 0;
+    
+    res.json({
+      results,
+      report,
+      summary: {
+        totalTests,
+        totalPassed,
+        totalFailed: totalTests - totalPassed,
+        overallPassRate
+      },
+      message: `All tests completed: ${totalPassed}/${totalTests} tests passed (${overallPassRate.toFixed(1)}%)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error running all tests:', error);
+    res.status(500).json({
+      error: 'Error running all tests',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/test/data-quality - Test data quality agent
+router.post('/test/data-quality', async (req, res) => {
+  try {
+    const { testData } = req.body;
+    
+    // Run test
+    const result = await testRunner.runTests(
+      'data-quality-agent',
+      'Data Quality Agent'
+    );
+    
+    res.json({
+      result,
+      message: `Data Quality Agent test completed: ${result.passed}/${result.total} tests passed (${result.passRate.toFixed(1)}%)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error testing data quality agent:', error);
+    res.status(500).json({
+      error: 'Error testing data quality agent',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/test/compliance - Test compliance agent
+router.post('/test/compliance', async (req, res) => {
+  try {
+    const { testData, regulationCode } = req.body;
+    
+    // Run test
+    const result = await testRunner.runTests(
+      'compliance-agent',
+      'Compliance Agent'
+    );
+    
+    res.json({
+      result,
+      message: `Compliance Agent test completed: ${result.passed}/${result.total} tests passed (${result.passRate.toFixed(1)}%)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error testing compliance agent:', error);
+    res.status(500).json({
+      error: 'Error testing compliance agent',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// POST /api/mcp/test/cost-analysis - Test cost analysis agent
+router.post('/test/cost-analysis', async (req, res) => {
+  try {
+    const { buildingType, squareFeet, region } = req.body;
+    
+    // Run test
+    const result = await testRunner.runTests(
+      'cost-analysis-agent',
+      'Cost Analysis Agent'
+    );
+    
+    res.json({
+      result,
+      message: `Cost Analysis Agent test completed: ${result.passed}/${result.total} tests passed (${result.passRate.toFixed(1)}%)`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error testing cost analysis agent:', error);
+    res.status(500).json({
+      error: 'Error testing cost analysis agent',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export default router;
