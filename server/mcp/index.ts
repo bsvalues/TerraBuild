@@ -11,6 +11,9 @@ import { geoMappingAgent } from './agents/geo-mapping-agent';
 import { neighborhoodDiscoveryAgent } from './agents/neighborhood-discovery-agent';
 import { initGeoMappingAgent } from './handlers/geo-mapping-handler';
 import { registerNeighborhoodDiscoveryAgent } from './handlers/neighborhood-discovery-handler';
+import { registerDataQualityAgent } from './handlers/data-quality-handler';
+import { registerComplianceAgent } from './handlers/compliance-handler';
+import { registerCostAnalysisAgent } from './handlers/cost-analysis-handler';
 
 /**
  * Initialize the Model Content Protocol (MCP) framework
