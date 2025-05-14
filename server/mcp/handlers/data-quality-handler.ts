@@ -138,24 +138,100 @@ async function validateData(data: any): Promise<any> {
   const validationResults = {
     success: true,
     issues: [] as any[],
+    regionIssues: [] as any[],
     message: 'Data validation completed successfully'
   };
   
-  // Example validation logic
-  if (data) {
-    // Check for required fields
-    if (data.properties) {
-      for (const property of data.properties) {
-        if (!property.id || !property.address) {
-          validationResults.issues.push({
-            severity: 'error',
-            message: 'Property missing required fields',
-            property: property.id || 'unknown'
-          });
-          validationResults.success = false;
+  // Handle different data types
+  if (!data) {
+    validationResults.success = false;
+    validationResults.message = 'No data provided for validation';
+    return validationResults;
+  }
+  
+  // Check if this is a cost matrix validation request
+  if (data.type === 'cost_matrix' || data.matrices) {
+    // Use the enhanced data quality agent for cost matrix validation
+    try {
+      const costMatrixResults = dataQualityAgent.validateCostMatrix(data);
+      
+      // Merge results
+      validationResults.success = costMatrixResults.valid;
+      validationResults.issues = costMatrixResults.issues || [];
+      validationResults.regionIssues = costMatrixResults.regionIssues || [];
+      validationResults.message = costMatrixResults.message;
+      
+      // Add quality metrics if requested
+      if (data.includeQualityMetrics) {
+        validationResults.qualityMetrics = dataQualityAgent.analyzeCostDataQuality(data);
+      }
+      
+      // Add anomaly detection if requested
+      if (data.detectAnomalies) {
+        validationResults.anomalies = dataQualityAgent.detectCostAnomalies(data);
+      }
+      
+      return validationResults;
+    } catch (error) {
+      logger.error('Error in cost matrix validation:', error);
+      validationResults.success = false;
+      validationResults.message = 'Error validating cost matrix data';
+      validationResults.issues.push({
+        severity: 'error',
+        message: error.message || 'Unknown error in cost matrix validation'
+      });
+      return validationResults;
+    }
+  }
+  
+  // Otherwise, handle property data validation (original functionality)
+  if (data.properties) {
+    for (const property of data.properties) {
+      // Check for required fields
+      if (!property.id || !property.address) {
+        validationResults.issues.push({
+          severity: 'error',
+          message: 'Property missing required fields',
+          property: property.id || 'unknown'
+        });
+        validationResults.success = false;
+      }
+      
+      // Validate property regions if present
+      if (property.regions) {
+        for (const [regionType, regionValue] of Object.entries(property.regions)) {
+          // Skip if region value is not provided
+          if (!regionValue) continue;
+          
+          // Validate only if it's a known region type
+          if (['city', 'tca', 'hood_code', 'township_range'].includes(regionType)) {
+            try {
+              const regionValidation = dataQualityAgent.validateRegion(
+                regionValue as string, 
+                regionType as any
+              );
+              
+              if (!regionValidation.valid) {
+                validationResults.regionIssues.push({
+                  severity: 'warning',
+                  property: property.id,
+                  region_type: regionType,
+                  region_value: regionValue,
+                  message: regionValidation.message
+                });
+              }
+            } catch (error) {
+              logger.error(`Error validating region for property ${property.id}:`, error);
+            }
+          }
         }
       }
     }
+  }
+  
+  // Update message if validation failed
+  if (!validationResults.success) {
+    validationResults.message = 'Data validation completed with issues';
   }
   
   return validationResults;
