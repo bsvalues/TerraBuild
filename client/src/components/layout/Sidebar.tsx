@@ -21,7 +21,9 @@ import {
   Settings,
   HelpCircle,
   History,
-  BookOpen
+  BookOpen,
+  Activity,
+  PieChart
 } from 'lucide-react';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -86,6 +88,11 @@ export function Sidebar({}: SidebarProps) {
       title: "Data Import",
       href: "/import",
       icon: Upload
+    },
+    {
+      title: "Diagnostics",
+      href: "/diagnostic",
+      icon: Activity
     }
   ];
 

@@ -12,6 +12,7 @@ import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import CostWizardPage from '@/pages/CostWizardPage';
 import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
 import MatrixExplorerPage from '@/pages/matrix';
+import DiagnosticPage from '@/pages/diagnostic';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -109,6 +110,12 @@ function Router() {
           <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
             <p className="text-blue-300">Settings coming soon...</p>
           </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/diagnostic" component={() => (
+        <DashboardLayout>
+          <DiagnosticPage />
         </DashboardLayout>
       )} />
       
