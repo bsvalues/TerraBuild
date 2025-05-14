@@ -59,18 +59,16 @@ export function getQueryFn({ on401 = 'throw' }: { on401?: 'throw' | 'returnNull'
 
 /**
  * Helper function for API requests
- * @param method - HTTP method
- * @param url - API endpoint
- * @param data - Request data
- * @returns - Fetch response
+ * @param url - API endpoint or options object
+ * @param options - Request options
+ * @returns - Parsed response data
  */
 export async function apiRequest(
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   url: string,
-  data?: any
-): Promise<Response> {
-  const options: RequestInit = {
-    method,
+  options?: RequestInit
+): Promise<any> {
+  const defaultOptions: RequestInit = {
+    method: 'GET',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -78,11 +76,9 @@ export async function apiRequest(
     credentials: 'include',
   };
 
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
-
-  const response = await fetch(url, options);
+  const mergedOptions = { ...defaultOptions, ...options };
+  
+  const response = await fetch(url, mergedOptions);
   
   if (!response.ok) {
     // Try to parse error as JSON first
@@ -98,5 +94,17 @@ export async function apiRequest(
     }
   }
   
-  return response;
+  // Parse response as JSON
+  try {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      const text = await response.text();
+      return text || null;
+    }
+  } catch (e) {
+    console.error('Error parsing response:', e);
+    throw new Error('Failed to parse API response');
+  }
 }

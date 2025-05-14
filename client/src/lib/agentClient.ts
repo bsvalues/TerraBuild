@@ -30,7 +30,9 @@ interface AgentTestResult {
  */
 export async function getAllAgents(): Promise<Agent[]> {
   try {
-    const response = await apiRequest('/mcp/agents');
+    const response = await apiRequest('/mcp/agents', {
+      method: 'GET'
+    });
     return response.agents || [];
   } catch (error) {
     console.error('Error fetching agents:', error);
@@ -45,7 +47,9 @@ export async function getAllAgents(): Promise<Agent[]> {
  */
 export async function getAgent(agentId: string): Promise<Agent> {
   try {
-    const response = await apiRequest(`/mcp/agents/${agentId}`);
+    const response = await apiRequest(`/mcp/agents/${agentId}`, {
+      method: 'GET'
+    });
     return response.agent;
   } catch (error) {
     console.error(`Error fetching agent ${agentId}:`, error);
@@ -63,6 +67,9 @@ export async function runAgentTests(agentId: string, agentName?: string): Promis
   try {
     const response = await apiRequest('/mcp/test/run', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         agentId,
         agentName: agentName || agentId
@@ -82,7 +89,10 @@ export async function runAgentTests(agentId: string, agentName?: string): Promis
 export async function runAllAgentTests(): Promise<AgentTestResult[]> {
   try {
     const response = await apiRequest('/mcp/test/run-all', {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
     return response.results;
   } catch (error) {
@@ -100,6 +110,9 @@ export async function testDataQualityAgent(testData?: any): Promise<AgentTestRes
   try {
     const response = await apiRequest('/mcp/test/data-quality', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         testData
       })
@@ -167,16 +180,21 @@ export async function testCostAnalysisAgent(
  * @param regionType The type of region (city, tca, hood_code, township_range)
  * @returns Validation results
  */
-export async function validateRegion(regionValue: string, regionType: 'city' | 'tca' | 'hood_code' | 'township_range'): Promise<any> {
+export async function validateRegion(
+  regionValue: string,
+  regionType: 'city' | 'tca' | 'hood_code' | 'township_range'
+): Promise<any> {
   try {
-    const response = await apiRequest('/mcp/diagnostic/validate-region', {
+    return await apiRequest('/mcp/diagnostic/validate-region', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         regionValue,
         regionType
       })
     });
-    return response;
   } catch (error) {
     console.error('Error validating region:', error);
     throw new Error(`Failed to validate ${regionType} region: ${regionValue}`);
@@ -196,15 +214,17 @@ export async function validateCostMatrix(
   detectAnomalies = false
 ): Promise<any> {
   try {
-    const response = await apiRequest('/mcp/diagnostic/validate-cost-matrix', {
+    return await apiRequest('/mcp/diagnostic/validate-cost-matrix', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         matrices,
         includeQualityMetrics,
         detectAnomalies
       })
     });
-    return response;
   } catch (error) {
     console.error('Error validating cost matrix:', error);
     throw new Error('Failed to validate cost matrix');
@@ -222,14 +242,16 @@ export async function analyzeCostQuality(
   detectAnomalies = false
 ): Promise<any> {
   try {
-    const response = await apiRequest('/mcp/diagnostic/analyze-cost-quality', {
+    return await apiRequest('/mcp/diagnostic/analyze-cost-quality', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         matrices,
         detectAnomalies
       })
     });
-    return response;
   } catch (error) {
     console.error('Error analyzing cost quality:', error);
     throw new Error('Failed to analyze cost quality');
