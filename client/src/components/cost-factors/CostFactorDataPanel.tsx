@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { loadCostFactorsData, CostFactorsData } from '@/lib/utils/loadCostFactors';
 import { useQuery } from '@tanstack/react-query';
+import RegionVisualization from '@/components/matrix/RegionVisualization';
 
 /**
  * Component to display the cost factors data loaded from costFactors.json
@@ -145,18 +146,27 @@ export function CostFactorDataPanel() {
                 regionsByCategory[category].push([region, factor as number]);
               });
               
-              // Display regions by category
+              // Display regions by category with visualization
               return (
                 <div className="space-y-6">
                   {Object.entries(regionsByCategory).map(([category, regions]) => (
-                    <div key={category} className="space-y-2">
+                    <div key={category} className="space-y-4">
                       <h4 className="font-medium text-sm border-b border-gray-200 pb-1">{category}</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {regions.map(([region, factor]) => (
-                          <div key={region} className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">{region}</span>
-                            <span className="font-medium text-sm">{factor.toFixed(2)}x</span>
-                          </div>
+                          <Card key={region} className="overflow-hidden border border-gray-200 hover:border-primary/50 transition-colors">
+                            <CardHeader className="p-3 pb-2">
+                              <CardTitle className="text-sm font-medium">{region}</CardTitle>
+                              <CardDescription className="text-xs">Factor: {factor.toFixed(2)}x</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-2">
+                              <RegionVisualization 
+                                regionId={region}
+                                compact={true}
+                                showTitle={false}
+                              />
+                            </CardContent>
+                          </Card>
                         ))}
                       </div>
                     </div>
