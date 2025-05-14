@@ -1,76 +1,6 @@
 {
   "agents": [
     {
-      "id": "costEstimationAgent",
-      "name": "Cost Estimation Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Performs valuation prediction based on building type, region, and cost matrix"
-      },
-      "lastUpdated": 1747187565230
-    },
-    {
-      "id": "dataQualityAgent",
-      "name": "Data Quality Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Scans dataset for missing or invalid fields and reports anomalies"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
-      "id": "geospatialAnalysisAgent",
-      "name": "Geospatial Analysis Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Validates spatial data for parcels and overlays valuation deltas"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
-      "id": "documentProcessingAgent",
-      "name": "Document Processing Agent",
-      "status": "inactive",
-      "capabilities": [],
-      "metadata": {
-        "description": "Extracts and summarizes building data from scanned PDFs or documents"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
-      "id": "inquisitorAgent",
-      "name": "Inquisitor Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Validates matrix structure and expected fields"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
-      "id": "interpreterAgent",
-      "name": "Interpreter Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Parses Excel file into JSON matrix representation"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
-      "id": "visualizerAgent",
-      "name": "Visualizer Agent",
-      "status": "active",
-      "capabilities": [],
-      "metadata": {
-        "description": "Generates insights and cost comparisons"
-      },
-      "lastUpdated": 1747187565231
-    },
-    {
       "id": "data-quality-agent",
       "name": "Data Quality Agent",
       "status": "active",
@@ -83,7 +13,7 @@
         "description": "Validates data quality and identifies issues in property data",
         "version": "1.0.0"
       },
-      "lastUpdated": 1747187565621
+      "lastUpdated": 1747187709405
     },
     {
       "id": "compliance-agent",
@@ -98,7 +28,7 @@
         "description": "Ensures compliance with Washington State regulations for property assessments",
         "version": "1.0.0"
       },
-      "lastUpdated": 1747187565623
+      "lastUpdated": 1747187709407
     },
     {
       "id": "cost-analysis-agent",
@@ -113,7 +43,61 @@
         "description": "Analyzes building cost data and provides estimation services",
         "version": "1.0.0"
       },
-      "lastUpdated": 1747187565632
+      "lastUpdated": 1747187709410
+    },
+    {
+      "id": "geo-mapping-agent",
+      "name": "Geographic Mapping Agent",
+      "status": "active",
+      "capabilities": [
+        "geography:map:property",
+        "geography:analyze:region"
+      ],
+      "metadata": {
+        "description": "Maps and analyzes geographic data for properties and regions"
+      },
+      "lastUpdated": 1747187709382
+    },
+    {
+      "id": "development-agent",
+      "name": "Development Agent",
+      "status": "active",
+      "capabilities": [
+        "code:request:generate",
+        "code:request:refactor",
+        "code:request:analyze"
+      ],
+      "metadata": {
+        "description": "Assists with code development and analysis"
+      },
+      "lastUpdated": 1716857380000
+    },
+    {
+      "id": "design-agent",
+      "name": "Design Agent",
+      "status": "active",
+      "capabilities": [
+        "design:request",
+        "accessibility:request"
+      ],
+      "metadata": {
+        "description": "Assists with UI/UX design tasks and accessibility"
+      },
+      "lastUpdated": 1716857380000
+    },
+    {
+      "id": "data-analysis-agent",
+      "name": "Data Analysis Agent",
+      "status": "active",
+      "capabilities": [
+        "data:query:generate",
+        "data:analyze",
+        "data:schema:optimize"
+      ],
+      "metadata": {
+        "description": "Performs data analysis and query generation"
+      },
+      "lastUpdated": 1716857380000
     },
     {
       "id": "neighborhood-discovery-agent",
@@ -129,7 +113,52 @@
         "version": "1.0.0",
         "supports_anthropic": false
       },
-      "lastUpdated": 1747187565616
+      "lastUpdated": 1747187709384
+    },
+    {
+      "id": "data-quality-agent",
+      "name": "Data Quality Agent",
+      "status": "active",
+      "capabilities": [
+        "data:validate",
+        "data:analyze:quality",
+        "data:repair"
+      ],
+      "metadata": {
+        "description": "Validates data quality and identifies issues in property data",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747187729898
+    },
+    {
+      "id": "compliance-agent",
+      "name": "Compliance Agent",
+      "status": "active",
+      "capabilities": [
+        "compliance:validate",
+        "compliance:check:regulations",
+        "compliance:generate:report"
+      ],
+      "metadata": {
+        "description": "Ensures compliance with Washington State regulations for property assessments",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747187729900
+    },
+    {
+      "id": "cost-analysis-agent",
+      "name": "Cost Analysis Agent",
+      "status": "active",
+      "capabilities": [
+        "cost:analyze",
+        "cost:estimate",
+        "cost:compare"
+      ],
+      "metadata": {
+        "description": "Analyzes building cost data and provides estimation services",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747187729901
     },
     {
       "id": "geo-mapping-agent",
@@ -142,7 +171,23 @@
       "metadata": {
         "description": "Maps and analyzes geographic data for properties and regions"
       },
-      "lastUpdated": 1747187565615
+      "lastUpdated": 1747187729893
+    },
+    {
+      "id": "neighborhood-discovery-agent",
+      "name": "Neighborhood Discovery Agent",
+      "status": "active",
+      "capabilities": [
+        "neighborhood:discover",
+        "neighborhood:analyze",
+        "geographic:pattern:analyze"
+      ],
+      "metadata": {
+        "description": "Identifies and analyzes neighborhoods based on property data patterns",
+        "version": "1.0.0",
+        "supports_anthropic": false
+      },
+      "lastUpdated": 1747187729895
     }
   ]
 }

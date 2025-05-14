@@ -15,6 +15,9 @@ import { debugAgentRegistry } from './debug-logger';
 import diagnosticRoutes from './routes/diagnostic';
 import testRoutes from './routes/test';
 
+// Call to ensure critical agents exist 
+agentRegistry.ensureCriticalAgentsExist();
+
 const router = express.Router();
 
 // Enable debug tracking of agent registry lookups

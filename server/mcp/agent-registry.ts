@@ -29,6 +29,8 @@ interface AgentRegistry {
   updateAgentStatus: (id: string, status: AgentStatus) => void;
   saveToFile: () => void;
   loadFromFile: () => void;
+  ensureCriticalAgentsExist: () => void;
+  initializeAllAgents: () => void;
 }
 
 // Create agent registry instance
@@ -39,6 +41,9 @@ class AgentRegistryImpl implements AgentRegistry {
   constructor() {
     // Load agent definitions from file
     this.loadFromFile();
+    
+    // Make sure critical agents exist after loading
+    this.ensureCriticalAgentsExist();
   }
   
   /**
@@ -136,33 +141,42 @@ class AgentRegistryImpl implements AgentRegistry {
   loadFromFile(): void {
     try {
       if (fs.existsSync(this.registryPath)) {
-        const data = JSON.parse(fs.readFileSync(this.registryPath, 'utf8'));
+        const fileContent = fs.readFileSync(this.registryPath, 'utf8');
+        const data = JSON.parse(fileContent);
         
         // Initialize empty registry
         this.agents = {};
         
-        // Register agents from file
-        if (data.agents && Array.isArray(data.agents)) {
+        // Check if data contains nested agents object
+        if (data.agents && typeof data.agents === 'object') {
+          // If agents is an object map (not an array), use it directly
+          this.agents = data.agents;
+          logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry map at ${this.registryPath}`);
+        } 
+        // If agents is an array, convert to map
+        else if (data.agents && Array.isArray(data.agents)) {
           for (const agentData of data.agents) {
-            // Create agent object with required fields
-            const agent: Agent = {
-              id: agentData.id,
-              name: agentData.name,
-              status: agentData.status || 'inactive',
-              capabilities: agentData.capabilities || [],
-              metadata: {
-                description: agentData.description || '',
-                ...agentData.metadata
-              },
-              lastUpdated: Date.now()
-            };
-            
-            // Register agent
-            this.agents[agent.id] = agent;
+            if (agentData && agentData.id) {
+              // Create agent object with required fields
+              const agent: Agent = {
+                id: agentData.id,
+                name: agentData.name,
+                status: agentData.status || 'inactive',
+                capabilities: agentData.capabilities || [],
+                metadata: agentData.metadata || {
+                  description: agentData.description || ''
+                },
+                lastUpdated: Date.now()
+              };
+              
+              // Register agent
+              this.agents[agent.id] = agent;
+            }
           }
+          logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry array at ${this.registryPath}`);
+        } else {
+          logger.warn(`Agent registry file at ${this.registryPath} has invalid format, initializing with defaults`);
         }
-        
-        logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry at ${this.registryPath}`);
       } else {
         logger.warn(`Agent registry file not found at ${this.registryPath}, initializing empty registry`);
         this.agents = {};
@@ -170,6 +184,44 @@ class AgentRegistryImpl implements AgentRegistry {
     } catch (error) {
       logger.error(`Error loading agent registry from file:`, error);
       this.agents = {};
+    }
+    
+    // Ensure critical agents exist regardless of loading success
+    this.ensureCriticalAgentsExist();
+  }
+  
+  /**
+   * Ensure that critical agents exist in the registry
+   */
+  ensureCriticalAgentsExist(): void {
+    // List of critical agent IDs that must always exist
+    const criticalAgentIds = ['data-quality-agent', 'compliance-agent', 'cost-analysis-agent'];
+    
+    // Check and add each critical agent if missing
+    for (const id of criticalAgentIds) {
+      if (!this.getAgent(id)) {
+        logger.info(`Adding missing critical agent: ${id}`);
+        
+        // Create default agent
+        const agent: Agent = {
+          id,
+          name: id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          status: 'active',
+          capabilities: [],
+          metadata: {
+            description: `Default ${id} implementation`
+          },
+          lastUpdated: Date.now()
+        };
+        
+        // Register agent
+        this.agents[id] = agent;
+      }
+    }
+    
+    // Save changes to disk
+    if (criticalAgentIds.some(id => !this.getAgent(id))) {
+      this.saveToFile();
     }
   }
   
