@@ -201,3 +201,51 @@ class AgentRegistryImpl implements AgentRegistry {
 
 // Create singleton instance
 export const agentRegistry = new AgentRegistryImpl();
+
+// Add commonly used agents if they don't exist
+(function ensureCommonAgents() {
+  // Add data quality agent
+  if (!agentRegistry.getAgent('data-quality-agent')) {
+    const dataQualityAgent: Agent = {
+      id: 'data-quality-agent',
+      name: 'Data Quality Agent', 
+      status: 'active',
+      capabilities: ['data:validate', 'data:analyze:quality'],
+      metadata: {
+        description: 'Validates data quality and identifies issues in property data'
+      },
+      lastUpdated: Date.now()
+    };
+    agentRegistry.registerAgent(dataQualityAgent);
+  }
+  
+  // Add compliance agent
+  if (!agentRegistry.getAgent('compliance-agent')) {
+    const complianceAgent: Agent = {
+      id: 'compliance-agent', 
+      name: 'Compliance Agent',
+      status: 'active',
+      capabilities: ['compliance:check', 'compliance:validate'],
+      metadata: {
+        description: 'Checks data against compliance rules and regulations'
+      },
+      lastUpdated: Date.now()
+    };
+    agentRegistry.registerAgent(complianceAgent);
+  }
+  
+  // Add cost analysis agent
+  if (!agentRegistry.getAgent('cost-analysis-agent')) {
+    const costAnalysisAgent: Agent = {
+      id: 'cost-analysis-agent',
+      name: 'Cost Analysis Agent',
+      status: 'active',
+      capabilities: ['cost:analyze', 'cost:estimate', 'cost:compare'],
+      metadata: {
+        description: 'Analyzes and compares cost data for properties'
+      },
+      lastUpdated: Date.now()
+    };
+    agentRegistry.registerAgent(costAnalysisAgent);
+  }
+})();

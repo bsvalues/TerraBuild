@@ -11,9 +11,18 @@ import { generateDashboardData, clearDashboardCache } from './monitoring/dashboa
 import * as agentModule from './agents';
 import { mcpDevOpsKit } from './devops';
 import { agentRegistry } from './agent-registry';
+import { debugAgentRegistry } from './debug-logger';
 import diagnosticRoutes from './routes/diagnostic';
+import testRoutes from './routes/test';
 
 const router = express.Router();
+
+// Enable debug tracking of agent registry lookups
+debugAgentRegistry(agentRegistry);
+
+// Use diagnostic and test routes
+router.use('/diagnostic', diagnosticRoutes);
+router.use('/test', testRoutes);
 
 // GET /api/mcp/status - Get overall MCP status
 router.get('/status', (req, res) => {
