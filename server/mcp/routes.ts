@@ -79,24 +79,21 @@ router.get('/agents', (req, res) => {
     const agents = [];
     
     // Get all registered agents
-    const agentIds = ['data-quality-agent', 'compliance-agent', 'cost-analysis-agent'];
+    const agentIds = agentRegistry.getAllAgentIds();
     
     for (const agentId of agentIds) {
       const agent = agentRegistry.getAgent(agentId);
       if (!agent) continue;
       
-      // Get agent definition
-      const definition = agent.getDefinition();
-      
       // Get agent health
       const health = agentCoordinator.getAgentHealth(agentId);
       
       agents.push({
-        id: definition.id,
-        name: definition.name,
-        description: definition.description,
-        capabilities: definition.capabilities,
-        status: health
+        id: agent.id,
+        name: agent.name,
+        description: agent.metadata?.description || '',
+        capabilities: agent.capabilities,
+        status: agent.status || health
       });
     }
     
@@ -127,25 +124,17 @@ router.get('/agents/:agentId', (req, res) => {
       });
     }
     
-    // Get agent definition
-    const definition = agent.getDefinition();
-    
-    // Get agent state (exclude memory for brevity)
-    const state = agent.getState();
-    const { memory, ...stateWithoutMemory } = state;
-    
     // Get agent health
     const health = agentCoordinator.getAgentHealth(agentId);
     
     res.json({
       agent: {
-        id: definition.id,
-        name: definition.name,
-        description: definition.description,
-        capabilities: definition.capabilities,
-        state: stateWithoutMemory,
-        status: health,
-        memorySize: memory?.length || 0
+        id: agent.id,
+        name: agent.name,
+        description: agent.metadata?.description || '',
+        capabilities: agent.capabilities,
+        status: agent.status || health,
+        lastUpdated: new Date(agent.lastUpdated).toISOString()
       },
       timestamp: new Date().toISOString()
     });
