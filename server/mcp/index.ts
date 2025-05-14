@@ -75,6 +75,33 @@ function initializeAgents(): void {
       // Continue despite errors to maintain core functionality
     }
     
+    // Initialize our data quality agent
+    try {
+      registerDataQualityAgent();
+      console.log('Data Quality Agent registered successfully');
+    } catch (dqError) {
+      console.error('Error initializing Data Quality Agent:', dqError);
+      // Continue despite errors to maintain core functionality
+    }
+    
+    // Initialize our compliance agent
+    try {
+      registerComplianceAgent();
+      console.log('Compliance Agent registered successfully');
+    } catch (compError) {
+      console.error('Error initializing Compliance Agent:', compError);
+      // Continue despite errors to maintain core functionality
+    }
+    
+    // Initialize our cost analysis agent
+    try {
+      registerCostAnalysisAgent();
+      console.log('Cost Analysis Agent registered successfully');
+    } catch (costError) {
+      console.error('Error initializing Cost Analysis Agent:', costError);
+      // Continue despite errors to maintain core functionality
+    }
+    
     // We don't need to explicitly register agents - they're already in the registry
     // Instead, we'll update the agentRegistry with our new agents by having the 
     // coordinator update its registry

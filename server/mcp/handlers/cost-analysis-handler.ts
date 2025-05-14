@@ -7,6 +7,7 @@
 
 import { logger } from '../../utils/logger';
 import { eventBus } from '../event-bus';
+import { costAnalysisAgent } from '../agents/costAnalysisAgent';
 import type { Agent, AgentStatus } from '../types';
 
 const AGENT_ID = 'cost-analysis-agent';
