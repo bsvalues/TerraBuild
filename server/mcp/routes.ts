@@ -11,6 +11,7 @@ import { generateDashboardData, clearDashboardCache } from './monitoring/dashboa
 import * as agentModule from './agents';
 import { mcpDevOpsKit } from './devops';
 import { agentRegistry } from './agent-registry';
+import diagnosticRoutes from './routes/diagnostic';
 
 const router = express.Router();
 
