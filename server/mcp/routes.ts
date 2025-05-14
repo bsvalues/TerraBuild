@@ -10,12 +10,7 @@ import { cacheMiddleware } from '../utils/cache';
 import { generateDashboardData, clearDashboardCache } from './monitoring/dashboard';
 import * as agentModule from './agents';
 import { mcpDevOpsKit } from './devops';
-
-// Use the agentRegistry from index.ts or create a local reference
-const agentRegistry = (agentModule as any).agentRegistry || {
-  getAgent: (id: string) => null,
-  getAllAgentIds: () => []
-};
+import { agentRegistry } from './agent-registry';
 
 const router = express.Router();
 

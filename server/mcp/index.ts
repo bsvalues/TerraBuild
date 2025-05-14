@@ -14,6 +14,7 @@ import { registerNeighborhoodDiscoveryAgent } from './handlers/neighborhood-disc
 import { registerDataQualityAgent } from './handlers/data-quality-handler';
 import { registerComplianceAgent } from './handlers/compliance-handler';
 import { registerCostAnalysisAgent } from './handlers/cost-analysis-handler';
+import { agentRegistry } from './agent-registry';
 
 /**
  * Initialize the Model Content Protocol (MCP) framework
@@ -59,8 +60,13 @@ function initializeAgents(): void {
     
     // Initialize our geographic mapping agent
     try {
-      initGeoMappingAgent();
-      console.log('Geographic Mapping Agent registered successfully');
+      const geoAgent = initGeoMappingAgent();
+      if (geoAgent) {
+        agentRegistry.registerAgent(geoAgent);
+        console.log('Geographic Mapping Agent registered successfully');
+      } else {
+        console.warn('Geographic Mapping Agent did not return a valid agent object');
+      }
     } catch (geoError) {
       console.error('Error initializing Geographic Mapping Agent:', geoError);
       // Continue despite errors to maintain core functionality
@@ -68,38 +74,41 @@ function initializeAgents(): void {
     
     // Initialize our neighborhood discovery agent
     try {
-      registerNeighborhoodDiscoveryAgent();
+      const neighborhoodAgent = registerNeighborhoodDiscoveryAgent();
+      agentRegistry.registerAgent(neighborhoodAgent);
       console.log('Neighborhood Discovery Agent registered successfully');
     } catch (neiError) {
       console.error('Error initializing Neighborhood Discovery Agent:', neiError);
       // Continue despite errors to maintain core functionality
     }
     
-    // Initialize our data quality agent
+    // Initialize our core agents using the agent registry
     try {
-      registerDataQualityAgent();
-      console.log('Data Quality Agent registered successfully');
-    } catch (dqError) {
-      console.error('Error initializing Data Quality Agent:', dqError);
+      // Initialize all registered agents in our registry
+      agentRegistry.initializeAllAgents();
+    } catch (initError) {
+      console.error('Error initializing agents through registry:', initError);
       // Continue despite errors to maintain core functionality
-    }
-    
-    // Initialize our compliance agent
-    try {
-      registerComplianceAgent();
-      console.log('Compliance Agent registered successfully');
-    } catch (compError) {
-      console.error('Error initializing Compliance Agent:', compError);
-      // Continue despite errors to maintain core functionality
-    }
-    
-    // Initialize our cost analysis agent
-    try {
-      registerCostAnalysisAgent();
-      console.log('Cost Analysis Agent registered successfully');
-    } catch (costError) {
-      console.error('Error initializing Cost Analysis Agent:', costError);
-      // Continue despite errors to maintain core functionality
+      
+      // Try to initialize individual agents as fallback
+      try {
+        // Data Quality Agent
+        const dataQualityAgent = registerDataQualityAgent();
+        agentRegistry.registerAgent(dataQualityAgent);
+        console.log('Data Quality Agent registered successfully');
+        
+        // Compliance Agent
+        const complianceAgent = registerComplianceAgent();
+        agentRegistry.registerAgent(complianceAgent);
+        console.log('Compliance Agent registered successfully');
+        
+        // Cost Analysis Agent
+        const costAnalysisAgent = registerCostAnalysisAgent();
+        agentRegistry.registerAgent(costAnalysisAgent);
+        console.log('Cost Analysis Agent registered successfully');
+      } catch (agentError) {
+        console.error('Error initializing individual agents:', agentError);
+      }
     }
     
     // We don't need to explicitly register agents - they're already in the registry

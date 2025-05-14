@@ -3,82 +3,146 @@
     {
       "id": "costEstimationAgent",
       "name": "Cost Estimation Agent",
-      "description": "Performs valuation prediction based on building type, region, and cost matrix",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Performs valuation prediction based on building type, region, and cost matrix"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "dataQualityAgent",
       "name": "Data Quality Agent",
-      "description": "Scans dataset for missing or invalid fields and reports anomalies",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": false
+      "capabilities": [],
+      "metadata": {
+        "description": "Scans dataset for missing or invalid fields and reports anomalies"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "geospatialAnalysisAgent",
       "name": "Geospatial Analysis Agent",
-      "description": "Validates spatial data for parcels and overlays valuation deltas",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Validates spatial data for parcels and overlays valuation deltas"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "documentProcessingAgent",
       "name": "Document Processing Agent",
-      "description": "Extracts and summarizes building data from scanned PDFs or documents",
       "status": "inactive",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Extracts and summarizes building data from scanned PDFs or documents"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "inquisitorAgent",
       "name": "Inquisitor Agent",
-      "description": "Validates matrix structure and expected fields",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Validates matrix structure and expected fields"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "interpreterAgent",
       "name": "Interpreter Agent",
-      "description": "Parses Excel file into JSON matrix representation",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Parses Excel file into JSON matrix representation"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "visualizerAgent",
       "name": "Visualizer Agent",
-      "description": "Generates insights and cost comparisons",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [],
+      "metadata": {
+        "description": "Generates insights and cost comparisons"
+      },
+      "lastUpdated": 1747186385303
     },
     {
       "id": "data-quality-agent",
-      "name": "Legacy Data Quality Agent",
-      "description": "Legacy agent for data quality checks",
+      "name": "Data Quality Agent",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [
+        "data:validate",
+        "data:analyze:quality",
+        "data:repair"
+      ],
+      "metadata": {
+        "description": "Validates data quality and identifies issues in property data",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747186385549
     },
     {
       "id": "compliance-agent",
-      "name": "Legacy Compliance Agent",
-      "description": "Legacy agent for compliance checks",
+      "name": "Compliance Agent",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [
+        "compliance:validate",
+        "compliance:check:regulations",
+        "compliance:generate:report"
+      ],
+      "metadata": {
+        "description": "Ensures compliance with Washington State regulations for property assessments",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747186385551
     },
     {
       "id": "cost-analysis-agent",
-      "name": "Legacy Cost Analysis Agent",
-      "description": "Legacy agent for cost analysis",
+      "name": "Cost Analysis Agent",
       "status": "active",
-      "endpoint": "/mcp/agent/run",
-      "requiresInput": true
+      "capabilities": [
+        "cost:analyze",
+        "cost:estimate",
+        "cost:compare"
+      ],
+      "metadata": {
+        "description": "Analyzes building cost data and provides estimation services",
+        "version": "1.0.0"
+      },
+      "lastUpdated": 1747186385554
+    },
+    {
+      "id": "neighborhood-discovery-agent",
+      "name": "Neighborhood Discovery Agent",
+      "status": "active",
+      "capabilities": [
+        "neighborhood:discover",
+        "neighborhood:analyze",
+        "geographic:pattern:analyze"
+      ],
+      "metadata": {
+        "description": "Identifies and analyzes neighborhoods based on property data patterns",
+        "version": "1.0.0",
+        "supports_anthropic": false
+      },
+      "lastUpdated": 1747186385541
+    },
+    {
+      "id": "geo-mapping-agent",
+      "name": "Geographic Mapping Agent",
+      "status": "active",
+      "capabilities": [
+        "geography:map:property",
+        "geography:analyze:region"
+      ],
+      "metadata": {
+        "description": "Maps and analyzes geographic data for properties and regions"
+      },
+      "lastUpdated": 1747186385539
     }
   ]
 }

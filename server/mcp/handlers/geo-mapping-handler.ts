@@ -6,13 +6,27 @@
 
 import { geoMappingAgent } from '../agents/geo-mapping-agent';
 import { eventBus } from '../event-bus';
-import { MCPEvent } from '../types';
+import { MCPEvent, Agent, AgentStatus } from '../types';
 
 /**
  * Initialize the Geographic Mapping Agent and register its handlers
+ * @returns Agent object for registration
  */
 export function initGeoMappingAgent() {
   console.log('Initializing Geographic Mapping Agent');
+  
+  // Create agent object for registration
+  const agentStatus: AgentStatus = 'active';
+  const agent: Agent = {
+    id: 'geo-mapping-agent',
+    name: 'Geographic Mapping Agent',
+    status: agentStatus,
+    capabilities: ['geography:map:property', 'geography:analyze:region'],
+    metadata: {
+      description: 'Maps and analyzes geographic data for properties and regions'
+    },
+    lastUpdated: Date.now()
+  };
   
   // Register handler for property geography mapping
   eventBus.subscribe('geography:map:property', async (event: MCPEvent) => {
@@ -92,4 +106,7 @@ export function initGeoMappingAgent() {
   });
   
   console.log('Geographic Mapping Agent initialized successfully');
+  
+  // Return the agent for registration
+  return agent;
 }
