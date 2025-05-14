@@ -160,3 +160,78 @@ export async function testCostAnalysisAgent(
     throw new Error('Failed to test cost analysis agent');
   }
 }
+
+/**
+ * Validate a region value using the Data Quality Agent
+ * @param regionValue The region value to validate
+ * @param regionType The type of region (city, tca, hood_code, township_range)
+ * @returns Validation results
+ */
+export async function validateRegion(regionValue: string, regionType: 'city' | 'tca' | 'hood_code' | 'township_range'): Promise<any> {
+  try {
+    const response = await apiRequest('/mcp/diagnostic/validate-region', {
+      method: 'POST',
+      body: JSON.stringify({
+        regionValue,
+        regionType
+      })
+    });
+    return response;
+  } catch (error) {
+    console.error('Error validating region:', error);
+    throw new Error(`Failed to validate ${regionType} region: ${regionValue}`);
+  }
+}
+
+/**
+ * Validate cost matrix data
+ * @param matrices Array of cost matrices to validate
+ * @param includeQualityMetrics Whether to include quality metrics in the results
+ * @param detectAnomalies Whether to detect anomalies in the data
+ * @returns Validation results
+ */
+export async function validateCostMatrix(
+  matrices: any[],
+  includeQualityMetrics = false,
+  detectAnomalies = false
+): Promise<any> {
+  try {
+    const response = await apiRequest('/mcp/diagnostic/validate-cost-matrix', {
+      method: 'POST',
+      body: JSON.stringify({
+        matrices,
+        includeQualityMetrics,
+        detectAnomalies
+      })
+    });
+    return response;
+  } catch (error) {
+    console.error('Error validating cost matrix:', error);
+    throw new Error('Failed to validate cost matrix');
+  }
+}
+
+/**
+ * Analyze cost matrix data quality
+ * @param matrices Array of cost matrices to analyze
+ * @param detectAnomalies Whether to detect anomalies in the data
+ * @returns Analysis results
+ */
+export async function analyzeCostQuality(
+  matrices: any[],
+  detectAnomalies = false
+): Promise<any> {
+  try {
+    const response = await apiRequest('/mcp/diagnostic/analyze-cost-quality', {
+      method: 'POST',
+      body: JSON.stringify({
+        matrices,
+        detectAnomalies
+      })
+    });
+    return response;
+  } catch (error) {
+    console.error('Error analyzing cost quality:', error);
+    throw new Error('Failed to analyze cost quality');
+  }
+}

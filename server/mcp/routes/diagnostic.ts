@@ -118,16 +118,16 @@ router.post('/validate-cost-matrix', (req, res) => {
       const completedHandler = (event: any) => {
         if (event.payload?.requestId === requestId) {
           resolve(event.payload.result);
-          eventBus.unsubscribe('data:validate:completed', completedHandler);
-          eventBus.unsubscribe('data:validate:failed', failedHandler);
+          eventBus.unsubscribe('data:validate:completed', completedHandler as any);
+          eventBus.unsubscribe('data:validate:failed', failedHandler as any);
         }
       };
       
       const failedHandler = (event: any) => {
         if (event.payload?.requestId === requestId) {
           resolve({ success: false, error: event.payload.error });
-          eventBus.unsubscribe('data:validate:completed', completedHandler);
-          eventBus.unsubscribe('data:validate:failed', failedHandler);
+          eventBus.unsubscribe('data:validate:completed', completedHandler as any);
+          eventBus.unsubscribe('data:validate:failed', failedHandler as any);
         }
       };
       
@@ -192,16 +192,16 @@ router.post('/analyze-cost-quality', (req, res) => {
       const completedHandler = (event: any) => {
         if (event.payload?.requestId === requestId) {
           resolve(event.payload.result);
-          eventBus.unsubscribe('data:analyze:quality:completed', completedHandler);
-          eventBus.unsubscribe('data:analyze:quality:failed', failedHandler);
+          eventBus.unsubscribe('data:analyze:quality:completed', completedHandler as any);
+          eventBus.unsubscribe('data:analyze:quality:failed', failedHandler as any);
         }
       };
       
       const failedHandler = (event: any) => {
         if (event.payload?.requestId === requestId) {
           resolve({ success: false, error: event.payload.error });
-          eventBus.unsubscribe('data:analyze:quality:completed', completedHandler);
-          eventBus.unsubscribe('data:analyze:quality:failed', failedHandler);
+          eventBus.unsubscribe('data:analyze:quality:completed', completedHandler as any);
+          eventBus.unsubscribe('data:analyze:quality:failed', failedHandler as any);
         }
       };
       
