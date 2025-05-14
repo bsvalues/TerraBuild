@@ -177,18 +177,25 @@ class MCPDevOpsKit {
       // Get agent health data from coordinator
       const agentHealth = agentCoordinator.getAgentHealth() as Record<string, any>;
       
-      // Update agent registry with current status
-      for (const agent of this.agentRegistry.agents) {
-        const health = agentHealth[agent.id];
-        
-        if (health) {
-          // Update status based on health
-          const newStatus = health.status === 'HEALTHY' || health.status === 'DEGRADED' 
-            ? 'active' 
-            : 'inactive';
-            
-          if (agent.status !== newStatus) {
-            this.updateAgentStatus(agent.id, newStatus as any);
+      // Handle the agents collection whether it's an object or an array
+      const agents = Array.isArray(this.agentRegistry.agents) 
+        ? this.agentRegistry.agents 
+        : Object.values(this.agentRegistry.agents || {});
+      
+      // Update each agent's status based on health data
+      for (const agent of agents) {
+        if (agent && agent.id) {
+          const health = agentHealth[agent.id];
+          
+          if (health) {
+            // Update status based on health
+            const newStatus = health.status === 'HEALTHY' || health.status === 'DEGRADED' 
+              ? 'active' 
+              : 'inactive';
+              
+            if (agent.status !== newStatus) {
+              this.updateAgentStatus(agent.id, newStatus as any);
+            }
           }
         }
       }
@@ -219,12 +226,20 @@ class MCPDevOpsKit {
   public getAgentStatuses(): Record<string, any> {
     const statuses: Record<string, any> = {};
     
-    for (const agent of this.agentRegistry.agents) {
-      statuses[agent.id] = {
-        id: agent.id,
-        status: agent.status,
-        health: agentCoordinator.getAgentHealth(agent.id)
-      };
+    // Handle the agents collection whether it's an object or an array
+    const agents = Array.isArray(this.agentRegistry.agents) 
+      ? this.agentRegistry.agents 
+      : Object.values(this.agentRegistry.agents || {});
+      
+    // Process each agent
+    for (const agent of agents) {
+      if (agent && agent.id) {
+        statuses[agent.id] = {
+          id: agent.id,
+          status: agent.status,
+          health: agentCoordinator.getAgentHealth(agent.id)
+        };
+      }
     }
     
     return statuses;
