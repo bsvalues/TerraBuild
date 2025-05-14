@@ -135,10 +135,16 @@ function registerEventHandlers(): void {
  */
 async function validateData(data: any): Promise<any> {
   // Implementation of data validation logic
-  const validationResults = {
+  const validationResults: {
+    success: boolean;
+    issues: any[];
+    regionIssues: any[];
+    message: string;
+    [key: string]: any; // Allow for dynamic properties like qualityMetrics, anomalies
+  } = {
     success: true,
-    issues: [] as any[],
-    regionIssues: [] as any[],
+    issues: [],
+    regionIssues: [],
     message: 'Data validation completed successfully'
   };
   
@@ -245,7 +251,25 @@ async function validateData(data: any): Promise<any> {
  */
 async function analyzeQuality(data: any): Promise<any> {
   // Implementation of data quality analysis logic
-  const analysisResults = {
+  const analysisResults: {
+    success: boolean;
+    metrics: {
+      completeness: number;
+      accuracy: number;
+      consistency: number;
+      overall: number;
+    };
+    regionCoverage: {
+      cities: number;
+      tcas: number;
+      hood_codes: number;
+      township_ranges: number;
+    };
+    recommendations: string[];
+    anomalies: any[];
+    message: string;
+    [key: string]: any; // Allow for dynamic properties like anomalySummary
+  } = {
     success: true,
     metrics: {
       completeness: 0,
@@ -253,16 +277,92 @@ async function analyzeQuality(data: any): Promise<any> {
       consistency: 0,
       overall: 0
     },
-    recommendations: [] as string[],
+    regionCoverage: {
+      cities: 0,
+      tcas: 0,
+      hood_codes: 0,
+      township_ranges: 0
+    },
+    recommendations: [],
+    anomalies: [],
     message: 'Quality analysis completed successfully'
   };
   
-  // Example analysis logic
-  if (data && data.properties) {
+  if (!data) {
+    analysisResults.success = false;
+    analysisResults.message = 'No data provided for analysis';
+    return analysisResults;
+  }
+  
+  // Check if this is a cost matrix quality analysis request
+  if (data.type === 'cost_matrix' || data.matrices) {
+    try {
+      // Use the enhanced data quality agent
+      const qualityMetrics = dataQualityAgent.analyzeCostDataQuality(data);
+      
+      // Map quality metrics to our response format
+      if (qualityMetrics.metrics) {
+        analysisResults.metrics = qualityMetrics.metrics;
+      }
+      
+      if (qualityMetrics.recommendations) {
+        analysisResults.recommendations = qualityMetrics.recommendations;
+      }
+      
+      if (qualityMetrics.quality_score !== undefined) {
+        analysisResults.metrics.overall = qualityMetrics.quality_score;
+      }
+      
+      // Add region coverage
+      if (qualityMetrics.region_coverage) {
+        analysisResults.regionCoverage = qualityMetrics.region_coverage;
+      }
+      
+      // Check for anomalies if requested
+      if (data.detectAnomalies) {
+        const anomalyResults = dataQualityAgent.detectCostAnomalies(data);
+        
+        if (anomalyResults.anomalies) {
+          analysisResults.anomalies = anomalyResults.anomalies;
+        }
+        
+        // Add summary of anomalies if available
+        if (anomalyResults.summary) {
+          // @ts-ignore - Adding dynamic property
+          analysisResults.anomalySummary = anomalyResults.summary;
+          
+          // Add recommendations based on anomalies
+          if (anomalyResults.summary.critical_anomalies > 0) {
+            analysisResults.recommendations.push(
+              `Review ${anomalyResults.summary.critical_anomalies} critical cost anomalies that may affect assessment accuracy`
+            );
+          }
+        }
+      }
+      
+      return analysisResults;
+    } catch (error: any) {
+      logger.error('Error in cost matrix quality analysis:', error);
+      analysisResults.success = false;
+      analysisResults.message = error?.message || 'Error analyzing cost matrix quality';
+      return analysisResults;
+    }
+  }
+  
+  // Otherwise, handle property data analysis (original functionality)
+  if (data.properties) {
     const totalProperties = data.properties.length;
     let completeProperties = 0;
     let fieldsPresent = 0;
     let totalFields = 0;
+    
+    // Track region information
+    const regionCounts = {
+      city: 0,
+      tca: 0,
+      hood_code: 0,
+      township_range: 0
+    };
     
     for (const property of data.properties) {
       const requiredFields = ['id', 'address', 'type', 'value', 'year_built'];
@@ -274,6 +374,15 @@ async function analyzeQuality(data: any): Promise<any> {
       if (presentFields.length === requiredFields.length) {
         completeProperties++;
       }
+      
+      // Count regions by type
+      if (property.regions) {
+        for (const [regionType, regionValue] of Object.entries(property.regions)) {
+          if (regionValue && regionCounts[regionType as keyof typeof regionCounts] !== undefined) {
+            regionCounts[regionType as keyof typeof regionCounts]++;
+          }
+        }
+      }
     }
     
     // Calculate quality metrics
@@ -284,10 +393,46 @@ async function analyzeQuality(data: any): Promise<any> {
                                       analysisResults.metrics.accuracy + 
                                       analysisResults.metrics.consistency) / 3;
     
+    // Calculate region coverage
+    const expectedCities = 6; // Richland, Kennewick, Pasco, West Richland, Benton City, Prosser
+    analysisResults.regionCoverage.cities = totalProperties > 0 
+      ? Math.min(100, (regionCounts.city / totalProperties) * 100) 
+      : 0;
+      
+    analysisResults.regionCoverage.tcas = totalProperties > 0 
+      ? Math.min(100, (regionCounts.tca / totalProperties) * 100) 
+      : 0;
+      
+    analysisResults.regionCoverage.hood_codes = totalProperties > 0 
+      ? Math.min(100, (regionCounts.hood_code / totalProperties) * 100) 
+      : 0;
+      
+    analysisResults.regionCoverage.township_ranges = totalProperties > 0 
+      ? Math.min(100, (regionCounts.township_range / totalProperties) * 100) 
+      : 0;
+    
     // Generate recommendations
     if (analysisResults.metrics.completeness < 90) {
       analysisResults.recommendations.push(
         'Improve data completeness by ensuring all properties have required fields'
+      );
+    }
+    
+    if (analysisResults.regionCoverage.cities < 80) {
+      analysisResults.recommendations.push(
+        'Increase city region coverage to improve geo-spatial analysis capabilities'
+      );
+    }
+    
+    if (analysisResults.regionCoverage.tcas < 70) {
+      analysisResults.recommendations.push(
+        'Add more Tax Code Area assignments to properties for better tax district analysis'
+      );
+    }
+    
+    if (analysisResults.regionCoverage.hood_codes < 60) {
+      analysisResults.recommendations.push(
+        'Improve Hood Code coverage for neighborhood-level assessments'
       );
     }
   }
