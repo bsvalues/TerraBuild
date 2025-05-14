@@ -146,15 +146,15 @@ const RegionVisualization: React.FC<RegionVisualizationProps> = ({
   const getCategoryColor = (category: string): string => {
     switch (category) {
       case 'City':
-        return 'bg-blue-500 text-white';
+        return 'bg-blue-500 text-white hover:bg-blue-600 border-blue-700 shadow-sm';
       case 'TCA':
-        return 'bg-amber-500 text-white';
+        return 'bg-amber-500 text-white hover:bg-amber-600 border-amber-700 shadow-sm';
       case 'Hood Code':
-        return 'bg-emerald-500 text-white';
+        return 'bg-emerald-500 text-white hover:bg-emerald-600 border-emerald-700 shadow-sm';
       case 'Township-Range':
-        return 'bg-purple-500 text-white';
+        return 'bg-purple-500 text-white hover:bg-purple-600 border-purple-700 shadow-sm';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-500 text-white hover:bg-gray-600 border-gray-700 shadow-sm';
     }
   };
 
@@ -243,8 +243,8 @@ const RegionVisualization: React.FC<RegionVisualizationProps> = ({
               className={isHighlighted ? 'border-primary' : ''}
             >
               <CardHeader className={compact ? 'p-3' : 'p-4'}>
-                <CardTitle className={`${compact ? 'text-sm' : 'text-md'} flex items-center gap-2`}>
-                  {getCategoryIcon(category)}
+                <CardTitle className={`${compact ? 'text-sm' : 'text-md'} flex items-center gap-2 font-medium`}>
+                  <span className="text-primary">{getCategoryIcon(category)}</span>
                   {category} Identifiers
                 </CardTitle>
               </CardHeader>
@@ -264,12 +264,15 @@ const RegionVisualization: React.FC<RegionVisualizationProps> = ({
                     </Badge>
                   ))}
                   {regionsByCategory[category].length > (compact ? 5 : 10) && (
-                    <Badge variant="outline" className="bg-gray-200 dark:bg-gray-800">
+                    <Badge 
+                      variant="outline" 
+                      className="bg-slate-200 hover:bg-slate-300 text-slate-700 border-slate-400 shadow-sm dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600"
+                    >
                       +{regionsByCategory[category].length - (compact ? 5 : 10)} more
                     </Badge>
                   )}
                 </div>
-                <p className={`text-xs text-muted-foreground mt-2 ${compact ? 'line-clamp-2' : ''}`}>
+                <p className={`text-xs text-muted-foreground mt-2 ${compact ? 'line-clamp-2' : ''} italic`}>
                   {category === 'City' && 'Incorporated municipalities like Richland, Kennewick, etc.'}
                   {category === 'TCA' && 'Tax Code Areas are numeric codes like 1111H, 1210 designating tax jurisdictions.'}
                   {category === 'Hood Code' && 'Neighborhood identifiers in format "52100 100" representing assessment areas.'}
