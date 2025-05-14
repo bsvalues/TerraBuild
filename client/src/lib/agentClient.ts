@@ -134,6 +134,9 @@ export async function testComplianceAgent(testData?: any, regulationCode?: strin
   try {
     const response = await apiRequest('/mcp/test/compliance', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         testData,
         regulationCode
@@ -161,6 +164,9 @@ export async function testCostAnalysisAgent(
   try {
     const response = await apiRequest('/mcp/test/cost-analysis', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         buildingType,
         squareFeet,
