@@ -124,8 +124,9 @@ class AgentRegistryImpl implements AgentRegistry {
    */
   saveToFile(): void {
     try {
+      // Save as an object map for direct access by ID
       const data = {
-        agents: this.getAllAgents()
+        agents: this.agents
       };
       
       fs.writeFileSync(this.registryPath, JSON.stringify(data, null, 2));
@@ -142,6 +143,13 @@ class AgentRegistryImpl implements AgentRegistry {
     try {
       if (fs.existsSync(this.registryPath)) {
         const fileContent = fs.readFileSync(this.registryPath, 'utf8');
+        
+        if (!fileContent || fileContent.trim() === '') {
+          logger.warn(`Agent registry file at ${this.registryPath} is empty, initializing with defaults`);
+          this.agents = {};
+          return;
+        }
+        
         const data = JSON.parse(fileContent);
         
         // Initialize empty registry
@@ -149,31 +157,35 @@ class AgentRegistryImpl implements AgentRegistry {
         
         // Check if data contains nested agents object
         if (data.agents && typeof data.agents === 'object') {
-          // If agents is an object map (not an array), use it directly
-          this.agents = data.agents;
-          logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry map at ${this.registryPath}`);
-        } 
-        // If agents is an array, convert to map
-        else if (data.agents && Array.isArray(data.agents)) {
-          for (const agentData of data.agents) {
-            if (agentData && agentData.id) {
-              // Create agent object with required fields
-              const agent: Agent = {
-                id: agentData.id,
-                name: agentData.name,
-                status: agentData.status || 'inactive',
-                capabilities: agentData.capabilities || [],
-                metadata: agentData.metadata || {
-                  description: agentData.description || ''
-                },
-                lastUpdated: Date.now()
-              };
-              
-              // Register agent
-              this.agents[agent.id] = agent;
+          if (!Array.isArray(data.agents)) {
+            // If agents is an object map (not an array), use it directly
+            this.agents = data.agents;
+            logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry map at ${this.registryPath}`);
+          } else {
+            // If agents is an array, convert to map
+            for (const agentData of data.agents) {
+              if (agentData && agentData.id) {
+                // Create agent object with required fields
+                const agent: Agent = {
+                  id: agentData.id,
+                  name: agentData.name,
+                  status: agentData.status || 'inactive',
+                  capabilities: agentData.capabilities || [],
+                  metadata: agentData.metadata || {
+                    description: agentData.description || ''
+                  },
+                  lastUpdated: Date.now()
+                };
+                
+                // Register agent
+                this.agents[agent.id] = agent;
+              }
             }
+            logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry array at ${this.registryPath}`);
+            
+            // Save back in object format to prevent future issues
+            this.saveToFile();
           }
-          logger.info(`Loaded ${Object.keys(this.agents).length} agents from registry array at ${this.registryPath}`);
         } else {
           logger.warn(`Agent registry file at ${this.registryPath} has invalid format, initializing with defaults`);
         }
@@ -186,8 +198,59 @@ class AgentRegistryImpl implements AgentRegistry {
       this.agents = {};
     }
     
-    // Ensure critical agents exist regardless of loading success
-    this.ensureCriticalAgentsExist();
+    // Always initialize three critical agents
+    this._initializeCriticalAgents();
+  }
+  
+  /**
+   * Initialize critical agents if they don't exist
+   * @private
+   */
+  private _initializeCriticalAgents(): void {
+    // Add data quality agent
+    if (!this.agents['data-quality-agent']) {
+      this.agents['data-quality-agent'] = {
+        id: 'data-quality-agent',
+        name: 'Data Quality Agent',
+        status: 'active',
+        capabilities: ['data:validate', 'data:analyze:quality'],
+        metadata: {
+          description: 'Validates data quality and identifies issues in property data'
+        },
+        lastUpdated: Date.now()
+      };
+    }
+    
+    // Add compliance agent
+    if (!this.agents['compliance-agent']) {
+      this.agents['compliance-agent'] = {
+        id: 'compliance-agent',
+        name: 'Compliance Agent',
+        status: 'active',
+        capabilities: ['compliance:check', 'compliance:validate'],
+        metadata: {
+          description: 'Checks data against compliance rules and regulations'
+        },
+        lastUpdated: Date.now()
+      };
+    }
+    
+    // Add cost analysis agent
+    if (!this.agents['cost-analysis-agent']) {
+      this.agents['cost-analysis-agent'] = {
+        id: 'cost-analysis-agent',
+        name: 'Cost Analysis Agent',
+        status: 'active',
+        capabilities: ['cost:analyze', 'cost:estimate', 'cost:compare'],
+        metadata: {
+          description: 'Analyzes and compares cost data for properties'
+        },
+        lastUpdated: Date.now()
+      };
+    }
+    
+    // Save to ensure critical agents are persisted
+    this.saveToFile();
   }
   
   /**
