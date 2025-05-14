@@ -23,32 +23,37 @@ export function registerDataQualityAgent(): Agent {
     // Subscribe to events for this agent
     registerEventHandlers();
     
+    // Create the agent definition
+    const agent: Agent = {
+      id: AGENT_ID,
+      name: AGENT_NAME,
+      status: 'active',
+      capabilities: [
+        'data:validate',
+        'data:analyze:quality',
+        'data:repair'
+      ],
+      metadata: {
+        description: 'Validates data quality and identifies issues in property data',
+        version: '1.0.0'
+      },
+      lastUpdated: Date.now()
+    };
+    
     // Notify system that agent is initialized
-    eventBus.emit('agent:initialized', {
+    eventBus.publish('agent:initialized', {
       agentId: AGENT_ID,
       agentName: AGENT_NAME
     });
     
     logger.info(`[TerraBuild] ${AGENT_NAME} registered successfully`);
     
-    return {
-      id: AGENT_ID,
-      name: AGENT_NAME,
-      status: 'active' as AgentStatus,
-      validateData: async (payload: any) => {
-        logger.info(`${AGENT_NAME} validating data`);
-        return { success: true, results: [], message: 'Data validation completed' };
-      },
-      analyzeQuality: async (payload: any) => {
-        logger.info(`${AGENT_NAME} analyzing data quality`);
-        return { success: true, results: [], message: 'Quality analysis completed' };
-      }
-    };
+    return agent;
   } catch (error) {
     logger.error(`Error initializing ${AGENT_NAME}:`, error);
     
     // Emit error event
-    eventBus.emit('agent:error', {
+    eventBus.publish('agent:error', {
       agentId: AGENT_ID,
       error: error
     });
@@ -62,13 +67,13 @@ export function registerDataQualityAgent(): Agent {
  */
 function registerEventHandlers(): void {
   // Subscribe to data quality validation request events
-  eventBus.subscribe('data:validate:request', async (event: any) => {
+  eventBus.subscribe('data:validate:request', async (event) => {
     try {
       logger.info('Data Quality Agent processing validation request');
-      const result = await dataQualityAgent.validateData(event.payload);
+      const result = await validateData(event.payload);
       
       // Emit success event with results
-      eventBus.emit('data:validate:completed', {
+      eventBus.publish('data:validate:completed', {
         requestId: event.id,
         result
       });
@@ -76,7 +81,7 @@ function registerEventHandlers(): void {
       logger.error('Error handling data validation request:', error);
       
       // Emit failure event
-      eventBus.emit('data:validate:failed', {
+      eventBus.publish('data:validate:failed', {
         requestId: event.id,
         error
       });
@@ -84,13 +89,13 @@ function registerEventHandlers(): void {
   });
   
   // Subscribe to data quality analysis request events
-  eventBus.subscribe('data:analyze:quality:request', async (event: any) => {
+  eventBus.subscribe('data:analyze:quality:request', async (event) => {
     try {
       logger.info('Data Quality Agent processing quality analysis request');
-      const result = { success: true, data: [], message: 'Quality analysis completed' };
+      const result = await analyzeQuality(event.payload);
       
       // Emit success event with results
-      eventBus.emit('data:analyze:quality:completed', {
+      eventBus.publish('data:analyze:quality:completed', {
         requestId: event.id,
         result
       });
@@ -98,10 +103,118 @@ function registerEventHandlers(): void {
       logger.error('Error handling data quality analysis request:', error);
       
       // Emit failure event
-      eventBus.emit('data:analyze:quality:failed', {
+      eventBus.publish('data:analyze:quality:failed', {
         requestId: event.id,
         error
       });
     }
   });
+  
+  // Update agent status when the agent initializes
+  eventBus.subscribe('agent:initialized', (event) => {
+    const { agentId } = event.payload || {};
+    
+    if (agentId === AGENT_ID) {
+      logger.info(`Agent ${AGENT_NAME} initialized`);
+      
+      // Notify about agent status
+      eventBus.publish('agent:status', {
+        agentId: AGENT_ID,
+        status: 'active',
+        message: `${AGENT_NAME} is ready`
+      });
+    }
+  });
+}
+
+/**
+ * Validate data quality
+ * 
+ * @param data The data to validate
+ * @returns Validation results
+ */
+async function validateData(data: any): Promise<any> {
+  // Implementation of data validation logic
+  const validationResults = {
+    success: true,
+    issues: [] as any[],
+    message: 'Data validation completed successfully'
+  };
+  
+  // Example validation logic
+  if (data) {
+    // Check for required fields
+    if (data.properties) {
+      for (const property of data.properties) {
+        if (!property.id || !property.address) {
+          validationResults.issues.push({
+            severity: 'error',
+            message: 'Property missing required fields',
+            property: property.id || 'unknown'
+          });
+          validationResults.success = false;
+        }
+      }
+    }
+  }
+  
+  return validationResults;
+}
+
+/**
+ * Analyze data quality
+ * 
+ * @param data The data to analyze
+ * @returns Analysis results
+ */
+async function analyzeQuality(data: any): Promise<any> {
+  // Implementation of data quality analysis logic
+  const analysisResults = {
+    success: true,
+    metrics: {
+      completeness: 0,
+      accuracy: 0,
+      consistency: 0,
+      overall: 0
+    },
+    recommendations: [] as string[],
+    message: 'Quality analysis completed successfully'
+  };
+  
+  // Example analysis logic
+  if (data && data.properties) {
+    const totalProperties = data.properties.length;
+    let completeProperties = 0;
+    let fieldsPresent = 0;
+    let totalFields = 0;
+    
+    for (const property of data.properties) {
+      const requiredFields = ['id', 'address', 'type', 'value', 'year_built'];
+      const presentFields = requiredFields.filter(field => property[field] !== undefined);
+      
+      fieldsPresent += presentFields.length;
+      totalFields += requiredFields.length;
+      
+      if (presentFields.length === requiredFields.length) {
+        completeProperties++;
+      }
+    }
+    
+    // Calculate quality metrics
+    analysisResults.metrics.completeness = totalProperties > 0 ? (completeProperties / totalProperties) * 100 : 0;
+    analysisResults.metrics.accuracy = 95; // Placeholder - would need more sophisticated analysis
+    analysisResults.metrics.consistency = totalFields > 0 ? (fieldsPresent / totalFields) * 100 : 0;
+    analysisResults.metrics.overall = (analysisResults.metrics.completeness + 
+                                      analysisResults.metrics.accuracy + 
+                                      analysisResults.metrics.consistency) / 3;
+    
+    // Generate recommendations
+    if (analysisResults.metrics.completeness < 90) {
+      analysisResults.recommendations.push(
+        'Improve data completeness by ensuring all properties have required fields'
+      );
+    }
+  }
+  
+  return analysisResults;
 }
