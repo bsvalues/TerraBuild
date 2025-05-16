@@ -18,7 +18,7 @@ import DiagnosticPage from '@/pages/diagnostic';
 import CalculatorPage from '@/pages/calculator-page';
 import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
-import DocumentationPage from '@/pages/documentation';
+import DocumentationPage from '@/pages/documentation-new';
 import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
 import TrendAnalysisPage from '@/pages/trend-analysis';
