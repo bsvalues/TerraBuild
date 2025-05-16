@@ -62,8 +62,9 @@ app.use((req, res, next) => {
   
   // Create default users for database authentication
   try {
-    const { createDefaultUsers } = require('./create-default-users');
-    await createDefaultUsers();
+    // Import using dynamic import() for ES modules compatibility
+    const defaultUsersModule = await import('./create-default-users');
+    await defaultUsersModule.createDefaultUsers();
   } catch (error) {
     log(`Default user creation error: ${error}`, 'error');
   }

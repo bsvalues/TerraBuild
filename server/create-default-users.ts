@@ -6,8 +6,9 @@ import { users } from '../shared/schema';
  */
 export async function createDefaultUsers() {
   try {
-    // Check if admin user already exists
-    const [existingAdmin] = await db.select().from(users).where({ username: 'admin' });
+    // Check if admin user already exists by querying with a primitive value
+    const adminResults = await db.select().from(users).where(users.username, '=', 'admin');
+    const existingAdmin = adminResults.length > 0 ? adminResults[0] : null;
     
     if (!existingAdmin) {
       console.log('Creating default admin user...');
@@ -20,8 +21,9 @@ export async function createDefaultUsers() {
       });
     }
     
-    // Check if regular user already exists
-    const [existingUser] = await db.select().from(users).where({ username: 'user' });
+    // Check if regular user already exists by querying with a primitive value
+    const userResults = await db.select().from(users).where(users.username, '=', 'user');
+    const existingUser = userResults.length > 0 ? userResults[0] : null;
     
     if (!existingUser) {
       console.log('Creating default regular user...');
@@ -37,5 +39,6 @@ export async function createDefaultUsers() {
     console.log('Default users setup complete');
   } catch (error) {
     console.error('Error creating default users:', error);
+    throw error; // Rethrow so we can see the full error
   }
 }
