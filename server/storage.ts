@@ -1,22 +1,19 @@
 import { 
   User, InsertUser, 
   Property, InsertProperty,
-  BuildingType, InsertBuildingType,
-  Region, InsertRegion,
+  BuildingType,
   Improvement, InsertImprovement,
-  ImprovementDetail, InsertImprovementDetail,
   CostMatrix, InsertCostMatrix,
   Session, InsertSession,
   Calculation, InsertCalculation,
   Project, InsertProject,
-  ProjectMember, InsertProjectMember,
-  ProjectProperty, InsertProjectProperty,
-  FileUpload, InsertFileUpload,
-  Setting, InsertSetting
+  projectProperties
 } from "../shared/schema";
+import * as schema from "../shared/schema";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { db, pool } from "./db";
+import { eq, and } from "drizzle-orm";
 
 /**
  * Storage Interface for TerraBuild platform.
@@ -1401,5 +1398,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-// No direct export here - use storage from storage-factory.ts
-// Don't create a circular reference
+// Export both storage implementations for use in the storage factory
+export * from './storage-factory';

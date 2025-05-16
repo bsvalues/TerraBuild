@@ -5,9 +5,7 @@
  * based on the configuration, aligned with TerraFusionMono repository structure.
  */
 
-import { IStorage } from './storage';
-import { MemStorage } from './storage';
-import { DatabaseStorage } from './database-storage';
+import { IStorage, MemStorage, DatabaseStorage } from './storage';
 import { logger } from './utils/logger';
 
 /**
