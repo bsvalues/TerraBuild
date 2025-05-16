@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { Navbar } from '@/components/layout/Navbar';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useSidebar } from '@/contexts/SidebarContext';
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <Header toggleSidebar={toggle} />
+        <Navbar />
         
         <ScrollArea className="flex-1 bg-gradient-to-br from-blue-950 to-blue-900">
           <main className="container mx-auto max-w-7xl px-4 py-6">
