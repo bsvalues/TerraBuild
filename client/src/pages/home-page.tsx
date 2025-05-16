@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/auth-context-fixed';
 import { 
   BarChart, 
   Building, 

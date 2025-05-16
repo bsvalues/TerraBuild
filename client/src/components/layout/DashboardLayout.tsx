@@ -5,7 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useSidebar } from '@/contexts/SidebarContext';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/auth-context-fixed';
 
 interface DashboardLayoutProps {
   children: ReactNode;

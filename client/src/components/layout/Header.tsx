@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, HelpCircle, Menu, Settings, User, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/auth-context-fixed';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
