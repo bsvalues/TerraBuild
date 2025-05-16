@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context-fixed";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
   const { loginMutation } = useAuth();
-  const navigate = useNavigate();
   const [, setLocation] = useLocation();
 
   // Handle form submission
