@@ -80,7 +80,7 @@ const agents = [
     memory: 128,
     capabilities: ['data:analyze', 'data:query:generate', 'data:schema:optimize'],
     owner: 'system',
-    icon: PieChart,
+    iconType: 'pie-chart'
   },
   {
     id: 'design-agent',
@@ -94,7 +94,7 @@ const agents = [
     memory: 96,
     capabilities: ['design:request', 'accessibility:request'],
     owner: 'system',
-    icon: ClipboardEdit,
+    iconType: 'clipboard-edit'
   },
   {
     id: 'development-agent',
@@ -108,7 +108,7 @@ const agents = [
     memory: 156,
     capabilities: ['code:request:generate', 'code:request:refactor', 'code:request:analyze'],
     owner: 'system',
-    icon: Code,
+    iconType: 'code'
   },
   {
     id: 'cost-analysis-agent',
@@ -122,7 +122,7 @@ const agents = [
     memory: 142,
     capabilities: ['cost:calculate', 'cost:analyze', 'cost:validate'],
     owner: 'system',
-    icon: BarChart,
+    iconType: 'bar-chart'
   },
   {
     id: 'compliance-agent',
@@ -136,7 +136,7 @@ const agents = [
     memory: 0,
     capabilities: ['compliance:validate', 'compliance:report', 'compliance:remediate'],
     owner: 'system',
-    icon: SearchCheck,
+    iconType: 'search-check'
   },
   {
     id: 'data-quality-agent',
@@ -150,7 +150,7 @@ const agents = [
     memory: 0,
     capabilities: ['quality:validate', 'quality:enhance', 'quality:monitor'],
     owner: 'system',
-    icon: Database,
+    iconType: 'database'
   },
   {
     id: 'mapping-agent',
@@ -164,7 +164,7 @@ const agents = [
     memory: 0,
     capabilities: ['geo:map', 'geo:analyze', 'geo:validate'],
     owner: 'system',
-    icon: CloudRain,
+    iconType: 'cloud-rain'
   }
 ];
 
@@ -275,6 +275,50 @@ const agentTasks = [
   },
 ];
 
+// Helper function to render the appropriate icon
+const renderAgentIcon = (iconType: string) => {
+  switch (iconType) {
+    case 'pie-chart':
+      return <PieChart className="h-5 w-5 text-blue-300" />;
+    case 'clipboard-edit':
+      return <ClipboardEdit className="h-5 w-5 text-blue-300" />;
+    case 'code':
+      return <Code className="h-5 w-5 text-blue-300" />;
+    case 'bar-chart':
+      return <BarChart className="h-5 w-5 text-blue-300" />;
+    case 'search-check':
+      return <SearchCheck className="h-5 w-5 text-blue-300" />;
+    case 'database':
+      return <Database className="h-5 w-5 text-blue-300" />;
+    case 'cloud-rain':
+      return <CloudRain className="h-5 w-5 text-blue-300" />;
+    default:
+      return <Bot className="h-5 w-5 text-blue-300" />;
+  }
+};
+
+// Small icon variant
+const renderSmallAgentIcon = (iconType: string) => {
+  switch (iconType) {
+    case 'pie-chart':
+      return <PieChart className="h-4 w-4 text-blue-400" />;
+    case 'clipboard-edit':
+      return <ClipboardEdit className="h-4 w-4 text-blue-400" />;
+    case 'code':
+      return <Code className="h-4 w-4 text-blue-400" />;
+    case 'bar-chart':
+      return <BarChart className="h-4 w-4 text-blue-400" />;
+    case 'search-check':
+      return <SearchCheck className="h-4 w-4 text-blue-400" />;
+    case 'database':
+      return <Database className="h-4 w-4 text-blue-400" />;
+    case 'cloud-rain':
+      return <CloudRain className="h-4 w-4 text-blue-400" />;
+    default:
+      return <Bot className="h-4 w-4 text-blue-400" />;
+  }
+};
+
 const AgentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
@@ -380,7 +424,7 @@ const AgentsPage = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex items-center">
                           <div className="p-2 rounded-lg bg-blue-800/50 mr-3">
-                            <agent.icon className="h-5 w-5 text-blue-300" />
+                            {renderAgentIcon(agent.iconType)}
                           </div>
                           <div>
                             <CardTitle className="text-blue-100 text-base">{agent.name}</CardTitle>
@@ -518,11 +562,7 @@ const AgentsPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="p-2 rounded-lg bg-blue-800/50 mr-3">
-                      {getAgentById(selectedAgent)?.icon && (
-                        <div className="h-5 w-5 text-blue-300">
-                          {React.createElement(getAgentById(selectedAgent)!.icon)}
-                        </div>
-                      )}
+                      {getAgentById(selectedAgent) && renderAgentIcon(getAgentById(selectedAgent)!.iconType)}
                     </div>
                     <div>
                       <CardTitle className="text-blue-100">{getAgentById(selectedAgent)?.name}</CardTitle>
@@ -855,9 +895,9 @@ const AgentsPage = () => {
                         <TableCell className="text-blue-400">{log.timestamp}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            {getAgentById(log.agentId)?.icon && (
+                            {getAgentById(log.agentId) && (
                               <div className="h-4 w-4 text-blue-400">
-                                {React.createElement(getAgentById(log.agentId)!.icon)}
+                                {renderSmallAgentIcon(getAgentById(log.agentId)!.iconType)}
                               </div>
                             )}
                             <span className="text-blue-200">{getAgentById(log.agentId)?.name}</span>
@@ -980,9 +1020,9 @@ const AgentsPage = () => {
                         </div>
                         <div className="flex items-center text-blue-400 text-sm">
                           <div className="flex items-center">
-                            {getAgentById(task.agentId)?.icon && (
+                            {getAgentById(task.agentId) && (
                               <div className="h-4 w-4 mr-1 text-blue-500">
-                                {React.createElement(getAgentById(task.agentId)!.icon)}
+                                {renderSmallAgentIcon(getAgentById(task.agentId)!.iconType)}
                               </div>
                             )}
                             <span>{getAgentById(task.agentId)?.name}</span>

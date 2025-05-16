@@ -23,7 +23,7 @@ import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
 import TrendAnalysisPage from '@/pages/trend-analysis';
 import DataImportPage from '@/pages/data-import';
-import AgentsPage from '@/pages/agents';
+import AgentsPage from '@/pages/agents/index-fixed';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
