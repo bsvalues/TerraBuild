@@ -563,6 +563,38 @@ const HelpSupportPage = () => {
                   
                   <div className="bg-blue-900/20 p-4 rounded-md border border-blue-800/40">
                     <div className="flex items-start">
+                      <BookOpen className="h-5 w-5 text-blue-400 mr-3 mt-0.5" />
+                      <div>
+                        <h3 className="text-blue-100 font-medium">Educational Webinars</h3>
+                        <p className="text-blue-300 text-sm mt-1">
+                          Recorded webinars on advanced topics and best practices.
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-blue-200">Advanced Regional Cost Analysis</span>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-blue-400 hover:text-blue-300">
+                              Watch <Play className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-blue-200">Property Data Quality Management</span>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-blue-400 hover:text-blue-300">
+                              Watch <Play className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-blue-200">Working with AI Agents</span>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-blue-400 hover:text-blue-300">
+                              Watch <Play className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-900/20 p-4 rounded-md border border-blue-800/40">
+                    <div className="flex items-start">
                       <CheckCircle className="h-5 w-5 text-blue-400 mr-3 mt-0.5" />
                       <div>
                         <h3 className="text-blue-100 font-medium">Release Notes</h3>
