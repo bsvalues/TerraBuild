@@ -65,6 +65,11 @@ export function Sidebar({}: SidebarProps) {
 
   const toolsNavItems = [
     {
+      title: "Calculator",
+      href: "/calculator",
+      icon: Calculator
+    },
+    {
       title: "Cost Wizard",
       href: "/cost-wizard",
       icon: Calculator

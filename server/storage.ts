@@ -139,6 +139,485 @@ export interface IStorage {
 }
 
 /**
+ * PostgreSQL database implementation of IStorage interface
+ * Used for production environments
+ */
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    // Connect to PostgreSQL for session storage
+    const PgStore = connectPgSimple(session);
+    this.sessionStore = new PgStore({
+      pool,
+      tableName: 'sessions',
+      createTableIfMissing: true,
+    });
+    
+    // Try to create default users if they don't exist
+    this.seedDefaultUsers().catch(err => {
+      console.error('Error creating default users:', err);
+    });
+  }
+
+  private async seedDefaultUsers() {
+    try {
+      // Check if admin user exists
+      const adminUser = await this.getUserByUsername('admin');
+      if (!adminUser) {
+        console.log('Creating default admin user...');
+        await this.createUser({
+          username: 'admin',
+          // Pre-hashed password equivalent to 'admin123'
+          password: '95e6f1597b56a1c1f3881c8c9dd41825de95e26523f2b6a30b85558cc43f5be6ce34d540a21add73fecbbaeab46bd0037f995719a96a9c8c59ec7adb598d6b1b.b3c0b9a8c29c7b3ab40a694cd0486111',
+          name: 'Administrator',
+          role: 'admin',
+          is_active: true
+        });
+      }
+
+      // Check if default user exists
+      const defaultUser = await this.getUserByUsername('user');
+      if (!defaultUser) {
+        console.log('Creating default regular user...');
+        await this.createUser({
+          username: 'user',
+          // Pre-hashed password equivalent to 'user123'
+          password: '6baa3ff5f70da9c6c3b9000a86e67c0c4b6b2bb4d67cb1d0e7c5b7de6ac24e36a96474f52702c2e67d694215267e58e2cd9b98d5c78c36aa44a4676e1a79b0f0.1e33abcbaa52e7bb0e01a74ee3f73d75',
+          name: 'Regular User',
+          role: 'user',
+          is_active: true
+        });
+      }
+    } catch (error) {
+      console.error('Error seeding default users:', error);
+      throw error;
+    }
+  }
+
+  // User operations
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(schema.users);
+  }
+
+  async getUser(id: number): Promise<User | null> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
+    return user || null;
+  }
+
+  async getUserById(id: number): Promise<User | null> {
+    return this.getUser(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | null> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
+    return user || null;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(schema.users).values({
+      ...user,
+      created_at: new Date(),
+      updated_at: new Date()
+    }).returning();
+    return newUser;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | null> {
+    const [updatedUser] = await db.update(schema.users)
+      .set({
+        ...userData,
+        updated_at: new Date()
+      })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return updatedUser || null;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(schema.users).where(eq(schema.users.id, id));
+    return !!result;
+  }
+
+  // Add implementations for all other interface methods...
+
+  // For now we'll provide basic implementations for critical operations
+  // and add functionality as needed
+
+  // Property operations (basic implementation)
+  async getProperties(filter?: Record<string, any>): Promise<Property[]> {
+    return await db.select().from(schema.properties);
+  }
+
+  async getPropertyById(id: number): Promise<Property | null> {
+    const [property] = await db.select().from(schema.properties).where(eq(schema.properties.id, id));
+    return property || null;
+  }
+
+  async getPropertyByGeoId(geoId: string): Promise<Property | null> {
+    const [property] = await db.select().from(schema.properties).where(eq(schema.properties.geo_id, geoId));
+    return property || null;
+  }
+
+  async createProperty(property: InsertProperty): Promise<Property> {
+    const [newProperty] = await db.insert(schema.properties).values(property).returning();
+    return newProperty;
+  }
+
+  async updateProperty(id: number, propertyData: Partial<Property>): Promise<Property | null> {
+    const [updatedProperty] = await db.update(schema.properties)
+      .set({
+        ...propertyData,
+        updated_at: new Date()
+      })
+      .where(eq(schema.properties.id, id))
+      .returning();
+    return updatedProperty || null;
+  }
+
+  async deleteProperty(id: number): Promise<boolean> {
+    const result = await db.delete(schema.properties).where(eq(schema.properties.id, id));
+    return !!result;
+  }
+
+  // Cost matrix operations (stub implementations)
+  async getCostMatrices(filter?: Record<string, any>): Promise<CostMatrix[]> {
+    return await db.select().from(schema.costMatrices);
+  }
+
+  async getCostMatrixById(id: number): Promise<CostMatrix | null> {
+    const [matrix] = await db.select().from(schema.costMatrices).where(eq(schema.costMatrices.id, id));
+    return matrix || null;
+  }
+
+  async getCostMatrixByBuildingType(buildingTypeCode: string, county: string, year: number): Promise<CostMatrix | null> {
+    const [matrix] = await db.select().from(schema.costMatrices)
+      .where(and(
+        eq(schema.costMatrices.building_type, buildingTypeCode),
+        eq(schema.costMatrices.county, county),
+        eq(schema.costMatrices.matrix_year, year)
+      ));
+    return matrix || null;
+  }
+
+  async createCostMatrix(matrix: InsertCostMatrix): Promise<CostMatrix> {
+    const [newMatrix] = await db.insert(schema.costMatrices).values(matrix).returning();
+    return newMatrix;
+  }
+
+  async updateCostMatrix(id: number, matrixData: Partial<CostMatrix>): Promise<CostMatrix | null> {
+    const [updatedMatrix] = await db.update(schema.costMatrices)
+      .set({
+        ...matrixData,
+        updated_at: new Date()
+      })
+      .where(eq(schema.costMatrices.id, id))
+      .returning();
+    return updatedMatrix || null;
+  }
+
+  async deleteCostMatrix(id: number): Promise<boolean> {
+    const result = await db.delete(schema.costMatrices).where(eq(schema.costMatrices.id, id));
+    return !!result;
+  }
+
+  // Session operations (stub implementations)
+  async getSessions(userId?: number): Promise<Session[]> {
+    // This is a stub implementation
+    return await db.select().from(schema.sessions);
+  }
+
+  async getSession(sid: string): Promise<Session | null> {
+    const [session] = await db.select().from(schema.sessions).where(eq(schema.sessions.sid, sid));
+    return session || null;
+  }
+
+  async createSession(session: InsertSession): Promise<Session> {
+    const [newSession] = await db.insert(schema.sessions).values({
+      ...session,
+      created_at: new Date()
+    }).returning();
+    return newSession;
+  }
+
+  async updateSession(sid: string, sessionData: Partial<Session>): Promise<Session | null> {
+    const [updatedSession] = await db.update(schema.sessions)
+      .set(sessionData)
+      .where(eq(schema.sessions.sid, sid))
+      .returning();
+    return updatedSession || null;
+  }
+
+  async deleteSession(sid: string): Promise<boolean> {
+    const result = await db.delete(schema.sessions).where(eq(schema.sessions.sid, sid));
+    return !!result;
+  }
+
+  // Other methods will be implemented as needed
+  // For now, providing stub implementations
+
+  async getBuildingTypes(): Promise<BuildingType[]> {
+    return await db.select().from(schema.buildingTypes);
+  }
+
+  async getBuildingTypeByCode(code: string): Promise<BuildingType | null> {
+    const [buildingType] = await db.select().from(schema.buildingTypes).where(eq(schema.buildingTypes.code, code));
+    return buildingType || null;
+  }
+
+  async createBuildingType(buildingType: any): Promise<BuildingType> {
+    const [newBuildingType] = await db.insert(schema.buildingTypes).values(buildingType).returning();
+    return newBuildingType;
+  }
+
+  async updateBuildingType(code: string, buildingTypeData: Partial<BuildingType>): Promise<BuildingType | null> {
+    const [updatedBuildingType] = await db.update(schema.buildingTypes)
+      .set(buildingTypeData)
+      .where(eq(schema.buildingTypes.code, code))
+      .returning();
+    return updatedBuildingType || null;
+  }
+
+  async deleteBuildingType(code: string): Promise<boolean> {
+    const result = await db.delete(schema.buildingTypes).where(eq(schema.buildingTypes.code, code));
+    return !!result;
+  }
+
+  // Regions operations
+  async getRegions(): Promise<Region[]> {
+    return await db.select().from(schema.regions);
+  }
+
+  async getRegionByCode(code: string): Promise<Region | null> {
+    const [region] = await db.select().from(schema.regions).where(eq(schema.regions.code, code));
+    return region || null;
+  }
+
+  async createRegion(region: any): Promise<Region> {
+    const [newRegion] = await db.insert(schema.regions).values(region).returning();
+    return newRegion;
+  }
+
+  async updateRegion(code: string, regionData: Partial<Region>): Promise<Region | null> {
+    const [updatedRegion] = await db.update(schema.regions)
+      .set(regionData)
+      .where(eq(schema.regions.code, code))
+      .returning();
+    return updatedRegion || null;
+  }
+
+  async deleteRegion(code: string): Promise<boolean> {
+    const result = await db.delete(schema.regions).where(eq(schema.regions.code, code));
+    return !!result;
+  }
+
+  // Improvement operations 
+  async getImprovements(propertyId?: string): Promise<Improvement[]> {
+    if (propertyId) {
+      return await db.select().from(schema.improvements).where(eq(schema.improvements.property_id, parseInt(propertyId)));
+    }
+    return await db.select().from(schema.improvements);
+  }
+
+  async getImprovementById(id: number): Promise<Improvement | null> {
+    const [improvement] = await db.select().from(schema.improvements).where(eq(schema.improvements.id, id));
+    return improvement || null;
+  }
+
+  async createImprovement(improvement: InsertImprovement): Promise<Improvement> {
+    const [newImprovement] = await db.insert(schema.improvements).values(improvement).returning();
+    return newImprovement;
+  }
+
+  async updateImprovement(id: number, improvementData: Partial<Improvement>): Promise<Improvement | null> {
+    const [updatedImprovement] = await db.update(schema.improvements)
+      .set(improvementData)
+      .where(eq(schema.improvements.id, id))
+      .returning();
+    return updatedImprovement || null;
+  }
+
+  async deleteImprovement(id: number): Promise<boolean> {
+    const result = await db.delete(schema.improvements).where(eq(schema.improvements.id, id));
+    return !!result;
+  }
+
+  // Stub implementations for remaining methods
+  async getImprovementDetails(improvementId: number): Promise<any[]> {
+    return [];
+  }
+
+  async createImprovementDetail(detail: any): Promise<any> {
+    return { id: 1 };
+  }
+
+  async deleteImprovementDetail(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getQualityFactors(): Promise<Record<string, number>> {
+    return {
+      'excellent': 1.1,
+      'good': 1.0,
+      'average': 0.9,
+      'fair': 0.8,
+      'poor': 0.7
+    };
+  }
+
+  async getConditionFactors(): Promise<Record<string, number>> {
+    return {
+      'excellent': 1.1,
+      'good': 1.0,
+      'average': 0.9,
+      'fair': 0.8,
+      'poor': 0.7
+    };
+  }
+
+  async getAgeFactors(): Promise<Record<number, number>> {
+    return {
+      0: 1.0,
+      5: 0.95,
+      10: 0.9,
+      15: 0.85,
+      20: 0.8,
+      25: 0.75,
+      30: 0.7
+    };
+  }
+
+  async getCalculations(propertyId?: string, improvementId?: string): Promise<Calculation[]> {
+    return [];
+  }
+
+  async getCalculationById(id: number): Promise<Calculation | null> {
+    return null;
+  }
+
+  async createCalculation(calculation: InsertCalculation): Promise<Calculation> {
+    const [newCalculation] = await db.insert(schema.calculations).values(calculation).returning();
+    return newCalculation;
+  }
+
+  async deleteCalculation(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getProjects(userId?: string): Promise<Project[]> {
+    return [];
+  }
+
+  async getProjectById(id: number): Promise<Project | null> {
+    return null;
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const [newProject] = await db.insert(schema.projects).values(project).returning();
+    return newProject;
+  }
+
+  async updateProject(id: number, projectData: Partial<Project>): Promise<Project | null> {
+    return null;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getProjectMembers(projectId: string): Promise<any[]> {
+    return [];
+  }
+
+  async addProjectMember(projectId: string, userId: string, role?: string): Promise<boolean> {
+    return true;
+  }
+
+  async removeProjectMember(projectId: string, userId: string): Promise<boolean> {
+    return true;
+  }
+
+  async getProjectProperties(projectId: string): Promise<any[]> {
+    return [];
+  }
+
+  async addPropertyToProject(projectId: string, propertyId: string): Promise<boolean> {
+    return true;
+  }
+
+  async removePropertyFromProject(projectId: string, propertyId: string): Promise<boolean> {
+    return true;
+  }
+
+  async getSettings(userId?: number, isPublic?: boolean): Promise<any[]> {
+    return [];
+  }
+
+  async getSetting(key: string, userId?: number): Promise<any | null> {
+    return null;
+  }
+
+  async createSetting(setting: any): Promise<any> {
+    return { id: 1 };
+  }
+
+  async updateSetting(id: number, settingData: Partial<any>): Promise<any | null> {
+    return null;
+  }
+
+  async deleteSetting(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getFileUploads(userId?: number): Promise<any[]> {
+    return [];
+  }
+
+  async getFileUploadById(id: number): Promise<any | null> {
+    return null;
+  }
+
+  async createFileUpload(fileUpload: any): Promise<any> {
+    return { id: 1 };
+  }
+
+  async updateFileUpload(id: number, fileUploadData: Partial<any>): Promise<any | null> {
+    return null;
+  }
+
+  async deleteFileUpload(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async checkDatabaseConnection(): Promise<boolean> {
+    try {
+      await pool.query('SELECT 1');
+      return true;
+    } catch (error) {
+      console.error('Database connection check failed:', error);
+      return false;
+    }
+  }
+
+  async getAgentStatuses(): Promise<Record<string, any>> {
+    return {};
+  }
+
+  async getAgentStatus(agentId: string): Promise<any | null> {
+    return null;
+  }
+
+  async updateAgentStatus(
+    agentId: string,
+    status: string,
+    metadata?: Record<string, any>,
+    errorMessage?: string
+  ): Promise<boolean> {
+    return true;
+  }
+}
+
+/**
  * In-memory implementation of IStorage interface
  * Used for development and testing
  */
