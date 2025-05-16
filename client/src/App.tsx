@@ -1,3 +1,4 @@
+import React from 'react';
 import { Route, Switch, useRoute } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -25,6 +26,8 @@ import TrendAnalysisPage from '@/pages/trend-analysis';
 import DataImportPage from '@/pages/data-import';
 import AgentsPage from '@/pages/agents/index-fixed';
 import HelpSupportPage from '@/pages/help';
+import WebinarsPage from '@/pages/help/webinars';
+import WebinarViewPage from '@/pages/help/webinars/[id]';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -155,6 +158,18 @@ function Router() {
       <ProtectedRoute path="/help" component={() => (
         <DashboardLayout>
           <HelpSupportPage />
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/help/webinars" component={() => (
+        <DashboardLayout>
+          <WebinarsPage />
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/help/webinars/:id" component={() => (
+        <DashboardLayout>
+          <WebinarViewPage />
         </DashboardLayout>
       )} />
       
