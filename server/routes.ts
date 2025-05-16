@@ -28,6 +28,7 @@ import propertiesRouter from './routes/properties';
 // The CostFactorTables plugin is registered directly in server/index.ts
 import authRoutes from './routes/auth';
 import calculatorRouter from './routes/calculator';
+import propertyMapRoutes from './routes/property-routes';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
@@ -858,6 +859,7 @@ router.use('/gis-import', gisImportRoutes);
 router.use('/geo-mapping', geoMappingRoutes);
 router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
 router.use('/search', smartSearchRoutes);
+router.use('/map', propertyMapRoutes);
 // Cost Factor Tables plugin is registered directly in server/index.ts
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
