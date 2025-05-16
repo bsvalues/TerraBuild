@@ -113,6 +113,14 @@ router.get('/properties', asyncHandler(async (req, res) => {
   res.json(properties);
 }));
 
+router.get('/properties/geo/:geoId', asyncHandler(async (req, res) => {
+  const property = await storage.getPropertyByGeoId(req.params.geoId);
+  if (!property) {
+    return res.status(404).json({ message: 'Property not found' });
+  }
+  res.json(property);
+}));
+
 router.get('/properties/:id', asyncHandler(async (req, res) => {
   // Convert string ID parameter to a number for database query
   const propertyId = parseInt(req.params.id, 10);
@@ -126,14 +134,6 @@ router.get('/properties/:id', asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Property not found' });
   }
   
-  res.json(property);
-}));
-
-router.get('/properties/geo/:geoId', asyncHandler(async (req, res) => {
-  const property = await storage.getPropertyByGeoId(req.params.geoId);
-  if (!property) {
-    return res.status(404).json({ message: 'Property not found' });
-  }
   res.json(property);
 }));
 
