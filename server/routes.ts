@@ -27,6 +27,7 @@ import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
 // The CostFactorTables plugin is registered directly in server/index.ts
 import authRoutes from './routes/auth';
+import calculatorRouter from './routes/calculator';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
@@ -1003,6 +1004,9 @@ router.use('/properties', propertiesRouter);
 
 // Mount the auth routes - this will handle login, register, logout, and user routes
 router.use('/', authRoutes);
+
+// Mount the calculator routes for building cost calculations
+router.use('/', calculatorRouter);
 
 // Mount the cost factor tables router
 // Cost Factor Tables router is already registered
