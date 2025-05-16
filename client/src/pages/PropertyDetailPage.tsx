@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { getQueryFn } from '@/lib/queryClient';
 
 // Property type interface matching the actual database structure
 interface Property {
@@ -75,6 +76,7 @@ const PropertyDetailPage: React.FC = () => {
   // Fetch property data
   const { data: property, isLoading, error } = useQuery<Property>({
     queryKey: [`/api/properties/${id}`],
+    queryFn: getQueryFn(),
     enabled: !!id
   });
 
