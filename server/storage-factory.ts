@@ -14,34 +14,24 @@ import { logger } from './utils/logger';
  * @returns {IStorage} The storage implementation
  */
 export function createStorage(): IStorage {
-  // Check for availability of PostgreSQL connection through environment variables
-  const hasPostgresConfig = Boolean(process.env.DATABASE_URL);
-  
-  // Storage type configuration
-  const storageType = process.env.STORAGE_TYPE?.toLowerCase();
-  
-  // Determine which storage implementation to use
-  if (storageType === 'file' || (!storageType && !hasPostgresConfig)) {
-    logger.info('[storage] Using file-based storage (in-memory)');
-    return new MemStorage();
-  } else if (storageType === 'postgres' || (!storageType && hasPostgresConfig)) {
-    logger.info('[storage] Using PostgreSQL database for persistent storage');
-    try {
-      return new DatabaseStorage();
-    } catch (error) {
-      logger.error('[storage] Failed to initialize PostgreSQL storage:', error);
-      logger.warn('[storage] Falling back to in-memory storage');
-      return new MemStorage();
-    }
-  } else {
-    logger.warn(`[storage] Unknown storage type: ${storageType}, using fallback to PostgreSQL`);
-    try {
-      return new DatabaseStorage();
-    } catch (error) {
-      logger.error('[storage] Failed to initialize PostgreSQL storage:', error);
-      logger.warn('[storage] Falling back to in-memory storage');
-      return new MemStorage();
-    }
+  // We know we have a PostgreSQL database in this environment,
+  // so we'll force using DatabaseStorage regardless of environment variables
+  try {
+    console.log('[Storage Factory] Forcing DatabaseStorage for properties lookup');
+    const dbStorage = new DatabaseStorage();
+    
+    // Add a verification method to check which implementation is being used
+    const originalGetPropertyById = dbStorage.getPropertyById;
+    dbStorage.getPropertyById = async function(id: number) {
+      console.log('[STORAGE DEBUG] DatabaseStorage.getPropertyById called with ID', id);
+      return originalGetPropertyById.call(this, id);
+    };
+    
+    return dbStorage;
+  } catch (error) {
+    console.error('[Storage Factory] Error initializing DatabaseStorage:', error);
+    logger.error('[storage] Failed to initialize PostgreSQL storage:', error);
+    throw new Error('Cannot initialize database storage. Application cannot start.');
   }
 }
 

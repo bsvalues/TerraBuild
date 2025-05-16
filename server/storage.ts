@@ -247,8 +247,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPropertyById(id: number): Promise<Property | null> {
-    const [property] = await db.select().from(schema.properties).where(eq(schema.properties.id, id));
-    return property || null;
+    console.log(`[DEBUG getPropertyById] Searching for property with ID ${id} in database`);
+    try {
+      const [property] = await db.select().from(schema.properties).where(eq(schema.properties.id, id));
+      console.log(`[DEBUG getPropertyById] Database query result:`, property ? 'Found property' : 'Property not found');
+      return property || null;
+    } catch (error) {
+      console.error(`[DEBUG getPropertyById] Error querying database:`, error);
+      throw error;
+    }
   }
 
   async getPropertyByGeoId(geoId: string): Promise<Property | null> {
