@@ -2,21 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 
-// Property type interface
+// Property type interface matching the server data structure
 interface Property {
   id: number;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  parcelNumber: string;
-  ownerName: string;
-  propertyType: string;
-  yearBuilt: number;
-  assessedValue: number;
-  squareFeet: number;
-  bedrooms: number;
-  bathrooms: number;
+  legal_desc?: string;
+  geo_id?: string;
+  property_use_desc?: string;
+  assessed_val?: number;
+  appraised_val?: number;
+  property_use_cd?: string;
+  hood_cd?: string;
+  
+  // Client display fields (transformed or defaulted)
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  parcelNumber?: string;
+  ownerName?: string;
+  propertyType?: string;
+  yearBuilt?: number;
+  assessedValue?: number;
+  squareFeet?: number;
+  bedrooms?: number;
+  bathrooms?: number;
   latitude?: number;
   longitude?: number;
 }
@@ -102,22 +111,35 @@ const PropertyDetailPage: React.FC = () => {
   // Create default property data
   const defaultProperty: Property = {
     id: parseInt(id || '0'),
-    address: '123 Main St',
+    legal_desc: 'Property legal description unavailable',
+    geo_id: `GEO-${id || '0'}`,
+    property_use_desc: 'Residential Property',
+    assessed_val: 350000,
+    appraised_val: 375000,
+    property_use_cd: 'RES',
+    hood_cd: '52100',
+  };
+  
+  // Combine API data with defaults for rendering
+  const rawProperty = property || defaultProperty;
+  
+  // Transform property data for display
+  const fullProperty: Property = {
+    ...rawProperty,
+    // Map API fields to display fields
+    address: rawProperty.legal_desc?.split(',')[0] || '123 Main St',
     city: 'Kennewick',
-    state: 'WA', 
+    state: 'WA',
     zip: '99336',
-    parcelNumber: `P-${id || '0'}`,
+    parcelNumber: rawProperty.geo_id || `P-${id || '0'}`,
     ownerName: 'Property Owner',
-    propertyType: 'Residential',
+    propertyType: rawProperty.property_use_desc || 'Residential',
     yearBuilt: 2010,
-    assessedValue: 350000,
+    assessedValue: rawProperty.assessed_val || 350000,
     squareFeet: 2200,
     bedrooms: 3,
     bathrooms: 2,
   };
-  
-  // Use actual property data or fallback to default
-  const fullProperty: Property = property || defaultProperty;
 
   // Helper function to generate value change percentages
   const getValueChanges = () => {
@@ -131,7 +153,7 @@ const PropertyDetailPage: React.FC = () => {
   const valueChanges = getValueChanges();
   
   // Return record card if in record card view
-  if (showRecordCard && property) {
+  if (showRecordCard) {
     return (
       <div className="container mx-auto py-6">
         <BasicPropertyCard property={fullProperty} onClose={() => setShowRecordCard(false)} />
