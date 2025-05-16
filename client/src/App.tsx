@@ -28,6 +28,7 @@ import AgentsPage from '@/pages/agents/index-fixed';
 import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
+import ValuationMapsPage from '@/pages/maps';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -77,10 +78,7 @@ function Router() {
       
       <ProtectedRoute path="/maps" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Valuation Maps</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Valuation maps coming soon...</p>
-          </div>
+          <ValuationMapsPage />
         </DashboardLayout>
       )} />
       
