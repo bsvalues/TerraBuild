@@ -18,6 +18,8 @@ import DiagnosticPage from '@/pages/diagnostic';
 import CalculatorPage from '@/pages/calculator-page';
 import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
+import DocumentationPage from '@/pages/documentation';
+import SettingsPage from '@/pages/settings';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -105,10 +107,7 @@ function Router() {
       
       <ProtectedRoute path="/settings" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Settings</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Settings coming soon...</p>
-          </div>
+          <SettingsPage />
         </DashboardLayout>
       )} />
       
@@ -138,10 +137,7 @@ function Router() {
       
       <ProtectedRoute path="/documentation" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Documentation</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Documentation coming soon...</p>
-          </div>
+          <DocumentationPage />
         </DashboardLayout>
       )} />
       
