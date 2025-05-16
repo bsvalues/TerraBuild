@@ -147,15 +147,15 @@ export function Sidebar({}: SidebarProps) {
       <div className="flex justify-between items-center px-3 mb-6">
         {isExpanded ? (
           <Link href="/">
-            <a className="flex items-center gap-2 text-xl font-semibold">
+            <div className="flex items-center gap-2 text-xl font-semibold">
               <TerraFusionLogo variant="default" size="md" />
-            </a>
+            </div>
           </Link>
         ) : (
           <Link href="/">
-            <a className="flex justify-center w-full">
+            <div className="flex justify-center w-full">
               <TerraFusionLogo variant="circular" size="md" />
-            </a>
+            </div>
           </Link>
         )}
         

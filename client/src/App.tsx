@@ -119,6 +119,51 @@ function Router() {
         </DashboardLayout>
       )} />
       
+      <ProtectedRoute path="/trend-analysis" component={() => (
+        <DashboardLayout>
+          <h1 className="text-2xl font-bold text-blue-100 mb-6">Trend Analysis</h1>
+          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
+            <p className="text-blue-300">Trend analysis coming soon...</p>
+          </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/import" component={() => (
+        <DashboardLayout>
+          <h1 className="text-2xl font-bold text-blue-100 mb-6">Data Import</h1>
+          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
+            <p className="text-blue-300">Data import functionality coming soon...</p>
+          </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/documentation" component={() => (
+        <DashboardLayout>
+          <h1 className="text-2xl font-bold text-blue-100 mb-6">Documentation</h1>
+          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
+            <p className="text-blue-300">Documentation coming soon...</p>
+          </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/history" component={() => (
+        <DashboardLayout>
+          <h1 className="text-2xl font-bold text-blue-100 mb-6">History</h1>
+          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
+            <p className="text-blue-300">History tracking coming soon...</p>
+          </div>
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/help" component={() => (
+        <DashboardLayout>
+          <h1 className="text-2xl font-bold text-blue-100 mb-6">Help & Support</h1>
+          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
+            <p className="text-blue-300">Help & support information coming soon...</p>
+          </div>
+        </DashboardLayout>
+      )} />
+      
       <Route component={NotFoundPage} />
     </Switch>
   );
