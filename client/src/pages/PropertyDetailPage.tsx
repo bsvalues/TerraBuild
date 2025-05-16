@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'wouter';
+import { useRoute } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 
 // Property type interface matching the actual database structure
@@ -68,7 +68,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PropertyDetailPage: React.FC = () => {
-  const { id } = useParams();
+  const [, params] = useRoute('/properties/:id');
+  const id = params?.id;
   const [showRecordCard, setShowRecordCard] = useState(false);
   
   // Fetch property data
