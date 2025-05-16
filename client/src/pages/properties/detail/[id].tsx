@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import PropertyRecordCard from '@/components/properties/PropertyRecordCard';
 import SimplePropertyCard from '@/components/properties/SimplePropertyCard';
+import BasicPropertyCard from '@/components/properties/BasicPropertyCard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -227,7 +228,7 @@ const PropertyDetail = () => {
   if (showRecordCard && property) {
     return (
       <div className="container mx-auto py-6">
-        <SimplePropertyCard property={property} onClose={() => setShowRecordCard(false)} />
+        <BasicPropertyCard property={property} onClose={() => setShowRecordCard(false)} />
       </div>
     );
   }
