@@ -74,7 +74,7 @@ const PropertyDetailPage: React.FC = () => {
   
   // Fetch property data
   const { data: property, isLoading, error } = useQuery<Property>({
-    queryKey: ['/api/properties', id],
+    queryKey: [`/api/properties/${id}`],
     enabled: !!id
   });
 
@@ -112,42 +112,16 @@ const PropertyDetailPage: React.FC = () => {
     );
   }
 
-  // Create default property data
-  const defaultProperty: Property = {
-    id: parseInt(id || '0'),
-    geo_id: `GEO-${id || '0'}`,
-    parcel_id: `PARCEL-${id || '0'}`,
-    address: '123 Main St',
-    city: 'Kennewick',
-    state: 'WA',
-    zip: '99336',
-    county: 'Benton',
-    latitude: 46.2112,
-    longitude: -119.1372,
-    property_type: 'Residential',
-    land_area: 8500,
-    land_value: 150000,
-    total_value: 350000,
-    year_built: 2010,
-    bedrooms: 3,
-    bathrooms: 2,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  // Combine API data with defaults for rendering
-  const rawProperty = property || defaultProperty;
-  
   // Transform property data for display convenience fields
   const fullProperty: Property = {
-    ...rawProperty,
+    ...property,
     // Map API fields to display fields
-    parcelNumber: rawProperty.parcel_id,
+    parcelNumber: property.parcel_id,
     ownerName: 'Property Owner', // We don't have this in our database yet
-    propertyType: rawProperty.property_type,
-    yearBuilt: rawProperty.year_built,
-    assessedValue: rawProperty.total_value,
-    squareFeet: rawProperty.land_area,
+    propertyType: property.property_type,
+    yearBuilt: property.year_built,
+    assessedValue: property.total_value,
+    squareFeet: property.land_area,
   };
 
   // Helper function to generate value change percentages
