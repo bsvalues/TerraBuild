@@ -71,11 +71,13 @@ function Router() {
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/properties/:id" component={() => (
-        <DashboardLayout>
-          <PropertyDetailPage />
-        </DashboardLayout>
-      )} />
+      <Route path="/properties/:id">
+        {(params) => (
+          <DashboardLayout>
+            <PropertyDetailPage />
+          </DashboardLayout>
+        )}
+      </Route>
       
       <ProtectedRoute path="/matrix" component={() => (
         <DashboardLayout>
