@@ -273,7 +273,7 @@ const HelpSupportPage = () => {
                     className="bg-blue-900/20 rounded-md border border-blue-800/40 overflow-hidden"
                   >
                     <div className="aspect-video bg-blue-950 relative flex items-center justify-center">
-                      <Video className="h-10 w-10 text-blue-500/70 absolute" />
+                      <Play className="h-10 w-10 text-blue-500/70 absolute" />
                       <div className="absolute bottom-2 right-2 bg-blue-900/80 text-blue-200 text-xs px-2 py-1 rounded">
                         {tutorial.duration}
                       </div>
@@ -519,7 +519,7 @@ const HelpSupportPage = () => {
                           Complete listing of all Benton County region codes and mappings.
                         </p>
                         <Button variant="outline" size="sm" className="mt-2 border-blue-700 text-blue-200">
-                          <Download className="mr-2 h-3 w-3" />
+                          <FileDown className="mr-2 h-3 w-3" />
                           Download Excel (2.8 MB)
                         </Button>
                       </div>
