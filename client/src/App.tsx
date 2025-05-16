@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/contexts/SidebarContext';
-import { AuthProvider } from '@/contexts/auth-context';
+import { AuthProvider } from '@/contexts/auth-context-fixed';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import HomePage from '@/pages/home-page';
 import AuthPage from '@/pages/auth-page';

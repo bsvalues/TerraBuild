@@ -59,16 +59,18 @@ export function getQueryFn({ on401 = 'throw' }: { on401?: 'throw' | 'returnNull'
 
 /**
  * Helper function for API requests
- * @param url - API endpoint or options object
- * @param options - Request options
- * @returns - Parsed response data
+ * @param method - HTTP method (GET, POST, etc.)
+ * @param url - API endpoint
+ * @param data - Optional data to send with request
+ * @returns - Response object
  */
 export async function apiRequest(
+  method: string,
   url: string,
-  options?: RequestInit
-): Promise<any> {
-  const defaultOptions: RequestInit = {
-    method: 'GET',
+  data?: any
+): Promise<Response> {
+  const options: RequestInit = {
+    method: method,
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -76,35 +78,16 @@ export async function apiRequest(
     credentials: 'include',
   };
 
-  const mergedOptions = { ...defaultOptions, ...options };
-  
-  const response = await fetch(url, mergedOptions);
-  
-  if (!response.ok) {
-    // Try to parse error as JSON first
-    try {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `API Error: ${response.status} ${response.statusText}`);
-    } catch (e) {
-      // If parsing as JSON fails, throw generic error
-      if (e instanceof Error && e.message.includes('API Error')) {
-        throw e;
-      }
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
+  // Add body for non-GET requests with data
+  if (method !== 'GET' && data) {
+    options.body = JSON.stringify(data);
   }
   
-  // Parse response as JSON
   try {
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    } else {
-      const text = await response.text();
-      return text || null;
-    }
-  } catch (e) {
-    console.error('Error parsing response:', e);
-    throw new Error('Failed to parse API response');
+    const response = await fetch(url, options);
+    return response;
+  } catch (error) {
+    console.error(`API ${method} request to ${url} failed:`, error);
+    throw error;
   }
 }
