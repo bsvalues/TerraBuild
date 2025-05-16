@@ -20,6 +20,8 @@ import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
 import DocumentationPage from '@/pages/documentation';
 import SettingsPage from '@/pages/settings';
+import ReportsPage from '@/pages/reports';
+import TrendAnalysisPage from '@/pages/trend-analysis';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -98,10 +100,7 @@ function Router() {
       
       <ProtectedRoute path="/reports" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Report Generator</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Report generator coming soon...</p>
-          </div>
+          <ReportsPage />
         </DashboardLayout>
       )} />
       
@@ -119,10 +118,7 @@ function Router() {
       
       <ProtectedRoute path="/trend-analysis" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Trend Analysis</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Trend analysis coming soon...</p>
-          </div>
+          <TrendAnalysisPage />
         </DashboardLayout>
       )} />
       
