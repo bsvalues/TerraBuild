@@ -2,32 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 
-// Property type interface matching the server data structure
+// Property type interface matching the actual database structure
 interface Property {
   id: number;
-  legal_desc?: string;
-  geo_id?: string;
-  property_use_desc?: string;
-  assessed_val?: number;
-  appraised_val?: number;
-  property_use_cd?: string;
-  hood_cd?: string;
+  geo_id: string;
+  parcel_id: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  county: string;
+  latitude: number;
+  longitude: number;
+  property_type: string;
+  land_area: number;
+  land_value: number;
+  total_value: number;
+  year_built: number;
+  bedrooms: number;
+  bathrooms: number;
+  created_at: string;
+  updated_at: string;
   
-  // Client display fields (transformed or defaulted)
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
+  // Display convenience fields
   parcelNumber?: string;
-  ownerName?: string;
   propertyType?: string;
-  yearBuilt?: number;
   assessedValue?: number;
+  yearBuilt?: number;
   squareFeet?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  latitude?: number;
-  longitude?: number;
+  ownerName?: string;
 }
 import { 
   Building, 
