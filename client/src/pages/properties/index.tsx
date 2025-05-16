@@ -24,72 +24,61 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Example property data
+// Example property data corresponding to actual database structure
 const properties = [
   {
-    id: '1',
-    parcelId: 'BC-10032-54',
-    address: '1234 Main St, Richland, WA 99352',
-    type: 'Residential',
-    region: 'Richland',
-    hoodCode: '52100 100',
-    value: '$485,000',
-    lastAssessed: '2024-12-10',
+    id: 1,
+    parcel_id: 'PARCEL-001',
+    address: '123 Main St, Kennewick, WA 99336',
+    property_type: 'Residential',
+    city: 'Kennewick',
+    county: 'Benton',
+    total_value: 350000,
+    created_at: '2025-05-16',
     status: 'Active',
   },
   {
-    id: '2',
-    parcelId: 'BC-10045-76',
-    address: '567 Oak Ave, Kennewick, WA 99336',
-    type: 'Commercial',
-    region: 'Kennewick',
-    hoodCode: '52100 140',
-    value: '$1,250,000',
-    lastAssessed: '2024-11-15',
+    id: 2,
+    parcel_id: 'PARCEL-002',
+    address: '456 Oak Ave, Richland, WA 99352',
+    property_type: 'Residential',
+    city: 'Richland',
+    county: 'Benton',
+    total_value: 420000,
+    created_at: '2025-05-16',
     status: 'Active',
   },
   {
-    id: '3',
-    parcelId: 'BC-10089-23',
-    address: '890 Pine Rd, Richland, WA 99352',
-    type: 'Residential',
-    region: 'Richland',
-    hoodCode: '52100 100',
-    value: '$550,000',
-    lastAssessed: '2024-10-22',
+    id: 3,
+    parcel_id: 'PARCEL-003',
+    address: '789 Pine Blvd, Pasco, WA 99301',
+    property_type: 'Commercial',
+    city: 'Pasco',
+    county: 'Franklin',
+    total_value: 750000,
+    created_at: '2025-05-16',
+    status: 'Active',
+  },
+  {
+    id: 4,
+    parcel_id: 'PARCEL-004',
+    address: '101 Washington St, Kennewick, WA 99336',
+    property_type: 'Residential',
+    city: 'Kennewick',
+    county: 'Benton',
+    total_value: 320000,
+    created_at: '2025-05-16',
     status: 'Under Review',
   },
   {
-    id: '4',
-    parcelId: 'BC-10125-89',
-    address: '432 Cedar Ln, West Richland, WA 99353',
-    type: 'Residential',
-    region: 'West Richland',
-    hoodCode: '52100 240',
-    value: '$410,000',
-    lastAssessed: '2024-12-05',
-    status: 'Active',
-  },
-  {
-    id: '5',
-    parcelId: 'BC-10201-43',
-    address: '789 Industrial Way, Kennewick, WA 99336',
-    type: 'Industrial',
-    region: 'Kennewick',
-    hoodCode: '52100 140',
-    value: '$2,850,000',
-    lastAssessed: '2024-09-18',
-    status: 'Active',
-  },
-  {
-    id: '6',
-    parcelId: 'BC-10256-91',
-    address: '345 Vineyard Rd, Prosser, WA 99350',
-    type: 'Agricultural',
-    region: 'Prosser',
-    hoodCode: '52100 320',
-    value: '$1,100,000',
-    lastAssessed: '2024-11-30',
+    id: 5,
+    parcel_id: 'PARCEL-005',
+    address: '202 Columbia Dr, Richland, WA 99352',
+    property_type: 'Multi-Family',
+    city: 'Richland',
+    county: 'Benton',
+    total_value: 600000,
+    created_at: '2025-05-16',
     status: 'Active',
   },
 ];
@@ -103,17 +92,17 @@ const PropertiesPage = () => {
   const filteredProperties = properties.filter(property => {
     const matchesSearch = !searchTerm || 
       property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.parcelId.toLowerCase().includes(searchTerm.toLowerCase());
+      property.parcel_id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = filterType === 'All' || property.type === filterType;
-    const matchesRegion = filterRegion === 'All' || property.region === filterRegion;
+    const matchesType = filterType === 'All' || property.property_type === filterType;
+    const matchesRegion = filterRegion === 'All' || property.city === filterRegion;
     
     return matchesSearch && matchesType && matchesRegion;
   });
 
   // Get unique types and regions for filters
-  const propertyTypes = ['All', ...Array.from(new Set(properties.map(p => p.type)))];
-  const regions = ['All', ...Array.from(new Set(properties.map(p => p.region)))];
+  const propertyTypes = ['All', ...Array.from(new Set(properties.map(p => p.property_type)))];
+  const regions = ['All', ...Array.from(new Set(properties.map(p => p.city)))];
 
   return (
     <div className="space-y-6">
@@ -233,7 +222,7 @@ const PropertiesPage = () => {
                           <TableRow key={property.id} className="hover:bg-blue-900/60 border-blue-800">
                             <TableCell className="font-mono text-blue-200">
                               <Link href={`/properties/${property.id}`} className="hover:underline">
-                                {property.parcelId}
+                                {property.parcel_id}
                               </Link>
                             </TableCell>
                             <TableCell className="text-blue-100">
@@ -243,17 +232,18 @@ const PropertiesPage = () => {
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline" className={`
-                                ${property.type === 'Residential' ? 'border-blue-500 text-blue-300' : ''}
-                                ${property.type === 'Commercial' ? 'border-cyan-500 text-cyan-300' : ''}
-                                ${property.type === 'Industrial' ? 'border-indigo-500 text-indigo-300' : ''}
-                                ${property.type === 'Agricultural' ? 'border-emerald-500 text-emerald-300' : ''}
+                                ${property.property_type === 'Residential' ? 'border-blue-500 text-blue-300' : ''}
+                                ${property.property_type === 'Commercial' ? 'border-cyan-500 text-cyan-300' : ''}
+                                ${property.property_type === 'Industrial' ? 'border-indigo-500 text-indigo-300' : ''}
+                                ${property.property_type === 'Multi-Family' ? 'border-purple-500 text-purple-300' : ''}
+                                ${property.property_type === 'Agricultural' ? 'border-emerald-500 text-emerald-300' : ''}
                               `}>
-                                {property.type}
+                                {property.property_type}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-blue-200">{property.region}</TableCell>
-                            <TableCell className="hidden md:table-cell text-blue-100">{property.value}</TableCell>
-                            <TableCell className="hidden md:table-cell text-blue-300">{property.lastAssessed}</TableCell>
+                            <TableCell className="text-blue-200">{property.city}</TableCell>
+                            <TableCell className="hidden md:table-cell text-blue-100">${property.total_value.toLocaleString()}</TableCell>
+                            <TableCell className="hidden md:table-cell text-blue-300">{property.created_at}</TableCell>
                             <TableCell>
                               <Badge variant={property.status === 'Active' ? 'default' : 'outline'} className={`
                                 ${property.status === 'Active' ? 'bg-emerald-600/50 hover:bg-emerald-600/70 text-emerald-200' : ''}

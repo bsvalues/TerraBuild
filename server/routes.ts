@@ -114,10 +114,18 @@ router.get('/properties', asyncHandler(async (req, res) => {
 }));
 
 router.get('/properties/:id', asyncHandler(async (req, res) => {
-  const property = await storage.getPropertyById(req.params.id);
+  // Convert string ID parameter to a number for database query
+  const propertyId = parseInt(req.params.id, 10);
+  
+  if (isNaN(propertyId)) {
+    return res.status(400).json({ message: 'Invalid property ID format' });
+  }
+  
+  const property = await storage.getPropertyById(propertyId);
   if (!property) {
     return res.status(404).json({ message: 'Property not found' });
   }
+  
   res.json(property);
 }));
 
