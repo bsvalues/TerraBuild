@@ -22,6 +22,7 @@ import DocumentationPage from '@/pages/documentation';
 import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
 import TrendAnalysisPage from '@/pages/trend-analysis';
+import DataImportPage from '@/pages/data-import';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -124,10 +125,7 @@ function Router() {
       
       <ProtectedRoute path="/import" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Data Import</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Data import functionality coming soon...</p>
-          </div>
+          <DataImportPage />
         </DashboardLayout>
       )} />
       
