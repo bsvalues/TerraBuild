@@ -129,7 +129,10 @@ router.get('/properties/:id', asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Invalid property ID format' });
   }
   
+  console.log(`Looking up property with ID: ${propertyId}`);
   const property = await storage.getPropertyById(propertyId);
+  console.log(`Property lookup result:`, property ? 'Found' : 'Not Found');
+  
   if (!property) {
     return res.status(404).json({ message: 'Property not found' });
   }
