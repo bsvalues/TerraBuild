@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'wouter';
 import { 
   HelpCircle, 
   LifeBuoy, 
@@ -305,10 +306,12 @@ const HelpSupportPage = () => {
               </div>
               
               <div className="mt-6 text-center">
-                <Button variant="outline" className="border-blue-700 text-blue-200">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View All Tutorials
-                </Button>
+                <Link href="/help/webinars">
+                  <Button variant="outline" className="border-blue-700 text-blue-200">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View All Tutorials
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
