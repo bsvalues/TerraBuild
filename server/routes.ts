@@ -10,6 +10,9 @@ import { z } from 'zod';
 import { storage } from './storage-factory';
 import * as fs from 'fs';
 import * as path from 'path';
+import { db } from './db';
+import * as schema from '../shared/schema';
+import { eq } from 'drizzle-orm';
 import analyticsRoutes from './routes/analyticsRoutes';
 import reportRoutes from './routes/reportRoutes';
 import whatIfScenariosRoutes from './routes/whatIfScenariosRoutes';
@@ -1010,6 +1013,33 @@ router.post('/agents/:agentId/status', asyncHandler(async (req, res) => {
   }
   
   res.status(200).json({ message: 'Agent status updated successfully' });
+}));
+
+// Debug test route for direct database access
+router.get('/debug/property/:id', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  console.log(`[DEBUG ROUTE] Directly querying database for property ID: ${id}`);
+  
+  try {
+    const propertyId = parseInt(id, 10);
+    if (isNaN(propertyId)) {
+      return res.status(400).json({ error: 'Invalid property ID' });
+    }
+    
+    // Query directly from the database
+    const [property] = await db.select().from(schema.properties).where(eq(schema.properties.id, propertyId));
+    
+    console.log(`[DEBUG ROUTE] Direct DB query result:`, property ? 'Property found' : 'Property not found');
+    
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    
+    res.json(property);
+  } catch (error) {
+    console.error('[DEBUG ROUTE] Error in direct database query:', error);
+    res.status(500).json({ error: 'Database error', details: String(error) });
+  }
 }));
 
 // Mount the properties router
