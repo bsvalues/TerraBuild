@@ -8,6 +8,7 @@ import { WindowProvider } from '@/contexts/WindowContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import HomePage from '@/pages/home-page';
 import AuthPage from '@/pages/auth-page';
+import LoginPage from '@/pages/login';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import CostWizardPage from '@/pages/CostWizardPage';

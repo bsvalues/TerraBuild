@@ -4,10 +4,12 @@ import { users } from '../shared/schema';
 /**
  * This script creates default users in the database for development purposes
  */
+import { eq } from 'drizzle-orm';
+
 export async function createDefaultUsers() {
   try {
-    // Check if admin user already exists by querying with a primitive value
-    const adminResults = await db.select().from(users).where(users.username, '=', 'admin');
+    // Check if admin user already exists using the eq operator
+    const adminResults = await db.select().from(users).where(eq(users.username, 'admin'));
     const existingAdmin = adminResults.length > 0 ? adminResults[0] : null;
     
     if (!existingAdmin) {
@@ -21,8 +23,8 @@ export async function createDefaultUsers() {
       });
     }
     
-    // Check if regular user already exists by querying with a primitive value
-    const userResults = await db.select().from(users).where(users.username, '=', 'user');
+    // Check if regular user already exists using the eq operator
+    const userResults = await db.select().from(users).where(eq(users.username, 'user'));
     const existingUser = userResults.length > 0 ? userResults[0] : null;
     
     if (!existingUser) {
