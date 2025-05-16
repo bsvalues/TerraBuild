@@ -320,6 +320,130 @@ const WebinarsPage = () => {
             </div>
           )}
           
+          {selectedCategory !== "All Webinars" && (
+            <div className="mt-6 bg-blue-900/30 p-5 rounded-lg border border-blue-800/40">
+              <h3 className="text-lg font-medium text-blue-100 mb-3">Key Concepts in {selectedCategory}</h3>
+              
+              {selectedCategory === "Cost Calculation" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Base Cost Principles</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Understanding how base costs are determined for different building types and how they serve as the foundation for all valuation calculations.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Adjustment Factors</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Learn how quality, condition, age, and regional factors affect the final valuation through multiplicative adjustment factors.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Depreciation Models</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Explore different depreciation calculation methods and how they account for physical, functional, and economic obsolescence.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedCategory === "Regional Analysis" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Geographic Identifiers</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Understanding the different region identification systems used in Benton County, including township/range coordinates, hood codes, and TCAs.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Regional Cost Variations</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Analyze how and why construction costs vary between different areas of the county based on economic factors and market conditions.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Comparative Analysis</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Learn techniques for comparing costs across multiple regions to identify patterns and outliers in valuation data.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedCategory === "Data Quality" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Validation Rules</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Understanding the system's data validation rules and how they ensure accuracy and consistency in property records.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Data Cleaning Processes</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Learn systematic approaches to identifying and correcting errors, inconsistencies, and missing values in property data.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Quality Metrics</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Explore the key metrics used to measure data quality and how to interpret quality scores for different data sets.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedCategory === "AI Agents" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Agent Capabilities</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Understanding the specific capabilities of each AI agent in the system and which tasks they're optimized to perform.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Command Syntax</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Learn the proper syntax for communicating with agents and how to structure requests for optimal results.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Integration Methods</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Explore how to integrate agent outputs into your workflow and combine insights from multiple agents.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {(selectedCategory !== "Cost Calculation" && 
+                selectedCategory !== "Regional Analysis" && 
+                selectedCategory !== "Data Quality" && 
+                selectedCategory !== "AI Agents") && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Core Principles</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Understanding the fundamental concepts and best practices in {selectedCategory.toLowerCase()}.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Advanced Techniques</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Learn specialized methods and approaches for complex {selectedCategory.toLowerCase()} scenarios.
+                    </p>
+                  </div>
+                  <div className="bg-blue-900/40 p-3 rounded-md border border-blue-800/50">
+                    <h4 className="text-blue-100 font-medium">Practical Applications</h4>
+                    <p className="text-blue-300 text-sm mt-1">
+                      Explore real-world applications and case studies demonstrating effective {selectedCategory.toLowerCase()} strategies.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
           <div className="mt-6 bg-blue-900/30 p-5 rounded-lg border border-blue-800/40">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
