@@ -4,6 +4,7 @@ import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { AuthProvider } from '@/contexts/auth-context-fixed';
+import { WindowProvider } from '@/contexts/WindowContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import HomePage from '@/pages/home-page';
 import AuthPage from '@/pages/auth-page';
@@ -19,10 +20,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SidebarProvider>
-          <Router />
-          <Toaster />
-        </SidebarProvider>
+        <WindowProvider>
+          <SidebarProvider>
+            <Router />
+            <Toaster />
+          </SidebarProvider>
+        </WindowProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

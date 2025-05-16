@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/auth-context-fixed";
 import BuildingCostCalculator from "@/components/dashboard/BuildingCostCalculator";
 import { CalculationHistory } from "@/components/dashboard/CalculationHistory";
-import Sidebar from "@/components/layout/Sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 import MainContent from "@/components/layout/MainContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Calculator } from "lucide-react";
