@@ -7,17 +7,26 @@
 import express, { Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import { pool } from './db';
 import { storage } from './storage-factory';
-import crypto from 'crypto';
 
 // Set up the login interface with PostgreSQL database connection
 export function setupLoginInterface(app: express.Express) {
   // Use cookie parser to access cookies
   app.use(cookieParser());
   
+  // Initialize PostgreSQL session store
+  const pgSession = connectPgSimple(session);
+  const sessionStore = new pgSession({
+    pool, // use the database pool connection
+    tableName: 'sessions', // use the sessions table we defined in schema
+    createTableIfMissing: true, // create the table if it doesn't exist
+  });
+
   // Use express-session with PostgreSQL session store
   app.use(session({
-    store: storage.sessionStore,
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'benton-county-secret-key',
     resave: false,
     saveUninitialized: false,

@@ -60,7 +60,15 @@ app.use((req, res, next) => {
     log(`CostFactorTables plugin registration error: ${error}`, 'error');
   }
   
-  // Setup simple authentication system that works without a database
+  // Create default users for database authentication
+  try {
+    const { createDefaultUsers } = require('./create-default-users');
+    await createDefaultUsers();
+  } catch (error) {
+    log(`Default user creation error: ${error}`, 'error');
+  }
+  
+  // Setup authentication system with PostgreSQL database
   try {
     setupLoginInterface(app);
   } catch (error) {
