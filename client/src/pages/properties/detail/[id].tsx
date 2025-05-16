@@ -19,8 +19,10 @@ import {
   Clock,
   CheckSquare,
   Info,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from 'lucide-react';
+import PropertyRecordCard from '@/components/properties/PropertyRecordCard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -153,6 +155,7 @@ const propertyData = {
 const PropertyDetail = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showRecordCard, setShowRecordCard] = useState(false);
   
   // Get property data based on ID from URL
   const property = propertyData[id as string];
@@ -219,6 +222,11 @@ const PropertyDetail = () => {
   
   const valueChanges = getValueChanges();
   
+  // Return record card if in record card view
+  if (showRecordCard) {
+    return <PropertyRecordCard property={property} onClose={() => setShowRecordCard(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -247,9 +255,13 @@ const PropertyDetail = () => {
             <Edit className="mr-2 h-4 w-4" />
             Edit Property
           </Button>
-          <Button variant="outline" className="border-blue-700 text-blue-200">
-            <Printer className="mr-2 h-4 w-4" />
-            Print
+          <Button 
+            variant="outline" 
+            className="border-blue-700 text-blue-200"
+            onClick={() => setShowRecordCard(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Record Card
           </Button>
           <Button className="bg-blue-700 hover:bg-blue-600">
             <FileText className="mr-2 h-4 w-4" />
