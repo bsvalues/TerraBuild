@@ -23,6 +23,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import PropertyRecordCard from '@/components/properties/PropertyRecordCard';
+import SimplePropertyCard from '@/components/properties/SimplePropertyCard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -223,8 +224,12 @@ const PropertyDetail = () => {
   const valueChanges = getValueChanges();
   
   // Return record card if in record card view
-  if (showRecordCard) {
-    return <PropertyRecordCard property={property} onClose={() => setShowRecordCard(false)} />;
+  if (showRecordCard && property) {
+    return (
+      <div className="container mx-auto py-6">
+        <SimplePropertyCard property={property} onClose={() => setShowRecordCard(false)} />
+      </div>
+    );
   }
 
   return (
