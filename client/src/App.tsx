@@ -16,6 +16,8 @@ import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
 import MatrixExplorerPage from '@/pages/matrix';
 import DiagnosticPage from '@/pages/diagnostic';
 import CalculatorPage from '@/pages/calculator-page';
+import DashboardsPage from '@/pages/dashboards';
+import PropertiesPage from '@/pages/properties';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -47,19 +49,13 @@ function Router() {
       
       <ProtectedRoute path="/dashboards" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Dashboards</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Dashboards coming soon...</p>
-          </div>
+          <DashboardsPage />
         </DashboardLayout>
       )} />
       
       <ProtectedRoute path="/properties" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Properties</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Property management coming soon...</p>
-          </div>
+          <PropertiesPage />
         </DashboardLayout>
       )} />
       
