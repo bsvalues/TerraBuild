@@ -54,14 +54,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await apiRequest("GET", queryKey[0] as string);
         if (res.status === 401) {
+          // Not authenticated is a normal state, not an error
           return null;
         }
-        return await res.json();
+        if (!res.ok) {
+          console.log("Server response not OK:", res.status);
+          return null;
+        }
+        const data = await res.json();
+        return data;
       } catch (error) {
         console.error("Error fetching user:", error);
+        // Dont throw, just return null on error
         return null;
       }
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   // Login mutation
