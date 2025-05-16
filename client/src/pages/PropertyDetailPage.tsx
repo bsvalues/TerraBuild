@@ -114,34 +114,39 @@ const PropertyDetailPage: React.FC = () => {
   // Create default property data
   const defaultProperty: Property = {
     id: parseInt(id || '0'),
-    legal_desc: 'Property legal description unavailable',
     geo_id: `GEO-${id || '0'}`,
-    property_use_desc: 'Residential Property',
-    assessed_val: 350000,
-    appraised_val: 375000,
-    property_use_cd: 'RES',
-    hood_cd: '52100',
+    parcel_id: `PARCEL-${id || '0'}`,
+    address: '123 Main St',
+    city: 'Kennewick',
+    state: 'WA',
+    zip: '99336',
+    county: 'Benton',
+    latitude: 46.2112,
+    longitude: -119.1372,
+    property_type: 'Residential',
+    land_area: 8500,
+    land_value: 150000,
+    total_value: 350000,
+    year_built: 2010,
+    bedrooms: 3,
+    bathrooms: 2,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   
   // Combine API data with defaults for rendering
   const rawProperty = property || defaultProperty;
   
-  // Transform property data for display
+  // Transform property data for display convenience fields
   const fullProperty: Property = {
     ...rawProperty,
     // Map API fields to display fields
-    address: rawProperty.legal_desc?.split(',')[0] || '123 Main St',
-    city: 'Kennewick',
-    state: 'WA',
-    zip: '99336',
-    parcelNumber: rawProperty.geo_id || `P-${id || '0'}`,
-    ownerName: 'Property Owner',
-    propertyType: rawProperty.property_use_desc || 'Residential',
-    yearBuilt: 2010,
-    assessedValue: rawProperty.assessed_val || 350000,
-    squareFeet: 2200,
-    bedrooms: 3,
-    bathrooms: 2,
+    parcelNumber: rawProperty.parcel_id,
+    ownerName: 'Property Owner', // We don't have this in our database yet
+    propertyType: rawProperty.property_type,
+    yearBuilt: rawProperty.year_built,
+    assessedValue: rawProperty.total_value,
+    squareFeet: rawProperty.land_area,
   };
 
   // Helper function to generate value change percentages
@@ -225,14 +230,18 @@ const PropertyDetailPage: React.FC = () => {
                   <Building className="h-5 w-5 text-blue-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Building Details</p>
-                    <p className="text-gray-700">{fullProperty.squareFeet.toLocaleString()} sq ft • {fullProperty.bedrooms} bed • {fullProperty.bathrooms} bath</p>
+                    <p className="text-gray-700">
+                      {fullProperty.squareFeet ? `${fullProperty.squareFeet.toLocaleString()} sq ft` : `${fullProperty.land_area.toLocaleString()} sq ft`} • 
+                      {fullProperty.bedrooms} bed • 
+                      {fullProperty.bathrooms} bath
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Year Built</p>
-                    <p className="text-gray-700">{fullProperty.yearBuilt}</p>
+                    <p className="text-gray-700">{fullProperty.yearBuilt || fullProperty.year_built}</p>
                   </div>
                 </div>
               </CardContent>
@@ -247,7 +256,7 @@ const PropertyDetailPage: React.FC = () => {
                   <DollarSign className="h-5 w-5 text-blue-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Current Assessment</p>
-                    <p className="text-green-700 font-semibold">${fullProperty.assessedValue.toLocaleString()}</p>
+                    <p className="text-green-700 font-semibold">${fullProperty.assessedValue?.toLocaleString() || fullProperty.total_value.toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
