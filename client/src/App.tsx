@@ -14,6 +14,7 @@ import CostWizardPage from '@/pages/CostWizardPage';
 import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
 import MatrixExplorerPage from '@/pages/matrix';
 import DiagnosticPage from '@/pages/diagnostic';
+import CalculatorPage from '@/pages/calculator-page';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -75,12 +76,9 @@ function Router() {
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/cost-calculator" component={() => (
+      <ProtectedRoute path="/calculator" component={() => (
         <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">Cost Calculator</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">Cost calculator coming soon...</p>
-          </div>
+          <CalculatorPage />
         </DashboardLayout>
       )} />
       
