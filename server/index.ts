@@ -3,15 +3,10 @@ import { createServer } from 'http';
 import routes from "./routes";
 import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
-import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
-// Use original auth for now
-import { setupAuth } from "./auth";
-import { setupCountyNetworkAuth } from "./county-auth";
+// Using simple login interface for Replit environment
+import { setupLoginInterface } from "./login-interface";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
-import { storage } from "./storage-factory";
-import { setStorage } from "./ai/shap_agent";
-import { seedProperties } from "./data/seed-properties";
 // Import cost factor plugin
 import { register as registerCostFactorPlugin } from "./plugins/CostFactorTables";
 
@@ -50,30 +45,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize the database
-  try {
-    await initDatabase();
-    log('Database initialized successfully');
-    
-    // Seed the database with sample properties
-    try {
-      const result = await seedProperties();
-      if (result.success) {
-        log('Sample properties seeded successfully');
-      } else {
-        log(`Property seeding warning: ${result.message}`, 'warn');
-      }
-    } catch (seedError) {
-      log(`Property seeding error: ${seedError}`, 'error');
-    }
-    
-    // Initialize SHAP agent with the storage
-    setStorage(storage);
-    log('SHAP agent initialized with storage');
-  } catch (error) {
-    log(`Database initialization error: ${error}`, 'error');
-  }
-  
   // Initialize MCP framework for AI-powered features
   try {
     initMCP(app);
@@ -89,12 +60,9 @@ app.use((req, res, next) => {
     log(`CostFactorTables plugin registration error: ${error}`, 'error');
   }
   
-  // Setup authentication with Replit Auth
+  // Setup simple authentication system that works without a database
   try {
-    await setupAuth(app);
-    // Setup County Network Authentication
-    setupCountyNetworkAuth(app);
-    log('Authentication system initialized successfully');
+    setupLoginInterface(app);
   } catch (error) {
     log(`Authentication initialization error: ${error}`, 'error');
   }

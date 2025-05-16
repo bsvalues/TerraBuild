@@ -2,13 +2,13 @@ import { generateNarrative } from './anthropic-client';
 import { db } from '../../db';
 import { eq, desc, or, and, SQL } from 'drizzle-orm';
 import { 
-  costMatrix, 
-  matrixDetail, 
+  costMatrices as costMatrix, 
+  costMatrices as matrixDetail, 
   buildingTypes, 
   regions, 
   properties, 
-  improvements, 
-  improvementDetails 
+  improvements,
+  improvements as improvementDetails 
 } from '@shared/schema';
 
 // Types of infrastructure stories we can generate

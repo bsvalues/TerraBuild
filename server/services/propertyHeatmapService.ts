@@ -10,12 +10,34 @@ import { db } from '../db';
 import { eq, and, sql, desc, gte, lte } from 'drizzle-orm';
 import { 
   properties, 
-  propertyValueHistory, 
-  geographicRegions, 
-  geographicMunicipalities, 
-  geographicNeighborhoods 
+  regions
 } from '../../shared/schema';
-import { CacheManager } from '../utils/cacheManager';
+
+// Mock CacheManager for development
+class CacheManager {
+  private cache: Map<string, any> = new Map();
+  
+  get<T>(key: string): T | null {
+    const item = this.cache.get(key);
+    if (!item) return null;
+    if (item.expires < Date.now()) {
+      this.cache.delete(key);
+      return null;
+    }
+    return item.value as T;
+  }
+  
+  set(key: string, value: any, ttl: number = 60): void {
+    this.cache.set(key, {
+      value,
+      expires: Date.now() + (ttl * 1000)
+    });
+  }
+  
+  clear(): void {
+    this.cache.clear();
+  }
+}
 
 const CACHE_TTL = 3600; // 1 hour cache expiration
 
