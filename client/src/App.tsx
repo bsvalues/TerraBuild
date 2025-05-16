@@ -23,6 +23,7 @@ import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
 import TrendAnalysisPage from '@/pages/trend-analysis';
 import DataImportPage from '@/pages/data-import';
+import AgentsPage from '@/pages/agents';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -144,6 +145,12 @@ function Router() {
         </DashboardLayout>
       )} />
       
+      <ProtectedRoute path="/agents" component={() => (
+        <DashboardLayout>
+          <AgentsPage />
+        </DashboardLayout>
+      )} />
+
       <ProtectedRoute path="/help" component={() => (
         <DashboardLayout>
           <h1 className="text-2xl font-bold text-blue-100 mb-6">Help & Support</h1>
