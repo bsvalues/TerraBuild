@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -230,8 +231,16 @@ const PropertiesPage = () => {
                       {filteredProperties.length > 0 ? (
                         filteredProperties.map((property) => (
                           <TableRow key={property.id} className="hover:bg-blue-900/60 border-blue-800">
-                            <TableCell className="font-mono text-blue-200">{property.parcelId}</TableCell>
-                            <TableCell className="text-blue-100">{property.address}</TableCell>
+                            <TableCell className="font-mono text-blue-200">
+                              <Link href={`/properties/detail/${property.id}`} className="hover:underline">
+                                {property.parcelId}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="text-blue-100">
+                              <Link href={`/properties/detail/${property.id}`} className="hover:underline">
+                                {property.address}
+                              </Link>
+                            </TableCell>
                             <TableCell>
                               <Badge variant="outline" className={`
                                 ${property.type === 'Residential' ? 'border-blue-500 text-blue-300' : ''}
@@ -262,7 +271,9 @@ const PropertiesPage = () => {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700">
-                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">View Details</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">
+                                    <Link href={`/properties/detail/${property.id}`}>View Details</Link>
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">Edit Property</DropdownMenuItem>
                                   <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">Calculate Valuation</DropdownMenuItem>
                                   <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">View History</DropdownMenuItem>
