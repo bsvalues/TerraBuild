@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { getQueryFn } from '@/lib/queryClient';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Building,
   Search,
@@ -24,389 +27,444 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Example property data corresponding to actual database structure
-const properties = [
-  {
-    id: 1,
-    parcel_id: 'PARCEL-001',
-    address: '123 Main St, Kennewick, WA 99336',
-    property_type: 'Residential',
-    city: 'Kennewick',
-    county: 'Benton',
-    total_value: 350000,
-    created_at: '2025-05-16',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    parcel_id: 'PARCEL-002',
-    address: '456 Oak Ave, Richland, WA 99352',
-    property_type: 'Residential',
-    city: 'Richland',
-    county: 'Benton',
-    total_value: 420000,
-    created_at: '2025-05-16',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    parcel_id: 'PARCEL-003',
-    address: '789 Pine Blvd, Pasco, WA 99301',
-    property_type: 'Commercial',
-    city: 'Pasco',
-    county: 'Franklin',
-    total_value: 750000,
-    created_at: '2025-05-16',
-    status: 'Active',
-  },
-  {
-    id: 4,
-    parcel_id: 'PARCEL-004',
-    address: '101 Washington St, Kennewick, WA 99336',
-    property_type: 'Residential',
-    city: 'Kennewick',
-    county: 'Benton',
-    total_value: 320000,
-    created_at: '2025-05-16',
-    status: 'Under Review',
-  },
-  {
-    id: 5,
-    parcel_id: 'PARCEL-005',
-    address: '202 Columbia Dr, Richland, WA 99352',
-    property_type: 'Multi-Family',
-    city: 'Richland',
-    county: 'Benton',
-    total_value: 600000,
-    created_at: '2025-05-16',
-    status: 'Active',
-  },
-];
+// Property interface matching database structure
+interface Property {
+  id: number;
+  parcel_id: string;
+  geo_id?: string;
+  address: string;
+  property_type: string;
+  city: string;
+  county: string;
+  state?: string;
+  zip?: string;
+  total_value: number;
+  land_value?: number;
+  land_area?: number;
+  year_built?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  created_at: string;
+  updated_at?: string;
+  latitude?: number;
+  longitude?: number;
+  status?: string;
+}
 
-const PropertiesPage = () => {
+const PropertiesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All');
-  const [filterRegion, setFilterRegion] = useState('All');
-
-  // Filter properties based on search and filters
-  const filteredProperties = properties.filter(property => {
-    const matchesSearch = !searchTerm || 
-      property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.parcel_id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = filterType === 'All' || property.property_type === filterType;
-    const matchesRegion = filterRegion === 'All' || property.city === filterRegion;
-    
-    return matchesSearch && matchesType && matchesRegion;
+  const [activeTab, setActiveTab] = useState('all');
+  
+  // Fetch properties from API
+  const { data: properties, isLoading, error } = useQuery<Property[]>({
+    queryKey: ['/api/properties'],
+    queryFn: getQueryFn(),
   });
-
-  // Get unique types and regions for filters
-  const propertyTypes = ['All', ...Array.from(new Set(properties.map(p => p.property_type)))];
-  const regions = ['All', ...Array.from(new Set(properties.map(p => p.city)))];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-100">Properties</h1>
-        <Button className="bg-blue-700 hover:bg-blue-600">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Property
-        </Button>
+  
+  // If properties are loading, show skeleton UI
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
       </div>
-
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="bg-blue-900/50 border border-blue-800/40">
-          <TabsTrigger value="all" className="data-[state=active]:bg-blue-800/50">All Properties</TabsTrigger>
-          <TabsTrigger value="residential" className="data-[state=active]:bg-blue-800/50">Residential</TabsTrigger>
-          <TabsTrigger value="commercial" className="data-[state=active]:bg-blue-800/50">Commercial</TabsTrigger>
-          <TabsTrigger value="map" className="data-[state=active]:bg-blue-800/50">
-            <Map className="h-4 w-4 mr-2" />
+    );
+  }
+  
+  // If there was an error fetching properties or no properties were returned
+  if (error || !properties) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Error Loading Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>There was an error loading the property data. Please try again later.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  // Default status for properties that don't have one
+  const propertiesWithStatus = properties.map(property => ({
+    ...property,
+    status: property.status || 'Active'
+  }));
+  
+  // Filter properties based on search term and active tab
+  const filteredProperties = propertiesWithStatus.filter(property => {
+    const matchesSearch = 
+      property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.parcel_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      property.county?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (activeTab === 'all') return matchesSearch;
+    if (activeTab === 'residential') return matchesSearch && property.property_type === 'Residential';
+    if (activeTab === 'commercial') return matchesSearch && property.property_type === 'Commercial';
+    if (activeTab === 'pending') return matchesSearch && property.status === 'Pending Review';
+    
+    return matchesSearch;
+  });
+  
+  return (
+    <div className="container mx-auto py-6">
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Properties</h1>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Property
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search properties..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" size="sm" className="flex gap-1 items-center">
+            <Filter className="h-4 w-4" />
+            Filter
+          </Button>
+          <Button variant="outline" size="sm" className="flex gap-1 items-center">
+            <FileDown className="h-4 w-4" />
+            Export
+          </Button>
+          <Button variant="outline" size="sm" className="flex gap-1 items-center">
+            <Map className="h-4 w-4" />
             Map View
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
-            <CardHeader className="pb-0">
-              <CardTitle className="text-blue-100">Property Management</CardTitle>
-              <CardDescription className="text-blue-300">
-                View and manage all property records in Benton County.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4 py-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
-                    <Input
-                      placeholder="Search properties by address or parcel ID..."
-                      className="pl-8 bg-blue-900/50 border-blue-700/50 text-blue-100 placeholder:text-blue-400/70"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="border-blue-700/50 bg-blue-900/50 text-blue-200">
-                          <ListFilter className="mr-2 h-4 w-4" />
-                          Type: {filterType}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700">
-                        {propertyTypes.map(type => (
-                          <DropdownMenuItem 
-                            key={type}
-                            onClick={() => setFilterType(type)}
-                            className={`text-blue-200 hover:bg-blue-800 ${filterType === type ? 'font-medium' : ''}`}
-                          >
-                            {type}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="border-blue-700/50 bg-blue-900/50 text-blue-200">
-                          <Map className="mr-2 h-4 w-4" />
-                          Region: {filterRegion}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700">
-                        {regions.map(region => (
-                          <DropdownMenuItem 
-                            key={region}
-                            onClick={() => setFilterRegion(region)}
-                            className={`text-blue-200 hover:bg-blue-800 ${filterRegion === region ? 'font-medium' : ''}`}
-                          >
-                            {region}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <Button variant="outline" className="border-blue-700/50 bg-blue-900/50 text-blue-200">
-                      <FileDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="rounded-md border border-blue-800">
-                  <Table>
-                    <TableHeader className="bg-blue-900/50">
-                      <TableRow className="hover:bg-blue-900/60 border-blue-800">
-                        <TableHead className="text-blue-300 w-[100px]">
-                          <div className="flex items-center">
-                            Parcel ID
-                            <ArrowUpDown className="ml-1 h-3 w-3" />
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-blue-300">
-                          <div className="flex items-center">
-                            Address
-                            <ArrowUpDown className="ml-1 h-3 w-3" />
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-blue-300">Type</TableHead>
-                        <TableHead className="text-blue-300">Region</TableHead>
-                        <TableHead className="text-blue-300 hidden md:table-cell">Value</TableHead>
-                        <TableHead className="text-blue-300 hidden md:table-cell">Last Assessed</TableHead>
-                        <TableHead className="text-blue-300">Status</TableHead>
-                        <TableHead className="text-blue-300 text-right">Actions</TableHead>
+          </Button>
+        </div>
+        
+        <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all">All Properties</TabsTrigger>
+            <TabsTrigger value="residential">Residential</TabsTrigger>
+            <TabsTrigger value="commercial">Commercial</TabsTrigger>
+            <TabsTrigger value="pending">Pending Review</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all" className="mt-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Property Inventory</CardTitle>
+                <CardDescription>
+                  Showing {filteredProperties.length} properties in Benton County and surrounding areas.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>
+                        <div className="flex items-center gap-1">
+                          Address
+                          <ArrowUpDown className="h-3 w-3" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>County</TableHead>
+                      <TableHead>
+                        <div className="flex items-center gap-1">
+                          Value
+                          <ArrowUpDown className="h-3 w-3" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/properties/${property.id}`}>
+                            {property.parcel_id}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/properties/${property.id}`} className="hover:underline">
+                            {property.address}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={property.property_type === 'Residential' ? 'default' : 'secondary'}>
+                            {property.property_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{property.city}</TableCell>
+                        <TableCell>{property.county}</TableCell>
+                        <TableCell>${property.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={property.status === 'Active' ? 'outline' : 'destructive'}>
+                            {property.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Link href={`/properties/${property.id}`}>
+                                  View Details
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Edit Property</DropdownMenuItem>
+                              <DropdownMenuItem>Generate Report</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProperties.length > 0 ? (
-                        filteredProperties.map((property) => (
-                          <TableRow key={property.id} className="hover:bg-blue-900/60 border-blue-800">
-                            <TableCell className="font-mono text-blue-200">
-                              <Link href={`/properties/${property.id}`} className="hover:underline">
-                                {property.parcel_id}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="text-blue-100">
-                              <Link href={`/properties/${property.id}`} className="hover:underline">
-                                {property.address}
-                              </Link>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={`
-                                ${property.property_type === 'Residential' ? 'border-blue-500 text-blue-300' : ''}
-                                ${property.property_type === 'Commercial' ? 'border-cyan-500 text-cyan-300' : ''}
-                                ${property.property_type === 'Industrial' ? 'border-indigo-500 text-indigo-300' : ''}
-                                ${property.property_type === 'Multi-Family' ? 'border-purple-500 text-purple-300' : ''}
-                                ${property.property_type === 'Agricultural' ? 'border-emerald-500 text-emerald-300' : ''}
-                              `}>
-                                {property.property_type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-blue-200">{property.city}</TableCell>
-                            <TableCell className="hidden md:table-cell text-blue-100">${property.total_value.toLocaleString()}</TableCell>
-                            <TableCell className="hidden md:table-cell text-blue-300">{property.created_at}</TableCell>
-                            <TableCell>
-                              <Badge variant={property.status === 'Active' ? 'default' : 'outline'} className={`
-                                ${property.status === 'Active' ? 'bg-emerald-600/50 hover:bg-emerald-600/70 text-emerald-200' : ''}
-                                ${property.status === 'Under Review' ? 'bg-amber-600/50 hover:bg-amber-600/70 text-amber-200' : ''}
-                              `}>
-                                {property.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0 text-blue-300 hover:text-blue-100">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700">
-                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">
-                                    <Link href={`/properties/${property.id}`}>View Details</Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">Edit Property</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">Calculate Valuation</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-blue-200 hover:bg-blue-800">View History</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center h-24 text-blue-300">
-                            No properties found matching your filters
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                <div className="flex items-center justify-between text-blue-300 text-sm">
-                  <div>Showing {filteredProperties.length} of {properties.length} properties</div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" className="h-8 border-blue-700/50 bg-blue-900/50 text-blue-200">Previous</Button>
-                    <Button variant="outline" size="sm" className="h-8 border-blue-700/50 bg-blue-900/50 text-blue-200">Next</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="residential" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
-            <CardHeader>
-              <CardTitle className="text-blue-100">Residential Properties</CardTitle>
-              <CardDescription className="text-blue-300">
-                View and manage all residential properties in Benton County.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-blue-200 mb-4">
-                This section shows all residential properties. Filter options specific to residential properties are available below.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Single Family</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">1,845</div>
-                    <div className="text-sm text-blue-300">Average value: $485,000</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Multi Family</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">386</div>
-                    <div className="text-sm text-blue-300">Average value: $752,000</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Condominium</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">97</div>
-                    <div className="text-sm text-blue-300">Average value: $340,000</div>
-                  </CardContent>
-                </Card>
-              </div>
-              <Button className="bg-blue-700 hover:bg-blue-600">View All Residential Properties</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="commercial" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
-            <CardHeader>
-              <CardTitle className="text-blue-100">Commercial Properties</CardTitle>
-              <CardDescription className="text-blue-300">
-                View and manage all commercial properties in Benton County.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-blue-200 mb-4">
-                This section shows all commercial properties. Filter options specific to commercial properties are available below.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Retail</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">212</div>
-                    <div className="text-sm text-blue-300">Average value: $1,250,000</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Office</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">184</div>
-                    <div className="text-sm text-blue-300">Average value: $1,840,000</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-blue-900/50 border-blue-800/40">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-blue-100 text-lg">Mixed Use</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-100">90</div>
-                    <div className="text-sm text-blue-300">Average value: $2,150,000</div>
-                  </CardContent>
-                </Card>
-              </div>
-              <Button className="bg-blue-700 hover:bg-blue-600">View All Commercial Properties</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="map" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
-            <CardHeader>
-              <CardTitle className="text-blue-100">Property Map View</CardTitle>
-              <CardDescription className="text-blue-300">
-                Geographic visualization of property locations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[500px] w-full bg-blue-950/50 rounded-lg border border-blue-800/40 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <Map className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                  <p className="text-blue-200 mb-2">Interactive map view will be available soon</p>
-                  <p className="text-blue-400 text-sm">This feature will display property locations with advanced filtering options and geospatial analysis tools.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="residential" className="mt-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Residential Properties</CardTitle>
+                <CardDescription>
+                  Showing {filteredProperties.length} residential properties.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  {/* Same table structure as above */}
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>County</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/properties/${property.id}`}>
+                            {property.parcel_id}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/properties/${property.id}`} className="hover:underline">
+                            {property.address}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{property.city}</TableCell>
+                        <TableCell>{property.county}</TableCell>
+                        <TableCell>${property.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={property.status === 'Active' ? 'outline' : 'destructive'}>
+                            {property.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Link href={`/properties/${property.id}`}>
+                                  View Details
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Edit Property</DropdownMenuItem>
+                              <DropdownMenuItem>Generate Report</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="commercial" className="mt-4">
+            {/* Similar structure for commercial properties */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Commercial Properties</CardTitle>
+                <CardDescription>
+                  Showing {filteredProperties.length} commercial properties.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  {/* Same table structure as above */}
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>County</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/properties/${property.id}`}>
+                            {property.parcel_id}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/properties/${property.id}`} className="hover:underline">
+                            {property.address}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{property.city}</TableCell>
+                        <TableCell>{property.county}</TableCell>
+                        <TableCell>${property.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={property.status === 'Active' ? 'outline' : 'destructive'}>
+                            {property.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Link href={`/properties/${property.id}`}>
+                                  View Details
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Edit Property</DropdownMenuItem>
+                              <DropdownMenuItem>Generate Report</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="pending" className="mt-4">
+            {/* Similar structure for pending properties */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Pending Review</CardTitle>
+                <CardDescription>
+                  Showing {filteredProperties.length} properties pending review.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  {/* Same table structure as above */}
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>County</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/properties/${property.id}`}>
+                            {property.parcel_id}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/properties/${property.id}`} className="hover:underline">
+                            {property.address}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={property.property_type === 'Residential' ? 'default' : 'secondary'}>
+                            {property.property_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{property.city}</TableCell>
+                        <TableCell>{property.county}</TableCell>
+                        <TableCell>${property.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">
+                            {property.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Link href={`/properties/${property.id}`}>
+                                  View Details
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Approve</DropdownMenuItem>
+                              <DropdownMenuItem>Edit Property</DropdownMenuItem>
+                              <DropdownMenuItem>Generate Report</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
