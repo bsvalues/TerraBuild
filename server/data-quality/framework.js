@@ -270,3 +270,14 @@ function createBatchQualityReport(records, validator, type, context) {
     recordResults
   };
 }
+
+// Export all necessary functions, classes and constants
+export {
+  ValidationContext,
+  RuleType,
+  Severity,
+  createRule,
+  createZodRule,
+  DataQualityValidator,
+  createBatchQualityReport
+};
