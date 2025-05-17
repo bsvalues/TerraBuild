@@ -836,6 +836,240 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Data quality operations
+  async validatePropertyRecords(records: any[], type: string, context: any): Promise<any> {
+    // Using the data quality framework to validate records
+    try {
+      const { dataQualityFramework } = await import('./data-quality/index.js');
+      return dataQualityFramework.validateBatch(type, records, context);
+    } catch (error) {
+      console.error('Error validating records:', error);
+      throw error;
+    }
+  }
+
+  async saveValidationReport(batchId: string, report: any): Promise<any> {
+    try {
+      // Store in validationReports table
+      const [savedReport] = await db.insert(schema.validationReports).values({
+        batch_id: batchId,
+        report_data: report,
+        entity_type: report.entityType,
+        created_at: new Date(),
+        user_id: report.userId || null,
+        pass_rate: report.summary?.passRate || 0,
+        total_records: report.summary?.totalRecords || 0,
+        passed_records: report.summary?.passedRecords || 0,
+        failed_records: report.summary?.failedRecords || 0
+      }).returning();
+      
+      return savedReport;
+    } catch (error) {
+      console.error('Error saving validation report:', error);
+      throw error;
+    }
+  }
+
+  async getValidationReport(batchId: string): Promise<any | null> {
+    try {
+      const [report] = await db.select().from(schema.validationReports)
+        .where(eq(schema.validationReports.batch_id, batchId));
+      
+      return report ? report : null;
+    } catch (error) {
+      console.error('Error fetching validation report:', error);
+      throw error;
+    }
+  }
+
+  async getValidationReports(options?: { limit?: number, offset?: number, userId?: number }): Promise<any[]> {
+    try {
+      const { limit = 20, offset = 0, userId } = options || {};
+      
+      let query = db.select().from(schema.validationReports)
+        .orderBy(desc(schema.validationReports.created_at))
+        .limit(limit)
+        .offset(offset);
+      
+      if (userId) {
+        query = query.where(eq(schema.validationReports.user_id, userId));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error fetching validation reports:', error);
+      throw error;
+    }
+  }
+
+  // Import operations
+  async storeRawImportRecords(batchId: string, records: any[], startIndex: number): Promise<boolean> {
+    try {
+      // Store raw import records for processing
+      const [result] = await db.insert(schema.importBatches).values({
+        batch_id: batchId,
+        records_data: records,
+        start_index: startIndex,
+        created_at: new Date()
+      }).returning();
+      
+      return !!result;
+    } catch (error) {
+      console.error('Error storing raw import records:', error);
+      throw error;
+    }
+  }
+
+  async getRawImportRecords(batchId: string): Promise<any[]> {
+    try {
+      // Get all records for a batch, ordered by start_index
+      const batches = await db.select().from(schema.importBatches)
+        .where(eq(schema.importBatches.batch_id, batchId))
+        .orderBy(asc(schema.importBatches.start_index));
+      
+      // Combine all records from all batches
+      let allRecords: any[] = [];
+      
+      for (const batch of batches) {
+        if (batch.records_data && Array.isArray(batch.records_data)) {
+          allRecords = [...allRecords, ...batch.records_data];
+        }
+      }
+      
+      return allRecords;
+    } catch (error) {
+      console.error('Error getting raw import records:', error);
+      throw error;
+    }
+  }
+
+  async createImportJob(job: any): Promise<any> {
+    try {
+      const [newJob] = await db.insert(schema.importJobs).values({
+        id: job.id,
+        user_id: job.userId,
+        file_name: job.fileName,
+        status: job.status,
+        total_count: job.totalCount,
+        pass_count: job.passCount || 0,
+        fail_count: job.failCount || 0,
+        started_at: job.startedAt || new Date(),
+        completed_at: null,
+        metadata: job.metadata || {},
+        error_message: job.errorMessage || null
+      }).returning();
+      
+      return newJob;
+    } catch (error) {
+      console.error('Error creating import job:', error);
+      throw error;
+    }
+  }
+
+  async getImportJobStatus(jobId: string): Promise<any | null> {
+    try {
+      const [job] = await db.select().from(schema.importJobs)
+        .where(eq(schema.importJobs.id, jobId));
+      
+      return job || null;
+    } catch (error) {
+      console.error('Error getting import job status:', error);
+      throw error;
+    }
+  }
+
+  async updateImportJobStatus(jobId: string, status: string, metadata?: any): Promise<boolean> {
+    try {
+      const updateData: any = {
+        status,
+        updated_at: new Date()
+      };
+      
+      // Update completed_at if status is 'completed' or 'error'
+      if (status === 'completed' || status === 'error') {
+        updateData.completed_at = new Date();
+      }
+      
+      // Update metadata if provided
+      if (metadata) {
+        const [existingJob] = await db.select().from(schema.importJobs)
+          .where(eq(schema.importJobs.id, jobId));
+        
+        if (existingJob) {
+          updateData.metadata = {
+            ...(existingJob.metadata || {}),
+            ...metadata
+          };
+          
+          // Update specific counters if provided
+          if (metadata.passCount !== undefined) updateData.pass_count = metadata.passCount;
+          if (metadata.failCount !== undefined) updateData.fail_count = metadata.failCount;
+          if (metadata.errorMessage !== undefined) updateData.error_message = metadata.errorMessage;
+        }
+      }
+      
+      const [result] = await db.update(schema.importJobs)
+        .set(updateData)
+        .where(eq(schema.importJobs.id, jobId))
+        .returning();
+      
+      return !!result;
+    } catch (error) {
+      console.error('Error updating import job status:', error);
+      throw error;
+    }
+  }
+
+  async createOrUpdateProperty(propertyData: any): Promise<any> {
+    try {
+      // Check if property already exists (by parcel_id or geo_id)
+      let existingProperty = null;
+      
+      if (propertyData.parcel_id) {
+        const [property] = await db.select().from(schema.properties)
+          .where(eq(schema.properties.parcel_id, propertyData.parcel_id));
+        
+        if (property) existingProperty = property;
+      }
+      
+      if (!existingProperty && propertyData.geo_id) {
+        const [property] = await db.select().from(schema.properties)
+          .where(eq(schema.properties.geo_id, propertyData.geo_id));
+        
+        if (property) existingProperty = property;
+      }
+      
+      if (existingProperty) {
+        // Update existing property
+        const [updatedProperty] = await db.update(schema.properties)
+          .set({
+            ...propertyData,
+            updated_at: new Date()
+          })
+          .where(eq(schema.properties.id, existingProperty.id))
+          .returning();
+        
+        return updatedProperty;
+      } else {
+        // Create new property
+        const insertData = {
+          ...propertyData,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+        
+        const [newProperty] = await db.insert(schema.properties)
+          .values(insertData)
+          .returning();
+        
+        return newProperty;
+      }
+    } catch (error) {
+      console.error('Error creating or updating property:', error);
+      throw error;
+    }
+  }
+
   async checkDatabaseConnection(): Promise<boolean> {
     try {
       await pool.query('SELECT 1');

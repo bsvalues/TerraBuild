@@ -183,11 +183,10 @@ export type Project = typeof projects.$inferSelect;
  * Project Properties Junction Table
  */
 export const projectProperties = pgTable("project_properties", {
-  project_id: integer("project_id").references(() => projects.id),
-  property_id: integer("property_id").references(() => properties.id),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.project_id, t.property_id] })
-}));
+  id: serial("id").primaryKey(),
+  project_id: integer("project_id").references(() => projects.id).notNull(),
+  property_id: integer("property_id").references(() => properties.id).notNull(),
+});
 
 /**
  * Building Types Table
@@ -236,3 +235,87 @@ export const insertSettingSchema = createInsertSchema(settings)
 
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
+
+/**
+ * Validation Reports Table
+ */
+export const validationReports = pgTable("validation_reports", {
+  id: serial("id").primaryKey(),
+  batch_id: varchar("batch_id", { length: 255 }).notNull().unique(),
+  entity_type: varchar("entity_type", { length: 50 }).notNull(),
+  report_data: text("report_data").notNull(), // JSON stringified report
+  user_id: integer("user_id").references(() => users.id),
+  pass_rate: doublePrecision("pass_rate"),
+  total_records: integer("total_records"),
+  passed_records: integer("passed_records"),
+  failed_records: integer("failed_records"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const insertValidationReportSchema = createInsertSchema(validationReports)
+  .omit({ id: true, created_at: true, updated_at: true });
+
+export type InsertValidationReport = z.infer<typeof insertValidationReportSchema>;
+export type ValidationReport = typeof validationReports.$inferSelect;
+
+/**
+ * Import Jobs Table
+ */
+export const importJobs = pgTable("import_jobs", {
+  id: varchar("id", { length: 255 }).primaryKey(), // UUID
+  user_id: integer("user_id").references(() => users.id),
+  file_name: varchar("file_name", { length: 255 }),
+  status: varchar("status", { length: 50 }).notNull(), // pending, processing, completed, error
+  total_count: integer("total_count").default(0),
+  pass_count: integer("pass_count").default(0),
+  fail_count: integer("fail_count").default(0),
+  started_at: timestamp("started_at").defaultNow(),
+  completed_at: timestamp("completed_at"),
+  metadata: text("metadata"), // JSON stringified metadata
+  error_message: text("error_message"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const insertImportJobSchema = createInsertSchema(importJobs)
+  .omit({ created_at: true, updated_at: true });
+
+export type InsertImportJob = z.infer<typeof insertImportJobSchema>;
+export type ImportJob = typeof importJobs.$inferSelect;
+
+/**
+ * Import Batches Table (for storing raw import data)
+ */
+export const importBatches = pgTable("import_batches", {
+  id: serial("id").primaryKey(),
+  batch_id: varchar("batch_id", { length: 255 }).notNull(),
+  records_data: text("records_data").notNull(), // JSON stringified records
+  start_index: integer("start_index").default(0),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertImportBatchSchema = createInsertSchema(importBatches)
+  .omit({ id: true, created_at: true });
+
+export type InsertImportBatch = z.infer<typeof insertImportBatchSchema>;
+export type ImportBatch = typeof importBatches.$inferSelect;
+
+/**
+ * Activities Table (for tracking user activities)
+ */
+export const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  action: varchar("action", { length: 100 }).notNull(),
+  entity_type: varchar("entity_type", { length: 50 }),
+  entity_id: varchar("entity_id", { length: 255 }),
+  details: text("details"), // JSON stringified details
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertActivitySchema = createInsertSchema(activities)
+  .omit({ id: true, created_at: true });
+
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type Activity = typeof activities.$inferSelect;
