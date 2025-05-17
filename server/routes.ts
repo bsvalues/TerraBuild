@@ -32,6 +32,7 @@ import propertiesRouter from './routes/properties';
 import authRoutes from './routes/auth';
 import calculatorRouter from './routes/calculator';
 import propertyMapRoutes from './routes/property-routes';
+import { registerPropertyImportRoutes } from './routes/property-import';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();
