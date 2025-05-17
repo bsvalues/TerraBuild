@@ -28,6 +28,8 @@ import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
+import propertyImportRouter from './routes/property-import';
+import dataQualityRouter from './routes/data-quality';
 // The CostFactorTables plugin is registered directly in server/index.ts
 import authRoutes from './routes/auth';
 import calculatorRouter from './routes/calculator';
@@ -1048,6 +1050,12 @@ router.get('/debug/property/:id', asyncHandler(async (req, res) => {
 
 // Mount the properties router
 router.use('/properties', propertiesRouter);
+
+// Mount the property import router
+router.use('/import', propertyImportRouter);
+
+// Mount the data quality router
+router.use('/data-quality', dataQualityRouter);
 
 // Mount the auth routes - this will handle login, register, logout, and user routes
 router.use('/', authRoutes);
