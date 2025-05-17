@@ -598,6 +598,18 @@ export class DatabaseStorage implements IStorage {
   async deleteFileUpload(id: number): Promise<boolean> {
     return true;
   }
+  
+  // Activity tracking
+  async createActivity(activityData: any): Promise<any> {
+    console.log('Activity created:', activityData);
+    return { id: 1, ...activityData, timestamp: new Date() };
+  }
+  
+  // File upload status tracking
+  async updateFileUploadStatus(fileId: number, status: string, metadata?: any): Promise<any> {
+    console.log(`File ${fileId} status updated to ${status}`, metadata);
+    return { id: fileId, status, metadata, updatedAt: new Date() };
+  }
 
   async checkDatabaseConnection(): Promise<boolean> {
     try {

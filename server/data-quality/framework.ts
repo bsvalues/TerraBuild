@@ -1,20 +1,19 @@
 /**
- * Data Quality Framework for Benton County Building Cost System
+ * Data Quality Framework
  * 
- * This module defines the core framework for data quality validation,
- * including the Rule interface, ValidationContext, and ValidationResult structures.
+ * This module provides the core data quality validation framework
+ * for the Benton County Building Cost System.
  */
-
-import { z } from 'zod';
 
 export enum RuleType {
   PROPERTY = 'property',
   IMPROVEMENT = 'improvement',
-  LAND_DETAIL = 'land_detail',
-  IMPROVEMENT_DETAIL = 'improvement_detail',
-  IMPROVEMENT_ITEM = 'improvement_item',
-  COST_MATRIX = 'cost_matrix',
-  GENERAL = 'general'
+  IMPROVEMENT_DETAIL = 'improvementDetail',
+  IMPROVEMENT_ITEM = 'improvementItem',
+  LAND_DETAIL = 'landDetail',
+  COST_MATRIX = 'costMatrix',
+  REGION = 'region',
+  BUILDING_TYPE = 'buildingType'
 }
 
 export enum Severity {
@@ -26,269 +25,189 @@ export enum Severity {
 
 export interface Rule {
   id: string;
-  name: string;
   description: string;
   type: RuleType;
   severity: Severity;
-  validate: (value: any, context: ValidationContext) => ValidationResult;
+  validate: (data: any, context?: ValidationContext) => ValidationResult;
 }
 
 export interface ValidationContext {
-  relatedData?: Record<string, any>;
-  options?: Record<string, any>;
+  userId?: number;
+  batchId?: string;
+  recordIndex?: number;
+  parentRecordId?: string | number;
+  [key: string]: any;
 }
 
 export interface ValidationResult {
-  passed: boolean;
-  message?: string;
-  details?: any;
+  valid: boolean;
+  issues: ValidationIssue[];
 }
 
-export class ValidationReport {
-  rules: Rule[] = [];
-  results: Map<string, ValidationResult> = new Map();
-  timestamp: Date = new Date();
-  
-  constructor(public entityType: RuleType) {}
-  
-  addResult(rule: Rule, result: ValidationResult): void {
-    this.rules.push(rule);
-    this.results.set(rule.id, result);
-  }
-  
-  get passed(): boolean {
-    return Array.from(this.results.values()).every(result => result.passed);
-  }
-  
-  get criticalErrorCount(): number {
-    return this.rules.filter(rule => 
-      rule.severity === Severity.CRITICAL && 
-      !this.results.get(rule.id)?.passed
-    ).length;
-  }
-  
-  get errorCount(): number {
-    return this.rules.filter(rule => 
-      rule.severity === Severity.ERROR && 
-      !this.results.get(rule.id)?.passed
-    ).length;
-  }
-  
-  get warningCount(): number {
-    return this.rules.filter(rule => 
-      rule.severity === Severity.WARNING && 
-      !this.results.get(rule.id)?.passed
-    ).length;
-  }
-  
-  get infoCount(): number {
-    return this.rules.filter(rule => 
-      rule.severity === Severity.INFO && 
-      !this.results.get(rule.id)?.passed
-    ).length;
-  }
-  
-  toJSON(): any {
-    return {
-      entityType: this.entityType,
-      passed: this.passed,
-      timestamp: this.timestamp,
-      summary: {
-        total: this.rules.length,
-        passed: this.rules.filter(rule => this.results.get(rule.id)?.passed).length,
-        failed: this.rules.filter(rule => !this.results.get(rule.id)?.passed).length,
-        criticalErrors: this.criticalErrorCount,
-        errors: this.errorCount,
-        warnings: this.warningCount,
-        info: this.infoCount
-      },
-      details: this.rules.map(rule => {
-        const ruleResult = this.results.get(rule.id);
-        return {
-          id: rule.id,
-          name: rule.name,
-          type: rule.type,
-          severity: rule.severity,
-          passed: ruleResult?.passed,
-          message: ruleResult?.message,
-          details: ruleResult?.details
-        };
-      })
-    };
-  }
+export interface ValidationIssue {
+  ruleId: string;
+  message: string;
+  severity: Severity;
+  code?: string;
+  field?: string;
+  value?: any;
+  context?: Record<string, any>;
 }
 
-export class DataQualityValidator {
-  private rules: Map<RuleType, Rule[]> = new Map();
-  
-  constructor(rules: Rule[] = []) {
-    this.registerRules(rules);
-  }
-  
-  registerRule(rule: Rule): void {
-    if (!this.rules.has(rule.type)) {
-      this.rules.set(rule.type, []);
-    }
-    this.rules.get(rule.type)?.push(rule);
-  }
-  
-  registerRules(rules: Rule[]): void {
-    rules.forEach(rule => this.registerRule(rule));
-  }
-  
-  validate(data: any, type: RuleType, context: ValidationContext = {}): ValidationReport {
-    const report = new ValidationReport(type);
-    const rules = this.rules.get(type) || [];
-    
-    for (const rule of rules) {
-      try {
-        const result = rule.validate(data, context);
-        report.addResult(rule, result);
-      } catch (error) {
-        console.error(`Error validating rule ${rule.id} - ${rule.name}:`, error);
-        report.addResult(rule, {
-          passed: false,
-          message: `Validation failed with error: ${(error as Error).message}`,
-          details: error
-        });
-      }
-    }
-    
-    return report;
-  }
-  
-  validateBatch(dataArray: any[], type: RuleType, context: ValidationContext = {}): ValidationReport[] {
-    return dataArray.map(data => this.validate(data, type, context));
-  }
+export interface ValidationReport {
+  timestamp: Date;
+  entityType: RuleType;
+  summary: {
+    totalRecords: number;
+    passedRecords: number;
+    failedRecords: number;
+    passRate: number;
+  };
+  issues: ValidationIssue[];
+  recordResults?: Record<string, ValidationResult>;
 }
 
-// Helper functions for creating rules
 export function createRule(
   id: string,
-  name: string,
   description: string,
   type: RuleType,
   severity: Severity,
-  validateFn: (value: any, context: ValidationContext) => ValidationResult
+  validate: (data: any, context?: ValidationContext) => ValidationResult
 ): Rule {
   return {
     id,
-    name,
     description,
     type,
     severity,
-    validate: validateFn
+    validate
   };
 }
 
 export function createZodRule(
   id: string,
-  name: string,
   description: string,
   type: RuleType,
   severity: Severity,
-  schema: z.ZodType<any>
+  schema: any,
+  errorMap?: (issue: any) => ValidationIssue
 ): Rule {
   return createRule(
     id,
-    name,
     description,
     type,
     severity,
-    (value) => {
-      const result = schema.safeParse(value);
-      return {
-        passed: result.success,
-        message: result.success ? 'Validation passed' : 'Validation failed',
-        details: result.success ? undefined : result.error.format()
-      };
+    (data: any) => {
+      try {
+        schema.parse(data);
+        return { valid: true, issues: [] };
+      } catch (error: any) {
+        if (errorMap) {
+          const issues = error.errors.map(errorMap);
+          return { valid: false, issues };
+        }
+        
+        return {
+          valid: false,
+          issues: [{
+            ruleId: id,
+            message: error.message || 'Validation failed',
+            severity,
+            code: 'SCHEMA_VALIDATION_FAILED'
+          }]
+        };
+      }
     }
   );
 }
 
-/**
- * Create a data quality report for a batch of records
- * 
- * @param records Array of records to validate
- * @param validator DataQualityValidator instance
- * @param type RuleType to apply
- * @param context Optional validation context
- * @returns Summary report with statistics
- */
+export class DataQualityValidator {
+  private rules: Rule[] = [];
+  
+  constructor(rules: Rule[] = []) {
+    this.rules = [...rules];
+  }
+  
+  registerRule(rule: Rule): void {
+    this.rules.push(rule);
+  }
+  
+  registerRules(rules: Rule[]): void {
+    this.rules.push(...rules);
+  }
+  
+  validate(
+    data: any,
+    type: RuleType = RuleType.PROPERTY,
+    context?: ValidationContext
+  ): ValidationResult {
+    const applicableRules = this.rules.filter(rule => rule.type === type);
+    const issues: ValidationIssue[] = [];
+    
+    for (const rule of applicableRules) {
+      const result = rule.validate(data, context);
+      if (!result.valid) {
+        issues.push(...result.issues);
+      }
+    }
+    
+    return {
+      valid: issues.length === 0,
+      issues
+    };
+  }
+  
+  validateBatch(
+    type: RuleType,
+    records: any[],
+    context?: ValidationContext
+  ): ValidationReport {
+    const startTime = Date.now();
+    const results: Record<string, ValidationResult> = {};
+    const allIssues: ValidationIssue[] = [];
+    
+    let passedCount = 0;
+    let failedCount = 0;
+    
+    records.forEach((record, index) => {
+      const recordContext = {
+        ...context,
+        recordIndex: index,
+        recordId: record.id || index
+      };
+      
+      const result = this.validate(record, type, recordContext);
+      const recordId = record.id || `record_${index}`;
+      
+      results[recordId] = result;
+      
+      if (result.valid) {
+        passedCount++;
+      } else {
+        failedCount++;
+        allIssues.push(...result.issues);
+      }
+    });
+    
+    return {
+      timestamp: new Date(),
+      entityType: type,
+      summary: {
+        totalRecords: records.length,
+        passedRecords: passedCount,
+        failedRecords: failedCount,
+        passRate: records.length > 0 ? (passedCount / records.length) * 100 : 0
+      },
+      issues: allIssues,
+      recordResults: results
+    };
+  }
+}
+
 export function createBatchQualityReport(
   records: any[],
   validator: DataQualityValidator,
   type: RuleType,
-  context: ValidationContext = {}
-): any {
-  const reports = validator.validateBatch(records, type, context);
-  
-  const totalRecords = records.length;
-  const passedRecords = reports.filter(r => r.passed).length;
-  
-  const criticalErrors = reports.reduce((sum, r) => sum + r.criticalErrorCount, 0);
-  const errors = reports.reduce((sum, r) => sum + r.errorCount, 0);
-  const warnings = reports.reduce((sum, r) => sum + r.warningCount, 0);
-  const infoCount = reports.reduce((sum, r) => sum + r.infoCount, 0);
-  
-  // Aggregate results by rule ID
-  const ruleStats: Record<string, { total: number, passed: number, failed: number }> = {};
-  
-  reports.forEach(report => {
-    report.rules.forEach(rule => {
-      if (!ruleStats[rule.id]) {
-        ruleStats[rule.id] = { total: 0, passed: 0, failed: 0 };
-      }
-      
-      ruleStats[rule.id].total++;
-      
-      if (report.results.get(rule.id)?.passed) {
-        ruleStats[rule.id].passed++;
-      } else {
-        ruleStats[rule.id].failed++;
-      }
-    });
-  });
-  
-  return {
-    timestamp: new Date(),
-    entityType: type,
-    summary: {
-      totalRecords,
-      passedRecords,
-      failedRecords: totalRecords - passedRecords,
-      passRate: totalRecords > 0 ? (passedRecords / totalRecords) * 100 : 0,
-      criticalErrors,
-      errors,
-      warnings,
-      infoMessages: infoCount
-    },
-    ruleStats: Object.entries(ruleStats).map(([ruleId, stats]) => ({
-      ruleId,
-      total: stats.total,
-      passed: stats.passed,
-      failed: stats.failed,
-      passRate: stats.total > 0 ? (stats.passed / stats.total) * 100 : 0
-    })),
-    // Include only failed records in the detailed results to keep the report size manageable
-    details: reports
-      .filter(r => !r.passed)
-      .map((r, i) => ({
-        recordIndex: i,
-        passed: r.passed,
-        criticalErrors: r.criticalErrorCount,
-        errors: r.errorCount,
-        warnings: r.warningCount,
-        infoMessages: r.infoCount,
-        rules: r.rules
-          .filter(rule => !r.results.get(rule.id)?.passed)
-          .map(rule => ({
-            id: rule.id,
-            name: rule.name,
-            severity: rule.severity,
-            message: r.results.get(rule.id)?.message,
-            details: r.results.get(rule.id)?.details
-          }))
-      }))
-  };
+  context?: ValidationContext
+): ValidationReport {
+  return validator.validateBatch(type, records, context);
 }
