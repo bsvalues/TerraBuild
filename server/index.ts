@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
+import apiRoutes from "./routes/index.js";
 import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initMCP } from "./mcp";
