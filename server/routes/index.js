@@ -1,26 +1,24 @@
 /**
- * BCBS Application API Routes
+ * API Routes Main Entry Point
  * 
- * This file defines the main API routes for the Benton County Building System.
+ * This file serves as the central hub for all API routes in the application.
+ * It imports and registers all route modules for the Benton County Building Cost System.
  */
 
 import express from 'express';
-import propertiesRouter from './properties';
-import propertyImportRouter from './property-import.js';
-import dataQualityRouter from './data-quality.js';
-import authRoutes from './auth';
-import calculatorRouter from './calculator';
-import propertyMapRoutes from './property-routes';
+import propertyImportRoutes from './property-import.js';
+import dataQualityRoutes from './data-quality.js';
 
 const router = express.Router();
 
-// Mount sub-routers
-router.use('/properties', propertiesRouter);
-router.use('/import', propertyImportRouter);
-router.use('/data-quality', dataQualityRouter);
-router.use('/auth', authRoutes);
-router.use('/calculator', calculatorRouter);
-router.use('/property-map', propertyMapRoutes);
+// Register all route modules
+router.use('/property-import', propertyImportRoutes);
+router.use('/data-quality', dataQualityRoutes);
+
+// Basic health check
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Export in both CJS and ESM formats to support both systems
 module.exports = router;

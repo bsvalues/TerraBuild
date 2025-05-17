@@ -5,7 +5,12 @@
  */
 
 import express from 'express';
-import { dataQualityFramework, RuleType } from '../data-quality';
+import { 
+  dataQualityFramework, 
+  ValidationContext, 
+  RuleType, 
+  Severity 
+} from '../data-quality/index.js';
 import { storage } from '../storage';
 
 const router = express.Router();
@@ -17,44 +22,24 @@ const router = express.Router();
  */
 router.post('/validate/property', async (req, res) => {
   try {
-    const { data, batchId } = req.body;
+    const { records, batchId = `batch_${Date.now()}`, userId = 1 } = req.body;
     
-    if (!data || !Array.isArray(data)) {
-      return res.status(400).json({
-        message: 'Invalid data format. Expected array of property records.'
-      });
+    if (!records || !Array.isArray(records)) {
+      return res.status(400).json({ error: 'Records array is required' });
     }
     
-    const context = {
-      userId: req.user?.id || req.body.userId || 1,
-      batchId: batchId || `validation_${Date.now()}`
-    };
+    const context = new ValidationContext(userId, batchId, 0, null);
+    const validation = dataQualityFramework.validateBatch(RuleType.PROPERTY, records, context);
     
-    const validationReport = dataQualityFramework.validateBatch(
-      RuleType.PROPERTY,
-      data,
-      context
-    );
+    // Store validation report
+    await storage.saveValidationReport(batchId, validation);
     
-    // Store validation report for future reference
-    if (storage.createValidationReport) {
-      await storage.createValidationReport({
-        batchId: context.batchId,
-        entityType: RuleType.PROPERTY,
-        userId: context.userId,
-        report: validationReport,
-        recordCount: data.length,
-        passRate: validationReport.summary.passRate,
-        issueCount: validationReport.issues.length
-      });
-    }
-    
-    return res.json(validationReport);
+    res.json(validation);
   } catch (error) {
     console.error('Error validating property data:', error);
-    return res.status(500).json({
-      message: 'Error validating property data',
-      error: error.message
+    res.status(500).json({ 
+      error: 'Failed to validate property data',
+      details: error.message 
     });
   }
 });
@@ -66,44 +51,24 @@ router.post('/validate/property', async (req, res) => {
  */
 router.post('/validate/cost-matrix', async (req, res) => {
   try {
-    const { data, batchId } = req.body;
+    const { records, batchId = `batch_${Date.now()}`, userId = 1 } = req.body;
     
-    if (!data || !Array.isArray(data)) {
-      return res.status(400).json({
-        message: 'Invalid data format. Expected array of cost matrix records.'
-      });
+    if (!records || !Array.isArray(records)) {
+      return res.status(400).json({ error: 'Records array is required' });
     }
     
-    const context = {
-      userId: req.user?.id || req.body.userId || 1,
-      batchId: batchId || `validation_${Date.now()}`
-    };
+    const context = new ValidationContext(userId, batchId, 0, null);
+    const validation = dataQualityFramework.validateBatch(RuleType.COST_MATRIX, records, context);
     
-    const validationReport = dataQualityFramework.validateBatch(
-      RuleType.COST_MATRIX,
-      data,
-      context
-    );
+    // Store validation report
+    await storage.saveValidationReport(batchId, validation);
     
-    // Store validation report for future reference
-    if (storage.createValidationReport) {
-      await storage.createValidationReport({
-        batchId: context.batchId,
-        entityType: RuleType.COST_MATRIX,
-        userId: context.userId,
-        report: validationReport,
-        recordCount: data.length,
-        passRate: validationReport.summary.passRate,
-        issueCount: validationReport.issues.length
-      });
-    }
-    
-    return res.json(validationReport);
+    res.json(validation);
   } catch (error) {
     console.error('Error validating cost matrix data:', error);
-    return res.status(500).json({
-      message: 'Error validating cost matrix data',
-      error: error.message
+    res.status(500).json({ 
+      error: 'Failed to validate cost matrix data',
+      details: error.message 
     });
   }
 });
@@ -115,19 +80,20 @@ router.post('/validate/cost-matrix', async (req, res) => {
  */
 router.get('/reports', async (req, res) => {
   try {
-    if (!storage.getValidationReports) {
-      return res.status(501).json({
-        message: 'Validation report storage not implemented'
-      });
-    }
+    const { limit = 20, offset = 0, userId } = req.query;
     
-    const reports = await storage.getValidationReports();
-    return res.json(reports);
+    const reports = await storage.getValidationReports({
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      userId: userId ? parseInt(userId) : undefined
+    });
+    
+    res.json(reports);
   } catch (error) {
     console.error('Error fetching validation reports:', error);
-    return res.status(500).json({
-      message: 'Error fetching validation reports',
-      error: error.message
+    res.status(500).json({ 
+      error: 'Failed to fetch validation reports',
+      details: error.message 
     });
   }
 });
@@ -139,28 +105,19 @@ router.get('/reports', async (req, res) => {
  */
 router.get('/reports/:batchId', async (req, res) => {
   try {
-    const { batchId } = req.params;
-    
-    if (!storage.getValidationReportById) {
-      return res.status(501).json({
-        message: 'Validation report storage not implemented'
-      });
-    }
-    
-    const report = await storage.getValidationReportById(batchId);
+    const batchId = req.params.batchId;
+    const report = await storage.getValidationReport(batchId);
     
     if (!report) {
-      return res.status(404).json({
-        message: 'Validation report not found'
-      });
+      return res.status(404).json({ error: 'Validation report not found' });
     }
     
-    return res.json(report);
+    res.json(report);
   } catch (error) {
     console.error('Error fetching validation report:', error);
-    return res.status(500).json({
-      message: 'Error fetching validation report',
-      error: error.message
+    res.status(500).json({ 
+      error: 'Failed to fetch validation report',
+      details: error.message 
     });
   }
 });
@@ -172,25 +129,19 @@ router.get('/reports/:batchId', async (req, res) => {
  */
 router.post('/profile', async (req, res) => {
   try {
-    const { data, type } = req.body;
+    const { records, type = 'property' } = req.body;
     
-    if (!data || !Array.isArray(data)) {
-      return res.status(400).json({
-        message: 'Invalid data format. Expected array of records.'
-      });
+    if (!records || !Array.isArray(records)) {
+      return res.status(400).json({ error: 'Records array is required' });
     }
     
-    const profile = dataQualityFramework.generateStatisticalProfile(
-      type || 'property',
-      data
-    );
-    
-    return res.json(profile);
+    const profile = dataQualityFramework.generateStatisticalProfile(type, records);
+    res.json(profile);
   } catch (error) {
     console.error('Error generating data profile:', error);
-    return res.status(500).json({
-      message: 'Error generating data profile',
-      error: error.message
+    res.status(500).json({ 
+      error: 'Failed to generate data profile',
+      details: error.message 
     });
   }
 });
