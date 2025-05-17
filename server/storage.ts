@@ -133,6 +133,12 @@ export interface IStorage {
     metadata?: Record<string, any>,
     errorMessage?: string
   ): Promise<boolean>;
+  
+  // Activity tracking
+  createActivity(activityData: any): Promise<any>;
+  
+  // File upload status tracking
+  updateFileUploadStatus(fileId: number, status: string, metadata?: any): Promise<any>;
 }
 
 /**
