@@ -22,4 +22,6 @@ router.use('/auth', authRoutes);
 router.use('/calculator', calculatorRouter);
 router.use('/property-map', propertyMapRoutes);
 
+// Export in both CJS and ESM formats to support both systems
+module.exports = router;
 export default router;

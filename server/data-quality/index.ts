@@ -12,10 +12,27 @@ import {
   createRule,
   createZodRule,
   createBatchQualityReport,
-  ValidationContext,
-  ValidationResult,
-  ValidationReport
-} from './framework';
+  ValidationContext
+} from './framework.js';
+
+// Define types here since they're not exported from the JS module
+export interface ValidationResult {
+  valid: boolean;
+  issues: any[];
+}
+
+export interface ValidationReport {
+  timestamp: Date;
+  entityType: string;
+  summary: {
+    totalRecords: number;
+    passedRecords: number;
+    failedRecords: number;
+    passRate: number;
+  };
+  issues: any[];
+  recordResults: Record<string, ValidationResult>;
+}
 
 import { 
   allPropertyRules,

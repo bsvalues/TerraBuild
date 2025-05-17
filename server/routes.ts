@@ -35,7 +35,8 @@ import dataQualityRouter from './routes/data-quality.js';
 import authRoutes from './routes/auth';
 import calculatorRouter from './routes/calculator';
 import propertyMapRoutes from './routes/property-routes';
-import { registerPropertyImportRoutes } from './routes/property-import';
+// Legacy import path, to be removed later
+// import { registerPropertyImportRoutes } from './routes/property-import';
 
 // Initialize SQLite storage
 const sqliteStorage = new SQLiteStorage();

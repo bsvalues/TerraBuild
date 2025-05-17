@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
-import apiRoutes from "./routes/index.js";
+import * as apiRouter from "./routes/index.js";
 import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initMCP } from "./mcp";
@@ -90,6 +90,7 @@ app.use((req, res, next) => {
   
   // Register API routes first, so they take precedence over Vite
   app.use('/api', routes);
+  app.use('/api', apiRouter.default);
   
   // importantly only setup vite in development after
   // setting up all the API routes so the catch-all route
