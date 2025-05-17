@@ -142,6 +142,20 @@ export interface IStorage {
   
   // File upload status tracking
   updateFileUploadStatus(fileId: number, status: string, metadata?: any): Promise<any>;
+
+  // Data quality operations
+  validatePropertyRecords(records: any[], type: string, context: any): Promise<any>;
+  saveValidationReport(batchId: string, report: any): Promise<any>;
+  getValidationReport(batchId: string): Promise<any | null>;
+  getValidationReports(options?: { limit?: number, offset?: number, userId?: number }): Promise<any[]>;
+  
+  // Import operations
+  storeRawImportRecords(batchId: string, records: any[], startIndex: number): Promise<boolean>;
+  getRawImportRecords(batchId: string): Promise<any[]>;
+  createImportJob(job: any): Promise<any>;
+  getImportJobStatus(jobId: string): Promise<any | null>;
+  updateImportJobStatus(jobId: string, status: string, metadata?: any): Promise<boolean>;
+  createOrUpdateProperty(propertyData: any): Promise<any>;
 }
 
 /**
