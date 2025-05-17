@@ -1,8 +1,8 @@
 /**
- * Test Script for Property Data Import with Database
+ * Benton County Property Data Import Script
  * 
- * This script tests importing property data directly using the API,
- * now that the property tables have been created in the database.
+ * This script imports the full Benton County property dataset with nearly 100k properties
+ * directly into the PostgreSQL database through our API endpoint.
  */
 
 import fs from 'fs';
@@ -28,32 +28,46 @@ const files = {
   propertiesFile: path.join(ASSETS_DIR, 'property_val.csv'),
 };
 
-async function testPropertyImport() {
+// Main import function
+async function importBentonProperties() {
   try {
-    console.log('Testing property data import with database...');
+    console.log('Starting Benton County property data import...');
     console.log('Files to import:');
     
-    // Verify files exist
+    let totalSize = 0;
+    
+    // Verify files exist and get total size
     for (const [key, filePath] of Object.entries(files)) {
       const exists = fs.existsSync(filePath);
-      console.log(`- ${key}: ${path.basename(filePath)} ${exists ? '✓' : '✗'}`);
+      const stats = fs.statSync(filePath);
+      const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+      totalSize += stats.size;
+      
+      console.log(`- ${key}: ${path.basename(filePath)} (${sizeMB} MB) ${exists ? '✓' : '✗'}`);
       if (!exists) {
         throw new Error(`File not found: ${filePath}`);
       }
     }
     
+    console.log(`\nTotal import size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+    console.log('Creating form data with files...');
+    
     // Create form data with files
     const formData = new FormData();
-    formData.append('userId', 1);
-    formData.append('batchSize', 100);
+    formData.append('userId', 1); // Admin user ID
+    formData.append('batchSize', 100); // Process in batches of 100 records
     
+    // Add files to form data
     for (const [key, filePath] of Object.entries(files)) {
       formData.append(key, fs.createReadStream(filePath));
     }
     
-    console.log('\nSending import request...');
+    console.log('\nSending import request to API...');
+    console.log(`URL: ${API_URL}${API_ENDPOINT}`);
     
-    // Send import request
+    const startTime = new Date();
+    
+    // Send import request to API
     const response = await axios.post(`${API_URL}${API_ENDPOINT}`, formData, {
       headers: {
         ...formData.getHeaders(),
@@ -62,22 +76,25 @@ async function testPropertyImport() {
       maxBodyLength: Infinity
     });
     
-    console.log('\nImport response:');
+    const endTime = new Date();
+    const durationSeconds = (endTime - startTime) / 1000;
+    
+    console.log(`\nImport completed in ${durationSeconds.toFixed(2)} seconds`);
     console.log(`Status: ${response.status} ${response.statusText}`);
     
-    // Print the entire response for debugging
-    console.log('\nComplete response data:');
-    console.log(JSON.stringify(response.data, null, 2));
-    
-    // Verify import results
     if (response.data && response.data.success) {
       console.log('\nImport successful!');
       console.log('Summary:');
+      
+      // Display results for each data type
       Object.entries(response.data.results || {}).forEach(([key, result]) => {
         console.log(`- ${key}: ${result.success} of ${result.processed} records processed`);
+        
         if (result.errors && result.errors.length > 0) {
           console.log(`  Errors: ${result.errors.length}`);
-          console.log(`  First error: ${JSON.stringify(result.errors[0])}`);
+          if (result.errors.length > 0) {
+            console.log(`  First error: ${JSON.stringify(result.errors[0])}`);
+          }
         }
       });
     } else {
@@ -85,7 +102,7 @@ async function testPropertyImport() {
     }
     
   } catch (error) {
-    console.error('Error during import test:');
+    console.error('Error during import:');
     if (error.response) {
       console.error(`Status: ${error.response.status}`);
       console.error('Response:', error.response.data);
@@ -95,5 +112,5 @@ async function testPropertyImport() {
   }
 }
 
-// Run the test
-testPropertyImport();
+// Run the import
+importBentonProperties();
