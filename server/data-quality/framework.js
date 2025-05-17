@@ -6,7 +6,8 @@
  */
 
 // Rule types supported by the framework
-export const RuleType = {
+// Rule types supported by the framework
+const RuleType = {
   PROPERTY: 'property',
   COST_MATRIX: 'cost_matrix',
   BATCH: 'batch',
@@ -16,16 +17,20 @@ export const RuleType = {
 };
 
 // Severity levels for validation issues
-export const Severity = {
+const Severity = {
   INFO: 'info',
   WARNING: 'warning',
   ERROR: 'error'
 };
 
+// Export the constants
+export { RuleType, Severity };
+
 /**
  * Validation context containing additional information for validation rules
  */
-export class ValidationContext {
+// Validation context class that contains additional information for validation rules
+class ValidationContext {
   constructor(userId, batchId, recordIndex, parentRecordId) {
     this.userId = userId;
     this.batchId = batchId;
@@ -45,6 +50,9 @@ export class ValidationContext {
   }
 }
 
+// Export ValidationContext class
+export { ValidationContext };
+
 /**
  * Create a validation rule
  * @param {string} id - Unique identifier for the rule
@@ -54,7 +62,16 @@ export class ValidationContext {
  * @param {Function} validateFn - Function that performs validation
  * @returns {Object} Rule object
  */
-export function createRule(id, description, type, severity, validateFn) {
+/**
+ * Create a validation rule
+ * @param {string} id - Unique identifier for the rule
+ * @param {string} description - Human-readable description
+ * @param {string} type - Rule type from RuleType enum
+ * @param {string} severity - Severity level from Severity enum
+ * @param {Function} validateFn - Function that performs validation
+ * @returns {Object} Rule object
+ */
+function createRule(id, description, type, severity, validateFn) {
   return {
     id,
     description,
@@ -74,7 +91,7 @@ export function createRule(id, description, type, severity, validateFn) {
  * @param {Function} errorMap - Optional error mapping function
  * @returns {Object} Rule object
  */
-export function createZodRule(id, description, type, severity, schema, errorMap) {
+function createZodRule(id, description, type, severity, schema, errorMap) {
   return createRule(id, description, type, severity, (data) => {
     try {
       schema.parse(data);
@@ -98,7 +115,7 @@ export function createZodRule(id, description, type, severity, schema, errorMap)
 /**
  * Data quality validator class for applying rules
  */
-export class DataQualityValidator {
+class DataQualityValidator {
   constructor(rules = []) {
     this.rules = new Map();
     
@@ -188,7 +205,7 @@ export class DataQualityValidator {
  * @param {ValidationContext} context - Validation context
  * @returns {Object} Batch validation report
  */
-export function createBatchQualityReport(records, validator, type, context) {
+function createBatchQualityReport(records, validator, type, context) {
   if (!Array.isArray(records)) {
     throw new Error('Records must be an array');
   }
