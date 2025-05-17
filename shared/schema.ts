@@ -216,3 +216,23 @@ export const regions = pgTable("regions", {
 });
 
 export type Region = typeof regions.$inferSelect;
+
+/**
+ * Settings Table
+ */
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  key_prefix: varchar("key_prefix", { length: 100 }),
+  value: text("value"),
+  is_public: boolean("is_public").default(false),
+  user_id: integer("user_id").references(() => users.id),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const insertSettingSchema = createInsertSchema(settings)
+  .omit({ id: true, created_at: true, updated_at: true });
+
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type Setting = typeof settings.$inferSelect;

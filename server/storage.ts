@@ -111,10 +111,13 @@ export interface IStorage {
 
   // Settings operations
   getSettings(userId?: number, isPublic?: boolean): Promise<Setting[]>;
+  getSettingsByPrefix(prefix: string, userId?: number): Promise<Setting[]>;
   getSetting(key: string, userId?: number): Promise<Setting | null>;
   createSetting(setting: InsertSetting): Promise<Setting>;
   updateSetting(id: number, settingData: Partial<Setting>): Promise<Setting | null>;
+  updateSettingByKey(key: string, value: any, userId?: number): Promise<Setting | null>;
   deleteSetting(id: number): Promise<boolean>;
+  deleteSettingByKey(key: string, userId?: number): Promise<boolean>;
 
   // File upload operations
   getFileUploads(userId?: number): Promise<FileUpload[]>;
@@ -559,24 +562,151 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
-  async getSettings(userId?: number, isPublic?: boolean): Promise<any[]> {
-    return [];
+  async getSettings(userId?: number, isPublic?: boolean): Promise<Setting[]> {
+    try {
+      let query = db.select().from(schema.settings);
+      
+      // Apply filters if provided
+      if (userId !== undefined) {
+        query = query.where(eq(schema.settings.user_id, userId));
+      }
+      
+      if (isPublic !== undefined) {
+        query = query.where(eq(schema.settings.is_public, isPublic));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      return [];
+    }
+  }
+  
+  async getSettingsByPrefix(prefix: string, userId?: number): Promise<Setting[]> {
+    try {
+      let query = db.select().from(schema.settings)
+        .where(eq(schema.settings.key_prefix, prefix));
+      
+      // Apply user filter if provided
+      if (userId !== undefined) {
+        query = query.where(eq(schema.settings.user_id, userId));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error(`Error fetching settings with prefix ${prefix}:`, error);
+      return [];
+    }
   }
 
-  async getSetting(key: string, userId?: number): Promise<any | null> {
-    return null;
+  async getSetting(key: string, userId?: number): Promise<Setting | null> {
+    try {
+      let query = db.select().from(schema.settings)
+        .where(eq(schema.settings.key, key));
+      
+      // Apply user filter if provided
+      if (userId !== undefined) {
+        query = query.where(eq(schema.settings.user_id, userId));
+      }
+      
+      const [setting] = await query;
+      return setting || null;
+    } catch (error) {
+      console.error(`Error fetching setting with key ${key}:`, error);
+      return null;
+    }
   }
 
-  async createSetting(setting: any): Promise<any> {
-    return { id: 1 };
+  async createSetting(setting: InsertSetting): Promise<Setting> {
+    try {
+      const [newSetting] = await db.insert(schema.settings).values({
+        ...setting,
+        created_at: new Date(),
+        updated_at: new Date()
+      }).returning();
+      
+      return newSetting;
+    } catch (error) {
+      console.error('Error creating setting:', error);
+      throw error;
+    }
   }
 
-  async updateSetting(id: number, settingData: Partial<any>): Promise<any | null> {
-    return null;
+  async updateSetting(id: number, settingData: Partial<Setting>): Promise<Setting | null> {
+    try {
+      const [updatedSetting] = await db.update(schema.settings)
+        .set({
+          ...settingData,
+          updated_at: new Date()
+        })
+        .where(eq(schema.settings.id, id))
+        .returning();
+      
+      return updatedSetting || null;
+    } catch (error) {
+      console.error(`Error updating setting with id ${id}:`, error);
+      return null;
+    }
+  }
+  
+  async updateSettingByKey(key: string, value: any, userId?: number): Promise<Setting | null> {
+    try {
+      // Find the setting first
+      const existingSetting = await this.getSetting(key, userId);
+      
+      if (!existingSetting) {
+        // Setting doesn't exist, create a new one
+        const newSetting = await this.createSetting({
+          key,
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+          is_public: false,
+          user_id: userId
+        });
+        
+        return newSetting;
+      }
+      
+      // Update the existing setting
+      const [updatedSetting] = await db.update(schema.settings)
+        .set({
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+          updated_at: new Date()
+        })
+        .where(eq(schema.settings.key, key))
+        .returning();
+      
+      return updatedSetting || null;
+    } catch (error) {
+      console.error(`Error updating setting with key ${key}:`, error);
+      return null;
+    }
   }
 
   async deleteSetting(id: number): Promise<boolean> {
-    return true;
+    try {
+      await db.delete(schema.settings).where(eq(schema.settings.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting setting with id ${id}:`, error);
+      return false;
+    }
+  }
+  
+  async deleteSettingByKey(key: string, userId?: number): Promise<boolean> {
+    try {
+      let query = db.delete(schema.settings).where(eq(schema.settings.key, key));
+      
+      // Apply user filter if provided
+      if (userId !== undefined) {
+        query = query.where(eq(schema.settings.user_id, userId));
+      }
+      
+      await query;
+      return true;
+    } catch (error) {
+      console.error(`Error deleting setting with key ${key}:`, error);
+      return false;
+    }
   }
 
   async getFileUploads(userId?: number): Promise<any[]> {
@@ -601,14 +731,95 @@ export class DatabaseStorage implements IStorage {
   
   // Activity tracking
   async createActivity(activityData: any): Promise<any> {
-    console.log('Activity created:', activityData);
-    return { id: 1, ...activityData, timestamp: new Date() };
+    try {
+      // Store activity in the database - ideal would be an activities table
+      // For now, we'll use the settings table with a prefix
+      const activityRecord = {
+        ...activityData,
+        timestamp: new Date().toISOString()
+      };
+      
+      const [activity] = await db.insert(schema.settings).values({
+        key: `activity_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        key_prefix: 'activity',
+        value: JSON.stringify(activityRecord),
+        is_public: false,
+        created_at: new Date(),
+        updated_at: new Date()
+      }).returning();
+      
+      return { 
+        id: activity.id, 
+        ...activityRecord, 
+        createdAt: activity.created_at 
+      };
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      // Still log the activity even if DB fails
+      console.log('Activity created:', activityData);
+      return { id: -1, ...activityData, timestamp: new Date().toISOString() };
+    }
   }
   
   // File upload status tracking
   async updateFileUploadStatus(fileId: number, status: string, metadata?: any): Promise<any> {
-    console.log(`File ${fileId} status updated to ${status}`, metadata);
-    return { id: fileId, status, metadata, updatedAt: new Date() };
+    try {
+      // Ideally, use a dedicated file uploads table
+      // For now, we'll use the settings table
+      const statusKey = `file_upload_${fileId}`;
+      
+      // Check if status exists
+      const [existingStatus] = await db.select().from(schema.settings)
+        .where(eq(schema.settings.key, statusKey));
+      
+      const statusData = {
+        fileId,
+        status,
+        ...(metadata && { metadata }),
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (existingStatus) {
+        // Update existing status
+        const [updatedStatus] = await db.update(schema.settings)
+          .set({
+            value: JSON.stringify(statusData),
+            updated_at: new Date()
+          })
+          .where(eq(schema.settings.key, statusKey))
+          .returning();
+        
+        return {
+          id: fileId,
+          status,
+          metadata,
+          updatedAt: updatedStatus.updated_at
+        };
+      } else {
+        // Create new status
+        const [newStatus] = await db.insert(schema.settings).values({
+          key: statusKey,
+          key_prefix: 'file_upload',
+          value: JSON.stringify(statusData),
+          is_public: false,
+          created_at: new Date(),
+          updated_at: new Date()
+        }).returning();
+        
+        return {
+          id: fileId,
+          status,
+          metadata,
+          createdAt: newStatus.created_at,
+          updatedAt: newStatus.updated_at
+        };
+      }
+    } catch (error) {
+      console.error(`Error updating file upload status for file ${fileId}:`, error);
+      // Log the status update even if DB fails
+      console.log(`File ${fileId} status updated to ${status}`, metadata);
+      return { id: fileId, status, metadata, updatedAt: new Date() };
+    }
   }
 
   async checkDatabaseConnection(): Promise<boolean> {
@@ -622,11 +833,63 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAgentStatuses(): Promise<Record<string, any>> {
-    return {};
+    try {
+      // We need to store agent status in a table, for now we're pulling from settings table
+      // assuming agent_status_{agentId} pattern for keys
+      const agentSettings = await db.select().from(schema.settings)
+        .where(eq(schema.settings.key_prefix, 'agent_status'));
+      
+      const statuses: Record<string, any> = {};
+      
+      for (const setting of agentSettings) {
+        try {
+          const agentId = setting.key.replace('agent_status_', '');
+          const statusData = typeof setting.value === 'string' ? 
+            JSON.parse(setting.value) : setting.value;
+          
+          statuses[agentId] = {
+            ...statusData,
+            agentId,
+            lastUpdated: setting.updated_at
+          };
+        } catch (error) {
+          console.error('Error parsing agent status:', error);
+        }
+      }
+      
+      return statuses;
+    } catch (error) {
+      console.error('Error getting agent statuses:', error);
+      return {};
+    }
   }
 
   async getAgentStatus(agentId: string): Promise<any | null> {
-    return null;
+    try {
+      const [setting] = await db.select().from(schema.settings)
+        .where(eq(schema.settings.key, `agent_status_${agentId}`));
+      
+      if (!setting) {
+        return null;
+      }
+      
+      try {
+        const statusData = typeof setting.value === 'string' ? 
+          JSON.parse(setting.value) : setting.value;
+        
+        return {
+          ...statusData,
+          agentId,
+          lastUpdated: setting.updated_at
+        };
+      } catch (error) {
+        console.error('Error parsing agent status:', error);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error getting agent status for ${agentId}:`, error);
+      return null;
+    }
   }
 
   async updateAgentStatus(
@@ -635,7 +898,42 @@ export class DatabaseStorage implements IStorage {
     metadata?: Record<string, any>,
     errorMessage?: string
   ): Promise<boolean> {
-    return true;
+    try {
+      const statusData = {
+        status,
+        ...(metadata && { metadata }),
+        ...(errorMessage && { errorMessage }),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Check if status exists
+      const existingStatus = await this.getAgentStatus(agentId);
+      
+      if (existingStatus) {
+        // Update existing status
+        await db.update(schema.settings)
+          .set({
+            value: JSON.stringify(statusData),
+            updated_at: new Date()
+          })
+          .where(eq(schema.settings.key, `agent_status_${agentId}`));
+      } else {
+        // Create new status
+        await db.insert(schema.settings).values({
+          key: `agent_status_${agentId}`,
+          key_prefix: 'agent_status',
+          value: JSON.stringify(statusData),
+          is_public: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error updating agent status for ${agentId}:`, error);
+      return false;
+    }
   }
 }
 
