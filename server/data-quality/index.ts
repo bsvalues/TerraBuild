@@ -23,6 +23,8 @@ import {
   validateImprovement 
 } from './property-rules';
 
+import costMatrixRules from './cost-matrix-rules';
+
 // Export the framework components
 export {
   RuleType,
@@ -44,7 +46,7 @@ export {
 };
 
 // Create a global validator instance with all rules
-export const globalValidator = new DataQualityValidator(allPropertyRules);
+export const globalValidator = new DataQualityValidator([...allPropertyRules, ...costMatrixRules]);
 
 // Main data quality framework export
 export const dataQualityFramework = {

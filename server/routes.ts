@@ -28,8 +28,9 @@ import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { SQLiteStorage } from './sqlite_storage';
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
-import propertyImportRouter from './routes/property-import';
-import dataQualityRouter from './routes/data-quality';
+// Import property import and data quality routers
+import propertyImportRouter from './routes/property-import.js';
+import dataQualityRouter from './routes/data-quality.js';
 // The CostFactorTables plugin is registered directly in server/index.ts
 import authRoutes from './routes/auth';
 import calculatorRouter from './routes/calculator';
