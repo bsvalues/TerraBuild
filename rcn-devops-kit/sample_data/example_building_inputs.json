@@ -1,0 +1,47 @@
+[
+  {
+    "use_type": "Residential",
+    "construction_type": "Wood Frame",
+    "sqft": 1800,
+    "year_built": 2010,
+    "quality_class": "B",
+    "locality_index": 1.05,
+    "condition": "Good"
+  },
+  {
+    "use_type": "Commercial",
+    "construction_type": "Masonry",
+    "sqft": 5000,
+    "year_built": 2000,
+    "quality_class": "A",
+    "locality_index": 1.15,
+    "condition": "Average"
+  },
+  {
+    "use_type": "Industrial",
+    "construction_type": "Steel Frame",
+    "sqft": 25000,
+    "year_built": 1995,
+    "quality_class": "C",
+    "locality_index": 0.95,
+    "condition": "Fair"
+  },
+  {
+    "use_type": "Agricultural",
+    "construction_type": "Wood Frame",
+    "sqft": 3500,
+    "year_built": 1975,
+    "quality_class": "D",
+    "locality_index": 0.85,
+    "condition": "Poor"
+  },
+  {
+    "use_type": "Residential",
+    "construction_type": "Concrete",
+    "sqft": 4200,
+    "year_built": 2020,
+    "quality_class": "A+",
+    "locality_index": 1.25,
+    "condition": "Excellent"
+  }
+]

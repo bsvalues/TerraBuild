@@ -1,0 +1,39 @@
+{
+  "county": "Benton",
+  "state": "Washington",
+  "year": 2025,
+  "default_quality_adjustments": {
+    "A+": 1.25,
+    "A": 1.15,
+    "B+": 1.10,
+    "B": 1.00,
+    "C+": 0.95,
+    "C": 0.90,
+    "D+": 0.85,
+    "D": 0.80,
+    "E": 0.70
+  },
+  "default_condition_adjustments": {
+    "Excellent": 1.10,
+    "Good": 1.00,
+    "Average": 0.90,
+    "Fair": 0.80,
+    "Poor": 0.65
+  },
+  "locality_factors": {
+    "Urban": 1.15,
+    "Suburban": 1.05,
+    "Rural": 0.95,
+    "Remote": 0.85
+  },
+  "general_settings": {
+    "min_depreciation": 0.0,
+    "max_depreciation": 80.0,
+    "default_locality_factor": 1.0,
+    "default_functional_obsolescence": 0.0,
+    "default_economic_obsolescence": 0.0,
+    "include_physical_depreciation": true,
+    "include_functional_obsolescence": true,
+    "include_economic_obsolescence": true
+  }
+}

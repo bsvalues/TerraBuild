@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraFusionBuild RCN Valuation Engine</title>
+    <style>
+        :root {
+            --primary-color: #2a5c8f;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin: 0;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        select {
+            height: 38px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1e4568;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+        }
+        
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: var(--secondary-color);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .two-column {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .column {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .error {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-info {
+            background-color: var(--info-color);
+            color: white;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+            border-top: 1px solid #ddd;
+            color: var(--secondary-color);
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                width: 100%;
+                max-width: none;
+                padding: 0;
+            }
+            
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            
+            button, .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>TerraFusionBuild RCN Valuation Engine</h1>
+            <p>Replacement Cost New (RCN) calculation tool for property assessment</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="alert alert-info">
+            This dashboard connects to the RCN Valuation Engine API running at: <strong>http://localhost:8000</strong>
+        </div>
+        
+        <div class="two-column">
+            <div class="column">
+                <div class="card">
+                    <h2>RCN Calculator</h2>
+                    <form id="rcnForm">
+                        <div class="form-group">
+                            <label for="use_type">Use Type:</label>
+                            <select id="use_type" name="use_type" required>
+                                <option value="">--Select Use Type--</option>
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Industrial">Industrial</option>
+                                <option value="Agricultural">Agricultural</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="construction_type">Construction Type:</label>
+                            <select id="construction_type" name="construction_type" required>
+                                <option value="">--Select Construction Type--</option>
+                                <option value="Wood Frame">Wood Frame</option>
+                                <option value="Masonry">Masonry</option>
+                                <option value="Steel Frame">Steel Frame</option>
+                                <option value="Concrete">Concrete</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sqft">Square Footage:</label>
+                            <input type="number" id="sqft" name="sqft" min="1" step="1" required placeholder="E.g., 2500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="year_built">Year Built:</label>
+                            <input type="number" id="year_built" name="year_built" min="1800" max="2025" required placeholder="E.g., 1995">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quality_class">Quality Class:</label>
+                            <select id="quality_class" name="quality_class">
+                                <option value="A+">A+ (Premium)</option>
+                                <option value="A">A (Excellent)</option>
+                                <option value="B+">B+ (Very Good)</option>
+                                <option value="B" selected>B (Good)</option>
+                                <option value="C+">C+ (Above Average)</option>
+                                <option value="C">C (Average)</option>
+                                <option value="D+">D+ (Below Average)</option>
+                                <option value="D">D (Fair)</option>
+                                <option value="E">E (Low)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="locality_index">Locality Index:</label>
+                            <input type="number" id="locality_index" name="locality_index" min="0.5" max="2.0" step="0.01" value="1.0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="condition">Condition:</label>
+                            <select id="condition" name="condition">
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Average" selected>Average</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit">Calculate RCN</button>
+                        <button type="button" id="loadSample">Load Sample Data</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="card" id="resultsCard">
+                    <h2>Calculation Results</h2>
+                    <div id="loading" class="loading hidden">Processing calculation...</div>
+                    <div id="error" class="error hidden"></div>
+                    
+                    <div id="results" class="hidden">
+                        <table id="resultsTable">
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                            <tr>
+                                <td>Base Cost</td>
+                                <td id="base_cost">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Adjusted RCN</td>
+                                <td id="adjusted_rcn">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Depreciation Percentage</td>
+                                <td id="depreciation_pct">0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>Depreciated RCN</td>
+                                <td id="depreciated_rcn">$0.00</td>
+                            </tr>
+                        </table>
+                        
+                        <h3>JSON Response</h3>
+                        <pre id="jsonOutput"></pre>
+                        
+                        <button type="button" id="printResults" class="no-print">Print Results</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Batch Processing</h2>
+            <p>Upload a JSON file with multiple building inputs to calculate RCN values in batch.</p>
+            <input type="file" id="batchFile" accept=".json">
+            <button type="button" id="processBatch">Process Batch</button>
+            
+            <div id="batchResults" class="hidden">
+                <h3>Batch Results</h3>
+                <pre id="batchOutput"></pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="container">
+            <p>TerraFusionBuild RCN Valuation Engine &copy; 2025. All rights reserved.</p>
+            <p>Developed for Benton County, Washington</p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('rcnForm');
+            const loadSampleBtn = document.getElementById('loadSample');
+            const printResultsBtn = document.getElementById('printResults');
+            const processBatchBtn = document.getElementById('processBatch');
+            
+            // Format currency
+            function formatCurrency(value) {
+                return '$' + parseFloat(value).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            
+            // Sample data
+            const sampleData = {
+                use_type: "Residential",
+                construction_type: "Wood Frame",
+                sqft: 2500,
+                year_built: 2010,
+                quality_class: "B",
+                locality_index: 1.05,
+                condition: "Good"
+            };
+            
+            // Load sample data
+            loadSampleBtn.addEventListener('click', function() {
+                document.getElementById('use_type').value = sampleData.use_type;
+                document.getElementById('construction_type').value = sampleData.construction_type;
+                document.getElementById('sqft').value = sampleData.sqft;
+                document.getElementById('year_built').value = sampleData.year_built;
+                document.getElementById('quality_class').value = sampleData.quality_class;
+                document.getElementById('locality_index').value = sampleData.locality_index;
+                document.getElementById('condition').value = sampleData.condition;
+            });
+            
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Show loading
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('results').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                
+                // Get form data
+                const formData = {
+                    use_type: document.getElementById('use_type').value,
+                    construction_type: document.getElementById('construction_type').value,
+                    sqft: parseFloat(document.getElementById('sqft').value),
+                    year_built: parseInt(document.getElementById('year_built').value),
+                    quality_class: document.getElementById('quality_class').value,
+                    locality_index: parseFloat(document.getElementById('locality_index').value),
+                    condition: document.getElementById('condition').value
+                };
+                
+                try {
+                    // Call RCN API
+                    const response = await fetch('http://localhost:8000/rcn/calculate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    // Hide loading
+                    document.getElementById('loading').classList.add('hidden');
+                    
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Display results
+                    document.getElementById('base_cost').textContent = formatCurrency(data.base_cost);
+                    document.getElementById('adjusted_rcn').textContent = formatCurrency(data.adjusted_rcn);
+                    document.getElementById('depreciation_pct').textContent = data.depreciation_pct.toFixed(2) + '%';
+                    document.getElementById('depreciated_rcn').textContent = formatCurrency(data.depreciated_rcn);
+                    document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('results').classList.remove('hidden');
+                } catch (error) {
+                    // Show error
+                    const errorElement = document.getElementById('error');
+                    errorElement.textContent = error.message;
+                    errorElement.classList.remove('hidden');
+                }
+            });
+            
+            // Print results
+            printResultsBtn.addEventListener('click', function() {
+                window.print();
+            });
+            
+            // Process batch file
+            processBatchBtn.addEventListener('click', async function() {
+                const fileInput = document.getElementById('batchFile');
+                
+                if (!fileInput.files.length) {
+                    alert('Please select a JSON file to process.');
+                    return;
+                }
+                
+                try {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = async function(e) {
+                        try {
+                            const buildings = JSON.parse(e.target.result);
+                            
+                            if (!Array.isArray(buildings)) {
+                                throw new Error('File content is not a valid array of buildings.');
+                            }
+                            
+                            // Process each building
+                            const results = [];
+                            for (const building of buildings) {
+                                const response = await fetch('http://localhost:8000/rcn/calculate', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify(building)
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                                }
+                                
+                                const data = await response.json();
+                                results.push({
+                                    building: building,
+                                    result: data
+                                });
+                            }
+                            
+                            // Display batch results
+                            document.getElementById('batchOutput').textContent = JSON.stringify(results, null, 2);
+                            document.getElementById('batchResults').classList.remove('hidden');
+                        } catch (error) {
+                            alert('Error processing batch file: ' + error.message);
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                } catch (error) {
+                    alert('Error reading file: ' + error.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
