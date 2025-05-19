@@ -1,77 +1,53 @@
 @echo off
-if not "%1"=="quiet" (
-    echo =====================================================
-    echo TerraFusionBuild RCN Valuation Engine - Service Uninstall
-    echo =====================================================
-    echo.
-)
+REM ======================================================================
+REM TerraFusionBuild RCN Valuation Engine - Windows Service Uninstaller
+REM
+REM This script removes the RCN Valuation Engine Windows service.
+REM Run as Administrator!
+REM ======================================================================
 
-setlocal
+echo.
+echo TerraFusionBuild RCN Valuation Engine - Windows Service Uninstaller
+echo ==================================================================
+echo.
 
-set NSSM_PATH=%~dp0bin\nssm.exe
-set SERVICE_NAME=TerraFusionRCN
-
-:: Check for administrative privileges
+REM Check for admin privileges
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    if not "%1"=="quiet" (
-        echo Error: Administrative privileges required.
-        echo Please run this script as Administrator.
-    )
-    goto :error
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: This script requires administrator privileges.
+    echo Please right-click on the script and select "Run as Administrator".
+    exit /b 1
 )
 
-:: Check if NSSM is available
-if not exist "%NSSM_PATH%" (
-    if not "%1"=="quiet" (
-        echo Error: NSSM (Non-Sucking Service Manager) not found at %NSSM_PATH%
-        echo Please download NSSM from http://nssm.cc/ and place in the bin directory.
-    )
-    goto :error
+REM Get script directory
+set SCRIPT_DIR=%~dp0
+set ROOT_DIR=%SCRIPT_DIR%..
+cd /d "%ROOT_DIR%"
+
+REM Check if the service exists
+sc query TerraFusionRCN >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo The TerraFusionRCN service does not exist or is not installed.
+    exit /b 0
 )
 
-:: Check if the service exists
-%NSSM_PATH% status %SERVICE_NAME% >nul 2>&1
-if %errorlevel% neq 0 (
-    if not "%1"=="quiet" (
-        echo Service '%SERVICE_NAME%' is not installed.
-    )
-    goto :end
-)
+REM Stop the service if running
+echo Stopping TerraFusionRCN service...
+net stop TerraFusionRCN >nul 2>&1
 
-:: Stop the service if it's running
-%NSSM_PATH% status %SERVICE_NAME% | findstr /C:"SERVICE_RUNNING" >nul
-if %errorlevel% equ 0 (
-    if not "%1"=="quiet" echo Stopping service '%SERVICE_NAME%'...
-    %NSSM_PATH% stop %SERVICE_NAME% >nul 2>&1
-    
-    :: Wait for the service to stop (max 10 seconds)
-    for /l %%i in (1, 1, 10) do (
-        %NSSM_PATH% status %SERVICE_NAME% | findstr /C:"SERVICE_STOPPED" >nul
-        if %errorlevel% equ 0 goto :remove_service
-        timeout /t 1 >nul
-    )
-)
-
-:remove_service
-if not "%1"=="quiet" echo Removing service '%SERVICE_NAME%'...
-%NSSM_PATH% remove %SERVICE_NAME% confirm >nul 2>&1
-
-if %errorlevel% equ 0 (
-    if not "%1"=="quiet" (
-        echo Service '%SERVICE_NAME%' has been successfully removed.
-    )
+REM Check if NSSM exists
+if not exist "%SCRIPT_DIR%nssm.exe" (
+    echo NSSM not found in %SCRIPT_DIR%
+    echo Attempting to uninstall service using SC command...
+    sc delete TerraFusionRCN
 ) else (
-    if not "%1"=="quiet" (
-        echo Warning: Failed to remove service '%SERVICE_NAME%'.
-        echo You may need to remove it manually using the Services console.
-    )
+    REM Remove the service
+    echo Removing TerraFusionRCN service...
+    "%SCRIPT_DIR%nssm.exe" remove TerraFusionRCN confirm
 )
 
-goto :end
+echo.
+echo TerraFusionRCN service has been uninstalled.
+echo.
 
-:error
-exit /b 1
-
-:end
-if not "%1"=="quiet" pause
+exit /b 0
