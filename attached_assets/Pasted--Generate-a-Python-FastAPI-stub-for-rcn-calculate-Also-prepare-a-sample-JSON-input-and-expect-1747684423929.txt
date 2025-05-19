@@ -1,0 +1,74 @@
+# Generate a Python FastAPI stub for `/rcn/calculate`
+# Also prepare a sample JSON input and expected output file
+api_stub_code = """
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Optional
+
+app = FastAPI()
+
+class RCNInput(BaseModel):
+    use_type: str
+    construction_type: str
+    sqft: float
+    year_built: int
+    quality_class: Optional[str] = "B"
+    locality_index: Optional[float] = 1.0
+    condition: Optional[str] = "Average"
+
+class RCNOutput(BaseModel):
+    base_cost: float
+    adjusted_rcn: float
+    depreciated_rcn: float
+    depreciation_pct: float
+
+@app.post("/rcn/calculate", response_model=RCNOutput)
+def calculate_rcn(data: RCNInput):
+    base_cost_per_sqft = 110  # Simulated lookup value
+    base_cost = data.sqft * base_cost_per_sqft
+    adjusted_rcn = base_cost * data.locality_index
+
+    age = 2025 - data.year_built
+    depreciation_pct = min(age * 0.5, 60)  # Simple linear physical depreciation
+    depreciated_rcn = adjusted_rcn * (1 - depreciation_pct / 100)
+
+    return {
+        "base_cost": round(base_cost, 2),
+        "adjusted_rcn": round(adjusted_rcn, 2),
+        "depreciated_rcn": round(depreciated_rcn, 2),
+        "depreciation_pct": round(depreciation_pct, 2)
+    }
+"""
+
+sample_input = {
+    "use_type": "Residential",
+    "construction_type": "Wood Frame",
+    "sqft": 2000,
+    "year_built": 2005,
+    "quality_class": "B",
+    "locality_index": 1.1,
+    "condition": "Average"
+}
+
+expected_output = {
+    "base_cost": 220000.0,
+    "adjusted_rcn": 242000.0,
+    "depreciated_rcn": 181500.0,
+    "depreciation_pct": 25.0
+}
+
+# Create directory to store generated content
+output_dir = "/mnt/data/rcn-devops-kit"
+os.makedirs(output_dir, exist_ok=True)
+
+# Write files
+with open(f"{output_dir}/rcn_api_stub.py", "w") as f:
+    f.write(api_stub_code.strip())
+
+with open(f"{output_dir}/sample_input.json", "w") as f:
+    json.dump(sample_input, f, indent=2)
+
+with open(f"{output_dir}/expected_output.json", "w") as f:
+    json.dump(expected_output, f, indent=2)
+
+"/mnt/data/rcn-devops-kit now includes a Python FastAPI stub, sample input, and expected output JSON."

@@ -1,0 +1,183 @@
+name: RCN Valuation Engine CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'rcn/**'
+      - 'tests/**'
+      - 'Dockerfile'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'rcn/**'
+      - 'tests/**'
+      - 'Dockerfile'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install pytest pytest-cov
+      
+      - name: Lint with flake8
+        run: |
+          flake8 rcn tests
+      
+      - name: Type check with mypy
+        run: |
+          mypy rcn
+      
+      - name: Security check with bandit
+        run: |
+          bandit -r rcn -ll
+      
+      - name: Test with pytest
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          COST_MATRIX_PATH: ./tests/fixtures/test_cost_matrix.json
+        run: |
+          pytest --cov=rcn --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+  
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Log in to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:${{ github.sha }},${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:latest
+          cache-to: type=inline
+      
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+  
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.25.0'
+      
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+      
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/rcn-valuation-engine rcn-valuation-engine=${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:${{ github.sha }} -n terrabuild-staging
+          kubectl rollout status deployment/rcn-valuation-engine -n terrabuild-staging
+      
+      - name: Run integration tests against staging
+        run: |
+          pip install -r requirements-dev.txt
+          export API_URL=${{ secrets.STAGING_API_URL }}
+          export API_KEY=${{ secrets.STAGING_API_KEY }}
+          pytest tests/integration
+  
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.25.0'
+      
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+      
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/rcn-valuation-engine rcn-valuation-engine=${{ secrets.DOCKER_REGISTRY }}/rcn-valuation-engine:${{ github.sha }} -n terrabuild-production
+          kubectl rollout status deployment/rcn-valuation-engine -n terrabuild-production
+      
+      - name: Run smoke tests against production
+        run: |
+          pip install -r requirements-dev.txt
+          export API_URL=${{ secrets.PRODUCTION_API_URL }}
+          export API_KEY=${{ secrets.PRODUCTION_API_KEY }}
+          pytest tests/smoke
