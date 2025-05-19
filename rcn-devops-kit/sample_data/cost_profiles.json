@@ -1,0 +1,26 @@
+{
+  "Wood Frame": {
+    "Residential": 110,
+    "Commercial": 130,
+    "Industrial": 95,
+    "Agricultural": 85
+  },
+  "Masonry": {
+    "Residential": 125,
+    "Commercial": 145,
+    "Industrial": 115,
+    "Agricultural": 100
+  },
+  "Steel Frame": {
+    "Residential": 140,
+    "Commercial": 160,
+    "Industrial": 130,
+    "Agricultural": 120
+  },
+  "Concrete": {
+    "Residential": 155,
+    "Commercial": 175,
+    "Industrial": 145,
+    "Agricultural": 135
+  }
+}

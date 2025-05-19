@@ -1,0 +1,300 @@
+✅ Next Execution Priorities
+1. 📁 Create Sample Data Folder
+Purpose: Give assessors/testers a plug-and-play starting point.
+
+Contents:
+
+cost_profiles.json – Sample base cost data per construction class
+
+depreciation_tables.json – Age-to-depreciation % matrix
+
+example_building_inputs.json – For bulk evaluation tests
+
+benton_default_config.json – Preloaded county calibration
+
+✅ I’ll build this.
+
+2. ⚙️ Generate Windows Service Wrapper
+Purpose: Allow IT to run the RCN engine persistently as a service.
+
+Includes:
+
+install_service.bat
+
+uninstall_service.bat
+
+nssm.exe or built-in PowerShell service manager script
+
+✅ I’ll build this.
+
+3. 🌐 Prepare Local HTML Dashboard
+Purpose: Lightweight browser UI to hit the /rcn/calculate endpoint.
+
+Includes:
+
+index.html → Form fields for valuation
+
+JS to call localhost:8000/rcn/calculate
+
+Previews result as JSON and optional printable table
+
+✅ I’ll build this.
+
+4. 📦 Package Everything into a Single .zip
+This will become your USB demo + IT delivery pack, ready for:
+
+Thumb drive delivery
+
+IT ticket fulfillment
+
+Offline testing
+
+✅ I’ll finalize this.
+
+🧭 Timeline
+All four will be done in this exact order and zipped into a county-ready deployment pack.
+
+Initiating now... standby.
+
+
+Analysis errored
+python
+Always show details
+
+Copy
+# Rebuild full RCN DevOps deployment bundle including:
+# - Sample data folder
+# - Local HTML dashboard
+# - Windows service wrapper scripts
+
+import json
+
+base_path = "/mnt/data/rcn-devops-kit"
+sample_data_path = os.path.join(base_path, "sample_data")
+html_ui_path = os.path.join(base_path, "html_ui")
+service_path = os.path.join(base_path, "windows_service")
+
+os.makedirs(sample_data_path, exist_ok=True)
+os.makedirs(html_ui_path, exist_ok=True)
+os.makedirs(service_path, exist_ok=True)
+
+# Sample Data Files
+cost_profiles = {
+    "Wood Frame": {"Residential": 110, "Commercial": 130},
+    "Masonry": {"Residential": 125, "Commercial": 145}
+}
+depreciation_table = {str(i): min(i * 0.5, 60) for i in range(1, 101)}
+
+with open(f"{sample_data_path}/cost_profiles.json", "w") as f:
+    json.dump(cost_profiles, f, indent=2)
+
+with open(f"{sample_data_path}/depreciation_tables.json", "w") as f:
+    json.dump(depreciation_table, f, indent=2)
+
+example_inputs = [
+    {
+        "use_type": "Residential",
+        "construction_type": "Wood Frame",
+        "sqft": 1800,
+        "year_built": 2010,
+        "quality_class": "B",
+        "locality_index": 1.05
+    },
+    {
+        "use_type": "Commercial",
+        "construction_type": "Masonry",
+        "sqft": 5000,
+        "year_built": 2000,
+        "quality_class": "A",
+        "locality_index": 1.15
+    }
+]
+
+with open(f"{sample_data_path}/example_building_inputs.json", "w") as f:
+    json.dump(example_inputs, f, indent=2)
+
+# HTML Dashboard
+index_html = """
+<!DOCTYPE html>
+<html>
+<head><title>RCN Valuation Tool</title></head>
+<body>
+<h2>RCN Calculator</h2>
+<form id="rcnForm">
+  Use Type: <input name="use_type"><br>
+  Construction Type: <input name="construction_type"><br>
+  Sqft: <input name="sqft"><br>
+  Year Built: <input name="year_built"><br>
+  Locality Index: <input name="locality_index" value="1.0"><br>
+  <button type="submit">Calculate</button>
+</form>
+<pre id="output"></pre>
+<script>
+document.getElementById("rcnForm").onsubmit = async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const payload = {
+    use_type: form.use_type.value,
+    construction_type: form.construction_type.value,
+    sqft: parseFloat(form.sqft.value),
+    year_built: parseInt(form.year_built.value),
+    locality_index: parseFloat(form.locality_index.value)
+  };
+  const res = await fetch("http://localhost:8000/rcn/calculate", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  const json = await res.json();
+  document.getElementById("output").innerText = JSON.stringify(json, null, 2);
+};
+</script>
+</body>
+</html>
+"""
+with open(f"{html_ui_path}/index.html", "w") as f:
+    f.write(index_html.strip())
+
+# Windows Service Wrapper
+with open(f"{service_path}/install_service.bat", "w") as f:
+    f.write("""
+@echo off
+REM Installs the RCN API as a Windows service using NSSM
+nssm install RCNAPI "C:\\Python311\\python.exe" "C:\\rcn-devops-kit\\rcn_api_stub.py"
+nssm set RCNAPI AppDirectory "C:\\rcn-devops-kit"
+nssm start RCNAPI
+pause
+""".strip())
+
+with open(f"{service_path}/uninstall_service.bat", "w") as f:
+    f.write("""
+@echo off
+nssm stop RCNAPI
+nssm remove RCNAPI confirm
+pause
+""".strip())
+
+# Package everything into a final ZIP
+final_zip = "/mnt/data/rcn-windows-full-deployment.zip"
+shutil.make_archive(final_zip.replace(".zip", ""), 'zip', base_path)
+
+final_zip
+
+Analyzing
+python
+Always show details
+
+Copy
+# Recreate and repackage the full deployment kit after kernel reset
+import os
+import shutil
+import json
+
+# Define all paths
+base_path = "/mnt/data/rcn-devops-kit"
+sample_data_path = os.path.join(base_path, "sample_data")
+html_ui_path = os.path.join(base_path, "html_ui")
+service_path = os.path.join(base_path, "windows_service")
+final_zip = "/mnt/data/rcn-windows-full-deployment.zip"
+
+# Rebuild structure
+os.makedirs(sample_data_path, exist_ok=True)
+os.makedirs(html_ui_path, exist_ok=True)
+os.makedirs(service_path, exist_ok=True)
+
+# Sample Data
+cost_profiles = {
+    "Wood Frame": {"Residential": 110, "Commercial": 130},
+    "Masonry": {"Residential": 125, "Commercial": 145}
+}
+depreciation_table = {str(i): min(i * 0.5, 60) for i in range(1, 101)}
+example_inputs = [
+    {
+        "use_type": "Residential",
+        "construction_type": "Wood Frame",
+        "sqft": 1800,
+        "year_built": 2010,
+        "quality_class": "B",
+        "locality_index": 1.05
+    },
+    {
+        "use_type": "Commercial",
+        "construction_type": "Masonry",
+        "sqft": 5000,
+        "year_built": 2000,
+        "quality_class": "A",
+        "locality_index": 1.15
+    }
+]
+
+with open(f"{sample_data_path}/cost_profiles.json", "w") as f:
+    json.dump(cost_profiles, f, indent=2)
+with open(f"{sample_data_path}/depreciation_tables.json", "w") as f:
+    json.dump(depreciation_table, f, indent=2)
+with open(f"{sample_data_path}/example_building_inputs.json", "w") as f:
+    json.dump(example_inputs, f, indent=2)
+
+# HTML Dashboard
+index_html = """
+<!DOCTYPE html>
+<html>
+<head><title>RCN Valuation Tool</title></head>
+<body>
+<h2>RCN Calculator</h2>
+<form id="rcnForm">
+  Use Type: <input name="use_type"><br>
+  Construction Type: <input name="construction_type"><br>
+  Sqft: <input name="sqft"><br>
+  Year Built: <input name="year_built"><br>
+  Locality Index: <input name="locality_index" value="1.0"><br>
+  <button type="submit">Calculate</button>
+</form>
+<pre id="output"></pre>
+<script>
+document.getElementById("rcnForm").onsubmit = async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const payload = {
+    use_type: form.use_type.value,
+    construction_type: form.construction_type.value,
+    sqft: parseFloat(form.sqft.value),
+    year_built: parseInt(form.year_built.value),
+    locality_index: parseFloat(form.locality_index.value)
+  };
+  const res = await fetch("http://localhost:8000/rcn/calculate", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  const json = await res.json();
+  document.getElementById("output").innerText = JSON.stringify(json, null, 2);
+};
+</script>
+</body>
+</html>
+"""
+with open(f"{html_ui_path}/index.html", "w") as f:
+    f.write(index_html.strip())
+
+# Windows Service Scripts
+with open(f"{service_path}/install_service.bat", "w") as f:
+    f.write("""
+@echo off
+REM Installs the RCN API as a Windows service using NSSM
+nssm install RCNAPI "C:\\Python311\\python.exe" "C:\\rcn-devops-kit\\rcn_api_stub.py"
+nssm set RCNAPI AppDirectory "C:\\rcn-devops-kit"
+nssm start RCNAPI
+pause
+""".strip())
+with open(f"{service_path}/uninstall_service.bat", "w") as f:
+    f.write("""
+@echo off
+nssm stop RCNAPI
+nssm remove RCNAPI confirm
+pause
+""".strip())
+
+# Create ZIP archive
+shutil.make_archive(final_zip.replace(".zip", ""), 'zip', base_path)
+
+final_zip
