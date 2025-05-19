@@ -1,82 +1,82 @@
 [
   {
-    "name": "Single Family Home",
     "use_type": "Residential",
     "construction_type": "Wood Frame",
     "sqft": 1800,
     "year_built": 2010,
     "quality_class": "B",
     "locality_index": 1.05,
-    "condition": "Good"
+    "condition": "Good",
+    "name": "Single Family Home"
   },
   {
-    "name": "Commercial Retail Store",
     "use_type": "Commercial",
-    "construction_type": "Masonry",
+    "construction_type": "Steel Frame",
     "sqft": 5000,
-    "year_built": 2000,
+    "year_built": 2015,
     "quality_class": "A",
     "locality_index": 1.15,
-    "condition": "Average"
+    "condition": "Excellent",
+    "name": "Retail Store"
   },
   {
-    "name": "Warehouse Facility",
     "use_type": "Industrial",
-    "construction_type": "Steel Frame",
+    "construction_type": "Concrete",
     "sqft": 12000,
-    "year_built": 1995,
-    "quality_class": "B+",
+    "year_built": 2005,
+    "quality_class": "C+",
     "locality_index": 0.95,
-    "condition": "Good"
+    "condition": "Average",
+    "name": "Warehouse"
   },
   {
-    "name": "Farm Storage Building",
     "use_type": "Agricultural",
+    "construction_type": "Wood Frame",
+    "sqft": 3600,
+    "year_built": 1995,
+    "quality_class": "D+",
+    "locality_index": 0.85,
+    "condition": "Fair",
+    "name": "Barn"
+  },
+  {
+    "use_type": "Residential",
+    "construction_type": "Masonry",
+    "sqft": 2400,
+    "year_built": 2000,
+    "quality_class": "B+",
+    "locality_index": 1.10,
+    "condition": "Good",
+    "name": "Brick House"
+  },
+  {
+    "use_type": "Commercial",
+    "construction_type": "Concrete",
+    "sqft": 15000,
+    "year_built": 1980,
+    "quality_class": "C",
+    "locality_index": 1.00,
+    "condition": "Fair",
+    "name": "Office Building"
+  },
+  {
+    "use_type": "Residential",
     "construction_type": "Wood Frame",
     "sqft": 3500,
-    "year_built": 2005,
-    "quality_class": "C",
-    "locality_index": 0.85,
-    "condition": "Fair"
-  },
-  {
-    "name": "Luxury Condominium",
-    "use_type": "Residential",
-    "construction_type": "Concrete",
-    "sqft": 2200,
-    "year_built": 2018,
+    "year_built": 2020,
     "quality_class": "A+",
-    "locality_index": 1.25,
-    "condition": "Excellent"
+    "locality_index": 1.20,
+    "condition": "Excellent",
+    "name": "Luxury Home"
   },
   {
-    "name": "Small Office Building",
-    "use_type": "Commercial",
-    "construction_type": "Wood Frame",
-    "sqft": 3800,
-    "year_built": 2008,
-    "quality_class": "B",
-    "locality_index": 1.10,
-    "condition": "Average"
-  },
-  {
-    "name": "Manufacturing Plant",
-    "use_type": "Industrial",
-    "construction_type": "Concrete",
-    "sqft": 25000,
-    "year_built": 1980,
-    "quality_class": "C+",
-    "locality_index": 1.00,
-    "condition": "Fair"
-  },
-  {
-    "name": "Barn With Living Quarters",
     "use_type": "Agricultural",
-    "construction_type": "Wood Frame",
-    "sqft": 4500,
-    "year_built": 2015,
-    "quality_class": "B",
+    "construction_type": "Steel Frame",
+    "sqft": 5000,
+    "year_built": 2010,
+    "quality_class": "C",
     "locality_index": 0.90,
-    "condition": "Good"
+    "condition": "Average",
+    "name": "Equipment Storage"
   }
 ]

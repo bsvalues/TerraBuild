@@ -1,26 +1,117 @@
 {
-  "Residential": {
-    "Wood Frame": 175.0,
-    "Masonry": 195.0,
-    "Steel Frame": 210.0,
-    "Concrete": 225.0
+  "use_types": {
+    "Residential": {
+      "description": "Residential buildings including single-family homes, duplexes, and apartments",
+      "base_cost_per_sqft": {
+        "Wood Frame": 125.50,
+        "Masonry": 145.75,
+        "Steel Frame": 160.25,
+        "Concrete": 170.00
+      },
+      "quality_multipliers": {
+        "A+": 1.45,
+        "A": 1.35,
+        "B+": 1.25,
+        "B": 1.15,
+        "C+": 1.05,
+        "C": 1.00,
+        "D+": 0.90,
+        "D": 0.80,
+        "E": 0.70
+      }
+    },
+    "Commercial": {
+      "description": "Commercial buildings including retail, offices, and other business spaces",
+      "base_cost_per_sqft": {
+        "Wood Frame": 135.25,
+        "Masonry": 155.50,
+        "Steel Frame": 185.75,
+        "Concrete": 195.25
+      },
+      "quality_multipliers": {
+        "A+": 1.50,
+        "A": 1.40,
+        "B+": 1.30,
+        "B": 1.20,
+        "C+": 1.10,
+        "C": 1.00,
+        "D+": 0.90,
+        "D": 0.80,
+        "E": 0.70
+      }
+    },
+    "Industrial": {
+      "description": "Industrial buildings including warehouses, factories, and manufacturing facilities",
+      "base_cost_per_sqft": {
+        "Wood Frame": 90.25,
+        "Masonry": 115.50,
+        "Steel Frame": 125.25,
+        "Concrete": 135.75
+      },
+      "quality_multipliers": {
+        "A+": 1.40,
+        "A": 1.30,
+        "B+": 1.20,
+        "B": 1.10,
+        "C+": 1.05,
+        "C": 1.00,
+        "D+": 0.95,
+        "D": 0.85,
+        "E": 0.75
+      }
+    },
+    "Agricultural": {
+      "description": "Agricultural buildings including barns, silos, and storage facilities",
+      "base_cost_per_sqft": {
+        "Wood Frame": 65.25,
+        "Masonry": 85.50,
+        "Steel Frame": 95.75,
+        "Concrete": 105.25
+      },
+      "quality_multipliers": {
+        "A+": 1.35,
+        "A": 1.25,
+        "B+": 1.15,
+        "B": 1.10,
+        "C+": 1.05,
+        "C": 1.00,
+        "D+": 0.90,
+        "D": 0.80,
+        "E": 0.70
+      }
+    }
   },
-  "Commercial": {
-    "Wood Frame": 145.0,
-    "Masonry": 185.0,
-    "Steel Frame": 195.0,
-    "Concrete": 215.0
+  "region_factors": {
+    "Northwest": 1.10,
+    "Northeast": 1.15,
+    "Midwest": 1.00,
+    "Southwest": 0.95,
+    "Southeast": 0.90,
+    "West Coast": 1.25,
+    "East Coast": 1.20,
+    "Mountain": 1.05,
+    "Central": 0.98,
+    "Gulf Coast": 1.02
   },
-  "Industrial": {
-    "Wood Frame": 110.0,
-    "Masonry": 125.0,
-    "Steel Frame": 150.0,
-    "Concrete": 175.0
+  "complexity_factors": {
+    "very_simple": 0.85,
+    "simple": 0.92,
+    "standard": 1.00,
+    "complex": 1.15,
+    "very_complex": 1.30
   },
-  "Agricultural": {
-    "Wood Frame": 85.0,
-    "Masonry": 110.0,
-    "Steel Frame": 135.0,
-    "Concrete": 150.0
+  "condition_factors": {
+    "Excellent": 1.00,
+    "Good": 0.95,
+    "Average": 0.85,
+    "Fair": 0.75,
+    "Poor": 0.60
+  },
+  "meta": {
+    "version": "2025.1",
+    "source": "TerraFusionBuild Cost Profiles",
+    "last_updated": "2025-02-15",
+    "effective_date": "2025-01-01",
+    "expiration_date": "2025-12-31"
   }
 }
