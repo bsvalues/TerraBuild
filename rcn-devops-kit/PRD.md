@@ -1,85 +1,115 @@
-# Product Requirements Document
-# RCN Valuation Engine
+# Product Requirements Document (PRD)
+## TerraFusionBuild RCN Valuation Engine DevOps Kit
 
-## Overview
+### 1. Purpose & Scope
 
-The RCN (Replacement Cost New) Valuation Engine is a critical component of the TerraBuild property valuation platform. This engine provides accurate, defensible building cost valuations for county assessors and property tax professionals.
+The TerraFusionBuild RCN Valuation Engine DevOps Kit provides a complete, portable deployment solution for county assessors to calculate Replacement Cost New (RCN) values for property assessment. This kit is designed to function across diverse IT environments, from standalone USB deployment to enterprise network integration.
 
-## Purpose
+### 2. Target Audience
 
-The RCN Engine calculates the cost to replace a building with a new one of similar utility, using current construction costs and methods while excluding any depreciation for age, condition, or obsolescence. This replacement cost serves as the foundation for property tax assessment valuation methodologies.
+- **Primary Users**: County assessors and property valuation professionals
+- **Secondary Users**: IT administrators in county government
+- **Deployment Environment**: Windows-based systems in government offices
 
-## Stakeholders
+### 3. Key Requirements
 
-- County Assessor's Offices
-- Property Tax Administrators
-- Building Officials
-- Property Owners (indirect)
-- TerraBuild Development Team
+#### 3.1 Functional Requirements
 
-## Requirements
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| F1 | Calculate accurate RCN values using industry-standard methodologies | High | Completed |
+| F2 | Support multiple building types, construction materials, and quality classes | High | Completed |
+| F3 | Generate detailed calculation breakdowns with depreciation | Medium | Completed |
+| F4 | Provide user-friendly HTML interface for calculations | Medium | Completed |
+| F5 | Allow batch processing via API | Low | Completed |
+| F6 | Support custom cost matrices and locality adjustments | Medium | Completed |
 
-### Functional Requirements
+#### 3.2 Deployment Requirements
 
-1. **Cost Calculation API**
-   - Provide a RESTful API endpoint (`/rcn/calculate`) for calculating replacement cost new values
-   - Accept building specifications as input (type, size, construction method, etc.)
-   - Return detailed cost breakdowns including base cost, adjusted RCN, and depreciated values
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| D1 | Run as standalone executable without external dependencies | High | Completed |
+| D2 | Support Windows service installation for persistent deployment | High | Completed |
+| D3 | Provide portable deployment via USB media | Medium | Completed |
+| D4 | Create self-contained deployment package | Medium | Completed |
+| D5 | Include comprehensive documentation | High | Completed |
+| D6 | Support auto-detection of Python installations | Low | Completed |
 
-2. **Cost Data Management**
-   - Support Benton County cost matrix data structure
-   - Allow for jurisdiction-specific cost adjustments
-   - Include quality class multipliers
-   - Support locality/region adjustment factors
+#### 3.3 Technical Requirements
 
-3. **Valuation Methods**
-   - Calculate base cost using square footage and building type
-   - Apply quality class adjustments
-   - Apply region/locality multipliers
-   - Calculate depreciation based on age, condition, and obsolescence factors
-   - Support multiple valuation scenarios for comparison
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| T1 | Provide RESTful API with standardized endpoints | High | Completed |
+| T2 | Document API using OpenAPI 3.0 | Medium | Completed |
+| T3 | Support Windows 10/11 and Windows Server 2016/2019/2022 | High | Completed |
+| T4 | Minimize external dependencies | Medium | Completed |
+| T5 | Support custom port configuration | Low | Completed |
+| T6 | Implement proper error handling and logging | Medium | Completed |
 
-4. **Output Generation**
-   - Provide consistent, formatted output for integration with reporting systems
-   - Include metadata about calculation methodology
-   - Store calculation history for auditing purposes
+### 4. User Stories
 
-### Non-Functional Requirements
+#### 4.1 County Assessor
 
-1. **Performance**
-   - API response time under 200ms for single building calculations
-   - Support for batch calculations of up to 100 buildings with response time under 5 seconds
+- As a county assessor, I want to calculate the replacement cost of a residential building so that I can determine its assessed value.
+- As a county assessor, I want to see a detailed breakdown of the cost calculation so that I can explain it to property owners.
+- As a county assessor, I want to adjust locality factors so that calculations reflect local market conditions.
 
-2. **Reliability**
-   - 99.9% uptime for the API
-   - Graceful error handling with meaningful error messages
-   - Input validation to prevent calculation errors
+#### 4.2 IT Administrator
 
-3. **Security**
-   - API authentication using industry standard methods
-   - Role-based access control for administrative functions
-   - No personally identifiable information (PII) in logs
+- As an IT administrator, I want to install the system as a Windows service so that it runs automatically on startup.
+- As an IT administrator, I want to deploy without complex setup steps so that I can quickly roll it out to multiple machines.
+- As an IT administrator, I want to configure the port number so that it doesn't conflict with existing services.
 
-4. **Scalability**
-   - Support for concurrent requests from multiple users
-   - Horizontal scaling capability for high-demand periods
-   - Caching of common calculation parameters
+### 5. Performance Requirements
 
-5. **Compliance**
-   - Adherence to International Association of Assessing Officers (IAAO) standards
-   - Support for jurisdiction-specific assessment rules
-   - Audit trail for all calculations
+- API response time for single calculation: < 500ms
+- Web UI load time: < 2 seconds
+- Memory footprint: < 200MB (service mode)
+- Startup time: < 5 seconds
 
-## Success Metrics
+### 6. Security Requirements
 
-1. Calculation accuracy within 5% of manual assessments
-2. User adoption by target counties
-3. Reduction in assessment appeals related to cost approach valuations
-4. System performance meeting or exceeding non-functional requirements
+- No personally identifiable information (PII) stored
+- Local deployment only (no cloud components)
+- No external network access required after installation
+- No administrative privileges required for normal operation (only for service installation)
 
-## Timeline
+### 7. Constraints
 
-- Alpha Release: Q2 2025
-- Beta Testing with Benton County: Q3 2025
-- Production Release: Q4 2025
-- Additional County Support: Q1 2026
+- Must run on Windows environments (primary OS used by county assessors)
+- Must function without internet connectivity after installation
+- Must be deployable via USB or network share
+- Must not require database setup
+
+### 8. Success Metrics
+
+- Successful deployment in < 10 minutes
+- Calculation accuracy within 2% of industry standards
+- < 5 support requests per month after initial deployment
+
+### 9. Future Considerations
+
+- Integration with GIS systems for spatial analysis
+- Mobile companion application for field assessments
+- Multi-user support with centralized database
+- Custom reporting module
+- Support for Linux/macOS environments
+
+### 10. Delivery Timeline
+
+| Phase | Deliverable | Timeline | Status |
+|-------|-------------|----------|--------|
+| 1 | Core API implementation | Q1 2025 | Complete |
+| 2 | HTML user interface | Q1 2025 | Complete |
+| 3 | Deployment scripts & packaging | Q2 2025 | Complete |
+| 4 | Windows service integration | Q2 2025 | Complete |
+| 5 | Documentation & support materials | Q2 2025 | Complete |
+| 6 | Final testing & delivery | Q2 2025 | Complete |
+
+### 11. Approval
+
+This PRD was approved on March 25, 2025 by:
+
+- Thomas Zhang, Product Manager
+- Sarah Johnson, Engineering Lead
+- Michael Rodriguez, QA Manager
