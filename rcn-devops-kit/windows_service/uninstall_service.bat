@@ -4,7 +4,7 @@ echo TerraFusionBuild RCN Valuation Engine - Windows Service Uninstallation
 echo ===================================================================
 echo.
 
-REM Check for administrator rights
+REM Check if running as administrator
 net session >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo Error: This script requires administrator privileges.
@@ -13,36 +13,56 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Set working directory to the script location
-cd /d %~dp0
-cd ..
+REM Get the current directory of the script
+set "SCRIPT_DIR=%~dp0"
+set "ROOT_DIR=%SCRIPT_DIR%.."
+cd "%ROOT_DIR%"
 
-REM Check if NSSM is available
-if not exist windows_service\nssm.exe (
-    echo Error: NSSM (Non-Sucking Service Manager) not found.
-    echo Please make sure nssm.exe is in the windows_service directory.
+REM Check if NSSM is present
+if not exist "%SCRIPT_DIR%nssm.exe" (
+    echo Error: NSSM (Non-Sucking Service Manager) is missing.
+    echo Please download NSSM from https://nssm.cc/download and place nssm.exe in the windows_service directory.
     pause
     exit /b 1
 )
 
-REM Check if the service exists
-sc query TerraFusionRCN >nul 2>&1
+REM Set service name
+set "SERVICE_NAME=TerraFusionRCN"
+
+REM Check if service exists
+sc query %SERVICE_NAME% >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo The TerraFusionRCN service is not installed.
+    echo Service '%SERVICE_NAME%' does not exist or is not installed.
     pause
-    exit /b 0
+    exit /b 1
 )
 
-REM Stop the service
-echo Stopping the TerraFusionRCN service...
-net stop TerraFusionRCN >nul 2>&1
+REM Stop the service if it's running
+echo Stopping service '%SERVICE_NAME%'...
+net stop %SERVICE_NAME% >nul 2>&1
 
 REM Remove the service
-echo Removing the TerraFusionRCN service...
-windows_service\nssm.exe remove TerraFusionRCN confirm
+echo Removing service '%SERVICE_NAME%'...
+"%SCRIPT_DIR%nssm.exe" remove %SERVICE_NAME% confirm
 
-echo.
-echo The TerraFusionRCN service has been removed.
-echo You can reinstall it any time by running install_service.bat.
-echo.
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo ===================================================================
+    echo Service uninstallation complete!
+    echo ===================================================================
+    echo.
+    echo The RCN Valuation Engine service has been successfully uninstalled.
+    echo.
+    echo You can still run the API manually using start_rcn.bat
+    echo.
+) else (
+    echo.
+    echo ===================================================================
+    echo Service uninstallation failed!
+    echo ===================================================================
+    echo.
+    echo Please check the error messages above.
+    echo.
+)
+
 pause

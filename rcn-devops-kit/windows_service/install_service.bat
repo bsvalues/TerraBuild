@@ -4,7 +4,7 @@ echo TerraFusionBuild RCN Valuation Engine - Windows Service Installation
 echo ===================================================================
 echo.
 
-REM Check for administrator rights
+REM Check if running as administrator
 net session >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo Error: This script requires administrator privileges.
@@ -13,102 +13,86 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Set working directory to the script location
-cd /d %~dp0
-cd ..
+REM Get the current directory of the script
+set "SCRIPT_DIR=%~dp0"
+set "ROOT_DIR=%SCRIPT_DIR%.."
+cd "%ROOT_DIR%"
 
-REM Check if Python is installed
-python --version >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo Error: Python is not installed or not in the PATH.
-    echo Please run install_deps.bat first to install the dependencies.
+REM Check if NSSM is present
+if not exist "%SCRIPT_DIR%nssm.exe" (
+    echo Error: NSSM (Non-Sucking Service Manager) is missing.
+    echo Please download NSSM from https://nssm.cc/download and place nssm.exe in the windows_service directory.
     pause
     exit /b 1
 )
 
-REM Check if NSSM is available
-if not exist windows_service\nssm.exe (
-    echo Error: NSSM (Non-Sucking Service Manager) not found.
-    echo Please make sure nssm.exe is in the windows_service directory.
-    pause
-    exit /b 1
-)
-
-REM Check if the service already exists
-sc query TerraFusionRCN >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo The TerraFusionRCN service is already installed.
-    echo If you want to reinstall it, please run uninstall_service.bat first.
-    pause
-    exit /b 0
-)
-
-REM Check if virtual environment exists, create if not
+REM Check if Python virtual environment exists
 if not exist venv (
-    echo Virtual environment not found. Creating it...
-    python -m venv venv
-    if %ERRORLEVEL% NEQ 0 (
-        echo Failed to create virtual environment.
-        pause
-        exit /b 1
-    )
+    echo Virtual environment not found. Please run install_deps.bat first.
+    pause
+    exit /b 1
 )
 
-REM Install dependencies in virtual environment
-echo Installing dependencies...
+REM Activate virtual environment (for environment setup only, service will use absolute paths)
 call venv\Scripts\activate.bat
-pip install -r requirements.txt 2>nul || pip install fastapi uvicorn numpy pandas 
-if %ERRORLEVEL% NEQ 0 (
-    echo Warning: Some dependencies may not have been installed correctly.
-    echo The service might not function properly.
-    pause
-)
 
 REM Create logs directory if it doesn't exist
 if not exist logs mkdir logs
 
-REM Define the service parameters
-set SERVICE_NAME=TerraFusionRCN
-set SERVICE_DISPLAY=TerraFusionBuild RCN Valuation Engine
-set SERVICE_DESC=Provides property valuation calculations for county assessors
-set PYTHON_EXE=%CD%\venv\Scripts\python.exe
-set APP_SCRIPT=%CD%\rcn_api_stub.py
-set LOG_FILE=%CD%\logs\rcn_service.log
+REM Set service information
+set "SERVICE_NAME=TerraFusionRCN"
+set "SERVICE_DISPLAY_NAME=TerraFusionBuild RCN Valuation Engine"
+set "SERVICE_DESCRIPTION=Provides API endpoints for calculating Replacement Cost New (RCN) values for buildings."
+set "PYTHON_EXE=%ROOT_DIR%\venv\Scripts\python.exe"
+set "SCRIPT_PATH=%ROOT_DIR%\rcn_api_stub.py"
 
-REM Install the service
-echo Installing the TerraFusionRCN service...
-windows_service\nssm.exe install %SERVICE_NAME% %PYTHON_EXE% %APP_SCRIPT%
-windows_service\nssm.exe set %SERVICE_NAME% DisplayName "%SERVICE_DISPLAY%"
-windows_service\nssm.exe set %SERVICE_NAME% Description "%SERVICE_DESC%"
-windows_service\nssm.exe set %SERVICE_NAME% AppDirectory "%CD%"
-windows_service\nssm.exe set %SERVICE_NAME% AppStdout "%LOG_FILE%"
-windows_service\nssm.exe set %SERVICE_NAME% AppStderr "%LOG_FILE%"
-windows_service\nssm.exe set %SERVICE_NAME% AppRotateFiles 1
-windows_service\nssm.exe set %SERVICE_NAME% AppRotateBytes 10485760
-windows_service\nssm.exe set %SERVICE_NAME% Start SERVICE_AUTO_START
-
-REM Start the service
-echo Starting the TerraFusionRCN service...
-net start %SERVICE_NAME%
-if %ERRORLEVEL% NEQ 0 (
-    echo Failed to start the TerraFusionRCN service.
-    echo Please check the logs for more information.
-    pause
-    exit /b 1
+REM Check if service already exists
+sc query %SERVICE_NAME% >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo Service '%SERVICE_NAME%' already exists. Removing existing service...
+    "%SCRIPT_DIR%nssm.exe" remove %SERVICE_NAME% confirm
 )
 
-echo.
-echo ===================================================================
-echo The TerraFusionRCN service has been installed and started!
-echo ===================================================================
-echo.
-echo The RCN Valuation Engine is now running as a Windows service.
-echo You can access it by opening http://localhost:8000 in your browser.
-echo.
-echo The service will automatically start when the computer boots.
-echo To stop or uninstall the service, use the Windows Services Manager
-echo or run the uninstall_service.bat script.
-echo.
-echo Service logs are saved to: %LOG_FILE%
-echo.
+REM Install service
+echo Installing service '%SERVICE_DISPLAY_NAME%'...
+"%SCRIPT_DIR%nssm.exe" install %SERVICE_NAME% "%PYTHON_EXE%" "%SCRIPT_PATH%"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% DisplayName "%SERVICE_DISPLAY_NAME%"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% Description "%SERVICE_DESCRIPTION%"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppDirectory "%ROOT_DIR%"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStdout "%ROOT_DIR%\logs\service_stdout.log"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStderr "%ROOT_DIR%\logs\service_stderr.log"
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStopMethodSkip 0
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStopMethodConsole 1500
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStopMethodWindow 1500
+"%SCRIPT_DIR%nssm.exe" set %SERVICE_NAME% AppStopMethodThreads 1500
+
+REM Start the service
+echo Starting service...
+net start %SERVICE_NAME%
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo ===================================================================
+    echo Service installation complete!
+    echo ===================================================================
+    echo.
+    echo The RCN Valuation Engine is now running as a Windows service.
+    echo.
+    echo - Service Name: %SERVICE_NAME%
+    echo - Access the API at: http://localhost:8000
+    echo - API Documentation: http://localhost:8000/docs
+    echo - Service logs are in: %ROOT_DIR%\logs\
+    echo.
+    echo To uninstall the service, run uninstall_service.bat
+    echo.
+) else (
+    echo.
+    echo ===================================================================
+    echo Service installation failed!
+    echo ===================================================================
+    echo.
+    echo Please check the error messages above.
+    echo.
+)
+
 pause

@@ -6,534 +6,772 @@
     <title>TerraFusionBuild RCN Valuation Engine</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
+            margin: 0;
+            padding: 0;
             color: #333;
+            background-color: #f5f7fa;
+        }
+        .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f7f9fc;
         }
-        
         header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #234567;
+            background-color: #2c3e50;
             color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 20px 0;
+            margin-bottom: 30px;
         }
-        
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
+        h1 {
+            margin: 0;
+        }
         .version {
             font-size: 14px;
             color: #ccc;
         }
-        
-        h1, h2, h3 {
-            color: #234567;
-        }
-        
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .panel {
-            background-color: #fff;
-            padding: 20px;
+        .card {
+            background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
         }
-        
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+        .col {
+            flex: 1;
+            padding: 0 15px;
+            min-width: 250px;
+        }
         label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 500;
+            font-weight: bold;
         }
-        
         select, input {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
             border-radius: 4px;
+            margin-bottom: 15px;
             font-size: 16px;
         }
-        
         button {
-            background-color: #234567;
+            background-color: #3498db;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
         }
-        
         button:hover {
-            background-color: #1a3a50;
+            background-color: #2980b9;
         }
-        
-        .button-secondary {
-            background-color: #6c757d;
-            margin-right: 10px;
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
         }
-        
-        .button-secondary:hover {
-            background-color: #5a6268;
+        .results {
+            display: none;
         }
-        
-        pre {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-size: 14px;
-        }
-        
-        .result-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
-        
-        .result-table th, .result-table td {
-            padding: 12px;
+        th, td {
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-        
-        .result-table th {
-            background-color: #f2f2f2;
-            font-weight: 600;
-        }
-        
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            color: #0c5460;
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-        }
-        
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 20px;
-        }
-        
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            border-bottom: none;
-            margin-right: 5px;
-            border-radius: 4px 4px 0 0;
-            background-color: #f2f2f2;
-        }
-        
-        .tab.active {
-            border-color: #ccc;
-            background-color: white;
-            border-bottom: 2px solid white;
-            margin-bottom: -1px;
+        th {
+            background-color: #f8f9fa;
             font-weight: bold;
         }
-        
-        .tab-content {
-            display: none;
+        .feature-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
         }
-        
-        .tab-content.active {
-            display: block;
+        .feature-row select, .feature-row input {
+            margin-bottom: 0;
         }
-        
-        footer {
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            margin-top: 40px;
-            color: #6c757d;
+        .feature-row button {
+            margin-left: 10px;
+            padding: 8px;
+            background-color: #e74c3c;
+        }
+        .feature-row .spacer {
+            width: 10px;
+        }
+        .add-feature {
+            margin-top: 10px;
+            background-color: #2ecc71;
+        }
+        .add-feature:hover {
+            background-color: #27ae60;
+        }
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .example-button {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
             font-size: 14px;
         }
-        
+        .example-button:hover {
+            background-color: #7f8c8d;
+        }
+        .confidence {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+        .confidence.high {
+            background-color: #2ecc71;
+        }
+        .confidence.medium {
+            background-color: #f39c12;
+        }
+        .confidence.low {
+            background-color: #e74c3c;
+        }
+        .notes {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .version {
-                margin-top: 10px;
+            .col {
+                flex: 100%;
             }
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">TerraFusionBuild RCN Valuation Engine</div>
-        <div class="version">v1.0.0</div>
-    </header>
-    
-    <div class="alert">
-        This tool calculates the Replacement Cost New (RCN) value for buildings based on 
-        various parameters such as use type, construction type, and quality class.
-    </div>
-    
-    <div class="tabs">
-        <div class="tab active" data-tab="calculator">Calculator</div>
-        <div class="tab" data-tab="samples">Sample Buildings</div>
-        <div class="tab" data-tab="about">About</div>
-    </div>
-    
-    <div class="tab-content active" id="calculator-content">
         <div class="container">
-            <div class="panel">
-                <h2>Input Parameters</h2>
-                <form id="rcnForm">
-                    <label for="useType">Building Use Type:</label>
-                    <select id="useType" name="useType" required>
-                        <option value="">Select...</option>
-                        <option value="Residential">Residential</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Industrial">Industrial</option>
-                        <option value="Agricultural">Agricultural</option>
-                    </select>
-                    
-                    <label for="constructionType">Construction Type:</label>
-                    <select id="constructionType" name="constructionType" required>
-                        <option value="">Select...</option>
-                        <option value="Wood Frame">Wood Frame</option>
-                        <option value="Masonry">Masonry</option>
-                        <option value="Steel Frame">Steel Frame</option>
-                        <option value="Concrete">Concrete</option>
-                    </select>
-                    
-                    <label for="sqft">Square Footage:</label>
-                    <input type="number" id="sqft" name="sqft" min="1" required>
-                    
-                    <label for="yearBuilt">Year Built:</label>
-                    <input type="number" id="yearBuilt" name="yearBuilt" min="1900" max="2100" required>
-                    
-                    <label for="qualityClass">Quality Class:</label>
-                    <select id="qualityClass" name="qualityClass" required>
-                        <option value="">Select...</option>
-                        <option value="A+">A+ (Premium)</option>
-                        <option value="A">A (Excellent)</option>
-                        <option value="B+">B+ (Very Good)</option>
-                        <option value="B">B (Good)</option>
-                        <option value="C+">C+ (Above Average)</option>
-                        <option value="C">C (Average)</option>
-                        <option value="D+">D+ (Fair)</option>
-                        <option value="D">D (Poor)</option>
-                        <option value="E">E (Minimal)</option>
-                    </select>
-                    
-                    <label for="condition">Condition:</label>
-                    <select id="condition" name="condition" required>
-                        <option value="">Select...</option>
-                        <option value="Excellent">Excellent</option>
-                        <option value="Good">Good</option>
-                        <option value="Average">Average</option>
-                        <option value="Fair">Fair</option>
-                        <option value="Poor">Poor</option>
-                    </select>
-                    
-                    <label for="localityIndex">Locality Index:</label>
-                    <input type="number" id="localityIndex" name="localityIndex" step="0.01" min="0.5" max="2.0" value="1.0" required>
-                    
-                    <div>
-                        <button type="button" id="loadSample1" class="button-secondary">Load Sample 1</button>
-                        <button type="button" id="loadSample2" class="button-secondary">Load Sample 2</button>
-                        <button type="submit">Calculate RCN</button>
-                    </div>
-                </form>
+            <h1>TerraFusionBuild RCN Valuation Engine</h1>
+            <span class="version">v1.0.0</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>Replacement Cost New (RCN) Calculator</h2>
+            <p>Enter building details below to calculate the Replacement Cost New value.</p>
+            
+            <div class="examples" id="examples">
+                <button class="example-button" data-example="clear">Clear Form</button>
+                <!-- Example buttons will be added here via JavaScript -->
             </div>
             
-            <div class="panel">
-                <h2>Results</h2>
-                <div id="results">
-                    <p>Enter parameters and click "Calculate RCN" to see results.</p>
+            <form id="rcn-form">
+                <div class="row">
+                    <div class="col">
+                        <label for="building-type">Building Type:</label>
+                        <select id="building-type" required>
+                            <option value="">Select Building Type</option>
+                            <!-- Options will be populated via JavaScript -->
+                        </select>
+                        
+                        <label for="construction-type">Construction Type:</label>
+                        <select id="construction-type" required>
+                            <option value="">Select Construction Type</option>
+                            <!-- Options will be populated via JavaScript -->
+                        </select>
+                        
+                        <label for="quality-class">Quality Class:</label>
+                        <select id="quality-class" required>
+                            <option value="">Select Quality Class</option>
+                            <!-- Options will be populated via JavaScript -->
+                        </select>
+                        
+                        <label for="region">Region:</label>
+                        <select id="region" required>
+                            <option value="">Select Region</option>
+                            <!-- Options will be populated via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="col">
+                        <label for="year-built">Year Built:</label>
+                        <input type="number" id="year-built" min="1800" max="2100" required>
+                        
+                        <label for="condition">Condition:</label>
+                        <select id="condition" required>
+                            <option value="">Select Condition</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Very Good">Very Good</option>
+                            <option value="Good">Good</option>
+                            <option value="Average">Average</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Very Poor">Very Poor</option>
+                            <option value="Unsound">Unsound</option>
+                        </select>
+                        
+                        <label for="effective-age">Effective Age Adjustment:</label>
+                        <input type="number" id="effective-age" min="-50" max="50" value="0">
+                        
+                        <label for="square-footage">Square Footage:</label>
+                        <input type="number" id="square-footage" min="1" step="1" required>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Additional Features</h3>
+                    <div id="features-container">
+                        <!-- Feature rows will be added here -->
+                    </div>
+                    <button type="button" class="add-feature" id="add-feature">Add Feature</button>
+                </div>
+                
+                <div class="button-container">
+                    <button type="submit" id="calculate-button">Calculate RCN</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="card results" id="results">
+            <h2>Calculation Results</h2>
+            
+            <div class="row">
+                <div class="col">
+                    <table>
+                        <tr>
+                            <th>RCN Value:</th>
+                            <td id="rcn-value">$0.00</td>
+                        </tr>
+                        <tr>
+                            <th>Base Cost per Sq.Ft.:</th>
+                            <td id="base-cost">$0.00</td>
+                        </tr>
+                        <tr>
+                            <th>Total Base Cost:</th>
+                            <td id="total-base-cost">$0.00</td>
+                        </tr>
+                        <tr>
+                            <th>Quality Adjusted Cost:</th>
+                            <td id="quality-cost">$0.00</td>
+                        </tr>
+                        <tr>
+                            <th>Region Adjusted Cost:</th>
+                            <td id="region-cost">$0.00</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col">
+                    <table>
+                        <tr>
+                            <th>Effective Age:</th>
+                            <td id="effective-age-result">0 years</td>
+                        </tr>
+                        <tr>
+                            <th>Age Depreciation:</th>
+                            <td id="age-depreciation">0%</td>
+                        </tr>
+                        <tr>
+                            <th>Condition Depreciation:</th>
+                            <td id="condition-depreciation">0%</td>
+                        </tr>
+                        <tr>
+                            <th>Calculation Date:</th>
+                            <td id="calculation-date"></td>
+                        </tr>
+                        <tr>
+                            <th>Confidence Level:</th>
+                            <td><span id="confidence-level" class="confidence"></span></td>
+                        </tr>
+                    </table>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="tab-content" id="samples-content">
-        <div class="panel">
-            <h2>Sample Buildings</h2>
-            <p>These sample buildings can be used to test the RCN calculation:</p>
             
-            <table class="result-table">
-                <thead>
-                    <tr>
-                        <th>Use Type</th>
-                        <th>Construction</th>
-                        <th>Sq. Footage</th>
-                        <th>Year Built</th>
-                        <th>Quality</th>
-                        <th>Condition</th>
-                        <th>Locality Index</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="sampleTable">
-                    <!-- Will be populated from API -->
-                    <tr>
-                        <td colspan="8">Loading samples...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <div class="tab-content" id="about-content">
-        <div class="panel">
-            <h2>About the RCN Valuation Engine</h2>
-            <p>The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine is a powerful tool designed to assist county assessors in determining accurate property valuations based on building characteristics.</p>
+            <div id="feature-costs-container" style="display: none;">
+                <h3>Feature Costs</h3>
+                <table id="feature-costs">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Feature costs will be added here -->
+                    </tbody>
+                </table>
+            </div>
             
-            <h3>Features</h3>
-            <ul>
-                <li>Support for multiple building types (Residential, Commercial, Industrial, Agricultural)</li>
-                <li>Various construction types with appropriate base rates</li>
-                <li>Quality classification system (A+ through E)</li>
-                <li>Condition-based depreciation</li>
-                <li>Age factor adjustments</li>
-                <li>Locality index for regional adjustments</li>
-            </ul>
-            
-            <h3>Calculation Methodology</h3>
-            <p>The RCN calculation follows industry-standard methodologies:</p>
-            <ol>
-                <li>Determine the base rate per square foot for the building type and construction method</li>
-                <li>Apply the quality factor based on construction quality class</li>
-                <li>Multiply by the square footage to get the basic replacement cost</li>
-                <li>Apply the locality index to account for regional cost variations</li>
-                <li>Calculate depreciation based on building condition and age</li>
-                <li>Apply depreciation factors to determine the depreciated cost</li>
-            </ol>
-            
-            <h3>API Documentation</h3>
-            <p>The RCN Valuation Engine provides a REST API for integration with other systems. Documentation is available at the <a href="/docs" target="_blank">API Documentation Page</a>.</p>
+            <div class="notes" id="notes">
+                <!-- Notes will be added here -->
+            </div>
         </div>
     </div>
     
     <footer>
-        <p>&copy; 2025 TerraFusionBuild. All rights reserved.</p>
-        <p>RCN Valuation Engine v1.0.0</p>
+        <p>TerraFusionBuild RCN Valuation Engine &copy; 2025 | <a href="/docs" target="_blank">API Documentation</a></p>
     </footer>
-    
+
     <script>
-        // Handle tabs
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                tab.classList.add('active');
-                document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
-            });
-        });
-        
-        // Sample data
-        const samples = [
-            {
-                useType: 'Residential',
-                constructionType: 'Wood Frame',
-                sqft: 2000,
-                yearBuilt: 2010,
-                qualityClass: 'B',
-                condition: 'Good',
-                localityIndex: 1.05
-            },
-            {
-                useType: 'Commercial',
-                constructionType: 'Steel Frame',
-                sqft: 10000,
-                yearBuilt: 2005,
-                qualityClass: 'A',
-                condition: 'Excellent',
-                localityIndex: 1.10
-            }
-        ];
-        
-        // Load sample data
-        document.getElementById('loadSample1').addEventListener('click', () => loadSample(0));
-        document.getElementById('loadSample2').addEventListener('click', () => loadSample(1));
-        
-        function loadSample(index) {
-            const sample = samples[index];
-            document.getElementById('useType').value = sample.useType;
-            document.getElementById('constructionType').value = sample.constructionType;
-            document.getElementById('sqft').value = sample.sqft;
-            document.getElementById('yearBuilt').value = sample.yearBuilt;
-            document.getElementById('qualityClass').value = sample.qualityClass;
-            document.getElementById('condition').value = sample.condition;
-            document.getElementById('localityIndex').value = sample.localityIndex;
-        }
-        
-        // Form submission
-        document.getElementById('rcnForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form elements
+            const form = document.getElementById('rcn-form');
+            const buildingTypeSelect = document.getElementById('building-type');
+            const constructionTypeSelect = document.getElementById('construction-type');
+            const qualityClassSelect = document.getElementById('quality-class');
+            const regionSelect = document.getElementById('region');
+            const featuresContainer = document.getElementById('features-container');
+            const addFeatureBtn = document.getElementById('add-feature');
+            const examplesContainer = document.getElementById('examples');
             
-            const form = e.target;
-            const data = {
-                use_type: form.useType.value,
-                construction_type: form.constructionType.value,
-                sqft: parseInt(form.sqft.value),
-                year_built: parseInt(form.yearBuilt.value),
-                quality_class: form.qualityClass.value,
-                condition: form.condition.value,
-                locality_index: parseFloat(form.localityIndex.value)
+            // Results elements
+            const resultsCard = document.getElementById('results');
+            
+            // API endpoints
+            const API_BASE = '/api';
+            const ENDPOINTS = {
+                buildingTypes: `${API_BASE}/building-types`,
+                constructionTypes: `${API_BASE}/construction-types`,
+                qualityClasses: `${API_BASE}/quality-classes`,
+                regions: `${API_BASE}/regions`,
+                exampleBuildings: `${API_BASE}/example-buildings`,
+                calculateRcn: `${API_BASE}/calculate-rcn`
             };
             
-            try {
-                document.getElementById('results').innerHTML = '<p>Calculating...</p>';
-                
-                const response = await fetch('/rcn/calculate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                
-                // Display results
-                let html = `
-                    <h3>Replacement Cost New (RCN)</h3>
-                    <p class="result-value">$${result.rcn.toLocaleString()}</p>
+            // Available features (will be populated from building types)
+            let availableFeatures = [];
+            
+            // Initialize the page
+            initialize();
+            
+            // Initialize function
+            async function initialize() {
+                try {
+                    // Load dropdowns data
+                    await Promise.all([
+                        loadBuildingTypes(),
+                        loadConstructionTypes(),
+                        loadQualityClasses(),
+                        loadRegions(),
+                        loadExampleBuildings()
+                    ]);
                     
-                    <h3>Depreciated Cost</h3>
-                    <p class="result-value">$${result.depreciated_cost.toLocaleString()}</p>
-                `;
-                
-                if (result.details) {
-                    html += `
-                        <h3>Calculation Details</h3>
-                        <table class="result-table">
-                            <tr>
-                                <th>Base Rate</th>
-                                <td>$${result.details.base_rate}/sqft</td>
-                            </tr>
-                            <tr>
-                                <th>Quality Factor</th>
-                                <td>${result.details.quality_factor}</td>
-                            </tr>
-                            <tr>
-                                <th>Condition Factor</th>
-                                <td>${result.details.condition_factor}</td>
-                            </tr>
-                            <tr>
-                                <th>Age Factor</th>
-                                <td>${result.details.age_factor}</td>
-                            </tr>
-                            <tr>
-                                <th>Locality Index</th>
-                                <td>${result.details.locality_index}</td>
-                            </tr>
-                        </table>
-                        
-                        <h3>Calculation Formula</h3>
-                        <pre>${result.details.calculation}</pre>
-                        
-                        <h3>Depreciation Formula</h3>
-                        <pre>${result.details.depreciation}</pre>
-                    `;
+                    // Set the current year as default for year built
+                    document.getElementById('year-built').value = new Date().getFullYear();
+                    
+                    console.log('Initialization complete');
+                } catch (error) {
+                    console.error('Error initializing:', error);
+                    alert('Error loading data. Please refresh the page or check the console for details.');
                 }
-                
-                document.getElementById('results').innerHTML = html;
-            } catch (error) {
-                document.getElementById('results').innerHTML = `
-                    <h3>Error</h3>
-                    <p>${error.message}</p>
-                `;
             }
-        });
-        
-        // Load sample buildings from API
-        async function loadSampleBuildings() {
-            try {
-                const response = await fetch('/sample/buildings');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+            
+            // Load building types
+            async function loadBuildingTypes() {
+                try {
+                    const response = await fetch(ENDPOINTS.buildingTypes);
+                    if (!response.ok) throw new Error('Failed to fetch building types');
+                    
+                    const data = await response.json();
+                    buildingTypeSelect.innerHTML = '<option value="">Select Building Type</option>';
+                    
+                    data.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.code;
+                        option.textContent = `${type.name} (${type.code})`;
+                        option.setAttribute('data-description', type.description);
+                        buildingTypeSelect.appendChild(option);
+                    });
+                    
+                    // Also load available features
+                    await loadAvailableFeatures();
+                } catch (error) {
+                    console.error('Error loading building types:', error);
                 }
+            }
+            
+            // Load construction types
+            async function loadConstructionTypes() {
+                try {
+                    const response = await fetch(ENDPOINTS.constructionTypes);
+                    if (!response.ok) throw new Error('Failed to fetch construction types');
+                    
+                    const data = await response.json();
+                    constructionTypeSelect.innerHTML = '<option value="">Select Construction Type</option>';
+                    
+                    data.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.code;
+                        option.textContent = `${type.name} (${type.code})`;
+                        option.setAttribute('data-description', type.description);
+                        constructionTypeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading construction types:', error);
+                }
+            }
+            
+            // Load quality classes
+            async function loadQualityClasses() {
+                try {
+                    const response = await fetch(ENDPOINTS.qualityClasses);
+                    if (!response.ok) throw new Error('Failed to fetch quality classes');
+                    
+                    const data = await response.json();
+                    qualityClassSelect.innerHTML = '<option value="">Select Quality Class</option>';
+                    
+                    data.forEach(quality => {
+                        const option = document.createElement('option');
+                        option.value = quality.code;
+                        option.textContent = `${quality.name} (${quality.code})`;
+                        qualityClassSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading quality classes:', error);
+                }
+            }
+            
+            // Load regions
+            async function loadRegions() {
+                try {
+                    const response = await fetch(ENDPOINTS.regions);
+                    if (!response.ok) throw new Error('Failed to fetch regions');
+                    
+                    const data = await response.json();
+                    regionSelect.innerHTML = '<option value="">Select Region</option>';
+                    
+                    data.forEach(region => {
+                        const option = document.createElement('option');
+                        option.value = region.code;
+                        option.textContent = `${region.name} (${region.code})`;
+                        regionSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading regions:', error);
+                }
+            }
+            
+            // Load available features
+            async function loadAvailableFeatures() {
+                try {
+                    // We'll fetch this from the cost profiles API endpoint in a real app
+                    // For now, we'll use a hard-coded list based on the sample data
+                    availableFeatures = [
+                        { type: 'finished_basement', name: 'Finished Basement', unit: 'sqft' },
+                        { type: 'unfinished_basement', name: 'Unfinished Basement', unit: 'sqft' },
+                        { type: 'attached_garage', name: 'Attached Garage', unit: 'sqft' },
+                        { type: 'detached_garage', name: 'Detached Garage', unit: 'sqft' },
+                        { type: 'covered_porch', name: 'Covered Porch', unit: 'sqft' },
+                        { type: 'open_porch', name: 'Open Porch', unit: 'sqft' },
+                        { type: 'elevator', name: 'Elevator', unit: 'floors' },
+                        { type: 'hvac_standard', name: 'Standard HVAC System', unit: 'system' },
+                        { type: 'hvac_premium', name: 'Premium HVAC System', unit: 'system' },
+                        { type: 'sprinkler_system', name: 'Fire Sprinkler System', unit: 'system' },
+                        { type: 'dock_door', name: 'Loading Dock Door', unit: 'doors' },
+                        { type: 'crane_system', name: 'Overhead Crane System', unit: 'system' },
+                        { type: 'reinforced_floor', name: 'Reinforced Concrete Floor', unit: 'sqft' },
+                        { type: 'climate_control', name: 'Climate Control System', unit: 'system' },
+                        { type: 'grain_storage', name: 'Grain Storage System', unit: 'system' }
+                    ];
+                } catch (error) {
+                    console.error('Error loading available features:', error);
+                }
+            }
+            
+            // Load example buildings
+            async function loadExampleBuildings() {
+                try {
+                    const response = await fetch(ENDPOINTS.exampleBuildings);
+                    if (!response.ok) throw new Error('Failed to fetch example buildings');
+                    
+                    const data = await response.json();
+                    
+                    // Clear existing examples except for the "Clear Form" button
+                    const clearButton = examplesContainer.querySelector('[data-example="clear"]');
+                    examplesContainer.innerHTML = '';
+                    examplesContainer.appendChild(clearButton);
+                    
+                    // Add example buttons
+                    data.forEach((example, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'example-button';
+                        button.textContent = example.name;
+                        button.setAttribute('data-example', index);
+                        button.onclick = () => loadExampleData(example);
+                        examplesContainer.appendChild(button);
+                    });
+                    
+                    // Handle clear button
+                    clearButton.onclick = clearForm;
+                } catch (error) {
+                    console.error('Error loading example buildings:', error);
+                }
+            }
+            
+            // Load example data into the form
+            function loadExampleData(example) {
+                // Building details
+                document.getElementById('building-type').value = example.building_type;
+                document.getElementById('construction-type').value = example.construction_type;
+                document.getElementById('quality-class').value = example.quality_class;
+                document.getElementById('region').value = example.region;
+                document.getElementById('year-built').value = example.year_built;
+                document.getElementById('condition').value = example.condition;
+                document.getElementById('effective-age').value = example.effective_age_adjustment;
+                document.getElementById('square-footage').value = example.square_footage;
                 
-                const samples = await response.json();
+                // Clear existing features
+                featuresContainer.innerHTML = '';
                 
-                let tableHtml = '';
-                samples.forEach((sample, index) => {
-                    tableHtml += `
-                        <tr>
-                            <td>${sample.use_type}</td>
-                            <td>${sample.construction_type}</td>
-                            <td>${sample.sqft.toLocaleString()}</td>
-                            <td>${sample.year_built}</td>
-                            <td>${sample.quality_class}</td>
-                            <td>${sample.condition}</td>
-                            <td>${sample.locality_index}</td>
-                            <td>
-                                <button onclick="useSample(${index})" class="button-secondary">Use</button>
-                            </td>
-                        </tr>
-                    `;
+                // Add features
+                example.features.forEach(feature => {
+                    addFeatureRow(feature.type, feature.quantity, feature.unit);
+                });
+            }
+            
+            // Clear the form
+            function clearForm() {
+                form.reset();
+                featuresContainer.innerHTML = '';
+                resultsCard.style.display = 'none';
+            }
+            
+            // Add feature row
+            function addFeatureRow(featureType = '', quantity = '', unit = '') {
+                const row = document.createElement('div');
+                row.className = 'feature-row';
+                
+                // Feature type select
+                const typeSelect = document.createElement('select');
+                typeSelect.className = 'feature-type';
+                typeSelect.required = true;
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select Feature';
+                typeSelect.appendChild(defaultOption);
+                
+                // Add available features
+                availableFeatures.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.type;
+                    option.textContent = feature.name;
+                    option.setAttribute('data-unit', feature.unit);
+                    typeSelect.appendChild(option);
                 });
                 
-                document.getElementById('sampleTable').innerHTML = tableHtml;
+                // Set the selected feature if provided
+                if (featureType) {
+                    typeSelect.value = featureType;
+                }
                 
-                // Store samples for later use
-                window.apiSamples = samples;
-            } catch (error) {
-                document.getElementById('sampleTable').innerHTML = `
-                    <tr>
-                        <td colspan="8">Error loading samples: ${error.message}</td>
-                    </tr>
-                `;
+                // Quantity input
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'number';
+                quantityInput.className = 'feature-quantity';
+                quantityInput.placeholder = 'Quantity';
+                quantityInput.min = '1';
+                quantityInput.step = '1';
+                quantityInput.required = true;
+                quantityInput.value = quantity;
+                
+                // Unit display
+                const unitSpan = document.createElement('span');
+                unitSpan.className = 'feature-unit';
+                unitSpan.style.marginLeft = '5px';
+                unitSpan.style.marginRight = '10px';
+                unitSpan.textContent = unit || '';
+                
+                // Update unit when feature type changes
+                typeSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    unitSpan.textContent = selectedOption.getAttribute('data-unit') || '';
+                });
+                
+                // Remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-feature';
+                removeBtn.textContent = 'X';
+                removeBtn.onclick = function() {
+                    featuresContainer.removeChild(row);
+                };
+                
+                // Add elements to row
+                row.appendChild(typeSelect);
+                row.appendChild(document.createElement('div')).className = 'spacer';
+                row.appendChild(quantityInput);
+                row.appendChild(unitSpan);
+                row.appendChild(removeBtn);
+                
+                // Add row to container
+                featuresContainer.appendChild(row);
             }
-        }
-        
-        // Use a sample from the API
-        function useSample(index) {
-            if (!window.apiSamples) return;
             
-            const sample = window.apiSamples[index];
-            document.getElementById('useType').value = sample.use_type;
-            document.getElementById('constructionType').value = sample.construction_type;
-            document.getElementById('sqft').value = sample.sqft;
-            document.getElementById('yearBuilt').value = sample.year_built;
-            document.getElementById('qualityClass').value = sample.quality_class;
-            document.getElementById('condition').value = sample.condition;
-            document.getElementById('localityIndex').value = sample.locality_index;
+            // Add feature button click handler
+            addFeatureBtn.addEventListener('click', function() {
+                addFeatureRow();
+            });
             
-            // Switch to calculator tab
-            document.querySelector('.tab[data-tab="calculator"]').click();
+            // Form submit handler
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    // Build request data
+                    const requestData = {
+                        building_type: buildingTypeSelect.value,
+                        construction_type: constructionTypeSelect.value,
+                        quality_class: qualityClassSelect.value,
+                        region: regionSelect.value,
+                        year_built: parseInt(document.getElementById('year-built').value),
+                        condition: document.getElementById('condition').value,
+                        effective_age_adjustment: parseInt(document.getElementById('effective-age').value),
+                        square_footage: parseFloat(document.getElementById('square-footage').value),
+                        features: []
+                    };
+                    
+                    // Add features
+                    const featureRows = featuresContainer.querySelectorAll('.feature-row');
+                    featureRows.forEach(row => {
+                        const typeSelect = row.querySelector('.feature-type');
+                        const quantityInput = row.querySelector('.feature-quantity');
+                        const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+                        
+                        if (typeSelect.value && quantityInput.value) {
+                            requestData.features.push({
+                                type: typeSelect.value,
+                                quantity: parseFloat(quantityInput.value),
+                                unit: selectedOption.getAttribute('data-unit') || ''
+                            });
+                        }
+                    });
+                    
+                    // Call API
+                    const response = await fetch(ENDPOINTS.calculateRcn, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Failed to calculate RCN');
+                    }
+                    
+                    // Process response
+                    const result = await response.json();
+                    displayResults(result);
+                } catch (error) {
+                    console.error('Error calculating RCN:', error);
+                    alert(`Error: ${error.message}`);
+                }
+            });
             
-            // Scroll to form
-            document.getElementById('rcnForm').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // On page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSampleBuildings();
+            // Display results
+            function displayResults(result) {
+                // Format currency
+                const formatCurrency = value => `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                
+                // Format percentage
+                const formatPercent = value => `${(value * 100).toFixed(1)}%`;
+                
+                // Display main results
+                document.getElementById('rcn-value').textContent = formatCurrency(result.rcn_value);
+                document.getElementById('base-cost').textContent = formatCurrency(result.base_cost_per_sqft);
+                document.getElementById('total-base-cost').textContent = formatCurrency(result.total_base_cost);
+                document.getElementById('quality-cost').textContent = formatCurrency(result.quality_adjusted_cost);
+                document.getElementById('region-cost').textContent = formatCurrency(result.region_adjusted_cost);
+                document.getElementById('effective-age-result').textContent = `${result.effective_age} years`;
+                document.getElementById('age-depreciation').textContent = formatPercent(result.age_depreciation);
+                document.getElementById('condition-depreciation').textContent = formatPercent(result.condition_depreciation);
+                document.getElementById('calculation-date').textContent = result.calculation_date;
+                
+                // Display confidence level
+                const confidenceElement = document.getElementById('confidence-level');
+                confidenceElement.textContent = result.confidence_level;
+                confidenceElement.className = `confidence ${result.confidence_level.toLowerCase()}`;
+                
+                // Display feature costs
+                const featureCostsContainer = document.getElementById('feature-costs-container');
+                const featureCostsTable = document.getElementById('feature-costs').querySelector('tbody');
+                featureCostsTable.innerHTML = '';
+                
+                if (Object.keys(result.feature_costs).length > 0) {
+                    featureCostsContainer.style.display = 'block';
+                    
+                    for (const [feature, cost] of Object.entries(result.feature_costs)) {
+                        const row = document.createElement('tr');
+                        
+                        // Feature name
+                        const featureCell = document.createElement('td');
+                        const featureInfo = availableFeatures.find(f => f.type === feature) || { name: feature };
+                        featureCell.textContent = featureInfo.name;
+                        row.appendChild(featureCell);
+                        
+                        // Feature cost
+                        const costCell = document.createElement('td');
+                        costCell.textContent = formatCurrency(cost);
+                        row.appendChild(costCell);
+                        
+                        featureCostsTable.appendChild(row);
+                    }
+                } else {
+                    featureCostsContainer.style.display = 'none';
+                }
+                
+                // Display notes
+                const notesContainer = document.getElementById('notes');
+                notesContainer.innerHTML = '<h3>Notes</h3>';
+                
+                const notesList = document.createElement('ul');
+                result.notes.forEach(note => {
+                    const noteItem = document.createElement('li');
+                    noteItem.textContent = note;
+                    notesList.appendChild(noteItem);
+                });
+                
+                notesContainer.appendChild(notesList);
+                
+                // Show results card
+                resultsCard.style.display = 'block';
+                
+                // Scroll to results
+                resultsCard.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     </script>
 </body>

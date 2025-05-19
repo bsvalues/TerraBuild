@@ -1,45 +1,69 @@
 @echo off
 echo ===================================================================
-echo TerraFusionBuild RCN Valuation Engine - Dependencies Installation
+echo TerraFusionBuild RCN Valuation Engine - Dependency Installation
 echo ===================================================================
 echo.
 
 REM Check if Python is installed
 python --version >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo Python is not installed or not in PATH. Please install Python 3.8 or higher.
-    echo You can download Python from https://www.python.org/downloads/
-    echo.
-    echo After installing Python, please run this script again.
+    echo Error: Python is not installed or not in the PATH.
+    echo Please install Python 3.8 or higher from https://www.python.org/downloads/
+    echo Make sure to check "Add Python to PATH" during installation.
     pause
     exit /b 1
 )
 
-echo Checking Python version...
-for /f "tokens=2" %%I in ('python --version 2^>^&1') do set PYTHON_VERSION=%%I
-echo Found Python %PYTHON_VERSION%
+REM Display Python version
+python --version
+echo.
 
-REM Create and activate virtual environment
-echo Creating Python virtual environment...
-if not exist venv (
-    python -m venv venv
+REM Check if virtualenv is installed
+python -m pip show virtualenv >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo Installing virtualenv...
+    python -m pip install virtualenv
     if %ERRORLEVEL% NEQ 0 (
-        echo Failed to create virtual environment. Please check your Python installation.
+        echo Failed to install virtualenv. Please check your internet connection.
         pause
         exit /b 1
     )
 )
 
-echo Activating virtual environment...
+REM Create virtual environment if it doesn't exist
+if not exist venv (
+    echo Creating Python virtual environment...
+    python -m venv venv
+    if %ERRORLEVEL% NEQ 0 (
+        echo Failed to create virtual environment.
+        pause
+        exit /b 1
+    )
+) else (
+    echo Virtual environment already exists.
+)
+
+REM Activate virtual environment
+echo Activating Python virtual environment...
 call venv\Scripts\activate.bat
 
-echo Installing required packages...
-pip install --upgrade pip
-pip install fastapi uvicorn pydantic
+REM Upgrade pip
+echo Upgrading pip...
+python -m pip install --upgrade pip
+
+REM Install required packages
+echo Installing required Python packages...
+python -m pip install fastapi uvicorn numpy pandas pydantic
+
+REM Create logs directory if it doesn't exist
+if not exist logs mkdir logs
 
 echo.
-echo Dependencies installed successfully!
+echo ===================================================================
+echo Installation complete!
+echo ===================================================================
 echo.
-echo To run the RCN Valuation Engine, use the start_rcn.bat script.
+echo All dependencies have been successfully installed.
+echo You can now run the RCN Valuation Engine using start_rcn.bat
 echo.
 pause
