@@ -1,8 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
-// Import directly as the router is in JavaScript format
-const apiRouter = require('./routes/index.js');
+// Use dynamic import for JavaScript router to avoid ESM compatibility issues
+// We'll mount this router later after it's loaded
 import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initMCP } from "./mcp";
@@ -91,7 +91,27 @@ app.use((req, res, next) => {
   
   // Register API routes first, so they take precedence over Vite
   app.use('/api', routes);
-  app.use('/api', apiRouter);
+  
+  // Directly create route handlers for the JavaScript routes
+  // Property Import routes
+  app.use('/api/property-import', (req, res, next) => {
+    import('./routes/property-import.js').then(module => {
+      module.default(req, res, next);
+    }).catch(err => {
+      console.error("Error loading property import routes:", err);
+      next(err);
+    });
+  });
+  
+  // Data Quality routes
+  app.use('/api/data-quality', (req, res, next) => {
+    import('./routes/data-quality.js').then(module => {
+      module.default(req, res, next);
+    }).catch(err => {
+      console.error("Error loading data quality routes:", err);
+      next(err);
+    });
+  });
   
   // importantly only setup vite in development after
   // setting up all the API routes so the catch-all route

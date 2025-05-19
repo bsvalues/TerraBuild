@@ -162,4 +162,17 @@ const propertyRules = [
   // Add more property validation rules as needed
 ];
 
-export default propertyRules;
+// Combined export of all property rules
+export const allPropertyRules = propertyRules;
+
+// Function to validate a property using all property rules
+export function validateProperty(property) {
+  const validator = new DataQualityValidator(propertyRules);
+  return validator.validate(property, RuleType.PROPERTY);
+}
+
+// Function to validate an improvement using property rules
+export function validateImprovement(improvement) {
+  const validator = new DataQualityValidator(propertyRules);
+  return validator.validate(improvement, RuleType.IMPROVEMENT);
+}

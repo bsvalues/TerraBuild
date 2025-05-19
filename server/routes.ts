@@ -883,8 +883,7 @@ router.use('/map', propertyMapRoutes);
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
 
-// Register property import routes
-registerPropertyImportRoutes(router, storage);
+// Property import routes are already mounted via propertyImportRouter
 
 /**
  * System Routes

@@ -6,7 +6,6 @@
  */
 
 // Rule types supported by the framework
-// Rule types supported by the framework
 const RuleType = {
   PROPERTY: 'property',
   COST_MATRIX: 'cost_matrix',
@@ -23,12 +22,6 @@ const Severity = {
   ERROR: 'error'
 };
 
-// Export the constants
-export { RuleType, Severity };
-
-/**
- * Validation context containing additional information for validation rules
- */
 // Validation context class that contains additional information for validation rules
 class ValidationContext {
   constructor(userId, batchId, recordIndex, parentRecordId) {
@@ -50,18 +43,6 @@ class ValidationContext {
   }
 }
 
-// Export ValidationContext class
-export { ValidationContext };
-
-/**
- * Create a validation rule
- * @param {string} id - Unique identifier for the rule
- * @param {string} description - Human-readable description
- * @param {string} type - Rule type from RuleType enum
- * @param {string} severity - Severity level from Severity enum
- * @param {Function} validateFn - Function that performs validation
- * @returns {Object} Rule object
- */
 /**
  * Create a validation rule
  * @param {string} id - Unique identifier for the rule
@@ -271,7 +252,7 @@ function createBatchQualityReport(records, validator, type, context) {
   };
 }
 
-// Export all necessary functions, classes and constants
+// Export all necessary functions, classes and constants in a single export statement
 export {
   ValidationContext,
   RuleType,

@@ -20,6 +20,5 @@ router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Export in both CJS and ESM formats to support both systems
-module.exports = router;
-export default router;
+// Use named export instead of default for TypeScript compatibility
+export { router };
