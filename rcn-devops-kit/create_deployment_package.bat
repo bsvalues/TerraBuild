@@ -1,106 +1,174 @@
 @echo off
-echo ===================================================================
-echo TerraFusionBuild RCN Valuation Engine - Deployment Package Creation
-echo ===================================================================
+echo ====================================================
+echo TerraFusionBuild RCN Valuation Engine - Deployment Package Creator
+echo ====================================================
 echo.
 
-REM Set package name with timestamp
-for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
-set "YYYY=%dt:~0,4%"
-set "MM=%dt:~4,2%"
-set "DD=%dt:~6,2%"
-set "HH=%dt:~8,2%"
-set "Min=%dt:~10,2%"
-set "Sec=%dt:~12,2%"
+set VERSION=1.0.0
+set PKG_NAME=TerraFusionBuild_RCN_ValuationEngine_v%VERSION%
 
-set "TIMESTAMP=%YYYY%%MM%%DD%_%HH%%Min%%Sec%"
-set "PACKAGE_NAME=TerraFusionBuild_RCN_Package_%TIMESTAMP%.zip"
+REM Check if 7-Zip is installed
+set ZIP_PATH=
+for %%X in (7z.exe) do (set ZIP_PATH=%%~$PATH:X)
+if not defined ZIP_PATH (
+    echo 7-Zip not found. Checking Program Files...
+    if exist "%ProgramFiles%\7-Zip\7z.exe" (
+        set "ZIP_PATH=%ProgramFiles%\7-Zip\7z.exe"
+    ) else if exist "%ProgramFiles(x86)%\7-Zip\7z.exe" (
+        set "ZIP_PATH=%ProgramFiles(x86)%\7-Zip\7z.exe"
+    ) else (
+        echo 7-Zip not found. Please install 7-Zip from https://www.7-zip.org/
+        echo.
+        echo Alternatively, you can manually create a ZIP file containing:
+        echo - All files in the rcn-devops-kit directory
+        echo.
+        pause
+        exit /b 1
+    )
+)
 
-REM Check for 7-Zip or PowerShell
-where 7z >nul 2>&1
-set HAS_7ZIP=%ERRORLEVEL%
+REM Check if the executable has been built
+if not exist dist\RcnValuationEngine.exe (
+    echo Standalone executable not found.
+    echo Running build_exe.bat to create it...
+    call build_exe.bat
+    if not exist dist\RcnValuationEngine.exe (
+        echo Failed to build executable.
+        echo.
+        pause
+        exit /b 1
+    )
+)
 
-REM Create temporary directory
-set "TEMP_DIR=temp_package"
-if exist %TEMP_DIR% rmdir /s /q %TEMP_DIR%
-mkdir %TEMP_DIR%
-
-echo Preparing package files...
-
-REM Copy main files
-copy install_deps.bat %TEMP_DIR%\
-copy start_rcn.bat %TEMP_DIR%\
-copy rcn_api_stub.py %TEMP_DIR%\
-copy README.md %TEMP_DIR%\
-
-REM Create directories
-mkdir %TEMP_DIR%\sample_data
-mkdir %TEMP_DIR%\html_ui
-mkdir %TEMP_DIR%\windows_service
-mkdir %TEMP_DIR%\logs
-
-REM Copy HTML UI files
-copy html_ui\index.html %TEMP_DIR%\html_ui\
-
-REM Copy Windows service scripts
-copy windows_service\install_service.bat %TEMP_DIR%\windows_service\
-copy windows_service\uninstall_service.bat %TEMP_DIR%\windows_service\
-
-REM Create sample data files (if they don't exist yet)
-call start_rcn.bat /nostart
-
-REM Copy sample data files (if they exist)
-if exist sample_data\cost_profiles.json copy sample_data\cost_profiles.json %TEMP_DIR%\sample_data\
-if exist sample_data\depreciation_tables.json copy sample_data\depreciation_tables.json %TEMP_DIR%\sample_data\
-if exist sample_data\example_building_inputs.json copy sample_data\example_building_inputs.json %TEMP_DIR%\sample_data\
-
-REM Create a placeholder file for logs directory
-echo # Log files will be stored here > %TEMP_DIR%\logs\README.txt
-
-REM Create an info.txt file with build info
-echo TerraFusionBuild RCN Valuation Engine Package > %TEMP_DIR%\info.txt
-echo Created: %YYYY%-%MM%-%DD% %HH%:%Min%:%Sec% >> %TEMP_DIR%\info.txt
-echo Version: 1.0.0 >> %TEMP_DIR%\info.txt
-echo. >> %TEMP_DIR%\info.txt
-echo Package Contents: >> %TEMP_DIR%\info.txt
-echo - RCN API Server >> %TEMP_DIR%\info.txt
-echo - Web UI Interface >> %TEMP_DIR%\info.txt
-echo - Sample Cost Data >> %TEMP_DIR%\info.txt
-echo - Windows Service Scripts >> %TEMP_DIR%\info.txt
-
-REM Create the zip file
+REM Create package directory
 echo Creating deployment package...
+if exist output rmdir /s /q output
+mkdir output\%PKG_NAME%
 
-if %HAS_7ZIP% EQU 0 (
-    echo Using 7-Zip for compression...
-    7z a -tzip "%PACKAGE_NAME%" "%TEMP_DIR%\*" -r
-) else (
-    echo Using PowerShell for compression...
-    powershell -command "Compress-Archive -Path '%TEMP_DIR%\*' -DestinationPath '%PACKAGE_NAME%' -Force"
-)
+REM Copy files to package directory
+echo Copying files to package directory...
+xcopy /e /i /y dist\* output\%PKG_NAME%\
+copy README.md output\%PKG_NAME%\
+copy install_deps.bat output\%PKG_NAME%\
+copy start_rcn.bat output\%PKG_NAME%\
+if not exist output\%PKG_NAME%\sample_data mkdir output\%PKG_NAME%\sample_data
+xcopy /e /i /y sample_data\* output\%PKG_NAME%\sample_data\
+if not exist output\%PKG_NAME%\html_ui mkdir output\%PKG_NAME%\html_ui
+xcopy /e /i /y html_ui\* output\%PKG_NAME%\html_ui\
 
-REM Clean up temporary directory
-rmdir /s /q %TEMP_DIR%
+REM Create installation guide
+echo Creating installation guide...
+(
+    echo ====================================================
+    echo TerraFusionBuild RCN Valuation Engine - Installation Guide
+    echo Version: %VERSION%
+    echo ====================================================
+    echo.
+    echo CONTENTS:
+    echo ---------
+    echo 1. Introduction
+    echo 2. System Requirements
+    echo 3. Installation Options
+    echo 4. Using the RCN Valuation Engine
+    echo 5. Customizing Cost Profiles and Depreciation Tables
+    echo 6. Troubleshooting
+    echo.
+    echo.
+    echo 1. INTRODUCTION
+    echo ---------------
+    echo The TerraFusionBuild RCN Valuation Engine is a powerful tool for calculating
+    echo Replacement Cost New ^(RCN^) values for buildings. It uses industry-standard
+    echo valuation methods and can be customized with your county's specific cost
+    echo data and depreciation tables.
+    echo.
+    echo.
+    echo 2. SYSTEM REQUIREMENTS
+    echo ----------------------
+    echo - Windows 10 or newer
+    echo - 100 MB of free disk space
+    echo - Administrator privileges ^(for service installation^)
+    echo.
+    echo.
+    echo 3. INSTALLATION OPTIONS
+    echo -----------------------
+    echo Option A: Python Installation ^(recommended for development/customization^)
+    echo --------------------------------------------------------------------
+    echo 1. Ensure Python 3.8 or newer is installed
+    echo 2. Run install_deps.bat as Administrator
+    echo 3. Run start_rcn.bat to start the API server
+    echo 4. Open http://localhost:5000/documentation in your web browser
+    echo.
+    echo Option B: Standalone Executable ^(no Python required^)
+    echo ------------------------------------------------
+    echo 1. Run start_engine.bat
+    echo 2. The API server will start and open documentation in your browser
+    echo.
+    echo Option C: Windows Service Installation ^(for permanent deployment^)
+    echo ------------------------------------------------------------
+    echo 1. Run windows_service\install_service.bat as Administrator
+    echo 2. The service will start automatically when the system boots
+    echo 3. Open http://localhost:5000/documentation in your web browser
+    echo.
+    echo.
+    echo 4. USING THE RCN VALUATION ENGINE
+    echo --------------------------------
+    echo After starting the engine:
+    echo.
+    echo 1. Access the HTML interface by opening html_ui\index.html in a web browser
+    echo 2. Use the example buildings to test the system
+    echo 3. Enter your own building data to calculate RCN values
+    echo 4. View API documentation at http://localhost:5000/documentation
+    echo.
+    echo.
+    echo 5. CUSTOMIZING COST PROFILES AND DEPRECIATION TABLES
+    echo ---------------------------------------------------
+    echo To customize the engine with your county's specific cost data:
+    echo.
+    echo 1. Edit sample_data\cost_profiles.json to update base rates and region adjustments
+    echo 2. Edit sample_data\depreciation_tables.json to update depreciation schedules
+    echo 3. Edit sample_data\example_building_inputs.json to add your own example buildings
+    echo 4. Restart the engine to apply changes
+    echo.
+    echo See sample_data\README.md for detailed information on customization options.
+    echo.
+    echo.
+    echo 6. TROUBLESHOOTING
+    echo -----------------
+    echo Common issues:
+    echo.
+    echo - If the API server fails to start, check logs\*.log for error messages
+    echo - If running as a service, check logs\service_*.log for error messages
+    echo - Port 5000 must be available for the API server to start
+    echo - Ensure you have necessary permissions to read/write files in the installation directory
+    echo.
+    echo For additional support, contact TerraFusionBuild support at support@terrafusionbuild.com
+    echo.
+) > output\%PKG_NAME%\INSTALLATION_GUIDE.txt
 
-if exist "%PACKAGE_NAME%" (
-    echo.
-    echo ===================================================================
-    echo Package created successfully!
-    echo ===================================================================
-    echo.
-    echo Package name: %PACKAGE_NAME%
-    echo.
-    echo The deployment package contains everything needed to install and run
-    echo the TerraFusionBuild RCN Valuation Engine.
-    echo.
-) else (
-    echo.
-    echo ===================================================================
-    echo Package creation failed!
-    echo ===================================================================
-    echo.
-    echo Please check the error messages above.
-    echo.
-)
+REM Create ZIP file
+echo Creating ZIP archive...
+cd output
+"%ZIP_PATH%" a -tzip "%PKG_NAME%.zip" "%PKG_NAME%"
+cd ..
+
+REM Clean up
+echo Cleaning up...
+rmdir /s /q output\%PKG_NAME%
+
+echo.
+echo ====================================================
+echo Deployment package created successfully!
+echo.
+echo Package file: output\%PKG_NAME%.zip
+echo.
+echo This package contains everything needed to deploy the RCN Valuation Engine:
+echo - Standalone executable
+echo - Python installation scripts
+echo - Windows service scripts
+echo - Sample data files
+echo - HTML user interface
+echo - Documentation
+echo ====================================================
+echo.
 
 pause

@@ -2,154 +2,105 @@
 
 ## Overview
 
-The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine is a portable, self-contained tool for calculating building replacement costs. It provides accurate valuation capabilities for county assessors, real estate professionals, and insurance adjusters.
+The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine is a comprehensive solution for calculating building replacement costs using industry-standard valuation methodologies. This tool helps county assessors, property appraisers, and valuation specialists quickly and accurately determine replacement costs for various building types.
 
-This DevOps Kit makes it easy to deploy, configure, and manage the RCN Valuation Engine in various environments.
+This DevOps kit provides a complete package for deployment, configuration, and usage of the RCN calculation engine in Windows environments, with options for both portable deployment (via USB) and enterprise IT deployment (via Group Policy or SCCM).
 
 ## Features
 
-- **Advanced Valuation Calculations**: Calculate replacement costs based on building type, construction method, quality, and regional factors
-- **Multiple Deployment Options**: Run as a web service, Windows service, or standalone executable
-- **Interactive Web Interface**: User-friendly interface for performing calculations
-- **Comprehensive REST API**: Programmatic access for integration with existing systems
-- **Sample Cost Data**: Pre-loaded cost profiles and depreciation tables
-- **Customizable Cost Factors**: Ability to modify cost profiles and regional multipliers
+- **Comprehensive Building Type Support**: Calculate RCNs for residential, commercial, industrial, and agricultural buildings
+- **Detailed Cost Breakdowns**: View itemized cost components including structure, basement, garage, and features
+- **Multiple Deployment Options**: Run as a standalone application, as a Windows service, or from Python source
+- **Customizable Cost Data**: Easily modify cost profiles and depreciation tables to match local market conditions
+- **User-Friendly Web Interface**: Intuitive dashboard for entering building data and viewing results
+- **Example Buildings**: Pre-configured examples demonstrating various building types and features
+- **API Documentation**: Comprehensive API reference for integration with other systems
+- **Windows Service Support**: Install as a system service for automated startup and background operation
 
 ## System Requirements
 
-- **Operating System**: Windows 10 or newer / Windows Server 2016+
-- **Memory**: 4GB RAM minimum (8GB recommended)
-- **Disk Space**: 500MB of free disk space
-- **Runtime**: Python 3.8 or newer (installed automatically)
-- **Network**: Internet connection for initial setup only
+- Windows 10 or newer
+- 100 MB free disk space
+- Administrator privileges (for service installation)
+- For Python deployment:
+  - Python 3.8 or newer
+  - pip package manager
 
-## Quick Start
+## Quick Start Guide
 
-1. **Download**: Download and extract the TerraFusionBuild RCN Valuation Engine package
-2. **Install Dependencies**: Run `install_deps.bat` to set up the Python environment and dependencies
-3. **Start the Server**: Run `start_rcn.bat` to start the RCN calculation engine
-4. **Access the Interface**: Open a web browser and navigate to http://localhost:8000
+### Option 1: Run from Python Source
 
-## Installation Options
+1. Run `install_deps.bat` as Administrator to install required dependencies
+2. Run `start_rcn.bat` to start the RCN Valuation Engine
+3. Open a web browser to http://localhost:5000/documentation or open `html_ui/index.html`
 
-### Standard Installation
+### Option 2: Run Standalone Executable
 
-1. Extract the package to any location on your computer
-2. Double-click `install_deps.bat` to install required dependencies
-3. Double-click `start_rcn.bat` to start the RCN calculation engine
-4. Open http://localhost:8000 in your web browser
+1. Run `build_exe.bat` to create the standalone executable
+2. In the `dist` directory, run `start_engine.bat`
+3. The application will automatically open in your web browser
 
-### Windows Service Installation
+### Option 3: Install as Windows Service
 
-To run the RCN Valuation Engine as a Windows service:
+1. Run `windows_service/install_service.bat` as Administrator
+2. The service will start automatically and run in the background
+3. Open a web browser to http://localhost:5000/documentation or open `html_ui/index.html`
 
-1. Complete the standard installation steps above
-2. Run the server manually at least once to create sample data files
-3. Open an Administrator command prompt
-4. Navigate to the installation directory
-5. Run `cd windows_service` and then `install_service.bat`
-6. The service will be installed and set to start automatically on system boot
-7. Access the interface at http://localhost:8000
+## Customizing Cost Data
 
-To uninstall the service:
-1. Open an Administrator command prompt
-2. Navigate to the installation directory, then to the windows_service folder
-3. Run `uninstall_service.bat`
+The engine uses three primary data files that can be customized for your local requirements:
 
-### Standalone Executable
+1. **cost_profiles.json** - Contains base rates, construction types, quality classes, and region adjustments
+2. **depreciation_tables.json** - Contains age-based and condition-based depreciation factors
+3. **example_building_inputs.json** - Contains example buildings for testing
 
-To create a standalone executable package:
+See the `sample_data/README.md` file for detailed information on customizing these files.
 
-1. Complete the standard installation steps above
-2. Run `build_exe.bat` to create a standalone executable version
-3. The executable will be created in the `dist` folder
-4. The executable package can be distributed to systems without Python installed
+## API Endpoints
+
+The RCN Valuation Engine provides the following API endpoints:
+
+- `GET /health` - Health check endpoint
+- `GET /info` - API information
+- `POST /calculate` - Calculate RCN for a building
+- `GET /examples` - List available example buildings
+- `GET /examples/{example_id}` - Get a specific example building
+- `POST /examples/{example_id}/calculate` - Calculate RCN for an example building
+- `GET /building-types` - Get available building types
+- `GET /regions` - Get available regions
+- `GET /quality-classes` - Get available quality classes
+- `GET /documentation` - Get API documentation
 
 ## Package Contents
 
-- `install_deps.bat` - Installs required Python and dependencies
-- `start_rcn.bat` - Starts the RCN Valuation Engine server
-- `build_exe.bat` - Creates a standalone executable package
-- `create_deployment_package.bat` - Creates a distributable deployment package
-- `rcn_api_stub.py` - Main RCN calculation engine
-- `windows_service/` - Scripts for Windows service installation
-- `sample_data/` - Sample cost profiles and depreciation tables
-- `html_ui/` - Web interface for the RCN Valuation Engine
-- `logs/` - Log files directory
+- `rcn_api_stub.py` - The main API implementation
+- `sample_data/` - Directory containing cost profiles, depreciation tables, and example buildings
+- `html_ui/` - Directory containing the web-based user interface
+- `windows_service/` - Scripts for installing and uninstalling Windows service
+- `*.bat` files - Deployment and management scripts
 
-## API Documentation
+## Deployment Scripts
 
-The RCN Valuation Engine provides a comprehensive REST API for programmatic access:
+- `install_deps.bat` - Installs required Python dependencies
+- `start_rcn.bat` - Starts the RCN Valuation Engine
+- `build_exe.bat` - Builds a standalone executable
+- `create_deployment_package.bat` - Creates a complete deployment package
+- `windows_service/install_service.bat` - Installs the engine as a Windows service
+- `windows_service/uninstall_service.bat` - Uninstalls the Windows service
 
-- Access the interactive API documentation at http://localhost:8000/docs
+## Development
 
-### Example API Call
+For developers looking to modify or extend the RCN Valuation Engine:
 
-```
-POST /api/calculate-rcn
-Content-Type: application/json
-
-{
-  "building_type": "residential",
-  "building_subtype": "single_family",
-  "construction_type": "frame",
-  "quality_class": "standard",
-  "region": "midwest",
-  "year_built": 2010,
-  "condition": "good",
-  "square_footage": 2000,
-  "features": [
-    {"type": "garage", "quantity": 400}
-  ]
-}
-```
-
-## Customization
-
-### Cost Profiles
-
-Cost profiles are stored in JSON format at `sample_data/cost_profiles.json`. This file can be modified to:
-
-- Add/modify building types and subtypes
-- Adjust base rates for different building categories
-- Customize regional cost multipliers
-- Add new construction types or quality classes
-
-### Depreciation Tables
-
-Depreciation tables are stored in JSON format at `sample_data/depreciation_tables.json`. This file can be modified to:
-
-- Adjust age-based depreciation factors
-- Customize condition-based depreciation values
-- Add specialized depreciation schedules
-
-## Troubleshooting
-
-### Common Issues
-
-- **Server won't start**: Ensure Python is properly installed and the virtual environment is created
-- **Can't access the web interface**: Check that the server is running and no firewall is blocking port 8000
-- **Windows service fails to start**: Check the Windows Event Viewer for specific error messages
-- **Calculation errors**: Verify the cost profiles and depreciation tables are properly formatted
-
-### Logs
-
-Log files are stored in the `logs` directory and can be used to diagnose issues:
-
-- `rcn_api_YYYYMMDD.log` - API server logs
+1. The main implementation is in `rcn_api_stub.py`
+2. The engine is built using FastAPI for the backend
+3. The frontend UI is in `html_ui/index.html`
+4. Data files in `sample_data/` can be modified to adjust costs and depreciation factors
 
 ## Support
 
-For support, please contact:
-
-- Email: support@terrafusionbuild.com
-- Website: https://www.terrafusionbuild.com/support
+For support, contact TerraFusionBuild support at support@terrafusionbuild.com or refer to the documentation included in this package.
 
 ## License
 
-Copyright © 2025 TerraFusionBuild Corporation.
-All rights reserved.
-
-## Version History
-
-- 1.0.0 (2025-05-19) - Initial release
+© 2025 TerraFusionBuild. All rights reserved.
