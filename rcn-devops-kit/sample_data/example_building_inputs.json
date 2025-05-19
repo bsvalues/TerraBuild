@@ -1,207 +1,563 @@
 {
-  "metadata": {
-    "version": "1.0.0",
-    "description": "Sample building inputs for RCN calculation demonstration"
-  },
-  "buildings": [
+  "example_buildings": [
     {
-      "id": "RES-001",
-      "name": "Single Family Home - Standard",
-      "description": "Typical single-family home with average features",
-      "building_type": "RES",
-      "construction_type": "WF",
-      "quality_class": "C",
-      "region": "CEN",
+      "id": "RES-SFR-01",
+      "description": "Standard Single-Family Home",
+      "building_type": "residential",
+      "subtype": "single_family",
       "year_built": 2010,
-      "condition": "Good",
-      "effective_age_adjustment": 0,
-      "square_footage": 2200,
+      "total_area": 2200,
+      "construction_type": "frame",
+      "quality_class": "standard",
+      "condition": "average",
+      "region": "midwest",
+      "stories": 2,
+      "basement_area": 1100,
+      "garage_area": 440,
       "features": [
         {
-          "type": "attached_garage",
-          "quantity": 440,
-          "unit": "sqft"
+          "type": "fireplace",
+          "quantity": 1
         },
         {
-          "type": "open_porch",
-          "quantity": 120,
-          "unit": "sqft"
+          "type": "hvac",
+          "area_covered": 2200
         }
-      ]
+      ],
+      "last_renovation": null
     },
     {
-      "id": "RES-002",
-      "name": "Executive Home - Premium",
-      "description": "Luxury executive home with high-end finishes",
-      "building_type": "RES",
-      "construction_type": "MS",
-      "quality_class": "A",
-      "region": "NW",
+      "id": "RES-SFR-02",
+      "description": "Luxury Single-Family Home",
+      "building_type": "residential",
+      "subtype": "single_family",
       "year_built": 2018,
-      "condition": "Excellent",
-      "effective_age_adjustment": -3,
-      "square_footage": 3800,
+      "total_area": 3800,
+      "construction_type": "masonry",
+      "quality_class": "luxury",
+      "condition": "excellent",
+      "region": "northeast",
+      "stories": 2,
+      "basement_area": 1900,
+      "garage_area": 800,
       "features": [
         {
-          "type": "attached_garage",
-          "quantity": 800,
-          "unit": "sqft"
+          "type": "fireplace",
+          "quantity": 2
         },
         {
-          "type": "finished_basement",
-          "quantity": 1200,
-          "unit": "sqft"
+          "type": "hvac",
+          "area_covered": 3800
         },
         {
-          "type": "covered_porch",
-          "quantity": 350,
-          "unit": "sqft"
+          "type": "pool",
+          "area": 450
+        },
+        {
+          "type": "deck",
+          "area": 500
         }
-      ]
+      ],
+      "last_renovation": null
     },
     {
-      "id": "COM-001",
-      "name": "Retail Strip Center",
-      "description": "Single-story retail strip center with multiple tenant spaces",
-      "building_type": "COM",
-      "construction_type": "MS",
-      "quality_class": "C+",
-      "region": "CEN",
+      "id": "RES-SFR-03",
+      "description": "Economy Single-Family Home",
+      "building_type": "residential",
+      "subtype": "single_family",
+      "year_built": 1978,
+      "total_area": 1200,
+      "construction_type": "frame",
+      "quality_class": "economy",
+      "condition": "fair",
+      "region": "central",
+      "stories": 1,
+      "basement_area": 0,
+      "garage_area": 264,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 1200
+        }
+      ],
+      "last_renovation": {
+        "year": 2005,
+        "extent": "minor"
+      }
+    },
+    {
+      "id": "RES-MFR-01",
+      "description": "Standard Apartment Building",
+      "building_type": "residential",
+      "subtype": "multi_family",
       "year_built": 2005,
-      "condition": "Average",
-      "effective_age_adjustment": 0,
-      "square_footage": 12500,
+      "total_area": 12000,
+      "construction_type": "concrete",
+      "quality_class": "standard",
+      "condition": "good",
+      "region": "southeast",
+      "stories": 3,
+      "basement_area": 4000,
+      "garage_area": 0,
+      "units": 12,
       "features": [
         {
-          "type": "hvac_standard",
-          "quantity": 1,
-          "unit": "system"
-        },
-        {
-          "type": "sprinkler_system",
-          "quantity": 1,
-          "unit": "system"
+          "type": "hvac",
+          "area_covered": 12000
         }
-      ]
+      ],
+      "last_renovation": null
     },
     {
-      "id": "COM-002",
-      "name": "Office Building - Class A",
-      "description": "Multi-story professional office building",
-      "building_type": "COM",
-      "construction_type": "SF",
-      "quality_class": "B+",
-      "region": "NE",
-      "year_built": 2015,
-      "condition": "Very Good",
-      "effective_age_adjustment": -5,
-      "square_footage": 45000,
+      "id": "RES-MH-01",
+      "description": "Standard Manufactured Home",
+      "building_type": "residential",
+      "subtype": "manufactured",
+      "year_built": 2012,
+      "total_area": 1440,
+      "construction_type": "frame",
+      "quality_class": "standard",
+      "condition": "good",
+      "region": "central",
+      "stories": 1,
+      "basement_area": 0,
+      "garage_area": 0,
       "features": [
         {
-          "type": "elevator",
-          "quantity": 4,
-          "unit": "floors"
-        },
-        {
-          "type": "hvac_premium",
-          "quantity": 1,
-          "unit": "system"
-        },
-        {
-          "type": "sprinkler_system",
-          "quantity": 1,
-          "unit": "system"
+          "type": "hvac",
+          "area_covered": 1440
         }
-      ]
+      ],
+      "last_renovation": null
     },
     {
-      "id": "IND-001",
-      "name": "Warehouse Facility",
-      "description": "Standard warehouse with shipping/receiving areas",
-      "building_type": "IND",
-      "construction_type": "SF",
-      "quality_class": "C",
-      "region": "SW",
-      "year_built": 2008,
-      "condition": "Average",
-      "effective_age_adjustment": 5,
-      "square_footage": 35000,
-      "features": [
-        {
-          "type": "dock_door",
-          "quantity": 8,
-          "unit": "doors"
-        }
-      ]
-    },
-    {
-      "id": "IND-002",
-      "name": "Manufacturing Plant",
-      "description": "Heavy manufacturing facility with specialized equipment",
-      "building_type": "IND",
-      "construction_type": "CC",
-      "quality_class": "B",
-      "region": "CEN",
+      "id": "RES-DPX-01",
+      "description": "Standard Duplex",
+      "building_type": "residential",
+      "subtype": "duplex",
       "year_built": 2000,
-      "condition": "Good",
-      "effective_age_adjustment": -10,
-      "square_footage": 85000,
+      "total_area": 2800,
+      "construction_type": "frame",
+      "quality_class": "standard",
+      "condition": "average",
+      "region": "midwest",
+      "stories": 2,
+      "basement_area": 1400,
+      "garage_area": 440,
+      "units": 2,
       "features": [
         {
-          "type": "crane_system",
-          "quantity": 1,
-          "unit": "system"
-        },
-        {
-          "type": "dock_door",
-          "quantity": 12,
-          "unit": "doors"
-        },
-        {
-          "type": "reinforced_floor",
-          "quantity": 65000,
-          "unit": "sqft"
+          "type": "hvac",
+          "area_covered": 2800
         }
-      ]
+      ],
+      "last_renovation": null
     },
     {
-      "id": "AGR-001",
-      "name": "Storage Barn",
-      "description": "Basic agricultural storage barn",
-      "building_type": "AGR",
-      "construction_type": "WF",
-      "quality_class": "D",
-      "region": "SE",
-      "year_built": 1995,
-      "condition": "Fair",
-      "effective_age_adjustment": 10,
-      "square_footage": 4800,
-      "features": []
-    },
-    {
-      "id": "AGR-002",
-      "name": "Modern Farm Complex",
-      "description": "Contemporary agricultural facility with climate control",
-      "building_type": "AGR",
-      "construction_type": "SF",
-      "quality_class": "C+",
-      "region": "NW",
-      "year_built": 2017,
-      "condition": "Very Good",
-      "effective_age_adjustment": 0,
-      "square_footage": 28000,
+      "id": "COM-RET-01",
+      "description": "Standard Retail Building",
+      "building_type": "commercial",
+      "subtype": "retail",
+      "year_built": 2008,
+      "total_area": 4500,
+      "construction_type": "masonry",
+      "quality_class": "standard",
+      "condition": "good",
+      "region": "midwest",
+      "stories": 1,
+      "basement_area": 0,
       "features": [
         {
-          "type": "climate_control",
-          "quantity": 1,
-          "unit": "system"
+          "type": "hvac",
+          "area_covered": 4500
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "COM-OFF-01",
+      "description": "High-Quality Office Building",
+      "building_type": "commercial",
+      "subtype": "office",
+      "year_built": 2015,
+      "total_area": 25000,
+      "construction_type": "steel",
+      "quality_class": "excellent",
+      "condition": "excellent",
+      "region": "northeast",
+      "stories": 4,
+      "basement_area": 6000,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 25000
+        }
+      ],
+      "last_renovation": null,
+      "special_considerations": {
+        "energy_efficient": true
+      }
+    },
+    {
+      "id": "COM-RST-01",
+      "description": "Standard Restaurant",
+      "building_type": "commercial",
+      "subtype": "restaurant",
+      "year_built": 2010,
+      "total_area": 3200,
+      "construction_type": "frame",
+      "quality_class": "good",
+      "condition": "good",
+      "region": "southwest",
+      "stories": 1,
+      "basement_area": 0,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 3200
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "COM-HTL-01",
+      "description": "Mid-Range Hotel",
+      "building_type": "commercial",
+      "subtype": "hotel",
+      "year_built": 2005,
+      "total_area": 45000,
+      "construction_type": "concrete",
+      "quality_class": "good",
+      "condition": "average",
+      "region": "southwest",
+      "stories": 5,
+      "basement_area": 9000,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 45000
         },
         {
-          "type": "grain_storage",
-          "quantity": 1,
-          "unit": "system"
+          "type": "pool",
+          "area": 800
         }
-      ]
+      ],
+      "last_renovation": {
+        "year": 2018,
+        "extent": "moderate"
+      }
+    },
+    {
+      "id": "IND-LM-01",
+      "description": "Standard Light Manufacturing Facility",
+      "building_type": "industrial",
+      "subtype": "light_manufacturing",
+      "year_built": 2012,
+      "total_area": 15000,
+      "construction_type": "steel",
+      "quality_class": "standard",
+      "condition": "good",
+      "region": "midwest",
+      "stories": 1,
+      "basement_area": 0,
+      "office_area": 1500,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 15000
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "IND-HM-01",
+      "description": "Heavy Manufacturing Facility",
+      "building_type": "industrial",
+      "subtype": "heavy_manufacturing",
+      "year_built": 2000,
+      "total_area": 40000,
+      "construction_type": "concrete",
+      "quality_class": "good",
+      "condition": "average",
+      "region": "midwest",
+      "stories": 1,
+      "basement_area": 0,
+      "office_area": 3000,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 40000
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "IND-WH-01",
+      "description": "Standard Warehouse",
+      "building_type": "industrial",
+      "subtype": "warehouse",
+      "year_built": 2015,
+      "total_area": 30000,
+      "construction_type": "steel",
+      "quality_class": "standard",
+      "condition": "excellent",
+      "region": "central",
+      "stories": 1,
+      "basement_area": 0,
+      "office_area": 1200,
+      "loading_docks": 4,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 1200
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "IND-FLX-01",
+      "description": "Standard Flex Space",
+      "building_type": "industrial",
+      "subtype": "flex",
+      "year_built": 2018,
+      "total_area": 12000,
+      "construction_type": "steel",
+      "quality_class": "standard",
+      "condition": "excellent",
+      "region": "northwest",
+      "stories": 1,
+      "basement_area": 0,
+      "office_area": 3600,
+      "warehouse_area": 8400,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 12000
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "AG-BRN-01",
+      "description": "Standard Barn",
+      "building_type": "agricultural",
+      "subtype": "barn",
+      "year_built": 2010,
+      "total_area": 4800,
+      "construction_type": "frame",
+      "quality_class": "standard",
+      "condition": "good",
+      "region": "midwest",
+      "stories": 1.5,
+      "basement_area": 0,
+      "features": [],
+      "last_renovation": null
+    },
+    {
+      "id": "AG-STO-01",
+      "description": "Agricultural Storage Building",
+      "building_type": "agricultural",
+      "subtype": "storage",
+      "year_built": 2015,
+      "total_area": 3600,
+      "construction_type": "steel",
+      "quality_class": "standard",
+      "condition": "excellent",
+      "region": "central",
+      "stories": 1,
+      "basement_area": 0,
+      "features": [],
+      "last_renovation": null
+    },
+    {
+      "id": "AG-PRC-01",
+      "description": "Agricultural Processing Facility",
+      "building_type": "agricultural",
+      "subtype": "processing",
+      "year_built": 2012,
+      "total_area": 8000,
+      "construction_type": "concrete",
+      "quality_class": "good",
+      "condition": "good",
+      "region": "midwest",
+      "stories": 1,
+      "basement_area": 0,
+      "office_area": 800,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 8000
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "AG-FR-01",
+      "description": "Farm Residence",
+      "building_type": "agricultural",
+      "subtype": "farm_residence",
+      "year_built": 2005,
+      "total_area": 2400,
+      "construction_type": "frame",
+      "quality_class": "standard",
+      "condition": "average",
+      "region": "midwest",
+      "stories": 2,
+      "basement_area": 1200,
+      "garage_area": 528,
+      "features": [
+        {
+          "type": "fireplace",
+          "quantity": 1
+        },
+        {
+          "type": "hvac",
+          "area_covered": 2400
+        }
+      ],
+      "last_renovation": null
+    },
+    {
+      "id": "RES-SFR-04",
+      "description": "Historical Single-Family Home",
+      "building_type": "residential",
+      "subtype": "single_family",
+      "year_built": 1910,
+      "total_area": 2800,
+      "construction_type": "masonry",
+      "quality_class": "good",
+      "condition": "good",
+      "region": "northeast",
+      "stories": 2,
+      "basement_area": 1400,
+      "garage_area": 0,
+      "features": [
+        {
+          "type": "fireplace",
+          "quantity": 2
+        },
+        {
+          "type": "hvac",
+          "area_covered": 2800
+        }
+      ],
+      "last_renovation": {
+        "year": 2015,
+        "extent": "major"
+      },
+      "special_considerations": {
+        "historical": true
+      }
+    },
+    {
+      "id": "COM-RET-02",
+      "description": "Historic Retail Building",
+      "building_type": "commercial",
+      "subtype": "retail",
+      "year_built": 1935,
+      "total_area": 3600,
+      "construction_type": "masonry",
+      "quality_class": "good",
+      "condition": "good",
+      "region": "northeast",
+      "stories": 2,
+      "basement_area": 1800,
+      "features": [
+        {
+          "type": "hvac",
+          "area_covered": 3600
+        }
+      ],
+      "last_renovation": {
+        "year": 2010,
+        "extent": "major"
+      },
+      "special_considerations": {
+        "historical": true,
+        "ada_compliant": true
+      }
+    }
+  ],
+  "calculation_examples": [
+    {
+      "example_id": "RES-SFR-01",
+      "calculation_steps": [
+        {
+          "step": 1,
+          "description": "Determine base rate",
+          "details": "Single-family residential base rate = $125.00/sq ft"
+        },
+        {
+          "step": 2,
+          "description": "Apply construction type multiplier",
+          "details": "Frame construction multiplier = 1.0 (no adjustment)"
+        },
+        {
+          "step": 3,
+          "description": "Apply quality class multiplier",
+          "details": "Standard quality multiplier = 1.0 (no adjustment)"
+        },
+        {
+          "step": 4,
+          "description": "Apply regional cost multiplier",
+          "details": "Midwest region multiplier = 1.0 (no adjustment)"
+        },
+        {
+          "step": 5,
+          "description": "Calculate adjusted base rate",
+          "details": "$125.00 × 1.0 × 1.0 × 1.0 = $125.00/sq ft"
+        },
+        {
+          "step": 6,
+          "description": "Calculate base building cost",
+          "details": "$125.00 × 2,200 sq ft = $275,000"
+        },
+        {
+          "step": 7,
+          "description": "Calculate basement cost",
+          "details": "$125.00 × 0.4 × 1,100 sq ft = $55,000"
+        },
+        {
+          "step": 8,
+          "description": "Calculate garage cost",
+          "details": "$45.00 × 440 sq ft = $19,800"
+        },
+        {
+          "step": 9,
+          "description": "Calculate feature costs",
+          "details": "Fireplace: $7,500 × 1 = $7,500\nHVAC: $10.00 × 2,200 sq ft = $22,000"
+        },
+        {
+          "step": 10,
+          "description": "Calculate total replacement cost new",
+          "details": "$275,000 + $55,000 + $19,800 + $7,500 + $22,000 = $379,300"
+        },
+        {
+          "step": 11,
+          "description": "Calculate age-based depreciation",
+          "details": "15 years old, residential depreciation rate = 0.15 (15%)"
+        },
+        {
+          "step": 12,
+          "description": "Calculate condition-based adjustment",
+          "details": "Average condition, adjustment = 0.25 (25%)"
+        },
+        {
+          "step": 13,
+          "description": "Calculate total depreciation",
+          "details": "Max of 0.15 and 0.25 = 0.25 (25%)"
+        },
+        {
+          "step": 14,
+          "description": "Calculate depreciated cost",
+          "details": "$379,300 × (1 - 0.25) = $284,475"
+        }
+      ],
+      "result": {
+        "replacement_cost_new": 379300,
+        "depreciation_percentage": 25,
+        "depreciated_value": 284475
+      }
     }
   ]
 }

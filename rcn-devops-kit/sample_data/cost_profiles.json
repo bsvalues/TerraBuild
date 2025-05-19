@@ -1,261 +1,518 @@
 {
-  "metadata": {
-    "version": "1.0.0",
-    "year": 2025,
-    "county": "Sample",
-    "description": "Sample cost profiles for RCN calculation demonstration"
-  },
-  "building_types": [
-    {
+  "building_types": {
+    "residential": {
       "code": "RES",
       "name": "Residential",
-      "description": "Single-family and multi-family residential buildings"
+      "description": "Single-family and multi-family residential buildings",
+      "subtypes": {
+        "single_family": {
+          "code": "SFR",
+          "name": "Single Family Residential",
+          "description": "Detached single-family homes",
+          "base_rate": 125.00,
+          "construction_details": {
+            "frame": "Standard wood framing, 2x4 or 2x6 walls",
+            "slab_foundation": "4-inch concrete slab",
+            "crawl_space_foundation": "Concrete or masonry perimeter with wood joist floor system",
+            "basement_foundation": "Concrete foundation walls with concrete floor"
+          }
+        },
+        "multi_family": {
+          "code": "MFR",
+          "name": "Multi-Family Residential",
+          "description": "Apartment and multi-family structures",
+          "base_rate": 115.00,
+          "construction_details": {
+            "frame": "Wood framing with enhanced fire separation",
+            "foundation": "Reinforced concrete slab or basement",
+            "common_areas": "Includes shared entryways, corridors, and stairwells"
+          }
+        },
+        "manufactured": {
+          "code": "MH",
+          "name": "Manufactured Home",
+          "description": "Factory-built housing assembled on site",
+          "base_rate": 75.00,
+          "construction_details": {
+            "frame": "Metal chassis with wood frame and light metal exterior",
+            "foundation": "Temporary or permanent foundation",
+            "utilities": "Factory-installed electrical and plumbing systems"
+          }
+        },
+        "duplex": {
+          "code": "DPX",
+          "name": "Duplex",
+          "description": "Two attached units with separate entrances",
+          "base_rate": 110.00,
+          "construction_details": {
+            "frame": "Wood frame with fire separation between units",
+            "foundation": "Shared foundation, typically concrete slab or crawl space",
+            "utilities": "Separate utilities for each unit"
+          }
+        }
+      }
     },
-    {
+    "commercial": {
       "code": "COM",
       "name": "Commercial",
-      "description": "Office, retail, and other commercial buildings"
+      "description": "Commercial and retail buildings",
+      "subtypes": {
+        "retail": {
+          "code": "RET",
+          "name": "Retail",
+          "description": "Retail stores and shopping centers",
+          "base_rate": 135.00,
+          "construction_details": {
+            "frame": "Metal or wood framing with various exterior finishes",
+            "foundation": "Reinforced concrete slab",
+            "storefront": "Glass and aluminum storefront systems",
+            "interior": "Open floor plan with adaptable partitioning"
+          }
+        },
+        "office": {
+          "code": "OFF",
+          "name": "Office",
+          "description": "Professional office buildings",
+          "base_rate": 150.00,
+          "construction_details": {
+            "frame": "Steel frame or reinforced concrete",
+            "foundation": "Reinforced concrete slab or basement",
+            "interior": "Partitioned office spaces with drop ceilings",
+            "utilities": "Enhanced electrical and data systems"
+          }
+        },
+        "restaurant": {
+          "code": "RST",
+          "name": "Restaurant",
+          "description": "Food service establishments",
+          "base_rate": 165.00,
+          "construction_details": {
+            "frame": "Various framing types with enhanced fire protection",
+            "foundation": "Reinforced concrete slab",
+            "kitchen": "Commercial kitchen with ventilation and fire suppression",
+            "utilities": "Enhanced plumbing, electrical, and ventilation systems"
+          }
+        },
+        "hotel": {
+          "code": "HTL",
+          "name": "Hotel",
+          "description": "Lodging facilities",
+          "base_rate": 175.00,
+          "construction_details": {
+            "frame": "Steel or concrete framing with enhanced fire protection",
+            "foundation": "Reinforced concrete with basement level amenities",
+            "interior": "Multiple room types with specialized common areas",
+            "utilities": "Enhanced plumbing, electrical, and fire suppression"
+          }
+        }
+      }
     },
-    {
+    "industrial": {
       "code": "IND",
       "name": "Industrial",
-      "description": "Manufacturing, warehouse, and industrial facilities"
+      "description": "Industrial, manufacturing, and warehouse buildings",
+      "subtypes": {
+        "light_manufacturing": {
+          "code": "LM",
+          "name": "Light Manufacturing",
+          "description": "Light industrial production facilities",
+          "base_rate": 115.00,
+          "construction_details": {
+            "frame": "Steel frame with metal or masonry exterior",
+            "foundation": "Reinforced concrete slab",
+            "interior": "Open floor plan with minimal office space",
+            "utilities": "Enhanced electrical systems for equipment"
+          }
+        },
+        "heavy_manufacturing": {
+          "code": "HM",
+          "name": "Heavy Manufacturing",
+          "description": "Heavy industrial production facilities",
+          "base_rate": 135.00,
+          "construction_details": {
+            "frame": "Heavy steel frame or reinforced concrete",
+            "foundation": "Heavy-duty reinforced concrete slab",
+            "features": "Equipment foundations, floor pits, and crane supports",
+            "utilities": "Industrial-grade electrical, water, and ventilation"
+          }
+        },
+        "warehouse": {
+          "code": "WH",
+          "name": "Warehouse",
+          "description": "Storage and distribution facilities",
+          "base_rate": 85.00,
+          "construction_details": {
+            "frame": "Steel frame with metal exterior",
+            "foundation": "Reinforced concrete slab",
+            "interior": "Open plan with high clearance height",
+            "features": "Loading docks and minimal office space"
+          }
+        },
+        "flex": {
+          "code": "FLX",
+          "name": "Flex Space",
+          "description": "Combined office and industrial space",
+          "base_rate": 105.00,
+          "construction_details": {
+            "frame": "Steel frame with various exterior finishes",
+            "foundation": "Reinforced concrete slab",
+            "interior": "Mixed-use space with office and warehouse areas",
+            "utilities": "Enhanced electrical and data systems in office areas"
+          }
+        }
+      }
     },
-    {
-      "code": "AGR",
+    "agricultural": {
+      "code": "AG",
       "name": "Agricultural",
-      "description": "Farm buildings, barns, and agricultural structures"
+      "description": "Agricultural and farm buildings",
+      "subtypes": {
+        "barn": {
+          "code": "BRN",
+          "name": "Barn",
+          "description": "General purpose farm building",
+          "base_rate": 65.00,
+          "construction_details": {
+            "frame": "Wood or steel frame with metal or wood exterior",
+            "foundation": "Concrete perimeter or slab",
+            "interior": "Open plan with high ceiling",
+            "features": "Large doors for equipment access"
+          }
+        },
+        "storage": {
+          "code": "STO",
+          "name": "Storage Building",
+          "description": "Agricultural storage facilities",
+          "base_rate": 55.00,
+          "construction_details": {
+            "frame": "Metal frame with metal exterior",
+            "foundation": "Concrete slab or gravel base",
+            "interior": "Open plan",
+            "features": "Basic utilities or no utilities"
+          }
+        },
+        "processing": {
+          "code": "PRC",
+          "name": "Processing Facility",
+          "description": "Agricultural product processing facilities",
+          "base_rate": 95.00,
+          "construction_details": {
+            "frame": "Steel frame with metal or masonry exterior",
+            "foundation": "Reinforced concrete slab",
+            "interior": "Specialized processing areas",
+            "utilities": "Enhanced electrical, water, and drainage systems"
+          }
+        },
+        "farm_residence": {
+          "code": "FR",
+          "name": "Farm Residence",
+          "description": "Residential building on agricultural property",
+          "base_rate": 115.00,
+          "construction_details": {
+            "frame": "Wood frame with various exterior finishes",
+            "foundation": "Concrete slab, crawl space, or basement",
+            "interior": "Standard residential layout",
+            "features": "May include farm office or utility areas"
+          }
+        }
+      }
     }
-  ],
-  "construction_types": [
-    {
-      "code": "WF",
-      "name": "Wood Frame",
-      "description": "Traditional wood frame construction"
+  },
+  "construction_types": {
+    "frame": {
+      "code": "FRM",
+      "name": "Frame",
+      "description": "Wood or light steel frame construction",
+      "multiplier": 1.0,
+      "details": {
+        "residential": "2x4 or 2x6 wood studs with plywood/OSB sheathing",
+        "commercial": "Light gauge steel framing with various sheathing",
+        "industrial": "Light steel framing with metal panels",
+        "agricultural": "Wood post and beam or light steel framing"
+      }
     },
-    {
-      "code": "MS",
+    "masonry": {
+      "code": "MSN",
       "name": "Masonry",
-      "description": "Brick, block, or stone construction"
+      "description": "Brick, block, or stone construction",
+      "multiplier": 1.15,
+      "details": {
+        "residential": "Brick or concrete block with wood floor and roof framing",
+        "commercial": "Concrete block or brick with steel floor and roof framing",
+        "industrial": "Concrete block or tilt-up concrete panels",
+        "agricultural": "Concrete block with wood or steel roof framing"
+      }
     },
-    {
-      "code": "SF",
-      "name": "Steel Frame",
-      "description": "Steel-framed construction"
-    },
-    {
-      "code": "CC",
+    "concrete": {
+      "code": "CNC",
       "name": "Concrete",
-      "description": "Reinforced concrete construction"
+      "description": "Reinforced concrete construction",
+      "multiplier": 1.25,
+      "details": {
+        "residential": "Poured concrete walls with concrete or wood framed floors",
+        "commercial": "Cast-in-place or precast concrete structural system",
+        "industrial": "Reinforced concrete columns and beams with concrete floors",
+        "agricultural": "Cast-in-place concrete walls with steel roof framing"
+      }
+    },
+    "steel": {
+      "code": "STL",
+      "name": "Steel",
+      "description": "Structural steel construction",
+      "multiplier": 1.3,
+      "details": {
+        "residential": "Structural steel frame with various exterior finishes",
+        "commercial": "Steel columns and beams with composite floors",
+        "industrial": "Heavy steel frame with metal panel or masonry exterior",
+        "agricultural": "Pre-engineered steel building system"
+      }
     }
-  ],
-  "quality_classes": [
-    {"code": "A+", "name": "Premium Plus", "multiplier": 1.45},
-    {"code": "A", "name": "Premium", "multiplier": 1.30},
-    {"code": "B+", "name": "Excellent Plus", "multiplier": 1.20},
-    {"code": "B", "name": "Excellent", "multiplier": 1.10},
-    {"code": "C+", "name": "Good Plus", "multiplier": 1.05},
-    {"code": "C", "name": "Good", "multiplier": 1.00},
-    {"code": "D+", "name": "Average Plus", "multiplier": 0.95},
-    {"code": "D", "name": "Average", "multiplier": 0.90},
-    {"code": "E+", "name": "Fair Plus", "multiplier": 0.85},
-    {"code": "E", "name": "Fair", "multiplier": 0.80}
-  ],
-  "region_factors": [
-    {"code": "NW", "name": "Northwest", "factor": 1.15},
-    {"code": "NE", "name": "Northeast", "factor": 1.10},
-    {"code": "CEN", "name": "Central", "factor": 1.00},
-    {"code": "SW", "name": "Southwest", "factor": 0.95},
-    {"code": "SE", "name": "Southeast", "factor": 0.90}
-  ],
-  "base_rates": [
-    {
-      "building_type": "RES",
-      "construction_type": "WF",
-      "base_rate": 120.50,
-      "unit": "sqft"
+  },
+  "quality_classes": {
+    "economy": {
+      "code": "ECO",
+      "name": "Economy",
+      "description": "Basic materials and workmanship",
+      "multiplier": 0.85,
+      "details": {
+        "finishes": "Minimal, functional finishes",
+        "fixtures": "Basic, builder-grade fixtures",
+        "systems": "Minimum code-compliant systems",
+        "insulation": "Minimum code-required insulation"
+      }
     },
-    {
-      "building_type": "RES",
-      "construction_type": "MS",
-      "base_rate": 135.75,
-      "unit": "sqft"
+    "standard": {
+      "code": "STD",
+      "name": "Standard",
+      "description": "Average materials and workmanship",
+      "multiplier": 1.0,
+      "details": {
+        "finishes": "Standard-grade finishes throughout",
+        "fixtures": "Mid-grade fixtures and hardware",
+        "systems": "Standard efficiency systems",
+        "insulation": "Standard insulation values"
+      }
     },
-    {
-      "building_type": "RES",
-      "construction_type": "SF",
-      "base_rate": 145.00,
-      "unit": "sqft"
+    "good": {
+      "code": "GD",
+      "name": "Good",
+      "description": "Above-average materials and workmanship",
+      "multiplier": 1.15,
+      "details": {
+        "finishes": "Above-average finishes with some custom work",
+        "fixtures": "Name-brand fixtures and hardware",
+        "systems": "Above-average efficiency systems",
+        "insulation": "Enhanced insulation values"
+      }
     },
-    {
-      "building_type": "RES",
-      "construction_type": "CC",
-      "base_rate": 160.25,
-      "unit": "sqft"
+    "excellent": {
+      "code": "EXC",
+      "name": "Excellent",
+      "description": "High-quality materials and workmanship",
+      "multiplier": 1.35,
+      "details": {
+        "finishes": "High-grade finishes with significant custom work",
+        "fixtures": "Premium fixtures and hardware",
+        "systems": "High-efficiency systems",
+        "insulation": "High-performance insulation"
+      }
     },
-    {
-      "building_type": "COM",
-      "construction_type": "WF",
-      "base_rate": 135.00,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "COM",
-      "construction_type": "MS",
-      "base_rate": 150.50,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "COM",
-      "construction_type": "SF",
-      "base_rate": 165.25,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "COM",
-      "construction_type": "CC",
-      "base_rate": 180.00,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "IND",
-      "construction_type": "WF",
-      "base_rate": 85.50,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "IND",
-      "construction_type": "MS",
-      "base_rate": 95.75,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "IND",
-      "construction_type": "SF",
-      "base_rate": 110.25,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "IND",
-      "construction_type": "CC",
-      "base_rate": 125.50,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "AGR",
-      "construction_type": "WF",
-      "base_rate": 65.25,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "AGR",
-      "construction_type": "MS",
-      "base_rate": 80.00,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "AGR",
-      "construction_type": "SF",
-      "base_rate": 90.50,
-      "unit": "sqft"
-    },
-    {
-      "building_type": "AGR",
-      "construction_type": "CC",
-      "base_rate": 105.25,
-      "unit": "sqft"
+    "luxury": {
+      "code": "LUX",
+      "name": "Luxury",
+      "description": "Premium materials and workmanship",
+      "multiplier": 1.6,
+      "details": {
+        "finishes": "Premium grade finishes with extensive custom work",
+        "fixtures": "Top-of-the-line fixtures and hardware",
+        "systems": "State-of-the-art systems with advanced controls",
+        "insulation": "Maximum insulation performance"
+      }
     }
-  ],
-  "feature_adjustments": [
-    {
-      "feature": "finished_basement",
-      "building_type": "RES",
-      "adjustment_factor": 0.65,
-      "description": "Finished basement area"
+  },
+  "regions": {
+    "northwest": {
+      "code": "NW",
+      "name": "Northwest",
+      "description": "Washington, Oregon, Idaho",
+      "multiplier": 1.1,
+      "factors": {
+        "labor": "Higher regional labor costs",
+        "materials": "Higher transportation costs for materials",
+        "climate": "Seismic and weather considerations in construction",
+        "regulations": "Stringent energy and building codes"
+      }
     },
-    {
-      "feature": "unfinished_basement",
-      "building_type": "RES",
-      "adjustment_factor": 0.40,
-      "description": "Unfinished basement area"
+    "southwest": {
+      "code": "SW",
+      "name": "Southwest",
+      "description": "California, Nevada, Arizona",
+      "multiplier": 1.2,
+      "factors": {
+        "labor": "High labor costs, especially in California",
+        "materials": "Varied material costs depending on proximity to ports",
+        "climate": "Desert and coastal climate considerations",
+        "regulations": "Stringent environmental and building codes"
+      }
     },
-    {
-      "feature": "attached_garage",
-      "building_type": "RES",
-      "adjustment_factor": 0.55,
-      "description": "Attached garage area"
+    "midwest": {
+      "code": "MW",
+      "name": "Midwest",
+      "description": "Illinois, Ohio, Michigan",
+      "multiplier": 1.0,
+      "factors": {
+        "labor": "Average labor costs",
+        "materials": "Average material costs with good transport networks",
+        "climate": "Four-season climate considerations",
+        "regulations": "Standard building codes"
+      }
     },
-    {
-      "feature": "detached_garage",
-      "building_type": "RES",
-      "adjustment_factor": 0.45,
-      "description": "Detached garage area"
+    "southeast": {
+      "code": "SE",
+      "name": "Southeast",
+      "description": "Florida, Georgia, North Carolina",
+      "multiplier": 0.95,
+      "factors": {
+        "labor": "Lower labor costs in most areas",
+        "materials": "Varied material costs with good supply chains",
+        "climate": "Hurricane and high humidity considerations",
+        "regulations": "Varied building codes by state"
+      }
     },
-    {
-      "feature": "covered_porch",
-      "building_type": "RES",
-      "adjustment_factor": 0.35,
-      "description": "Covered porch area"
+    "northeast": {
+      "code": "NE",
+      "name": "Northeast",
+      "description": "New York, Massachusetts, Pennsylvania",
+      "multiplier": 1.25,
+      "factors": {
+        "labor": "High union labor costs",
+        "materials": "Higher material costs with transportation challenges",
+        "climate": "Cold climate and snow load considerations",
+        "regulations": "Stringent building codes and historic preservation"
+      }
     },
-    {
-      "feature": "open_porch",
-      "building_type": "RES",
-      "adjustment_factor": 0.25,
-      "description": "Open porch or deck area"
-    },
-    {
-      "feature": "elevator",
-      "building_type": "COM",
-      "adjustment_factor": 1.15,
-      "description": "Elevator (per floor)"
-    },
-    {
-      "feature": "hvac_standard",
-      "building_type": "COM",
-      "adjustment_factor": 1.05,
-      "description": "Standard HVAC systems"
-    },
-    {
-      "feature": "hvac_premium",
-      "building_type": "COM",
-      "adjustment_factor": 1.15,
-      "description": "Premium HVAC systems"
-    },
-    {
-      "feature": "sprinkler_system",
-      "building_type": "COM",
-      "adjustment_factor": 1.07,
-      "description": "Fire sprinkler system"
-    },
-    {
-      "feature": "dock_door",
-      "building_type": "IND",
-      "adjustment_factor": 1.03,
-      "description": "Loading dock door (per door)"
-    },
-    {
-      "feature": "crane_system",
-      "building_type": "IND",
-      "adjustment_factor": 1.10,
-      "description": "Overhead crane system"
-    },
-    {
-      "feature": "reinforced_floor",
-      "building_type": "IND",
-      "adjustment_factor": 1.08,
-      "description": "Reinforced concrete floor"
-    },
-    {
-      "feature": "climate_control",
-      "building_type": "AGR",
-      "adjustment_factor": 1.25,
-      "description": "Climate control systems"
-    },
-    {
-      "feature": "grain_storage",
-      "building_type": "AGR",
-      "adjustment_factor": 1.15,
-      "description": "Grain storage systems"
+    "central": {
+      "code": "CEN",
+      "name": "Central",
+      "description": "Texas, Oklahoma, Kansas",
+      "multiplier": 0.9,
+      "factors": {
+        "labor": "Lower labor costs",
+        "materials": "Variable material costs with good transportation",
+        "climate": "Tornado and extreme weather considerations",
+        "regulations": "Generally less stringent building codes"
+      }
     }
-  ]
+  },
+  "features": {
+    "garage": {
+      "code": "GAR",
+      "name": "Garage",
+      "description": "Attached or detached vehicle storage",
+      "unit_cost": 45.00,
+      "unit": "square_foot",
+      "quality_adjustments": {
+        "economy": 0.8,
+        "standard": 1.0,
+        "good": 1.15,
+        "excellent": 1.3,
+        "luxury": 1.5
+      }
+    },
+    "pool": {
+      "code": "POOL",
+      "name": "Swimming Pool",
+      "description": "In-ground swimming pool",
+      "unit_cost": 125.00,
+      "unit": "square_foot",
+      "quality_adjustments": {
+        "economy": 0.85,
+        "standard": 1.0,
+        "good": 1.2,
+        "excellent": 1.4,
+        "luxury": 1.75
+      }
+    },
+    "deck": {
+      "code": "DECK",
+      "name": "Deck",
+      "description": "Exterior wood deck",
+      "unit_cost": 35.00,
+      "unit": "square_foot",
+      "quality_adjustments": {
+        "economy": 0.75,
+        "standard": 1.0,
+        "good": 1.25,
+        "excellent": 1.6,
+        "luxury": 2.0
+      }
+    },
+    "fireplace": {
+      "code": "FP",
+      "name": "Fireplace",
+      "description": "Masonry fireplace",
+      "unit_cost": 7500.00,
+      "unit": "each",
+      "quality_adjustments": {
+        "economy": 0.7,
+        "standard": 1.0,
+        "good": 1.3,
+        "excellent": 1.8,
+        "luxury": 2.5
+      }
+    },
+    "hvac": {
+      "code": "HVAC",
+      "name": "HVAC System",
+      "description": "Central heating and air conditioning",
+      "unit_cost": 10.00,
+      "unit": "square_foot",
+      "quality_adjustments": {
+        "economy": 0.8,
+        "standard": 1.0,
+        "good": 1.25,
+        "excellent": 1.5,
+        "luxury": 2.0
+      }
+    }
+  },
+  "special_considerations": {
+    "historical": {
+      "description": "Historical or heritage buildings",
+      "cost_impact": "Higher replacement costs due to specialized materials and craftsmanship",
+      "multiplier_range": [1.3, 2.0]
+    },
+    "energy_efficient": {
+      "description": "Energy-efficient or green buildings",
+      "cost_impact": "Higher initial costs, lower operating costs",
+      "multiplier_range": [1.1, 1.3]
+    },
+    "ada_compliant": {
+      "description": "ADA-compliant accessibility features",
+      "cost_impact": "Additional costs for accessibility features",
+      "multiplier_range": [1.05, 1.15]
+    },
+    "hazardous_materials": {
+      "description": "Buildings containing hazardous materials",
+      "cost_impact": "Additional costs for remediation and special handling",
+      "multiplier_range": [1.1, 1.5]
+    }
+  },
+  "cost_trending": {
+    "annual_inflation": 0.035,
+    "regional_trends": {
+      "northwest": 0.045,
+      "southwest": 0.050,
+      "midwest": 0.030,
+      "southeast": 0.035,
+      "northeast": 0.040,
+      "central": 0.025
+    },
+    "material_specific": {
+      "lumber": 0.045,
+      "concrete": 0.035,
+      "steel": 0.040,
+      "labor": 0.042
+    }
+  }
 }

@@ -6,8 +6,7 @@ echo.
 
 REM Check if Python virtual environment exists
 if not exist venv (
-    echo Python virtual environment not found.
-    echo Please run install_deps.bat first to install the dependencies.
+    echo Virtual environment not found. Please run install_deps.bat first.
     pause
     exit /b 1
 )
@@ -28,58 +27,79 @@ if %ERRORLEVEL% NEQ 0 (
     )
 )
 
-REM Check for required files
-if not exist rcn_api_stub.py (
-    echo Error: rcn_api_stub.py file not found.
-    echo Please make sure all files are in the correct location.
-    pause
-    exit /b 1
-)
-
-REM Create build directory
+REM Create directories if they don't exist
+if not exist dist mkdir dist
 if not exist build mkdir build
 
-REM Building executable
-echo.
-echo Building standalone executable for RCN Valuation Engine...
-echo This may take a few minutes...
-echo.
-
-pyinstaller --noconfirm --onefile --console ^
-    --add-data "sample_data;sample_data" ^
-    --add-data "html_ui;html_ui" ^
-    --name "TerraFusionRCN" ^
-    --icon=windows_service\app_icon.ico ^
-    rcn_api_stub.py
-
-REM Check if build was successful
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo Error: Failed to build executable.
-    pause
-    exit /b 1
+REM Create sample data directory (if needed)
+if not exist sample_data (
+    echo Creating sample data directory...
+    mkdir sample_data
 )
 
-REM Copy executable to main directory
-echo Moving executable to main directory...
-copy /Y dist\TerraFusionRCN.exe TerraFusionRCN.exe >nul
+REM Create logs directory (if needed)
+if not exist logs mkdir logs
 
-REM Cleanup
-echo Cleaning up build files...
-rmdir /S /Q build >nul 2>&1
-rmdir /S /Q dist >nul 2>&1
-del /Q TerraFusionRCN.spec >nul 2>&1
+REM Create HTML UI directory (if needed)
+if not exist html_ui (
+    echo Creating HTML UI directory...
+    mkdir html_ui
+)
 
-echo.
-echo ===================================================================
-echo Build complete!
-echo ===================================================================
-echo.
-echo The standalone executable TerraFusionRCN.exe has been created.
-echo You can now run this executable on any Windows system without 
-echo needing to install Python or dependencies.
-echo.
-echo NOTE: The executable still needs access to the sample_data and 
-echo       html_ui folders, which are included in the executable.
-echo.
+REM Call start_rcn.bat with /nostart flag to ensure sample data files are created
+echo Initializing sample data...
+call start_rcn.bat /nostart
+
+REM Build executable with PyInstaller
+echo Building TerraFusionBuild RCN Executable...
+pyinstaller --name="TerraFusionBuild_RCN_Valuation_Engine" ^
+    --add-data="sample_data;sample_data" ^
+    --add-data="html_ui;html_ui" ^
+    --icon=NONE ^
+    --windowed ^
+    --clean ^
+    rcn_api_stub.py
+
+REM Copy relevant files to dist directory
+echo Copying additional files to distribution...
+copy README.md "dist\TerraFusionBuild_RCN_Valuation_Engine\"
+echo Please check logs directory for application logs > "dist\TerraFusionBuild_RCN_Valuation_Engine\logs_readme.txt"
+
+REM Create a simple launcher.bat file
+echo Creating launcher script...
+echo @echo off > "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo Starting TerraFusionBuild RCN Valuation Engine... >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo. >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo Access the web interface at http://localhost:8000 >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo Interactive API documentation at http://localhost:8000/docs >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo. >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo echo Press Ctrl+C to stop the server >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo. >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo mkdir logs 2>nul >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo start TerraFusionBuild_RCN_Valuation_Engine.exe >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+echo start http://localhost:8000 >> "dist\TerraFusionBuild_RCN_Valuation_Engine\run_rcn_server.bat"
+
+REM Check if build was successful
+if exist "dist\TerraFusionBuild_RCN_Valuation_Engine\TerraFusionBuild_RCN_Valuation_Engine.exe" (
+    echo.
+    echo ===================================================================
+    echo Build successful!
+    echo ===================================================================
+    echo.
+    echo Executable created at: dist\TerraFusionBuild_RCN_Valuation_Engine\TerraFusionBuild_RCN_Valuation_Engine.exe
+    echo.
+    echo To use the executable:
+    echo 1. Distribute the entire "dist\TerraFusionBuild_RCN_Valuation_Engine" folder
+    echo 2. Run the "run_rcn_server.bat" file to start the application
+    echo.
+) else (
+    echo.
+    echo ===================================================================
+    echo Build failed!
+    echo ===================================================================
+    echo.
+    echo Please check the error messages above.
+    echo.
+)
+
 pause

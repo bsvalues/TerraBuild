@@ -1,115 +1,173 @@
-# Product Requirements Document (PRD)
-## TerraFusionBuild RCN Valuation Engine DevOps Kit
+# TerraFusionBuild RCN Valuation Engine - Product Requirements Document
 
-### 1. Purpose & Scope
+## 1. Introduction
 
-The TerraFusionBuild RCN Valuation Engine DevOps Kit provides a complete, portable deployment solution for county assessors to calculate Replacement Cost New (RCN) values for property assessment. This kit is designed to function across diverse IT environments, from standalone USB deployment to enterprise network integration.
+### 1.1 Purpose
 
-### 2. Target Audience
+The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine is designed to provide county assessors, real estate professionals, and insurance adjusters with a reliable tool for calculating accurate replacement cost values for various building types. This document outlines the requirements and specifications for the RCN Valuation Engine.
 
-- **Primary Users**: County assessors and property valuation professionals
-- **Secondary Users**: IT administrators in county government
-- **Deployment Environment**: Windows-based systems in government offices
+### 1.2 Scope
 
-### 3. Key Requirements
+This document covers the RCN Valuation Engine's core functionality, deployment options, user interface, and API capabilities. It serves as the definitive reference for understanding the product's features and limitations.
 
-#### 3.1 Functional Requirements
+### 1.3 Product Overview
 
-| ID | Requirement | Priority | Status |
-|----|-------------|----------|--------|
-| F1 | Calculate accurate RCN values using industry-standard methodologies | High | Completed |
-| F2 | Support multiple building types, construction materials, and quality classes | High | Completed |
-| F3 | Generate detailed calculation breakdowns with depreciation | Medium | Completed |
-| F4 | Provide user-friendly HTML interface for calculations | Medium | Completed |
-| F5 | Allow batch processing via API | Low | Completed |
-| F6 | Support custom cost matrices and locality adjustments | Medium | Completed |
+The RCN Valuation Engine is a standalone application that calculates replacement cost values based on industry-standard cost metrics including building type, construction type, quality class, regional factors, and depreciation. It offers both a web-based UI and API access for integration with existing systems.
 
-#### 3.2 Deployment Requirements
+## 2. Product Features
 
-| ID | Requirement | Priority | Status |
-|----|-------------|----------|--------|
-| D1 | Run as standalone executable without external dependencies | High | Completed |
-| D2 | Support Windows service installation for persistent deployment | High | Completed |
-| D3 | Provide portable deployment via USB media | Medium | Completed |
-| D4 | Create self-contained deployment package | Medium | Completed |
-| D5 | Include comprehensive documentation | High | Completed |
-| D6 | Support auto-detection of Python installations | Low | Completed |
+### 2.1 Core Calculation Engine
 
-#### 3.3 Technical Requirements
+- **Base Cost Calculation**: Calculate base cost using square footage and type-specific cost rates
+- **Quality Adjustments**: Apply quality class multipliers to base costs
+- **Regional Adjustments**: Adjust costs based on regional factors
+- **Age Depreciation**: Calculate depreciation based on building age
+- **Condition Depreciation**: Apply depreciation based on building condition
+- **Feature Additions**: Calculate costs for additional building features
+- **Confidence Indicators**: Provide confidence levels for calculations based on data availability
 
-| ID | Requirement | Priority | Status |
-|----|-------------|----------|--------|
-| T1 | Provide RESTful API with standardized endpoints | High | Completed |
-| T2 | Document API using OpenAPI 3.0 | Medium | Completed |
-| T3 | Support Windows 10/11 and Windows Server 2016/2019/2022 | High | Completed |
-| T4 | Minimize external dependencies | Medium | Completed |
-| T5 | Support custom port configuration | Low | Completed |
-| T6 | Implement proper error handling and logging | Medium | Completed |
+### 2.2 Web Interface
 
-### 4. User Stories
+- **Interactive Form**: User-friendly input form for building parameters
+- **Detailed Results**: Comprehensive breakdown of calculation results
+- **Example Buildings**: Pre-configured examples for common building types
+- **Responsive Design**: Works on desktop and tablet devices
 
-#### 4.1 County Assessor
+### 2.3 API Endpoints
 
-- As a county assessor, I want to calculate the replacement cost of a residential building so that I can determine its assessed value.
-- As a county assessor, I want to see a detailed breakdown of the cost calculation so that I can explain it to property owners.
-- As a county assessor, I want to adjust locality factors so that calculations reflect local market conditions.
+- **Calculate RCN**: Primary endpoint for calculating RCN values
+- **Building Types**: Retrieve available building types
+- **Construction Types**: Retrieve available construction types
+- **Quality Classes**: Retrieve available quality classes
+- **Regions**: Retrieve available regions
+- **Example Buildings**: Retrieve example building inputs
 
-#### 4.2 IT Administrator
+### 2.4 Deployment Options
 
-- As an IT administrator, I want to install the system as a Windows service so that it runs automatically on startup.
-- As an IT administrator, I want to deploy without complex setup steps so that I can quickly roll it out to multiple machines.
-- As an IT administrator, I want to configure the port number so that it doesn't conflict with existing services.
+- **Standalone Server**: Run as a Python web server
+- **Windows Service**: Install as a background Windows service
+- **Executable Package**: Run as a standalone Windows executable
+- **Deployment Package**: Create a distributable package for deployment
 
-### 5. Performance Requirements
+## 3. User Personas
 
-- API response time for single calculation: < 500ms
-- Web UI load time: < 2 seconds
-- Memory footprint: < 200MB (service mode)
-- Startup time: < 5 seconds
+### 3.1 County Assessor
 
-### 6. Security Requirements
+- **Needs**: Batch processing of property valuations, consistency in calculations
+- **Goals**: Accurately assess property values for tax purposes
+- **Pain Points**: Time-consuming manual calculations, inconsistent methodologies
 
-- No personally identifiable information (PII) stored
-- Local deployment only (no cloud components)
-- No external network access required after installation
-- No administrative privileges required for normal operation (only for service installation)
+### 3.2 Real Estate Appraiser
 
-### 7. Constraints
+- **Needs**: Quick individual property valuations
+- **Goals**: Generate accurate property reports for clients
+- **Pain Points**: Limited access to cost data, complex calculation processes
 
-- Must run on Windows environments (primary OS used by county assessors)
-- Must function without internet connectivity after installation
-- Must be deployable via USB or network share
-- Must not require database setup
+### 3.3 Insurance Adjuster
 
-### 8. Success Metrics
+- **Needs**: Defensible replacement cost estimates
+- **Goals**: Determine appropriate insurance coverage amounts
+- **Pain Points**: Outdated cost data, regional variations in construction costs
 
-- Successful deployment in < 10 minutes
-- Calculation accuracy within 2% of industry standards
-- < 5 support requests per month after initial deployment
+### 3.4 IT Administrator
 
-### 9. Future Considerations
+- **Needs**: Simple deployment and maintenance
+- **Goals**: Integrate with existing systems and workflows
+- **Pain Points**: Complex setup procedures, limited documentation
 
-- Integration with GIS systems for spatial analysis
-- Mobile companion application for field assessments
-- Multi-user support with centralized database
-- Custom reporting module
-- Support for Linux/macOS environments
+## 4. Technical Requirements
 
-### 10. Delivery Timeline
+### 4.1 System Requirements
 
-| Phase | Deliverable | Timeline | Status |
-|-------|-------------|----------|--------|
-| 1 | Core API implementation | Q1 2025 | Complete |
-| 2 | HTML user interface | Q1 2025 | Complete |
-| 3 | Deployment scripts & packaging | Q2 2025 | Complete |
-| 4 | Windows service integration | Q2 2025 | Complete |
-| 5 | Documentation & support materials | Q2 2025 | Complete |
-| 6 | Final testing & delivery | Q2 2025 | Complete |
+- **Operating System**: Windows 10 or newer, Windows Server 2016+
+- **Runtime Environment**: Python 3.8+ or standalone executable
+- **Memory**: 4GB RAM minimum
+- **Storage**: 500MB disk space
+- **Network**: Internet access (for initial setup only)
 
-### 11. Approval
+### 4.2 Performance Requirements
 
-This PRD was approved on March 25, 2025 by:
+- **Response Time**: < 2 seconds for individual calculations
+- **Throughput**: Support for up to 10 concurrent users
+- **Availability**: 99.9% uptime when running as a service
 
-- Thomas Zhang, Product Manager
-- Sarah Johnson, Engineering Lead
-- Michael Rodriguez, QA Manager
+### 4.3 Security Requirements
+
+- **Data Storage**: Local storage only, no external data transmission
+- **API Access**: Local network access only by default
+
+## 5. Data Requirements
+
+### 5.1 Cost Data
+
+- **Building Types**: Support for residential, commercial, industrial, agricultural
+- **Construction Types**: Multiple construction methodologies
+- **Quality Classes**: Multiple quality grades with corresponding multipliers
+- **Regional Factors**: Geographic cost adjustment factors
+- **Base Rates**: Cost per square foot for various building/construction types
+- **Feature Adjustments**: Cost factors for additional building features
+
+### 5.2 Depreciation Data
+
+- **Age-Based Depreciation**: Factors based on effective age
+- **Condition-Based Depreciation**: Factors based on building condition
+
+## 6. Interfaces
+
+### 6.1 User Interfaces
+
+- **Web UI**: HTML-based interface accessible via web browser
+- **API Documentation**: Interactive Swagger UI for API exploration
+
+### 6.2 API Interfaces
+
+- **REST API**: JSON-based RESTful API
+- **OpenAPI Documentation**: Swagger specification for API documentation
+
+## 7. Customization
+
+### 7.1 Cost Profiles
+
+- **Editable Cost Data**: Modify cost profiles through JSON configuration files
+- **Custom Building Types**: Add organization-specific building categories
+- **Regional Adjustments**: Customize regional cost multipliers
+
+### 7.2 Depreciation Tables
+
+- **Custom Age Factors**: Modify age-based depreciation schedules
+- **Custom Condition Factors**: Adjust condition-based depreciation values
+
+## 8. Limitations & Constraints
+
+- **No Cloud Integration**: The system operates locally without cloud dependencies
+- **No External Database**: Uses file-based data storage
+- **No Multi-user Authentication**: Designed for single organization use
+- **Limited to Supported Building Types**: Calculations are limited to configured building types
+
+## 9. Future Enhancements
+
+- **Multi-user Support**: User management and authentication
+- **External Database Integration**: Support for external database systems
+- **Advanced Reporting**: Enhanced reporting capabilities
+- **Mobile Interface**: Dedicated mobile application
+- **Cloud Deployment**: Support for cloud deployment options
+- **Integration APIs**: Connectors for popular property management systems
+
+## Appendix A: Calculation Methodology
+
+The RCN calculation follows this general formula:
+
+```
+Base Cost = Square Footage × Base Rate for Building/Construction Type
+Quality Adjusted Cost = Base Cost × Quality Class Multiplier
+Region Adjusted Cost = Quality Adjusted Cost × Regional Factor
+Feature Costs = Sum of (Feature Quantity × Feature-specific Rate)
+Depreciation Factor = Max(Age Depreciation, Condition Depreciation)
+Final RCN = (Region Adjusted Cost + Feature Costs) × (1 - Depreciation Factor)
+```
+
+## Appendix B: Version History
+
+| Version | Date       | Description                              |
+|---------|------------|------------------------------------------|
+| 1.0.0   | 2025-05-19 | Initial release with core functionality  |

@@ -1,218 +1,249 @@
 {
-  "metadata": {
-    "version": "1.0.0",
-    "year": 2025,
-    "county": "Sample",
-    "description": "Sample depreciation tables for RCN calculation demonstration"
-  },
-  "condition_factors": [
-    {
-      "condition": "Excellent",
-      "description": "New or nearly new, showing no signs of wear, all components functioning perfectly",
-      "factor": 0.05
+  "age_based": {
+    "residential": {
+      "0": 0.00,
+      "1": 0.01,
+      "2": 0.02,
+      "3": 0.03,
+      "4": 0.04,
+      "5": 0.05,
+      "6": 0.06,
+      "7": 0.07,
+      "8": 0.08,
+      "9": 0.09,
+      "10": 0.10,
+      "11": 0.11,
+      "12": 0.12,
+      "13": 0.13,
+      "14": 0.14,
+      "15": 0.15,
+      "16": 0.16,
+      "17": 0.17,
+      "18": 0.18,
+      "19": 0.19,
+      "20": 0.20,
+      "25": 0.25,
+      "30": 0.30,
+      "35": 0.35,
+      "40": 0.40,
+      "45": 0.45,
+      "50": 0.50,
+      "55": 0.55,
+      "60": 0.60,
+      "65": 0.65,
+      "70": 0.70,
+      "75": 0.75,
+      "80": 0.78,
+      "85": 0.80,
+      "90": 0.82,
+      "95": 0.84,
+      "100": 0.85,
+      "110": 0.87,
+      "120": 0.88,
+      "130": 0.89,
+      "140": 0.90,
+      "150": 0.90
     },
-    {
-      "condition": "Very Good",
-      "description": "Slight signs of wear, well maintained, all components functioning well",
-      "factor": 0.10
+    "commercial": {
+      "0": 0.00,
+      "1": 0.015,
+      "2": 0.03,
+      "3": 0.045,
+      "4": 0.06,
+      "5": 0.07,
+      "6": 0.08,
+      "7": 0.09,
+      "8": 0.10,
+      "9": 0.11,
+      "10": 0.14,
+      "11": 0.15,
+      "12": 0.16,
+      "13": 0.17,
+      "14": 0.18,
+      "15": 0.21,
+      "16": 0.22,
+      "17": 0.23,
+      "18": 0.24,
+      "19": 0.25,
+      "20": 0.28,
+      "25": 0.35,
+      "30": 0.42,
+      "35": 0.49,
+      "40": 0.56,
+      "45": 0.63,
+      "50": 0.70,
+      "55": 0.74,
+      "60": 0.77,
+      "65": 0.80,
+      "70": 0.82,
+      "75": 0.84,
+      "80": 0.86,
+      "85": 0.88,
+      "90": 0.90,
+      "95": 0.92,
+      "100": 0.94
     },
-    {
-      "condition": "Good",
-      "description": "Minor wear visible, maintained regularly, all major components functioning",
-      "factor": 0.20
+    "industrial": {
+      "0": 0.00,
+      "1": 0.017,
+      "2": 0.033,
+      "3": 0.050,
+      "4": 0.067,
+      "5": 0.08,
+      "6": 0.09,
+      "7": 0.10,
+      "8": 0.11,
+      "9": 0.12,
+      "10": 0.16,
+      "11": 0.17,
+      "12": 0.18,
+      "13": 0.19,
+      "14": 0.20,
+      "15": 0.24,
+      "16": 0.25,
+      "17": 0.26,
+      "18": 0.27,
+      "19": 0.28,
+      "20": 0.32,
+      "25": 0.40,
+      "30": 0.48,
+      "35": 0.56,
+      "40": 0.64,
+      "45": 0.72,
+      "50": 0.80,
+      "55": 0.82,
+      "60": 0.84,
+      "65": 0.86,
+      "70": 0.88,
+      "75": 0.90
     },
-    {
-      "condition": "Average",
-      "description": "Normal wear for age, maintained, minor repairs may be needed",
-      "factor": 0.30
-    },
-    {
-      "condition": "Fair",
-      "description": "Significant wear, some deferred maintenance, some repairs needed",
-      "factor": 0.40
-    },
-    {
-      "condition": "Poor",
-      "description": "Considerable wear, significant deferred maintenance, major repairs needed",
-      "factor": 0.55
-    },
-    {
-      "condition": "Very Poor",
-      "description": "Extensive wear, minimal maintenance, extensive repairs needed",
-      "factor": 0.70
-    },
-    {
-      "condition": "Unsound",
-      "description": "Building not functioning as intended, may not be habitable/usable",
-      "factor": 0.80
+    "agricultural": {
+      "0": 0.00,
+      "1": 0.02,
+      "2": 0.04,
+      "3": 0.06,
+      "4": 0.08,
+      "5": 0.10,
+      "6": 0.12,
+      "7": 0.14,
+      "8": 0.16,
+      "9": 0.18,
+      "10": 0.20,
+      "11": 0.22,
+      "12": 0.24,
+      "13": 0.26,
+      "14": 0.28,
+      "15": 0.30,
+      "16": 0.32,
+      "17": 0.34,
+      "18": 0.36,
+      "19": 0.38,
+      "20": 0.40,
+      "25": 0.50,
+      "30": 0.60,
+      "35": 0.70,
+      "40": 0.80,
+      "45": 0.85,
+      "50": 0.90
     }
-  ],
-  "age_factors": {
-    "RES": [
-      {"age": 0, "factor": 0.00},
-      {"age": 1, "factor": 0.01},
-      {"age": 2, "factor": 0.02},
-      {"age": 3, "factor": 0.03},
-      {"age": 4, "factor": 0.04},
-      {"age": 5, "factor": 0.05},
-      {"age": 6, "factor": 0.06},
-      {"age": 7, "factor": 0.07},
-      {"age": 8, "factor": 0.08},
-      {"age": 9, "factor": 0.09},
-      {"age": 10, "factor": 0.10},
-      {"age": 15, "factor": 0.15},
-      {"age": 20, "factor": 0.20},
-      {"age": 25, "factor": 0.25},
-      {"age": 30, "factor": 0.30},
-      {"age": 35, "factor": 0.35},
-      {"age": 40, "factor": 0.40},
-      {"age": 45, "factor": 0.45},
-      {"age": 50, "factor": 0.48},
-      {"age": 55, "factor": 0.51},
-      {"age": 60, "factor": 0.54},
-      {"age": 65, "factor": 0.57},
-      {"age": 70, "factor": 0.60},
-      {"age": 75, "factor": 0.63},
-      {"age": 80, "factor": 0.65},
-      {"age": 85, "factor": 0.67},
-      {"age": 90, "factor": 0.69},
-      {"age": 95, "factor": 0.71},
-      {"age": 100, "factor": 0.72}
-    ],
-    "COM": [
-      {"age": 0, "factor": 0.00},
-      {"age": 1, "factor": 0.01},
-      {"age": 2, "factor": 0.02},
-      {"age": 3, "factor": 0.03},
-      {"age": 4, "factor": 0.04},
-      {"age": 5, "factor": 0.05},
-      {"age": 6, "factor": 0.06},
-      {"age": 7, "factor": 0.07},
-      {"age": 8, "factor": 0.08},
-      {"age": 9, "factor": 0.09},
-      {"age": 10, "factor": 0.10},
-      {"age": 15, "factor": 0.14},
-      {"age": 20, "factor": 0.18},
-      {"age": 25, "factor": 0.22},
-      {"age": 30, "factor": 0.26},
-      {"age": 35, "factor": 0.30},
-      {"age": 40, "factor": 0.34},
-      {"age": 45, "factor": 0.38},
-      {"age": 50, "factor": 0.42},
-      {"age": 55, "factor": 0.46},
-      {"age": 60, "factor": 0.49},
-      {"age": 65, "factor": 0.52},
-      {"age": 70, "factor": 0.55},
-      {"age": 75, "factor": 0.58},
-      {"age": 80, "factor": 0.60},
-      {"age": 85, "factor": 0.62},
-      {"age": 90, "factor": 0.64},
-      {"age": 95, "factor": 0.66},
-      {"age": 100, "factor": 0.68}
-    ],
-    "IND": [
-      {"age": 0, "factor": 0.00},
-      {"age": 1, "factor": 0.01},
-      {"age": 2, "factor": 0.02},
-      {"age": 3, "factor": 0.03},
-      {"age": 4, "factor": 0.04},
-      {"age": 5, "factor": 0.05},
-      {"age": 6, "factor": 0.06},
-      {"age": 7, "factor": 0.07},
-      {"age": 8, "factor": 0.08},
-      {"age": 9, "factor": 0.09},
-      {"age": 10, "factor": 0.10},
-      {"age": 15, "factor": 0.16},
-      {"age": 20, "factor": 0.21},
-      {"age": 25, "factor": 0.27},
-      {"age": 30, "factor": 0.33},
-      {"age": 35, "factor": 0.38},
-      {"age": 40, "factor": 0.43},
-      {"age": 45, "factor": 0.48},
-      {"age": 50, "factor": 0.53},
-      {"age": 55, "factor": 0.57},
-      {"age": 60, "factor": 0.61},
-      {"age": 65, "factor": 0.65},
-      {"age": 70, "factor": 0.68},
-      {"age": 75, "factor": 0.71},
-      {"age": 80, "factor": 0.74},
-      {"age": 85, "factor": 0.76},
-      {"age": 90, "factor": 0.78},
-      {"age": 95, "factor": 0.80},
-      {"age": 100, "factor": 0.82}
-    ],
-    "AGR": [
-      {"age": 0, "factor": 0.00},
-      {"age": 1, "factor": 0.01},
-      {"age": 2, "factor": 0.03},
-      {"age": 3, "factor": 0.04},
-      {"age": 4, "factor": 0.06},
-      {"age": 5, "factor": 0.07},
-      {"age": 6, "factor": 0.09},
-      {"age": 7, "factor": 0.10},
-      {"age": 8, "factor": 0.12},
-      {"age": 9, "factor": 0.13},
-      {"age": 10, "factor": 0.15},
-      {"age": 15, "factor": 0.22},
-      {"age": 20, "factor": 0.29},
-      {"age": 25, "factor": 0.36},
-      {"age": 30, "factor": 0.43},
-      {"age": 35, "factor": 0.49},
-      {"age": 40, "factor": 0.55},
-      {"age": 45, "factor": 0.61},
-      {"age": 50, "factor": 0.66},
-      {"age": 55, "factor": 0.71},
-      {"age": 60, "factor": 0.75},
-      {"age": 65, "factor": 0.79},
-      {"age": 70, "factor": 0.83},
-      {"age": 75, "factor": 0.86},
-      {"age": 80, "factor": 0.89},
-      {"age": 85, "factor": 0.91},
-      {"age": 90, "factor": 0.93},
-      {"age": 95, "factor": 0.94},
-      {"age": 100, "factor": 0.95}
-    ]
   },
-  "effective_age_adjustments": [
-    {
-      "description": "Complete renovation (all systems)",
-      "adjustment": -20
+  "condition_based": {
+    "excellent": 0.00,
+    "good": 0.10,
+    "average": 0.25,
+    "fair": 0.40,
+    "poor": 0.60,
+    "very_poor": 0.80
+  },
+  "building_type_specific_condition": {
+    "residential": {
+      "excellent": 0.00,
+      "good": 0.08,
+      "average": 0.20,
+      "fair": 0.35,
+      "poor": 0.55,
+      "very_poor": 0.75
     },
-    {
-      "description": "Major renovation (structure, HVAC, electrical)",
-      "adjustment": -15
+    "commercial": {
+      "excellent": 0.00,
+      "good": 0.12,
+      "average": 0.28,
+      "fair": 0.45,
+      "poor": 0.65,
+      "very_poor": 0.85
     },
-    {
-      "description": "Moderate renovation (interior and some systems)",
-      "adjustment": -10
+    "industrial": {
+      "excellent": 0.00,
+      "good": 0.15,
+      "average": 0.30,
+      "fair": 0.50,
+      "poor": 0.70,
+      "very_poor": 0.90
     },
-    {
-      "description": "Minor renovation (cosmetic updates)",
-      "adjustment": -5
-    },
-    {
-      "description": "Well maintained (regular updates)",
-      "adjustment": -3
-    },
-    {
-      "description": "Standard maintenance",
-      "adjustment": 0
-    },
-    {
-      "description": "Below average maintenance",
-      "adjustment": 5
-    },
-    {
-      "description": "Significant deferred maintenance",
-      "adjustment": 10
-    },
-    {
-      "description": "Major deferred maintenance",
-      "adjustment": 15
-    },
-    {
-      "description": "Extreme neglect",
-      "adjustment": 20
+    "agricultural": {
+      "excellent": 0.00,
+      "good": 0.20,
+      "average": 0.35,
+      "fair": 0.55,
+      "poor": 0.75,
+      "very_poor": 0.95
     }
-  ]
+  },
+  "effective_age_adjustment": {
+    "excellent": -5,
+    "good": 0,
+    "average": 5,
+    "fair": 10,
+    "poor": 15,
+    "very_poor": 20
+  },
+  "building_subtype_adjustments": {
+    "residential": {
+      "single_family": 1.0,
+      "multi_family": 1.05,
+      "manufactured": 1.15,
+      "duplex": 1.03
+    },
+    "commercial": {
+      "retail": 1.0,
+      "office": 0.95,
+      "restaurant": 1.1,
+      "hotel": 1.05
+    },
+    "industrial": {
+      "light_manufacturing": 1.0,
+      "heavy_manufacturing": 1.1,
+      "warehouse": 0.9,
+      "flex": 0.95
+    },
+    "agricultural": {
+      "barn": 1.0,
+      "storage": 0.9,
+      "processing": 1.1,
+      "farm_residence": 0.95
+    }
+  },
+  "quality_age_impact": {
+    "economy": 1.2,
+    "standard": 1.0,
+    "good": 0.9,
+    "excellent": 0.8,
+    "luxury": 0.7
+  },
+  "historical_considerations": {
+    "age_thresholds": {
+      "historical": 75,
+      "significant_historical": 100
+    },
+    "depreciation_caps": {
+      "historical": 0.60,
+      "significant_historical": 0.50
+    }
+  },
+  "renovation_adjustments": {
+    "minor": -5,
+    "moderate": -10,
+    "major": -15,
+    "complete": -20
+  }
 }
