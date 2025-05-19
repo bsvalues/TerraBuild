@@ -1,110 +1,40 @@
 {
-  "age_based": {
-    "residential": {
-      "description": "Standard age-based depreciation for residential buildings",
-      "table": [
-        {"min_age": 0, "max_age": 1, "depreciation_factor": 0.00},
-        {"min_age": 1, "max_age": 5, "depreciation_factor": 0.05},
-        {"min_age": 5, "max_age": 10, "depreciation_factor": 0.10},
-        {"min_age": 10, "max_age": 15, "depreciation_factor": 0.15},
-        {"min_age": 15, "max_age": 20, "depreciation_factor": 0.20},
-        {"min_age": 20, "max_age": 25, "depreciation_factor": 0.25},
-        {"min_age": 25, "max_age": 30, "depreciation_factor": 0.30},
-        {"min_age": 30, "max_age": 40, "depreciation_factor": 0.40},
-        {"min_age": 40, "max_age": 50, "depreciation_factor": 0.50},
-        {"min_age": 50, "max_age": 75, "depreciation_factor": 0.60},
-        {"min_age": 75, "max_age": 100, "depreciation_factor": 0.70},
-        {"min_age": 100, "max_age": 999, "depreciation_factor": 0.75}
-      ]
-    },
-    "commercial": {
-      "description": "Standard age-based depreciation for commercial buildings",
-      "table": [
-        {"min_age": 0, "max_age": 1, "depreciation_factor": 0.00},
-        {"min_age": 1, "max_age": 5, "depreciation_factor": 0.08},
-        {"min_age": 5, "max_age": 10, "depreciation_factor": 0.15},
-        {"min_age": 10, "max_age": 15, "depreciation_factor": 0.22},
-        {"min_age": 15, "max_age": 20, "depreciation_factor": 0.30},
-        {"min_age": 20, "max_age": 25, "depreciation_factor": 0.35},
-        {"min_age": 25, "max_age": 30, "depreciation_factor": 0.40},
-        {"min_age": 30, "max_age": 40, "depreciation_factor": 0.45},
-        {"min_age": 40, "max_age": 50, "depreciation_factor": 0.55},
-        {"min_age": 50, "max_age": 75, "depreciation_factor": 0.65},
-        {"min_age": 75, "max_age": 100, "depreciation_factor": 0.75},
-        {"min_age": 100, "max_age": 999, "depreciation_factor": 0.80}
-      ]
-    },
-    "industrial": {
-      "description": "Standard age-based depreciation for industrial buildings",
-      "table": [
-        {"min_age": 0, "max_age": 1, "depreciation_factor": 0.00},
-        {"min_age": 1, "max_age": 5, "depreciation_factor": 0.10},
-        {"min_age": 5, "max_age": 10, "depreciation_factor": 0.20},
-        {"min_age": 10, "max_age": 15, "depreciation_factor": 0.30},
-        {"min_age": 15, "max_age": 20, "depreciation_factor": 0.40},
-        {"min_age": 20, "max_age": 25, "depreciation_factor": 0.50},
-        {"min_age": 25, "max_age": 30, "depreciation_factor": 0.55},
-        {"min_age": 30, "max_age": 40, "depreciation_factor": 0.60},
-        {"min_age": 40, "max_age": 50, "depreciation_factor": 0.65},
-        {"min_age": 50, "max_age": 75, "depreciation_factor": 0.70},
-        {"min_age": 75, "max_age": 100, "depreciation_factor": 0.80},
-        {"min_age": 100, "max_age": 999, "depreciation_factor": 0.85}
-      ]
-    },
-    "agricultural": {
-      "description": "Standard age-based depreciation for agricultural buildings",
-      "table": [
-        {"min_age": 0, "max_age": 1, "depreciation_factor": 0.00},
-        {"min_age": 1, "max_age": 5, "depreciation_factor": 0.12},
-        {"min_age": 5, "max_age": 10, "depreciation_factor": 0.25},
-        {"min_age": 10, "max_age": 15, "depreciation_factor": 0.35},
-        {"min_age": 15, "max_age": 20, "depreciation_factor": 0.45},
-        {"min_age": 20, "max_age": 25, "depreciation_factor": 0.55},
-        {"min_age": 25, "max_age": 30, "depreciation_factor": 0.60},
-        {"min_age": 30, "max_age": 40, "depreciation_factor": 0.65},
-        {"min_age": 40, "max_age": 50, "depreciation_factor": 0.70},
-        {"min_age": 50, "max_age": 75, "depreciation_factor": 0.75},
-        {"min_age": 75, "max_age": 100, "depreciation_factor": 0.80},
-        {"min_age": 100, "max_age": 999, "depreciation_factor": 0.85}
-      ]
-    }
+  "condition_factors": {
+    "Excellent": 0.95,
+    "Good": 0.85,
+    "Average": 0.70,
+    "Fair": 0.50,
+    "Poor": 0.30
   },
-  "condition_based": {
-    "description": "Additional depreciation factors based on building condition",
-    "factors": {
-      "Excellent": 0.00,
-      "Good": 0.05,
-      "Average": 0.15,
-      "Fair": 0.25,
-      "Poor": 0.40
-    }
+  "age_factors": {
+    "0-5": 0.98,
+    "6-10": 0.90,
+    "11-20": 0.80,
+    "21-30": 0.70,
+    "31-40": 0.60,
+    "41-50": 0.50,
+    "51+": 0.40
   },
   "economic_obsolescence": {
-    "description": "Obsolescence factors based on economic or location factors",
-    "factors": {
-      "none": 0.00,
-      "minor": 0.05,
-      "moderate": 0.10,
-      "significant": 0.15,
-      "severe": 0.25
-    }
+    "None": 1.00,
+    "Minor": 0.95,
+    "Moderate": 0.90,
+    "Considerable": 0.80,
+    "Severe": 0.70
   },
   "functional_obsolescence": {
-    "description": "Obsolescence factors based on functional utility",
-    "factors": {
-      "none": 0.00,
-      "minor": 0.05,
-      "moderate": 0.10,
-      "significant": 0.20,
-      "severe": 0.30
-    }
+    "None": 1.00,
+    "Minor": 0.95,
+    "Moderate": 0.90,
+    "Considerable": 0.85,
+    "Severe": 0.75
   },
-  "meta": {
-    "version": "2025.1",
-    "source": "TerraFusionBuild Depreciation Tables",
-    "last_updated": "2025-02-15",
-    "effective_date": "2025-01-01",
-    "expiration_date": "2025-12-31",
-    "notes": "These tables conform to standard assessment practices. Age is calculated as (current year - year built)."
+  "special_factors": {
+    "Historic": 1.10,
+    "Energy Efficient": 1.05,
+    "ADA Compliant": 1.03,
+    "Green Certified": 1.08,
+    "Flood Zone": 0.90,
+    "Seismic Zone": 0.95
   }
 }

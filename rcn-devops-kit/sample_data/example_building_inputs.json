@@ -2,81 +2,89 @@
   {
     "use_type": "Residential",
     "construction_type": "Wood Frame",
-    "sqft": 1800,
+    "sqft": 2000,
     "year_built": 2010,
     "quality_class": "B",
-    "locality_index": 1.05,
     "condition": "Good",
-    "name": "Single Family Home"
-  },
-  {
-    "use_type": "Commercial",
-    "construction_type": "Steel Frame",
-    "sqft": 5000,
-    "year_built": 2015,
-    "quality_class": "A",
-    "locality_index": 1.15,
-    "condition": "Excellent",
-    "name": "Retail Store"
-  },
-  {
-    "use_type": "Industrial",
-    "construction_type": "Concrete",
-    "sqft": 12000,
-    "year_built": 2005,
-    "quality_class": "C+",
-    "locality_index": 0.95,
-    "condition": "Average",
-    "name": "Warehouse"
-  },
-  {
-    "use_type": "Agricultural",
-    "construction_type": "Wood Frame",
-    "sqft": 3600,
-    "year_built": 1995,
-    "quality_class": "D+",
-    "locality_index": 0.85,
-    "condition": "Fair",
-    "name": "Barn"
+    "locality_index": 1.05,
+    "description": "Single Family Home, 3 bedroom, 2 bathroom",
+    "location": "Urban residential neighborhood"
   },
   {
     "use_type": "Residential",
     "construction_type": "Masonry",
-    "sqft": 2400,
+    "sqft": 3500,
     "year_built": 2000,
-    "quality_class": "B+",
+    "quality_class": "A",
+    "condition": "Excellent",
+    "locality_index": 1.15,
+    "description": "Custom Brick Home, 4 bedroom, 3.5 bathroom",
+    "location": "Suburban estate area"
+  },
+  {
+    "use_type": "Commercial",
+    "construction_type": "Steel Frame",
+    "sqft": 10000,
+    "year_built": 2005,
+    "quality_class": "A",
+    "condition": "Excellent",
     "locality_index": 1.10,
-    "condition": "Good",
-    "name": "Brick House"
+    "description": "Office Building, 2 stories with elevator",
+    "location": "Downtown business district"
   },
   {
     "use_type": "Commercial",
     "construction_type": "Concrete",
-    "sqft": 15000,
-    "year_built": 1980,
-    "quality_class": "C",
-    "locality_index": 1.00,
-    "condition": "Fair",
-    "name": "Office Building"
+    "sqft": 25000,
+    "year_built": 1995,
+    "quality_class": "B+",
+    "condition": "Good",
+    "locality_index": 1.05,
+    "description": "Retail Building with storefront and storage",
+    "location": "Regional shopping center"
   },
   {
-    "use_type": "Residential",
+    "use_type": "Industrial",
+    "construction_type": "Steel Frame",
+    "sqft": 50000,
+    "year_built": 2008,
+    "quality_class": "B",
+    "condition": "Good",
+    "locality_index": 0.95,
+    "description": "Warehouse with office space and loading docks",
+    "location": "Industrial park"
+  },
+  {
+    "use_type": "Industrial",
+    "construction_type": "Concrete",
+    "sqft": 75000,
+    "year_built": 1990,
+    "quality_class": "C+",
+    "condition": "Average",
+    "locality_index": 0.90,
+    "description": "Manufacturing facility with heavy equipment installations",
+    "location": "Rural industrial zone"
+  },
+  {
+    "use_type": "Agricultural",
     "construction_type": "Wood Frame",
-    "sqft": 3500,
-    "year_built": 2020,
-    "quality_class": "A+",
-    "locality_index": 1.20,
+    "sqft": 5000,
+    "year_built": 2015,
+    "quality_class": "B",
     "condition": "Excellent",
-    "name": "Luxury Home"
+    "locality_index": 0.85,
+    "description": "Equipment storage barn with workshop",
+    "location": "Agricultural land outside city limits"
   },
   {
     "use_type": "Agricultural",
     "construction_type": "Steel Frame",
-    "sqft": 5000,
-    "year_built": 2010,
+    "sqft": 15000,
+    "year_built": 2000,
     "quality_class": "C",
-    "locality_index": 0.90,
-    "condition": "Average",
-    "name": "Equipment Storage"
+    "condition": "Good",
+    "locality_index": 0.80,
+    "description": "Livestock facility with feeding and handling areas",
+    "location": "Rural farm complex"
   }
 ]
