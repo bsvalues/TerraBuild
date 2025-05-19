@@ -1,73 +1,100 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "RCN Valuation Engine API",
-    "description": "API for calculating Replacement Cost New (RCN) values for property valuation",
+    "title": "TerraFusionBuild RCN Valuation Engine API",
+    "description": "API for calculating Replacement Cost New (RCN) values for property assessment and valuation purposes.",
     "version": "1.0.0",
     "contact": {
-      "name": "TerraBuild Support",
-      "email": "support@terrabuild.com",
-      "url": "https://terrabuild.com/support"
+      "name": "TerraFusionBuild Support",
+      "email": "support@terrafusionbuild.com",
+      "url": "https://terrafusionbuild.com/support"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://terrafusionbuild.com/license"
     }
   },
   "servers": [
     {
-      "url": "https://api.terrabuild.com/v1",
-      "description": "Production server"
-    },
-    {
-      "url": "https://staging-api.terrabuild.com/v1",
-      "description": "Staging server"
-    },
-    {
-      "url": "http://localhost:8000/v1",
+      "url": "http://localhost:8000",
       "description": "Local development server"
     }
   ],
   "paths": {
+    "/": {
+      "get": {
+        "summary": "API Information",
+        "description": "Returns information about the API including version and available endpoints.",
+        "operationId": "getApiInfo",
+        "responses": {
+          "200": {
+            "description": "API information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rcn/calculate": {
       "post": {
-        "summary": "Calculate RCN value",
-        "description": "Calculate the Replacement Cost New (RCN) value for a building based on its specifications",
+        "summary": "Calculate RCN Value",
+        "description": "Calculates the Replacement Cost New (RCN) value for a building based on its characteristics.",
         "operationId": "calculateRcn",
-        "tags": ["RCN"],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
         "requestBody": {
+          "description": "Building information for RCN calculation",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RCNInput"
               },
-              "example": {
-                "use_type": "Residential",
-                "construction_type": "Wood Frame",
-                "sqft": 2000,
-                "year_built": 2005,
-                "quality_class": "B",
-                "locality_index": 1.1,
-                "condition": "Average"
+              "examples": {
+                "residential": {
+                  "summary": "Residential Wood Frame Example",
+                  "value": {
+                    "use_type": "Residential",
+                    "construction_type": "Wood Frame",
+                    "sqft": 1800,
+                    "year_built": 2010,
+                    "quality_class": "B",
+                    "locality_index": 1.05,
+                    "condition": "Good"
+                  }
+                },
+                "commercial": {
+                  "summary": "Commercial Masonry Example",
+                  "value": {
+                    "use_type": "Commercial",
+                    "construction_type": "Masonry",
+                    "sqft": 5000,
+                    "year_built": 2000,
+                    "quality_class": "A",
+                    "locality_index": 1.15,
+                    "condition": "Average"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Successful calculation",
+            "description": "RCN calculation results",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RCNOutput"
                 },
                 "example": {
-                  "base_cost": 220000.0,
-                  "adjusted_rcn": 242000.0,
-                  "depreciated_rcn": 181500.0,
-                  "depreciation_pct": 25.0
+                  "base_cost": 198000.00,
+                  "adjusted_rcn": 207900.00,
+                  "depreciated_rcn": 166320.00,
+                  "depreciation_pct": 20.00
                 }
               }
             }
@@ -77,244 +104,39 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 },
                 "example": {
-                  "error": "Invalid parameters",
-                  "detail": "Parameter 'sqft' must be a positive number"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Unauthorized",
-                  "detail": "Invalid API key"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Server error",
-                  "detail": "An unexpected error occurred while processing your request"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/rcn/batch-calculate": {
-      "post": {
-        "summary": "Batch calculate RCN values",
-        "description": "Calculate RCN values for multiple buildings in a single request",
-        "operationId": "batchCalculateRcn",
-        "tags": ["RCN"],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RCNInput"
-                },
-                "maxItems": 100
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful batch calculation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RCNOutput"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Payload too large - exceeded maximum batch size",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Payload too large",
-                  "detail": "Batch requests are limited to 100 items"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/rcn/factors": {
-      "get": {
-        "summary": "Get cost factors",
-        "description": "Retrieve the current cost factors used in RCN calculations",
-        "operationId": "getCostFactors",
-        "tags": ["RCN"],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "region",
-            "in": "query",
-            "description": "Filter factors by region code",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "building_type",
-            "in": "query",
-            "description": "Filter factors by building type",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved cost factors",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "locality_factors": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
-                    },
-                    "quality_factors": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
-                    },
-                    "condition_factors": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
-                    },
-                    "base_rates": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
+                  "detail": [
+                    {
+                      "loc": ["body", "sqft"],
+                      "msg": "value is not a valid float",
+                      "type": "type_error.float"
                     }
-                  }
-                },
-                "example": {
-                  "locality_factors": {
-                    "WEST_BENTON": 1.05,
-                    "CENTRAL_BENTON": 1.0,
-                    "EAST_BENTON": 0.95
-                  },
-                  "quality_factors": {
-                    "A": 1.3,
-                    "B": 1.0,
-                    "C": 0.8,
-                    "D": 0.6,
-                    "E": 0.4
-                  },
-                  "condition_factors": {
-                    "Excellent": 1.0,
-                    "Good": 0.9,
-                    "Average": 0.75,
-                    "Fair": 0.6,
-                    "Poor": 0.4
-                  },
-                  "base_rates": {
-                    "Residential_WoodFrame": 110,
-                    "Residential_Masonry": 140,
-                    "Commercial_Office": 160,
-                    "Commercial_Retail": 120,
-                    "Industrial_Warehouse": 95
-                  }
+                  ]
                 }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Invalid API key",
+          "422": {
+            "description": "Validation error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "500": {
-            "description": "Server error",
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "An error occurred during calculation"
                 }
               }
             }
@@ -325,6 +147,50 @@
   },
   "components": {
     "schemas": {
+      "ApiInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "API name",
+            "example": "TerraFusionBuild RCN Valuation Engine"
+          },
+          "version": {
+            "type": "string",
+            "description": "API version",
+            "example": "1.0.0"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of the API",
+            "example": "API for calculating Replacement Cost New (RCN) values for property valuation"
+          },
+          "endpoints": {
+            "type": "array",
+            "description": "List of available API endpoints",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Endpoint path",
+                  "example": "/rcn/calculate"
+                },
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method",
+                  "example": "POST"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Endpoint description",
+                  "example": "Calculate RCN value for a building"
+                }
+              }
+            }
+          }
+        }
+      },
       "RCNInput": {
         "type": "object",
         "required": [
@@ -337,49 +203,51 @@
           "use_type": {
             "type": "string",
             "description": "Building use type",
-            "example": "Residential"
+            "example": "Residential",
+            "enum": ["Residential", "Commercial", "Industrial", "Agricultural"]
           },
           "construction_type": {
             "type": "string",
-            "description": "Construction method/materials",
-            "example": "Wood Frame"
+            "description": "Primary construction material/type",
+            "example": "Wood Frame",
+            "enum": ["Wood Frame", "Masonry", "Steel Frame", "Concrete"]
           },
           "sqft": {
             "type": "number",
-            "description": "Building size in square feet",
             "format": "float",
-            "minimum": 0,
-            "example": 2000
+            "description": "Total square footage of the building",
+            "example": 1800,
+            "minimum": 1
           },
           "year_built": {
             "type": "integer",
-            "description": "Year of construction",
+            "description": "Year the building was constructed",
+            "example": 2010,
             "minimum": 1800,
-            "maximum": 2100,
-            "example": 2005
+            "maximum": 2025
           },
           "quality_class": {
             "type": "string",
-            "description": "Quality class (A, B, C, D, E)",
-            "enum": ["A", "B", "C", "D", "E"],
-            "default": "B",
-            "example": "B"
+            "description": "Quality class rating of the building",
+            "example": "B",
+            "enum": ["A+", "A", "B+", "B", "C+", "C", "D+", "D", "E"],
+            "default": "B"
           },
           "locality_index": {
             "type": "number",
-            "description": "Regional cost adjustment factor",
             "format": "float",
+            "description": "Local cost multiplier for the area (1.0 = average)",
+            "example": 1.05,
             "minimum": 0.5,
             "maximum": 2.0,
-            "default": 1.0,
-            "example": 1.1
+            "default": 1.0
           },
           "condition": {
             "type": "string",
-            "description": "Building condition",
+            "description": "Current physical condition of the building",
+            "example": "Good",
             "enum": ["Excellent", "Good", "Average", "Fair", "Poor"],
-            "default": "Average",
-            "example": "Average"
+            "default": "Average"
           }
         }
       },
@@ -388,58 +256,73 @@
         "properties": {
           "base_cost": {
             "type": "number",
-            "description": "Base cost before adjustments",
             "format": "float",
-            "example": 220000.0
+            "description": "Base cost before adjustments ($/sqft × sqft)",
+            "example": 198000.00
           },
           "adjusted_rcn": {
             "type": "number",
-            "description": "Adjusted replacement cost new (with quality & locality)",
             "format": "float",
-            "example": 242000.0
+            "description": "Adjusted Replacement Cost New value after locality and quality adjustments",
+            "example": 207900.00
           },
           "depreciated_rcn": {
             "type": "number",
-            "description": "Cost after depreciation",
             "format": "float",
-            "example": 181500.0
+            "description": "Depreciated RCN value after applying physical, functional, and economic depreciation",
+            "example": 166320.00
           },
           "depreciation_pct": {
             "type": "number",
-            "description": "Total depreciation percentage applied",
             "format": "float",
-            "minimum": 0,
-            "maximum": 100,
-            "example": 25.0
+            "description": "Total depreciation percentage applied",
+            "example": 20.00
           }
-        },
-        "required": [
-          "base_cost",
-          "adjusted_rcn",
-          "depreciated_rcn",
-          "depreciation_pct"
-        ]
+        }
       },
-      "Error": {
+      "ErrorResponse": {
         "type": "object",
         "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error type"
-          },
           "detail": {
-            "type": "string",
-            "description": "Detailed error message"
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Error message"
+              },
+              {
+                "type": "array",
+                "description": "List of validation errors",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "loc": {
+                      "type": "array",
+                      "description": "Location of the error",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
+                      }
+                    },
+                    "msg": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    }
+                  }
+                }
+              }
+            ]
           }
-        },
-        "required": ["error"]
-      }
-    },
-    "securitySchemes": {
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-Key"
+        }
       }
     }
   }

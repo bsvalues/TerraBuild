@@ -1,92 +1,99 @@
 @echo off
 echo =====================================================
-echo TerraFusionBuild RCN Valuation Engine - Build EXE
+echo TerraFusionBuild RCN Valuation Engine - Build Executable
 echo =====================================================
 echo.
 
+setlocal
+
+:: Check if Python is installed
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Python is not installed or not in your PATH.
+    echo Please run install_deps.bat first.
+    pause
+    exit /b 1
+)
+
 :: Check if virtual environment exists
 if not exist venv (
-    echo Virtual environment not found. Please run install_deps.bat first.
+    echo Virtual environment not found.
+    echo Please run install_deps.bat first.
+    pause
+    exit /b 1
+)
+
+:: Check if API stub exists
+if not exist rcn_api_stub.py (
+    echo API stub file (rcn_api_stub.py) not found.
+    echo Please ensure all files are properly installed.
     pause
     exit /b 1
 )
 
 :: Activate virtual environment
+echo Activating virtual environment...
 call venv\Scripts\activate.bat
 
-:: Check if rcn_api_stub.py exists
-if not exist rcn_api_stub.py (
-    echo Error: rcn_api_stub.py not found.
-    echo This file is required to build the executable.
+:: Install PyInstaller if not already installed
+pip show pyinstaller >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Installing PyInstaller...
+    pip install pyinstaller
+    if %errorlevel% neq 0 (
+        echo Failed to install PyInstaller.
+        pause
+        exit /b 1
+    )
+)
+
+:: Create build directory if it doesn't exist
+if not exist build mkdir build
+
+:: Create dist directory if it doesn't exist
+if not exist dist mkdir dist
+
+echo Building executable with PyInstaller...
+echo This may take a few minutes...
+
+:: Build the executable
+pyinstaller --noconfirm --onefile --windowed ^
+    --add-data "sample_data;sample_data" ^
+    --add-data "html_ui;html_ui" ^
+    --hidden-import uvicorn.logging ^
+    --hidden-import uvicorn.loops ^
+    --hidden-import uvicorn.loops.auto ^
+    --hidden-import uvicorn.protocols ^
+    --hidden-import uvicorn.protocols.http ^
+    --hidden-import uvicorn.protocols.http.auto ^
+    --hidden-import uvicorn.protocols.websockets ^
+    --hidden-import uvicorn.protocols.websockets.auto ^
+    --hidden-import uvicorn.lifespan ^
+    --hidden-import uvicorn.lifespan.on ^
+    --name rcn_valuation_engine ^
+    rcn_api_stub.py
+
+if %errorlevel% neq 0 (
+    echo Failed to build executable.
     pause
     exit /b 1
 )
 
-echo Creating build directory...
-if not exist build mkdir build
-
-echo Creating PyInstaller spec file...
-echo # -*- mode: python -*- > rcn_server.spec
-echo block_cipher = None >> rcn_server.spec
-echo >> rcn_server.spec
-echo a = Analysis(['rcn_api_stub.py'], >> rcn_server.spec
-echo              pathex=['%CD%'], >> rcn_server.spec
-echo              binaries=[], >> rcn_server.spec
-echo              datas=[('.env', '.'), ('data', 'data')], >> rcn_server.spec
-echo              hiddenimports=['uvicorn.logging', 'uvicorn.protocols', 'uvicorn.lifespan', 'uvicorn.protocols.http.auto'], >> rcn_server.spec
-echo              hookspath=[], >> rcn_server.spec
-echo              runtime_hooks=[], >> rcn_server.spec
-echo              excludes=[], >> rcn_server.spec
-echo              win_no_prefer_redirects=False, >> rcn_server.spec
-echo              win_private_assemblies=False, >> rcn_server.spec
-echo              cipher=block_cipher, >> rcn_server.spec
-echo              noarchive=False) >> rcn_server.spec
-echo pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher) >> rcn_server.spec
-echo exe = EXE(pyz, >> rcn_server.spec
-echo           a.scripts, >> rcn_server.spec
-echo           a.binaries, >> rcn_server.spec
-echo           a.zipfiles, >> rcn_server.spec
-echo           a.datas, >> rcn_server.spec
-echo           [], >> rcn_server.spec
-echo           name='rcn_server', >> rcn_server.spec
-echo           debug=False, >> rcn_server.spec
-echo           bootloader_ignore_signals=False, >> rcn_server.spec
-echo           strip=False, >> rcn_server.spec
-echo           upx=True, >> rcn_server.spec
-echo           upx_exclude=[], >> rcn_server.spec
-echo           runtime_tmpdir=None, >> rcn_server.spec
-echo           console=True, >> rcn_server.spec
-echo           icon='') >> rcn_server.spec
-
-echo Creating startup script...
-echo @echo off > build\start_rcn_server.bat
-echo echo Starting RCN Valuation Engine... >> build\start_rcn_server.bat
-echo echo. >> build\start_rcn_server.bat
-echo echo Web API will be available at: http://127.0.0.1:8000 >> build\start_rcn_server.bat
-echo echo Press Ctrl+C to stop the server. >> build\start_rcn_server.bat
-echo echo. >> build\start_rcn_server.bat
-echo rcn_server.exe >> build\start_rcn_server.bat
-
-echo Building executable with PyInstaller...
-pyinstaller --clean --noconfirm rcn_server.spec
-
-echo.
-if %errorlevel% neq 0 (
-    echo Build failed.
-    pause
-    exit /b %errorlevel%
-)
-
-echo Copying additional files...
-copy .env.example build\dist\rcn_server\.env.example
-if not exist build\dist\rcn_server\data mkdir build\dist\rcn_server\data
-
 echo.
 echo Build completed successfully!
 echo.
-echo Executable is located at: %CD%\build\dist\rcn_server\rcn_server.exe
-echo Startup script is located at: %CD%\build\start_rcn_server.bat
+echo The executable is located at:
+echo   dist\rcn_valuation_engine.exe
 echo.
-echo To run the server, use start_rcn_server.bat in the build directory.
+echo This executable contains the RCN Valuation Engine API server
+echo and can be distributed to run on Windows systems without Python installed.
 echo.
+echo To run the executable:
+echo   1. Double-click on dist\rcn_valuation_engine.exe
+echo   2. Or run it from command line with: dist\rcn_valuation_engine.exe
+echo.
+echo Note: The executable uses the .env file from the same directory for configuration.
+echo If .env doesn't exist, default values will be used.
+echo.
+
 pause
