@@ -1,169 +1,91 @@
-# TerraFusionBuild RCN Valuation Engine
+# TerraFusionBuild RCN Valuation Engine DevOps Kit
 
-The **TerraFusionBuild RCN Valuation Engine** is a comprehensive solution for calculating Replacement Cost New (RCN) values for property assessment. This DevOps Kit provides everything needed to deploy, configure, and use the RCN calculation engine in county assessor environments.
-
-![TerraFusionBuild](https://www.terrafusionbuild.com/logo.png)
+The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine DevOps Kit provides a complete deployment solution for the property valuation engine used by county assessors. This kit includes everything needed to install, configure, and run the RCN calculator in various Windows environments.
 
 ## Overview
 
-This package is designed for county assessors and property valuation professionals who need a reliable, consistent method for calculating building replacement costs. The RCN Valuation Engine uses industry-standard valuation methodologies updated for 2025 and can be deployed in various IT environments.
+This DevOps kit allows county departments to deploy the RCN Valuation Engine through multiple methods:
 
-### Key Features
+1. **Direct Execution** - Run the server directly from a local folder
+2. **Windows Service** - Install as a background Windows service
+3. **Standalone Executable** - Create a portable executable file
+4. **Enterprise Deployment** - Package for distribution via Group Policy or SCCM
 
-- **Accurate Cost Calculations**: Uses up-to-date cost matrices for different building types and construction methods
-- **Flexible Deployment Options**: Run as a standalone application or Windows service
-- **User-Friendly Interface**: Simple web UI for performing calculations
-- **API Access**: RESTful API for integration with existing systems
-- **Comprehensive Documentation**: Detailed usage guides and API specifications
+## Components
 
-## System Requirements
+The kit includes the following components:
 
-- **Operating System**: Windows 10/11 or Windows Server 2016/2019/2022
-- **Prerequisites**:
-  - Python 3.8 or higher (automatically detected or can be specified)
-  - Network connectivity (for initial setup only)
-  - Administrative privileges (for service installation only)
+- **Core RCN Calculator** - The FastAPI implementation of the valuation engine
+- **User Interface** - Web-based HTML interface for easy calculations
+- **Sample Data** - Preconfigured cost profiles and depreciation tables
+- **Deployment Scripts** - Installation and service management utilities
+- **Documentation** - Installation and usage instructions
 
-## Quick Start Guide
+## Getting Started
 
-Follow these steps to get the RCN Valuation Engine up and running quickly:
+### System Requirements
 
-### 1. Install Dependencies
+- Windows 10/11 or Windows Server 2016/2019/2022
+- Python 3.8 or higher (for direct execution)
+- PowerShell 5.1 or higher (for deployment packaging)
+- Administrator privileges (for Windows service installation)
 
-Run the installer script to set up all required dependencies:
+### Installation Options
 
-```bat
-install_deps.bat
-```
+#### Option 1: Quick Start (Direct Execution)
 
-This script will:
-- Check for Python installation
-- Create a virtual environment
-- Install required packages
-- Set up sample data for testing
+1. Run `install_deps.bat` to install the required dependencies
+2. Run `start_rcn.bat` to start the RCN Valuation Engine
+3. Open a web browser and navigate to http://localhost:8000
 
-### 2. Start the Server
+#### Option 2: Windows Service Installation
 
-Launch the RCN Valuation Engine server:
+1. Run `install_deps.bat` to install the required dependencies
+2. Right-click on `windows_service/install_service.bat` and select "Run as administrator"
+3. The service will be installed and started automatically
+4. Open a web browser and navigate to http://localhost:8000
+5. To uninstall, run `windows_service/uninstall_service.bat` as administrator
 
-```bat
-start_rcn.bat
-```
+#### Option 3: Standalone Executable
 
-By default, the server runs on port 8000. To use a different port:
+1. Run `install_deps.bat` to install the required dependencies
+2. Run `build_exe.bat` to create a standalone executable
+3. The executable will be created as `TerraFusionRCN.exe` in the current directory
+4. Run the executable and access the web interface at http://localhost:8000
 
-```bat
-start_rcn.bat 8080
-```
+#### Option 4: Deployment Package for Distribution
 
-### 3. Access the Web Interface
+1. Run `create_deployment_package.bat` to create a ZIP file for distribution
+2. Deploy the ZIP file to target machines via USB drive, network share, or IT deployment tools
+3. Extract the ZIP file and follow the instructions in the included README.txt
 
-Open your web browser and navigate to:
+## Key Features
 
-```
-http://localhost:8000/ui
-```
+- **Multiple Building Types** - Support for Residential, Commercial, Industrial, and Agricultural properties
+- **Customizable Construction Types** - Wood Frame, Masonry, Steel Frame, and Concrete
+- **Quality Classifications** - Detailed quality class system (A+ through E)
+- **Condition-Based Depreciation** - Automatically calculate depreciation based on building condition
+- **Age Factors** - Adjust valuation based on the building's age
+- **Regional Adjustments** - Apply locality factors for regional cost variations
+- **Professional UI** - User-friendly web interface for easy data entry and results
+- **API Documentation** - Built-in API documentation for integration with other systems
 
-This will display the RCN calculator where you can enter building specifications and calculate replacement costs.
+## Sample Data
 
-## Windows Service Installation
+The kit includes sample data files that demonstrate the functionality:
 
-For persistent deployment, you can install the engine as a Windows service:
-
-1. Open Command Prompt as Administrator
-2. Run:
-   ```bat
-   windows_service\install_service.bat
-   ```
-
-This will install and start the "TerraFusionRCN" service. The service will automatically start when Windows boots.
-
-To uninstall the service:
-```bat
-windows_service\uninstall_service.bat
-```
-
-## Building a Standalone Executable
-
-For easier distribution or deployment to systems without Python, you can create a standalone executable:
-
-```bat
-build_exe.bat
-```
-
-The executable will be created in the `dist` folder.
-
-## Creating a Deployment Package
-
-To create a complete deployment package for distribution:
-
-```bat
-create_deployment_package.bat
-```
-
-This will create a ZIP file in the `deployment` folder containing all necessary files for installation on another system.
-
-## API Usage
-
-### API Documentation
-
-The API documentation is available at:
-
-```
-http://localhost:8000/docs
-```
-
-This interactive documentation allows you to try out API endpoints directly from the browser.
-
-### Sample API Request
-
-Calculate an RCN value via API:
-
-```bash
-curl -X POST "http://localhost:8000/rcn/calculate" -H "Content-Type: application/json" -d '{
-  "use_type": "Residential",
-  "construction_type": "Wood Frame",
-  "sqft": 1800,
-  "year_built": 2010,
-  "quality_class": "B",
-  "locality_index": 1.05,
-  "condition": "Good"
-}'
-```
+- **Cost Profiles** - Base rates for different building types and construction methods
+- **Depreciation Tables** - Factors for condition and age-based depreciation
+- **Example Buildings** - Sample building inputs for testing the calculation engine
 
 ## Customization
 
-### Using Your Own Cost Data
+County assessors can customize the valuation engine by:
 
-To use custom cost matrices:
-1. Create JSON files following the format in the `sample_data` directory
-2. Replace the existing sample data files
+1. Modifying the `sample_data/cost_profiles.json` file to adjust base rates
+2. Updating the `sample_data/depreciation_tables.json` file for local depreciation standards
+3. Adding or modifying building types, construction methods, and quality factors
 
-## Troubleshooting
+## Support
 
-### Common Issues
-
-1. **Server won't start**: Ensure Python is correctly installed and in your PATH
-2. **Service fails to install**: Make sure you're running as Administrator
-3. **Can't access web UI**: Check that the server is running and confirm the port is not blocked
-
-### Log Files
-
-Log files are stored in the `logs` directory and can help diagnose issues:
-- Server logs: `logs/server.log`
-- Service logs: `logs/service_stdout.log` and `logs/service_stderr.log`
-
-## Support and Resources
-
-For additional assistance:
-- Documentation: See the `docs` folder for detailed guides
-- Email Support: support@terrafusionbuild.com
-- Website: [www.terrafusionbuild.com](https://www.terrafusionbuild.com)
-
-## License
-
-This software is licensed under a proprietary license. See LICENSE.txt for details.
-
----
-
-© 2025 TerraFusionBuild. All rights reserved.
+For technical support or questions about the RCN Valuation Engine, please contact your TerraFusionBuild representative.

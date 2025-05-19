@@ -1,80 +1,85 @@
 @echo off
-REM ======================================================================
-REM TerraFusionBuild RCN Valuation Engine - Executable Builder
-REM
-REM This script builds a standalone executable of the RCN Valuation Engine.
-REM ======================================================================
-
-echo.
+echo ===================================================================
 echo TerraFusionBuild RCN Valuation Engine - Executable Builder
-echo =======================================================
+echo ===================================================================
 echo.
 
-REM Check if Python is installed
-python --version >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo Python not found. Please install Python 3.8 or higher.
-    echo You can download it from https://www.python.org/downloads/
-    echo.
-    echo After installing Python, run install_deps.bat first.
+REM Check if Python virtual environment exists
+if not exist venv (
+    echo Python virtual environment not found.
+    echo Please run install_deps.bat first to install the dependencies.
+    pause
     exit /b 1
 )
 
-REM Check if virtual environment exists
-if not exist venv (
-    echo Virtual environment not found. Running dependency installer...
-    call install_deps.bat
-    if %ERRORLEVEL% NEQ 0 (
-        echo Error installing dependencies. Please check the logs.
-        exit /b 1
-    )
-)
-
-REM Create dist directory if it doesn't exist
-if not exist dist mkdir dist
-
 REM Activate virtual environment
-echo Activating virtual environment...
+echo Activating Python virtual environment...
 call venv\Scripts\activate.bat
 
-REM Install PyInstaller if not already installed
+REM Check if PyInstaller is installed
 pip show pyinstaller >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo Installing PyInstaller...
     pip install pyinstaller
+    if %ERRORLEVEL% NEQ 0 (
+        echo Failed to install PyInstaller. Please check your internet connection.
+        pause
+        exit /b 1
+    )
 )
 
-REM Build the executable
-echo Building standalone executable...
-echo This may take a few minutes...
-
-pyinstaller --noconfirm --onefile ^
-    --add-data "sample_data;sample_data" ^
-    --add-data "html_ui;html_ui" ^
-    --hidden-import uvicorn.logging ^
-    --hidden-import uvicorn.lifespan ^
-    --hidden-import uvicorn.protocols ^
-    --hidden-import fastapi ^
-    --name TerraFusionRCN ^
-    rcn_api_stub.py
-
-REM Copy the executable to dist directory
-if exist dist\TerraFusionRCN.exe (
-    echo Executable built successfully!
-    echo.
-    echo The executable is available at: dist\TerraFusionRCN.exe
-    echo.
-    echo Usage:
-    echo   TerraFusionRCN.exe [--port PORT]
-    echo.
-    echo Example:
-    echo   TerraFusionRCN.exe --port 8080
-) else (
-    echo Failed to build executable. Please check the logs.
+REM Check for required files
+if not exist rcn_api_stub.py (
+    echo Error: rcn_api_stub.py file not found.
+    echo Please make sure all files are in the correct location.
+    pause
     exit /b 1
 )
 
-REM Deactivate virtual environment
-call venv\Scripts\deactivate.bat
+REM Create build directory
+if not exist build mkdir build
 
-exit /b 0
+REM Building executable
+echo.
+echo Building standalone executable for RCN Valuation Engine...
+echo This may take a few minutes...
+echo.
+
+pyinstaller --noconfirm --onefile --console ^
+    --add-data "sample_data;sample_data" ^
+    --add-data "html_ui;html_ui" ^
+    --name "TerraFusionRCN" ^
+    --icon=windows_service\app_icon.ico ^
+    rcn_api_stub.py
+
+REM Check if build was successful
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Error: Failed to build executable.
+    pause
+    exit /b 1
+)
+
+REM Copy executable to main directory
+echo Moving executable to main directory...
+copy /Y dist\TerraFusionRCN.exe TerraFusionRCN.exe >nul
+
+REM Cleanup
+echo Cleaning up build files...
+rmdir /S /Q build >nul 2>&1
+rmdir /S /Q dist >nul 2>&1
+del /Q TerraFusionRCN.spec >nul 2>&1
+
+echo.
+echo ===================================================================
+echo Build complete!
+echo ===================================================================
+echo.
+echo The standalone executable TerraFusionRCN.exe has been created.
+echo You can now run this executable on any Windows system without 
+echo needing to install Python or dependencies.
+echo.
+echo NOTE: The executable still needs access to the sample_data and 
+echo       html_ui folders, which are included in the executable.
+echo.
+pause

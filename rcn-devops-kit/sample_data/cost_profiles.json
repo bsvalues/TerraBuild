@@ -1,128 +1,261 @@
 {
-  "building_types": {
-    "Residential": {
-      "base_rates": {
-        "Wood Frame": 125.00,
-        "Masonry": 150.00,
-        "Steel Frame": 175.00,
-        "Concrete": 180.00
-      },
-      "quality_factors": {
-        "A+": 1.40,
-        "A": 1.30,
-        "B+": 1.20,
-        "B": 1.10,
-        "C+": 1.00,
-        "C": 0.90,
-        "D+": 0.80,
-        "D": 0.70,
-        "E": 0.60
-      },
-      "description": "Single-family homes, multi-family dwellings, condominiums, and apartments"
+  "metadata": {
+    "version": "1.0.0",
+    "year": 2025,
+    "county": "Sample",
+    "description": "Sample cost profiles for RCN calculation demonstration"
+  },
+  "building_types": [
+    {
+      "code": "RES",
+      "name": "Residential",
+      "description": "Single-family and multi-family residential buildings"
     },
-    "Commercial": {
-      "base_rates": {
-        "Wood Frame": 145.00,
-        "Masonry": 170.00,
-        "Steel Frame": 185.00,
-        "Concrete": 200.00
-      },
-      "quality_factors": {
-        "A+": 1.45,
-        "A": 1.35,
-        "B+": 1.25,
-        "B": 1.15,
-        "C+": 1.05,
-        "C": 0.95,
-        "D+": 0.85,
-        "D": 0.75,
-        "E": 0.65
-      },
-      "description": "Office buildings, retail stores, restaurants, and service establishments"
+    {
+      "code": "COM",
+      "name": "Commercial",
+      "description": "Office, retail, and other commercial buildings"
     },
-    "Industrial": {
-      "base_rates": {
-        "Wood Frame": 120.00,
-        "Masonry": 140.00,
-        "Steel Frame": 160.00,
-        "Concrete": 170.00
-      },
-      "quality_factors": {
-        "A+": 1.40,
-        "A": 1.30,
-        "B+": 1.20,
-        "B": 1.10,
-        "C+": 1.00,
-        "C": 0.90,
-        "D+": 0.80,
-        "D": 0.70,
-        "E": 0.60
-      },
-      "description": "Manufacturing facilities, warehouses, distribution centers, and processing plants"
+    {
+      "code": "IND",
+      "name": "Industrial",
+      "description": "Manufacturing, warehouse, and industrial facilities"
     },
-    "Agricultural": {
-      "base_rates": {
-        "Wood Frame": 90.00,
-        "Masonry": 110.00,
-        "Steel Frame": 130.00,
-        "Concrete": 140.00
-      },
-      "quality_factors": {
-        "A+": 1.35,
-        "A": 1.25,
-        "B+": 1.15,
-        "B": 1.05,
-        "C+": 0.95,
-        "C": 0.85,
-        "D+": 0.75,
-        "D": 0.65,
-        "E": 0.55
-      },
-      "description": "Barns, equipment storage, livestock facilities, and agricultural processing buildings"
+    {
+      "code": "AGR",
+      "name": "Agricultural",
+      "description": "Farm buildings, barns, and agricultural structures"
     }
-  },
-  "complexity_factors": {
-    "standard": 1.0,
-    "custom_design": 1.10,
-    "historic_features": 1.25,
-    "multiple_stories": 1.15,
-    "complex_rooflines": 1.12,
-    "specialized_systems": 1.20
-  },
-  "size_adjustment_factors": {
-    "very_small": {
-      "range": [0, 1000],
-      "factor": 1.20
+  ],
+  "construction_types": [
+    {
+      "code": "WF",
+      "name": "Wood Frame",
+      "description": "Traditional wood frame construction"
     },
-    "small": {
-      "range": [1001, 2500],
-      "factor": 1.10
+    {
+      "code": "MS",
+      "name": "Masonry",
+      "description": "Brick, block, or stone construction"
     },
-    "medium": {
-      "range": [2501, 5000],
-      "factor": 1.00
+    {
+      "code": "SF",
+      "name": "Steel Frame",
+      "description": "Steel-framed construction"
     },
-    "large": {
-      "range": [5001, 10000],
-      "factor": 0.95
-    },
-    "very_large": {
-      "range": [10001, 50000],
-      "factor": 0.90
-    },
-    "mega": {
-      "range": [50001, 1000000],
-      "factor": 0.85
+    {
+      "code": "CC",
+      "name": "Concrete",
+      "description": "Reinforced concrete construction"
     }
-  },
-  "region_factors": {
-    "rural": 0.90,
-    "suburban": 1.00,
-    "urban": 1.15,
-    "metropolitan": 1.25
-  },
-  "year_adjustment": {
-    "base_year": 2025,
-    "annual_inflation_rate": 0.03
-  }
+  ],
+  "quality_classes": [
+    {"code": "A+", "name": "Premium Plus", "multiplier": 1.45},
+    {"code": "A", "name": "Premium", "multiplier": 1.30},
+    {"code": "B+", "name": "Excellent Plus", "multiplier": 1.20},
+    {"code": "B", "name": "Excellent", "multiplier": 1.10},
+    {"code": "C+", "name": "Good Plus", "multiplier": 1.05},
+    {"code": "C", "name": "Good", "multiplier": 1.00},
+    {"code": "D+", "name": "Average Plus", "multiplier": 0.95},
+    {"code": "D", "name": "Average", "multiplier": 0.90},
+    {"code": "E+", "name": "Fair Plus", "multiplier": 0.85},
+    {"code": "E", "name": "Fair", "multiplier": 0.80}
+  ],
+  "region_factors": [
+    {"code": "NW", "name": "Northwest", "factor": 1.15},
+    {"code": "NE", "name": "Northeast", "factor": 1.10},
+    {"code": "CEN", "name": "Central", "factor": 1.00},
+    {"code": "SW", "name": "Southwest", "factor": 0.95},
+    {"code": "SE", "name": "Southeast", "factor": 0.90}
+  ],
+  "base_rates": [
+    {
+      "building_type": "RES",
+      "construction_type": "WF",
+      "base_rate": 120.50,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "RES",
+      "construction_type": "MS",
+      "base_rate": 135.75,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "RES",
+      "construction_type": "SF",
+      "base_rate": 145.00,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "RES",
+      "construction_type": "CC",
+      "base_rate": 160.25,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "COM",
+      "construction_type": "WF",
+      "base_rate": 135.00,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "COM",
+      "construction_type": "MS",
+      "base_rate": 150.50,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "COM",
+      "construction_type": "SF",
+      "base_rate": 165.25,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "COM",
+      "construction_type": "CC",
+      "base_rate": 180.00,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "IND",
+      "construction_type": "WF",
+      "base_rate": 85.50,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "IND",
+      "construction_type": "MS",
+      "base_rate": 95.75,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "IND",
+      "construction_type": "SF",
+      "base_rate": 110.25,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "IND",
+      "construction_type": "CC",
+      "base_rate": 125.50,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "AGR",
+      "construction_type": "WF",
+      "base_rate": 65.25,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "AGR",
+      "construction_type": "MS",
+      "base_rate": 80.00,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "AGR",
+      "construction_type": "SF",
+      "base_rate": 90.50,
+      "unit": "sqft"
+    },
+    {
+      "building_type": "AGR",
+      "construction_type": "CC",
+      "base_rate": 105.25,
+      "unit": "sqft"
+    }
+  ],
+  "feature_adjustments": [
+    {
+      "feature": "finished_basement",
+      "building_type": "RES",
+      "adjustment_factor": 0.65,
+      "description": "Finished basement area"
+    },
+    {
+      "feature": "unfinished_basement",
+      "building_type": "RES",
+      "adjustment_factor": 0.40,
+      "description": "Unfinished basement area"
+    },
+    {
+      "feature": "attached_garage",
+      "building_type": "RES",
+      "adjustment_factor": 0.55,
+      "description": "Attached garage area"
+    },
+    {
+      "feature": "detached_garage",
+      "building_type": "RES",
+      "adjustment_factor": 0.45,
+      "description": "Detached garage area"
+    },
+    {
+      "feature": "covered_porch",
+      "building_type": "RES",
+      "adjustment_factor": 0.35,
+      "description": "Covered porch area"
+    },
+    {
+      "feature": "open_porch",
+      "building_type": "RES",
+      "adjustment_factor": 0.25,
+      "description": "Open porch or deck area"
+    },
+    {
+      "feature": "elevator",
+      "building_type": "COM",
+      "adjustment_factor": 1.15,
+      "description": "Elevator (per floor)"
+    },
+    {
+      "feature": "hvac_standard",
+      "building_type": "COM",
+      "adjustment_factor": 1.05,
+      "description": "Standard HVAC systems"
+    },
+    {
+      "feature": "hvac_premium",
+      "building_type": "COM",
+      "adjustment_factor": 1.15,
+      "description": "Premium HVAC systems"
+    },
+    {
+      "feature": "sprinkler_system",
+      "building_type": "COM",
+      "adjustment_factor": 1.07,
+      "description": "Fire sprinkler system"
+    },
+    {
+      "feature": "dock_door",
+      "building_type": "IND",
+      "adjustment_factor": 1.03,
+      "description": "Loading dock door (per door)"
+    },
+    {
+      "feature": "crane_system",
+      "building_type": "IND",
+      "adjustment_factor": 1.10,
+      "description": "Overhead crane system"
+    },
+    {
+      "feature": "reinforced_floor",
+      "building_type": "IND",
+      "adjustment_factor": 1.08,
+      "description": "Reinforced concrete floor"
+    },
+    {
+      "feature": "climate_control",
+      "building_type": "AGR",
+      "adjustment_factor": 1.25,
+      "description": "Climate control systems"
+    },
+    {
+      "feature": "grain_storage",
+      "building_type": "AGR",
+      "adjustment_factor": 1.15,
+      "description": "Grain storage systems"
+    }
+  ]
 }
