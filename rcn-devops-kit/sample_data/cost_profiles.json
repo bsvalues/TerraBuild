@@ -1,234 +1,128 @@
 {
-  "Residential": {
-    "Wood Frame": {
-      "base_rate": 125.0,
+  "building_types": {
+    "Residential": {
+      "base_rates": {
+        "Wood Frame": 125.00,
+        "Masonry": 150.00,
+        "Steel Frame": 175.00,
+        "Concrete": 180.00
+      },
       "quality_factors": {
-        "A+": 1.5,
-        "A": 1.3,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+        "A+": 1.40,
+        "A": 1.30,
+        "B+": 1.20,
+        "B": 1.10,
+        "C+": 1.00,
+        "C": 0.90,
+        "D+": 0.80,
+        "D": 0.70,
+        "E": 0.60
+      },
+      "description": "Single-family homes, multi-family dwellings, condominiums, and apartments"
     },
-    "Masonry": {
-      "base_rate": 145.0,
+    "Commercial": {
+      "base_rates": {
+        "Wood Frame": 145.00,
+        "Masonry": 170.00,
+        "Steel Frame": 185.00,
+        "Concrete": 200.00
+      },
       "quality_factors": {
-        "A+": 1.5,
-        "A": 1.3,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+        "A+": 1.45,
+        "A": 1.35,
+        "B+": 1.25,
+        "B": 1.15,
+        "C+": 1.05,
+        "C": 0.95,
+        "D+": 0.85,
+        "D": 0.75,
+        "E": 0.65
+      },
+      "description": "Office buildings, retail stores, restaurants, and service establishments"
     },
-    "Steel Frame": {
-      "base_rate": 155.0,
+    "Industrial": {
+      "base_rates": {
+        "Wood Frame": 120.00,
+        "Masonry": 140.00,
+        "Steel Frame": 160.00,
+        "Concrete": 170.00
+      },
       "quality_factors": {
-        "A+": 1.5,
-        "A": 1.3,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+        "A+": 1.40,
+        "A": 1.30,
+        "B+": 1.20,
+        "B": 1.10,
+        "C+": 1.00,
+        "C": 0.90,
+        "D+": 0.80,
+        "D": 0.70,
+        "E": 0.60
+      },
+      "description": "Manufacturing facilities, warehouses, distribution centers, and processing plants"
     },
-    "Concrete": {
-      "base_rate": 165.0,
+    "Agricultural": {
+      "base_rates": {
+        "Wood Frame": 90.00,
+        "Masonry": 110.00,
+        "Steel Frame": 130.00,
+        "Concrete": 140.00
+      },
       "quality_factors": {
-        "A+": 1.5,
-        "A": 1.3,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+        "A+": 1.35,
+        "A": 1.25,
+        "B+": 1.15,
+        "B": 1.05,
+        "C+": 0.95,
+        "C": 0.85,
+        "D+": 0.75,
+        "D": 0.65,
+        "E": 0.55
+      },
+      "description": "Barns, equipment storage, livestock facilities, and agricultural processing buildings"
     }
   },
-  "Commercial": {
-    "Wood Frame": {
-      "base_rate": 135.0,
-      "quality_factors": {
-        "A+": 1.6,
-        "A": 1.4,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+  "complexity_factors": {
+    "standard": 1.0,
+    "custom_design": 1.10,
+    "historic_features": 1.25,
+    "multiple_stories": 1.15,
+    "complex_rooflines": 1.12,
+    "specialized_systems": 1.20
+  },
+  "size_adjustment_factors": {
+    "very_small": {
+      "range": [0, 1000],
+      "factor": 1.20
     },
-    "Masonry": {
-      "base_rate": 165.0,
-      "quality_factors": {
-        "A+": 1.6,
-        "A": 1.4,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+    "small": {
+      "range": [1001, 2500],
+      "factor": 1.10
     },
-    "Steel Frame": {
-      "base_rate": 175.0,
-      "quality_factors": {
-        "A+": 1.6,
-        "A": 1.4,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+    "medium": {
+      "range": [2501, 5000],
+      "factor": 1.00
     },
-    "Concrete": {
-      "base_rate": 195.0,
-      "quality_factors": {
-        "A+": 1.6,
-        "A": 1.4,
-        "B+": 1.2,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
+    "large": {
+      "range": [5001, 10000],
+      "factor": 0.95
+    },
+    "very_large": {
+      "range": [10001, 50000],
+      "factor": 0.90
+    },
+    "mega": {
+      "range": [50001, 1000000],
+      "factor": 0.85
     }
   },
-  "Industrial": {
-    "Wood Frame": {
-      "base_rate": 115.0,
-      "quality_factors": {
-        "A+": 1.4,
-        "A": 1.3,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Masonry": {
-      "base_rate": 135.0,
-      "quality_factors": {
-        "A+": 1.4,
-        "A": 1.3,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Steel Frame": {
-      "base_rate": 155.0,
-      "quality_factors": {
-        "A+": 1.4,
-        "A": 1.3,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Concrete": {
-      "base_rate": 185.0,
-      "quality_factors": {
-        "A+": 1.4,
-        "A": 1.3,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    }
+  "region_factors": {
+    "rural": 0.90,
+    "suburban": 1.00,
+    "urban": 1.15,
+    "metropolitan": 1.25
   },
-  "Agricultural": {
-    "Wood Frame": {
-      "base_rate": 85.0,
-      "quality_factors": {
-        "A+": 1.3,
-        "A": 1.2,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Masonry": {
-      "base_rate": 95.0,
-      "quality_factors": {
-        "A+": 1.3,
-        "A": 1.2,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Steel Frame": {
-      "base_rate": 95.0,
-      "quality_factors": {
-        "A+": 1.3,
-        "A": 1.2,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    },
-    "Concrete": {
-      "base_rate": 115.0,
-      "quality_factors": {
-        "A+": 1.3,
-        "A": 1.2,
-        "B+": 1.1,
-        "B": 1.0,
-        "C+": 0.9,
-        "C": 0.8,
-        "D+": 0.7,
-        "D": 0.6,
-        "E": 0.5
-      }
-    }
+  "year_adjustment": {
+    "base_year": 2025,
+    "annual_inflation_rate": 0.03
   }
 }

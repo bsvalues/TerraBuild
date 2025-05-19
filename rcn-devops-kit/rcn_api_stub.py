@@ -1,41 +1,41 @@
 #!/usr/bin/env python3
 """
-TerraFusionBuild RCN Valuation Engine API
+TerraFusionBuild RCN (Replacement Cost New) Valuation Engine API
 
-This module implements a FastAPI-based API for calculating Replacement Cost New (RCN)
-values for property assessment. It provides a simple interface for county assessors
-to calculate building costs based on various parameters.
+This FastAPI implementation provides endpoints for calculating property replacement costs
+based on building characteristics, materials, and quality factors. It serves as the core
+of the RCN Valuation Engine for county assessors.
 
 Usage:
-    python rcn_api_stub.py [--port PORT]
-
-Example:
-    python rcn_api_stub.py --port 8080
+  python rcn_api_stub.py
 """
 
-import argparse
 import json
 import os
-import sys
-from datetime import datetime
-from pathlib import Path
+import math
+import logging
+import datetime
 from typing import Dict, List, Optional, Union, Any
-
-import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from pydantic import BaseModel, Field, validator
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
-# Define the version
-VERSION = "1.0.0"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger("rcn_valuation_engine")
 
-# Create the application
+# Create FastAPI application
 app = FastAPI(
-    title="TerraFusionBuild RCN Valuation Engine API",
-    description="API for calculating Replacement Cost New (RCN) values for property assessment",
-    version=VERSION,
+    title="TerraFusionBuild RCN Valuation Engine",
+    description="API for calculating property Replacement Cost New (RCN) values based on building characteristics",
+    version="1.0.0",
 )
 
 # Add CORS middleware
@@ -47,541 +47,348 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Data models
-class RCNRequest(BaseModel):
-    """Request model for RCN calculation"""
+# Define data models
+class BuildingInput(BaseModel):
+    """Input data model for building valuation requests"""
     use_type: str = Field(..., description="Building use type (Residential, Commercial, Industrial, Agricultural)")
-    construction_type: str = Field(..., description="Construction type (Wood Frame, Masonry, Steel Frame, Concrete)")
-    sqft: int = Field(..., description="Building square footage")
+    construction_type: str = Field(..., description="Type of construction (Wood Frame, Masonry, Steel Frame, Concrete)")
+    sqft: int = Field(..., gt=0, description="Building square footage")
     year_built: int = Field(..., description="Year the building was constructed")
-    quality_class: str = Field(..., description="Quality class of construction (A+, A, B+, B, C+, C, D+, D, E)")
+    quality_class: str = Field(..., description="Quality class (A+, A, B+, B, C+, C, D+, D, E)")
     condition: str = Field(..., description="Building condition (Excellent, Good, Average, Fair, Poor)")
-    locality_index: Optional[float] = Field(1.0, description="Local adjustment factor")
+    locality_index: float = Field(1.0, gt=0, description="Regional cost modifier (default: 1.0)")
+    description: Optional[str] = Field(None, description="Optional building description")
+    location: Optional[str] = Field(None, description="Optional location description")
+    
+    @validator('use_type')
+    def validate_use_type(cls, v):
+        valid_types = ["Residential", "Commercial", "Industrial", "Agricultural"]
+        if v not in valid_types:
+            raise ValueError(f"use_type must be one of {valid_types}")
+        return v
+    
+    @validator('construction_type')
+    def validate_construction_type(cls, v):
+        valid_types = ["Wood Frame", "Masonry", "Steel Frame", "Concrete"]
+        if v not in valid_types:
+            raise ValueError(f"construction_type must be one of {valid_types}")
+        return v
+    
+    @validator('quality_class')
+    def validate_quality_class(cls, v):
+        valid_classes = ["A+", "A", "B+", "B", "C+", "C", "D+", "D", "E"]
+        if v not in valid_classes:
+            raise ValueError(f"quality_class must be one of {valid_classes}")
+        return v
+    
+    @validator('condition')
+    def validate_condition(cls, v):
+        valid_conditions = ["Excellent", "Good", "Average", "Fair", "Poor"]
+        if v not in valid_conditions:
+            raise ValueError(f"condition must be one of {valid_conditions}")
+        return v
 
-class RCNResponse(BaseModel):
-    """Response model for RCN calculation"""
-    rcn: float = Field(..., description="Replacement Cost New in USD")
-    depreciated_cost: float = Field(..., description="Depreciated cost in USD")
-    details: Optional[Dict[str, Any]] = Field(None, description="Detailed calculation factors")
+class CalculationResult(BaseModel):
+    """Result data model for RCN calculation responses"""
+    rcn: float = Field(..., description="Replacement Cost New value")
+    depreciated_cost: float = Field(..., description="Depreciated cost after applying factors")
+    effective_age: Optional[int] = Field(None, description="Effective age of the building")
+    remaining_life: Optional[int] = Field(None, description="Estimated remaining life")
+    details: Optional[Dict[str, Any]] = Field(None, description="Detailed calculation breakdown")
 
-# Load sample data
-def load_sample_data():
-    """Load sample data from JSON files"""
-    data = {
-        "cost_profiles": {},
-        "depreciation_tables": {},
-        "example_buildings": []
+# Data paths
+SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_data")
+COST_PROFILES_PATH = os.path.join(SAMPLE_DATA_DIR, "cost_profiles.json")
+DEPRECIATION_TABLES_PATH = os.path.join(SAMPLE_DATA_DIR, "depreciation_tables.json")
+EXAMPLE_BUILDINGS_PATH = os.path.join(SAMPLE_DATA_DIR, "example_building_inputs.json")
+HTML_UI_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "html_ui")
+
+# Check if sample data exists, create directories if not
+os.makedirs(SAMPLE_DATA_DIR, exist_ok=True)
+os.makedirs(HTML_UI_DIR, exist_ok=True)
+
+# Load or create cost profiles
+try:
+    with open(COST_PROFILES_PATH, 'r') as f:
+        cost_profiles = json.load(f)
+        logger.info(f"Loaded cost profiles from {COST_PROFILES_PATH}")
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    logger.error(f"Error loading cost profiles: {e}")
+    # Default cost profiles if file doesn't exist
+    cost_profiles = {"building_types": {}}
+    logger.warning("Using default cost profiles")
+
+# Load or create depreciation tables
+try:
+    with open(DEPRECIATION_TABLES_PATH, 'r') as f:
+        depreciation_tables = json.load(f)
+        logger.info(f"Loaded depreciation tables from {DEPRECIATION_TABLES_PATH}")
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    logger.error(f"Error loading depreciation tables: {e}")
+    # Default depreciation tables if file doesn't exist
+    depreciation_tables = {
+        "condition_factors": {
+            "Excellent": 0.95,
+            "Good": 0.85,
+            "Average": 0.70,
+            "Fair": 0.50,
+            "Poor": 0.30
+        },
+        "age_factors": {}
     }
-    
-    # Get the directory where this script is located
-    script_dir = Path(__file__).resolve().parent
-    
-    # Define paths to sample data files
-    cost_profiles_path = script_dir / "sample_data" / "cost_profiles.json"
-    depreciation_tables_path = script_dir / "sample_data" / "depreciation_tables.json"
-    example_buildings_path = script_dir / "sample_data" / "example_building_inputs.json"
-    
-    # Load cost profiles
-    if cost_profiles_path.exists():
-        with open(cost_profiles_path, "r") as f:
-            data["cost_profiles"] = json.load(f)
-    else:
-        # Default cost profiles if file doesn't exist
-        data["cost_profiles"] = {
-            "Residential": {
-                "Wood Frame": {"base_rate": 125.0, "quality_factors": {"A+": 1.5, "A": 1.3, "B+": 1.2, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}},
-                "Masonry": {"base_rate": 145.0, "quality_factors": {"A+": 1.5, "A": 1.3, "B+": 1.2, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}}
-            },
-            "Commercial": {
-                "Steel Frame": {"base_rate": 175.0, "quality_factors": {"A+": 1.6, "A": 1.4, "B+": 1.2, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}},
-                "Concrete": {"base_rate": 195.0, "quality_factors": {"A+": 1.6, "A": 1.4, "B+": 1.2, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}}
-            },
-            "Industrial": {
-                "Steel Frame": {"base_rate": 155.0, "quality_factors": {"A+": 1.4, "A": 1.3, "B+": 1.1, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}},
-                "Concrete": {"base_rate": 185.0, "quality_factors": {"A+": 1.4, "A": 1.3, "B+": 1.1, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}}
-            },
-            "Agricultural": {
-                "Wood Frame": {"base_rate": 85.0, "quality_factors": {"A+": 1.3, "A": 1.2, "B+": 1.1, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}},
-                "Steel Frame": {"base_rate": 95.0, "quality_factors": {"A+": 1.3, "A": 1.2, "B+": 1.1, "B": 1.0, "C+": 0.9, "C": 0.8, "D+": 0.7, "D": 0.6, "E": 0.5}}
-            }
-        }
-    
-    # Load depreciation tables
-    if depreciation_tables_path.exists():
-        with open(depreciation_tables_path, "r") as f:
-            data["depreciation_tables"] = json.load(f)
-    else:
-        # Default depreciation tables if file doesn't exist
-        data["depreciation_tables"] = {
-            "condition_factors": {
-                "Excellent": 0.95,
-                "Good": 0.85,
-                "Average": 0.70,
-                "Fair": 0.50,
-                "Poor": 0.30
-            },
-            "age_factors": {
-                "0-5": 0.98,
-                "6-10": 0.90,
-                "11-20": 0.80,
-                "21-30": 0.70,
-                "31-40": 0.60,
-                "41-50": 0.50,
-                "51+": 0.40
-            }
-        }
-    
-    # Load example buildings
-    if example_buildings_path.exists():
-        with open(example_buildings_path, "r") as f:
-            data["example_buildings"] = json.load(f)
-    else:
-        # Default example buildings if file doesn't exist
-        data["example_buildings"] = [
-            {
-                "use_type": "Residential",
-                "construction_type": "Wood Frame",
-                "sqft": 2000,
-                "year_built": 2010,
-                "quality_class": "B",
-                "condition": "Good",
-                "locality_index": 1.05
-            },
-            {
-                "use_type": "Commercial",
-                "construction_type": "Steel Frame",
-                "sqft": 10000,
-                "year_built": 2005,
-                "quality_class": "A",
-                "condition": "Excellent",
-                "locality_index": 1.10
-            }
-        ]
-    
-    return data
+    logger.warning("Using default depreciation tables")
 
-# Load the sample data
-SAMPLE_DATA = load_sample_data()
+# Load or create example buildings
+try:
+    with open(EXAMPLE_BUILDINGS_PATH, 'r') as f:
+        example_buildings = json.load(f)
+        logger.info(f"Loaded example buildings from {EXAMPLE_BUILDINGS_PATH}")
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    logger.error(f"Error loading example buildings: {e}")
+    # Default example buildings if file doesn't exist
+    example_buildings = []
+    logger.warning("Using default example buildings (empty list)")
 
-# Calculation functions
-def calculate_age_factor(year_built: int) -> float:
-    """Calculate age factor based on the year built"""
-    current_year = datetime.now().year
-    age = current_year - year_built
+# RCN Calculation Engine
+class RCNCalculator:
+    """RCN (Replacement Cost New) Calculator for property valuation"""
     
-    if age <= 5:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["0-5"]
-    elif age <= 10:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["6-10"]
-    elif age <= 20:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["11-20"]
-    elif age <= 30:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["21-30"]
-    elif age <= 40:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["31-40"]
-    elif age <= 50:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["41-50"]
-    else:
-        return SAMPLE_DATA["depreciation_tables"]["age_factors"]["51+"]
-
-def calculate_rcn(request: RCNRequest) -> Dict:
-    """Calculate RCN based on the request parameters"""
-    try:
-        # Get base rate and quality factor
-        base_rate = SAMPLE_DATA["cost_profiles"][request.use_type][request.construction_type]["base_rate"]
-        quality_factor = SAMPLE_DATA["cost_profiles"][request.use_type][request.construction_type]["quality_factors"][request.quality_class]
+    def __init__(self, cost_profiles, depreciation_tables):
+        self.cost_profiles = cost_profiles
+        self.depreciation_tables = depreciation_tables
+        self.current_year = datetime.datetime.now().year
+    
+    def get_base_rate(self, use_type, construction_type):
+        """Get the base rate per square foot for a building type and construction type"""
+        try:
+            return self.cost_profiles["building_types"][use_type]["base_rates"][construction_type]
+        except KeyError:
+            # Default values if not found in profiles
+            default_rates = {
+                "Residential": {"Wood Frame": 125, "Masonry": 150, "Steel Frame": 175, "Concrete": 180},
+                "Commercial": {"Wood Frame": 145, "Masonry": 170, "Steel Frame": 185, "Concrete": 200},
+                "Industrial": {"Wood Frame": 120, "Masonry": 140, "Steel Frame": 160, "Concrete": 170},
+                "Agricultural": {"Wood Frame": 90, "Masonry": 110, "Steel Frame": 130, "Concrete": 140}
+            }
+            return default_rates.get(use_type, {}).get(construction_type, 150)
+    
+    def get_quality_factor(self, use_type, quality_class):
+        """Get the quality factor for a building type and quality class"""
+        try:
+            return self.cost_profiles["building_types"][use_type]["quality_factors"][quality_class]
+        except KeyError:
+            # Default quality factors if not found in profiles
+            default_factors = {
+                "A+": 1.4, "A": 1.3, "B+": 1.2, "B": 1.1, "C+": 1.0,
+                "C": 0.9, "D+": 0.8, "D": 0.7, "E": 0.6
+            }
+            return default_factors.get(quality_class, 1.0)
+    
+    def get_size_adjustment(self, sqft):
+        """Get size adjustment factor based on building size"""
+        try:
+            for size_category, size_data in self.cost_profiles["size_adjustment_factors"].items():
+                size_range = size_data["range"]
+                if size_range[0] <= sqft <= size_range[1]:
+                    return size_data["factor"]
+            return 1.0
+        except (KeyError, IndexError):
+            # Default size adjustments if not found in profiles
+            if sqft <= 1000:
+                return 1.2
+            elif sqft <= 2500:
+                return 1.1
+            elif sqft <= 5000:
+                return 1.0
+            elif sqft <= 10000:
+                return 0.95
+            elif sqft <= 50000:
+                return 0.9
+            else:
+                return 0.85
+    
+    def get_condition_factor(self, condition):
+        """Get the condition factor based on building condition"""
+        try:
+            return self.depreciation_tables["condition_factors"][condition]
+        except KeyError:
+            # Default condition factors if not found in tables
+            default_factors = {
+                "Excellent": 0.95, "Good": 0.85, "Average": 0.70, "Fair": 0.50, "Poor": 0.30
+            }
+            return default_factors.get(condition, 0.70)
+    
+    def calculate_age_factor(self, year_built):
+        """Calculate the age factor based on the building's age"""
+        age = self.current_year - year_built
         
-        # Get condition factor
-        condition_factor = SAMPLE_DATA["depreciation_tables"]["condition_factors"][request.condition]
+        # Try to use the age factors from the depreciation tables
+        try:
+            for age_range, factor in self.depreciation_tables["age_factors"].items():
+                age_min, age_max = map(int, age_range.split('-'))
+                if age_min <= age <= age_max:
+                    return factor
+        except (KeyError, ValueError):
+            pass
         
-        # Calculate age factor
-        age_factor = calculate_age_factor(request.year_built)
+        # Default age factor calculation if not found in tables
+        if age <= 5:
+            return 0.98
+        elif age <= 10:
+            return 0.90
+        elif age <= 20:
+            return 0.80
+        elif age <= 30:
+            return 0.70
+        elif age <= 40:
+            return 0.60
+        elif age <= 50:
+            return 0.50
+        else:
+            return 0.40
+    
+    def calculate_rcn(self, building: BuildingInput) -> CalculationResult:
+        """Calculate the Replacement Cost New (RCN) for a building"""
+        # Get base rate for building type and construction
+        base_rate = self.get_base_rate(building.use_type, building.construction_type)
         
-        # Calculate RCN
-        rcn = base_rate * request.sqft * quality_factor * request.locality_index
+        # Get quality factor
+        quality_factor = self.get_quality_factor(building.use_type, building.quality_class)
+        
+        # Get size adjustment
+        size_factor = self.get_size_adjustment(building.sqft)
+        
+        # Calculate base replacement cost
+        base_cost = base_rate * building.sqft * quality_factor * size_factor
+        
+        # Apply locality index
+        rcn = base_cost * building.locality_index
+        
+        # Calculate depreciation
+        age = self.current_year - building.year_built
+        age_factor = self.calculate_age_factor(building.year_built)
+        condition_factor = self.get_condition_factor(building.condition)
+        
+        # Combined depreciation factor
+        depreciation_factor = (age_factor + condition_factor) / 2
         
         # Calculate depreciated cost
-        depreciated_cost = rcn * condition_factor * age_factor
+        depreciated_cost = rcn * depreciation_factor
         
-        return {
-            "rcn": round(rcn, 2),
-            "depreciated_cost": round(depreciated_cost, 2),
-            "details": {
-                "base_rate": base_rate,
-                "quality_factor": quality_factor,
-                "condition_factor": condition_factor,
-                "age_factor": age_factor,
-                "locality_index": request.locality_index,
-                "calculation": f"{base_rate} $/sqft × {request.sqft} sqft × {quality_factor} quality × {request.locality_index} locality = ${rcn:.2f} RCN",
-                "depreciation": f"${rcn:.2f} × {condition_factor} condition × {age_factor} age = ${depreciated_cost:.2f}"
-            }
+        # Calculate effective age and remaining life
+        typical_life = 75  # Typical building life in years
+        effective_age = int(typical_life * (1 - depreciation_factor))
+        remaining_life = max(0, typical_life - effective_age)
+        
+        # Format calculation details for response
+        calculation_details = {
+            "base_rate": round(base_rate, 2),
+            "quality_factor": round(quality_factor, 2),
+            "size_factor": round(size_factor, 2),
+            "condition_factor": round(condition_factor, 2),
+            "age_factor": round(age_factor, 2),
+            "locality_index": round(building.locality_index, 2),
+            "depreciation_factor": round(depreciation_factor, 2),
+            "calculation": f"RCN = {base_rate:.2f} $/sqft × {building.sqft:,} sqft × {quality_factor:.2f} (quality) × {size_factor:.2f} (size) × {building.locality_index:.2f} (locality) = ${rcn:,.2f}",
+            "depreciation": f"Depreciated Cost = ${rcn:,.2f} × {depreciation_factor:.2f} (depreciation) = ${depreciated_cost:,.2f}"
         }
-    except KeyError as e:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid parameter value: {str(e)}. Please check that all parameters have valid values."
+        
+        return CalculationResult(
+            rcn=round(rcn, 2),
+            depreciated_cost=round(depreciated_cost, 2),
+            effective_age=effective_age,
+            remaining_life=remaining_life,
+            details=calculation_details
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-# API routes
+# Create calculator instance
+calculator = RCNCalculator(cost_profiles, depreciation_tables)
+
+# Define API routes
 @app.get("/", response_class=HTMLResponse)
-async def root():
-    """Root endpoint that redirects to documentation"""
-    return """
-    <html>
+async def read_root():
+    """Serve the HTML UI for the RCN calculator"""
+    try:
+        with open(os.path.join(HTML_UI_DIR, "index.html"), 'r') as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        # Fallback HTML if file doesn't exist
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
         <head>
-            <title>TerraFusionBuild RCN Valuation Engine API</title>
-            <meta http-equiv="refresh" content="0;url=/docs" />
+            <title>TerraFusionBuild RCN Valuation Engine</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+                h1 { color: #234567; }
+                .api-link { margin-top: 20px; }
+            </style>
         </head>
         <body>
-            <p>Redirecting to <a href="/docs">API documentation</a>...</p>
+            <h1>TerraFusionBuild RCN Valuation Engine</h1>
+            <p>The HTML UI file was not found. Please check the installation.</p>
+            <div class="api-link">
+                <p>API documentation is available at: <a href="/docs">/docs</a></p>
+            </div>
         </body>
-    </html>
-    """
+        </html>
+        """)
 
-@app.get("/health", response_model=Dict)
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "ok", "version": VERSION}
-
-@app.post("/rcn/calculate", response_model=RCNResponse)
-async def calculate_rcn_endpoint(request: RCNRequest):
-    """Calculate RCN value based on input parameters"""
-    return calculate_rcn(request)
-
-@app.get("/sample/buildings", response_model=List[Dict])
-async def get_sample_buildings():
-    """Get sample building inputs"""
-    return SAMPLE_DATA["example_buildings"]
-
-@app.get("/sample/cost-profiles", response_model=Dict)
-async def get_cost_profiles():
-    """Get cost profiles"""
-    return SAMPLE_DATA["cost_profiles"]
-
-@app.get("/sample/depreciation-tables", response_model=Dict)
-async def get_depreciation_tables():
-    """Get depreciation tables"""
-    return SAMPLE_DATA["depreciation_tables"]
-
-# Serve HTML UI
-html_ui_path = Path(__file__).resolve().parent / "html_ui"
-if html_ui_path.exists():
-    app.mount("/ui", StaticFiles(directory=str(html_ui_path), html=True), name="ui")
-    
-    @app.get("/ui")
-    async def ui_root():
-        """Serve the UI index file"""
-        index_path = html_ui_path / "index.html"
-        if index_path.exists():
-            return FileResponse(index_path)
-        else:
-            # Create a simple UI if no custom UI exists
-            return HTMLResponse(f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>TerraFusionBuild RCN Valuation Engine</title>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body {{
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        line-height: 1.6;
-                        color: #333;
-                        max-width: 1200px;
-                        margin: 0 auto;
-                        padding: 20px;
-                    }}
-                    h1, h2, h3 {{
-                        color: #2c3e50;
-                    }}
-                    .container {{
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 20px;
-                    }}
-                    .form-container {{
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    }}
-                    .result-container {{
-                        background-color: #f8f9fa;
-                        padding: 20px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        min-height: 300px;
-                    }}
-                    label {{
-                        display: block;
-                        margin-bottom: 5px;
-                        font-weight: 500;
-                    }}
-                    select, input {{
-                        width: 100%;
-                        padding: 8px;
-                        margin-bottom: 15px;
-                        border: 1px solid #ced4da;
-                        border-radius: 4px;
-                    }}
-                    button {{
-                        background-color: #2c3e50;
-                        color: white;
-                        border: none;
-                        padding: 10px 15px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                    }}
-                    button:hover {{
-                        background-color: #1a252f;
-                    }}
-                    pre {{
-                        background-color: #eaeaea;
-                        padding: 15px;
-                        border-radius: 4px;
-                        overflow-x: auto;
-                    }}
-                    .sample-button {{
-                        background-color: #6c757d;
-                        margin-right: 10px;
-                    }}
-                    .header {{
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        margin-bottom: 20px;
-                    }}
-                    .logo {{
-                        font-size: 24px;
-                        font-weight: bold;
-                    }}
-                    .version {{
-                        font-size: 14px;
-                        color: #6c757d;
-                    }}
-                    @media (max-width: 768px) {{
-                        .container {{
-                            grid-template-columns: 1fr;
-                        }}
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <div class="logo">TerraFusionBuild RCN Valuation Engine</div>
-                    <div class="version">v{VERSION}</div>
-                </div>
-                
-                <p>This tool calculates the Replacement Cost New (RCN) value for buildings based on 
-                various parameters like use type, construction type, and quality.</p>
-                
-                <div class="container">
-                    <div class="form-container">
-                        <h2>Input Parameters</h2>
-                        <form id="rcnForm">
-                            <label for="useType">Building Use Type:</label>
-                            <select id="useType" name="useType" required>
-                                <option value="">Select...</option>
-                                <option value="Residential">Residential</option>
-                                <option value="Commercial">Commercial</option>
-                                <option value="Industrial">Industrial</option>
-                                <option value="Agricultural">Agricultural</option>
-                            </select>
-                            
-                            <label for="constructionType">Construction Type:</label>
-                            <select id="constructionType" name="constructionType" required>
-                                <option value="">Select...</option>
-                                <option value="Wood Frame">Wood Frame</option>
-                                <option value="Masonry">Masonry</option>
-                                <option value="Steel Frame">Steel Frame</option>
-                                <option value="Concrete">Concrete</option>
-                            </select>
-                            
-                            <label for="sqft">Square Footage:</label>
-                            <input type="number" id="sqft" name="sqft" min="1" required>
-                            
-                            <label for="yearBuilt">Year Built:</label>
-                            <input type="number" id="yearBuilt" name="yearBuilt" min="1900" max="2100" required>
-                            
-                            <label for="qualityClass">Quality Class:</label>
-                            <select id="qualityClass" name="qualityClass" required>
-                                <option value="">Select...</option>
-                                <option value="A+">A+ (Premium)</option>
-                                <option value="A">A (Excellent)</option>
-                                <option value="B+">B+ (Very Good)</option>
-                                <option value="B">B (Good)</option>
-                                <option value="C+">C+ (Above Average)</option>
-                                <option value="C">C (Average)</option>
-                                <option value="D+">D+ (Fair)</option>
-                                <option value="D">D (Poor)</option>
-                                <option value="E">E (Minimal)</option>
-                            </select>
-                            
-                            <label for="condition">Condition:</label>
-                            <select id="condition" name="condition" required>
-                                <option value="">Select...</option>
-                                <option value="Excellent">Excellent</option>
-                                <option value="Good">Good</option>
-                                <option value="Average">Average</option>
-                                <option value="Fair">Fair</option>
-                                <option value="Poor">Poor</option>
-                            </select>
-                            
-                            <label for="localityIndex">Locality Index:</label>
-                            <input type="number" id="localityIndex" name="localityIndex" step="0.01" min="0.5" max="2.0" value="1.0" required>
-                            
-                            <div>
-                                <button type="button" id="loadSample1" class="sample-button">Load Sample 1</button>
-                                <button type="button" id="loadSample2" class="sample-button">Load Sample 2</button>
-                                <button type="submit">Calculate RCN</button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <div class="result-container">
-                        <h2>Results</h2>
-                        <div id="results">
-                            <p>Enter parameters and click "Calculate RCN" to see results.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <script>
-                    // Sample data
-                    const samples = [
-                        {{
-                            useType: 'Residential',
-                            constructionType: 'Wood Frame',
-                            sqft: 2000,
-                            yearBuilt: 2010,
-                            qualityClass: 'B',
-                            condition: 'Good',
-                            localityIndex: 1.05
-                        }},
-                        {{
-                            useType: 'Commercial',
-                            constructionType: 'Steel Frame',
-                            sqft: 10000,
-                            yearBuilt: 2005,
-                            qualityClass: 'A',
-                            condition: 'Excellent',
-                            localityIndex: 1.10
-                        }}
-                    ];
-                    
-                    // Load sample data
-                    document.getElementById('loadSample1').addEventListener('click', () => loadSample(0));
-                    document.getElementById('loadSample2').addEventListener('click', () => loadSample(1));
-                    
-                    function loadSample(index) {{
-                        const sample = samples[index];
-                        document.getElementById('useType').value = sample.useType;
-                        document.getElementById('constructionType').value = sample.constructionType;
-                        document.getElementById('sqft').value = sample.sqft;
-                        document.getElementById('yearBuilt').value = sample.yearBuilt;
-                        document.getElementById('qualityClass').value = sample.qualityClass;
-                        document.getElementById('condition').value = sample.condition;
-                        document.getElementById('localityIndex').value = sample.localityIndex;
-                    }}
-                    
-                    // Form submission
-                    document.getElementById('rcnForm').addEventListener('submit', async (e) => {{
-                        e.preventDefault();
-                        
-                        const form = e.target;
-                        const data = {{
-                            use_type: form.useType.value,
-                            construction_type: form.constructionType.value,
-                            sqft: parseInt(form.sqft.value),
-                            year_built: parseInt(form.yearBuilt.value),
-                            quality_class: form.qualityClass.value,
-                            condition: form.condition.value,
-                            locality_index: parseFloat(form.localityIndex.value)
-                        }};
-                        
-                        try {{
-                            document.getElementById('results').innerHTML = '<p>Calculating...</p>';
-                            
-                            const response = await fetch('/rcn/calculate', {{
-                                method: 'POST',
-                                headers: {{
-                                    'Content-Type': 'application/json'
-                                }},
-                                body: JSON.stringify(data)
-                            }});
-                            
-                            if (!response.ok) {{
-                                throw new Error(`HTTP error! Status: ${{response.status}}`);
-                            }}
-                            
-                            const result = await response.json();
-                            
-                            // Display results
-                            let html = `
-                                <h3>Replacement Cost New (RCN)</h3>
-                                <p><strong>$${result.rcn.toLocaleString()}</strong></p>
-                                
-                                <h3>Depreciated Cost</h3>
-                                <p><strong>$${result.depreciated_cost.toLocaleString()}</strong></p>
-                            `;
-                            
-                            if (result.details) {{
-                                html += `
-                                    <h3>Calculation Details</h3>
-                                    <p><strong>Base Rate:</strong> $${result.details.base_rate}/sqft</p>
-                                    <p><strong>Quality Factor:</strong> ${result.details.quality_factor}</p>
-                                    <p><strong>Condition Factor:</strong> ${result.details.condition_factor}</p>
-                                    <p><strong>Age Factor:</strong> ${result.details.age_factor}</p>
-                                    <p><strong>Locality Index:</strong> ${result.details.locality_index}</p>
-                                    <p><strong>RCN Calculation:</strong> ${result.details.calculation}</p>
-                                    <p><strong>Depreciation Calculation:</strong> ${result.details.depreciation}</p>
-                                `;
-                            }}
-                            
-                            document.getElementById('results').innerHTML = html;
-                        }} catch (error) {{
-                            document.getElementById('results').innerHTML = `
-                                <h3>Error</h3>
-                                <p>${{error.message}}</p>
-                            `;
-                        }}
-                    }});
-                </script>
-            </body>
-            </html>
-            """)
-
-
-def parse_args():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(
-        description="TerraFusionBuild RCN Valuation Engine API"
-    )
-    parser.add_argument(
-        "--port", type=int, default=8000, help="Port to run the server on (default: 8000)"
-    )
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    args = parse_args()
-    
-    print(f"Starting TerraFusionBuild RCN Valuation Engine API (v{VERSION})")
-    print(f"Server will be available at: http://localhost:{args.port}")
-    print(f"API Documentation: http://localhost:{args.port}/docs")
-    print(f"Web Interface: http://localhost:{args.port}/ui")
-    
-    # Create logs directory if it doesn't exist
-    logs_dir = Path(__file__).resolve().parent / "logs"
-    logs_dir.mkdir(exist_ok=True)
-    
+@app.post("/rcn/calculate", response_model=CalculationResult)
+async def calculate_rcn(building: BuildingInput):
+    """Calculate the Replacement Cost New (RCN) for a building"""
     try:
-        import uvicorn
-        uvicorn.run(app, host="0.0.0.0", port=args.port)
-    except ImportError:
-        print("Error: uvicorn is required to run the server.")
-        print("Please install it using: pip install uvicorn")
-        sys.exit(1)
+        logger.info(f"Calculating RCN for building: {building.dict()}")
+        result = calculator.calculate_rcn(building)
+        logger.info(f"RCN calculation complete: ${result.rcn:,.2f}")
+        return result
+    except Exception as e:
+        logger.error(f"Error calculating RCN: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calculating RCN: {str(e)}")
+
+@app.get("/sample/buildings")
+async def get_sample_buildings():
+    """Get sample building inputs for testing"""
+    return example_buildings
+
+@app.get("/api/status")
+async def get_api_status():
+    """Get the API status and version information"""
+    return {
+        "status": "online",
+        "version": "1.0.0",
+        "data_loaded": {
+            "cost_profiles": bool(cost_profiles.get("building_types")),
+            "depreciation_tables": bool(depreciation_tables.get("condition_factors")),
+            "example_buildings": len(example_buildings) > 0
+        },
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+
+@app.get("/data/profiles")
+async def get_cost_profiles():
+    """Get the cost profiles data"""
+    return cost_profiles
+
+@app.get("/data/depreciation")
+async def get_depreciation_tables():
+    """Get the depreciation tables data"""
+    return depreciation_tables
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def get_favicon():
+    """Serve the favicon"""
+    favicon_path = os.path.join(HTML_UI_DIR, "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return JSONResponse(content={"message": "Favicon not found"}, status_code=404)
+
+# Entry point for running the application
+if __name__ == "__main__":
+    uvicorn.run(
+        "rcn_api_stub:app",
+        host="0.0.0.0",  # Bind to all interfaces
+        port=8000,
+        reload=True
+    )
