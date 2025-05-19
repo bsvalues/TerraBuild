@@ -1,26 +1,26 @@
 {
   "Residential": {
-    "Wood Frame": 110.0,
-    "Masonry": 125.0,
-    "Steel Frame": 140.0,
-    "Concrete": 135.0
+    "Wood Frame": 175.0,
+    "Masonry": 195.0,
+    "Steel Frame": 210.0,
+    "Concrete": 225.0
   },
   "Commercial": {
-    "Wood Frame": 95.0,
-    "Masonry": 135.0,
-    "Steel Frame": 150.0,
-    "Concrete": 145.0
+    "Wood Frame": 145.0,
+    "Masonry": 185.0,
+    "Steel Frame": 195.0,
+    "Concrete": 215.0
   },
   "Industrial": {
-    "Wood Frame": 85.0,
-    "Masonry": 110.0,
-    "Steel Frame": 130.0,
-    "Concrete": 125.0
+    "Wood Frame": 110.0,
+    "Masonry": 125.0,
+    "Steel Frame": 150.0,
+    "Concrete": 175.0
   },
   "Agricultural": {
-    "Wood Frame": 65.0,
-    "Masonry": 85.0,
-    "Steel Frame": 100.0,
-    "Concrete": 90.0
+    "Wood Frame": 85.0,
+    "Masonry": 110.0,
+    "Steel Frame": 135.0,
+    "Concrete": 150.0
   }
 }

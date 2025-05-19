@@ -1,74 +1,82 @@
 @echo off
 echo =====================================================
-echo TerraFusionBuild RCN Valuation Engine - Service Removal
+echo TerraFusionBuild RCN Valuation Engine - Service Uninstall
 echo =====================================================
 echo.
 
 setlocal
 
-:: Check if running as administrator
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo This script requires administrator privileges.
-    echo Please right-click and select "Run as administrator"
-    pause
-    exit /b 1
-)
-
-:: Set paths
-set "INSTALL_DIR=%~dp0.."
-set "NSSM_PATH=%INSTALL_DIR%\windows_service\nssm.exe"
-set "SERVICE_NAME=TerraFusionRCN"
+:: Define service name
+set SERVICE_NAME=TerraFusionRCNEngine
+set INSTALL_DIR=%~dp0
+set NSSM_PATH=%INSTALL_DIR%\bin\nssm.exe
 
 :: Check if NSSM exists
 if not exist "%NSSM_PATH%" (
-    echo Error: NSSM executable not found at %NSSM_PATH%
-    echo Attempting to remove service using native Windows commands...
-    
-    :: Try to stop the service
-    sc stop "%SERVICE_NAME%" >nul 2>&1
-    
-    :: Try to remove the service
-    sc delete "%SERVICE_NAME%" >nul 2>&1
-    if %errorLevel% neq 0 (
-        echo Failed to remove service. Please try again or remove manually.
-        pause
-        exit /b %errorLevel%
-    ) else (
-        echo Service removed successfully.
-        pause
-        exit /b 0
-    )
+    echo Error: NSSM (Non-Sucking Service Manager) not found at %NSSM_PATH%
+    echo Please download NSSM from http://nssm.cc and place it in the bin directory.
+    echo.
+    goto :error
+)
+
+:: Check if running as administrator
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Error: This script requires administrator privileges.
+    echo Please right-click and select "Run as administrator"
+    echo.
+    goto :error
 )
 
 :: Check if service exists
-sc query "%SERVICE_NAME%" >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Service %SERVICE_NAME% does not exist or is already uninstalled.
-    pause
-    exit /b 0
+"%NSSM_PATH%" status "%SERVICE_NAME%" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Service "%SERVICE_NAME%" is not installed.
+    echo.
+    goto :end
 )
 
-echo Stopping service...
-net stop "%SERVICE_NAME%" >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Warning: Failed to stop service, it may not be running.
-    echo Proceeding with removal...
-) else (
-    echo Service stopped successfully.
+echo Checking if service is running...
+
+:: Check if the service is running
+sc query "%SERVICE_NAME%" | find "STATE" | find "RUNNING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Stopping service "%SERVICE_NAME%"...
+    net stop "%SERVICE_NAME%"
+    
+    if %errorlevel% neq 0 (
+        echo Warning: Failed to stop the service. It may be in use or already stopped.
+        
+        :: Ask to force remove
+        set /p FORCE_REMOVE=Force remove the service? (Y/N): 
+        
+        if /i not "%FORCE_REMOVE%"=="Y" (
+            echo Uninstallation cancelled.
+            goto :end
+        )
+    )
 )
 
-echo.
-echo Removing service...
+echo Removing service "%SERVICE_NAME%"...
 "%NSSM_PATH%" remove "%SERVICE_NAME%" confirm
-if %errorLevel% neq 0 (
-    echo Failed to remove service. Please try again or remove manually.
-    pause
-    exit /b %errorLevel%
+
+if %errorlevel% equ 0 (
+    echo Service "%SERVICE_NAME%" has been successfully removed.
+) else (
+    echo Error: Failed to remove service "%SERVICE_NAME%".
+    goto :error
 )
 
 echo.
-echo Service uninstalled successfully.
+echo Service uninstallation complete!
 echo.
 
+goto :end
+
+:error
+echo.
+echo Service uninstallation failed. Please fix the errors above and try again.
+exit /b 1
+
+:end
 pause

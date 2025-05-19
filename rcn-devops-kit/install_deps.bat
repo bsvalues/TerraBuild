@@ -1,105 +1,186 @@
 @echo off
 echo =====================================================
-echo TerraFusionBuild RCN Valuation Engine - Setup
+echo TerraFusionBuild RCN Valuation Engine - Dependencies Setup
 echo =====================================================
 echo.
 
 setlocal
 
-:: Check for Python installation
+set INSTALL_DIR=%~dp0
+set PYTHON_REQUIRED=3.8
+set VENV_NAME=venv
+
+echo Checking for Python installation...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Python is not installed or not in your PATH.
-    echo Please install Python 3.8 or later from https://www.python.org/downloads/
-    echo Make sure to check "Add Python to PATH" during installation.
-    pause
-    exit /b 1
+    echo Python not found in PATH. Checking for Python in standard locations...
+    
+    if exist "%ProgramFiles%\Python38\python.exe" (
+        set PYTHON_EXE="%ProgramFiles%\Python38\python.exe"
+    ) else if exist "%ProgramFiles%\Python39\python.exe" (
+        set PYTHON_EXE="%ProgramFiles%\Python39\python.exe"
+    ) else if exist "%ProgramFiles%\Python310\python.exe" (
+        set PYTHON_EXE="%ProgramFiles%\Python310\python.exe"
+    ) else if exist "%ProgramFiles%\Python311\python.exe" (
+        set PYTHON_EXE="%ProgramFiles%\Python311\python.exe"
+    ) else if exist "%LocalAppData%\Programs\Python\Python38\python.exe" (
+        set PYTHON_EXE="%LocalAppData%\Programs\Python\Python38\python.exe"
+    ) else if exist "%LocalAppData%\Programs\Python\Python39\python.exe" (
+        set PYTHON_EXE="%LocalAppData%\Programs\Python\Python39\python.exe"
+    ) else if exist "%LocalAppData%\Programs\Python\Python310\python.exe" (
+        set PYTHON_EXE="%LocalAppData%\Programs\Python\Python310\python.exe"
+    ) else if exist "%LocalAppData%\Programs\Python\Python311\python.exe" (
+        set PYTHON_EXE="%LocalAppData%\Programs\Python\Python311\python.exe"
+    ) else (
+        echo Error: Python 3.8 or higher is required but not found.
+        echo Please install Python from https://www.python.org/downloads/
+        echo and make sure it is added to PATH.
+        echo.
+        goto :error
+    )
+    
+    echo Found Python at %PYTHON_EXE%
+) else (
+    set PYTHON_EXE=python
 )
 
-:: Check Python version
-for /f "tokens=2" %%i in ('python --version 2^>^&1') do set pyver=%%i
-echo Detected Python version: %pyver%
+echo Checking Python version...
+%PYTHON_EXE% -c "import sys; print(sys.version_info.major, sys.version_info.minor)" > temp.txt
+set /p PYTHON_VERSION=<temp.txt
+del temp.txt
 
-:: Create virtual environment if it doesn't exist
-if not exist venv (
-    echo Creating Python virtual environment...
-    python -m venv venv
-    if %errorlevel% neq 0 (
-        echo Failed to create virtual environment.
-        echo Please ensure you have venv module available.
-        pause
-        exit /b 1
+for /f "tokens=1,2" %%a in ("%PYTHON_VERSION%") do (
+    set PYTHON_MAJOR=%%a
+    set PYTHON_MINOR=%%b
+)
+
+if %PYTHON_MAJOR% lss 3 (
+    echo Error: Python 3.8 or higher is required.
+    echo Current version: %PYTHON_MAJOR%.%PYTHON_MINOR%
+    echo Please install a newer version of Python.
+    goto :error
+)
+
+if %PYTHON_MAJOR% equ 3 (
+    if %PYTHON_MINOR% lss 8 (
+        echo Error: Python 3.8 or higher is required.
+        echo Current version: %PYTHON_MAJOR%.%PYTHON_MINOR%
+        echo Please install a newer version of Python.
+        goto :error
     )
 )
 
-:: Activate virtual environment
+echo Python version check passed: %PYTHON_MAJOR%.%PYTHON_MINOR%
+echo.
+
+echo Creating Python virtual environment...
+if exist "%INSTALL_DIR%\%VENV_NAME%" (
+    echo Virtual environment already exists. Updating...
+) else (
+    %PYTHON_EXE% -m venv "%INSTALL_DIR%\%VENV_NAME%"
+    if %errorlevel% neq 0 (
+        echo Error: Failed to create virtual environment.
+        goto :error
+    )
+    echo Virtual environment created successfully.
+)
+
+echo.
 echo Activating virtual environment...
-call venv\Scripts\activate.bat
+call "%INSTALL_DIR%\%VENV_NAME%\Scripts\activate"
 if %errorlevel% neq 0 (
-    echo Failed to activate virtual environment.
-    pause
-    exit /b 1
+    echo Error: Failed to activate virtual environment.
+    goto :error
 )
 
-:: Create requirements.txt if it doesn't exist
-if not exist requirements.txt (
-    echo Creating requirements.txt file...
-    (
-        echo fastapi==0.104.1
-        echo uvicorn==0.24.0
-        echo pydantic==2.4.2
-        echo python-dotenv==1.0.0
-    ) > requirements.txt
-)
-
-:: Install dependencies
-echo Installing dependencies from requirements.txt...
-pip install --upgrade pip
-pip install -r requirements.txt
+echo.
+echo Upgrading pip...
+python -m pip install --upgrade pip
 if %errorlevel% neq 0 (
-    echo Failed to install dependencies.
-    pause
-    exit /b 1
+    echo Warning: Failed to upgrade pip, but continuing...
 )
 
-:: Create .env file from .env.example if it doesn't exist
-if exist .env.example (
-    if not exist .env (
-        echo Creating .env configuration file from template...
-        copy .env.example .env
+echo.
+echo Installing required Python packages...
+python -m pip install fastapi uvicorn python-dotenv pydantic
+if %errorlevel% neq 0 (
+    echo Error: Failed to install required packages.
+    goto :error
+)
+
+echo.
+echo Installing optional dependencies...
+python -m pip install pyinstaller
+if %errorlevel% neq 0 (
+    echo Warning: Failed to install PyInstaller (needed only for executable building).
+)
+
+echo.
+echo Creating Windows service directory structure...
+if not exist "%INSTALL_DIR%\windows_service\bin" mkdir "%INSTALL_DIR%\windows_service\bin"
+
+echo.
+echo Checking for NSSM (Non-Sucking Service Manager)...
+if not exist "%INSTALL_DIR%\windows_service\bin\nssm.exe" (
+    echo NSSM (Non-Sucking Service Manager) is required for Windows service support.
+    echo Please download it from http://nssm.cc/download and extract nssm.exe
+    echo to %INSTALL_DIR%\windows_service\bin\nssm.exe
+    
+    echo.
+    set /p DOWNLOAD_NSSM=Would you like the script to attempt to download NSSM for you? (Y/N): 
+    
+    if /i "%DOWNLOAD_NSSM%"=="Y" (
+        echo Attempting to download NSSM...
+        
+        :: Create PowerShell script to download and extract NSSM
+        echo $webClient = New-Object System.Net.WebClient > download_nssm.ps1
+        echo $url = "https://nssm.cc/release/nssm-2.24.zip" >> download_nssm.ps1
+        echo $outputFile = "%TEMP%\nssm.zip" >> download_nssm.ps1
+        echo $webClient.DownloadFile($url, $outputFile) >> download_nssm.ps1
+        echo Expand-Archive -Path $outputFile -DestinationPath "%TEMP%\nssm" -Force >> download_nssm.ps1
+        echo $nssmExe = Get-ChildItem -Path "%TEMP%\nssm" -Recurse -Filter "nssm.exe" ^| Where-Object { $_.FullName -like "*win64*" } ^| Select-Object -First 1 >> download_nssm.ps1
+        echo Copy-Item -Path $nssmExe.FullName -Destination "%INSTALL_DIR%\windows_service\bin\nssm.exe" -Force >> download_nssm.ps1
+        
+        powershell -ExecutionPolicy Bypass -File download_nssm.ps1
+        del download_nssm.ps1
+        
+        if exist "%INSTALL_DIR%\windows_service\bin\nssm.exe" (
+            echo NSSM downloaded and extracted successfully.
+        ) else (
+            echo Failed to download NSSM automatically.
+            echo Please download it manually from http://nssm.cc/download
+            echo and extract nssm.exe to %INSTALL_DIR%\windows_service\bin\nssm.exe
+            echo.
+            echo You can still use the RCN Valuation Engine without Windows service support.
+        )
+    ) else (
+        echo Skipping NSSM download.
+        echo You can still use the RCN Valuation Engine without Windows service support.
     )
 ) else (
-    :: Create default .env if .env.example doesn't exist and .env doesn't exist
-    if not exist .env (
-        echo Creating default .env configuration file...
-        (
-            echo # TerraFusionBuild RCN Valuation Engine Configuration
-            echo # Generated on %date% at %time%
-            echo 
-            echo # API Settings
-            echo PORT=8000
-            echo HOST=0.0.0.0
-            echo 
-            echo # Logging Settings
-            echo LOG_LEVEL=info
-            echo 
-            echo # Sample Data Settings
-            echo USE_SAMPLE_DATA=true
-            echo SAMPLE_DATA_PATH=./sample_data
-        ) > .env
-    )
+    echo NSSM already exists.
 )
-
-:: Create logs directory if it doesn't exist
-if not exist logs mkdir logs
 
 echo.
 echo Setup completed successfully!
 echo.
-echo To start the RCN Valuation Engine, run:
-echo   start_rcn.bat
+echo To start the RCN Valuation Engine API:
+echo   "%INSTALL_DIR%\start_rcn.bat"
 echo.
-echo For more information, see README.md
+echo To install as a Windows Service:
+echo   "%INSTALL_DIR%\windows_service\install_service.bat"
 echo.
 
-pause
+:: Deactivate virtual environment
+call "%INSTALL_DIR%\%VENV_NAME%\Scripts\deactivate"
+
+goto :end
+
+:error
+echo.
+echo Setup failed. Please fix the errors above and try again.
+exit /b 1
+
+:end
+echo Press any key to exit...
+pause > nul

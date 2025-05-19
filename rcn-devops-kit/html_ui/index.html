@@ -6,58 +6,82 @@
     <title>TerraFusionBuild RCN Valuation Engine</title>
     <style>
         :root {
-            --primary-color: #2a5c8f;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --info-color: #17a2b8;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
+            --primary-color: #1a5276;
+            --secondary-color: #2874a6;
+            --accent-color: #3498db;
+            --light-color: #f2f6f9;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --error-color: #c0392b;
+            --border-radius: 5px;
+            --box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 0;
             color: #333;
             background-color: #f5f5f5;
+            padding: 20px;
         }
         
         .container {
-            width: 90%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
         }
         
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 20px 0;
+            padding: 20px;
             text-align: center;
-            margin-bottom: 30px;
         }
         
-        h1 {
-            font-size: 2.5em;
-            margin: 0;
+        header h1 {
+            margin-bottom: 10px;
         }
         
-        h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-top: 30px;
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
         
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .results-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .panel {
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
             padding: 20px;
             margin-bottom: 20px;
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
         }
         
         .form-group {
@@ -67,166 +91,200 @@
         label {
             display: block;
             margin-bottom: 5px;
-            font-weight: bold;
+            font-weight: 600;
         }
         
         input, select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        select {
-            height: 38px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
         }
         
         button {
-            background-color: var(--primary-color);
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
+            padding: 10px 15px;
+            font-size: 1rem;
             cursor: pointer;
-            font-size: 16px;
             transition: background-color 0.3s;
         }
         
         button:hover {
-            background-color: #1e4568;
+            background-color: var(--secondary-color);
         }
         
-        pre {
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: var(--border-radius);
             padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 15px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .result-heading {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .result-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-json {
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            font-family: monospace;
             white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
+            overflow-x: auto;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: var(--border-radius);
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--accent-color);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            border-radius: 10px;
+            background-color: var(--accent-color);
+            color: white;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
+            margin-bottom: 15px;
         }
         
-        table th, table td {
-            padding: 12px 15px;
+        th, td {
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
         
-        table th {
-            background-color: var(--primary-color);
-            color: white;
+        th {
+            background-color: var(--light-color);
+            font-weight: 600;
         }
-        
-        .loading {
+
+        footer {
             text-align: center;
             padding: 20px;
-            font-style: italic;
-            color: var(--secondary-color);
+            color: #777;
+            border-top: 1px solid #ddd;
         }
-        
+
+        .examples-panel {
+            margin-top: 20px;
+        }
+
+        .example-button {
+            margin: 5px;
+            padding: 8px 10px;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            border: 1px solid #ddd;
+        }
+
+        .example-button:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
         .hidden {
             display: none;
         }
-        
-        .two-column {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .column {
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .error {
-            background-color: var(--danger-color);
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .success {
-            background-color: var(--success-color);
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .alert {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-info {
-            background-color: var(--info-color);
-            color: white;
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 20px;
-            margin-top: 50px;
-            border-top: 1px solid #ddd;
-            color: var(--secondary-color);
-        }
-        
-        @media print {
-            body {
-                background-color: white;
-            }
-            
-            .container {
-                width: 100%;
-                max-width: none;
-                padding: 0;
-            }
-            
-            .card {
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
-            
-            button, .no-print {
-                display: none;
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>TerraFusionBuild RCN Valuation Engine</h1>
-            <p>Replacement Cost New (RCN) calculation tool for property assessment</p>
-        </div>
-    </header>
-    
     <div class="container">
-        <div class="alert alert-info">
-            This dashboard connects to the RCN Valuation Engine API running at: <strong>http://localhost:8000</strong>
-        </div>
+        <header>
+            <h1>TerraFusionBuild RCN Valuation Engine</h1>
+            <p>Building Replacement Cost New (RCN) Calculation Tool</p>
+        </header>
         
-        <div class="two-column">
-            <div class="column">
-                <div class="card">
-                    <h2>RCN Calculator</h2>
-                    <form id="rcnForm">
+        <div class="content">
+            <div class="input-section">
+                <div class="panel">
+                    <h2 class="panel-title">Building Information</h2>
+                    
+                    <form id="rcn-form">
                         <div class="form-group">
-                            <label for="use_type">Use Type:</label>
-                            <select id="use_type" name="use_type" required>
-                                <option value="">--Select Use Type--</option>
+                            <label for="use-type">Building Use Type</label>
+                            <select id="use-type" name="use_type" required>
+                                <option value="">-- Select Use Type --</option>
                                 <option value="Residential">Residential</option>
                                 <option value="Commercial">Commercial</option>
                                 <option value="Industrial">Industrial</option>
@@ -235,9 +293,9 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="construction_type">Construction Type:</label>
-                            <select id="construction_type" name="construction_type" required>
-                                <option value="">--Select Construction Type--</option>
+                            <label for="construction-type">Construction Type</label>
+                            <select id="construction-type" name="construction_type" required>
+                                <option value="">-- Select Construction Type --</option>
                                 <option value="Wood Frame">Wood Frame</option>
                                 <option value="Masonry">Masonry</option>
                                 <option value="Steel Frame">Steel Frame</option>
@@ -246,37 +304,37 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="sqft">Square Footage:</label>
-                            <input type="number" id="sqft" name="sqft" min="1" step="1" required placeholder="E.g., 2500">
+                            <label for="sqft">Square Footage</label>
+                            <input type="number" id="sqft" name="sqft" min="1" required placeholder="Enter square footage">
                         </div>
                         
                         <div class="form-group">
-                            <label for="year_built">Year Built:</label>
-                            <input type="number" id="year_built" name="year_built" min="1800" max="2025" required placeholder="E.g., 1995">
+                            <label for="year-built">Year Built</label>
+                            <input type="number" id="year-built" name="year_built" min="1800" max="2025" required placeholder="Enter year built">
                         </div>
                         
                         <div class="form-group">
-                            <label for="quality_class">Quality Class:</label>
-                            <select id="quality_class" name="quality_class">
+                            <label for="quality-class">Quality Class</label>
+                            <select id="quality-class" name="quality_class">
                                 <option value="A+">A+ (Premium)</option>
                                 <option value="A">A (Excellent)</option>
                                 <option value="B+">B+ (Very Good)</option>
                                 <option value="B" selected>B (Good)</option>
                                 <option value="C+">C+ (Above Average)</option>
                                 <option value="C">C (Average)</option>
-                                <option value="D+">D+ (Below Average)</option>
-                                <option value="D">D (Fair)</option>
-                                <option value="E">E (Low)</option>
+                                <option value="D+">D+ (Fair)</option>
+                                <option value="D">D (Low)</option>
+                                <option value="E">E (Minimal)</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label for="locality_index">Locality Index:</label>
-                            <input type="number" id="locality_index" name="locality_index" min="0.5" max="2.0" step="0.01" value="1.0">
+                            <label for="locality-index">Locality Index (0.5 - 2.0)</label>
+                            <input type="number" id="locality-index" name="locality_index" min="0.5" max="2.0" step="0.05" value="1.0">
                         </div>
                         
                         <div class="form-group">
-                            <label for="condition">Condition:</label>
+                            <label for="condition">Condition</label>
                             <select id="condition" name="condition">
                                 <option value="Excellent">Excellent</option>
                                 <option value="Good">Good</option>
@@ -286,223 +344,331 @@
                             </select>
                         </div>
                         
-                        <button type="submit">Calculate RCN</button>
-                        <button type="button" id="loadSample">Load Sample Data</button>
+                        <div class="button-group">
+                            <button type="submit" id="calculate-button">Calculate RCN</button>
+                            <button type="button" id="reset-button">Reset Form</button>
+                        </div>
                     </form>
+                </div>
+                
+                <div class="panel examples-panel">
+                    <h2 class="panel-title">Example Buildings</h2>
+                    <p>Click on an example to load its data into the form:</p>
+                    <div id="examples-container">
+                        <!-- Examples will be loaded here -->
+                    </div>
                 </div>
             </div>
             
-            <div class="column">
-                <div class="card" id="resultsCard">
-                    <h2>Calculation Results</h2>
-                    <div id="loading" class="loading hidden">Processing calculation...</div>
-                    <div id="error" class="error hidden"></div>
+            <div class="results-section">
+                <div class="panel">
+                    <h2 class="panel-title">Calculation Results</h2>
                     
-                    <div id="results" class="hidden">
-                        <table id="resultsTable">
-                            <tr>
-                                <th>Metric</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr>
-                                <td>Base Cost</td>
-                                <td id="base_cost">$0.00</td>
-                            </tr>
-                            <tr>
-                                <td>Adjusted RCN</td>
-                                <td id="adjusted_rcn">$0.00</td>
-                            </tr>
-                            <tr>
-                                <td>Depreciation Percentage</td>
-                                <td id="depreciation_pct">0.00%</td>
-                            </tr>
-                            <tr>
-                                <td>Depreciated RCN</td>
-                                <td id="depreciated_rcn">$0.00</td>
-                            </tr>
-                        </table>
-                        
-                        <h3>JSON Response</h3>
-                        <pre id="jsonOutput"></pre>
-                        
-                        <button type="button" id="printResults" class="no-print">Print Results</button>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="summary">Summary</div>
+                        <div class="tab" data-tab="json">JSON Response</div>
                     </div>
+                    
+                    <div class="tab-content active" id="summary-tab">
+                        <div id="results-container">
+                            <p>No calculation performed yet. Enter building information and click "Calculate RCN" to see results.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="json-tab">
+                        <div class="result-json" id="json-result">
+                            // JSON response will appear here
+                        </div>
+                    </div>
+                    
+                    <div id="status-message" class="status hidden"></div>
+                </div>
+                
+                <div class="panel hidden" id="batch-panel">
+                    <h2 class="panel-title">Batch Processing Results</h2>
+                    <table id="batch-results">
+                        <thead>
+                            <tr>
+                                <th>Building</th>
+                                <th>Base Cost</th>
+                                <th>Adjusted RCN</th>
+                                <th>Depreciated RCN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Batch results will be inserted here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
         
-        <div class="card">
-            <h2>Batch Processing</h2>
-            <p>Upload a JSON file with multiple building inputs to calculate RCN values in batch.</p>
-            <input type="file" id="batchFile" accept=".json">
-            <button type="button" id="processBatch">Process Batch</button>
-            
-            <div id="batchResults" class="hidden">
-                <h3>Batch Results</h3>
-                <pre id="batchOutput"></pre>
-            </div>
-        </div>
+        <footer>
+            <p>TerraFusionBuild RCN Valuation Engine v1.0.0 | &copy; 2025 TerraFusionBuild</p>
+        </footer>
     </div>
-    
-    <div class="footer">
-        <div class="container">
-            <p>TerraFusionBuild RCN Valuation Engine &copy; 2025. All rights reserved.</p>
-            <p>Developed for Benton County, Washington</p>
-        </div>
-    </div>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('rcnForm');
-            const loadSampleBtn = document.getElementById('loadSample');
-            const printResultsBtn = document.getElementById('printResults');
-            const processBatchBtn = document.getElementById('processBatch');
+            const apiBaseUrl = 'http://localhost:8000';
+            const rcnForm = document.getElementById('rcn-form');
+            const resetButton = document.getElementById('reset-button');
+            const resultsContainer = document.getElementById('results-container');
+            const jsonResult = document.getElementById('json-result');
+            const statusMessage = document.getElementById('status-message');
+            const examplesContainer = document.getElementById('examples-container');
+            const batchPanel = document.getElementById('batch-panel');
+            const batchResults = document.getElementById('batch-results').querySelector('tbody');
             
-            // Format currency
-            function formatCurrency(value) {
-                return '$' + parseFloat(value).toLocaleString('en-US', {
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Load examples
+            function loadExamples() {
+                fetch('./examples')
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            // Fallback to sample data if endpoint not available
+                            return fetch('../sample_data/example_building_inputs.json')
+                                .then(sampleResponse => {
+                                    if (sampleResponse.ok) {
+                                        return sampleResponse.json();
+                                    } else {
+                                        throw new Error('No examples available');
+                                    }
+                                });
+                        }
+                    })
+                    .then(examples => {
+                        examplesContainer.innerHTML = '';
+                        examples.forEach((example, index) => {
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.className = 'example-button';
+                            button.textContent = example.name || `Example ${index + 1}`;
+                            button.addEventListener('click', () => loadExample(example));
+                            examplesContainer.appendChild(button);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading examples:', error);
+                        examplesContainer.innerHTML = '<p>No examples available.</p>';
+                    });
+            }
+            
+            function loadExample(example) {
+                document.getElementById('use-type').value = example.use_type || '';
+                document.getElementById('construction-type').value = example.construction_type || '';
+                document.getElementById('sqft').value = example.sqft || '';
+                document.getElementById('year-built').value = example.year_built || '';
+                document.getElementById('quality-class').value = example.quality_class || 'B';
+                document.getElementById('locality-index').value = example.locality_index || 1.0;
+                document.getElementById('condition').value = example.condition || 'Average';
+            }
+            
+            // Calculate RCN
+            rcnForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(rcnForm);
+                const data = {
+                    use_type: formData.get('use_type'),
+                    construction_type: formData.get('construction_type'),
+                    sqft: parseFloat(formData.get('sqft')),
+                    year_built: parseInt(formData.get('year_built')),
+                    quality_class: formData.get('quality_class'),
+                    locality_index: parseFloat(formData.get('locality_index')),
+                    condition: formData.get('condition')
+                };
+                
+                // Show loading status
+                statusMessage.textContent = 'Calculating...';
+                statusMessage.className = 'status loading';
+                statusMessage.classList.remove('hidden');
+                
+                fetch(`${apiBaseUrl}/rcn/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.detail || 'Failed to calculate RCN');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    // Display results
+                    displayResults(result);
+                    
+                    // Show success message
+                    statusMessage.textContent = 'Calculation completed successfully!';
+                    statusMessage.className = 'status success';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Show error message
+                    statusMessage.textContent = error.message || 'Error calculating RCN. Please check your inputs and try again.';
+                    statusMessage.className = 'status error';
+                    
+                    // Clear results
+                    resultsContainer.innerHTML = '<p>Error calculating RCN. Please check your inputs and try again.</p>';
+                    jsonResult.textContent = JSON.stringify({ error: error.message }, null, 2);
+                });
+            });
+            
+            function displayResults(result) {
+                // Format numbers with commas and 2 decimal places
+                const formatCurrency = num => '$' + parseFloat(num).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
+                
+                // Create HTML for summary view
+                const html = `
+                    <div class="result-card">
+                        <div class="result-heading">
+                            <h3>Final RCN Value</h3>
+                            <span class="result-value">${formatCurrency(result.depreciated_rcn)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3>Calculation Breakdown</h3>
+                        <div class="result-item">
+                            <span>Base Cost:</span>
+                            <span>${formatCurrency(result.base_cost)}</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Adjusted RCN (with quality/locality):</span>
+                            <span>${formatCurrency(result.adjusted_rcn)}</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Depreciation Applied:</span>
+                            <span>${result.depreciation_pct}%</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Depreciated RCN:</span>
+                            <span>${formatCurrency(result.depreciated_rcn)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                resultsContainer.innerHTML = html;
+                
+                // Display JSON result
+                jsonResult.textContent = JSON.stringify(result, null, 2);
             }
             
-            // Sample data
-            const sampleData = {
-                use_type: "Residential",
-                construction_type: "Wood Frame",
-                sqft: 2500,
-                year_built: 2010,
-                quality_class: "B",
-                locality_index: 1.05,
-                condition: "Good"
-            };
-            
-            // Load sample data
-            loadSampleBtn.addEventListener('click', function() {
-                document.getElementById('use_type').value = sampleData.use_type;
-                document.getElementById('construction_type').value = sampleData.construction_type;
-                document.getElementById('sqft').value = sampleData.sqft;
-                document.getElementById('year_built').value = sampleData.year_built;
-                document.getElementById('quality_class').value = sampleData.quality_class;
-                document.getElementById('locality_index').value = sampleData.locality_index;
-                document.getElementById('condition').value = sampleData.condition;
+            // Reset form
+            resetButton.addEventListener('click', function() {
+                rcnForm.reset();
+                resultsContainer.innerHTML = '<p>No calculation performed yet. Enter building information and click "Calculate RCN" to see results.</p>';
+                jsonResult.textContent = '// JSON response will appear here';
+                statusMessage.classList.add('hidden');
             });
             
-            // Form submission
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                // Show loading
-                document.getElementById('loading').classList.remove('hidden');
-                document.getElementById('results').classList.add('hidden');
-                document.getElementById('error').classList.add('hidden');
-                
-                // Get form data
-                const formData = {
-                    use_type: document.getElementById('use_type').value,
-                    construction_type: document.getElementById('construction_type').value,
-                    sqft: parseFloat(document.getElementById('sqft').value),
-                    year_built: parseInt(document.getElementById('year_built').value),
-                    quality_class: document.getElementById('quality_class').value,
-                    locality_index: parseFloat(document.getElementById('locality_index').value),
-                    condition: document.getElementById('condition').value
-                };
-                
-                try {
-                    // Call RCN API
-                    const response = await fetch('http://localhost:8000/rcn/calculate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(formData)
+            // Run batch processing for all examples
+            document.getElementById('batch-button')?.addEventListener('click', function() {
+                // Fetch examples
+                fetch('../sample_data/example_building_inputs.json')
+                    .then(response => response.json())
+                    .then(examples => {
+                        batchPanel.classList.remove('hidden');
+                        batchResults.innerHTML = '';
+                        
+                        // Process each example
+                        const processExample = (index) => {
+                            if (index >= examples.length) {
+                                statusMessage.textContent = 'Batch processing complete!';
+                                statusMessage.className = 'status success';
+                                return;
+                            }
+                            
+                            const example = examples[index];
+                            
+                            fetch(`${apiBaseUrl}/rcn/calculate`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(example)
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                // Add row to batch results table
+                                const row = document.createElement('tr');
+                                
+                                const formatCurrency = num => '$' + parseFloat(num).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                                
+                                row.innerHTML = `
+                                    <td>${example.name || `Building ${index + 1}`}</td>
+                                    <td>${formatCurrency(result.base_cost)}</td>
+                                    <td>${formatCurrency(result.adjusted_rcn)}</td>
+                                    <td>${formatCurrency(result.depreciated_rcn)}</td>
+                                `;
+                                
+                                batchResults.appendChild(row);
+                                
+                                // Process next example
+                                processExample(index + 1);
+                            })
+                            .catch(error => {
+                                console.error('Error processing example:', error);
+                                
+                                // Add error row
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${example.name || `Building ${index + 1}`}</td>
+                                    <td colspan="3">Error: ${error.message}</td>
+                                `;
+                                batchResults.appendChild(row);
+                                
+                                // Continue with next example
+                                processExample(index + 1);
+                            });
+                        };
+                        
+                        // Start batch processing
+                        statusMessage.textContent = 'Batch processing in progress...';
+                        statusMessage.className = 'status loading';
+                        statusMessage.classList.remove('hidden');
+                        
+                        processExample(0);
+                    })
+                    .catch(error => {
+                        console.error('Error loading examples for batch processing:', error);
+                        statusMessage.textContent = 'Error loading examples for batch processing.';
+                        statusMessage.className = 'status error';
+                        statusMessage.classList.remove('hidden');
                     });
-                    
-                    // Hide loading
-                    document.getElementById('loading').classList.add('hidden');
-                    
-                    if (!response.ok) {
-                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Display results
-                    document.getElementById('base_cost').textContent = formatCurrency(data.base_cost);
-                    document.getElementById('adjusted_rcn').textContent = formatCurrency(data.adjusted_rcn);
-                    document.getElementById('depreciation_pct').textContent = data.depreciation_pct.toFixed(2) + '%';
-                    document.getElementById('depreciated_rcn').textContent = formatCurrency(data.depreciated_rcn);
-                    document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
-                    document.getElementById('results').classList.remove('hidden');
-                } catch (error) {
-                    // Show error
-                    const errorElement = document.getElementById('error');
-                    errorElement.textContent = error.message;
-                    errorElement.classList.remove('hidden');
-                }
             });
             
-            // Print results
-            printResultsBtn.addEventListener('click', function() {
-                window.print();
-            });
-            
-            // Process batch file
-            processBatchBtn.addEventListener('click', async function() {
-                const fileInput = document.getElementById('batchFile');
-                
-                if (!fileInput.files.length) {
-                    alert('Please select a JSON file to process.');
-                    return;
-                }
-                
-                try {
-                    const file = fileInput.files[0];
-                    const reader = new FileReader();
-                    
-                    reader.onload = async function(e) {
-                        try {
-                            const buildings = JSON.parse(e.target.result);
-                            
-                            if (!Array.isArray(buildings)) {
-                                throw new Error('File content is not a valid array of buildings.');
-                            }
-                            
-                            // Process each building
-                            const results = [];
-                            for (const building of buildings) {
-                                const response = await fetch('http://localhost:8000/rcn/calculate', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify(building)
-                                });
-                                
-                                if (!response.ok) {
-                                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-                                }
-                                
-                                const data = await response.json();
-                                results.push({
-                                    building: building,
-                                    result: data
-                                });
-                            }
-                            
-                            // Display batch results
-                            document.getElementById('batchOutput').textContent = JSON.stringify(results, null, 2);
-                            document.getElementById('batchResults').classList.remove('hidden');
-                        } catch (error) {
-                            alert('Error processing batch file: ' + error.message);
-                        }
-                    };
-                    
-                    reader.readAsText(file);
-                } catch (error) {
-                    alert('Error reading file: ' + error.message);
-                }
-            });
+            // Initialize
+            loadExamples();
         });
     </script>
 </body>
