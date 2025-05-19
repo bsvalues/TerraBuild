@@ -263,6 +263,12 @@ if not exist html_ui (
     mkdir html_ui
 )
 
+REM Check for /nostart flag (used by packaging script)
+if "%1"=="/nostart" (
+    echo Sample data initialized. Not starting server due to /nostart flag.
+    exit /b 0
+)
+
 REM Start the server
 echo.
 echo Starting RCN Valuation Engine API...

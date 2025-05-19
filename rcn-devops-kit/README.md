@@ -1,91 +1,120 @@
-# TerraFusionBuild RCN Valuation Engine DevOps Kit
-
-The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine DevOps Kit provides a complete deployment solution for the property valuation engine used by county assessors. This kit includes everything needed to install, configure, and run the RCN calculator in various Windows environments.
+# TerraFusionBuild RCN Valuation Engine
 
 ## Overview
 
-This DevOps kit allows county departments to deploy the RCN Valuation Engine through multiple methods:
+The TerraFusionBuild RCN (Replacement Cost New) Valuation Engine is a professional-grade API and calculation tool for property assessors and valuers. The system provides accurate cost estimations for various building types based on industry-standard metrics including quality class, construction type, regional cost factors, and depreciation tables.
 
-1. **Direct Execution** - Run the server directly from a local folder
-2. **Windows Service** - Install as a background Windows service
-3. **Standalone Executable** - Create a portable executable file
-4. **Enterprise Deployment** - Package for distribution via Group Policy or SCCM
+This DevOps Kit provides a complete package for deploying and using the RCN Valuation Engine in Windows environments, with options for both standalone and service-based deployments.
 
-## Components
+## Features
 
-The kit includes the following components:
+- **Comprehensive Building Cost Calculation**: Calculate Replacement Cost New values for residential, commercial, industrial, and agricultural buildings with detailed cost breakdowns.
+- **Multiple Deployment Options**: Deploy as a standalone application or as a Windows service.
+- **Interactive Web UI**: User-friendly interface for performing calculations and viewing results.
+- **RESTful API**: Well-documented API endpoints for integration with other systems.
+- **Sample Data Included**: Pre-configured with sample cost profiles and depreciation tables for immediate use.
+- **Extensible Architecture**: Designed to be customized with organization-specific cost data.
 
-- **Core RCN Calculator** - The FastAPI implementation of the valuation engine
-- **User Interface** - Web-based HTML interface for easy calculations
-- **Sample Data** - Preconfigured cost profiles and depreciation tables
-- **Deployment Scripts** - Installation and service management utilities
-- **Documentation** - Installation and usage instructions
+## System Requirements
 
-## Getting Started
+- Windows 10 or newer, or Windows Server 2016 or newer
+- Python 3.8 or newer
+- 4GB RAM (minimum)
+- 500MB free disk space
+- Administrator rights (for service installation only)
 
-### System Requirements
+## Quick Start Guide
 
-- Windows 10/11 or Windows Server 2016/2019/2022
-- Python 3.8 or higher (for direct execution)
-- PowerShell 5.1 or higher (for deployment packaging)
-- Administrator privileges (for Windows service installation)
+### Standalone Deployment
 
-### Installation Options
+1. Extract the package to a directory of your choice.
+2. Run `install_deps.bat` to install required dependencies.
+3. Run `start_rcn.bat` to start the server.
+4. Access the web interface at http://localhost:8000 or the API documentation at http://localhost:8000/docs.
 
-#### Option 1: Quick Start (Direct Execution)
+### Windows Service Deployment
 
-1. Run `install_deps.bat` to install the required dependencies
-2. Run `start_rcn.bat` to start the RCN Valuation Engine
-3. Open a web browser and navigate to http://localhost:8000
+1. Extract the package to a directory of your choice.
+2. Run `install_deps.bat` to install required dependencies.
+3. Download NSSM (Non-Sucking Service Manager) from https://nssm.cc/download and place `nssm.exe` in the `windows_service` directory.
+4. Run `windows_service\install_service.bat` as Administrator to install and start the service.
+5. Access the web interface at http://localhost:8000 or the API documentation at http://localhost:8000/docs.
 
-#### Option 2: Windows Service Installation
+To uninstall the service, run `windows_service\uninstall_service.bat` as Administrator.
 
-1. Run `install_deps.bat` to install the required dependencies
-2. Right-click on `windows_service/install_service.bat` and select "Run as administrator"
-3. The service will be installed and started automatically
-4. Open a web browser and navigate to http://localhost:8000
-5. To uninstall, run `windows_service/uninstall_service.bat` as administrator
+## Directory Structure
 
-#### Option 3: Standalone Executable
+```
+rcn-devops-kit/
+├── install_deps.bat           # Dependency installation script
+├── start_rcn.bat              # Server startup script
+├── rcn_api_stub.py            # Main API implementation
+├── sample_data/               # Sample cost data files
+│   ├── cost_profiles.json     # Base rates, building types, etc.
+│   ├── depreciation_tables.json # Age and condition factors
+│   └── example_building_inputs.json # Example building data
+├── html_ui/                   # Web interface files
+│   └── index.html             # Main web interface
+├── windows_service/           # Windows service scripts
+│   ├── install_service.bat    # Service installation script
+│   └── uninstall_service.bat  # Service removal script
+└── logs/                      # Log files directory
+```
 
-1. Run `install_deps.bat` to install the required dependencies
-2. Run `build_exe.bat` to create a standalone executable
-3. The executable will be created as `TerraFusionRCN.exe` in the current directory
-4. Run the executable and access the web interface at http://localhost:8000
+## API Documentation
 
-#### Option 4: Deployment Package for Distribution
+The RCN Valuation Engine provides the following API endpoints:
 
-1. Run `create_deployment_package.bat` to create a ZIP file for distribution
-2. Deploy the ZIP file to target machines via USB drive, network share, or IT deployment tools
-3. Extract the ZIP file and follow the instructions in the included README.txt
+- `POST /api/calculate-rcn`: Calculate RCN value based on building parameters
+- `GET /api/building-types`: List available building types
+- `GET /api/construction-types`: List available construction types
+- `GET /api/quality-classes`: List available quality classes
+- `GET /api/regions`: List available regions
+- `GET /api/example-buildings`: Get example building inputs
+- `GET /api/health`: Health check endpoint
 
-## Key Features
-
-- **Multiple Building Types** - Support for Residential, Commercial, Industrial, and Agricultural properties
-- **Customizable Construction Types** - Wood Frame, Masonry, Steel Frame, and Concrete
-- **Quality Classifications** - Detailed quality class system (A+ through E)
-- **Condition-Based Depreciation** - Automatically calculate depreciation based on building condition
-- **Age Factors** - Adjust valuation based on the building's age
-- **Regional Adjustments** - Apply locality factors for regional cost variations
-- **Professional UI** - User-friendly web interface for easy data entry and results
-- **API Documentation** - Built-in API documentation for integration with other systems
-
-## Sample Data
-
-The kit includes sample data files that demonstrate the functionality:
-
-- **Cost Profiles** - Base rates for different building types and construction methods
-- **Depreciation Tables** - Factors for condition and age-based depreciation
-- **Example Buildings** - Sample building inputs for testing the calculation engine
+For detailed API documentation, access the Swagger UI at http://localhost:8000/docs when the server is running.
 
 ## Customization
 
-County assessors can customize the valuation engine by:
+### Cost Profiles
 
-1. Modifying the `sample_data/cost_profiles.json` file to adjust base rates
-2. Updating the `sample_data/depreciation_tables.json` file for local depreciation standards
-3. Adding or modifying building types, construction methods, and quality factors
+To customize cost profiles, edit the `sample_data/cost_profiles.json` file. This file contains:
+
+- Building types
+- Construction types
+- Quality classes and multipliers
+- Regional cost factors
+- Base rates for each building type/construction type combination
+- Feature adjustments
+
+### Depreciation Tables
+
+To customize depreciation tables, edit the `sample_data/depreciation_tables.json` file. This file contains:
+
+- Age-based depreciation factors for each building type
+- Condition-based depreciation factors
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Server won't start**: Ensure Python is installed and in the PATH. Check logs in the `logs` directory.
+2. **Service installation fails**: Ensure you have administrator privileges and NSSM is correctly placed in the `windows_service` directory.
+3. **Calculation errors**: Verify the input data matches the expected format. Check that the building type, construction type, and other parameters exist in the cost profile data.
+
+### Logs
+
+Log files are stored in the `logs` directory:
+- `rcn_api_YYYYMMDD.log`: API server logs
+- `service_stdout.log` and `service_stderr.log`: Service logs (when installed as a service)
 
 ## Support
 
-For technical support or questions about the RCN Valuation Engine, please contact your TerraFusionBuild representative.
+For additional support or to report issues, please contact your TerraFusionBuild representative.
+
+## License
+
+This software is proprietary and licensed under the terms of the TerraFusionBuild Software License Agreement.
+
+Copyright © 2025 TerraFusionBuild. All rights reserved.
