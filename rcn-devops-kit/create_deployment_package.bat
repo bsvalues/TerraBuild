@@ -1,111 +1,138 @@
 @echo off
 echo =====================================================
-echo TerraFusionBuild RCN Valuation Engine - Package Creator
+echo TerraFusionBuild RCN Valuation Engine - Deployment Package
 echo =====================================================
 echo.
 
 setlocal
 
-set "PACKAGE_NAME=TerraFusionBuild_RCN_Valuation_Engine_v1.0.0"
-set "OUTPUT_DIR=%~dp0\dist"
+set INSTALL_DIR=%~dp0
+set OUTPUT_DIR=%INSTALL_DIR%\deployment
+set PACKAGE_NAME=TerraFusionBuild_RCN_Valuation_Engine
+set VERSION=1.0.0
+set TIMESTAMP=%date:~10,4%%date:~4,2%%date:~7,2%
 
-:: Create output directory if it doesn't exist
-if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
-
-:: Check if existing package exists and remove it
-if exist "%OUTPUT_DIR%\%PACKAGE_NAME%.zip" del "%OUTPUT_DIR%\%PACKAGE_NAME%.zip"
+:: Check if executable exists or needs to be built
+if not exist "%INSTALL_DIR%\dist\rcn_valuation_engine.exe" (
+    echo Executable not found. Would you like to build it now?
+    set /p BUILD_EXE=Build executable (Y/N): 
+    
+    if /i "%BUILD_EXE%"=="Y" (
+        echo Running build_exe.bat...
+        call "%INSTALL_DIR%\build_exe.bat"
+        
+        if %errorlevel% neq 0 (
+            echo Error: Executable build failed.
+            goto :error
+        )
+    ) else (
+        echo Continuing without executable. Python runtime will be required on target system.
+    )
+)
 
 echo Creating deployment package...
-echo.
 
-:: Check for required files
-if not exist "rcn_api_stub.py" (
-    echo Error: rcn_api_stub.py not found. Required for package creation.
-    goto :error
-)
+:: Create output directory
+if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
 
-if not exist "build_exe.bat" (
-    echo Error: build_exe.bat not found. Required for package creation.
-    goto :error
-)
+:: Clean previous package
+if exist "%OUTPUT_DIR%\%PACKAGE_NAME%_%VERSION%.zip" del /q "%OUTPUT_DIR%\%PACKAGE_NAME%_%VERSION%.zip"
+if exist "%OUTPUT_DIR%\%PACKAGE_NAME%" rd /s /q "%OUTPUT_DIR%\%PACKAGE_NAME%"
 
-if not exist "install_deps.bat" (
-    echo Error: install_deps.bat not found. Required for package creation.
-    goto :error
-)
+:: Create package directory structure
+mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%"
+mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%\sample_data"
+mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%\html_ui"
+mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service"
+mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\bin"
 
-:: Create a temporary directory for the package contents
-set "TEMP_DIR=%TEMP%\rcn_package_%RANDOM%"
-mkdir "%TEMP_DIR%" 2>nul
+echo Copying files to package...
 
-:: Copy files to the temporary directory
-echo Copying core files...
-xcopy /Y "*.py" "%TEMP_DIR%\"
-xcopy /Y "*.bat" "%TEMP_DIR%\"
-xcopy /Y "*.json" "%TEMP_DIR%\"
-if exist ".env.example" xcopy /Y ".env.example" "%TEMP_DIR%\"
-if exist "requirements.txt" xcopy /Y "requirements.txt" "%TEMP_DIR%\"
-if exist "LICENSE.txt" xcopy /Y "LICENSE.txt" "%TEMP_DIR%\"
-if exist "README.md" xcopy /Y "README.md" "%TEMP_DIR%\"
-if exist "api_spec.json" xcopy /Y "api_spec.json" "%TEMP_DIR%\"
-if exist "PRD.md" xcopy /Y "PRD.md" "%TEMP_DIR%\"
+:: Copy README and documentation
+echo. > "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo TerraFusionBuild RCN Valuation Engine v%VERSION% >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo ================================================= >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo This package contains the RCN Valuation Engine for property assessment. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo Quick Start: >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo 1. Run install_deps.bat to set up required dependencies (one-time setup) >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo 2. Run start_rcn.bat to start the RCN Valuation Engine API Server >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo 3. Open http://localhost:8000/ui in your web browser >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo Windows Service Installation: >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo - Run windows_service\install_service.bat as Administrator to install as a Windows service >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo - Run windows_service\uninstall_service.bat as Administrator to remove the service >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo For more information and support, contact TerraFusionBuild support. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
+echo Package created on: %date% %time% >> "%OUTPUT_DIR%\%PACKAGE_NAME%\README.txt"
 
-echo Copying sample data...
-if exist "sample_data" (
-    mkdir "%TEMP_DIR%\sample_data" 2>nul
-    xcopy /Y /S "sample_data\*" "%TEMP_DIR%\sample_data\"
-)
+:: Copy batch files
+copy "%INSTALL_DIR%\start_rcn.bat" "%OUTPUT_DIR%\%PACKAGE_NAME%\"
+copy "%INSTALL_DIR%\install_deps.bat" "%OUTPUT_DIR%\%PACKAGE_NAME%\"
+copy "%INSTALL_DIR%\build_exe.bat" "%OUTPUT_DIR%\%PACKAGE_NAME%\"
 
-echo Copying HTML UI files...
-if exist "html_ui" (
-    mkdir "%TEMP_DIR%\html_ui" 2>nul
-    xcopy /Y /S "html_ui\*" "%TEMP_DIR%\html_ui\"
-)
+:: Copy service scripts
+copy "%INSTALL_DIR%\windows_service\install_service.bat" "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\"
+copy "%INSTALL_DIR%\windows_service\uninstall_service.bat" "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\"
 
-echo Copying Windows service files...
-if exist "windows_service" (
-    mkdir "%TEMP_DIR%\windows_service" 2>nul
-    xcopy /Y /S "windows_service\*" "%TEMP_DIR%\windows_service\"
-)
+:: Copy sample data
+copy "%INSTALL_DIR%\sample_data\*.json" "%OUTPUT_DIR%\%PACKAGE_NAME%\sample_data\"
 
-:: Create ZIP file using PowerShell
-echo Creating ZIP package...
-powershell -command "Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('%TEMP_DIR%', '%OUTPUT_DIR%\%PACKAGE_NAME%.zip');"
+:: Copy HTML UI
+copy "%INSTALL_DIR%\html_ui\*.*" "%OUTPUT_DIR%\%PACKAGE_NAME%\html_ui\"
 
-:: Check if the ZIP file was created successfully
-if exist "%OUTPUT_DIR%\%PACKAGE_NAME%.zip" (
-    echo.
-    echo Deployment package created successfully!
-    echo.
-    echo Package location: %OUTPUT_DIR%\%PACKAGE_NAME%.zip
-    echo.
+:: Copy API implementation
+if exist "%INSTALL_DIR%\dist\rcn_valuation_engine.exe" (
+    :: Copy compiled executable if available
+    mkdir "%OUTPUT_DIR%\%PACKAGE_NAME%\dist"
+    copy "%INSTALL_DIR%\dist\rcn_valuation_engine.exe" "%OUTPUT_DIR%\%PACKAGE_NAME%\dist\"
+    echo Included standalone executable - no Python installation needed on target.
 ) else (
-    echo.
-    echo Error: Failed to create deployment package.
+    :: Copy Python script if no executable
+    copy "%INSTALL_DIR%\rcn_api_stub.py" "%OUTPUT_DIR%\%PACKAGE_NAME%\"
+    echo Included Python script - Python installation required on target.
+)
+
+:: Copy NSSM if it exists
+if exist "%INSTALL_DIR%\windows_service\bin\nssm.exe" (
+    copy "%INSTALL_DIR%\windows_service\bin\nssm.exe" "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\bin\"
+    echo Included NSSM for Windows service support.
+) else (
+    echo NSSM not found. Windows service functionality will require manual NSSM installation.
+    
+    :: Create README for NSSM
+    echo. > "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\bin\README.txt"
+    echo To enable Windows service support, download NSSM from http://nssm.cc/ >> "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\bin\README.txt"
+    echo and place nssm.exe in this directory. >> "%OUTPUT_DIR%\%PACKAGE_NAME%\windows_service\bin\README.txt"
+)
+
+:: Create ZIP package
+echo Creating final ZIP package...
+powershell -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('%OUTPUT_DIR%\%PACKAGE_NAME%', '%OUTPUT_DIR%\%PACKAGE_NAME%_%VERSION%_%TIMESTAMP%.zip')"
+
+if %errorlevel% neq 0 (
+    echo Error: Failed to create ZIP package.
     goto :error
 )
 
-:: Clean up temporary directory
-rmdir /S /Q "%TEMP_DIR%" 2>nul
-
-echo Package contains:
-echo  - RCN Valuation Engine API
-echo  - Sample data files
-echo  - Windows service wrapper
-echo  - HTML dashboard
-echo  - Installation and setup scripts
 echo.
-echo This package can be deployed via:
-echo  1. Direct copy to USB drive for portable use
-echo  2. Enterprise IT deployment (MSI package)
-echo  3. Manual installation on a server
+echo Deployment package created successfully:
+echo %OUTPUT_DIR%\%PACKAGE_NAME%_%VERSION%_%TIMESTAMP%.zip
+echo.
+echo The package includes:
+echo - RCN Valuation Engine API
+echo - Sample data for testing
+echo - HTML UI for interactive usage
+echo - Windows service scripts for persistent deployment
 echo.
 
 goto :end
 
 :error
 echo.
-echo Package creation failed. Please check the errors above.
+echo Package creation failed. Please fix the errors above and try again.
 exit /b 1
 
 :end
