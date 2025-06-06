@@ -199,6 +199,10 @@ export const buildingTypes = pgTable("building_types", {
   updated_at: timestamp("updated_at").defaultNow()
 });
 
+export const insertBuildingTypeSchema = createInsertSchema(buildingTypes)
+  .omit({ created_at: true, updated_at: true });
+
+export type InsertBuildingType = z.infer<typeof insertBuildingTypeSchema>;
 export type BuildingType = typeof buildingTypes.$inferSelect;
 
 /**
@@ -214,6 +218,10 @@ export const regions = pgTable("regions", {
   updated_at: timestamp("updated_at").defaultNow()
 });
 
+export const insertRegionSchema = createInsertSchema(regions)
+  .omit({ created_at: true, updated_at: true });
+
+export type InsertRegion = z.infer<typeof insertRegionSchema>;
 export type Region = typeof regions.$inferSelect;
 
 /**
