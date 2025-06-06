@@ -124,7 +124,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
   if (variant === 'text-only') {
     return (
       <div className={cn('flex items-center', container, className)}>
-        <span className={cn('font-bold tracking-tight text-slate-800 dark:text-slate-100', text)}>
+        <span className={cn('font-bold tracking-tight text-cyan-800 dark:text-cyan-100', text)}>
           {textContent}
         </span>
       </div>
@@ -174,7 +174,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
             </g>
           </svg>
         </div>
-        <span className="font-bold tracking-tight dark:text-slate-100 text-sm text-[#a0ffff]">
+        <span className={cn('font-bold tracking-tight text-cyan-800 dark:text-cyan-100', text)}>
           {textContent}
         </span>
       </div>
@@ -253,7 +253,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
           </g>
         </svg>
       </div>
-      <span className={cn('font-bold tracking-tight text-slate-800 dark:text-slate-100', text)}>
+      <span className={cn('font-bold tracking-tight text-cyan-800 dark:text-cyan-100', text)}>
         {textContent}
       </span>
     </div>
