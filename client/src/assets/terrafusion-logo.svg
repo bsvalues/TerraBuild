@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1DD1A1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891B2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded square background -->
+  <rect x="10" y="10" width="100" height="100" rx="20" ry="20" fill="url(#tfGradient)"/>
+  
+  <!-- TF Logo -->
+  <g transform="translate(25, 25)">
+    <!-- T -->
+    <path d="M10 15 L50 15 L50 25 L35 25 L35 55 L25 55 L25 25 L10 25 Z" fill="white"/>
+    <!-- F -->
+    <path d="M60 15 L60 55 L50 55 L50 15 L80 15 L80 25 L60 25 L60 30 L75 30 L75 40 L60 40 Z" fill="white"/>
+  </g>
+</svg>

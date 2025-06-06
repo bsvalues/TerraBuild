@@ -51,7 +51,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
         </Button>
         
         <div className="mr-6 hidden lg:flex">
-          <TerraFusionLogo variant="with-text" textContent="TerraFusion Build" size="sm" className="h-8" />
+          <TerraFusionLogo variant="with-text" textContent="TerraFusion" size="sm" className="h-8" />
         </div>
       </div>
       

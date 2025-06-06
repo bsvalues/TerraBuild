@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Show success message
       toast({
         title: "Registration successful",
-        description: `Welcome to TerraBuild, ${userData.name || userData.username}!`,
+        description: `Welcome to TerraFusion, ${userData.name || userData.username}!`,
       });
     },
     onError: (error) => {

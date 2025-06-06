@@ -1,6 +1,6 @@
-# TerraBuild Enterprise Platform
+# TerraFusion Enterprise Platform
 
-**Advanced Geospatial Property Valuation System for County Governments**
+**Advanced AI-Powered Geospatial Property Valuation System for County Governments**
 
 [![License](https://img.shields.io/badge/license-Enterprise-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](package.json)
@@ -9,7 +9,7 @@
 
 ## Overview
 
-TerraBuild transforms property assessment for county governments through AI-driven automation, providing accurate valuations with enterprise-grade security and one-click deployment capabilities.
+TerraFusion transforms property assessment for county governments through AI-driven automation, providing accurate valuations with enterprise-grade security and one-click deployment capabilities.
 
 ### Key Features
 
@@ -30,8 +30,8 @@ TerraBuild transforms property assessment for county governments through AI-driv
 
 ### Installation
 ```bash
-git clone <repository-url> terrabuild
-cd terrabuild
+git clone <repository-url> terrafusion
+cd terrafusion
 chmod +x deploy.sh
 ./deploy.sh production
 ```
