@@ -3,12 +3,95 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* TerraFusion Brand Colors */
+    --tf-cyan-50: #ecfeff;
+    --tf-cyan-100: #cffafe;
+    --tf-cyan-200: #a5f3fc;
+    --tf-cyan-300: #67e8f9;
+    --tf-cyan-400: #22d3ee;
+    --tf-cyan-500: #06b6d4;
+    --tf-cyan-600: #0891b2;
+    --tf-cyan-700: #0e7490;
+    --tf-cyan-800: #155e75;
+    --tf-cyan-900: #164e63;
+    --tf-teal-50: #f0fdfa;
+    --tf-teal-100: #ccfbf1;
+    --tf-teal-200: #99f6e4;
+    --tf-teal-300: #5eead4;
+    --tf-teal-400: #2dd4bf;
+    --tf-teal-500: #14b8a6;
+    --tf-teal-600: #0d9488;
+    --tf-teal-700: #0f766e;
+    --tf-teal-800: #115e59;
+    --tf-teal-900: #134e4a;
+    --tf-dark: #083344;
+    
+    /* Professional Typography */
+    --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Spacing Scale */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-family: var(--font-family-sans);
+  }
+  
+  /* Professional Typography Classes */
+  .tf-heading-1 {
+    @apply text-3xl md:text-4xl font-bold text-cyan-800 dark:text-cyan-100;
+  }
+  
+  .tf-heading-2 {
+    @apply text-2xl md:text-3xl font-semibold text-cyan-800 dark:text-cyan-100;
+  }
+  
+  .tf-heading-3 {
+    @apply text-xl font-medium text-cyan-700 dark:text-cyan-200;
+  }
+  
+  .tf-body-text {
+    @apply text-base text-cyan-900 dark:text-cyan-100;
+  }
+  
+  .tf-body-muted {
+    @apply text-sm text-cyan-600 dark:text-cyan-300;
+  }
+  
+  .tf-caption {
+    @apply text-xs text-cyan-500 dark:text-cyan-400;
+  }
+  
+  /* Professional Button Styles */
+  .tf-btn-primary {
+    @apply bg-gradient-to-r from-teal-400 to-cyan-600 text-white hover:from-teal-500 hover:to-cyan-700 font-medium;
+  }
+  
+  .tf-btn-secondary {
+    @apply bg-cyan-800/10 text-cyan-800 border border-cyan-800/20 hover:bg-cyan-800/20 dark:bg-cyan-100/10 dark:text-cyan-100 dark:border-cyan-100/20 dark:hover:bg-cyan-100/20;
+  }
+  
+  /* Professional Card Styles */
+  .tf-card {
+    @apply bg-white dark:bg-gray-900 border border-cyan-200 dark:border-cyan-800 rounded-lg shadow-sm;
+  }
+  
+  .tf-card-header {
+    @apply border-b border-cyan-200 dark:border-cyan-800 bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-900/20 dark:to-teal-900/20;
   }
 }
 

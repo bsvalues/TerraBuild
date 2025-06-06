@@ -159,8 +159,8 @@ export default function MainLayout({
                 transition={{ delay: 0.1 }}
                 className="mb-6"
               >
-                {pageTitle && <h1 className="text-2xl md:text-3xl font-bold text-[#243E4D]">{pageTitle}</h1>}
-                {pageDescription && <p className="mt-2 text-gray-600">{pageDescription}</p>}
+                {pageTitle && <h1 className="text-2xl md:text-3xl font-bold text-cyan-800 dark:text-cyan-100">{pageTitle}</h1>}
+                {pageDescription && <p className="mt-2 text-cyan-600 dark:text-cyan-300">{pageDescription}</p>}
                 
                 {/* Add workflow status bar for property assessment related pages */}
                 <WorkflowStatusBarSection />

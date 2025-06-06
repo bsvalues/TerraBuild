@@ -121,10 +121,10 @@ export function Sidebar({}: SidebarProps) {
                 variant="ghost"
                 size={isExpanded ? "default" : "icon"}
                 className={cn(
-                  "w-full mb-1 justify-start text-blue-400",
+                  "w-full mb-1 justify-start text-cyan-400",
                   isActive 
-                    ? "bg-blue-900/60 text-blue-200 hover:text-blue-100" 
-                    : "hover:bg-blue-900/40 hover:text-blue-300"
+                    ? "bg-cyan-900/60 text-cyan-200 hover:text-cyan-100" 
+                    : "hover:bg-cyan-900/40 hover:text-cyan-300"
                 )}
               >
                 <Icon className={cn("h-5 w-5", isExpanded ? "mr-3" : "")} />
@@ -145,7 +145,7 @@ export function Sidebar({}: SidebarProps) {
   return (
     <div
       className={cn(
-        "h-screen bg-gradient-to-b from-blue-950 to-blue-900 border-r border-blue-800/40 py-2 transition-all duration-300 ease-in-out",
+        "h-screen bg-gradient-to-b from-[#083344] to-[#0891B2] border-r border-cyan-800/40 py-2 transition-all duration-300 ease-in-out",
         isExpanded ? "w-64" : "w-16"
       )}
     >
