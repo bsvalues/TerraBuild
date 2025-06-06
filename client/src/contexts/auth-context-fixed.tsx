@@ -4,10 +4,18 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { User } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+
+// Auth-specific User type that matches what the backend returns
+interface AuthUser {
+  id: number;
+  username: string;
+  name: string;
+  role: string;
+  is_active: boolean;
+}
 
 // Validation schemas
 const loginSchema = z.object({
@@ -30,12 +38,12 @@ type RegisterData = z.infer<typeof registerSchema> & {
 };
 
 export type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User, Error, LoginData>;
+  loginMutation: UseMutationResult<AuthUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<User, Error, RegisterData>;
+  registerMutation: UseMutationResult<AuthUser, Error, RegisterData>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -48,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | null, Error>({
+  } = useQuery<AuthUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: async ({ queryKey }) => {
       try {
@@ -75,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // Login mutation
-  const loginMutation = useMutation<User, Error, LoginData>({
+  const loginMutation = useMutation<AuthUser, Error, LoginData>({
     mutationFn: async (credentials) => {
       // Validate input
       loginSchema.parse(credentials);
@@ -114,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // Registration mutation
-  const registerMutation = useMutation<User, Error, RegisterData>({
+  const registerMutation = useMutation<AuthUser, Error, RegisterData>({
     mutationFn: async (userData) => {
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...registrationData } = userData;
