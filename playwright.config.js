@@ -1,4 +1,4 @@
-// Playwright End-to-End Test Configuration for TerraBuild
+// Playwright End-to-End Test Configuration for TerraFusion
 const { devices } = require('@playwright/test');
 
 /**

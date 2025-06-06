@@ -1,6 +1,6 @@
-# TerraBuild AI Agent Context
+# TerraFusion AI Agent Context
 
-TerraBuild is an advanced geospatial property valuation platform that transforms municipal property assessments through intelligent technologies and comprehensive data analysis, with a specific focus on Benton County's unique regional requirements.
+TerraFusion is an advanced AI-powered geospatial property valuation platform that transforms municipal property assessments through intelligent technologies and comprehensive data analysis, with a specific focus on Benton County's unique regional requirements.
 
 ## Core Project Components
 

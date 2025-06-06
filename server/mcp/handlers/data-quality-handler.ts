@@ -46,7 +46,7 @@ export function registerDataQualityAgent(): Agent {
       agentName: AGENT_NAME
     });
     
-    logger.info(`[TerraBuild] ${AGENT_NAME} registered successfully`);
+    logger.info(`[TerraFusion] ${AGENT_NAME} registered successfully`);
     
     return agent;
   } catch (error) {
