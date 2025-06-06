@@ -746,10 +746,10 @@ Content-Type: application/json
                     <Button variant="link" className="text-blue-300 hover:text-blue-200 p-0 h-auto justify-start font-medium">
                       Environment Variables
                     </Button>
-                    <Button variant="link" className="text-blue-300 hover:text-blue-200 p-0 h-auto justify-start">
+                    <Button variant="link" className="text-cyan-300 hover:text-cyan-200 p-0 h-auto justify-start">
                       Performance Tuning
                     </Button>
-                    <Button variant="link" className="text-blue-300 hover:text-blue-200 p-0 h-auto justify-start">
+                    <Button variant="link" className="text-cyan-300 hover:text-cyan-200 p-0 h-auto justify-start">
                       Backup and Recovery
                     </Button>
                   </div>
@@ -758,48 +758,48 @@ Content-Type: application/json
             </div>
             
             <div className="lg:col-span-3 space-y-6">
-              <Card className="bg-blue-900/30 border-blue-800/40">
+              <Card className="bg-cyan-900/30 border-cyan-800/40">
                 <CardHeader>
-                  <CardTitle className="text-blue-100">Environment Variables</CardTitle>
-                  <CardDescription className="text-blue-300">
+                  <CardTitle className="text-cyan-100">Environment Variables</CardTitle>
+                  <CardDescription className="text-cyan-300">
                     Configuration options that can be set through environment variables
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-blue-100 text-lg mb-2">Overview</h2>
-                      <p className="text-blue-200">
-                        The BCBS application uses environment variables for configuration to simplify deployment
+                      <h2 className="text-cyan-100 text-lg mb-2">Overview</h2>
+                      <p className="text-cyan-200">
+                        The TerraFusion application uses environment variables for configuration to simplify deployment
                         across different environments. These variables can be set in a .env file or through your
                         deployment platform's environment configuration.
                       </p>
                     </div>
                     
                     <div>
-                      <h2 className="text-blue-100 text-lg mb-2">Database Configuration</h2>
+                      <h2 className="text-cyan-100 text-lg mb-2">Database Configuration</h2>
                       
-                      <div className="rounded-md border border-blue-800/40 overflow-hidden mb-4">
+                      <div className="rounded-md border border-cyan-800/40 overflow-hidden mb-4">
                         <Table>
-                          <TableHeader className="bg-blue-900/50">
-                            <TableRow className="hover:bg-blue-900/60 border-blue-800/60">
-                              <TableHead className="text-blue-300 w-1/4">Variable</TableHead>
-                              <TableHead className="text-blue-300 w-1/4">Default</TableHead>
-                              <TableHead className="text-blue-300">Description</TableHead>
+                          <TableHeader className="bg-cyan-900/50">
+                            <TableRow className="hover:bg-cyan-900/60 border-cyan-800/60">
+                              <TableHead className="text-cyan-300 w-1/4">Variable</TableHead>
+                              <TableHead className="text-cyan-300 w-1/4">Default</TableHead>
+                              <TableHead className="text-cyan-300">Description</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            <TableRow className="hover:bg-blue-900/40 border-blue-800/40">
-                              <TableCell className="font-medium text-blue-200">DATABASE_URL</TableCell>
-                              <TableCell className="text-blue-300">None (Required)</TableCell>
-                              <TableCell className="text-blue-300">
+                            <TableRow className="hover:bg-cyan-900/40 border-cyan-800/40">
+                              <TableCell className="font-medium text-cyan-200">DATABASE_URL</TableCell>
+                              <TableCell className="text-cyan-300">None (Required)</TableCell>
+                              <TableCell className="text-cyan-300">
                                 PostgreSQL connection string
                               </TableCell>
                             </TableRow>
-                            <TableRow className="hover:bg-blue-900/40 border-blue-800/40">
-                              <TableCell className="font-medium text-blue-200">DATABASE_POOL_SIZE</TableCell>
-                              <TableCell className="text-blue-300">10</TableCell>
-                              <TableCell className="text-blue-300">
+                            <TableRow className="hover:bg-cyan-900/40 border-cyan-800/40">
+                              <TableCell className="font-medium text-cyan-200">DATABASE_POOL_SIZE</TableCell>
+                              <TableCell className="text-cyan-300">10</TableCell>
+                              <TableCell className="text-cyan-300">
                                 Maximum number of database connections in the pool
                               </TableCell>
                             </TableRow>

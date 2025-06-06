@@ -72,7 +72,7 @@ export default function MainLayout({
   showDataFlow = false,
   trackPageView = true
 }: MainLayoutProps) {
-  const { isExpanded } = useSidebar();
+  const { isExpanded, toggle: toggleSidebar } = useSidebar();
   const { isLoading: authLoading } = useAuth();
   const { trackUserActivity } = useDataFlow();
   
@@ -103,8 +103,8 @@ export default function MainLayout({
           >
             <Loader2 className="h-8 w-8 animate-spin text-white" />
           </div>
-          <p className="text-[#243E4D] font-medium" style={{ transform: 'translateZ(5px)' }}>
-            Loading TerraBuild...
+          <p className="text-cyan-800 font-medium" style={{ transform: 'translateZ(5px)' }}>
+            Loading TerraFusion...
           </p>
         </motion.div>
       </div>
@@ -113,7 +113,7 @@ export default function MainLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#f0f4f7] to-[#e6eef2]">
-      <Header isLanding={isLanding} />
+      <Header toggleSidebar={toggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
         {!isLanding && <Sidebar />}
         <div 
