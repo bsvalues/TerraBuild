@@ -49,10 +49,10 @@ export default function LandingPage() {
           <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
             <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mb-6" />
             <h1 className="text-3xl md:text-5xl font-bold mb-4">
-              TerraBuild
+              TerraFusion
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-3xl">
-              The official Building Cost Estimation System for Benton County, Washington
+              The official AI-Powered Property Assessment Platform for Benton County, Washington
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               {isAuthenticated ? (

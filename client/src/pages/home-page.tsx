@@ -82,7 +82,7 @@ const HomePage = () => {
               Welcome back, {user?.name || user?.username || 'User'}
             </h1>
             <p className="text-blue-300 max-w-xl">
-              TerraFusion Build provides powerful tools for property valuation, cost analysis, and data-driven insights. Explore the platform to discover how it can streamline your assessment workflows.
+              TerraFusion provides powerful AI-driven tools for property valuation, cost analysis, and data-driven insights. Explore the platform to discover how it can streamline your assessment workflows.
             </p>
           </div>
           <div className="flex-shrink-0">

@@ -1,5 +1,5 @@
 /**
- * Logger utility for TerraBuild platform
+ * Logger utility for TerraFusion platform
  * 
  * This provides a consistent logging interface throughout the application.
  * It supports different log levels and can be extended to include additional

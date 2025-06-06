@@ -38,7 +38,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
   variant = 'default',
   size = 'md',
   className,
-  textContent = 'TerraFusion Build'
+  textContent = 'TerraFusion'
 }) => {
   const { container, icon, text } = sizeMap[size];
 
