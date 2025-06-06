@@ -803,10 +803,10 @@ Content-Type: application/json
                                 Maximum number of database connections in the pool
                               </TableCell>
                             </TableRow>
-                            <TableRow className="hover:bg-blue-900/40 border-blue-800/40">
-                              <TableCell className="font-medium text-blue-200">DATABASE_IDLE_TIMEOUT</TableCell>
-                              <TableCell className="text-blue-300">30000</TableCell>
-                              <TableCell className="text-blue-300">
+                            <TableRow className="hover:bg-cyan-900/40 border-cyan-800/40">
+                              <TableCell className="font-medium text-cyan-200">DATABASE_IDLE_TIMEOUT</TableCell>
+                              <TableCell className="text-cyan-300">30000</TableCell>
+                              <TableCell className="text-cyan-300">
                                 Idle timeout for database connections in milliseconds
                               </TableCell>
                             </TableRow>
