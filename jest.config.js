@@ -1,4 +1,4 @@
-// Jest Configuration for TerraBuild unit tests
+// Jest Configuration for TerraFusion unit tests
 
 module.exports = {
   // Test environment
