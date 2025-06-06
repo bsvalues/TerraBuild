@@ -174,7 +174,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
             </g>
           </svg>
         </div>
-        <span className={cn('font-bold tracking-tight text-slate-800 dark:text-slate-100', text)}>
+        <span className="font-bold tracking-tight dark:text-slate-100 text-sm text-[#a0ffff]">
           {textContent}
         </span>
       </div>
