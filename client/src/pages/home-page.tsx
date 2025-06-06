@@ -75,20 +75,20 @@ const HomePage = () => {
   return (
     <div className="space-y-8">
       {/* Welcome header */}
-      <div className="rounded-lg overflow-hidden border border-blue-800/40 bg-gradient-to-r from-blue-950 to-blue-900">
+      <div className="rounded-lg overflow-hidden border border-cyan-800/40 bg-gradient-to-r from-[#083344] to-[#0891B2]">
         <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-blue-100 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-cyan-100 mb-2">
               Welcome back, {user?.name || user?.username || 'User'}
             </h1>
-            <p className="text-blue-300 max-w-xl">
+            <p className="text-cyan-300 max-w-xl">
               TerraFusion provides powerful AI-driven tools for property valuation, cost analysis, and data-driven insights. Explore the platform to discover how it can streamline your assessment workflows.
             </p>
           </div>
           <div className="flex-shrink-0">
             <Link href="/cost-wizard">
               <Button 
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 border-0 shadow-md"
+                className="bg-gradient-to-r from-[#2DD4BF] to-[#0891B2] text-white hover:from-[#22C4A8] hover:to-[#067A91] border-0 shadow-md"
                 size="lg"
               >
                 <Calculator className="mr-2 h-5 w-5" />
@@ -97,23 +97,23 @@ const HomePage = () => {
             </Link>
           </div>
         </div>
-        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-600/10 px-8 py-4 border-t border-blue-800/40">
+        <div className="bg-gradient-to-r from-[#2DD4BF]/10 to-[#0891B2]/10 px-8 py-4 border-t border-cyan-800/40">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
             <div>
-              <span className="text-blue-400">Last login:</span>
-              <span className="ml-2 text-blue-200">Today, 9:45 AM</span>
+              <span className="text-cyan-400">Last login:</span>
+              <span className="ml-2 text-cyan-200">Today, 9:45 AM</span>
             </div>
             <div>
-              <span className="text-blue-400">Recent calculations:</span>
-              <span className="ml-2 text-blue-200">12</span>
+              <span className="text-cyan-400">Recent calculations:</span>
+              <span className="ml-2 text-cyan-200">12</span>
             </div>
             <div>
-              <span className="text-blue-400">Properties analyzed:</span>
-              <span className="ml-2 text-blue-200">85</span>
+              <span className="text-cyan-400">Properties analyzed:</span>
+              <span className="ml-2 text-cyan-200">85</span>
             </div>
             <div>
-              <span className="text-blue-400">Active matrices:</span>
-              <span className="ml-2 text-blue-200">3</span>
+              <span className="text-cyan-400">Active matrices:</span>
+              <span className="ml-2 text-cyan-200">3</span>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ const HomePage = () => {
       {/* Quick access section */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-blue-100">Quick Access</h2>
+          <h2 className="text-xl font-bold text-cyan-100">Quick Access</h2>
           <Button variant="link" className="text-cyan-400 p-0 hover:text-cyan-300">
             View All <Grid3X3 className="ml-1 h-4 w-4" />
           </Button>

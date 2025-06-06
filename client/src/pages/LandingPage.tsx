@@ -45,7 +45,7 @@ export default function LandingPage() {
     <MainLayout loading={loading} isLanding={true}>
       <div className="bg-white">
         {/* Hero section */}
-        <section className="relative bg-gradient-to-r from-[#1a3b5c] to-[#235789] text-white -mt-6 -mx-6 mb-4">
+        <section className="relative bg-gradient-to-r from-[#083344] to-[#0891B2] text-white -mt-6 -mx-6 mb-4">
           <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col items-center text-center">
             <img src={bentonSeal} alt="Benton County Seal" className="w-24 h-24 mb-6" />
             <h1 className="text-3xl md:text-5xl font-bold mb-4">
@@ -60,7 +60,7 @@ export default function LandingPage() {
                   <Link href="/dashboard">
                     <Button 
                       size="lg" 
-                      className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                      className="bg-[#2DD4BF] hover:bg-[#0891B2] text-white font-medium"
                     >
                       <Calculator className="mr-2 h-5 w-5" /> Go to Dashboard
                     </Button>
@@ -89,7 +89,7 @@ export default function LandingPage() {
                   <Link href="/cost-wizard">
                     <Button 
                       size="lg" 
-                      className="bg-[#29B7D3] hover:bg-[#21a6bf] text-white font-medium"
+                      className="bg-[#2DD4BF] hover:bg-[#0891B2] text-white font-medium"
                     >
                       <Calculator className="mr-2 h-5 w-5" /> Launch Cost Wizard
                     </Button>

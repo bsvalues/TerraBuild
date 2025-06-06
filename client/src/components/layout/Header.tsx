@@ -39,12 +39,12 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const userInitials = user ? getInitials(user.name || user.username || '') : 'U';
 
   return (
-    <header className="h-16 z-30 bg-gradient-to-r from-blue-950 to-blue-900 border-b border-blue-800/40 flex items-center px-4 justify-between">
+    <header className="h-16 z-30 bg-gradient-to-r from-[#083344] to-[#0891B2] border-b border-cyan-800/40 flex items-center px-4 justify-between">
       <div className="flex items-center">
         <Button 
           variant="ghost" 
           onClick={toggleSidebar} 
-          className="mr-2 text-blue-300 hover:text-blue-100 hover:bg-blue-800/30 lg:hidden"
+          className="mr-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-800/30 lg:hidden"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
@@ -57,7 +57,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
       
       <div className="flex items-center space-x-4">
         <div className="hidden md:flex">
-          <Button variant="outline" size="sm" className="text-blue-300 border-blue-800 bg-blue-900/40 hover:bg-blue-800/60 mr-2">
+          <Button variant="outline" size="sm" className="text-cyan-300 border-cyan-800 bg-[#083344]/40 hover:bg-cyan-800/60 mr-2">
             <HelpCircle className="h-4 w-4 mr-1" />
             Help
           </Button>
@@ -65,20 +65,20 @@ export function Header({ toggleSidebar }: HeaderProps) {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative p-1 rounded-full text-blue-300 hover:text-blue-100 hover:bg-blue-800/30">
+            <Button variant="ghost" className="relative p-1 rounded-full text-cyan-300 hover:text-cyan-100 hover:bg-cyan-800/30">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-cyan-500"></span>
+              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-[#2DD4BF]"></span>
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80 bg-blue-900 border-blue-800 text-blue-100" align="end">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-blue-800/40">
+          <DropdownMenuContent className="w-80 bg-[#083344] border-cyan-800 text-cyan-100" align="end">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-800/40">
               <span className="font-semibold">Notifications</span>
               <Button variant="link" className="text-cyan-400 hover:text-cyan-300 h-auto p-0">
                 Mark all as read
               </Button>
             </div>
-            <div className="py-2 px-4 text-blue-400 text-sm">
+            <div className="py-2 px-4 text-cyan-400 text-sm">
               No new notifications
             </div>
           </DropdownMenuContent>
@@ -86,33 +86,33 @@ export function Header({ toggleSidebar }: HeaderProps) {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center space-x-2 rounded-full hover:bg-blue-800/30 p-1">
-              <Avatar className="h-8 w-8 border border-blue-800 bg-blue-800">
-                <AvatarFallback className="bg-gradient-to-br from-cyan-500/20 to-blue-700/40 text-blue-100 font-medium">
+            <Button variant="ghost" className="flex items-center space-x-2 rounded-full hover:bg-cyan-800/30 p-1">
+              <Avatar className="h-8 w-8 border border-cyan-800 bg-cyan-800">
+                <AvatarFallback className="bg-gradient-to-br from-[#2DD4BF]/20 to-[#0891B2]/40 text-cyan-100 font-medium">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-blue-900 border-blue-800 text-blue-100" align="end">
-            <div className="px-4 py-3 border-b border-blue-800/40">
-              <p className="text-sm font-medium text-blue-100">{user?.name || user?.username}</p>
-              <p className="text-xs text-blue-400 mt-0.5">{user?.role}</p>
+          <DropdownMenuContent className="w-56 bg-[#083344] border-cyan-800 text-cyan-100" align="end">
+            <div className="px-4 py-3 border-b border-cyan-800/40">
+              <p className="text-sm font-medium text-cyan-100">{user?.name || user?.username}</p>
+              <p className="text-xs text-cyan-400 mt-0.5">{user?.role}</p>
             </div>
-            <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
-              <User className="mr-2 h-4 w-4 text-blue-400" />
+            <DropdownMenuItem className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100">
+              <User className="mr-2 h-4 w-4 text-cyan-400" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100">
-              <Settings className="mr-2 h-4 w-4 text-blue-400" />
+            <DropdownMenuItem className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100">
+              <Settings className="mr-2 h-4 w-4 text-cyan-400" />
               <span>Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-blue-800/40" />
+            <DropdownMenuSeparator className="bg-cyan-800/40" />
             <DropdownMenuItem 
               onClick={handleLogout}
-              className="hover:bg-blue-800/30 text-blue-200 focus:bg-blue-800/50 focus:text-blue-100"
+              className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100"
             >
-              <LogOut className="mr-2 h-4 w-4 text-blue-400" />
+              <LogOut className="mr-2 h-4 w-4 text-cyan-400" />
               <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
