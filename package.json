@@ -143,7 +143,7 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@replit/vite-plugin-cartographer": "^0.0.11",
+    "@replit/vite-plugin-cartographer": "^0.2.7",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@tailwindcss/typography": "^0.5.15",
     "@types/connect-pg-simple": "^7.0.3",
