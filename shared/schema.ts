@@ -327,3 +327,69 @@ export const insertActivitySchema = createInsertSchema(activities)
 
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activities.$inferSelect;
+
+/**
+ * Project Members Table
+ */
+export const projectMembers = pgTable("project_members", {
+  id: serial("id").primaryKey(),
+  project_id: integer("project_id").references(() => projects.id).notNull(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  role: varchar("role", { length: 50 }).default("member"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertProjectMemberSchema = createInsertSchema(projectMembers)
+  .omit({ id: true, created_at: true });
+
+export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
+export type ProjectMember = typeof projectMembers.$inferSelect;
+
+/**
+ * Project Properties Junction Table
+ */
+export const insertProjectPropertySchema = createInsertSchema(projectProperties)
+  .omit({ id: true });
+
+export type InsertProjectProperty = z.infer<typeof insertProjectPropertySchema>;
+export type ProjectProperty = typeof projectProperties.$inferSelect;
+
+/**
+ * File Uploads Table
+ */
+export const fileUploads = pgTable("file_uploads", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  file_name: varchar("file_name", { length: 255 }).notNull(),
+  file_path: varchar("file_path", { length: 500 }).notNull(),
+  file_size: integer("file_size"),
+  mime_type: varchar("mime_type", { length: 100 }),
+  status: varchar("status", { length: 50 }).default("uploaded"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const insertFileUploadSchema = createInsertSchema(fileUploads)
+  .omit({ id: true, created_at: true, updated_at: true });
+
+export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;
+export type FileUpload = typeof fileUploads.$inferSelect;
+
+/**
+ * Improvement Details Table
+ */
+export const improvementDetails = pgTable("improvement_details", {
+  id: serial("id").primaryKey(),
+  improvement_id: integer("improvement_id").references(() => improvements.id).notNull(),
+  detail_type: varchar("detail_type", { length: 100 }),
+  detail_value: varchar("detail_value", { length: 255 }),
+  numeric_value: doublePrecision("numeric_value"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const insertImprovementDetailSchema = createInsertSchema(improvementDetails)
+  .omit({ id: true, created_at: true, updated_at: true });
+
+export type InsertImprovementDetail = z.infer<typeof insertImprovementDetailSchema>;
+export type ImprovementDetail = typeof improvementDetails.$inferSelect;
