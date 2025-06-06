@@ -397,16 +397,16 @@ const SettingsPage = () => {
 
                 <div className="space-y-4">
                   <div className="flex flex-col space-y-1">
-                    <Label className="text-blue-200">API Key</Label>
-                    <span className="text-xs text-blue-400">For accessing TerraBuild programmatically</span>
+                    <Label className="text-cyan-200">API Key</Label>
+                    <span className="text-xs text-cyan-400">For accessing TerraFusion programmatically</span>
                   </div>
                   <div className="flex gap-2">
                     <Input
                       value="••••••••••••••••••••••••••"
                       disabled
-                      className="font-mono bg-blue-950/70 border-blue-800/60 text-blue-300"
+                      className="font-mono bg-[#083344]/70 border-cyan-800/60 text-cyan-300"
                     />
-                    <Button variant="outline" className="border-blue-700 text-blue-200">
+                    <Button variant="outline" className="border-cyan-700 text-cyan-200">
                       Regenerate
                     </Button>
                   </div>
@@ -415,10 +415,10 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-blue-900/30 border-blue-800/40">
+          <Card className="bg-cyan-900/30 border-cyan-800/40">
             <CardHeader>
-              <CardTitle className="text-blue-100">About</CardTitle>
-              <CardDescription className="text-blue-300">
+              <CardTitle className="text-cyan-100">About</CardTitle>
+              <CardDescription className="text-cyan-300">
                 System information and version details.
               </CardDescription>
             </CardHeader>
@@ -426,24 +426,24 @@ const SettingsPage = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-blue-400 text-sm">Version</p>
-                    <p className="text-blue-100">v2.5.1 (build 2025.05.16)</p>
+                    <p className="text-cyan-400 text-sm">Version</p>
+                    <p className="text-cyan-100">v2.5.1 (build 2025.05.16)</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-blue-400 text-sm">Database</p>
-                    <p className="text-blue-100">PostgreSQL 16.3</p>
+                    <p className="text-cyan-400 text-sm">Database</p>
+                    <p className="text-cyan-100">PostgreSQL 16.3</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-blue-400 text-sm">Environment</p>
-                    <p className="text-blue-100">Production</p>
+                    <p className="text-cyan-400 text-sm">Environment</p>
+                    <p className="text-cyan-100">Production</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-blue-400 text-sm">Last Update</p>
-                    <p className="text-blue-100">May 16, 2025</p>
+                    <p className="text-cyan-400 text-sm">Last Update</p>
+                    <p className="text-cyan-100">May 16, 2025</p>
                   </div>
                 </div>
                 
-                <Button variant="outline" className="border-blue-700 text-blue-200 w-full mt-4">
+                <Button variant="outline" className="border-cyan-700 text-cyan-200 w-full mt-4">
                   Check for Updates
                 </Button>
               </div>

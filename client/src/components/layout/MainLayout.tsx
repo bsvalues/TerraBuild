@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./header";
+import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 import Footer from "./Footer";
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from "@/lib/utils";

@@ -760,21 +760,21 @@ const ValuationMapsPage = () => {
                   </div>
                   
                   <div>
-                    <h3 className="text-blue-100 font-medium mb-2">Property Filters</h3>
+                    <h3 className="text-cyan-100 font-medium mb-2">Property Filters</h3>
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label htmlFor="type-filter" className="text-sm text-blue-300">Property Type</Label>
+                          <Label htmlFor="type-filter" className="text-sm text-cyan-300">Property Type</Label>
                           <Select defaultValue="all">
-                            <SelectTrigger id="type-filter" className="bg-blue-900/50 border-blue-700/50 text-blue-200">
+                            <SelectTrigger id="type-filter" className="bg-cyan-900/50 border-cyan-700/50 text-cyan-200">
                               <SelectValue placeholder="All Types" />
                             </SelectTrigger>
-                            <SelectContent className="bg-blue-950 border-blue-800/60">
-                              <SelectItem value="all" className="text-blue-200">All Types</SelectItem>
-                              <SelectItem value="residential" className="text-blue-200">Residential</SelectItem>
-                              <SelectItem value="commercial" className="text-blue-200">Commercial</SelectItem>
-                              <SelectItem value="industrial" className="text-blue-200">Industrial</SelectItem>
-                              <SelectItem value="agricultural" className="text-blue-200">Agricultural</SelectItem>
+                            <SelectContent className="bg-cyan-950 border-cyan-800/60">
+                              <SelectItem value="all" className="text-cyan-200">All Types</SelectItem>
+                              <SelectItem value="residential" className="text-cyan-200">Residential</SelectItem>
+                              <SelectItem value="commercial" className="text-cyan-200">Commercial</SelectItem>
+                              <SelectItem value="industrial" className="text-cyan-200">Industrial</SelectItem>
+                              <SelectItem value="agricultural" className="text-cyan-200">Agricultural</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
