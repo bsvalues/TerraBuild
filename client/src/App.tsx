@@ -5,7 +5,7 @@ import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { WindowProvider } from '@/contexts/WindowContext';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
 import HomePage from '@/pages/home-page';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
@@ -47,130 +47,173 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <TerraFusionCore />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/benton-county" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <BentonCountyValuationPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/dashboards" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <DashboardsPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/properties" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <PropertiesPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/properties/:id" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <PropertyDetailPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/matrix" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <MatrixExplorerPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
-      <Route path="/maps" component={MapAnalysisPage} />
+      <Route path="/maps" component={() => (
+        <TerraFusionLayout>
+          <MapAnalysisPage />
+        </TerraFusionLayout>
+      )} />
       
       <Route path="/calculator" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <CalculatorPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/cost-factors" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <CostFactorTablesPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/cost-wizard" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <CostWizardPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
-      <Route path="/test-cost-factors" component={TestCostFactorsPage} />
+      <Route path="/test-cost-factors" component={() => (
+        <TerraFusionLayout>
+          <TestCostFactorsPage />
+        </TerraFusionLayout>
+      )} />
       
       <Route path="/reports" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <ReportsPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/settings" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <SettingsPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/diagnostic" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <DiagnosticPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/trend-analysis" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <TrendAnalysisPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/import" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <DataImportPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/documentation" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <DocumentationPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/history" component={() => (
-        <DashboardLayout>
-          <h1 className="text-2xl font-bold text-blue-100 mb-6">History</h1>
-          <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
-            <p className="text-blue-300">History tracking coming soon...</p>
+        <TerraFusionLayout>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white mb-2">History</h1>
+            <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
+              <p className="text-slate-300">History tracking coming soon...</p>
+            </div>
           </div>
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/agents" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <AgentsPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
 
       <Route path="/help" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <HelpSupportPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/help/webinars" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <WebinarsPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
       )} />
       
       <Route path="/help/webinars/:id" component={() => (
-        <DashboardLayout>
+        <TerraFusionLayout>
           <WebinarViewPage />
-        </DashboardLayout>
+        </TerraFusionLayout>
+      )} />
+      
+      <Route path="/predictive" component={() => (
+        <TerraFusionLayout>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Predictive Analytics</h1>
+            <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
+              <p className="text-slate-300">AI-powered market forecasting and trend analysis coming soon...</p>
+            </div>
+          </div>
+        </TerraFusionLayout>
+      )} />
+      
+      <Route path="/insights" component={() => (
+        <TerraFusionLayout>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Smart Insights</h1>
+            <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
+              <p className="text-slate-300">Automated pattern recognition and recommendations coming soon...</p>
+            </div>
+          </div>
+        </TerraFusionLayout>
+      )} />
+      
+      <Route path="/users" component={() => (
+        <TerraFusionLayout>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
+            <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
+              <p className="text-slate-300">Access control and role management coming soon...</p>
+            </div>
+          </div>
+        </TerraFusionLayout>
       )} />
       
       <Route component={NotFoundPage} />

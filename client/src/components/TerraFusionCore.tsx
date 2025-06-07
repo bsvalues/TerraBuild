@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +8,16 @@ import {
   MapPin, 
   Calculator, 
   TrendingUp, 
-  Settings, 
-  FileText, 
   Database,
-  Zap
+  BarChart3,
+  Building,
+  Zap,
+  ArrowRight,
+  Activity,
+  Target,
+  Eye,
+  Brain,
+  ChevronRight
 } from 'lucide-react';
 
 interface CountyMetrics {
@@ -18,224 +25,320 @@ interface CountyMetrics {
   assessedValue: number;
   accuracy: number;
   processingTime: number;
+  averageAssessment: number;
+  monthlyGrowth: number;
 }
 
-interface TerraFusionCoreProps {
-  county?: string;
+interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  path: string;
+  color: string;
+  badge?: string;
 }
 
-const TerraFusionCore: React.FC<TerraFusionCoreProps> = ({ county = "Benton County" }) => {
+const TerraFusionCore: React.FC = () => {
   const [metrics, setMetrics] = useState<CountyMetrics>({
     totalProperties: 45234,
     assessedValue: 2840000000,
     accuracy: 98.7,
-    processingTime: 0.3
+    processingTime: 0.3,
+    averageAssessment: 425000,
+    monthlyGrowth: 3.2
   });
-  
-  const [activeFlow, setActiveFlow] = useState<string>('geographic');
 
-  const flows = [
+  const quickActions: QuickAction[] = [
     {
-      id: 'geographic',
-      title: 'Geographic Assessment',
+      id: 'assessment',
+      title: 'Property Assessment',
+      description: 'Launch intelligent property valuation workflows',
+      icon: Building,
+      path: '/properties',
+      color: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+      badge: 'Core'
+    },
+    {
+      id: 'analytics',
+      title: 'Market Analytics',
+      description: 'Deep dive into county market intelligence',
+      icon: BarChart3,
+      path: '/dashboards',
+      color: 'bg-gradient-to-r from-green-500 to-emerald-500',
+      badge: 'AI'
+    },
+    {
+      id: 'mapping',
+      title: 'Geographic Intelligence',
+      description: 'Interactive property mapping and spatial analysis',
       icon: MapPin,
-      description: 'Tesla Energy - Autonomous property discovery and mapping',
-      color: 'bg-blue-500'
+      path: '/maps',
+      color: 'bg-gradient-to-r from-purple-500 to-pink-500'
     },
     {
-      id: 'financial',
-      title: 'Financial Analysis', 
-      icon: Calculator,
-      description: 'Jobs Simplicity - Elegant cost calculations',
-      color: 'bg-green-500'
-    },
-    {
-      id: 'predictive',
-      title: 'Predictive Intelligence',
-      icon: TrendingUp,
-      description: 'Musk Scale - AI-driven future projections',
-      color: 'bg-purple-500'
+      id: 'predictions',
+      title: 'Predictive Modeling',
+      description: 'AI-powered market forecasting and trend analysis',
+      icon: Brain,
+      path: '/predictive',
+      color: 'bg-gradient-to-r from-orange-500 to-red-500',
+      badge: 'Beta'
     }
   ];
 
-  const goldenMetrics = [
-    { label: 'System Accuracy', value: metrics.accuracy, target: 99, unit: '%' },
-    { label: 'Processing Speed', value: metrics.processingTime, target: 1, unit: 's' },
-    { label: 'County Satisfaction', value: 97.2, target: 95, unit: '%' },
-    { label: 'Cost Reduction', value: 78.5, target: 75, unit: '%' }
+  const systemMetrics = [
+    { 
+      label: 'Assessment Accuracy', 
+      value: metrics.accuracy, 
+      target: 99, 
+      unit: '%',
+      trend: '+0.3%',
+      icon: Target,
+      color: 'text-green-400'
+    },
+    { 
+      label: 'Processing Speed', 
+      value: metrics.processingTime, 
+      target: 1, 
+      unit: 's',
+      trend: '-0.1s',
+      icon: Zap,
+      color: 'text-cyan-400'
+    },
+    { 
+      label: 'Market Growth', 
+      value: metrics.monthlyGrowth, 
+      target: 3, 
+      unit: '%',
+      trend: '+0.8%',
+      icon: TrendingUp,
+      color: 'text-purple-400'
+    },
+    { 
+      label: 'System Health', 
+      value: 99.9, 
+      target: 99, 
+      unit: '%',
+      trend: 'Stable',
+      icon: Activity,
+      color: 'text-emerald-400'
+    }
+  ];
+
+  const recentActivity = [
+    { 
+      id: 1, 
+      type: 'assessment', 
+      description: 'Completed batch assessment for Residential District 7',
+      time: '2 minutes ago',
+      status: 'completed'
+    },
+    { 
+      id: 2, 
+      type: 'analysis', 
+      description: 'Generated market trend report for Q1 2025',
+      time: '15 minutes ago',
+      status: 'completed'
+    },
+    { 
+      id: 3, 
+      type: 'alert', 
+      description: 'Property value anomaly detected in Commercial Zone B',
+      time: '1 hour ago',
+      status: 'requires_attention'
+    },
+    { 
+      id: 4, 
+      type: 'sync', 
+      description: 'GIS data synchronization completed successfully',
+      time: '2 hours ago',
+      status: 'completed'
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      <div className="container mx-auto px-6 py-8">
-        
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Zap className="h-12 w-12 text-cyan-400 mr-3" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              TerraFusion
-            </h1>
-          </div>
-          <p className="text-xl text-slate-300">
-            {county} Infrastructure Brain - The Golden Pattern
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Command Center
+          </h1>
+          <p className="text-slate-400">
+            Benton County Infrastructure Intelligence Platform
           </p>
-          <div className="mt-4 flex justify-center space-x-4">
-            <Badge variant="outline" className="bg-cyan-400/20 text-cyan-400 border-cyan-400">
-              Tesla Precision
-            </Badge>
-            <Badge variant="outline" className="bg-green-400/20 text-green-400 border-green-400">
-              Jobs Elegance
-            </Badge>
-            <Badge variant="outline" className="bg-purple-400/20 text-purple-400 border-purple-400">
-              Musk Autonomy
-            </Badge>
-          </div>
         </div>
+        <div className="flex items-center space-x-2">
+          <Badge variant="outline" className="bg-green-400/20 text-green-400 border-green-400">
+            System Operational
+          </Badge>
+          <Badge variant="outline" className="bg-cyan-400/20 text-cyan-400 border-cyan-400">
+            AI Active
+          </Badge>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {goldenMetrics.map((metric, index) => (
-            <Card key={index} className="bg-slate-800/50 border-slate-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {systemMetrics.map((metric, index) => {
+          const Icon = metric.icon;
+          return (
+            <Card key={index} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-400">{metric.label}</span>
-                  <span className="text-2xl font-bold text-white">
-                    {metric.value}{metric.unit}
-                  </span>
+                <div className="flex items-center justify-between mb-4">
+                  <Icon className={`h-5 w-5 ${metric.color}`} />
+                  <span className={`text-xs ${metric.color}`}>{metric.trend}</span>
                 </div>
-                <Progress 
-                  value={(metric.value / metric.target) * 100} 
-                  className="h-2"
-                />
-                <div className="text-xs text-slate-500 mt-1">
-                  Target: {metric.target}{metric.unit}
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-white">
+                    {metric.value}{metric.unit}
+                  </div>
+                  <div className="text-sm text-slate-400">{metric.label}</div>
+                  <Progress 
+                    value={(metric.value / metric.target) * 100} 
+                    className="h-1.5"
+                  />
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {flows.map((flow) => {
-            const Icon = flow.icon;
-            const isActive = activeFlow === flow.id;
-            
-            return (
-              <Card 
-                key={flow.id} 
-                className={`cursor-pointer transition-all duration-300 ${
-                  isActive 
-                    ? 'bg-slate-700/50 border-cyan-400 shadow-lg shadow-cyan-400/20' 
-                    : 'bg-slate-800/30 border-slate-700 hover:border-slate-600'
-                }`}
-                onClick={() => setActiveFlow(flow.id)}
-              >
-                <CardHeader>
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-lg ${flow.color}`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-white">{flow.title}</CardTitle>
-                      <CardDescription className="text-slate-400">
-                        {flow.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isActive && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-slate-400">Properties</div>
-                          <div className="text-white font-semibold">
-                            {metrics.totalProperties.toLocaleString()}
-                          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Quick Actions</CardTitle>
+            <CardDescription>
+              Launch key TerraFusion workflows
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link key={action.id} href={action.path}>
+                  <div className="group p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600 hover:border-slate-500 transition-all cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-lg ${action.color}`}>
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                          <div className="text-slate-400">Value</div>
-                          <div className="text-white font-semibold">
-                            ${(metrics.assessedValue / 1000000000).toFixed(1)}B
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-semibold text-white">{action.title}</h3>
+                            {action.badge && (
+                              <Badge variant="outline" className="text-xs bg-cyan-400/20 text-cyan-400 border-cyan-400">
+                                {action.badge}
+                              </Badge>
+                            )}
                           </div>
+                          <p className="text-sm text-slate-400">{action.description}</p>
                         </div>
                       </div>
-                      <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
-                        Launch {flow.title}
-                      </Button>
+                      <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-cyan-400 transition-colors" />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-slate-800/30 border-slate-700">
-            <CardHeader>
-              <CardTitle className="flex items-center text-white">
-                <Database className="h-5 w-5 mr-2 text-cyan-400" />
-                Data Harmonics
-              </CardTitle>
-              <CardDescription>
-                Tesla's "Energy, Frequency, Vibration" in real-time
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Market Frequency</span>
-                  <span className="text-green-400 font-semibold">Stable</span>
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Recent Activity</CardTitle>
+            <CardDescription>
+              Real-time system operations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg bg-slate-700/20">
+                  <div className={`w-2 h-2 rounded-full mt-2 ${
+                    activity.status === 'completed' ? 'bg-green-400' : 
+                    activity.status === 'requires_attention' ? 'bg-yellow-400' : 'bg-blue-400'
+                  }`}></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white">{activity.description}</p>
+                    <p className="text-xs text-slate-400">{activity.time}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Assessment Energy</span>
-                  <span className="text-cyan-400 font-semibold">High</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Data Vibration</span>
-                  <span className="text-purple-400 font-semibold">Optimal</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <Card className="bg-slate-800/30 border-slate-700">
-            <CardHeader>
-              <CardTitle className="flex items-center text-white">
-                <FileText className="h-5 w-5 mr-2 text-green-400" />
-                Brady/Belichick Execution
-              </CardTitle>
-              <CardDescription>
-                Tactical excellence in county operations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Game Plan Status</span>
-                  <span className="text-green-400 font-semibold">Executing</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Performance Metrics</span>
-                  <span className="text-cyan-400 font-semibold">Superior</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Strategic Position</span>
-                  <span className="text-purple-400 font-semibold">Dominant</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center text-white">
+              <Database className="h-5 w-5 mr-2 text-cyan-400" />
+              Data Intelligence
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Total Properties</span>
+              <span className="text-white font-semibold">{metrics.totalProperties.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Total Value</span>
+              <span className="text-white font-semibold">${(metrics.assessedValue / 1000000000).toFixed(1)}B</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Avg Assessment</span>
+              <span className="text-white font-semibold">${metrics.averageAssessment.toLocaleString()}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="mt-8 text-center">
-          <p className="text-slate-400 text-sm">
-            "If you want to understand the universe, think in terms of energy, frequency, and vibration." - Nikola Tesla
-          </p>
-          <p className="text-slate-500 text-xs mt-2">
-            TerraFusion Platform - Engineered for divine geometry in county infrastructure
-          </p>
-        </div>
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center text-white">
+              <Brain className="h-5 w-5 mr-2 text-purple-400" />
+              AI Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Model Confidence</span>
+              <span className="text-green-400 font-semibold">98.7%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Predictions Today</span>
+              <span className="text-cyan-400 font-semibold">2,847</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Anomalies Detected</span>
+              <span className="text-yellow-400 font-semibold">3</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center text-white">
+              <Activity className="h-5 w-5 mr-2 text-green-400" />
+              Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Uptime</span>
+              <span className="text-green-400 font-semibold">99.9%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Response Time</span>
+              <span className="text-cyan-400 font-semibold">{metrics.processingTime}s</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400">Data Sync</span>
+              <span className="text-green-400 font-semibold">Current</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
