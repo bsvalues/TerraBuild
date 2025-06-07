@@ -25,6 +25,7 @@ import { gisImportRoutes } from './routes/gisImportRoutes';
 import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
+import { bentonCountyDataService } from './services/benton-county-data';
 
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
@@ -1062,6 +1063,195 @@ router.use('/', authRoutes);
 
 // Mount the calculator routes for building cost calculations
 router.use('/', calculatorRouter);
+
+// Benton County Washington Real Property Data API Endpoints
+router.get('/api/benton-county/search', async (req: express.Request, res: express.Response) => {
+  try {
+    const { query } = req.query;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const properties = await bentonCountyDataService.searchProperties(query);
+    res.json({
+      success: true,
+      data: properties,
+      message: `Found ${properties.length} properties in Benton County`
+    });
+  } catch (error) {
+    console.error('Benton County property search error:', error);
+    res.status(500).json({ 
+      error: 'Failed to search Benton County properties',
+      message: 'Please verify API credentials for Benton County data access'
+    });
+  }
+});
+
+router.get('/api/benton-county/property/:parcelId', async (req: express.Request, res: express.Response) => {
+  try {
+    const { parcelId } = req.params;
+    const property = await bentonCountyDataService.getPropertyByParcelId(parcelId);
+    
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found in Benton County records' });
+    }
+    
+    res.json({
+      success: true,
+      data: property,
+      message: 'Benton County property details retrieved'
+    });
+  } catch (error) {
+    console.error('Benton County property lookup error:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve property details',
+      message: 'Please verify API credentials for Benton County assessor data'
+    });
+  }
+});
+
+router.get('/api/benton-county/market-data/:region', async (req: express.Request, res: express.Response) => {
+  try {
+    const { region } = req.params;
+    const marketData = await bentonCountyDataService.getMarketData(region);
+    
+    res.json({
+      success: true,
+      data: marketData,
+      message: `Market data for ${region} retrieved from Benton County records`
+    });
+  } catch (error) {
+    console.error('Benton County market data error:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve market data',
+      message: 'Please verify API credentials for Benton County market analysis'
+    });
+  }
+});
+
+router.get('/api/benton-county/cost-factors/:buildingType', async (req: express.Request, res: express.Response) => {
+  try {
+    const { buildingType } = req.params;
+    const { region } = req.query;
+    
+    const costFactors = await bentonCountyDataService.getCostFactors(
+      buildingType, 
+      region as string
+    );
+    
+    res.json({
+      success: true,
+      data: costFactors,
+      message: `Cost factors for ${buildingType} in Benton County retrieved`
+    });
+  } catch (error) {
+    console.error('Benton County cost factors error:', error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve cost factors',
+      message: 'Please verify API credentials for Benton County building cost data'
+    });
+  }
+});
+
+// AI-Powered Property Valuation Endpoint
+router.post('/api/benton-county/ai-valuation', async (req: express.Request, res: express.Response) => {
+  try {
+    const { parcelId, propertyDetails, marketComparables } = req.body;
+    
+    // Get property data from Benton County
+    const property = await bentonCountyDataService.getPropertyByParcelId(parcelId);
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found in Benton County records' });
+    }
+    
+    // Get market data for the property's region
+    const marketData = await bentonCountyDataService.getMarketData(property.city.toLowerCase());
+    
+    // Get cost factors for the building type
+    const costFactors = await bentonCountyDataService.getCostFactors(
+      property.buildingType, 
+      property.city.toLowerCase()
+    );
+    
+    // AI-powered valuation calculation
+    const aiValuation = {
+      property,
+      marketData,
+      costFactors,
+      aiAnalysis: {
+        estimatedValue: calculateAIValuation(property, marketData, costFactors),
+        confidenceLevel: calculateConfidence(property, marketData),
+        insights: generateValuationInsights(property, marketData, costFactors),
+        recommendations: generateRecommendations(property, marketData)
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    res.json({
+      success: true,
+      data: aiValuation,
+      message: 'AI-powered property valuation completed using Benton County data'
+    });
+  } catch (error) {
+    console.error('AI valuation error:', error);
+    res.status(500).json({ 
+      error: 'Failed to complete AI valuation',
+      message: 'Please verify API credentials and try again'
+    });
+  }
+});
+
+// Helper functions for AI valuation
+function calculateAIValuation(property: any, marketData: any, costFactors: any): number {
+  const baseValue = property.totalSqFt * marketData.pricePerSqFt;
+  const locationFactor = costFactors.locationFactors[property.city.toLowerCase().replace(' ', '_')] || 1.0;
+  const qualityFactor = costFactors.qualityMultipliers[property.buildingDetails.quality.toLowerCase()] || 1.0;
+  
+  return Math.round(baseValue * locationFactor * qualityFactor);
+}
+
+function calculateConfidence(property: any, marketData: any): string {
+  const salesVolume = marketData.salesVolume;
+  const propertyAge = new Date().getFullYear() - property.yearBuilt;
+  
+  if (salesVolume > 100 && propertyAge < 20) return 'High';
+  if (salesVolume > 50 && propertyAge < 40) return 'Medium';
+  return 'Low';
+}
+
+function generateValuationInsights(property: any, marketData: any, costFactors: any): string[] {
+  const insights = [];
+  
+  if (marketData.appreciation > 8) {
+    insights.push(`Strong market appreciation of ${marketData.appreciation}% in ${property.city}`);
+  }
+  
+  if (property.buildingDetails.condition === 'Good') {
+    insights.push('Property condition supports current valuation');
+  }
+  
+  if (marketData.pricePerSqFt > 200) {
+    insights.push('Above-average market pricing in this region');
+  }
+  
+  return insights;
+}
+
+function generateRecommendations(property: any, marketData: any): string[] {
+  const recommendations = [];
+  
+  if (marketData.appreciation > 5) {
+    recommendations.push('Consider holding for continued appreciation');
+  }
+  
+  if (property.buildingDetails.condition !== 'Excellent') {
+    recommendations.push('Property improvements could increase value');
+  }
+  
+  recommendations.push('Regular market monitoring recommended');
+  
+  return recommendations;
+}
 
 // Mount the cost factor tables router
 // Cost Factor Tables router is already registered
