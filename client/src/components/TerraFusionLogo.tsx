@@ -45,53 +45,11 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
   if (variant === 'circular') {
     return (
       <div className={cn('flex items-center justify-center', className)}>
-        <svg 
-          viewBox="0 0 120 120" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-          className={cn(icon, 'relative z-10')}
-        >
-          <defs>
-            <linearGradient id="tfNewMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#00e5ff', stopOpacity:1}} />
-              <stop offset="50%" style={{stopColor:'#00bcd4', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#0097a7', stopOpacity:1}} />
-            </linearGradient>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          {/* Rounded square container with dark background */}
-          <rect x="10" y="10" width="100" height="100" rx="20" ry="20" 
-                fill="#0a1f2e" stroke="url(#tfNewMainGradient)" strokeWidth="2"/>
-          
-          {/* Topographic contour lines */}
-          <path d="M20 30 Q40 25 60 30 Q80 35 100 30" 
-                stroke="#00e5ff" strokeWidth="0.8" opacity="0.3" fill="none"/>
-          <path d="M20 40 Q40 35 60 40 Q80 45 100 40" 
-                stroke="#00e5ff" strokeWidth="0.8" opacity="0.4" fill="none"/>
-          <path d="M20 50 Q40 45 60 50 Q80 55 100 50" 
-                stroke="#00e5ff" strokeWidth="0.8" opacity="0.5" fill="none"/>
-          <path d="M20 70 Q40 65 60 70 Q80 75 100 70" 
-                stroke="#00e5ff" strokeWidth="0.8" opacity="0.3" fill="none"/>
-          <path d="M20 80 Q40 75 60 80 Q80 85 100 80" 
-                stroke="#00e5ff" strokeWidth="0.8" opacity="0.4" fill="none"/>
-          
-          {/* Modern TF monogram */}
-          <g transform="translate(30, 35)" filter="url(#glow)">
-            {/* T letter */}
-            <path d="M5 10 L35 10 L35 18 L23 18 L23 50 L17 50 L17 18 L5 18 Z" 
-                  fill="url(#tfNewMainGradient)"/>
-            {/* F letter */}
-            <path d="M40 10 L40 50 L34 50 L34 10 L60 10 L60 18 L40 18 L40 25 L55 25 L55 33 L40 33 Z" 
-                  fill="url(#tfNewMainGradient)"/>
-          </g>
-        </svg>
+        <img 
+          src="/assets/terrafusion-logo.png" 
+          alt="TerraFusion Logo" 
+          className={cn(icon, 'object-contain')}
+        />
       </div>
     );
   }
@@ -188,65 +146,15 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
     );
   }
 
-  // Default variant - new TerraFusion design with contour lines and modern styling
+  // Default variant - uses your actual TerraFusion logo image
   return (
     <div className={cn('flex items-center gap-3', container, className)}>
       <div className="relative">
-        <svg 
-          viewBox="0 0 120 120" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-          className={cn(icon, 'relative z-10')}
-        >
-          <defs>
-            <linearGradient id="tfDefaultMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#00e5ff', stopOpacity:1}} />
-              <stop offset="50%" style={{stopColor:'#00bcd4', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#0097a7', stopOpacity:1}} />
-            </linearGradient>
-            <filter id="defaultGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          {/* Dark rounded square container */}
-          <rect x="10" y="10" width="100" height="100" rx="20" ry="20" 
-                fill="#0a1f2e" stroke="url(#tfDefaultMainGradient)" strokeWidth="2"/>
-          
-          {/* Topographic contour lines background */}
-          <g opacity="0.4">
-            <path d="M20 25 Q40 20 60 25 Q80 30 100 25" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 35 Q40 30 60 35 Q80 40 100 35" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 45 Q40 40 60 45 Q80 50 100 45" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 55 Q40 50 60 55 Q80 60 100 55" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 65 Q40 60 60 65 Q80 70 100 65" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 75 Q40 70 60 75 Q80 80 100 75" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 85 Q40 80 60 85 Q80 90 100 85" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-            <path d="M20 95 Q40 90 60 95 Q80 100 100 95" 
-                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
-          </g>
-          
-          {/* Modern TF monogram */}
-          <g transform="translate(25, 30)" filter="url(#defaultGlow)">
-            {/* T letter - cleaner, modern design */}
-            <path d="M8 15 L42 15 L42 25 L30 25 L30 60 L20 60 L20 25 L8 25 Z" 
-                  fill="url(#tfDefaultMainGradient)" strokeWidth="1" stroke="#00e5ff"/>
-            {/* F letter - cleaner, modern design */}
-            <path d="M50 15 L50 60 L40 60 L40 15 L70 15 L70 25 L50 25 L50 32 L65 32 L65 42 L50 42 Z" 
-                  fill="url(#tfDefaultMainGradient)" strokeWidth="1" stroke="#00e5ff"/>
-          </g>
-        </svg>
+        <img 
+          src="/assets/terrafusion-logo.png" 
+          alt="TerraFusion Logo" 
+          className={cn(icon, 'object-contain')}
+        />
       </div>
       <div className="flex flex-col">
         <span className={cn('font-bold tracking-tight text-slate-100', text)}>

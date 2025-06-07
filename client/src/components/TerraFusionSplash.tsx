@@ -57,7 +57,7 @@ const TerraFusionSplash: React.FC<TerraFusionSplashProps> = ({
               <img 
                 src="/assets/terrafusion-logo.png" 
                 alt="TerraFusion Logo" 
-                className="w-48 h-48 mx-auto drop-shadow-2xl"
+                className="w-64 h-auto mx-auto drop-shadow-2xl"
                 style={{ filter: 'drop-shadow(0 0 30px rgba(0, 229, 255, 0.5))' }}
               />
             </motion.div>
