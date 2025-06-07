@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Route, Switch, useRoute } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -7,6 +7,7 @@ import { SidebarProvider } from '@/contexts/SidebarContext';
 import { WindowProvider } from '@/contexts/WindowContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
+import TerraFusionSplash from '@/components/TerraFusionSplash';
 import HomePage from '@/pages/home-page';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
@@ -32,11 +33,16 @@ import { MapAnalysisPage } from '@/pages/MapAnalysisPage';
 import TerraFusionCore from '@/components/TerraFusionCore';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <WindowProvider>
           <SidebarProvider>
+            {showSplash && (
+              <TerraFusionSplash onComplete={() => setShowSplash(false)} duration={2500} />
+            )}
             <Router />
             <Toaster />
           </SidebarProvider>
