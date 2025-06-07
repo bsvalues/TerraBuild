@@ -28,6 +28,7 @@ import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
 import ValuationMapsPage from '@/pages/maps';
 import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
+import { MapAnalysisPage } from '@/pages/MapAnalysisPage';
 
 function App() {
   return (
@@ -86,6 +87,8 @@ function Router() {
           <ValuationMapsPage />
         </DashboardLayout>
       )} />
+      
+      <Route path="/map-analysis" component={MapAnalysisPage} />
       
       <Route path="/calculator" component={() => (
         <DashboardLayout>
