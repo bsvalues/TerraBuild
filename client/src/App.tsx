@@ -28,6 +28,7 @@ import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
 import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
 import { MapAnalysisPage } from '@/pages/MapAnalysisPage';
+import TerraFusionCore from '@/components/TerraFusionCore';
 
 function App() {
   return (
@@ -47,7 +48,7 @@ function Router() {
     <Switch>
       <Route path="/" component={() => (
         <DashboardLayout>
-          <BentonCountyValuationPage />
+          <TerraFusionCore />
         </DashboardLayout>
       )} />
       
