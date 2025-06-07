@@ -84,7 +84,7 @@ export function PropertyValuationInterface() {
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ['/api/benton-county/search', searchQuery],
     enabled: searchQuery.length > 2,
-    select: (data) => data?.data || []
+    select: (data: any) => data?.data || []
   });
 
   // AI-powered property valuation mutation
@@ -137,9 +137,9 @@ export function PropertyValuationInterface() {
   const getConfidenceBadgeVariant = (confidence: string) => {
     switch (confidence.toLowerCase()) {
       case 'high': return 'default';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'secondary';
+      case 'medium': return 'outline';
+      case 'low': return 'destructive';
+      default: return 'outline';
     }
   };
 

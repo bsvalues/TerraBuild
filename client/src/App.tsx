@@ -30,6 +30,7 @@ import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
 import ValuationMapsPage from '@/pages/maps';
+import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
 import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
@@ -86,6 +87,12 @@ function Router() {
       <ProtectedRoute path="/maps" component={() => (
         <DashboardLayout>
           <ValuationMapsPage />
+        </DashboardLayout>
+      )} />
+      
+      <ProtectedRoute path="/benton-county" component={() => (
+        <DashboardLayout>
+          <BentonCountyValuationPage />
         </DashboardLayout>
       )} />
       
