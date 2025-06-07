@@ -1,11 +1,6 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, LineChart, PieChart, TrendingUp, Map } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import MainContent from '@/components/layout/MainContent';
+import React from 'react';
+import PropertyAnalyticsDashboard from '@/components/analytics/PropertyAnalyticsDashboard';
+import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
 
 /**
  * Analytics Page
