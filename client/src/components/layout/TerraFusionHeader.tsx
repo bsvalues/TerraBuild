@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import TerraFusionCommandPalette from './TerraFusionCommandPalette';
+import TerraFusionNotificationCenter from '../notifications/TerraFusionNotificationCenter';
 
 interface TerraFusionHeaderProps {
   countyName?: string;
@@ -22,6 +23,7 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
   userRole = "Senior Assessor" 
 }) => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -99,9 +101,14 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
 
             <div className="h-6 w-px bg-slate-700"></div>
 
-            <Button variant="ghost" size="sm" className="relative text-slate-400 hover:text-white">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative text-slate-400 hover:text-white"
+              onClick={() => setNotificationCenterOpen(true)}
+            >
               <Bell className="h-5 w-5" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             </Button>
 
             <DropdownMenu>
@@ -151,6 +158,11 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
       <TerraFusionCommandPalette 
         open={commandPaletteOpen} 
         onOpenChange={setCommandPaletteOpen} 
+      />
+      
+      <TerraFusionNotificationCenter
+        isOpen={notificationCenterOpen}
+        onClose={() => setNotificationCenterOpen(false)}
       />
     </>
   );
