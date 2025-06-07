@@ -1,7 +1,7 @@
 import React from 'react';
 import { CostFactorDashboard } from '@/components/cost-factors/CostFactorDashboard';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Redirect } from 'wouter';
 import { Loader2 } from 'lucide-react';
 

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useAuth as useAuthContext } from "@/contexts/auth-context-fixed";
+import { useAuth as useAuthContext } from "@/contexts/AuthContext";
 
 // Create a fallback context for when useAuth is called outside of AuthProvider
 // This helps prevent the app from crashing, but will show a warning

@@ -25,7 +25,7 @@ import { gisImportRoutes } from './routes/gisImportRoutes';
 import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
-import { SQLiteStorage } from './sqlite_storage';
+
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
 // Import property import and data quality routers

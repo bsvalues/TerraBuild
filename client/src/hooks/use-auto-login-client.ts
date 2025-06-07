@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/auth-context-fixed";
+import { useAuth } from "@/contexts/AuthContext";
 import { queryClient } from "@/lib/queryClient";
 
 /**

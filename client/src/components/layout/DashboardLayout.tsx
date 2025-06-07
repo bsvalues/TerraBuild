@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useSidebar } from '@/contexts/SidebarContext';
-import { useAuth } from '@/contexts/auth-context-fixed';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
   children: ReactNode;

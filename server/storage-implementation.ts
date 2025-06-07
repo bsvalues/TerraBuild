@@ -1,6 +1,5 @@
 import { IStorage } from './storage';
-import { adaptiveStorage } from './adaptive-storage';
+import { DatabaseStorage } from './database-storage';
 
-// Export the adaptive storage, which automatically selects between 
-// Supabase and local PostgreSQL storage based on availability
-export const storage = adaptiveStorage;
+// Use PostgreSQL storage directly for Tesla-level simplicity and reliability
+export const storage: IStorage = new DatabaseStorage();
