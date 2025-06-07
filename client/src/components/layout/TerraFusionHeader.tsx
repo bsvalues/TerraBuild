@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bell, Search, Settings, User, Globe, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Search, Settings, User, Globe, Zap, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import TerraFusionCommandPalette from './TerraFusionCommandPalette';
 
 interface TerraFusionHeaderProps {
   countyName?: string;
@@ -21,9 +22,25 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
   countyName = "Benton County", 
   userRole = "Senior Assessor" 
 }) => {
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Handle keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        setCommandPaletteOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <header className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 border-b border-cyan-400/20 backdrop-blur-sm">
-      <div className="flex items-center justify-between px-6 py-4">
+    <>
+      <header className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 border-b border-cyan-400/20 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-6 py-4">
         
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
@@ -52,11 +69,19 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
 
         <div className="flex-1 max-w-md mx-8">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search properties, assessments, analytics..."
-              className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
-            />
+            <Button
+              variant="ghost"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="w-full justify-start text-left bg-slate-800/50 border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search TerraFusion...
+              <div className="ml-auto flex items-center space-x-1">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-slate-800 px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </div>
+            </Button>
           </div>
         </div>
 

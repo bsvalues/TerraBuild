@@ -5,6 +5,7 @@ import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { WindowProvider } from '@/contexts/WindowContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
 import HomePage from '@/pages/home-page';
 import NotFoundPage from '@/pages/not-found';
@@ -33,12 +34,14 @@ import TerraFusionCore from '@/components/TerraFusionCore';
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WindowProvider>
-        <SidebarProvider>
-          <Router />
-          <Toaster />
-        </SidebarProvider>
-      </WindowProvider>
+      <AuthProvider>
+        <WindowProvider>
+          <SidebarProvider>
+            <Router />
+            <Toaster />
+          </SidebarProvider>
+        </WindowProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
