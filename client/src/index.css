@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* TerraFusion Global Brand Variables */
+:root {
+  --tf-primary: #00e5ff;
+  --tf-secondary: #00bcd4;
+  --tf-accent: #0097a7;
+  --tf-dark: #0a1f2e;
+  --tf-darker: #001529;
+  --tf-glow: 0 0 20px rgba(0, 229, 255, 0.3);
+  --tf-glow-strong: 0 0 30px rgba(0, 229, 255, 0.5);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

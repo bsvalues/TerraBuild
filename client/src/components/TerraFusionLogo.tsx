@@ -46,43 +46,50 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
     return (
       <div className={cn('flex items-center justify-center', className)}>
         <svg 
-          viewBox="0 0 200 200" 
+          viewBox="0 0 120 120" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           className={cn(icon, 'relative z-10')}
         >
           <defs>
-            <linearGradient id="tfCircularMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#2DD4BF', stopOpacity:1}} />
-              <stop offset="50%" style={{stopColor:'#0891B2', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#164E63', stopOpacity:1}} />
+            <linearGradient id="tfNewMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{stopColor:'#00e5ff', stopOpacity:1}} />
+              <stop offset="50%" style={{stopColor:'#00bcd4', stopOpacity:1}} />
+              <stop offset="100%" style={{stopColor:'#0097a7', stopOpacity:1}} />
             </linearGradient>
-            <linearGradient id="tfCircularLetterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#083344', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#164E63', stopOpacity:1}} />
-            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
           </defs>
           
-          {/* Circular background with 3D effect */}
-          <circle cx="100" cy="100" r="80" fill="url(#tfCircularMainGradient)" stroke="#164E63" strokeWidth="2"/>
-          <circle cx="100" cy="100" r="80" fill="url(#tfCircularMainGradient)" opacity="0.8"/>
+          {/* Rounded square container with dark background */}
+          <rect x="10" y="10" width="100" height="100" rx="20" ry="20" 
+                fill="#0a1f2e" stroke="url(#tfNewMainGradient)" strokeWidth="2"/>
           
-          {/* Top circular highlight */}
-          <path d="M 20 100 A 80 80 0 0 1 180 100 A 70 70 0 0 0 30 100 Z" fill="#5EEAD4" opacity="0.4"/>
+          {/* Topographic contour lines */}
+          <path d="M20 30 Q40 25 60 30 Q80 35 100 30" 
+                stroke="#00e5ff" strokeWidth="0.8" opacity="0.3" fill="none"/>
+          <path d="M20 40 Q40 35 60 40 Q80 45 100 40" 
+                stroke="#00e5ff" strokeWidth="0.8" opacity="0.4" fill="none"/>
+          <path d="M20 50 Q40 45 60 50 Q80 55 100 50" 
+                stroke="#00e5ff" strokeWidth="0.8" opacity="0.5" fill="none"/>
+          <path d="M20 70 Q40 65 60 70 Q80 75 100 70" 
+                stroke="#00e5ff" strokeWidth="0.8" opacity="0.3" fill="none"/>
+          <path d="M20 80 Q40 75 60 80 Q80 85 100 80" 
+                stroke="#00e5ff" strokeWidth="0.8" opacity="0.4" fill="none"/>
           
-          {/* TF Letters with 3D beveled effect */}
-          <g transform="translate(50, 50)">
-            <g>
-              <path d="M10 20 L60 20 L60 32 L42 32 L42 80 L28 80 L28 32 L10 32 Z" fill="url(#tfCircularLetterGradient)"/>
-              <path d="M10 20 L60 20 L60 26 L10 26 Z" fill="#5EEAD4" opacity="0.6"/>
-              <path d="M28 32 L34 32 L34 80 L28 80 Z" fill="#5EEAD4" opacity="0.4"/>
-            </g>
-            <g>
-              <path d="M70 20 L70 80 L58 80 L58 20 L100 20 L100 32 L70 32 L70 40 L90 40 L90 52 L70 52 Z" fill="url(#tfCircularLetterGradient)"/>
-              <path d="M70 20 L100 20 L100 26 L70 26 Z" fill="#5EEAD4" opacity="0.6"/>
-              <path d="M70 40 L90 40 L90 46 L70 46 Z" fill="#5EEAD4" opacity="0.4"/>
-              <path d="M58 20 L64 20 L64 80 L58 80 Z" fill="#5EEAD4" opacity="0.4"/>
-            </g>
+          {/* Modern TF monogram */}
+          <g transform="translate(30, 35)" filter="url(#glow)">
+            {/* T letter */}
+            <path d="M5 10 L35 10 L35 18 L23 18 L23 50 L17 50 L17 18 L5 18 Z" 
+                  fill="url(#tfNewMainGradient)"/>
+            {/* F letter */}
+            <path d="M40 10 L40 50 L34 50 L34 10 L60 10 L60 18 L40 18 L40 25 L55 25 L55 33 L40 33 Z" 
+                  fill="url(#tfNewMainGradient)"/>
           </g>
         </svg>
       </div>
@@ -181,81 +188,74 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
     );
   }
 
-  // Default variant - matches exact TerraFusion design with 3D beveled effect
+  // Default variant - new TerraFusion design with contour lines and modern styling
   return (
-    <div className={cn('flex items-center gap-2.5', container, className)}>
+    <div className={cn('flex items-center gap-3', container, className)}>
       <div className="relative">
         <svg 
-          viewBox="0 0 200 200" 
+          viewBox="0 0 120 120" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           className={cn(icon, 'relative z-10')}
         >
           <defs>
-            {/* Main gradient for face */}
-            <linearGradient id="tfMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#2DD4BF', stopOpacity:1}} />
-              <stop offset="50%" style={{stopColor:'#0891B2', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#164E63', stopOpacity:1}} />
+            <linearGradient id="tfDefaultMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{stopColor:'#00e5ff', stopOpacity:1}} />
+              <stop offset="50%" style={{stopColor:'#00bcd4', stopOpacity:1}} />
+              <stop offset="100%" style={{stopColor:'#0097a7', stopOpacity:1}} />
             </linearGradient>
-            
-            {/* Top bevel highlight */}
-            <linearGradient id="tfTopBevel" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#5EEAD4', stopOpacity:0.8}} />
-              <stop offset="100%" style={{stopColor:'#2DD4BF', stopOpacity:0.2}} />
-            </linearGradient>
-            
-            {/* Bottom shadow */}
-            <linearGradient id="tfBottomShadow" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#083344', stopOpacity:0.3}} />
-              <stop offset="100%" style={{stopColor:'#0C4A6E', stopOpacity:0.8}} />
-            </linearGradient>
-            
-            {/* Letter gradient */}
-            <linearGradient id="tfLetterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#083344', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#164E63', stopOpacity:1}} />
-            </linearGradient>
+            <filter id="defaultGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
           </defs>
           
-          {/* Outer rounded square with 3D effect */}
-          <rect x="20" y="20" width="160" height="160" rx="35" ry="35" fill="url(#tfMainGradient)" stroke="#164E63" strokeWidth="2"/>
+          {/* Dark rounded square container */}
+          <rect x="10" y="10" width="100" height="100" rx="20" ry="20" 
+                fill="#0a1f2e" stroke="url(#tfDefaultMainGradient)" strokeWidth="2"/>
           
-          {/* Top bevel highlight */}
-          <rect x="20" y="20" width="160" height="40" rx="35" ry="35" fill="url(#tfTopBevel)" opacity="0.6"/>
+          {/* Topographic contour lines background */}
+          <g opacity="0.4">
+            <path d="M20 25 Q40 20 60 25 Q80 30 100 25" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 35 Q40 30 60 35 Q80 40 100 35" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 45 Q40 40 60 45 Q80 50 100 45" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 55 Q40 50 60 55 Q80 60 100 55" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 65 Q40 60 60 65 Q80 70 100 65" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 75 Q40 70 60 75 Q80 80 100 75" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 85 Q40 80 60 85 Q80 90 100 85" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+            <path d="M20 95 Q40 90 60 95 Q80 100 100 95" 
+                  stroke="#00e5ff" strokeWidth="1" fill="none"/>
+          </g>
           
-          {/* Bottom shadow */}
-          <rect x="20" y="140" width="160" height="40" rx="35" ry="35" fill="url(#tfBottomShadow)" opacity="0.4"/>
-          
-          {/* TF Letters with 3D beveled effect */}
-          <g transform="translate(40, 40)">
-            {/* T Letter */}
-            <g>
-              {/* T Main body */}
-              <path d="M10 20 L70 20 L70 35 L50 35 L50 100 L30 100 L30 35 L10 35 Z" fill="url(#tfLetterGradient)"/>
-              {/* T Top highlight */}
-              <path d="M10 20 L70 20 L70 28 L10 28 Z" fill="#5EEAD4" opacity="0.6"/>
-              {/* T Vertical highlight */}
-              <path d="M30 35 L38 35 L38 100 L30 100 Z" fill="#5EEAD4" opacity="0.4"/>
-            </g>
-            
-            {/* F Letter */}
-            <g>
-              {/* F Main body */}
-              <path d="M80 20 L80 100 L65 100 L65 20 L120 20 L120 35 L80 35 L80 45 L110 45 L110 60 L80 60 Z" fill="url(#tfLetterGradient)"/>
-              {/* F Top highlight */}
-              <path d="M80 20 L120 20 L120 28 L80 28 Z" fill="#5EEAD4" opacity="0.6"/>
-              {/* F Middle highlight */}
-              <path d="M80 45 L110 45 L110 53 L80 53 Z" fill="#5EEAD4" opacity="0.4"/>
-              {/* F Vertical highlight */}
-              <path d="M65 20 L73 20 L73 100 L65 100 Z" fill="#5EEAD4" opacity="0.4"/>
-            </g>
+          {/* Modern TF monogram */}
+          <g transform="translate(25, 30)" filter="url(#defaultGlow)">
+            {/* T letter - cleaner, modern design */}
+            <path d="M8 15 L42 15 L42 25 L30 25 L30 60 L20 60 L20 25 L8 25 Z" 
+                  fill="url(#tfDefaultMainGradient)" strokeWidth="1" stroke="#00e5ff"/>
+            {/* F letter - cleaner, modern design */}
+            <path d="M50 15 L50 60 L40 60 L40 15 L70 15 L70 25 L50 25 L50 32 L65 32 L65 42 L50 42 Z" 
+                  fill="url(#tfDefaultMainGradient)" strokeWidth="1" stroke="#00e5ff"/>
           </g>
         </svg>
       </div>
-      <span className={cn('font-bold tracking-tight text-cyan-800 dark:text-cyan-100', text)}>
-        {textContent}
-      </span>
+      <div className="flex flex-col">
+        <span className={cn('font-bold tracking-tight text-slate-100', text)}>
+          {textContent}
+        </span>
+        <span className={cn('text-cyan-400 font-medium', size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-lg')}>
+          AI That Understands Land
+        </span>
+      </div>
     </div>
   );
 };

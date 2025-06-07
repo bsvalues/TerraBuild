@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import TerraFusionCommandPalette from './TerraFusionCommandPalette';
 import TerraFusionNotificationCenter from '../notifications/TerraFusionNotificationCenter';
+import TerraFusionLogo from '@/components/TerraFusionLogo';
 
 interface TerraFusionHeaderProps {
   countyName?: string;
@@ -45,9 +46,7 @@ const TerraFusionHeader: React.FC<TerraFusionHeaderProps> = ({
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
               <div className="relative group">
-                <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-lg font-bold text-white">TF</span>
-                </div>
+                <TerraFusionLogo variant="circular" size="sm" className="transition-transform hover:scale-105" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-purple-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
