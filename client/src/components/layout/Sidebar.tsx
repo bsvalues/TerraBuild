@@ -60,6 +60,12 @@ export function Sidebar({}: SidebarProps) {
       title: "Valuation Maps",
       href: "/maps",
       icon: Map
+    },
+    {
+      title: "Map Analysis",
+      href: "/map-analysis",
+      icon: Layers,
+      description: "Interactive property analysis layers"
     }
   ];
 
