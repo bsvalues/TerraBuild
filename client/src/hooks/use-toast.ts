@@ -1,4 +1,10 @@
-// Re-export the useToast hook from the tsx implementation
-import { useToast, toast } from "./use-toast.tsx";
+// Direct implementation for toast functionality
+import { toast as sonnerToast } from "sonner";
 
-export { useToast, toast };
+export const toast = sonnerToast;
+
+export function useToast() {
+  return {
+    toast: sonnerToast,
+  };
+}

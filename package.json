@@ -124,6 +124,7 @@
     "recharts": "^2.15.3",
     "rest-express": "file:",
     "sinon": "^20.0.0",
+    "sonner": "^2.0.5",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "supertest": "^7.1.0",

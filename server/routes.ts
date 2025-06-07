@@ -38,8 +38,7 @@ import propertyMapRoutes from './routes/property-routes';
 // Legacy import path, to be removed later
 // import { registerPropertyImportRoutes } from './routes/property-import';
 
-// Initialize SQLite storage
-const sqliteStorage = new SQLiteStorage();
+// Use consolidated storage interface
 
 import {
   insertUserSchema,
@@ -612,7 +611,7 @@ router.post('/validate_matrix', asyncHandler(async (req, res) => {
   
   try {
     // Store session in SQLite
-    await sqliteStorage.createSession({
+    await storage.createSession({
       id: sessionId,
       userId: 1, // Default user ID
       matrixName: fileName,
@@ -622,14 +621,14 @@ router.post('/validate_matrix', asyncHandler(async (req, res) => {
     
     // Store each matrix item
     for (const item of data) {
-      await sqliteStorage.saveMatrixItem(sessionId, item);
+      await storage.saveMatrixItem(sessionId, item);
     }
     
     // Generate initial SHAP insight
     const insightMessage = await generateShapInsight(sessionId, data);
     
     // Record session history
-    await sqliteStorage.createSessionHistory({
+    await storage.createSessionHistory({
       sessionId,
       event: 'matrix_validated',
       data: { fileName, itemCount: data.length, insight: insightMessage }
@@ -674,14 +673,14 @@ router.post('/re_run_agents', asyncHandler(async (req, res) => {
     // If we have a session ID, update the matrix items
     if (sessionId) {
       for (const adjusted of adjustedValues) {
-        await sqliteStorage.updateMatrixItem(sessionId, adjusted.id, {
+        await storage.updateMatrixItem(sessionId, adjusted.id, {
           adjustedCost: adjusted.new_value,
           changePercent: adjusted.change_percent
         });
       }
       
       // Record rerun in session history
-      await sqliteStorage.createSessionHistory({
+      await storage.createSessionHistory({
         sessionId,
         event: 'agents_rerun',
         data: { adjustedValues, insight: insightMessage }
@@ -706,7 +705,7 @@ router.get('/get_insights/:sessionId', asyncHandler(async (req, res) => {
   
   try {
     // Get insights for the session from SQLite
-    const insights = await sqliteStorage.getInsights(sessionId);
+    const insights = await storage.getInsights(sessionId);
     
     res.json({
       sessionId,
@@ -732,19 +731,19 @@ router.get('/export/json/:sessionId', asyncHandler(async (req, res) => {
   
   try {
     // Get session data
-    const session = await sqliteStorage.getSession(sessionId);
+    const session = await storage.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
     
     // Get matrix items
-    const matrixItems = await sqliteStorage.getMatrixItems(sessionId);
+    const matrixItems = await storage.getMatrixItems(sessionId);
     
     // Get insights
-    const insights = await sqliteStorage.getInsights(sessionId);
+    const insights = await storage.getInsights(sessionId);
     
     // Get session history
-    const history = await sqliteStorage.getSessionHistory(sessionId);
+    const history = await storage.getSessionHistory(sessionId);
     
     const exportData = {
       sessionId,
