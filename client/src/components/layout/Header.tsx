@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Bell, HelpCircle, Menu, Settings, User, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import TerraFusionLogo from '@/components/TerraFusionLogo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -12,31 +11,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 export function Header({ toggleSidebar }: HeaderProps) {
-  const { user, logoutMutation } = useAuth();
-  const { toast } = useToast();
-  
-  const handleLogout = () => {
-    logoutMutation.mutate();
-  };
-  
-  const getInitials = (name: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  };
-
-  const userInitials = user ? getInitials(user.name || user.username || '') : 'U';
 
   return (
     <header className="h-16 z-30 bg-gradient-to-r from-[#083344] to-[#0891B2] border-b border-cyan-800/40 flex items-center px-4 justify-between">
@@ -89,15 +69,15 @@ export function Header({ toggleSidebar }: HeaderProps) {
             <Button variant="ghost" className="flex items-center space-x-2 rounded-full hover:bg-cyan-800/30 p-1">
               <Avatar className="h-8 w-8 border border-cyan-800 bg-cyan-800">
                 <AvatarFallback className="bg-gradient-to-br from-[#2DD4BF]/20 to-[#0891B2]/40 text-cyan-100 font-medium">
-                  {userInitials}
+                  TF
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-[#083344] border-cyan-800 text-cyan-100" align="end">
             <div className="px-4 py-3 border-b border-cyan-800/40">
-              <p className="text-sm font-medium text-cyan-100">{user?.name || user?.username}</p>
-              <p className="text-xs text-cyan-400 mt-0.5">{user?.role}</p>
+              <p className="text-sm font-medium text-cyan-100">TerraFusion User</p>
+              <p className="text-xs text-cyan-400 mt-0.5">Property Analyst</p>
             </div>
             <DropdownMenuItem className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100">
               <User className="mr-2 h-4 w-4 text-cyan-400" />
@@ -108,12 +88,9 @@ export function Header({ toggleSidebar }: HeaderProps) {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-cyan-800/40" />
-            <DropdownMenuItem 
-              onClick={handleLogout}
-              className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100"
-            >
-              <LogOut className="mr-2 h-4 w-4 text-cyan-400" />
-              <span>Log out</span>
+            <DropdownMenuItem className="hover:bg-cyan-800/30 text-cyan-200 focus:bg-cyan-800/50 focus:text-cyan-100">
+              <Settings className="mr-2 h-4 w-4 text-cyan-400" />
+              <span>Help & Support</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
