@@ -10,6 +10,9 @@ interface AuthContextType {
   login?: (username: string, password: string) => Promise<User>;
   logout?: () => Promise<void>;
   register?: (userData: any) => Promise<User>;
+  loginMutation?: { mutate: (data: any) => void; isPending: boolean };
+  logoutMutation?: { mutate: () => void; isPending: boolean };
+  registerMutation?: { mutate: (data: any) => void; isPending: boolean };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +39,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // For Replit Auth, registration is handled by Replit
       window.location.href = '/api/login';
       return {} as User; // This won't actually be returned due to redirect
+    },
+    loginMutation: {
+      mutate: (data: any) => {
+        window.location.href = '/api/login';
+      },
+      isPending: false
+    },
+    logoutMutation: {
+      mutate: () => {
+        window.location.href = '/api/logout';
+      },
+      isPending: false
+    },
+    registerMutation: {
+      mutate: (data: any) => {
+        window.location.href = '/api/login';
+      },
+      isPending: false
     }
   };
   

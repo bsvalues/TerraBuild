@@ -63,7 +63,8 @@ const validate = (schema: z.ZodType<any, any>) => (req: express.Request, res: ex
     req.body = schema.parse(req.body);
     next();
   } catch (error) {
-    res.status(400).json({ message: 'Validation error', errors: error.errors });
+    const validationError = error as z.ZodError;
+    res.status(400).json({ message: 'Validation error', errors: validationError.errors });
   }
 };
 
