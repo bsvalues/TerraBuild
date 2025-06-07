@@ -27,8 +27,12 @@ import {
   Zap,
   Building2,
   MapPin,
-  Activity
+  Activity,
+  Search,
+  Download,
+  Settings
 } from 'lucide-react';
+import { PropertyDetailsPanel } from './PropertyDetailsPanel';
 
 interface PropertyMapData {
   properties: Array<{
