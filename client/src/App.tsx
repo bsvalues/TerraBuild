@@ -26,7 +26,6 @@ import AgentsPage from '@/pages/agents/index-fixed';
 import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
-import ValuationMapsPage from '@/pages/maps';
 import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
 import { MapAnalysisPage } from '@/pages/MapAnalysisPage';
 
@@ -82,13 +81,7 @@ function Router() {
         </DashboardLayout>
       )} />
       
-      <Route path="/maps" component={() => (
-        <DashboardLayout>
-          <ValuationMapsPage />
-        </DashboardLayout>
-      )} />
-      
-      <Route path="/map-analysis" component={MapAnalysisPage} />
+      <Route path="/maps" component={MapAnalysisPage} />
       
       <Route path="/calculator" component={() => (
         <DashboardLayout>
