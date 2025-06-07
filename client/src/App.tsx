@@ -4,12 +4,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/contexts/SidebarContext';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { WindowProvider } from '@/contexts/WindowContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import HomePage from '@/pages/home-page';
-import AuthPage from '@/pages/auth-page';
-import LoginPage from '@/pages/login';
 import NotFoundPage from '@/pages/not-found';
 import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
 import CostWizardPage from '@/pages/CostWizardPage';
@@ -31,19 +28,16 @@ import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
 import ValuationMapsPage from '@/pages/maps';
 import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
-import { ProtectedRoute } from '@/lib/protected-route';
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <WindowProvider>
-          <SidebarProvider>
-            <Router />
-            <Toaster />
-          </SidebarProvider>
-        </WindowProvider>
-      </AuthProvider>
+      <WindowProvider>
+        <SidebarProvider>
+          <Router />
+          <Toaster />
+        </SidebarProvider>
+      </WindowProvider>
     </QueryClientProvider>
   );
 }
@@ -51,64 +45,61 @@ function App() {
 function Router() {
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/login" component={LoginPage} />
-      
-      <ProtectedRoute path="/" component={() => (
-        <DashboardLayout>
-          <HomePage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/dashboards" component={() => (
-        <DashboardLayout>
-          <DashboardsPage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/properties" component={() => (
-        <DashboardLayout>
-          <PropertiesPage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/properties/:id" component={() => (
-        <DashboardLayout>
-          <PropertyDetailPage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/matrix" component={() => (
-        <DashboardLayout>
-          <MatrixExplorerPage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/maps" component={() => (
-        <DashboardLayout>
-          <ValuationMapsPage />
-        </DashboardLayout>
-      )} />
-      
-      <ProtectedRoute path="/benton-county" component={() => (
+      <Route path="/" component={() => (
         <DashboardLayout>
           <BentonCountyValuationPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/calculator" component={() => (
+      <Route path="/benton-county" component={() => (
+        <DashboardLayout>
+          <BentonCountyValuationPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/dashboards" component={() => (
+        <DashboardLayout>
+          <DashboardsPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/properties" component={() => (
+        <DashboardLayout>
+          <PropertiesPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/properties/:id" component={() => (
+        <DashboardLayout>
+          <PropertyDetailPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/matrix" component={() => (
+        <DashboardLayout>
+          <MatrixExplorerPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/maps" component={() => (
+        <DashboardLayout>
+          <ValuationMapsPage />
+        </DashboardLayout>
+      )} />
+      
+      <Route path="/calculator" component={() => (
         <DashboardLayout>
           <CalculatorPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/cost-factors" component={() => (
+      <Route path="/cost-factors" component={() => (
         <DashboardLayout>
           <CostFactorTablesPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/cost-wizard" component={() => (
+      <Route path="/cost-wizard" component={() => (
         <DashboardLayout>
           <CostWizardPage />
         </DashboardLayout>
@@ -116,43 +107,43 @@ function Router() {
       
       <Route path="/test-cost-factors" component={TestCostFactorsPage} />
       
-      <ProtectedRoute path="/reports" component={() => (
+      <Route path="/reports" component={() => (
         <DashboardLayout>
           <ReportsPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/settings" component={() => (
+      <Route path="/settings" component={() => (
         <DashboardLayout>
           <SettingsPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/diagnostic" component={() => (
+      <Route path="/diagnostic" component={() => (
         <DashboardLayout>
           <DiagnosticPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/trend-analysis" component={() => (
+      <Route path="/trend-analysis" component={() => (
         <DashboardLayout>
           <TrendAnalysisPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/import" component={() => (
+      <Route path="/import" component={() => (
         <DashboardLayout>
           <DataImportPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/documentation" component={() => (
+      <Route path="/documentation" component={() => (
         <DashboardLayout>
           <DocumentationPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/history" component={() => (
+      <Route path="/history" component={() => (
         <DashboardLayout>
           <h1 className="text-2xl font-bold text-blue-100 mb-6">History</h1>
           <div className="bg-blue-900/30 p-8 rounded-lg border border-blue-800/40">
@@ -161,25 +152,25 @@ function Router() {
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/agents" component={() => (
+      <Route path="/agents" component={() => (
         <DashboardLayout>
           <AgentsPage />
         </DashboardLayout>
       )} />
 
-      <ProtectedRoute path="/help" component={() => (
+      <Route path="/help" component={() => (
         <DashboardLayout>
           <HelpSupportPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/help/webinars" component={() => (
+      <Route path="/help/webinars" component={() => (
         <DashboardLayout>
           <WebinarsPage />
         </DashboardLayout>
       )} />
       
-      <ProtectedRoute path="/help/webinars/:id" component={() => (
+      <Route path="/help/webinars/:id" component={() => (
         <DashboardLayout>
           <WebinarViewPage />
         </DashboardLayout>
