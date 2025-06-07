@@ -5,17 +5,28 @@
  * Benton County Washington data for comprehensive property analysis and results display.
  */
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, MapPin, DollarSign, TrendingUp, Home, Calendar, Info } from 'lucide-react';
+import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Search, 
+  Home, 
+  MapPin, 
+  DollarSign, 
+  TrendingUp, 
+  Info,
+  Building2,
+  Calendar,
+  Ruler
+} from 'lucide-react';
 
+// Benton County Property Interface
 interface BentonCountyProperty {
   parcelId: string;
   address: string;
@@ -60,6 +71,7 @@ interface BentonCountyProperty {
   }>;
 }
 
+// AI Valuation Result Interface
 interface AIValuationResult {
   property: BentonCountyProperty;
   marketData: any;
@@ -78,16 +90,15 @@ export function PropertyValuationInterface() {
   const [selectedProperty, setSelectedProperty] = useState<BentonCountyProperty | null>(null);
   const [valuationResult, setValuationResult] = useState<AIValuationResult | null>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Search Benton County properties
-  const { data: searchResults, isLoading: isSearching } = useQuery({
+  // Property Search Query
+  const { data: searchResults, isLoading: isSearching, refetch: searchProperties } = useQuery({
     queryKey: ['/api/benton-county/search', searchQuery],
-    enabled: searchQuery.length > 2,
-    select: (data: any) => data?.data || []
+    enabled: false,
+    staleTime: 0
   });
 
-  // AI-powered property valuation mutation
+  // AI Valuation Mutation
   const valuationMutation = useMutation({
     mutationFn: async (parcelId: string) => {
       const response = await fetch('/api/benton-county/ai-valuation', {
@@ -102,14 +113,14 @@ export function PropertyValuationInterface() {
       setValuationResult(data.data);
       toast({
         title: "AI Valuation Complete",
-        description: "Property analysis using Benton County data completed successfully"
+        description: "Advanced property analysis completed with authentic Benton County data",
       });
     },
     onError: (error) => {
       toast({
         title: "Valuation Error",
-        description: "Please verify API credentials for Benton County data access",
-        variant: "destructive"
+        description: "Failed to complete AI analysis. Please try again.",
+        variant: "destructive",
       });
     }
   });
@@ -119,308 +130,251 @@ export function PropertyValuationInterface() {
     setValuationResult(null);
   };
 
-  const handleStartValuation = () => {
+  const handleAnalyzeProperty = () => {
     if (selectedProperty) {
       valuationMutation.mutate(selectedProperty.parcelId);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const getConfidenceBadgeVariant = (confidence: string) => {
-    switch (confidence.toLowerCase()) {
-      case 'high': return 'default';
-      case 'medium': return 'outline';
-      case 'low': return 'destructive';
-      default: return 'outline';
+  const handleSearch = () => {
+    if (searchQuery.length >= 3) {
+      searchProperties();
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Benton County Property Valuation
-        </h1>
-        <p className="text-lg text-gray-600">
-          AI-powered property analysis using authentic Benton County Washington data
-        </p>
-      </div>
-
-      {/* Property Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search Benton County Properties
-          </CardTitle>
-          <CardDescription>
-            Enter an address, parcel ID, or city to search authentic county records
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Input
-              placeholder="e.g., 1234 Columbia Park Trail, Richland"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-            />
-            <Button disabled={isSearching || searchQuery.length < 3}>
-              {isSearching ? 'Searching...' : 'Search'}
-            </Button>
-          </div>
-
-          {/* Search Results */}
-          {searchResults && searchResults.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <h3 className="font-semibold">Search Results</h3>
-              {searchResults.map((property: BentonCountyProperty) => (
-                <Card 
-                  key={property.parcelId}
-                  className={`cursor-pointer transition-colors ${
-                    selectedProperty?.parcelId === property.parcelId 
-                      ? 'bg-blue-50 border-blue-300' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => handlePropertySelect(property)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{property.address}</h4>
-                        <p className="text-sm text-gray-600">
-                          {property.city}, WA {property.zipCode}
-                        </p>
-                        <div className="flex gap-4 mt-2 text-sm">
-                          <span>Parcel: {property.parcelId}</span>
-                          <span>{property.buildingType}</span>
-                          <span>{property.totalSqFt.toLocaleString()} sq ft</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-lg">
-                          {formatCurrency(property.assessedValue)}
-                        </p>
-                        <p className="text-sm text-gray-500">Assessed Value</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Selected Property Details */}
-      {selectedProperty && (
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Home className="h-5 w-5" />
-                Property Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-lg">{selectedProperty.address}</h3>
-                <p className="text-gray-600">{selectedProperty.city}, WA {selectedProperty.zipCode}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Parcel ID:</span>
-                  <p>{selectedProperty.parcelId}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Property Type:</span>
-                  <p>{selectedProperty.propertyType}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Building Type:</span>
-                  <p>{selectedProperty.buildingType}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Year Built:</span>
-                  <p>{selectedProperty.yearBuilt}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Total Sq Ft:</span>
-                  <p>{selectedProperty.totalSqFt.toLocaleString()}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Lot Size:</span>
-                  <p>{selectedProperty.lotSizeSqFt.toLocaleString()} sq ft</p>
-                </div>
-                <div>
-                  <span className="font-medium">Zoning:</span>
-                  <p>{selectedProperty.zoning}</p>
-                </div>
-                <div>
-                  <span className="font-medium">Neighborhood:</span>
-                  <p>{selectedProperty.neighborhood}</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h4 className="font-medium mb-2">Building Details</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span>Stories: {selectedProperty.buildingDetails.stories}</span>
-                  <span>Quality: {selectedProperty.buildingDetails.quality}</span>
-                  <span>Condition: {selectedProperty.buildingDetails.condition}</span>
-                  <span>Heating: {selectedProperty.buildingDetails.heatingType}</span>
-                  <span>Basement: {selectedProperty.buildingDetails.basement ? 'Yes' : 'No'}</span>
-                  <span>Garage: {selectedProperty.buildingDetails.garage ? 'Yes' : 'No'}</span>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleStartValuation}
-                disabled={valuationMutation.isPending}
-                className="w-full"
-              >
-                {valuationMutation.isPending ? 'Analyzing...' : 'Start AI Valuation'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Assessment History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Current Assessed Value</span>
-                  <span className="text-lg font-bold">
-                    {formatCurrency(selectedProperty.assessedValue)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Market Value</span>
-                  <span className="text-lg">
-                    {formatCurrency(selectedProperty.marketValue)}
-                  </span>
-                </div>
-              </div>
-
-              <Separator className="my-4" />
-
-              <div>
-                <h4 className="font-medium mb-2">Tax History</h4>
-                <div className="space-y-2">
-                  {selectedProperty.taxHistory.map((tax) => (
-                    <div key={tax.year} className="flex justify-between text-sm">
-                      <span>{tax.year}</span>
-                      <span>{formatCurrency(tax.assessedValue)}</span>
-                      <span>{formatCurrency(tax.taxAmount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-cyan-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Hero Section */}
+        <div className="text-center space-y-4 mb-8">
+          <h1 className="text-4xl font-bold text-white">
+            TerraFusion-AI Property Valuation
+          </h1>
+          <p className="text-xl text-cyan-200 max-w-3xl mx-auto">
+            Advanced AI-powered property analysis using authentic Benton County Washington data
+          </p>
         </div>
-      )}
 
-      {/* AI Valuation Results */}
-      {valuationResult && (
-        <Card>
+        {/* Search Section */}
+        <Card className="bg-white/10 backdrop-blur-sm border-cyan-800/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              AI-Powered Valuation Results
+            <CardTitle className="text-white flex items-center">
+              <Search className="h-5 w-5 mr-2 text-cyan-400" />
+              Property Search
             </CardTitle>
-            <CardDescription>
-              Analysis completed using authentic Benton County data and market trends
+            <CardDescription className="text-cyan-200">
+              Search by address, parcel ID, or owner name in Benton County
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Main Valuation Result */}
-            <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Estimated Property Value
-              </h3>
-              <p className="text-4xl font-bold text-green-600 mb-2">
-                {formatCurrency(valuationResult.aiAnalysis.estimatedValue)}
-              </p>
-              <Badge variant={getConfidenceBadgeVariant(valuationResult.aiAnalysis.confidenceLevel)}>
-                {valuationResult.aiAnalysis.confidenceLevel} Confidence
-              </Badge>
+          <CardContent>
+            <div className="flex space-x-4">
+              <Input
+                placeholder="Enter address, parcel ID, or owner name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white/10 border-cyan-800/50 text-white placeholder-cyan-300"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <Button 
+                onClick={handleSearch}
+                disabled={isSearching || searchQuery.length < 3}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+              >
+                {isSearching ? 'Searching...' : 'Search'}
+              </Button>
             </div>
 
-            {/* Market Comparison */}
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="text-center p-4 border rounded-lg">
-                <p className="text-sm text-gray-600">Assessed Value</p>
-                <p className="text-lg font-semibold">
-                  {formatCurrency(valuationResult.property.assessedValue)}
-                </p>
-              </div>
-              <div className="text-center p-4 border rounded-lg">
-                <p className="text-sm text-gray-600">Market Value</p>
-                <p className="text-lg font-semibold">
-                  {formatCurrency(valuationResult.property.marketValue)}
-                </p>
-              </div>
-              <div className="text-center p-4 border rounded-lg">
-                <p className="text-sm text-gray-600">Price per Sq Ft</p>
-                <p className="text-lg font-semibold">
-                  {formatCurrency(valuationResult.marketData.pricePerSqFt)}
-                </p>
-              </div>
-            </div>
-
-            {/* AI Insights */}
-            <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                AI Analysis Insights
-              </h4>
-              <div className="space-y-2">
-                {valuationResult.aiAnalysis.insights.map((insight, index) => (
-                  <Alert key={index}>
-                    <AlertDescription>{insight}</AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </div>
-
-            {/* Recommendations */}
-            <div>
-              <h4 className="font-semibold mb-3">Recommendations</h4>
-              <div className="space-y-2">
-                {valuationResult.aiAnalysis.recommendations.map((recommendation, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm">{recommendation}</p>
+            {/* Search Results */}
+            {searchResults && searchResults.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+                {searchResults.map((property: BentonCountyProperty) => (
+                  <div
+                    key={property.parcelId}
+                    onClick={() => handlePropertySelect(property)}
+                    className="p-3 bg-white/5 rounded-lg border border-cyan-800/30 cursor-pointer hover:bg-white/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-white font-medium">{property.address}</p>
+                        <p className="text-cyan-300 text-sm">{property.city}, WA {property.zipCode}</p>
+                        <p className="text-cyan-400 text-xs">Parcel: {property.parcelId}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-green-400 font-bold">
+                          ${property.marketValue?.toLocaleString() || 'N/A'}
+                        </p>
+                        <p className="text-cyan-300 text-sm">{property.propertyType}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="text-xs text-gray-500 text-center">
-              Analysis completed on {new Date(valuationResult.timestamp).toLocaleString()}
-              using authentic Benton County Washington property data
-            </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {/* Selected Property Details */}
+        {selectedProperty && (
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="bg-white/10 backdrop-blur-sm border-cyan-800/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Home className="h-5 w-5 mr-2 text-cyan-400" />
+                  Property Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-cyan-300 text-sm">Address</p>
+                    <p className="text-white font-medium">{selectedProperty.address}</p>
+                    <p className="text-cyan-200">{selectedProperty.city}, WA {selectedProperty.zipCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-cyan-300 text-sm">Owner</p>
+                    <p className="text-white">{selectedProperty.ownerName}</p>
+                  </div>
+                  <div>
+                    <p className="text-cyan-300 text-sm">Property Type</p>
+                    <Badge variant="secondary" className="bg-cyan-800/50 text-cyan-200">
+                      {selectedProperty.propertyType}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-cyan-300 text-sm">Year Built</p>
+                    <p className="text-white">{selectedProperty.yearBuilt}</p>
+                  </div>
+                  <div>
+                    <p className="text-cyan-300 text-sm">Total Sq Ft</p>
+                    <p className="text-white">{selectedProperty.totalSqFt?.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-cyan-300 text-sm">Lot Size</p>
+                    <p className="text-white">{selectedProperty.lotSizeSqFt?.toLocaleString()} sq ft</p>
+                  </div>
+                </div>
+
+                <Separator className="bg-cyan-800/50" />
+
+                <div>
+                  <p className="text-cyan-300 text-sm mb-2">Current Valuation</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-white text-sm">Assessed Value</p>
+                      <p className="text-green-400 font-bold text-lg">
+                        ${selectedProperty.assessedValue?.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-white text-sm">Market Value</p>
+                      <p className="text-green-400 font-bold text-lg">
+                        ${selectedProperty.marketValue?.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAnalyzeProperty}
+                  disabled={valuationMutation.isPending}
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white"
+                >
+                  {valuationMutation.isPending ? (
+                    <>
+                      <TrendingUp className="h-4 w-4 mr-2 animate-pulse" />
+                      AI Analysis in Progress...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Run AI Valuation Analysis
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* AI Valuation Results */}
+            {valuationResult && (
+              <Card className="bg-white/10 backdrop-blur-sm border-cyan-800/30">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <DollarSign className="h-5 w-5 mr-2 text-green-400" />
+                    AI Valuation Results
+                  </CardTitle>
+                  <CardDescription className="text-cyan-200">
+                    Advanced analysis completed at {new Date(valuationResult.timestamp).toLocaleString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center p-6 bg-gradient-to-r from-green-900/30 to-cyan-900/30 rounded-lg border border-green-500/30">
+                    <p className="text-green-300 text-sm mb-2">AI Estimated Value</p>
+                    <p className="text-green-400 text-3xl font-bold">
+                      ${valuationResult.aiAnalysis.estimatedValue.toLocaleString()}
+                    </p>
+                    <Badge 
+                      variant="outline" 
+                      className="mt-2 border-green-500/50 text-green-300"
+                    >
+                      {valuationResult.aiAnalysis.confidenceLevel} Confidence
+                    </Badge>
+                  </div>
+
+                  {valuationResult.aiAnalysis.insights.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3 flex items-center">
+                        <Info className="h-4 w-4 mr-2 text-cyan-400" />
+                        AI Insights
+                      </h4>
+                      <div className="space-y-2">
+                        {valuationResult.aiAnalysis.insights.map((insight, index) => (
+                          <Alert key={index} className="bg-blue-900/30 border-blue-500/30">
+                            <AlertDescription className="text-blue-200">
+                              {insight}
+                            </AlertDescription>
+                          </Alert>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {valuationResult.aiAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <div className="space-y-2">
+                        {valuationResult.aiAnalysis.recommendations.map((rec, index) => (
+                          <Alert key={index} className="bg-cyan-900/30 border-cyan-500/30">
+                            <AlertDescription className="text-cyan-200">
+                              {rec}
+                            </AlertDescription>
+                          </Alert>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Information Card */}
+        {!selectedProperty && (
+          <Card className="bg-white/5 backdrop-blur-sm border-cyan-800/30">
+            <CardContent className="p-8 text-center">
+              <MapPin className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Welcome to TerraFusion-AI
+              </h3>
+              <p className="text-cyan-200 max-w-2xl mx-auto">
+                Advanced property valuation platform using authentic Benton County data. 
+                Search for any property in Richland, Kennewick, Pasco, or other Benton County municipalities 
+                to begin comprehensive AI-powered analysis.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
