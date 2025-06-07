@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { 
   Map, 
   Layers, 
@@ -84,6 +85,8 @@ export function InteractivePropertyMap() {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [analysisMode, setAnalysisMode] = useState<'value' | 'trends' | 'costs' | 'ai'>('value');
   const [timeRange, setTimeRange] = useState<string>('1year');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState('all');
   const [mapLayers, setMapLayers] = useState<MapLayer[]>([
     { id: 'properties', name: 'Properties', type: 'markers', visible: true, opacity: 1, color: '#3b82f6', icon: 'home' },
     { id: 'values', name: 'Property Values', type: 'heatmap', visible: true, opacity: 0.7, color: '#10b981' },
@@ -123,6 +126,16 @@ export function InteractivePropertyMap() {
     ));
   };
 
+  const handlePropertyClick = (propertyId: string) => {
+    setSelectedProperty(propertyId);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // In production, this would trigger a search API call
+    console.log('Searching for:', query);
+  };
+
   const getAnalysisStats = () => {
     if (!mapData) return null;
     
@@ -141,282 +154,241 @@ export function InteractivePropertyMap() {
         };
       case 'costs':
         return {
-          primary: '$425/sq ft',
-          secondary: 'Avg construction',
-          trend: 'stable'
+          primary: '$185/sq ft',
+          secondary: 'Avg building cost',
+          trend: 'up'
         };
       case 'ai':
         return {
-          primary: '94% accuracy',
-          secondary: 'AI predictions',
-          trend: 'up'
+          primary: '87%',
+          secondary: 'AI confidence',
+          trend: 'stable'
         };
+      default:
+        return null;
     }
   };
 
   const stats = getAnalysisStats();
 
   return (
-    <div className="h-screen bg-gray-900 text-white overflow-hidden">
-      {/* Header */}
-      <div className="bg-gray-800/80 backdrop-blur-sm border-b border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Map className="h-6 w-6 text-cyan-400" />
-              <h1 className="text-xl font-bold">TerraFusion-AI Map Analysis</h1>
-            </div>
-            <Badge variant="outline" className="bg-green-900/50 text-green-300 border-green-600">
-              Live Data
-            </Badge>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-32 bg-gray-700 border-gray-600">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1month">1 Month</SelectItem>
-                <SelectItem value="3months">3 Months</SelectItem>
-                <SelectItem value="1year">1 Year</SelectItem>
-                <SelectItem value="5years">5 Years</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="h-screen w-full relative bg-gray-50">
+      {/* Top Search and Controls Bar */}
+      <div className="absolute top-4 left-4 right-4 z-10 flex gap-4">
+        {/* Search Box */}
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search Benton County properties..."
+              className="pl-10 bg-white/95 backdrop-blur"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
           </div>
         </div>
+
+        {/* Analysis Mode Selector */}
+        <Select value={analysisMode} onValueChange={(value: any) => setAnalysisMode(value)}>
+          <SelectTrigger className="w-48 bg-white/95 backdrop-blur">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="value">Property Values</SelectItem>
+            <SelectItem value="trends">Market Trends</SelectItem>
+            <SelectItem value="costs">Building Costs</SelectItem>
+            <SelectItem value="ai">AI Insights</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Time Range Selector */}
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="w-32 bg-white/95 backdrop-blur">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1month">1 Month</SelectItem>
+            <SelectItem value="3months">3 Months</SelectItem>
+            <SelectItem value="1year">1 Year</SelectItem>
+            <SelectItem value="3years">3 Years</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* City Filter */}
+        <Select value={selectedCity} onValueChange={setSelectedCity}>
+          <SelectTrigger className="w-32 bg-white/95 backdrop-blur">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Cities</SelectItem>
+            <SelectItem value="richland">Richland</SelectItem>
+            <SelectItem value="kennewick">Kennewick</SelectItem>
+            <SelectItem value="pasco">Pasco</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button variant="outline" size="sm" className="bg-white/95 backdrop-blur">
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
       </div>
 
-      <div className="flex h-full">
-        {/* Sidebar Controls */}
-        <div className="w-80 bg-gray-800/90 backdrop-blur-sm border-r border-gray-700 overflow-y-auto">
-          <div className="p-4 space-y-6">
-            
-            {/* Analysis Mode */}
-            <Card className="bg-gray-700/50 border-gray-600">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-gray-300">Analysis Mode</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={analysisMode} onValueChange={(value: any) => setAnalysisMode(value)}>
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-600">
-                    <TabsTrigger value="value" className="text-xs">Values</TabsTrigger>
-                    <TabsTrigger value="trends" className="text-xs">Trends</TabsTrigger>
-                  </TabsList>
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-600 mt-2">
-                    <TabsTrigger value="costs" className="text-xs">Costs</TabsTrigger>
-                    <TabsTrigger value="ai" className="text-xs">AI</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* Live Statistics */}
+      {/* Left Sidebar - Layer Controls */}
+      <div className="absolute left-4 top-20 bottom-4 w-80 z-10">
+        <Card className="h-full bg-white/95 backdrop-blur">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Layers className="h-5 w-5" />
+              Map Layers
+            </CardTitle>
             {stats && (
-              <Card className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border-cyan-600/30">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-2xl font-bold text-cyan-300">{stats.primary}</p>
-                      <p className="text-sm text-gray-300">{stats.secondary}</p>
-                    </div>
-                    <div className="text-right">
-                      <TrendingUp className={`h-6 w-6 ${
-                        stats.trend === 'up' ? 'text-green-400' : 
-                        stats.trend === 'down' ? 'text-red-400' : 'text-yellow-400'
-                      }`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Map Layers */}
-            <Card className="bg-gray-700/50 border-gray-600">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-gray-300 flex items-center">
-                  <Layers className="h-4 w-4 mr-2" />
-                  Map Layers
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {mapLayers.map((layer) => (
-                  <div key={layer.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          checked={layer.visible}
-                          onCheckedChange={() => toggleLayer(layer.id)}
-                          className="data-[state=checked]:bg-cyan-600"
-                        />
-                        <span className="text-sm">{layer.name}</span>
-                      </div>
-                      <div 
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: layer.color }}
-                      />
-                    </div>
-                    
-                    {layer.visible && (
-                      <div className="ml-6 space-y-1">
-                        <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>Opacity</span>
-                          <span>{Math.round(layer.opacity * 100)}%</span>
-                        </div>
-                        <Slider
-                          value={[layer.opacity * 100]}
-                          onValueChange={(value) => updateLayerOpacity(layer.id, value[0])}
-                          max={100}
-                          step={10}
-                          className="w-full"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Analysis Tools */}
-            <Card className="bg-gray-700/50 border-gray-600">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-gray-300 flex items-center">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Analysis Tools
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start border-gray-600 hover:bg-gray-600"
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Market Comparison
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start border-gray-600 hover:bg-gray-600"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  AI Predictions
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start border-gray-600 hover:bg-gray-600"
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Cost Analysis
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start border-gray-600 hover:bg-gray-600"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Custom Filter
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Property Info Panel */}
-            {selectedProperty && (
-              <Card className="bg-gray-700/50 border-gray-600">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-300 flex items-center">
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Selected Property
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm font-medium">123 Main St, Richland</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-400">Value:</span>
-                      <p className="font-medium text-green-400">$425,000</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Sq Ft:</span>
-                      <p className="font-medium">2,150</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Year:</span>
-                      <p className="font-medium">1998</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">AI Score:</span>
-                      <p className="font-medium text-purple-400">94%</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full mt-3 bg-cyan-600 hover:bg-cyan-700">
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        {/* Map Container */}
-        <div className="flex-1 relative">
-          <div 
-            ref={mapRef}
-            className="w-full h-full bg-gray-900"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(31, 41, 55, 0.9) 100%)
-              `
-            }}
-          >
-            {/* Map Loading State */}
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-                  <p className="text-gray-300">Loading map data...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Map Overlay - Real map integration placeholder */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <MapPin className="h-16 w-16 text-cyan-400 mx-auto" />
+              <div className="flex items-center gap-4 mt-2">
                 <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Interactive Map Interface
-                  </h3>
-                  <p className="text-gray-300 max-w-md">
-                    Map integration ready for Benton County property visualization
-                    with all analysis layers and real-time data feeds.
-                  </p>
+                  <div className="text-2xl font-bold text-blue-600">{stats.primary}</div>
+                  <div className="text-sm text-gray-600">{stats.secondary}</div>
+                </div>
+                <div className={`p-2 rounded-full ${stats.trend === 'up' ? 'bg-green-100' : 'bg-gray-100'}`}>
+                  <TrendingUp className={`h-4 w-4 ${stats.trend === 'up' ? 'text-green-600' : 'text-gray-600'}`} />
                 </div>
               </div>
-            </div>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mapLayers.map(layer => (
+              <div key={layer.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={layer.visible}
+                      onCheckedChange={() => toggleLayer(layer.id)}
+                    />
+                    <span className="text-sm font-medium">{layer.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleLayer(layer.id)}
+                  >
+                    {layer.visible ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {layer.visible && (
+                  <div className="ml-6">
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <span>Opacity:</span>
+                      <Slider
+                        value={[layer.opacity * 100]}
+                        onValueChange={(value) => updateLayerOpacity(layer.id, value[0])}
+                        max={100}
+                        step={10}
+                        className="flex-1"
+                      />
+                      <span>{Math.round(layer.opacity * 100)}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Map Controls Overlay */}
-            <div className="absolute top-4 right-4 space-y-2">
-              <Button size="sm" variant="outline" className="bg-gray-800/80 border-gray-600">
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="outline" className="bg-gray-800/80 border-gray-600">
-                <Home className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Live Data Indicator */}
-            <div className="absolute bottom-4 left-4">
-              <div className="flex items-center space-x-2 bg-gray-800/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-600">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-300">Live data feed active</span>
+      {/* Main Map Area */}
+      <div 
+        ref={mapRef}
+        className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 relative"
+        onClick={() => handlePropertyClick('P001')}
+      >
+        {/* Map Placeholder - In production, this would be a real map component */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center p-8 bg-white/90 rounded-lg shadow-lg">
+            <Map className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+            <h3 className="text-xl font-semibold mb-2">TerraFusion-AI Interactive Map</h3>
+            <p className="text-gray-600 mb-4">
+              Comprehensive Benton County Property Analysis
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="bg-blue-50 p-3 rounded">
+                <div className="font-semibold text-blue-800">Properties Loaded</div>
+                <div className="text-blue-600">{mapData?.properties.length || 0}</div>
+              </div>
+              <div className="bg-green-50 p-3 rounded">
+                <div className="font-semibold text-green-800">Analysis Mode</div>
+                <div className="text-green-600 capitalize">{analysisMode.toString()}</div>
               </div>
             </div>
+            {isLoading && (
+              <div className="mt-4 text-blue-600">
+                <Activity className="h-4 w-4 inline mr-2 animate-spin" />
+                Loading map data...
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Sample Property Markers */}
+        {mapData?.properties.slice(0, 10).map((property, index) => (
+          <div
+            key={property.id}
+            className="absolute w-6 h-6 bg-blue-600 rounded-full border-2 border-white shadow-lg cursor-pointer transform -translate-x-3 -translate-y-3 hover:scale-110 transition-transform"
+            style={{
+              left: `${40 + index * 8}%`,
+              top: `${30 + (index % 3) * 15}%`
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePropertyClick(property.id);
+            }}
+            title={`${property.address} - $${property.value.toLocaleString()}`}
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              <Home className="h-3 w-3 text-white" />
+            </div>
+          </div>
+        ))}
+
+        {/* Live Analysis Panel */}
+        {liveAnalysis && (
+          <div className="absolute bottom-4 left-4 right-4 max-w-sm ml-auto">
+            <Card className="bg-white/95 backdrop-blur">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Live Market Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <div className="font-semibold">Avg $/SqFt</div>
+                    <div className="text-green-600">$312.45</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Growth</div>
+                    <div className="text-green-600">+8.7%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Volume</div>
+                    <div className="text-blue-600">847</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Property Details Panel */}
+        {selectedProperty && (
+          <PropertyDetailsPanel 
+            propertyId={selectedProperty}
+            onClose={() => setSelectedProperty(null)}
+          />
+        )}
       </div>
     </div>
   );

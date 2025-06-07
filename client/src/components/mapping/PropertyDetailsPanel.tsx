@@ -174,7 +174,7 @@ export function PropertyDetailsPanel({ propertyId, onClose }: PropertyDetailsPan
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{propertyData.propertyType}</Badge>
+            <Badge variant="outline">{propertyData.propertyType}</Badge>
             <Badge variant="outline">{propertyData.city}</Badge>
             {propertyData.marketTrend === 'up' ? (
               <Badge className="bg-green-100 text-green-800">
