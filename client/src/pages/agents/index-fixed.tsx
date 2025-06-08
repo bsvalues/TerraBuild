@@ -432,12 +432,12 @@ const AgentsPage = () => {
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center">
-                          <div className="p-2 rounded-lg bg-blue-800/50 mr-3">
+                          <div className="p-2 rounded-lg bg-slate-700/50 mr-3">
                             {renderAgentIcon(agent.iconType)}
                           </div>
                           <div>
-                            <CardTitle className="text-blue-100 text-base">{agent.name}</CardTitle>
-                            <CardDescription className="text-blue-400 text-xs">
+                            <CardTitle className="text-slate-100 text-base">{agent.name}</CardTitle>
+                            <CardDescription className="text-slate-400 text-xs">
                               {agent.id}
                             </CardDescription>
                           </div>
@@ -463,23 +463,23 @@ const AgentsPage = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-blue-300 text-sm mb-3">{agent.description}</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-blue-400">
+                      <p className="text-slate-300 text-sm mb-3">{agent.description}</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
                         <div>
                           <span className="block">Version</span>
-                          <span className="text-blue-200">{agent.version}</span>
+                          <span className="text-slate-200">{agent.version}</span>
                         </div>
                         <div>
                           <span className="block">Type</span>
-                          <span className="text-blue-200">{agent.type}</span>
+                          <span className="text-slate-200">{agent.type}</span>
                         </div>
                         <div>
                           <span className="block">Last Active</span>
-                          <span className="text-blue-200">{agent.lastActive || 'N/A'}</span>
+                          <span className="text-slate-200">{agent.lastActive || 'N/A'}</span>
                         </div>
                         <div>
                           <span className="block">Capabilities</span>
-                          <span className="text-blue-200">{agent.capabilities.length}</span>
+                          <span className="text-slate-200">{agent.capabilities.length}</span>
                         </div>
                       </div>
                       {agent.status === 'active' && (
@@ -555,9 +555,9 @@ const AgentsPage = () => {
 
               {filteredAgents.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <Bot className="h-12 w-12 text-blue-700/50 mb-4" />
-                  <h3 className="text-lg font-medium text-blue-200 mb-1">No agents found</h3>
-                  <p className="text-blue-400">
+                  <Bot className="h-12 w-12 text-slate-500/50 mb-4" />
+                  <h3 className="text-lg font-medium text-slate-200 mb-1">No agents found</h3>
+                  <p className="text-slate-400">
                     No agents match your current search criteria.
                   </p>
                 </div>
@@ -832,22 +832,22 @@ const AgentsPage = () => {
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
+          <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-blue-100">Agent Logs</CardTitle>
-              <CardDescription className="text-blue-300">
+              <CardTitle className="text-slate-100">Agent Logs</CardTitle>
+              <CardDescription className="text-slate-400">
                 View and filter logs from all agents in the system.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="agent-filter" className="text-blue-200 text-sm">Agent</Label>
+                  <Label htmlFor="agent-filter" className="text-slate-300 text-sm">Agent</Label>
                   <Select defaultValue="all">
-                    <SelectTrigger id="agent-filter" className="bg-blue-900/50 border-blue-700/50 text-blue-100 mt-1">
+                    <SelectTrigger id="agent-filter" className="bg-slate-900/50 border-slate-700/50 text-slate-100 mt-1">
                       <SelectValue placeholder="Select agent" />
                     </SelectTrigger>
-                    <SelectContent className="bg-blue-900 border-blue-700 text-blue-200">
+                    <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
                       <SelectItem value="all">All Agents</SelectItem>
                       {agents.map(agent => (
                         <SelectItem key={agent.id} value={agent.id}>
@@ -858,12 +858,12 @@ const AgentsPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="level-filter" className="text-blue-200 text-sm">Log Level</Label>
+                  <Label htmlFor="level-filter" className="text-slate-300 text-sm">Log Level</Label>
                   <Select defaultValue="all">
-                    <SelectTrigger id="level-filter" className="bg-blue-900/50 border-blue-700/50 text-blue-100 mt-1">
+                    <SelectTrigger id="level-filter" className="bg-slate-900/50 border-slate-700/50 text-slate-100 mt-1">
                       <SelectValue placeholder="Select level" />
                     </SelectTrigger>
-                    <SelectContent className="bg-blue-900 border-blue-700 text-blue-200">
+                    <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
                       <SelectItem value="all">All Levels</SelectItem>
                       <SelectItem value="info">Info</SelectItem>
                       <SelectItem value="warning">Warning</SelectItem>
@@ -872,12 +872,12 @@ const AgentsPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="date-filter" className="text-blue-200 text-sm">Date Range</Label>
+                  <Label htmlFor="date-filter" className="text-slate-300 text-sm">Date Range</Label>
                   <Select defaultValue="today">
-                    <SelectTrigger id="date-filter" className="bg-blue-900/50 border-blue-700/50 text-blue-100 mt-1">
+                    <SelectTrigger id="date-filter" className="bg-slate-900/50 border-slate-700/50 text-slate-100 mt-1">
                       <SelectValue placeholder="Select date range" />
                     </SelectTrigger>
-                    <SelectContent className="bg-blue-900 border-blue-700 text-blue-200">
+                    <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
                       <SelectItem value="today">Today</SelectItem>
                       <SelectItem value="yesterday">Yesterday</SelectItem>
                       <SelectItem value="week">Last 7 Days</SelectItem>
