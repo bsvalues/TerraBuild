@@ -1,0 +1,33 @@
+[package]
+name = "terrafusion-launcher"
+version = "2.0.0"
+description = "TerraFusion Enterprise Launcher - Lightweight Tauri Implementation"
+authors = ["TerraFusion Systems <support@terrafusion.com>"]
+license = "MIT"
+repository = "https://github.com/terrafusion/tauri-launcher"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = ["api-all", "system-tray", "updater"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+dirs = "5.0"
+port-scanner = "0.1"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
