@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraFusion Enterprise Launcher</title>
+    <link rel="stylesheet" href="../styles/launcher.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">TF</div>
+                    <div class="title-section">
+                        <h1>TerraFusion Enterprise</h1>
+                        <span class="subtitle">Deployment Control Center</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="system-status" id="system-status">
+                        <div class="status-indicator offline"></div>
+                        <span>Initializing...</span>
+                    </div>
+                    <button class="btn-icon" id="refresh-btn" title="Refresh System Status">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="screen active">
+                <div class="welcome-hero">
+                    <h2>Enterprise-Grade Deployment System</h2>
+                    <p>Deploy TerraFusion with production-ready infrastructure, monitoring, and security in one click.</p>
+                    
+                    <div class="feature-highlights">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V5l-10-4z"/>
+                                </svg>
+                            </div>
+                            <h3>Enterprise Security</h3>
+                            <p>SSL/TLS encryption, authentication, and compliance controls</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                            </div>
+                            <h3>Auto-Scaling</h3>
+                            <p>Dynamic resource allocation and load balancing</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </div>
+                            <h3>Monitoring & Analytics</h3>
+                            <p>Real-time dashboards, alerts, and performance metrics</p>
+                        </div>
+                    </div>
+
+                    <div class="action-section">
+                        <button id="quick-deploy-btn" class="btn-primary large">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            Quick Deploy
+                        </button>
+                        <button id="custom-deploy-btn" class="btn-secondary large">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            Custom Configuration
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Overview -->
+                <div class="system-overview">
+                    <h3>System Information</h3>
+                    <div class="system-grid" id="system-info-grid">
+                        <div class="system-card">
+                            <div class="card-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                                <span>Platform</span>
+                            </div>
+                            <div class="card-value" id="platform-info">Loading...</div>
+                        </div>
+                        
+                        <div class="system-card">
+                            <div class="card-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+                                </svg>
+                                <span>Memory</span>
+                            </div>
+                            <div class="card-value" id="memory-info">Loading...</div>
+                        </div>
+                        
+                        <div class="system-card">
+                            <div class="card-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+                                </svg>
+                                <span>Storage</span>
+                            </div>
+                            <div class="card-value" id="storage-info">Loading...</div>
+                        </div>
+                        
+                        <div class="system-card">
+                            <div class="card-header">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 4h-4L12 1 9 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 9c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z"/>
+                                </svg>
+                                <span>Network</span>
+                            </div>
+                            <div class="card-value" id="network-info">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Screen -->
+            <div id="config-screen" class="screen">
+                <div class="config-header">
+                    <button id="back-btn" class="btn-back">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        Back
+                    </button>
+                    <div class="header-text">
+                        <h2>Deployment Configuration</h2>
+                        <p>Configure your enterprise deployment settings</p>
+                    </div>
+                </div>
+
+                <form id="deployment-form" class="config-form">
+                    <div class="form-sections">
+                        <div class="form-section">
+                            <h3>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                Cloud Infrastructure
+                            </h3>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="deployment-type" value="local" checked>
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Local Deployment</strong>
+                                        <span>Deploy on current machine with localhost access</span>
+                                    </div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="deployment-type" value="docker">
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Docker Container</strong>
+                                        <span>Containerized deployment with Docker</span>
+                                    </div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="deployment-type" value="cloud">
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Cloud Deployment</strong>
+                                        <span>Deploy to AWS, GCP, or Azure cloud infrastructure</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                Application Configuration
+                            </h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="app-name">Application Name</label>
+                                    <input type="text" id="app-name" name="app-name" value="TerraFusion Enterprise" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="port">Port</label>
+                                    <input type="number" id="port" name="port" value="5000" min="1000" max="65535">
+                                </div>
+                                <div class="form-group">
+                                    <label for="domain">Domain (Optional)</label>
+                                    <input type="text" id="domain" name="domain" placeholder="terrafusion.company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="environment">Environment</label>
+                                    <select id="environment" name="environment">
+                                        <option value="development">Development</option>
+                                        <option value="staging">Staging</option>
+                                        <option value="production" selected>Production</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V5l-10-4z"/>
+                                </svg>
+                                Security & Features
+                            </h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="enable-ssl" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span>Enable SSL/TLS encryption</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="enable-monitoring" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span>Enable performance monitoring</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="enable-ai-agents" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span>Deploy AI analysis agents</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="enable-backup">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Enable automated backups</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="enable-analytics">
+                                    <span class="checkbox-custom"></span>
+                                    <span>Enable usage analytics</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="save-config-btn" class="btn-secondary">Save Configuration</button>
+                        <button type="submit" class="btn-primary">Deploy Now</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Deployment Progress Screen -->
+            <div id="progress-screen" class="screen">
+                <div class="progress-header">
+                    <h2>Deploying TerraFusion Enterprise</h2>
+                    <p id="progress-subtitle">Initializing deployment process...</p>
+                </div>
+
+                <div class="progress-main">
+                    <div class="progress-circle-container">
+                        <svg class="progress-circle" width="200" height="200">
+                            <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                            <circle cx="100" cy="100" r="90" fill="none" stroke="#3b82f6" stroke-width="8" 
+                                    stroke-linecap="round" stroke-dasharray="565.48" stroke-dashoffset="565.48" 
+                                    class="progress-ring" transform="rotate(-90 100 100)"/>
+                        </svg>
+                        <div class="progress-text">
+                            <div class="progress-percentage" id="progress-percentage">0%</div>
+                            <div class="progress-step" id="progress-step">Starting...</div>
+                        </div>
+                    </div>
+
+                    <div class="deployment-steps" id="deployment-steps">
+                        <!-- Steps will be populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="progress-log-section">
+                    <div class="log-header">
+                        <h3>Deployment Log</h3>
+                        <button class="btn-icon" id="clear-log-btn" title="Clear Log">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="log-container" id="deployment-log">
+                        <!-- Log entries will be populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="progress-actions">
+                    <button id="cancel-deployment-btn" class="btn-danger">Cancel Deployment</button>
+                </div>
+            </div>
+
+            <!-- Success Screen -->
+            <div id="success-screen" class="screen">
+                <div class="success-container">
+                    <div class="success-icon">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <h2>Deployment Successful!</h2>
+                    <p>TerraFusion Enterprise has been successfully deployed and is ready for use.</p>
+
+                    <div class="deployment-summary" id="deployment-summary">
+                        <!-- Deployment details will be populated dynamically -->
+                    </div>
+
+                    <div class="success-actions">
+                        <button id="open-app-btn" class="btn-primary large">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                            </svg>
+                            Open Application
+                        </button>
+                        <button id="new-deployment-btn" class="btn-secondary">New Deployment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Management Panel -->
+            <div id="services-panel" class="side-panel">
+                <div class="panel-header">
+                    <h3>Running Services</h3>
+                    <button class="btn-icon" id="close-services-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-content" id="services-list">
+                    <!-- Services will be populated dynamically -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <span>TerraFusion Enterprise v2.0.0</span>
+                </div>
+                <div class="footer-section">
+                    <button class="btn-link" id="view-logs-btn">View Logs</button>
+                    <button class="btn-link" id="services-btn">Services</button>
+                    <button class="btn-link" id="settings-btn">Settings</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="../scripts/launcher.js"></script>
+</body>
+</html>
