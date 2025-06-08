@@ -18,7 +18,6 @@ import DiagnosticPage from '@/pages/diagnostic';
 import CalculatorPage from '@/pages/calculator-page';
 import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
-import PropertyDetailPage from '@/pages/PropertyDetailPage';
 import DocumentationPage from '@/pages/documentation-new';
 import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
@@ -79,11 +78,7 @@ function Router() {
         </EnterpriseLayout>
       )} />
       
-      <Route path="/properties/:id" component={() => (
-        <EnterpriseLayout>
-          <PropertyDetailPage />
-        </EnterpriseLayout>
-      )} />
+
       
       <Route path="/matrix" component={() => (
         <EnterpriseLayout>

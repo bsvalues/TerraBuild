@@ -1,571 +1,251 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
-const fs = require('fs');
-const { spawn, exec } = require('child_process');
-const os = require('os');
-const https = require('https');
+const { spawn } = require('child_process');
+const fetch = require('node-fetch');
 
-/**
- * TerraFusion Desktop Deployment Manager
- * Enterprise-grade one-click deployment solution
- */
+let mainWindow;
+let serverProcess;
+let splashWindow;
 
-class TerraFusionDeploymentManager {
-  constructor() {
-    this.mainWindow = null;
-    this.deploymentProcess = null;
-    this.deploymentSteps = [
-      { id: 'init', name: 'Initializing Deployment', progress: 0 },
-      { id: 'environment', name: 'Setting Up Environment', progress: 0 },
-      { id: 'dependencies', name: 'Installing Dependencies', progress: 0 },
-      { id: 'database', name: 'Configuring Database', progress: 0 },
-      { id: 'build', name: 'Building Application', progress: 0 },
-      { id: 'docker', name: 'Creating Docker Images', progress: 0 },
-      { id: 'cloud', name: 'Deploying to Cloud', progress: 0 },
-      { id: 'ssl', name: 'Configuring SSL/TLS', progress: 0 },
-      { id: 'monitoring', name: 'Setting Up Monitoring', progress: 0 },
-      { id: 'complete', name: 'Deployment Complete', progress: 0 }
-    ];
-    this.currentStepIndex = 0;
-    this.deploymentConfig = {};
-  }
+const isDev = process.env.NODE_ENV === 'development';
+const serverPort = process.env.PORT || 5000;
 
-  createWindow() {
-    this.mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      minWidth: 900,
-      minHeight: 600,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-        enableRemoteModule: true
-      },
-      titleBarStyle: 'hiddenInset',
-      vibrancy: 'dark',
-      backgroundColor: '#1e293b',
-      show: false,
-      icon: path.join(__dirname, 'assets', 'terrafusion-icon.png')
-    });
-
-    this.mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-    this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow.show();
-      this.sendSystemInfo();
-    });
-
-    this.mainWindow.on('closed', () => {
-      this.mainWindow = null;
-    });
-
-    if (process.env.NODE_ENV === 'development') {
-      this.mainWindow.webContents.openDevTools();
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    alwaysOnTop: true,
+    transparent: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
     }
-  }
+  });
 
-  setupIPC() {
-    ipcMain.handle('get-system-info', () => {
-      return {
-        platform: os.platform(),
-        arch: os.arch(),
-        cpus: os.cpus().length,
-        memory: Math.round(os.totalmem() / 1024 / 1024 / 1024),
-        hostname: os.hostname(),
-        user: os.userInfo().username,
-        node: process.version,
-        versions: process.versions
-      };
-    });
-
-    ipcMain.handle('start-deployment', async (event, config) => {
-      this.deploymentConfig = config;
-      await this.startDeployment();
-    });
-
-    ipcMain.handle('check-prerequisites', async () => {
-      return await this.checkPrerequisites();
-    });
-
-    ipcMain.handle('select-directory', async () => {
-      const result = await dialog.showOpenDialog(this.mainWindow, {
-        properties: ['openDirectory'],
-        title: 'Select Deployment Directory'
-      });
-      return result.filePaths[0];
-    });
-
-    ipcMain.handle('open-external', async (event, url) => {
-      shell.openExternal(url);
-    });
-
-    ipcMain.handle('cancel-deployment', () => {
-      this.cancelDeployment();
-    });
-  }
-
-  async sendSystemInfo() {
-    const systemInfo = await this.invokeRenderer('get-system-info');
-    this.mainWindow.webContents.send('system-info', systemInfo);
-  }
-
-  async checkPrerequisites() {
-    const checks = {
-      docker: false,
-      node: false,
-      git: false,
-      kubectl: false,
-      helm: false,
-      terraform: false
-    };
-
-    try {
-      await this.execPromise('docker --version');
-      checks.docker = true;
-    } catch (e) {
-      console.log('Docker not found');
-    }
-
-    try {
-      await this.execPromise('node --version');
-      checks.node = true;
-    } catch (e) {
-      console.log('Node.js not found');
-    }
-
-    try {
-      await this.execPromise('git --version');
-      checks.git = true;
-    } catch (e) {
-      console.log('Git not found');
-    }
-
-    try {
-      await this.execPromise('kubectl version --client');
-      checks.kubectl = true;
-    } catch (e) {
-      console.log('kubectl not found');
-    }
-
-    try {
-      await this.execPromise('helm version');
-      checks.helm = true;
-    } catch (e) {
-      console.log('Helm not found');
-    }
-
-    try {
-      await this.execPromise('terraform version');
-      checks.terraform = true;
-    } catch (e) {
-      console.log('Terraform not found');
-    }
-
-    return checks;
-  }
-
-  async startDeployment() {
-    this.currentStepIndex = 0;
-    this.updateProgress('init', 10, 'Initializing deployment environment...');
-
-    try {
-      await this.sleep(1000);
-      this.updateProgress('init', 100, 'Initialization complete');
-      this.nextStep();
-
-      await this.setupEnvironment();
-      this.nextStep();
-
-      await this.installDependencies();
-      this.nextStep();
-
-      await this.setupDatabase();
-      this.nextStep();
-
-      await this.buildApplication();
-      this.nextStep();
-
-      await this.createDockerImages();
-      this.nextStep();
-
-      await this.deployToCloud();
-      this.nextStep();
-
-      await this.configureSSL();
-      this.nextStep();
-
-      await this.setupMonitoring();
-      this.nextStep();
-
-      this.updateProgress('complete', 100, 'Deployment completed successfully!');
-      this.mainWindow.webContents.send('deployment-complete', {
-        url: this.deploymentConfig.domain || 'https://terrafusion.example.com',
-        adminUrl: this.deploymentConfig.adminDomain || 'https://admin.terrafusion.example.com',
-        monitoring: this.deploymentConfig.monitoringUrl || 'https://monitoring.terrafusion.example.com'
-      });
-
-    } catch (error) {
-      this.handleDeploymentError(error);
-    }
-  }
-
-  async setupEnvironment() {
-    this.updateProgress('environment', 20, 'Creating deployment directory...');
-    
-    const deployDir = this.deploymentConfig.directory || path.join(os.homedir(), 'terrafusion-deployment');
-    if (!fs.existsSync(deployDir)) {
-      fs.mkdirSync(deployDir, { recursive: true });
-    }
-
-    this.updateProgress('environment', 50, 'Generating configuration files...');
-    
-    const dockerCompose = this.generateDockerCompose();
-    fs.writeFileSync(path.join(deployDir, 'docker-compose.yml'), dockerCompose);
-
-    const k8sManifests = this.generateK8sManifests();
-    const k8sDir = path.join(deployDir, 'k8s');
-    fs.mkdirSync(k8sDir, { recursive: true });
-    
-    Object.entries(k8sManifests).forEach(([filename, content]) => {
-      fs.writeFileSync(path.join(k8sDir, filename), content);
-    });
-
-    this.updateProgress('environment', 100, 'Environment setup complete');
-  }
-
-  async installDependencies() {
-    this.updateProgress('dependencies', 20, 'Installing Node.js dependencies...');
-    
-    try {
-      await this.execWithProgress('npm install --production', 'dependencies', 20, 80);
-      this.updateProgress('dependencies', 100, 'Dependencies installed successfully');
-    } catch (error) {
-      throw new Error(`Failed to install dependencies: ${error.message}`);
-    }
-  }
-
-  async setupDatabase() {
-    this.updateProgress('database', 20, 'Starting PostgreSQL container...');
-    
-    try {
-      await this.execWithProgress('docker run -d --name terrafusion-db -e POSTGRES_PASSWORD=secure123 -p 5432:5432 postgres:15', 'database', 20, 60);
-      
-      this.updateProgress('database', 80, 'Running database migrations...');
-      await this.sleep(3000);
-      
-      await this.execWithProgress('npm run db:push', 'database', 80, 100);
-      this.updateProgress('database', 100, 'Database configured successfully');
-    } catch (error) {
-      throw new Error(`Failed to setup database: ${error.message}`);
-    }
-  }
-
-  async buildApplication() {
-    this.updateProgress('build', 10, 'Building frontend application...');
-    
-    try {
-      await this.execWithProgress('npm run build', 'build', 10, 70);
-      
-      this.updateProgress('build', 80, 'Optimizing assets...');
-      await this.sleep(2000);
-      
-      this.updateProgress('build', 100, 'Application built successfully');
-    } catch (error) {
-      throw new Error(`Failed to build application: ${error.message}`);
-    }
-  }
-
-  async createDockerImages() {
-    this.updateProgress('docker', 20, 'Building Docker images...');
-    
-    try {
-      await this.execWithProgress('docker build -t terrafusion:latest .', 'docker', 20, 80);
-      
-      this.updateProgress('docker', 90, 'Tagging images...');
-      await this.execWithProgress('docker tag terrafusion:latest registry.terrafusion.com/terrafusion:latest', 'docker', 90, 100);
-      
-      this.updateProgress('docker', 100, 'Docker images created successfully');
-    } catch (error) {
-      throw new Error(`Failed to create Docker images: ${error.message}`);
-    }
-  }
-
-  async deployToCloud() {
-    this.updateProgress('cloud', 10, 'Initializing cloud deployment...');
-    
-    const provider = this.deploymentConfig.cloudProvider || 'aws';
-    
-    try {
-      if (provider === 'aws') {
-        await this.deployToAWS();
-      } else if (provider === 'gcp') {
-        await this.deployToGCP();
-      } else if (provider === 'azure') {
-        await this.deployToAzure();
-      }
-      
-      this.updateProgress('cloud', 100, 'Cloud deployment completed');
-    } catch (error) {
-      throw new Error(`Failed to deploy to cloud: ${error.message}`);
-    }
-  }
-
-  async deployToAWS() {
-    this.updateProgress('cloud', 20, 'Configuring AWS EKS cluster...');
-    await this.execWithProgress('terraform init', 'cloud', 20, 40);
-    
-    this.updateProgress('cloud', 50, 'Provisioning infrastructure...');
-    await this.execWithProgress('terraform apply -auto-approve', 'cloud', 50, 80);
-    
-    this.updateProgress('cloud', 90, 'Deploying to Kubernetes...');
-    await this.execWithProgress('kubectl apply -f k8s/', 'cloud', 90, 100);
-  }
-
-  async configureSSL() {
-    this.updateProgress('ssl', 20, 'Installing cert-manager...');
-    
-    try {
-      await this.execWithProgress('kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.12.0/cert-manager.yaml', 'ssl', 20, 60);
-      
-      this.updateProgress('ssl', 70, 'Configuring Let\'s Encrypt...');
-      await this.sleep(2000);
-      
-      this.updateProgress('ssl', 100, 'SSL/TLS configured successfully');
-    } catch (error) {
-      throw new Error(`Failed to configure SSL: ${error.message}`);
-    }
-  }
-
-  async setupMonitoring() {
-    this.updateProgress('monitoring', 20, 'Installing Prometheus...');
-    
-    try {
-      await this.execWithProgress('helm repo add prometheus-community https://prometheus-community.github.io/helm-charts', 'monitoring', 20, 40);
-      
-      this.updateProgress('monitoring', 50, 'Installing Grafana...');
-      await this.execWithProgress('helm install monitoring prometheus-community/kube-prometheus-stack', 'monitoring', 50, 80);
-      
-      this.updateProgress('monitoring', 90, 'Configuring dashboards...');
-      await this.sleep(2000);
-      
-      this.updateProgress('monitoring', 100, 'Monitoring setup complete');
-    } catch (error) {
-      throw new Error(`Failed to setup monitoring: ${error.message}`);
-    }
-  }
-
-  generateDockerCompose() {
-    return `version: '3.8'
-services:
-  terrafusion-app:
-    image: terrafusion:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:secure123@db:5432/terrafusion
-    depends_on:
-      - db
-      - redis
-    restart: unless-stopped
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=terrafusion
-      - POSTGRES_PASSWORD=secure123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/ssl/certs
-    depends_on:
-      - terrafusion-app
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-`;
-  }
-
-  generateK8sManifests() {
-    return {
-      'namespace.yaml': `apiVersion: v1
-kind: Namespace
-metadata:
-  name: terrafusion
-`,
-      'deployment.yaml': `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: terrafusion-app
-  namespace: terrafusion
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: terrafusion-app
-  template:
-    metadata:
-      labels:
-        app: terrafusion-app
-    spec:
-      containers:
-      - name: terrafusion
-        image: registry.terrafusion.com/terrafusion:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: terrafusion-secrets
-              key: database-url
-`,
-      'service.yaml': `apiVersion: v1
-kind: Service
-metadata:
-  name: terrafusion-service
-  namespace: terrafusion
-spec:
-  selector:
-    app: terrafusion-app
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 3000
-  type: LoadBalancer
-`,
-      'ingress.yaml': `apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: terrafusion-ingress
-  namespace: terrafusion
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-spec:
-  tls:
-  - hosts:
-    - terrafusion.com
-    secretName: terrafusion-tls
-  rules:
-  - host: terrafusion.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: terrafusion-service
-            port:
-              number: 80
-`
-    };
-  }
-
-  updateProgress(stepId, progress, message) {
-    const step = this.deploymentSteps.find(s => s.id === stepId);
-    if (step) {
-      step.progress = progress;
-    }
-    
-    this.mainWindow.webContents.send('deployment-progress', {
-      currentStep: stepId,
-      stepIndex: this.currentStepIndex,
-      totalSteps: this.deploymentSteps.length,
-      progress,
-      message,
-      steps: this.deploymentSteps
-    });
-  }
-
-  nextStep() {
-    this.currentStepIndex++;
-  }
-
-  async execWithProgress(command, stepId, startProgress, endProgress) {
-    const progressIncrement = (endProgress - startProgress) / 10;
-    let currentProgress = startProgress;
-
-    return new Promise((resolve, reject) => {
-      const process = exec(command, (error, stdout, stderr) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(stdout);
-        }
-      });
-
-      const progressInterval = setInterval(() => {
-        currentProgress += progressIncrement;
-        if (currentProgress < endProgress) {
-          this.updateProgress(stepId, currentProgress, `Executing: ${command}`);
-        } else {
-          clearInterval(progressInterval);
-        }
-      }, 500);
-
-      process.on('close', () => {
-        clearInterval(progressInterval);
-        this.updateProgress(stepId, endProgress, `Completed: ${command}`);
-      });
-    });
-  }
-
-  async execPromise(command) {
-    return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(stdout);
-        }
-      });
-    });
-  }
-
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  handleDeploymentError(error) {
-    this.mainWindow.webContents.send('deployment-error', {
-      message: error.message,
-      step: this.deploymentSteps[this.currentStepIndex]?.id || 'unknown'
-    });
-  }
-
-  cancelDeployment() {
-    if (this.deploymentProcess) {
-      this.deploymentProcess.kill();
-    }
-    this.mainWindow.webContents.send('deployment-cancelled');
-  }
+  splashWindow.loadFile(path.join(__dirname, 'renderer', 'splash.html'));
 }
 
-const deploymentManager = new TerraFusionDeploymentManager();
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1200,
+    minHeight: 800,
+    show: false,
+    icon: path.join(__dirname, 'assets', 'icon.png'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
 
-app.whenReady().then(() => {
-  deploymentManager.createWindow();
-  deploymentManager.setupIPC();
+  mainWindow.once('ready-to-show', () => {
+    if (splashWindow) {
+      splashWindow.close();
+    }
+    mainWindow.show();
+    
+    if (isDev) {
+      mainWindow.webContents.openDevTools();
+    }
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+    if (serverProcess) {
+      serverProcess.kill();
+    }
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+}
+
+async function startServer() {
+  return new Promise((resolve, reject) => {
+    const serverPath = isDev 
+      ? path.join(__dirname, '..', '..', 'server') 
+      : path.join(process.resourcesPath, 'app', 'server');
+    
+    serverProcess = spawn('npm', ['run', 'start'], {
+      cwd: serverPath,
+      stdio: 'pipe',
+      env: { ...process.env, PORT: serverPort }
+    });
+
+    serverProcess.stdout.on('data', (data) => {
+      console.log(`Server: ${data}`);
+      if (data.toString().includes('serving on port')) {
+        resolve();
+      }
+    });
+
+    serverProcess.stderr.on('data', (data) => {
+      console.error(`Server Error: ${data}`);
+    });
+
+    serverProcess.on('close', (code) => {
+      console.log(`Server process exited with code ${code}`);
+      if (code !== 0) {
+        reject(new Error(`Server failed to start with code ${code}`));
+      }
+    });
+
+    setTimeout(() => {
+      reject(new Error('Server startup timeout'));
+    }, 30000);
+  });
+}
+
+async function waitForServer() {
+  const maxAttempts = 30;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(`http://localhost:${serverPort}/api/health`);
+      if (response.ok) {
+        return true;
+      }
+    } catch (error) {
+      console.log(`Waiting for server... attempt ${attempts + 1}`);
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    attempts++;
+  }
+  
+  throw new Error('Server failed to respond');
+}
+
+function createMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Project',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => {
+            mainWindow.webContents.send('menu-action', 'new-project');
+          }
+        },
+        {
+          label: 'Open Project',
+          accelerator: 'CmdOrCtrl+O',
+          click: async () => {
+            const result = await dialog.showOpenDialog(mainWindow, {
+              properties: ['openDirectory'],
+              title: 'Select Project Directory'
+            });
+            
+            if (!result.canceled) {
+              mainWindow.webContents.send('menu-action', 'open-project', result.filePaths[0]);
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Exit',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'close' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About TerraFusion',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About TerraFusion Enterprise',
+              message: 'TerraFusion Enterprise v1.0.0',
+              detail: 'AI-Powered Geospatial Property Valuation Platform\nBuilt for County Governments'
+            });
+          }
+        },
+        {
+          label: 'Check for Updates',
+          click: () => {
+            autoUpdater.checkForUpdatesAndNotify();
+          }
+        }
+      ]
+    }
+  ];
+
+  if (process.platform === 'darwin') {
+    template.unshift({
+      label: app.getName(),
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    });
+  }
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
+app.whenReady().then(async () => {
+  createSplashWindow();
+  createMenu();
+  
+  try {
+    await startServer();
+    await waitForServer();
+    
+    createWindow();
+    mainWindow.loadURL(`http://localhost:${serverPort}`);
+    
+    autoUpdater.checkForUpdatesAndNotify();
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    dialog.showErrorBox('Startup Error', `Failed to start TerraFusion: ${error.message}`);
+    app.quit();
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      deploymentManager.createWindow();
+      createWindow();
     }
   });
 });
@@ -574,4 +254,41 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available.');
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available.');
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater. ' + err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded');
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
+ipcMain.handle('restart-app', () => {
+  app.relaunch();
+  app.exit();
 });
