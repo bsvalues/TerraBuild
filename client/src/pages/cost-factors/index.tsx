@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Edit, Plus, Download, Upload, Search, Filter } from 'lucide-react';
+import { Database, Edit, Plus, Download, Upload, Search, Filter, Brain, TrendingUp, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -107,7 +107,8 @@ const CostFactorsPage = () => {
   const filteredFactors = costFactors.filter(factor => {
     const matchesSearch = factor.factor.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          factor.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || factor.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || 
+                           factor.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
@@ -120,16 +121,20 @@ const CostFactorsPage = () => {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Import Factors
+            <Brain className="h-4 w-4 mr-2" />
+            AI Analysis
+          </Button>
+          <Button variant="outline" size="sm">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Trend Forecast
           </Button>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export Data
           </Button>
           <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Factor
+            <Zap className="h-4 w-4 mr-2" />
+            Generate Factors
           </Button>
         </div>
       </div>
@@ -201,16 +206,19 @@ const CostFactorsPage = () => {
           />
         </div>
         <div className="flex gap-2">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category.toLowerCase().replace(' categories', '').replace(' ', '') ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategory(category.toLowerCase().replace(' categories', '').replace(' ', ''))}
-            >
-              {category}
-            </Button>
-          ))}
+          {categories.map((category) => {
+            const categoryValue = category === 'All Categories' ? 'all' : category.toLowerCase();
+            return (
+              <Button
+                key={category}
+                variant={selectedCategory === categoryValue ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(categoryValue)}
+              >
+                {category}
+              </Button>
+            );
+          })}
         </div>
         <Button variant="outline" size="sm">
           <Filter className="h-4 w-4 mr-2" />
@@ -324,21 +332,25 @@ const CostFactorsPage = () => {
 
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-slate-100 text-lg">Data Sources</CardTitle>
+            <CardTitle className="text-slate-100 text-lg">AI Analysis Engine</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">Marshall Swift</span>
-                <span className="text-emerald-400 text-xs">Synced</span>
+                <span className="text-slate-300">Regional Market Analysis</span>
+                <span className="text-emerald-400 text-xs">Active</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">RS Means</span>
-                <span className="text-emerald-400 text-xs">Synced</span>
+                <span className="text-slate-300">Cost Trend Prediction</span>
+                <span className="text-emerald-400 text-xs">Running</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-300">Local Contractors</span>
-                <span className="text-yellow-400 text-xs">Manual</span>
+                <span className="text-slate-300">Historical Data Mining</span>
+                <span className="text-sky-400 text-xs">Processing</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Local Contractor Data</span>
+                <span className="text-yellow-400 text-xs">Verified</span>
               </div>
             </div>
           </CardContent>
