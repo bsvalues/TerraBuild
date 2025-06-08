@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraFusion Enterprise Launcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .splash-container {
+            text-align: center;
+            padding: 40px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #00d4ff, #7b68ee);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .loading-container {
+            margin-top: 20px;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 0 auto 15px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b68ee);
+            border-radius: 2px;
+            width: 0%;
+            animation: loading 3s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            opacity: 0.8;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .version {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .features {
+            margin-top: 20px;
+            font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        .feature-item {
+            margin: 5px 0;
+        }
+
+        .feature-item::before {
+            content: "✓";
+            margin-right: 8px;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="splash-container">
+        <div class="logo">TF</div>
+        <div class="title">TerraFusion Enterprise</div>
+        <div class="subtitle">One-Click Deployment System</div>
+        
+        <div class="features">
+            <div class="feature-item">Enterprise Security & Compliance</div>
+            <div class="feature-item">Auto-scaling Infrastructure</div>
+            <div class="feature-item">Real-time Monitoring & Alerts</div>
+            <div class="feature-item">AI-Powered Property Valuation</div>
+        </div>
+        
+        <div class="loading-container">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <div class="loading-text">Initializing enterprise deployment system...</div>
+        </div>
+    </div>
+    
+    <div class="version">v2.0.0</div>
+
+    <script>
+        // Simple loading animation updates
+        const loadingTexts = [
+            "Initializing enterprise deployment system...",
+            "Checking system requirements...",
+            "Loading deployment modules...",
+            "Preparing launch environment...",
+            "Ready to deploy!"
+        ];
+        
+        let currentTextIndex = 0;
+        const loadingTextElement = document.querySelector('.loading-text');
+        
+        setInterval(() => {
+            currentTextIndex = (currentTextIndex + 1) % loadingTexts.length;
+            loadingTextElement.textContent = loadingTexts[currentTextIndex];
+        }, 600);
+    </script>
+</body>
+</html>
