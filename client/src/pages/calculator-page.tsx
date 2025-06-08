@@ -21,9 +21,15 @@ export default function CalculatorPage() {
     qualityClass: "standard",
     stories: "1"
   });
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<{
+    totalCost: number;
+    costPerSqFt: number;
+    baseCost: number;
+    qualityAdjustment: number;
+    storyAdjustment: number;
+  } | null>(null);
   
-  const { data: costMatrix, isLoading } = useCostMatrix();
+  // Remove unused cost matrix hook
 
   const buildingTypes = [
     { value: "residential_single", label: "Single Family Residential" },

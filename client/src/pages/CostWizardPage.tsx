@@ -382,286 +382,113 @@ const CostWizardPage: React.FC = () => {
         return null;
     }
   };
-  
-  // Render content based on wizard state
-  const renderContent = () => {
-    if (wizardCompleted) {
-      return (
-        <div className="max-w-4xl mx-auto mt-8">
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-8 text-center mb-8">
-            <Building className="h-16 w-16 mx-auto text-primary mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Estimate Completed</h1>
-            <p className="text-muted-foreground mb-6">
-              Your building cost estimate has been saved successfully. You can now view the details, create a new estimate, or return to the dashboard.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button onClick={startNewEstimate} className="gap-2">
-                <Calculator className="h-4 w-4" />
-                Create New Estimate
-              </Button>
-              <Button onClick={exportEstimate} variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export Estimate
-              </Button>
-              <Button onClick={goToDashboard} variant="outline" className="gap-2">
-                <Home className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            </div>
-          </div>
-          
-          {savedEstimate && (
-            <div className="border rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                {savedEstimate.inputValues.projectName || 'Building Cost Estimate'}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Estimate Summary</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Total Cost:</span>
-                      <span className="font-bold">
-                        ${savedEstimate.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Per Square Foot:</span>
-                      <span>
-                        ${savedEstimate.costPerSqFt.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Building Type:</span>
-                      <span>
-                        {savedEstimate.inputValues.buildingType}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Square Feet:</span>
-                      <span>{savedEstimate.inputValues.squareFeet.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Quality:</span>
-                      <span>{savedEstimate.inputValues.quality}</span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Condition:</span>
-                      <span>{savedEstimate.inputValues.condition}</span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Year Built:</span>
-                      <span>{savedEstimate.inputValues.yearBuilt}</span>
-                    </div>
-                    <div className="flex justify-between border-b pb-1">
-                      <span className="text-muted-foreground">Region:</span>
-                      <span>{savedEstimate.inputValues.region}</span>
-                    </div>
-                    <div className="mt-4 pt-2 border-t">
-                      <span className="text-sm font-medium block mb-2">Region Visualization:</span>
-                      <RegionVisualization 
-                        regionId={savedEstimate.inputValues.region}
-                        compact={true}
-                        showTitle={false}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Cost Breakdown</h3>
-                  <div className="space-y-2">
-                    {savedEstimate.breakdownCosts && (
-                      <>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Foundation:</span>
-                          <span>${savedEstimate.breakdownCosts.foundation.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Framing & Structure:</span>
-                          <span>${savedEstimate.breakdownCosts.framing.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Exterior Finishes:</span>
-                          <span>${savedEstimate.breakdownCosts.exterior.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Roofing:</span>
-                          <span>${savedEstimate.breakdownCosts.roofing.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Interior Finishes:</span>
-                          <span>${savedEstimate.breakdownCosts.interiorFinish.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Plumbing:</span>
-                          <span>${savedEstimate.breakdownCosts.plumbing.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">Electrical:</span>
-                          <span>${savedEstimate.breakdownCosts.electrical.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-1">
-                          <span className="text-muted-foreground">HVAC:</span>
-                          <span>${savedEstimate.breakdownCosts.hvac.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {savedEstimate.inputValues.notes && (
-                <div className="mt-6">
-                  <h3 className="font-medium mb-2">Notes</h3>
-                  <div className="bg-muted p-3 rounded-md">
-                    {savedEstimate.inputValues.notes}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      );
-    }
-    
-    return (
-      <div className="w-full mt-4 mb-10">
-        <CostEstimationWizard 
-          onSave={handleWizardComplete} 
-          onExit={goToDashboard}
-        />
-      </div>
-    );
-  };
-  
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={goToDashboard}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Cost Estimation Wizard</h1>
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={() => setLocation('/matrix')}
-          >
-            <Layers className="h-4 w-4" />
-            Matrix Explorer
-          </Button>
-        </div>
-        
-        {!wizardCompleted && (
-          <>
-            {isLoadingCostFactors ? (
-              <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 bg-muted">
-                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Loading cost factors...</span>
-              </div>
-            ) : costFactorsError ? (
-              <div className="flex items-center gap-2 border border-destructive rounded-md px-3 py-1.5 bg-destructive/10">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <span className="text-sm text-destructive">Error loading cost factors</span>
-              </div>
-            ) : costFactors ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => {
-                  toast({
-                    title: "Cost Factors Source",
-                    description: `Using ${costFactors.source} (v${costFactors.version})`,
-                  });
-                }}
-              >
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                Using Benton County Cost Factors
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => {
-                  toast({
-                    title: "Cost Factors",
-                    description: "Using fallback cost factors data",
-                    variant: "destructive"
-                  });
-                }}
-              >
-                <Database className="h-4 w-4" />
-                Using Default Cost Factors
-              </Button>
-            )}
-          </>
-        )}
-      </div>
-      
-      <div className="container mx-auto">
-        {isLoadingCostFactors && !wizardCompleted && (
-          <Alert className="mb-4">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-            <AlertTitle>Loading Cost Factors</AlertTitle>
-            <AlertDescription>
-              Loading cost factors data from Benton County Building Cost Standards...
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {costFactorsError && !wizardCompleted && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            <AlertTitle>Error Loading Cost Factors</AlertTitle>
-            <AlertDescription>
-              There was an error loading the cost factors data. The calculation will use built-in defaults.
-              {costFactorsError instanceof Error && (
-                <div className="mt-2 text-xs">{costFactorsError.message}</div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {costFactors && !isLoadingCostFactors && !wizardCompleted && (
-          <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
-            <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-            <AlertTitle>Cost Factors Loaded Successfully</AlertTitle>
-            <AlertDescription>
-              Using {costFactors.source} version {costFactors.version} ({costFactors.year}).
-              Last updated: {new Date(costFactors.lastUpdated).toLocaleDateString()}
-            </AlertDescription>
-          </Alert>
-        )}
 
-        {renderContent()}
-        
-        {wizardCompleted && (
-          <div className="mt-8 border-t pt-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
-              <Database className="h-5 w-5 mr-2 text-primary" />
-              Cost Factors Used in Calculation
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              The following cost factors from Benton County Building Cost Standards were used in the calculation.
-              These factors are loaded directly from data/costFactors.json.
-            </p>
-            <CostFactorDataPanel />
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Cost Estimation Wizard"
+        description="Step-by-step guided process to calculate accurate building costs for Benton County projects"
+        icon={Calculator}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/" },
+          { label: "Cost Analysis" },
+          { label: "Wizard" }
+        ]}
+      />
+
+      {/* Progress Bar */}
+      <EnterpriseCard>
+        <EnterpriseCardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-200">
+                Step {currentStep} of {totalSteps}
+              </h3>
+              <span className="text-sm text-slate-400">
+                {Math.round((currentStep / totalSteps) * 100)}% Complete
+              </span>
+            </div>
+            <Progress 
+              value={(currentStep / totalSteps) * 100} 
+              className="w-full h-2"
+            />
+            <div className="flex justify-between text-xs text-slate-400">
+              <span>Project Info</span>
+              <span>Specifications</span>
+              <span>Quality & Construction</span>
+              <span>Results</span>
+            </div>
           </div>
-        )}
+        </EnterpriseCardContent>
+      </EnterpriseCard>
+
+      {/* Wizard Content */}
+      <div className="max-w-4xl mx-auto">
+        {renderStep()}
       </div>
+
+      {/* Navigation */}
+      {currentStep < totalSteps && !estimate && (
+        <div className="flex justify-between items-center max-w-4xl mx-auto">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
+          </Button>
+
+          <Button
+            onClick={nextStep}
+            disabled={!canProceed()}
+            className="bg-sky-600 hover:bg-sky-700"
+          >
+            Next Step
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Final Actions */}
+      {estimate && currentStep === totalSteps && (
+        <div className="flex justify-center gap-4 max-w-4xl mx-auto">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEstimate(null);
+              setCurrentStep(1);
+              setWizardData({
+                projectName: '',
+                buildingType: '',
+                squareFootage: '',
+                stories: '1',
+                qualityClass: 'standard',
+                region: 'Benton County',
+                yearBuilt: new Date().getFullYear().toString(),
+                constructionType: 'frame',
+                occupancyType: 'residential',
+                notes: ''
+              });
+            }}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <Calculator className="mr-2 h-4 w-4" />
+            New Estimate
+          </Button>
+
+          <Button className="bg-emerald-600 hover:bg-emerald-700">
+            <Save className="mr-2 h-4 w-4" />
+            Save Estimate
+          </Button>
+
+          <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+            <FileText className="mr-2 h-4 w-4" />
+            Export Report
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
