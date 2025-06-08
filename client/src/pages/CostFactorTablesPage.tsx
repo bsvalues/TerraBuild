@@ -144,7 +144,7 @@ export default function CostFactorTablesPage() {
                   <TableRow>
                     <TableCell className="font-medium">Multi-Family Residential</TableCell>
                     <TableCell>$140.00</TableCell>
-                    <TableCell><Badge variant="secondary">Residential</Badge></TableCell>
+                    <TableCell><Badge variant="outline">Residential</Badge></TableCell>
                     <TableCell><Badge variant="default" className="bg-emerald-600"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge></TableCell>
                   </TableRow>
                   <TableRow>
@@ -168,7 +168,7 @@ export default function CostFactorTablesPage() {
                   <TableRow>
                     <TableCell className="font-medium">Educational Facility</TableCell>
                     <TableCell>$200.00</TableCell>
-                    <TableCell><Badge variant="secondary">Institutional</Badge></TableCell>
+                    <TableCell><Badge variant="outline">Institutional</Badge></TableCell>
                     <TableCell><Badge variant="default" className="bg-emerald-600"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge></TableCell>
                   </TableRow>
                 </TableBody>

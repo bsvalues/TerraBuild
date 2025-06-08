@@ -1,12 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseCard, EnterpriseCardHeader, EnterpriseCardTitle, EnterpriseCardContent } from '@/components/ui/enterprise-card';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
   Table,
   TableBody,
@@ -18,9 +14,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, AlertTriangle, Clock } from "lucide-react";
-import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
-import { ErrorDisplay } from "@/components/ui/error-display";
+import { CheckCircle2, AlertCircle, AlertTriangle, Clock, Activity, Cpu, Database, MessageSquare } from "lucide-react";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -193,7 +187,6 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    // Refresh data every 15 seconds
     const intervalId = setInterval(() => {
       refetch();
     }, 15000);
@@ -202,32 +195,61 @@ const Dashboard = () => {
   }, [refetch]);
 
   if (isLoading) {
-    // Use the new skeleton component for a better loading experience
-    return <DashboardSkeleton />;
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="System Dashboard"
+          description="Loading system metrics and status..."
+          icon={Activity}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 bg-slate-800/30 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">MCP Monitoring Dashboard</h1>
-        <ErrorDisplay 
-          title="Error Loading Dashboard" 
-          error={error} 
-          onRetry={() => refetch()} 
+      <div className="space-y-6">
+        <PageHeader
+          title="System Dashboard"
+          description="Error loading dashboard data"
+          icon={Activity}
         />
+        <EnterpriseCard>
+          <EnterpriseCardContent>
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <p className="text-slate-400">Failed to load dashboard data</p>
+              <button 
+                onClick={() => refetch()} 
+                className="mt-4 px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-lg"
+              >
+                Retry
+              </button>
+            </div>
+          </EnterpriseCardContent>
+        </EnterpriseCard>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">MCP Monitoring Dashboard</h1>
-        <Card>
-          <CardContent className="pt-6">
-            <p>No dashboard data available</p>
-          </CardContent>
-        </Card>
+      <div className="space-y-6">
+        <PageHeader
+          title="System Dashboard"
+          description="No data available"
+          icon={Activity}
+        />
+        <EnterpriseCard>
+          <EnterpriseCardContent>
+            <p className="text-slate-400">No dashboard data available</p>
+          </EnterpriseCardContent>
+        </EnterpriseCard>
       </div>
     );
   }
@@ -241,94 +263,69 @@ const Dashboard = () => {
     data.taskMetrics.delegatedTasks;
   
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <h1 className="text-2xl font-bold">MCP Monitoring Dashboard</h1>
-          <div className="ml-4">
+    <div className="space-y-8">
+      <PageHeader
+        title="System Dashboard"
+        description={`System ${data.systemStatus.status.toLowerCase()} - Uptime: ${formatDuration(data.systemStatus.uptimeSeconds)}`}
+        icon={Activity}
+        action={
+          <div className="flex items-center gap-4">
             {getStatusBadge(data.systemStatus.status)}
+            <span className="text-sm text-slate-400">
+              Updated: {formatDate(data.timestamp)}
+            </span>
           </div>
-        </div>
-        <div className="text-sm text-gray-500">
-          <div>Last updated: {formatDate(data.timestamp)}</div>
-          <div>Uptime: {formatDuration(data.systemStatus.uptimeSeconds)}</div>
-        </div>
+        }
+      />
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard
+          title="Active Agents"
+          value={`${data.systemStatus.activeAgents}/${data.systemStatus.totalAgents}`}
+          description="System agents online"
+          icon={Cpu}
+          variant="primary"
+        />
+        <MetricCard
+          title="Total Tasks"
+          value={totalTasks.toString()}
+          trend="up"
+          trendValue={`${data.taskMetrics.completedTasks} completed`}
+          icon={Activity}
+          variant="default"
+        />
+        <MetricCard
+          title="Success Rate"
+          value={`${successRate}%`}
+          description="Task completion rate"
+          icon={CheckCircle2}
+          variant="success"
+        />
+        <MetricCard
+          title="Experience Buffer"
+          value={data.trainingMetrics.replayBufferSize.toString()}
+          description="Training experiences stored"
+          icon={Database}
+          variant="default"
+        />
       </div>
 
       <Tabs defaultValue="overview" className="mb-8">
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
-          <TabsTrigger value="command">Command Structure</TabsTrigger>
-          <TabsTrigger value="mcps">MCP Processes</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="training">Training</TabsTrigger>
           <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Agents</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.systemStatus.activeAgents}/{data.systemStatus.totalAgents}
-                </div>
-                <p className="text-xs text-gray-500">Active agents</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {totalTasks}
-                </div>
-                <p className="text-xs text-gray-500">Total tasks</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Task Success</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {successRate}%
-                </div>
-                <Progress 
-                  value={successRate} 
-                  className="h-2 mt-2" 
-                />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Experience Buffer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.trainingMetrics.replayBufferSize}
-                </div>
-                <p className="text-xs text-gray-500">Stored experiences</p>
-              </CardContent>
-            </Card>
-          </div>
-          
           <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Agent Status</CardTitle>
-                <CardDescription>
-                  Status of all MCP agents in the system
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <EnterpriseCard>
+              <EnterpriseCardHeader>
+                <EnterpriseCardTitle>Agent Status Overview</EnterpriseCardTitle>
+              </EnterpriseCardHeader>
+              <EnterpriseCardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -351,583 +348,164 @@ const Dashboard = () => {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
+              </EnterpriseCardContent>
+            </EnterpriseCard>
           </div>
         </TabsContent>
         
         <TabsContent value="agents">
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Agent Details</CardTitle>
-                <CardDescription>
-                  Detailed information about all MCP agents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Memory Usage</TableHead>
-                      <TableHead>Tasks</TableHead>
-                      <TableHead>Errors</TableHead>
-                      <TableHead>Response Time</TableHead>
-                      <TableHead>Last Heartbeat</TableHead>
+          <EnterpriseCard>
+            <EnterpriseCardHeader>
+              <EnterpriseCardTitle>Detailed Agent Information</EnterpriseCardTitle>
+            </EnterpriseCardHeader>
+            <EnterpriseCardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Memory Usage</TableHead>
+                    <TableHead>Tasks</TableHead>
+                    <TableHead>Errors</TableHead>
+                    <TableHead>Response Time</TableHead>
+                    <TableHead>Last Heartbeat</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.values(data.agentMetrics).map((agent) => (
+                    <TableRow key={agent.id}>
+                      <TableCell className="font-medium">{agent.name}</TableCell>
+                      <TableCell className="font-mono text-xs">{agent.id}</TableCell>
+                      <TableCell>{getStatusBadge(agent.status)}</TableCell>
+                      <TableCell>{agent.memoryUsage} bytes</TableCell>
+                      <TableCell>{agent.taskCount}</TableCell>
+                      <TableCell>{agent.errorCount}</TableCell>
+                      <TableCell>{agent.averageResponseTime}ms</TableCell>
+                      <TableCell className="text-sm">{formatDate(agent.lastHeartbeat)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.values(data.agentMetrics).map((agent) => (
-                      <TableRow key={agent.id}>
-                        <TableCell className="font-medium">{agent.name}</TableCell>
-                        <TableCell className="font-mono text-xs">{agent.id}</TableCell>
-                        <TableCell>{getStatusBadge(agent.status)}</TableCell>
-                        <TableCell>{agent.memoryUsage} bytes</TableCell>
-                        <TableCell>{agent.taskCount}</TableCell>
-                        <TableCell>{agent.errorCount}</TableCell>
-                        <TableCell>{agent.averageResponseTime}ms</TableCell>
-                        <TableCell className="text-sm">{formatDate(agent.lastHeartbeat)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </EnterpriseCardContent>
+          </EnterpriseCard>
         </TabsContent>
         
         <TabsContent value="tasks">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Completed Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.taskMetrics.completedTasks}
-                </div>
-                <p className="text-xs text-gray-500">Successfully completed tasks</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.taskMetrics.inProgressTasks}
-                </div>
-                <p className="text-xs text-gray-500">Tasks in progress</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Failed Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.taskMetrics.failedTasks}
-                </div>
-                <p className="text-xs text-gray-500">Tasks that failed to complete</p>
-              </CardContent>
-            </Card>
+            <MetricCard
+              title="Completed Tasks"
+              value={data.taskMetrics.completedTasks.toString()}
+              description="Successfully completed tasks"
+              icon={CheckCircle2}
+              variant="success"
+            />
+            <MetricCard
+              title="Active Tasks"
+              value={data.taskMetrics.inProgressTasks.toString()}
+              description="Tasks in progress"
+              icon={Activity}
+              variant="default"
+            />
+            <MetricCard
+              title="Failed Tasks"
+              value={data.taskMetrics.failedTasks.toString()}
+              description="Tasks that failed to complete"
+              icon={AlertCircle}
+              variant="warning"
+            />
           </div>
           
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Task Distribution</CardTitle>
-                <CardDescription>
-                  Distribution of tasks by status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-4 flex rounded-full overflow-hidden mb-2">
-                  {data.taskMetrics.completedTasks > 0 && (
-                    <div 
-                      className="bg-green-500 text-xs text-white flex items-center justify-center"
-                      style={{ width: `${Math.round(data.taskMetrics.completedTasks / totalTasks * 100)}%` }}
-                    />
-                  )}
-                  {data.taskMetrics.inProgressTasks > 0 && (
-                    <div 
-                      className="bg-blue-500 text-xs text-white flex items-center justify-center"
-                      style={{ width: `${Math.round(data.taskMetrics.inProgressTasks / totalTasks * 100)}%` }}
-                    />
-                  )}
-                  {data.taskMetrics.pendingTasks > 0 && (
-                    <div 
-                      className="bg-purple-500 text-xs text-white flex items-center justify-center"
-                      style={{ width: `${Math.round(data.taskMetrics.pendingTasks / totalTasks * 100)}%` }}
-                    />
-                  )}
-                  {data.taskMetrics.delegatedTasks > 0 && (
-                    <div 
-                      className="bg-amber-500 text-xs text-white flex items-center justify-center"
-                      style={{ width: `${Math.round(data.taskMetrics.delegatedTasks / totalTasks * 100)}%` }}
-                    />
-                  )}
-                  {data.taskMetrics.failedTasks > 0 && (
-                    <div 
-                      className="bg-red-500 text-xs text-white flex items-center justify-center"
-                      style={{ width: `${Math.round(data.taskMetrics.failedTasks / totalTasks * 100)}%` }}
-                    />
-                  )}
+          <EnterpriseCard>
+            <EnterpriseCardHeader>
+              <EnterpriseCardTitle>Task Distribution</EnterpriseCardTitle>
+            </EnterpriseCardHeader>
+            <EnterpriseCardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Success Rate</span>
+                  <span className="text-sm font-medium">{successRate}%</span>
                 </div>
+                <Progress value={successRate} className="h-2" />
                 
-                <div className="flex flex-wrap gap-4 mt-4">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-2" />
-                    <span className="text-sm">Completed ({data.taskMetrics.completedTasks})</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-emerald-400">{data.taskMetrics.completedTasks}</div>
+                    <div className="text-xs text-slate-500">Completed</div>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-2" />
-                    <span className="text-sm">In Progress ({data.taskMetrics.inProgressTasks})</span>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-sky-400">{data.taskMetrics.inProgressTasks}</div>
+                    <div className="text-xs text-slate-500">In Progress</div>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-purple-500 mr-2" />
-                    <span className="text-sm">Pending ({data.taskMetrics.pendingTasks})</span>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-amber-400">{data.taskMetrics.pendingTasks}</div>
+                    <div className="text-xs text-slate-500">Pending</div>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-amber-500 mr-2" />
-                    <span className="text-sm">Delegated ({data.taskMetrics.delegatedTasks})</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-red-500 mr-2" />
-                    <span className="text-sm">Failed ({data.taskMetrics.failedTasks})</span>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-400">{data.taskMetrics.failedTasks}</div>
+                    <div className="text-xs text-slate-500">Failed</div>
                   </div>
                 </div>
-                
-                <div className="mt-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Task Success Rate</span>
-                    <span className="text-sm font-medium">{successRate}%</span>
-                  </div>
-                  <Progress 
-                    value={successRate} 
-                    className="h-2" 
-                  />
-                </div>
-                
-                <div className="mt-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Average Completion Time</span>
-                    <span className="text-sm font-medium">{data.taskMetrics.averageCompletionTimeMs}ms</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="command">
-          <div className="grid grid-cols-1 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Command Structure</CardTitle>
-                <CardDescription>
-                  ARCHITECT PRIME → INTEGRATION COORDINATOR → COMPONENT LEADS → SPECIALIST AGENTS
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-8">
-                  {/* Top Level: Architect Prime */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Architect Prime</h3>
-                    {data.commandStructure.architectPrime ? (
-                      <div className="bg-slate-50 p-4 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">{data.commandStructure.architectPrime.name}</div>
-                            <div className="text-sm text-gray-500">ID: {data.commandStructure.architectPrime.id}</div>
-                          </div>
-                          <div>
-                            {getStatusBadge(data.commandStructure.architectPrime.status)}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Architect Prime assigned</div>
-                    )}
-                  </div>
-                  
-                  {/* Second Level: Integration Coordinator */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Integration Coordinator</h3>
-                    {data.commandStructure.integrationCoordinator ? (
-                      <div className="bg-slate-50 p-4 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">{data.commandStructure.integrationCoordinator.name}</div>
-                            <div className="text-sm text-gray-500">ID: {data.commandStructure.integrationCoordinator.id}</div>
-                          </div>
-                          <div>
-                            {getStatusBadge(data.commandStructure.integrationCoordinator.status)}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Integration Coordinator assigned</div>
-                    )}
-                  </div>
-                  
-                  {/* Third Level: Component Leads */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Component Leads</h3>
-                    {Object.keys(data.commandStructure.componentLeads).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Object.entries(data.commandStructure.componentLeads).map(([key, lead]) => (
-                          <div key={key} className="bg-slate-50 p-4 rounded-md">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <div className="font-medium">{lead.name}</div>
-                                <div className="text-xs text-gray-500">Component: {key}</div>
-                              </div>
-                              <div>
-                                {getStatusBadge(lead.status)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Component Leads assigned</div>
-                    )}
-                  </div>
-                  
-                  {/* Fourth Level: Specialist Agents */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Specialist Agents</h3>
-                    {Object.keys(data.commandStructure.specialistAgents).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Object.entries(data.commandStructure.specialistAgents).map(([key, agent]) => (
-                          <div key={key} className="bg-slate-50 p-4 rounded-md">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <div className="font-medium">{agent.name}</div>
-                                <div className="text-xs text-gray-500">Specialty: {key}</div>
-                              </div>
-                              <div>
-                                {getStatusBadge(agent.status)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-md text-gray-500">No Specialist Agents assigned</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="mcps">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Assessment Calculation MCP */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Assessment Calculation MCP</CardTitle>
-                <CardDescription>
-                  Input Processing → Calculation Engine → Output Generation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold">Status</div>
-                    <div>{getStatusBadge(data.mcpMetrics.assessmentCalculation.status)}</div>
-                  </div>
-                  
-                  <div>
-                    <div className="font-medium mb-2">Processing Stages</div>
-                    
-                    <div className="space-y-3">
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Input Processing</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.activeAgents}/
-                            {data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.inputProcessing.status)}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Calculation Engine</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.activeAgents}/
-                            {data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.calculationEngine.status)}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Output Generation</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.activeAgents}/
-                            {data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.assessmentCalculation.processingStages.outputGeneration.status)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Geospatial Integration MCP */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Geospatial Integration MCP</CardTitle>
-                <CardDescription>
-                  Data Ingestion → Spatial Analytics → Visualization Generation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold">Status</div>
-                    <div>{getStatusBadge(data.mcpMetrics.geospatialIntegration.status)}</div>
-                  </div>
-                  
-                  <div>
-                    <div className="font-medium mb-2">Processing Stages</div>
-                    
-                    <div className="space-y-3">
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Data Ingestion</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.activeAgents}/
-                            {data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.dataIngestion.status)}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Spatial Analytics</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.activeAgents}/
-                            {data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.spatialAnalytics.status)}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 p-3 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">Visualization Generation</div>
-                          <div className="text-sm">
-                            {data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.activeAgents}/
-                            {data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.totalAgents} agents
-                          </div>
-                        </div>
-                        <div className="mt-1">
-                          {getStatusBadge(data.mcpMetrics.geospatialIntegration.processingStages.visualizationGeneration.status)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </EnterpriseCardContent>
+          </EnterpriseCard>
         </TabsContent>
         
         <TabsContent value="communication">
-          <div className="grid grid-cols-1 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication Metrics</CardTitle>
-                <CardDescription>
-                  Agent message exchange and communication patterns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-slate-50 p-4 rounded-md">
-                    <div className="text-2xl font-bold">
-                      {data.communicationMetrics.messageCount}
-                    </div>
-                    <div className="text-sm text-gray-500">Total messages exchanged</div>
-                  </div>
-                  
-                  <div className="bg-slate-50 p-4 rounded-md md:col-span-2">
-                    <div className="font-medium mb-2">Message Types</div>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(data.communicationMetrics.messagesByType).map(([type, count]) => (
-                        <div key={type} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                          {type}: {count}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="font-medium mb-2">Latest Messages</div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>From</TableHead>
-                        <TableHead>To</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Time</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.communicationMetrics.latestMessages.map((message) => (
-                        <TableRow key={message.id}>
-                          <TableCell className="font-medium">{message.from}</TableCell>
-                          <TableCell>{message.to}</TableCell>
-                          <TableCell>
-                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                              {message.type}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-sm">{formatDate(message.timestamp)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="training">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Training Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.trainingMetrics.trainingEnabled ? 'Enabled' : 'Disabled'}
-                </div>
-                <p className="text-xs text-gray-500">Automated training status</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Experience Buffer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.trainingMetrics.replayBufferSize}
-                </div>
-                <p className="text-xs text-gray-500">Experiences in buffer</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Training Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.trainingMetrics.totalTrainingSessions}
-                </div>
-                <p className="text-xs text-gray-500">Total training sessions</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Agent Improvement</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(data.trainingMetrics.averageAgentImprovement * 100).toFixed(1)}%
-                </div>
-                <p className="text-xs text-gray-500">Average improvement</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Training Information</CardTitle>
-                <CardDescription>
-                  Details about agent training and experience sharing
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <EnterpriseCard>
+              <EnterpriseCardHeader>
+                <EnterpriseCardTitle>Message Statistics</EnterpriseCardTitle>
+              </EnterpriseCardHeader>
+              <EnterpriseCardContent>
                 <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium mb-1">Last Training Time</div>
-                    <div>{data.trainingMetrics.lastTrainingTime ? formatDate(data.trainingMetrics.lastTrainingTime) : 'Never'}</div>
-                  </div>
+                  <MetricCard
+                    title="Total Messages"
+                    value={data.communicationMetrics.messageCount.toString()}
+                    icon={MessageSquare}
+                    variant="primary"
+                  />
                   
-                  <div>
-                    <div className="text-sm font-medium mb-1">Experiences in Buffer</div>
-                    <div>{data.trainingMetrics.replayBufferSize} experiences available for training</div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-sm font-medium mb-1">Training Status</div>
-                    <div className="flex items-center">
-                      {data.trainingMetrics.trainingEnabled ? (
-                        <>
-                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                          <span>Automated training is enabled</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />
-                          <span>Automated training is disabled</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-sm font-medium mb-1">Agent Performance Improvement</div>
-                    <div>Average improvement of {(data.trainingMetrics.averageAgentImprovement * 100).toFixed(1)}% across {data.trainingMetrics.totalTrainingSessions} training sessions</div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-slate-300">Messages by Type</h4>
+                    {Object.entries(data.communicationMetrics.messagesByType).map(([type, count]) => (
+                      <div key={type} className="flex justify-between items-center">
+                        <span className="text-sm text-slate-400 capitalize">{type.replace('_', ' ')}</span>
+                        <span className="text-sm font-medium">{count}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </EnterpriseCardContent>
+            </EnterpriseCard>
+
+            <EnterpriseCard>
+              <EnterpriseCardHeader>
+                <EnterpriseCardTitle>Recent Messages</EnterpriseCardTitle>
+              </EnterpriseCardHeader>
+              <EnterpriseCardContent>
+                <div className="space-y-3">
+                  {data.communicationMetrics.latestMessages.slice(0, 5).map((message) => (
+                    <div key={message.id} className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-sm">
+                          <span className="text-sky-400">{message.from}</span>
+                          <span className="text-slate-500 mx-2">→</span>
+                          <span className="text-emerald-400">{message.to}</span>
+                        </div>
+                        <span className="text-xs text-slate-500">{formatDate(message.timestamp)}</span>
+                      </div>
+                      <div className="text-xs text-slate-400 capitalize">
+                        {message.type.replace('_', ' ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </EnterpriseCardContent>
+            </EnterpriseCard>
           </div>
         </TabsContent>
       </Tabs>
-      
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={() => refetch()}
-          className="px-4 py-2 text-sm bg-primary text-white rounded-md hover:bg-primary/90"
-        >
-          Refresh Dashboard
-        </button>
-      </div>
     </div>
   );
 };
