@@ -1,60 +1,89 @@
-# TerraFusion Application Dockerfile
-# Multi-stage build for optimized production container
+# TerraFusion Production Dockerfile
+# Multi-stage build for optimized production deployment
 
-# ---- Base Node Stage ----
-FROM node:20-slim AS base
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=5000
+# Stage 1: Build frontend
+FROM node:18-alpine AS frontend-builder
 
-# ---- Dependencies Stage ----
-FROM base AS dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev
+WORKDIR /app/client
 
-# ---- Build Stage ----
-FROM base AS build
-COPY package*.json ./
-RUN npm ci
-COPY . .
+# Copy client package files
+COPY client/package*.json ./
+RUN npm ci --only=production
+
+# Copy client source and build
+COPY client/ ./
 RUN npm run build
 
-# ---- Final Stage ----
-FROM base AS final
+# Stage 2: Build backend
+FROM node:18-alpine AS backend-builder
 
-# Install production dependencies
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/server ./server
-COPY --from=build /app/shared ./shared
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/drizzle.config.ts ./
-COPY --from=build /app/migrations ./migrations
+WORKDIR /app
 
-# Add PostgreSQL client for health checks
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends postgresql-client curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apk add --no-cache python3 make g++ postgresql-client
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy server source
+COPY server/ ./server/
+COPY shared/ ./shared/
+COPY *.ts *.js ./
+
+# Build TypeScript
+RUN npm run build
+
+# Stage 3: Production runtime
+FROM node:18-alpine AS production
+
+# Install system dependencies
+RUN apk add --no-cache \
+    postgresql-client \
+    curl \
+    bash \
+    tzdata \
+    dumb-init
 
 # Create non-root user
-RUN groupadd -r terrafusion && \
-    useradd -r -g terrafusion terrafusion && \
-    mkdir -p /home/terrafusion && \
-    chown -R terrafusion:terrafusion /home/terrafusion
+RUN addgroup -g 1001 -S terrafusion && \
+    adduser -S terrafusion -u 1001
 
-# Set permissions
-RUN chown -R terrafusion:terrafusion /app
+# Set working directory
+WORKDIR /app
+
+# Copy built backend
+COPY --from=backend-builder --chown=terrafusion:terrafusion /app/node_modules ./node_modules
+COPY --from=backend-builder --chown=terrafusion:terrafusion /app/dist ./dist
+COPY --from=backend-builder --chown=terrafusion:terrafusion /app/server ./server
+COPY --from=backend-builder --chown=terrafusion:terrafusion /app/shared ./shared
+COPY --from=backend-builder --chown=terrafusion:terrafusion /app/package.json ./
+
+# Copy built frontend
+COPY --from=frontend-builder --chown=terrafusion:terrafusion /app/client/dist ./client/dist
+
+# Copy additional production files
+COPY --chown=terrafusion:terrafusion deployment/docker/entrypoint.sh ./entrypoint.sh
+COPY --chown=terrafusion:terrafusion deployment/docker/healthcheck.sh ./healthcheck.sh
+
+# Make scripts executable
+RUN chmod +x ./entrypoint.sh ./healthcheck.sh
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD ./healthcheck.sh
+
+# Expose port
+EXPOSE 3000
 
 # Switch to non-root user
 USER terrafusion
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/api/health || exit 1
-
-# Expose port
-EXPOSE ${PORT}
-
-# Start application
-CMD ["node", "server/index.js"]
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["./entrypoint.sh"]
