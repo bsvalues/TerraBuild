@@ -57,7 +57,7 @@ function Router() {
     <Switch>
       <Route path="/" component={() => (
         <TerraFusionLayout>
-          <TerraFusionCore />
+          <HomePage />
         </TerraFusionLayout>
       )} />
       
@@ -220,6 +220,17 @@ function Router() {
             <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
             <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
               <p className="text-slate-300">Access control and role management coming soon...</p>
+            </div>
+          </div>
+        </TerraFusionLayout>
+      )} />
+      
+      <Route path="/export" component={() => (
+        <TerraFusionLayout>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Export Tools</h1>
+            <div className="bg-slate-800/30 p-8 rounded-lg border border-slate-700">
+              <p className="text-slate-300">Data export and visualization tools coming soon...</p>
             </div>
           </div>
         </TerraFusionLayout>

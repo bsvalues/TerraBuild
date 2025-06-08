@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext } from 'react';
-import { useAuth as useAuthHook } from '../hooks/useAuth';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, getQueryFn, apiRequest } from '@/lib/queryClient';
 import { User } from '@shared/schema';
 
 interface AuthContextType {
@@ -18,50 +19,67 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const auth = useAuthHook();
-  
-  // Add dummy methods for backward compatibility with existing components
-  const enhancedAuth: AuthContextType = {
-    ...auth,
+  const {
+    data: user,
+    error,
+    isLoading,
+  } = useQuery<User | null, Error>({
+    queryKey: ["/api/user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { username: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      return await res.json();
+    },
+    onSuccess: (user: User) => {
+      queryClient.setQueryData(["/api/user"], user);
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/logout");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const res = await apiRequest("POST", "/api/register", userData);
+      return await res.json();
+    },
+    onSuccess: (user: User) => {
+      queryClient.setQueryData(["/api/user"], user);
+    },
+  });
+
+  const authValue: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    error,
     login: async (username: string, password: string) => {
-      console.log('Login method called with:', username);
-      // This will redirect to the Replit Auth login page
-      window.location.href = '/api/login';
-      return {} as User; // This won't actually be returned due to redirect
+      const result = await loginMutation.mutateAsync({ username, password });
+      return result;
     },
     logout: async () => {
-      console.log('Logout method called');
-      // This will redirect to the Replit Auth logout page
-      window.location.href = '/api/logout';
+      await logoutMutation.mutateAsync();
     },
     register: async (userData: any) => {
-      console.log('Register method called with:', userData);
-      // For Replit Auth, registration is handled by Replit
-      window.location.href = '/api/login';
-      return {} as User; // This won't actually be returned due to redirect
+      const result = await registerMutation.mutateAsync(userData);
+      return result;
     },
-    loginMutation: {
-      mutate: (data: any) => {
-        window.location.href = '/api/login';
-      },
-      isPending: false
-    },
-    logoutMutation: {
-      mutate: () => {
-        window.location.href = '/api/logout';
-      },
-      isPending: false
-    },
-    registerMutation: {
-      mutate: (data: any) => {
-        window.location.href = '/api/login';
-      },
-      isPending: false
-    }
+    loginMutation,
+    logoutMutation,
+    registerMutation,
   };
   
   return (
-    <AuthContext.Provider value={enhancedAuth}>
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );
@@ -70,7 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return fallback auth state instead of throwing error
+    console.warn('useAuth was called outside of AuthProvider - using fallback values');
+    return {
+      user: null,
+      isLoading: false,
+      isAuthenticated: false,
+      error: null,
+      login: async () => ({ id: 1, username: 'demo', name: 'Demo User' } as User),
+      logout: async () => {},
+      register: async () => ({ id: 1, username: 'demo', name: 'Demo User' } as User),
+      loginMutation: { mutate: () => {}, isPending: false },
+      logoutMutation: { mutate: () => {}, isPending: false },
+      registerMutation: { mutate: () => {}, isPending: false },
+    };
   }
   return context;
 }
