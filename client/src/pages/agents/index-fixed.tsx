@@ -355,40 +355,49 @@ const AgentsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-100">Agent Management</h1>
-        <Button variant="outline" className="text-blue-200 border-blue-700">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh Status
-        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-100">Agent Management</h1>
+          <p className="text-slate-400 mt-1">Monitor and control AI agents for property analysis and automation</p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Status
+          </Button>
+          <Button size="sm">
+            <Zap className="h-4 w-4 mr-2" />
+            Deploy Agent
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-blue-900/50 border border-blue-800/40">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-blue-800/50">
+        <TabsList className="bg-slate-800/50 border border-slate-700">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700/50 data-[state=active]:text-slate-100">
             <Bot className="h-4 w-4 mr-2" />
             Agent Overview
           </TabsTrigger>
-          <TabsTrigger value="logs" className="data-[state=active]:bg-blue-800/50">
+          <TabsTrigger value="logs" className="data-[state=active]:bg-slate-700/50 data-[state=active]:text-slate-100">
             <MessageSquare className="h-4 w-4 mr-2" />
             Agent Logs
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="data-[state=active]:bg-blue-800/50">
+          <TabsTrigger value="tasks" className="data-[state=active]:bg-slate-700/50 data-[state=active]:text-slate-100">
             <Activity className="h-4 w-4 mr-2" />
             Active Tasks
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-blue-800/50">
+          <TabsTrigger value="settings" className="data-[state=active]:bg-slate-700/50 data-[state=active]:text-slate-100">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <Card className="bg-blue-900/30 border-blue-800/40">
+          <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-blue-100">MCP Agent Status</CardTitle>
+                <CardTitle className="text-slate-100">AI Agent Status</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <Label htmlFor="show-inactive" className="text-blue-300 text-sm">Show Inactive</Label>
+                  <Label htmlFor="show-inactive" className="text-slate-300 text-sm">Show Inactive</Label>
                   <Switch 
                     id="show-inactive" 
                     checked={showInactive}
@@ -396,27 +405,27 @@ const AgentsPage = () => {
                   />
                 </div>
               </div>
-              <CardDescription className="text-blue-300">
-                Monitor and manage intelligent agents in the Model Content Protocol system.
+              <CardDescription className="text-slate-400">
+                Monitor and manage AI agents for property analysis and automation.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative mb-4">
                 <Input
                   placeholder="Search agents..."
-                  className="pl-8 bg-blue-900/50 border-blue-700/50 text-blue-100"
+                  className="pl-8 bg-slate-900/50 border-slate-700/50 text-slate-100"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <SearchCheck className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                <SearchCheck className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredAgents.map(agent => (
                   <Card 
                     key={agent.id} 
-                    className={`bg-blue-900/40 border-blue-800/40 hover:bg-blue-900/50 transition-colors cursor-pointer ${
-                      selectedAgent === agent.id ? 'ring-2 ring-blue-500' : ''
+                    className={`bg-slate-900/50 border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${
+                      selectedAgent === agent.id ? 'ring-2 ring-sky-500' : ''
                     }`}
                     onClick={() => setSelectedAgent(agent.id)}
                   >
