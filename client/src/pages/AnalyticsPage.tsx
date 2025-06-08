@@ -1,6 +1,5 @@
 import React from 'react';
 import PropertyAnalyticsDashboard from '@/components/analytics/PropertyAnalyticsDashboard';
-import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
 
 /**
  * TerraFusion Analytics Page
@@ -13,9 +12,7 @@ import TerraFusionLayout from '@/components/layout/TerraFusionLayout';
  */
 const AnalyticsPage: React.FC = () => {
   return (
-    <TerraFusionLayout>
-      <PropertyAnalyticsDashboard countyName="Benton County" />
-    </TerraFusionLayout>
+    <PropertyAnalyticsDashboard countyName="Benton County" />
   );
 };
 
