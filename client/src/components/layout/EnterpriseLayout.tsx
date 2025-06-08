@@ -99,6 +99,20 @@ const navigationItems: NavigationItem[] = [
     href: '/agents',
     description: 'AI-powered analysis and automation',
     badge: 'New'
+  },
+  {
+    id: 'help',
+    label: 'Help & Support',
+    icon: HelpCircle,
+    href: '/help',
+    description: 'Documentation and support resources'
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings,
+    href: '/settings',
+    description: 'System configuration and preferences'
   }
 ];
 
