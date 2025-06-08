@@ -116,22 +116,7 @@ const navigationItems: NavigationItem[] = [
   }
 ];
 
-const bottomNavigationItems: NavigationItem[] = [
-  {
-    id: 'help',
-    label: 'Help & Support',
-    icon: HelpCircle,
-    href: '/help',
-    description: 'Documentation and support'
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: Settings,
-    href: '/settings',
-    description: 'Application preferences'
-  }
-];
+const bottomNavigationItems: NavigationItem[] = [];
 
 interface EnterpriseLayoutProps {
   children: React.ReactNode;
