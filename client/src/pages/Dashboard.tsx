@@ -268,7 +268,7 @@ const Dashboard = () => {
         title="System Dashboard"
         description={`System ${data.systemStatus.status.toLowerCase()} - Uptime: ${formatDuration(data.systemStatus.uptimeSeconds)}`}
         icon={Activity}
-        action={
+        actions={
           <div className="flex items-center gap-4">
             {getStatusBadge(data.systemStatus.status)}
             <span className="text-sm text-slate-400">

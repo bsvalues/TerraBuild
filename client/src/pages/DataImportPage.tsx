@@ -6,14 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import MainContent from '@/components/layout/MainContent';
 import PropertyDataImportHandler from '@/components/data/PropertyDataImportHandler';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseCard, EnterpriseCardHeader, EnterpriseCardTitle, EnterpriseCardContent } from '@/components/ui/enterprise-card';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

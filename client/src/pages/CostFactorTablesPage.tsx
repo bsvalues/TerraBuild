@@ -202,7 +202,7 @@ export default function CostFactorTablesPage() {
                   <TableRow>
                     <TableCell className="font-medium">Standard</TableCell>
                     <TableCell>1.00</TableCell>
-                    <TableCell><Badge variant="secondary">Baseline</Badge></TableCell>
+                    <TableCell><Badge variant="outline">Baseline</Badge></TableCell>
                     <TableCell>Standard construction materials</TableCell>
                   </TableRow>
                   <TableRow>
@@ -242,7 +242,7 @@ export default function CostFactorTablesPage() {
                   <TableRow>
                     <TableCell className="font-medium">Benton County (Base)</TableCell>
                     <TableCell>1.00</TableCell>
-                    <TableCell><Badge variant="secondary">Baseline</Badge></TableCell>
+                    <TableCell><Badge variant="outline">Baseline</Badge></TableCell>
                     <TableCell>Standard market rates</TableCell>
                   </TableRow>
                   <TableRow>
@@ -288,7 +288,7 @@ export default function CostFactorTablesPage() {
                   <TableRow>
                     <TableCell className="font-medium">Wood Frame</TableCell>
                     <TableCell>1.00</TableCell>
-                    <TableCell><Badge variant="secondary">Baseline</Badge></TableCell>
+                    <TableCell><Badge variant="outline">Baseline</Badge></TableCell>
                     <TableCell>Most residential construction</TableCell>
                   </TableRow>
                   <TableRow>
