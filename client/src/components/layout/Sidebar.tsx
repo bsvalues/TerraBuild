@@ -60,6 +60,11 @@ export function Sidebar({}: SidebarProps) {
       title: "Interactive Maps",
       href: "/maps",
       icon: Map
+    },
+    {
+      title: "Valuation Engine",
+      href: "/benton-county",
+      icon: PieChart
     }
   ];
 
