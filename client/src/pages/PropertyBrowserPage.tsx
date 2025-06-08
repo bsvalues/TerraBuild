@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import MainLayout from '@/components/layout/MainLayout';
-import PageHeader from '@/components/layout/PageHeader';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseCard, EnterpriseCardHeader, EnterpriseCardTitle, EnterpriseCardContent } from '@/components/ui/enterprise-card';
 import {
