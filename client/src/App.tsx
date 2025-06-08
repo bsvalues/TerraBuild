@@ -10,8 +10,6 @@ import EnterpriseLayout from '@/components/layout/EnterpriseLayout';
 import TerraFusionSplash from '@/components/TerraFusionSplash';
 import HomePage from '@/pages/home-page';
 import NotFoundPage from '@/pages/not-found';
-import CostFactorTablesPage from '@/pages/CostFactorTablesPage';
-import CostWizardPage from '@/pages/CostWizardPage';
 import TestCostFactorsPage from '@/pages/TestCostFactorsPage';
 import MatrixExplorerPage from '@/pages/matrix';
 import DiagnosticPage from '@/pages/diagnostic';
@@ -23,12 +21,14 @@ import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
 import TrendAnalysisPage from '@/pages/trend-analysis';
 import DataImportPage from '@/pages/data-import';
+import NewCostWizardPage from '@/pages/cost-wizard';
+import CostFactorsPage from '@/pages/cost-factors';
+import MapsPage from '@/pages/maps';
 import AgentsPage from '@/pages/agents/index-fixed';
 import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
-import { BentonCountyValuationPage } from '@/pages/BentonCountyValuationPage';
-import { MapAnalysisPage } from '@/pages/MapAnalysisPage';
+
 
 
 function App() {
@@ -62,7 +62,7 @@ function Router() {
       
       <Route path="/benton-county" component={() => (
         <EnterpriseLayout>
-          <BentonCountyValuationPage />
+          <PropertiesPage />
         </EnterpriseLayout>
       )} />
       
@@ -88,7 +88,7 @@ function Router() {
       
       <Route path="/maps" component={() => (
         <EnterpriseLayout>
-          <MapAnalysisPage />
+          <MapsPage />
         </EnterpriseLayout>
       )} />
       
@@ -100,13 +100,13 @@ function Router() {
       
       <Route path="/cost-factors" component={() => (
         <EnterpriseLayout>
-          <CostFactorTablesPage />
+          <CostFactorsPage />
         </EnterpriseLayout>
       )} />
       
       <Route path="/cost-wizard" component={() => (
         <EnterpriseLayout>
-          <CostWizardPage />
+          <NewCostWizardPage />
         </EnterpriseLayout>
       )} />
       
