@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import terraFusionLogoPath from '@/assets/terrafusion-logo.png';
 
 type LogoVariant = 'default' | 'circular' | 'minimal' | 'text-only' | 'with-text';
 type LogoSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -46,7 +47,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
     return (
       <div className={cn('flex items-center justify-center', className)}>
         <img 
-          src="/assets/terrafusion-logo.png" 
+          src={terraFusionLogoPath} 
           alt="TerraFusion Logo" 
           className={cn(icon, 'object-contain')}
         />
@@ -151,7 +152,7 @@ const TerraFusionLogo: React.FC<TerraFusionLogoProps> = ({
     <div className={cn('flex items-center gap-3', container, className)}>
       <div className="relative">
         <img 
-          src="/assets/terrafusion-logo.png" 
+          src={terraFusionLogoPath} 
           alt="TerraFusion Logo" 
           className={cn(icon, 'object-contain')}
         />
