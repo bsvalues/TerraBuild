@@ -120,19 +120,38 @@ const CostFactorsPage = () => {
           <p className="text-slate-400 mt-1">Manage building cost factors and regional adjustments</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log('Running AI analysis on cost factors...')}
+            className="hover:bg-slate-700 hover:border-slate-600"
+          >
             <Brain className="h-4 w-4 mr-2" />
             AI Analysis
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log('Generating cost trend forecast...')}
+            className="hover:bg-slate-700 hover:border-slate-600"
+          >
             <TrendingUp className="h-4 w-4 mr-2" />
             Trend Forecast
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log('Exporting cost factor data...')}
+            className="hover:bg-slate-700 hover:border-slate-600"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export Data
           </Button>
-          <Button size="sm">
+          <Button 
+            size="sm"
+            onClick={() => console.log('Generating new cost factors using AI...')}
+            className="hover:bg-slate-600"
+          >
             <Zap className="h-4 w-4 mr-2" />
             Generate Factors
           </Button>
@@ -220,7 +239,12 @@ const CostFactorsPage = () => {
             );
           })}
         </div>
-        <Button variant="outline" size="sm">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => console.log('Opening advanced filter options...')}
+          className="hover:bg-slate-700 hover:border-slate-600"
+        >
           <Filter className="h-4 w-4 mr-2" />
           More Filters
         </Button>
@@ -269,8 +293,21 @@ const CostFactorsPage = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => console.log('Edit factor:', factor.factor)}
+                        className="hover:bg-slate-700 hover:border-slate-600"
+                      >
                         <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => console.log('Analyze factor:', factor.factor)}
+                        className="hover:bg-slate-700 hover:border-slate-600"
+                      >
+                        <Brain className="h-3 w-3" />
                       </Button>
                     </div>
                   </TableCell>
