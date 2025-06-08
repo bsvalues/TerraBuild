@@ -2,294 +2,297 @@ import React from 'react';
 import { Link } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  BarChart, 
-  Building, 
   Calculator, 
-  FileBarChart, 
-  Grid3X3, 
-  ImageDown, 
-  Layers, 
+  Building2, 
   Map, 
-  Upload,
-  TrendingUp,
+  BarChart3, 
+  Database, 
   FileText,
-  Settings
+  TrendingUp,
+  Import,
+  ArrowRight,
+  Zap,
+  Shield,
+  Clock,
+  Target
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import TerraFusionLogo from '@/components/TerraFusionLogo';
+import { EnterpriseCard, EnterpriseCardHeader, EnterpriseCardTitle, EnterpriseCardDescription, EnterpriseCardContent } from '@/components/ui/enterprise-card';
+import { MetricCard } from '@/components/ui/metric-card';
+import { PageHeader } from '@/components/ui/page-header';
 
 const HomePage = () => {
   const { user } = useAuth();
 
-  const quickAccessItems = [
+  const quickActions = [
     {
       icon: Calculator,
-      title: "Cost Estimation Wizard",
-      description: "Calculate building costs with Benton County data",
-      path: "/cost-wizard"
+      title: "Property Valuation",
+      description: "Start a new property analysis with AI-powered cost estimation",
+      href: "/cost-wizard",
+      variant: "primary" as const
     },
     {
       icon: Map,
-      title: "Valuation Maps",
-      description: "View property value distributions",
-      path: "/maps"
+      title: "Geographic Analysis",
+      description: "Explore property values and market trends on interactive maps",
+      href: "/maps",
+      variant: "feature" as const
     },
     {
-      icon: Building,
-      title: "Property Search",
-      description: "Find and manage properties",
-      path: "/properties"
+      icon: Building2,
+      title: "Property Browser",
+      description: "Search and analyze properties in the Benton County database",
+      href: "/properties",
+      variant: "default" as const
     },
     {
-      icon: Layers,
-      title: "Matrix Explorer",
-      description: "Explore cost matrix data",
-      path: "/matrix"
-    },
+      icon: Database,
+      title: "Cost Matrix",
+      description: "Manage building cost factors and valuation matrices",
+      href: "/matrix",
+      variant: "default" as const
+    }
   ];
 
-  const toolsItems = [
+  const recentActivity = [
     {
-      icon: Upload,
-      title: "Data Import",
-      description: "Import property and cost data",
-      path: "/import"
+      icon: Calculator,
+      title: "Residential Valuation Completed",
+      description: "1250 Oakwood Lane - $485,000 assessed value",
+      time: "2 hours ago",
+      status: "success" as const
     },
     {
-      icon: BarChart,
-      title: "Analytics Dashboard",
-      description: "Advanced property analytics",
-      path: "/dashboards"
+      icon: Map,
+      title: "Market Analysis Updated",
+      description: "Benton County District 5 - Q4 2024 trends",
+      time: "4 hours ago",
+      status: "info" as const
     },
     {
-      icon: FileBarChart,
-      title: "Reports",
-      description: "Generate detailed reports",
-      path: "/reports"
-    },
-    {
-      icon: ImageDown,
-      title: "Export Tools",
-      description: "Export data and visuals",
-      path: "/export"
-    },
+      icon: FileText,
+      title: "Cost Report Generated",
+      description: "Commercial properties - Building standards review",
+      time: "1 day ago",
+      status: "neutral" as const
+    }
   ];
 
   return (
     <div className="space-y-8">
-      {/* TerraFusion Hero Section */}
-      <div className="relative rounded-xl overflow-hidden border border-cyan-400/20 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="heroPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M0 10 Q5 5 10 10 Q15 15 20 10" stroke="#00e5ff" strokeWidth="0.5" fill="none" opacity="0.3"/>
-                <path d="M0 15 Q5 10 10 15 Q15 20 20 15" stroke="#00e5ff" strokeWidth="0.5" fill="none" opacity="0.2"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#heroPattern)"/>
-          </svg>
-        </div>
-
-        <div className="relative p-8 flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-6 flex-1">
-            <TerraFusionLogo variant="circular" size="lg" className="flex-shrink-0" />
+      {/* Welcome Header */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-sky-500/10 to-blue-500/10 rounded-2xl" />
+        <div className="relative p-8 rounded-2xl border border-sky-500/20">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-slate-100 mb-3">
-                Welcome to TerraFusion
+              <h1 className="text-4xl font-bold text-slate-100 mb-2">
+                Welcome back, {user?.name || user?.username || 'User'}
               </h1>
-              <p className="text-cyan-400 text-lg mb-2">
-                AI That Understands Land
+              <p className="text-lg text-slate-400 mb-4">
+                TerraFusion AI-powered property valuation platform
               </p>
-              <p className="text-slate-300 max-w-2xl leading-relaxed">
-                Advanced geospatial property valuation platform for Benton County. 
-                Streamline your assessment workflows with cutting-edge AI-powered analysis and comprehensive municipal property data.
-              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <span className="text-slate-400">System Operational</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-sky-500 rounded-full" />
+                  <span className="text-slate-400">Data Current</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                  <span className="text-slate-400">Benton County Connected</span>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 flex-shrink-0">
-            <Link href="/cost-wizard">
-              <Button 
-                className="bg-gradient-to-r from-cyan-400 to-cyan-600 text-slate-900 hover:from-cyan-300 hover:to-cyan-500 border-0 shadow-lg font-semibold"
-                size="lg"
-              >
-                <Calculator className="mr-2 h-5 w-5" />
-                Start Analysis
-              </Button>
-            </Link>
-            <Link href="/maps">
-              <Button 
-                variant="outline" 
-                className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 hover:border-cyan-400"
-                size="lg"
-              >
-                <Map className="mr-2 h-5 w-5" />
-                View Maps
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Statistics bar */}
-        <div className="bg-slate-900/60 backdrop-blur-sm px-8 py-4 border-t border-cyan-400/20">
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-              <span className="text-slate-400">Active Session:</span>
-              <span className="text-cyan-400 font-medium">{user?.name || user?.username || 'User'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-slate-400">System Status:</span>
-              <span className="text-green-400 font-medium">Operational</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-slate-400">Data Source:</span>
-              <span className="text-blue-400 font-medium">Benton County</span>
+            <div className="flex items-center gap-4">
+              <Link href="/cost-wizard">
+                <Button size="lg" className="bg-sky-600 hover:bg-sky-700">
+                  <Calculator className="mr-2 h-5 w-5" />
+                  Start Analysis
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Access section */}
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard
+          title="Properties Analyzed"
+          value="1,247"
+          trend="up"
+          trendValue="+12% this month"
+          icon={Building2}
+          variant="primary"
+        />
+        <MetricCard
+          title="Active Cost Matrices"
+          value="8"
+          description="Building cost standards loaded"
+          icon={Database}
+          variant="success"
+        />
+        <MetricCard
+          title="Accuracy Rate"
+          value="99.8%"
+          trend="up"
+          trendValue="+0.1%"
+          icon={Target}
+          variant="default"
+        />
+        <MetricCard
+          title="Reports Generated"
+          value="89"
+          trend="up"
+          trendValue="+5 this week"
+          icon={FileText}
+          variant="default"
+        />
+      </div>
+
+      {/* Quick Actions */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-100 mb-1">Quick Access</h2>
-            <p className="text-slate-400">Essential tools for property valuation and analysis</p>
+            <h2 className="text-2xl font-bold text-slate-100">Quick Actions</h2>
+            <p className="text-slate-400">Get started with essential valuation tools</p>
           </div>
-          <Button variant="ghost" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10">
-            View All <Grid3X3 className="ml-2 h-4 w-4" />
-          </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {quickAccessItems.map((item, index) => (
-            <Link key={index} href={item.path}>
-              <Card className="group hover:bg-slate-800/50 transition-all duration-300 cursor-pointer border-slate-700/50 bg-slate-800/30 hover:border-cyan-400/30 hover:shadow-lg hover:shadow-cyan-400/10">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <item.icon className="h-10 w-10 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-                  <CardTitle className="text-slate-100 group-hover:text-white transition-colors text-lg">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-slate-400 group-hover:text-slate-300 transition-colors">
-                  {item.description}
-                </CardContent>
-              </Card>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quickActions.map((action, index) => (
+            <Link key={index} href={action.href}>
+              <EnterpriseCard variant="interactive" className="h-full">
+                <EnterpriseCardHeader icon={action.icon}>
+                  <EnterpriseCardTitle>{action.title}</EnterpriseCardTitle>
+                  <EnterpriseCardDescription>{action.description}</EnterpriseCardDescription>
+                </EnterpriseCardHeader>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Click to continue</span>
+                  <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-sky-400 transition-colors" />
+                </div>
+              </EnterpriseCard>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Tools & Resources section */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-100 mb-1">Tools & Resources</h2>
-            <p className="text-slate-400">Advanced utilities for data management and reporting</p>
-          </div>
-          <Button variant="ghost" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10">
-            View All <Settings className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {toolsItems.map((item, index) => (
-            <Link key={index} href={item.path}>
-              <Card className="group hover:bg-slate-800/50 transition-all duration-300 cursor-pointer border-slate-700/50 bg-slate-800/30 hover:border-cyan-400/30 hover:shadow-lg hover:shadow-cyan-400/10">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <item.icon className="h-8 w-8 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-                  <CardTitle className="text-slate-100 group-hover:text-white transition-colors">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-slate-400 group-hover:text-slate-300 transition-colors text-sm">
-                  {item.description}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
+      {/* Recent Activity & System Status */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-slate-100 mb-1">Recent Activity</h2>
-              <p className="text-slate-400">Latest property analyses and system updates</p>
+              <h3 className="text-xl font-bold text-slate-100">Recent Activity</h3>
+              <p className="text-slate-400">Latest property analyses and updates</p>
             </div>
-            <Button variant="ghost" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              View Reports
-            </Button>
+            <Link href="/reports">
+              <Button variant="ghost" className="text-sky-400 hover:text-sky-300">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-          <Card className="border-slate-700/50 bg-slate-800/30">
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                {[
-                  { icon: Calculator, title: "Residential property valuation completed", detail: "Property ID: #18423 - 1250 Oakwood Lane", time: "Today, 10:23 AM", color: "cyan" },
-                  { icon: Map, title: "Geographic analysis updated", detail: "Benton County District 5 - Market trends", time: "Today, 9:15 AM", color: "blue" },
-                  { icon: FileText, title: "Cost matrix export generated", detail: "2024 Building Cost Standards - Commercial", time: "Yesterday, 4:30 PM", color: "emerald" }
-                ].map((activity, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 rounded-lg bg-slate-900/40 border border-slate-700/30">
-                    <div className={`p-2 rounded-full bg-${activity.color}-500/10 border border-${activity.color}-500/20`}>
-                      <activity.icon className={`h-5 w-5 text-${activity.color}-400`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <p className="font-medium text-slate-100 truncate">{activity.title}</p>
-                        <span className="text-xs text-slate-400 flex-shrink-0">{activity.time}</span>
+          
+          <EnterpriseCard>
+            <div className="space-y-4">
+              {recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-start gap-4 p-4 rounded-lg bg-slate-800/30">
+                  <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                    <activity.icon className="h-5 w-5 text-sky-400" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-medium text-slate-200">{activity.title}</h4>
+                        <p className="text-sm text-slate-400 mt-1">{activity.description}</p>
                       </div>
-                      <p className="text-sm text-slate-300 mt-1 truncate">{activity.detail}</p>
+                      <span className="text-xs text-slate-500">{activity.time}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="border-t border-slate-700/50 bg-slate-900/40">
-              <Button variant="ghost" className="mx-auto text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10">
-                View All Activity
-              </Button>
-            </CardFooter>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </EnterpriseCard>
         </div>
 
-        {/* Quick Stats */}
+        {/* System Status */}
         <div>
           <div className="mb-6">
-            <h3 className="text-xl font-bold text-slate-100 mb-1">System Overview</h3>
-            <p className="text-slate-400">Real-time platform statistics</p>
+            <h3 className="text-xl font-bold text-slate-100">System Status</h3>
+            <p className="text-slate-400">Platform health and performance</p>
           </div>
+          
           <div className="space-y-4">
-            {[
-              { label: "Properties Analyzed", value: "1,247", change: "+12%", icon: Building },
-              { label: "Active Matrices", value: "8", change: "stable", icon: Grid3X3 },
-              { label: "Reports Generated", value: "89", change: "+5%", icon: FileBarChart },
-              { label: "Data Accuracy", value: "99.8%", change: "+0.1%", icon: TrendingUp }
-            ].map((stat, i) => (
-              <Card key={i} className="border-slate-700/50 bg-slate-800/30 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">{stat.label}</p>
-                    <p className="text-2xl font-bold text-slate-100">{stat.value}</p>
-                    <p className={`text-xs ${stat.change.startsWith('+') ? 'text-emerald-400' : stat.change === 'stable' ? 'text-slate-400' : 'text-red-400'}`}>
-                      {stat.change}
-                    </p>
-                  </div>
-                  <stat.icon className="h-8 w-8 text-cyan-400 opacity-60" />
+            <EnterpriseCard variant="feature">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <Shield className="h-5 w-5 text-emerald-400" />
                 </div>
-              </Card>
-            ))}
+                <div>
+                  <h4 className="font-medium text-slate-200">Security Status</h4>
+                  <p className="text-sm text-emerald-400">All systems secure</p>
+                </div>
+              </div>
+            </EnterpriseCard>
+
+            <EnterpriseCard>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                  <Zap className="h-5 w-5 text-sky-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-200">Performance</h4>
+                  <p className="text-sm text-slate-400">Response time: 245ms</p>
+                </div>
+              </div>
+            </EnterpriseCard>
+
+            <EnterpriseCard>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-slate-200">Last Sync</h4>
+                  <p className="text-sm text-slate-400">5 minutes ago</p>
+                </div>
+              </div>
+            </EnterpriseCard>
           </div>
         </div>
       </div>
+
+      {/* Feature Highlights */}
+      <EnterpriseCard variant="feature">
+        <div className="text-center py-8">
+          <h3 className="text-2xl font-bold text-slate-100 mb-4">
+            Powered by Advanced AI Technology
+          </h3>
+          <p className="text-slate-400 mb-6 max-w-2xl mx-auto">
+            TerraFusion combines machine learning, geospatial analysis, and municipal data 
+            to deliver the most accurate property valuations in the industry.
+          </p>
+          <div className="flex items-center justify-center gap-8">
+            <Link href="/agents">
+              <Button variant="outline" className="border-sky-500/30 text-sky-400 hover:bg-sky-500/10">
+                Explore AI Tools
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/documentation">
+              <Button variant="ghost" className="text-slate-400 hover:text-slate-300">
+                Learn More
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </EnterpriseCard>
     </div>
   );
 };
