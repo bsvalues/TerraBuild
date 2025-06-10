@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asotin-county-config
+  namespace: terrabuild-wa
+data:
+  # Asotin County Specific Configuration
+  county_name: "Asotin County"
+  county_code: "ASO"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_asotin"
+  schema_prefix: "aso_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "11000"
+  parcel_id_format: "ASO-{6}"
+  
+  # Cost Factors - Rural Agricultural Region
+  regional_multiplier: "0.78"
+  agricultural_factor: "0.75"
+  residential_factor: "0.88"
+  commercial_factor: "0.85"
+  industrial_factor: "0.82"
+  riverfront_factor: "1.25"
+  
+  # Agricultural Property Types
+  crop_types: |
+    - wheat
+    - barley
+    - hay
+    - pasture
+    - cattle_ranch
+    - timber
+    - christmas_trees
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.co.asotin.wa.us/arcgis"
+  tax_system_url: "https://assessor.co.asotin.wa.us/api"
+  permits_system_url: "https://permits.co.asotin.wa.us/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.co.asotin.wa.us"
+  ldap_base_dn: "dc=co,dc=asotin,dc=wa,dc=us"
+  
+  # Custom Assessment Rules
+  snake_river_access: "1.35"
+  mountain_view_premium: "1.12"
+  fire_risk_discount: "0.88"
+  flood_zone_discount: "0.82"
+  hunting_lease_rights: "1.08"
+  
+  # Reporting Configuration
+  state_reporting_code: "003"
+  assessor_name: "Dave Gehrke"
+  assessor_email: "dgehrke@co.asotin.wa.us"
+  department_phone: "(509) 243-2084"
+  
+  # Backup and Recovery
+  backup_schedule: "0 1 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "10"
+  batch_size: "100"
+  cache_ttl: "7200"
