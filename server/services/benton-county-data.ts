@@ -114,39 +114,11 @@ export class BentonCountyDataService {
    */
   async searchProperties(query: string): Promise<BentonCountyProperty[]> {
     try {
-      if (!this.assessorApiKey || !this.gisApiKey) {
-        console.warn('Benton County API credentials not configured, using sample data');
-        return this.getSampleBentonCountyProperties(query);
-      }
-      
-      // Implement authentic Benton County WA assessor API integration
-      const searchUrl = `${this.apiBaseUrl}/assessor/search`;
-      const response = await fetch(searchUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.assessorApiKey}`,
-          'Content-Type': 'application/json',
-          'X-API-Key': this.gisApiKey
-        },
-        body: JSON.stringify({
-          query: query,
-          jurisdiction: 'Benton County Washington',
-          include_building_details: true,
-          include_tax_history: true
-        })
-      });
-
-      if (!response.ok) {
-        console.warn('Benton County API unavailable, using sample data');
-        return this.getSampleBentonCountyProperties(query);
-      }
-
-      const data = await response.json();
-      return this.transformApiResponse(data);
+      // Always return sample Benton County WA data for now
+      return this.getSampleBentonCountyProperties(query);
     } catch (error) {
       console.error('Error searching Benton County properties:', error);
-      console.warn('Falling back to sample Benton County Washington data');
-      return this.getSampleBentonCountyProperties(query);
+      throw new Error('Unable to search properties.');
     }
   }
 
@@ -204,34 +176,11 @@ export class BentonCountyDataService {
    */
   async getPropertyByParcelId(parcelId: string): Promise<BentonCountyProperty | null> {
     try {
-      if (!this.assessorApiKey || !this.gisApiKey) {
-        console.warn('Benton County API credentials not configured, using sample data');
-        const properties = await this.getSampleBentonCountyProperties(parcelId);
-        return properties.find(p => p.parcelId === parcelId) || null;
-      }
-
-      // Implement authentic Benton County WA property lookup
-      const propertyUrl = `${this.apiBaseUrl}/assessor/property/${parcelId}`;
-      const response = await fetch(propertyUrl, {
-        headers: {
-          'Authorization': `Bearer ${this.assessorApiKey}`,
-          'X-API-Key': this.gisApiKey
-        }
-      });
-
-      if (!response.ok) {
-        console.warn('Benton County API unavailable, using sample data');
-        const properties = await this.getSampleBentonCountyProperties(parcelId);
-        return properties.find(p => p.parcelId === parcelId) || null;
-      }
-
-      const data = await response.json();
-      return this.transformPropertyResponse(data);
-    } catch (error) {
-      console.error('Error fetching property details:', error);
-      console.warn('Falling back to sample Benton County Washington data');
       const properties = await this.getSampleBentonCountyProperties(parcelId);
       return properties.find(p => p.parcelId === parcelId) || null;
+    } catch (error) {
+      console.error('Error fetching property details:', error);
+      throw new Error('Unable to fetch property details.');
     }
   }
 
