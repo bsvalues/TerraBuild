@@ -1,0 +1,55 @@
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    postgresql-client \
+    openssl \
+    ca-certificates \
+    tzdata
+
+ENV NODE_ENV=production
+ENV TZ=UTC
+
+FROM base AS dependencies
+
+COPY package*.json ./
+RUN npm ci --only=production --silent
+
+FROM base AS build
+
+COPY package*.json ./
+RUN npm ci --silent
+
+COPY . .
+RUN npm run build
+RUN npm run type-check
+
+FROM base AS runtime
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S terrabuild -u 1001
+
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=build /app/client/dist ./client/dist
+COPY --from=build /app/server ./server
+COPY --from=build /app/shared ./shared
+COPY --from=build /app/migrations ./migrations
+COPY package*.json ./
+COPY drizzle.config.ts ./
+
+RUN mkdir -p logs uploads && \
+    chown -R terrabuild:nodejs /app && \
+    chmod -R 755 /app
+
+USER terrabuild
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server/index.js"]
