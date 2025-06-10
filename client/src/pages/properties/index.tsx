@@ -11,7 +11,7 @@ const PropertiesPage = () => {
   const properties = [
     {
       id: '1',
-      address: '123 Main St, Corvallis, OR',
+      address: '1234 Columbia Park Trail, Richland, WA',
       value: '$485,000',
       type: 'Residential',
       yearBuilt: 2018,
@@ -20,7 +20,7 @@ const PropertiesPage = () => {
     },
     {
       id: '2', 
-      address: '456 Oak Ave, Corvallis, OR',
+      address: '5678 Gage Boulevard, Kennewick, WA',
       value: '$650,000',
       type: 'Commercial',
       yearBuilt: 2015,
@@ -29,7 +29,7 @@ const PropertiesPage = () => {
     },
     {
       id: '3',
-      address: '789 Pine St, Corvallis, OR', 
+      address: '9012 Road 68, Pasco, WA', 
       value: '$395,000',
       type: 'Residential',
       yearBuilt: 2020,
@@ -42,8 +42,8 @@ const PropertiesPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Property Portfolio</h1>
-          <p className="text-slate-400 mt-1">Comprehensive property valuation and analysis</p>
+          <h1 className="text-3xl font-bold text-slate-100">Benton County Washington Properties</h1>
+          <p className="text-slate-400 mt-1">Comprehensive property valuation and analysis for Benton County WA</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm">
