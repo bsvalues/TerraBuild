@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yakima-county-config
+  namespace: terrabuild-wa
+data:
+  # Yakima County Specific Configuration
+  county_name: "Yakima County"
+  county_code: "YAK"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_yakima"
+  schema_prefix: "yak_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "95000"
+  parcel_id_format: "YAK-{8}"
+  
+  # Cost Factors - Eastern Washington Agricultural Region
+  regional_multiplier: "0.92"
+  agricultural_factor: "0.85"
+  residential_factor: "1.05"
+  commercial_factor: "1.12"
+  industrial_factor: "0.98"
+  
+  # Agricultural Property Types
+  crop_types: |
+    - apples
+    - hops
+    - grapes
+    - wheat
+    - corn
+    - hay
+    - dairy
+    - beef_cattle
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.yakimacounty.us/arcgis"
+  tax_system_url: "https://tax.yakimacounty.us/api"
+  permits_system_url: "https://permits.yakimacounty.us/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.yakimacounty.us"
+  ldap_base_dn: "dc=yakimacounty,dc=us"
+  
+  # Custom Assessment Rules
+  irrigation_rights_factor: "1.15"
+  water_rights_premium: "0.08"
+  soil_quality_multiplier: "1.0-1.25"
+  organic_certification_bonus: "1.10"
+  
+  # Reporting Configuration
+  state_reporting_code: "39"
+  assessor_name: "Rick Ensey"
+  assessor_email: "rick.ensey@yakimacounty.us"
+  department_phone: "(509) 574-1430"
+  
+  # Backup and Recovery
+  backup_schedule: "0 2 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "50"
+  batch_size: "500"
+  cache_ttl: "3600"

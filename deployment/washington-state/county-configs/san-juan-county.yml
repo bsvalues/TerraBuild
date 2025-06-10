@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: san-juan-county-config
+  namespace: terrabuild-wa
+data:
+  # San Juan County Specific Configuration
+  county_name: "San Juan County"
+  county_code: "SAN"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_san_juan"
+  schema_prefix: "san_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "12500"
+  parcel_id_format: "SAN-{6}"
+  
+  # Cost Factors - Island Premium Market
+  regional_multiplier: "1.45"
+  agricultural_factor: "1.15"
+  residential_factor: "1.65"
+  commercial_factor: "1.35"
+  industrial_factor: "1.25"
+  waterfront_factor: "2.15"
+  
+  # Island-Specific Property Types
+  property_classifications: |
+    - waterfront_residential
+    - island_estate
+    - marine_commercial
+    - ferry_terminal
+    - marina_facility
+    - vacation_rental
+    - conservation_easement
+  
+  # Marine Access Classifications
+  marine_access_types: |
+    - deep_water_access
+    - protected_harbor
+    - tidal_access
+    - no_bank_access
+    - private_dock
+    - shared_moorage
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.sanjuanco.com/arcgis"
+  tax_system_url: "https://assessor.sanjuanco.com/api"
+  permits_system_url: "https://permits.sanjuanco.com/api"
+  marine_registry_url: "https://ports.wa.gov/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.sanjuanco.com"
+  ldap_base_dn: "dc=sanjuanco,dc=com"
+  
+  # Custom Assessment Rules
+  waterfront_premium: "1.85"
+  marine_access_premium: "1.35"
+  ferry_proximity_factor: "1.20"
+  conservation_discount: "0.75"
+  critical_areas_discount: "0.65"
+  tourism_zone_premium: "1.25"
+  
+  # Environmental Factors
+  environmental_constraints: |
+    - salmon_habitat
+    - orca_habitat
+    - wetlands
+    - shoreline_management
+    - critical_areas
+    - scenic_easements
+  
+  # Reporting Configuration
+  state_reporting_code: "055"
+  assessor_name: "Jerry Gehrke"
+  assessor_email: "jerry.gehrke@sanjuanco.com"
+  department_phone: "(360) 378-2898"
+  
+  # Backup and Recovery
+  backup_schedule: "0 1 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "15"
+  batch_size: "100"
+  cache_ttl: "7200"

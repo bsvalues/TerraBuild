@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: walla-walla-county-config
+  namespace: terrabuild-wa
+data:
+  # Walla Walla County Specific Configuration
+  county_name: "Walla Walla County"
+  county_code: "WAL"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_walla_walla"
+  schema_prefix: "wal_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "28000"
+  parcel_id_format: "WAL-{7}"
+  
+  # Cost Factors - Wine Country Premium Region
+  regional_multiplier: "1.08"
+  agricultural_factor: "0.95"
+  residential_factor: "1.15"
+  commercial_factor: "1.18"
+  industrial_factor: "1.02"
+  wine_industry_factor: "1.25"
+  
+  # Agricultural Property Types - Wine Focus
+  crop_types: |
+    - wine_grapes
+    - wheat
+    - asparagus
+    - onions
+    - peas
+    - cherries
+    - apples
+    - beef_cattle
+  
+  # Wine Industry Specific
+  vineyard_classifications: |
+    - estate_vineyard
+    - commercial_vineyard
+    - boutique_vineyard
+    - experimental_vineyard
+  
+  winery_types: |
+    - production_winery
+    - tasting_room
+    - crush_facility
+    - storage_facility
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.co.walla-walla.wa.us/arcgis"
+  tax_system_url: "https://tax.co.walla-walla.wa.us/api"
+  permits_system_url: "https://permits.co.walla-walla.wa.us/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.co.walla-walla.wa.us"
+  ldap_base_dn: "dc=co,dc=walla-walla,dc=wa,dc=us"
+  
+  # Custom Assessment Rules
+  ava_designation_premium: "1.20"
+  water_rights_premium: "0.12"
+  soil_quality_multiplier: "1.0-1.35"
+  organic_certification_bonus: "1.15"
+  tourism_proximity_factor: "1.10"
+  
+  # Reporting Configuration
+  state_reporting_code: "35"
+  assessor_name: "Kim Lyonnais"
+  assessor_email: "kim.lyonnais@co.walla-walla.wa.us"
+  department_phone: "(509) 524-2530"
+  
+  # Backup and Recovery
+  backup_schedule: "0 1 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "25"
+  batch_size: "250"
+  cache_ttl: "3600"

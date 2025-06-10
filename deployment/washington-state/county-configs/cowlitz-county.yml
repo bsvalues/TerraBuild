@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cowlitz-county-config
+  namespace: terrabuild-wa
+data:
+  # Cowlitz County Specific Configuration
+  county_name: "Cowlitz County"
+  county_code: "COW"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_cowlitz"
+  schema_prefix: "cow_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "48000"
+  parcel_id_format: "COW-{7}"
+  
+  # Cost Factors - Industrial Corridor Region
+  regional_multiplier: "1.02"
+  agricultural_factor: "0.88"
+  residential_factor: "1.08"
+  commercial_factor: "1.15"
+  industrial_factor: "1.18"
+  waterfront_factor: "1.35"
+  
+  # Industrial Property Types
+  industrial_classifications: |
+    - manufacturing
+    - timber_processing
+    - pulp_mill
+    - aluminum_smelting
+    - port_facility
+    - rail_terminal
+    - logistics_center
+  
+  # Agricultural Property Types
+  crop_types: |
+    - timber
+    - hay
+    - corn
+    - dairy
+    - beef_cattle
+    - christmas_trees
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.co.cowlitz.wa.us/arcgis"
+  tax_system_url: "https://assessor.co.cowlitz.wa.us/api"
+  permits_system_url: "https://permits.co.cowlitz.wa.us/api"
+  port_system_url: "https://portofkso.com/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.co.cowlitz.wa.us"
+  ldap_base_dn: "dc=co,dc=cowlitz,dc=wa,dc=us"
+  
+  # Custom Assessment Rules
+  columbia_river_access: "1.25"
+  rail_access_premium: "1.12"
+  port_proximity_factor: "1.18"
+  environmental_constraints: "0.92"
+  flood_zone_discount: "0.85"
+  
+  # Reporting Configuration
+  state_reporting_code: "015"
+  assessor_name: "Jon Russell"
+  assessor_email: "russell@co.cowlitz.wa.us"
+  department_phone: "(360) 577-3016"
+  
+  # Backup and Recovery
+  backup_schedule: "0 3 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "35"
+  batch_size: "400"
+  cache_ttl: "3600"

@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: island-county-config
+  namespace: terrabuild-wa
+data:
+  # Island County Specific Configuration
+  county_name: "Island County"
+  county_code: "ISL"
+  state: "WA"
+  timezone: "America/Los_Angeles"
+  
+  # Database Configuration
+  database_name: "terrabuild_island"
+  schema_prefix: "isl_"
+  
+  # Property Assessment Settings
+  assessment_year: "2025"
+  property_count: "38000"
+  parcel_id_format: "ISL-{7}"
+  
+  # Cost Factors - Naval/Tourism Region
+  regional_multiplier: "1.28"
+  agricultural_factor: "1.05"
+  residential_factor: "1.35"
+  commercial_factor: "1.25"
+  industrial_factor: "1.08"
+  waterfront_factor: "1.75"
+  
+  # Property Classifications
+  property_types: |
+    - naval_housing
+    - tourism_commercial
+    - waterfront_residential
+    - agricultural_preserve
+    - historic_district
+    - ferry_terminal
+    - state_park
+  
+  # Integration Endpoints
+  gis_server_url: "https://gis.islandcountywa.gov/arcgis"
+  tax_system_url: "https://assessor.islandcountywa.gov/api"
+  permits_system_url: "https://permits.islandcountywa.gov/api"
+  naval_base_api: "https://naswi.navy.mil/api"
+  
+  # User Authentication
+  ldap_server: "ldap://ad.islandcountywa.gov"
+  ldap_base_dn: "dc=islandcountywa,dc=gov"
+  
+  # Custom Assessment Rules
+  whidbey_island_premium: "1.20"
+  camano_island_premium: "1.15"
+  naval_proximity_factor: "1.10"
+  deception_pass_premium: "1.25"
+  tourism_zone_factor: "1.18"
+  
+  # Reporting Configuration
+  state_reporting_code: "029"
+  assessor_name: "Dave Mattingly"
+  assessor_email: "d.mattingly@islandcountywa.gov"
+  department_phone: "(360) 679-7354"
+  
+  # Backup and Recovery
+  backup_schedule: "0 2 * * *"
+  retention_days: "2555"
+  
+  # Performance Tuning
+  max_concurrent_assessments: "25"
+  batch_size: "300"
+  cache_ttl: "3600"
