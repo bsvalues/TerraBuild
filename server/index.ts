@@ -103,6 +103,16 @@ app.use((req, res, next) => {
       next(err);
     });
   });
+
+  // GIS Analysis routes for TerraFusion
+  app.use('/api/gis', (req, res, next) => {
+    import('./routes/gis-analysis.js').then(module => {
+      module.default(req, res, next);
+    }).catch(err => {
+      console.error("Error loading GIS analysis routes:", err);
+      next(err);
+    });
+  });
   
   // Directly create route handlers for the JavaScript routes
   // Property Import routes
