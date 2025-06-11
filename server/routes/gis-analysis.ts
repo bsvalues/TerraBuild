@@ -216,7 +216,7 @@ router.get('/spatial-search', async (req: Request, res: Response) => {
 
     query += ` ORDER BY distance_meters LIMIT 50`;
 
-    const result = await db.execute(sql.raw(query, params));
+    const result = await pool.query(query, params);
     res.json(result.rows || []);
   } catch (error) {
     console.error('Spatial search error:', error);
@@ -303,12 +303,12 @@ router.get('/heatmap/:type', async (req: Request, res: Response) => {
           SELECT 
             ROUND(latitude::numeric, 2) as lat,
             ROUND(longitude::numeric, 2) as lng,
-            AVG(COALESCE(market_value, assessed_value, 0)) as value,
+            AVG(COALESCE(total_value, land_value, 0)) as value,
             COUNT(*) as count
           FROM properties 
           WHERE latitude IS NOT NULL 
             AND longitude IS NOT NULL 
-            AND (market_value IS NOT NULL OR assessed_value IS NOT NULL)
+            AND (total_value IS NOT NULL OR land_value IS NOT NULL)
         `;
         break;
         
@@ -339,7 +339,7 @@ router.get('/heatmap/:type', async (req: Request, res: Response) => {
     
     query += ` GROUP BY ROUND(latitude::numeric, 2), ROUND(longitude::numeric, 2) HAVING COUNT(*) > 0`;
     
-    const result = await db.execute(sql.raw(query, params));
+    const result = await pool.query(query, params);
     res.json(result.rows || []);
   } catch (error) {
     console.error('Heatmap query error:', error);
