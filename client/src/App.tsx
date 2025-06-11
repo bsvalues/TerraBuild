@@ -17,6 +17,7 @@ import CalculatorPage from '@/pages/calculator-page';
 import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
 import PortfolioAnalytics from '@/pages/analytics/PortfolioAnalytics';
+import MarketAnalytics from '@/pages/analytics/MarketAnalytics';
 import MunicipalDashboard from '@/pages/deployment/MunicipalDashboard';
 import DocumentationPage from '@/pages/documentation-new';
 import SettingsPage from '@/pages/settings';
@@ -78,6 +79,18 @@ function Router() {
       <Route path="/properties" component={() => (
         <EnterpriseLayout>
           <PropertiesPage />
+        </EnterpriseLayout>
+      )} />
+      
+      <Route path="/analytics" component={() => (
+        <EnterpriseLayout>
+          <PortfolioAnalytics />
+        </EnterpriseLayout>
+      )} />
+      
+      <Route path="/deployment" component={() => (
+        <EnterpriseLayout>
+          <MunicipalDashboard />
         </EnterpriseLayout>
       )} />
       
