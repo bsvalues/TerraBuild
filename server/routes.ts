@@ -27,6 +27,8 @@ import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoute
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { bentonCountyDataService } from './services/benton-county-data';
 import { populateBentonCountyData, getBentonCountyStats, getPropertiesByMunicipality } from './benton-county-integration';
+import { populateFullBentonCountyDataset } from './benton-county-full-dataset';
+import { loadBentonCountyAssessorData, getBentonCountyPropertyCount } from './benton-county-assessor-integration';
 
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
@@ -1613,6 +1615,56 @@ router.get('/api/benton-county/delivery-report', asyncHandler(async (req, res) =
     res.status(500).json({
       success: false,
       message: 'Failed to generate delivery report',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
+// Populate complete Benton County dataset (all 80,000+ parcels)
+router.post('/api/benton-county/populate-full', asyncHandler(async (req, res) => {
+  try {
+    console.log('Starting full Benton County dataset population (80,000+ properties)...');
+    await populateFullBentonCountyDataset();
+    
+    const stats = await getBentonCountyStats();
+    
+    res.json({
+      success: true,
+      message: 'Complete Benton County dataset populated successfully',
+      totalProperties: stats.countyStats.totalProperties,
+      municipalBreakdown: stats.municipalBreakdown,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Full dataset population error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to populate full dataset',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
+// Load authentic Benton County Assessor property records
+router.post('/api/benton-county/load-assessor-data', asyncHandler(async (req, res) => {
+  try {
+    console.log('Loading Benton County Assessor property records...');
+    await loadBentonCountyAssessorData();
+    
+    const totalProperties = await getBentonCountyPropertyCount();
+    
+    res.json({
+      success: true,
+      message: 'Benton County Assessor data loaded successfully',
+      totalProperties: totalProperties,
+      source: 'Benton County Assessor Property Information System',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Assessor data loading error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load assessor data',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
