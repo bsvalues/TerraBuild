@@ -88,6 +88,12 @@ function Router() {
         </EnterpriseLayout>
       )} />
       
+      <Route path="/market-intelligence" component={() => (
+        <EnterpriseLayout>
+          <MarketAnalytics />
+        </EnterpriseLayout>
+      )} />
+      
       <Route path="/deployment" component={() => (
         <EnterpriseLayout>
           <MunicipalDashboard />
