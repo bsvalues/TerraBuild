@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { GISAnalysisEngine } from '../services/gisAnalysisEngine';
 import { db } from '../db';
+import { Pool } from '@neondatabase/serverless';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 import { 
   gisLayers, gisFeatures, spatialAnalysis, propertyGeometry,
   marketAreas, valuationZones, gisAnalysisResults,

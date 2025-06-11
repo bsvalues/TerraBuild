@@ -15,15 +15,22 @@ import {
 
 interface Property {
   id: number;
-  parcelNumber: string;
+  geo_id: string;
+  parcel_id: string;
   address: string;
+  city: string;
+  state: string;
+  zip: string;
+  county: string;
   latitude: number;
   longitude: number;
-  marketValue: number;
-  squareFootage: number;
-  propertyType: string;
+  property_type: string;
+  land_area: number;
+  land_value: number;
+  total_value: number;
   year_built: number;
-  neighborhood: string;
+  bedrooms: number;
+  bathrooms: number;
 }
 
 interface GISLayer {
@@ -237,21 +244,25 @@ export const TerraFusionGISMap: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="text-sm font-medium text-white">{property.address}</h4>
                       <Badge variant="outline" className="text-xs">
-                        {property.propertyType}
+                        {property.property_type}
                       </Badge>
                     </div>
                     <div className="space-y-1 text-xs text-slate-400">
                       <div className="flex justify-between">
                         <span>Value:</span>
-                        <span className="text-green-400">{formatCurrency(property.marketValue || 0)}</span>
+                        <span className="text-green-400">${(property.total_value || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Sq Ft:</span>
-                        <span>{property.squareFootage?.toLocaleString() || 'N/A'}</span>
+                        <span>Area:</span>
+                        <span>{property.land_area?.toLocaleString() || 'N/A'} sq ft</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Built:</span>
                         <span>{property.year_built || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>City:</span>
+                        <span>{property.city}, {property.state}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -298,7 +309,7 @@ export const TerraFusionGISMap: React.FC = () => {
                   <CardContent className="pt-0">
                     <div className="text-xs space-y-1">
                       <div className="text-white font-medium">{selectedProperty.address}</div>
-                      <div className="text-slate-400">Parcel: {selectedProperty.parcelNumber}</div>
+                      <div className="text-slate-400">Parcel: {selectedProperty.parcel_id}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -465,9 +476,9 @@ export const TerraFusionGISMap: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-400">
-                    {formatCurrency(
-                      properties.reduce((sum: number, p: Property) => sum + (p.marketValue || 0), 0) / properties.length || 0
-                    )}
+                    ${((
+                      properties.reduce((sum: number, p: Property) => sum + (p.total_value || 0), 0) / properties.length || 0
+                    ).toLocaleString())}
                   </div>
                   <div className="text-xs text-slate-400">Avg Value</div>
                 </div>
