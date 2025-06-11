@@ -109,6 +109,113 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
 /**
  * Property Routes
  */
+
+// AI-powered property valuation endpoint
+router.post('/properties/ai-valuation', asyncHandler(async (req: express.Request, res: express.Response) => {
+  try {
+    const { propertyId, propertyData } = req.body;
+    
+    // Fetch property data if only ID provided
+    let property = propertyData;
+    if (propertyId && !propertyData) {
+      property = await storage.getProperty(propertyId);
+      if (!property) {
+        return res.status(404).json({ success: false, message: 'Property not found' });
+      }
+    }
+
+    // Generate AI valuation using multiple models
+    const aiValuation = await generateAIValuation(property);
+    
+    res.json({
+      success: true,
+      valuation: aiValuation,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('AI valuation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'AI valuation failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
+// Property analytics endpoint
+router.get('/properties/analytics', asyncHandler(async (req: express.Request, res: express.Response) => {
+  try {
+    const analytics = await generatePropertyAnalytics();
+    res.json({
+      success: true,
+      analytics,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Property analytics error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Analytics generation failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
+// Batch property valuation for portfolio analysis
+router.post('/properties/batch-valuation', asyncHandler(async (req: express.Request, res: express.Response) => {
+  try {
+    const { propertyIds } = req.body;
+    
+    if (!Array.isArray(propertyIds) || propertyIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Property IDs array required' });
+    }
+
+    const valuations = [];
+    for (const propertyId of propertyIds) {
+      try {
+        const property = await storage.getProperty(propertyId);
+        if (property) {
+          const valuation = await generateAIValuation(property);
+          valuations.push({
+            propertyId,
+            valuation,
+            success: true
+          });
+        } else {
+          valuations.push({
+            propertyId,
+            success: false,
+            error: 'Property not found'
+          });
+        }
+      } catch (error) {
+        valuations.push({
+          propertyId,
+          success: false,
+          error: error instanceof Error ? error.message : 'Valuation failed'
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      valuations,
+      summary: {
+        total: propertyIds.length,
+        successful: valuations.filter(v => v.success).length,
+        failed: valuations.filter(v => !v.success).length
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Batch valuation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Batch valuation failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
 router.get('/properties', asyncHandler(async (req, res) => {
   // Extract filter parameters if any
   const { county, city, state, propertyType } = req.query;

@@ -1,22 +1,67 @@
-import React, { useState } from 'react';
-import { Search, Filter, Map, Building2, Calculator, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Map, Building2, Calculator, TrendingUp, Zap, Eye, BarChart3, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 
 const PropertiesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedView, setSelectedView] = useState('list');
   const { toast } = useToast();
+
+  // Fetch properties data
+  const { data: propertiesData, isLoading } = useQuery({
+    queryKey: ['/api/properties'],
+    enabled: true,
+  });
+
+  // Fetch property analytics
+  const { data: analytics } = useQuery({
+    queryKey: ['/api/properties/analytics'],
+    enabled: true,
+  });
+
+  const handleAIValuation = async (property: any) => {
+    toast({
+      title: "AI Valuation Started",
+      description: `Analyzing property using TerraFusion AI engine`,
+    });
+
+    try {
+      const response = await fetch('/api/properties/ai-valuation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId: property.id })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "AI Valuation Complete",
+          description: `Estimated value: ${result.valuation.formattedValue}`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Analysis Error",
+        description: "Unable to complete AI valuation",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleAnalyzeCosts = (property: any) => {
     toast({
       title: "Cost Analysis Initiated",
       description: `Analyzing replacement costs for ${property.address}`,
     });
-    // Navigate to calculator with property data
     window.location.href = `/calculator?property=${property.id}`;
   };
 
@@ -25,7 +70,6 @@ const PropertiesPage = () => {
       title: "Value Trend Analysis",
       description: `Loading market trends for ${property.address}`,
     });
-    // Navigate to trend analysis
     window.location.href = `/trend-analysis?property=${property.id}`;
   };
 
@@ -34,19 +78,33 @@ const PropertiesPage = () => {
       title: "Property Details",
       description: `Opening detailed view for ${property.address}`,
     });
-    // Navigate to property details
     window.location.href = `/properties/detail/${property.id}`;
   };
 
-  const properties = [
+  // Sample property data with enhanced valuation metrics
+  const sampleProperties = [
     {
       id: '1',
       address: '1234 Columbia Park Trail, Richland, WA',
-      value: '$485,000',
+      assessedValue: 485000,
+      marketValue: 495000,
+      aiValuation: 487500,
+      confidence: 'High',
       type: 'Residential',
       yearBuilt: 2018,
       sqft: 2200,
-      status: 'Active'
+      bedrooms: 4,
+      bathrooms: 2.5,
+      lotSize: 0.25,
+      status: 'Active',
+      lastSale: '2022-03-15',
+      pricePerSqft: 221,
+      appreciationRate: 5.2,
+      neighborhood: 'Columbia Park',
+      zoning: 'R-1',
+      taxAssessment: 478000,
+      improvements: ['New HVAC', 'Updated Kitchen'],
+      condition: 'Excellent'
     },
     {
       id: '2', 
@@ -104,16 +162,44 @@ const PropertiesPage = () => {
       </div>
 
       <div className="grid gap-6">
-        {properties.map((property) => (
+        {sampleProperties.map((property: any) => (
           <Card key={property.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-slate-100">{property.address}</CardTitle>
-                  <p className="text-slate-400 text-sm mt-1">{property.type} • Built {property.yearBuilt} • {property.sqft.toLocaleString()} sq ft</p>
+                  <p className="text-slate-400 text-sm mt-1">{property.type} • Built {property.yearBuilt} • {property.sqft?.toLocaleString()} sq ft</p>
+                  {property.neighborhood && (
+                    <p className="text-slate-500 text-xs mt-1">
+                      <MapPin className="inline h-3 w-3 mr-1" />
+                      {property.neighborhood} • {property.zoning}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-emerald-400">{property.value}</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-400">
+                        ${property.marketValue?.toLocaleString() || property.value}
+                      </p>
+                      <p className="text-xs text-slate-400">Market Value</p>
+                    </div>
+                    {property.aiValuation && (
+                      <div>
+                        <p className="text-lg font-semibold text-blue-400">
+                          ${property.aiValuation.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-slate-400">AI Valuation</p>
+                        <Badge variant="secondary" className={`text-xs ${
+                          property.confidence === 'High' ? 'bg-green-500/20 text-green-400' :
+                          property.confidence === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {property.confidence} Confidence
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     property.status === 'Active' 
                       ? 'bg-emerald-500/20 text-emerald-400' 
