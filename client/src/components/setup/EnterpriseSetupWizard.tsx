@@ -209,7 +209,7 @@ export default function EnterpriseSetupWizard() {
       case 'error':
         return <Badge variant="destructive">{status}</Badge>;
       case 'warning':
-        return <Badge variant="warning">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

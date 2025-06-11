@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import routes from "./routes";
+import setupRoutes from "./routes/setup";
 // Use dynamic import for JavaScript router to avoid ESM compatibility issues
 // We'll mount this router later after it's loaded
 import monitoringRoutes from "./monitoringRoutes";
@@ -91,6 +92,7 @@ app.use((req, res, next) => {
   
   // Register API routes first, so they take precedence over Vite
   app.use('/api', routes);
+  app.use('/api/setup', setupRoutes);
   
   // Directly create route handlers for the JavaScript routes
   // Property Import routes

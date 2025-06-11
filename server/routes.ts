@@ -34,6 +34,7 @@ import propertyImportRouter from './routes/property-import.js';
 import dataQualityRouter from './routes/data-quality.js';
 // The CostFactorTables plugin is registered directly in server/index.ts
 import authRoutes from './routes/auth';
+import setupRoutes from './routes/setup';
 import calculatorRouter from './routes/calculator';
 import propertyMapRoutes from './routes/property-routes';
 // Legacy import path, to be removed later
