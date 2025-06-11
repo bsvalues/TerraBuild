@@ -92,7 +92,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {analyticsData.overview.totalProperties.toLocaleString()}
+              {analyticsData?.overview.totalProperties.toLocaleString()}
             </div>
             <p className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" />
@@ -108,7 +108,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              ${(analyticsData.overview.totalValue / 1e9).toFixed(1)}B
+              ${(analyticsData?.overview.totalValue / 1e9).toFixed(1)}B
             </div>
             <p className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" />
@@ -124,10 +124,10 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {analyticsData.overview.confidenceScore}%
+              {analyticsData?.overview.confidenceScore}%
             </div>
             <Progress 
-              value={analyticsData.overview.confidenceScore} 
+              value={analyticsData?.overview.confidenceScore || 0} 
               className="mt-2 h-2"
             />
           </CardContent>
@@ -140,7 +140,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {analyticsData.performance.processingSpeed}/hr
+              {analyticsData?.performance.processingSpeed}/hr
             </div>
             <p className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" />
@@ -169,7 +169,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {analyticsData.trends.map((trend, index) => (
+                {analyticsData?.trends?.map((trend, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       {trend.direction === 'up' ? (
@@ -188,7 +188,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || []}
               </CardContent>
             </Card>
 
@@ -232,7 +232,7 @@ const PropertyAnalyticsDashboard: React.FC<PropertyAnalyticsDashboardProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.regions.map((region, index) => (
+                {analyticsData?.regions?.map((region, index) => (
                   <div key={index} className="p-4 bg-slate-800/50 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
                       <div>
