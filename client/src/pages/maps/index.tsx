@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Map, Layers, Zap, Building2, TrendingUp, MapPin, Filter, Download } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Map, Layers, Zap, Building2, TrendingUp, MapPin, Filter, Download, Activity, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 const MapsPage = () => {
   const [selectedLayer, setSelectedLayer] = useState('property-values');
@@ -17,17 +19,19 @@ const MapsPage = () => {
   ];
 
   const regions = [
-    { id: 'corvallis', name: 'Corvallis', properties: 12847, avgValue: '$485,000' },
-    { id: 'philomath', name: 'Philomath', properties: 4521, avgValue: '$425,000' },
-    { id: 'monroe', name: 'Monroe', properties: 1876, avgValue: '$385,000' },
-    { id: 'alsea', name: 'Alsea', properties: 892, avgValue: '$325,000' }
+    { id: 'richland', name: 'Richland', properties: 15010, avgValue: '$819,635' },
+    { id: 'kennewick', name: 'Kennewick', properties: 18010, avgValue: '$617,854' },
+    { id: 'pasco', name: 'Pasco', properties: 12005, avgValue: '$463,330' },
+    { id: 'west-richland', name: 'West Richland', properties: 5005, avgValue: '$597,497' },
+    { id: 'prosser', name: 'Prosser', properties: 1405, avgValue: '$357,855' },
+    { id: 'benton-city', name: 'Benton City', properties: 705, avgValue: '$272,495' }
   ];
 
   const analytics = [
-    { label: 'Total Properties Mapped', value: '20,136', change: '+2.3%' },
-    { label: 'Coverage Area', value: '679 sq mi', change: '100%' },
-    { label: 'Avg Property Value', value: '$458,000', change: '+5.7%' },
-    { label: 'Last Updated', value: 'Jun 8, 2025', change: 'Current' }
+    { label: 'Total Properties Mapped', value: '52,141', change: '+5.2%' },
+    { label: 'Coverage Area', value: '1,703 sq mi', change: '100%' },
+    { label: 'Avg Property Value', value: '$677,488', change: '+5.2%' },
+    { label: 'Last Updated', value: 'Jun 11, 2025', change: 'Current' }
   ];
 
   return (
@@ -96,21 +100,21 @@ const MapsPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-sm font-medium text-slate-100">Benton County</div>
-                      <div className="text-xs text-slate-400">Property Value Heatmap</div>
+                      <div className="text-sm font-medium text-slate-100">Benton County, WA</div>
+                      <div className="text-xs text-slate-400">Property Value Heatmap • 52,141 Properties</div>
                     </div>
                     <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-3 h-3 bg-emerald-500 rounded"></div>
-                        <span className="text-slate-300">High Value ($500K+)</span>
+                        <span className="text-slate-300">High Value ($800K+)</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs mt-1">
                         <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                        <span className="text-slate-300">Medium Value ($300-500K)</span>
+                        <span className="text-slate-300">Medium Value ($400-800K)</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs mt-1">
                         <div className="w-3 h-3 bg-red-500 rounded"></div>
-                        <span className="text-slate-300">Lower Value (Under $300K)</span>
+                        <span className="text-slate-300">Lower Value (Under $400K)</span>
                       </div>
                     </div>
                   </div>
@@ -125,9 +129,9 @@ const MapsPage = () => {
 
                   <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
                     <div className="text-xs text-slate-400 mb-1">Selected Area</div>
-                    <div className="text-sm font-medium text-slate-100">Corvallis Urban Area</div>
-                    <div className="text-xs text-slate-400">12,847 properties</div>
-                    <div className="text-xs text-emerald-400">Avg: $485,000</div>
+                    <div className="text-sm font-medium text-slate-100">Tri-Cities Metro Area</div>
+                    <div className="text-xs text-slate-400">52,141 properties</div>
+                    <div className="text-xs text-emerald-400">Avg: $677,488</div>
                   </div>
                 </div>
               </div>

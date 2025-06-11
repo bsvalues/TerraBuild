@@ -94,6 +94,16 @@ app.use((req, res, next) => {
   app.use('/api', routes);
   app.use('/api/setup', setupRoutes);
   
+  // Geographic Analysis routes for Benton County mapping
+  app.use('/api/geographic', (req, res, next) => {
+    import('./routes/geographic-analysis.js').then(module => {
+      module.default(req, res, next);
+    }).catch(err => {
+      console.error("Error loading geographic analysis routes:", err);
+      next(err);
+    });
+  });
+  
   // Directly create route handlers for the JavaScript routes
   // Property Import routes
   app.use('/api/property-import', (req, res, next) => {
