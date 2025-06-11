@@ -3,10 +3,40 @@ import { Search, Filter, Map, Building2, Calculator, TrendingUp } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
 
 const PropertiesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleAnalyzeCosts = (property: any) => {
+    toast({
+      title: "Cost Analysis Initiated",
+      description: `Analyzing replacement costs for ${property.address}`,
+    });
+    // Navigate to calculator with property data
+    window.location.href = `/calculator?property=${property.id}`;
+  };
+
+  const handleValueTrends = (property: any) => {
+    toast({
+      title: "Value Trend Analysis",
+      description: `Loading market trends for ${property.address}`,
+    });
+    // Navigate to trend analysis
+    window.location.href = `/trend-analysis?property=${property.id}`;
+  };
+
+  const handleViewDetails = (property: any) => {
+    toast({
+      title: "Property Details",
+      description: `Opening detailed view for ${property.address}`,
+    });
+    // Navigate to property details
+    window.location.href = `/properties/detail/${property.id}`;
+  };
 
   const properties = [
     {
@@ -96,15 +126,27 @@ const PropertiesPage = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAnalyzeCosts(property)}
+                >
                   <Calculator className="h-4 w-4 mr-2" />
                   Analyze Costs
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleValueTrends(property)}
+                >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Value Trends
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleViewDetails(property)}
+                >
                   View Details
                 </Button>
               </div>
