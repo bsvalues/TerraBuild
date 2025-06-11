@@ -114,10 +114,10 @@ router.get('/regional-stats', async (req, res) => {
     const regionStats = await db.select({
       city: properties.city,
       propertyCount: count(),
-      avgValue: avg(properties.assessed_value),
-      minValue: min(properties.assessed_value),
-      maxValue: max(properties.assessed_value),
-      totalSqft: sql<number>`sum(${properties.total_area})`.as('totalSqft')
+      avgValue: sql<number>`AVG(${properties.assessedValue})`.as('avgValue'),
+      minValue: sql<number>`MIN(${properties.assessedValue})`.as('minValue'),
+      maxValue: sql<number>`MAX(${properties.assessedValue})`.as('maxValue'),
+      totalSqft: sql<number>`SUM(${properties.totalArea})`.as('totalSqft')
     }).from(properties)
       .where(sql`${properties.city} IS NOT NULL`)
       .groupBy(properties.city)
