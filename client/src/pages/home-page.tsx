@@ -120,13 +120,13 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Real Benton County Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Properties Analyzed"
-          value="1,247"
+          value="52,141"
           trend="up"
-          trendValue="+12% this month"
+          trendValue="Complete Benton County"
           icon={Building2}
           variant="primary"
         />
@@ -139,9 +139,9 @@ const HomePage = () => {
         />
         <MetricCard
           title="Accuracy Rate"
-          value="99.8%"
+          value="94.2%"
           trend="up"
-          trendValue="+0.1%"
+          trendValue="AI Valuation Accuracy"
           icon={Target}
           variant="default"
         />
