@@ -28,6 +28,7 @@ import AgentsPage from '@/pages/agents/index-fixed';
 import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
+import EnterpriseSetupPage from '@/pages/setup/EnterpriseSetupPage';
 
 
 
@@ -162,6 +163,10 @@ function Router() {
         <EnterpriseLayout>
           <HelpSupportPage />
         </EnterpriseLayout>
+      )} />
+      
+      <Route path="/setup" component={() => (
+        <EnterpriseSetupPage />
       )} />
       
       <Route component={NotFoundPage} />
