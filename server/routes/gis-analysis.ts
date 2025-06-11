@@ -194,18 +194,17 @@ router.get('/spatial-search', async (req: Request, res: Response) => {
     let query = `
       SELECT 
         p.*,
-        ST_Distance(
-          ST_SetSRID(ST_MakePoint(p.longitude, p.latitude), 4326),
-          ST_SetSRID(ST_MakePoint($1, $2), 4326)
-        ) * 111319.9 as distance_meters
+        SQRT(
+          POW((p.longitude - $1) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
+          POW((p.latitude - $2) * 111319.9, 2)
+        ) as distance_meters
       FROM properties p
       WHERE p.latitude IS NOT NULL 
         AND p.longitude IS NOT NULL
-        AND ST_DWithin(
-          ST_SetSRID(ST_MakePoint(p.longitude, p.latitude), 4326),
-          ST_SetSRID(ST_MakePoint($1, $2), 4326),
-          $3 / 111319.9
-        )
+        AND SQRT(
+          POW((p.longitude - $1) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
+          POW((p.latitude - $2) * 111319.9, 2)
+        ) <= $3
     `;
 
     const params = [longitude, latitude, searchRadius];
@@ -304,12 +303,12 @@ router.get('/heatmap/:type', async (req: Request, res: Response) => {
           SELECT 
             ROUND(latitude::numeric, 2) as lat,
             ROUND(longitude::numeric, 2) as lng,
-            AVG(market_value) as value,
+            AVG(COALESCE(marketValue, assessedValue, 0)) as value,
             COUNT(*) as count
           FROM properties 
           WHERE latitude IS NOT NULL 
             AND longitude IS NOT NULL 
-            AND market_value IS NOT NULL
+            AND (marketValue IS NOT NULL OR assessedValue IS NOT NULL)
         `;
         break;
         
