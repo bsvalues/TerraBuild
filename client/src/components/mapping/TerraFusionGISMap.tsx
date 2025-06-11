@@ -63,14 +63,19 @@ export const TerraFusionGISMap: React.FC = () => {
     }
   });
 
-  const { data: properties = [] } = useQuery({
+  const { data: properties = [], isLoading: propertiesLoading, error: propertiesError } = useQuery({
     queryKey: ['/api/gis/spatial-search', mapCenter, searchRadius[0]],
     queryFn: async () => {
       const response = await fetch(
         `/api/gis/spatial-search?lat=${mapCenter.lat}&lng=${mapCenter.lng}&radius=${searchRadius[0]}`
       );
-      return response.json();
-    }
+      if (!response.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: heatmapData = [] } = useQuery({
@@ -207,7 +212,18 @@ export const TerraFusionGISMap: React.FC = () => {
 
           <TabsContent value="properties" className="flex-1 overflow-auto p-4">
             <div className="space-y-2">
-              {properties.map((property: Property) => (
+              {propertiesLoading && (
+                <div className="text-center text-slate-400 p-4">
+                  Loading properties...
+                </div>
+              )}
+              {propertiesError && (
+                <div className="text-center text-red-400 p-4">
+                  Error loading properties
+                </div>
+              )}
+              {properties && Array.isArray(properties) && properties.length > 0 ? (
+                properties.map((property: Property) => (
                 <Card 
                   key={property.id}
                   className={`cursor-pointer transition-colors ${
@@ -240,7 +256,12 @@ export const TerraFusionGISMap: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              ) : (
+                <div className="text-center text-slate-400 p-4">
+                  No properties found in this area
+                </div>
+              )}
             </div>
           </TabsContent>
 

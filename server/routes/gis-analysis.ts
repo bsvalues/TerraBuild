@@ -195,16 +195,16 @@ router.get('/spatial-search', async (req: Request, res: Response) => {
       SELECT 
         p.*,
         SQRT(
-          POW((p.longitude - $1) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
-          POW((p.latitude - $2) * 111319.9, 2)
+          POW((p.longitude - $1::float) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
+          POW((p.latitude - $2::float) * 111319.9, 2)
         ) as distance_meters
       FROM properties p
       WHERE p.latitude IS NOT NULL 
         AND p.longitude IS NOT NULL
         AND SQRT(
-          POW((p.longitude - $1) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
-          POW((p.latitude - $2) * 111319.9, 2)
-        ) <= $3
+          POW((p.longitude - $1::float) * 111319.9 * COS(RADIANS(p.latitude)), 2) +
+          POW((p.latitude - $2::float) * 111319.9, 2)
+        ) <= $3::float
     `;
 
     const params = [longitude, latitude, searchRadius];
@@ -303,12 +303,12 @@ router.get('/heatmap/:type', async (req: Request, res: Response) => {
           SELECT 
             ROUND(latitude::numeric, 2) as lat,
             ROUND(longitude::numeric, 2) as lng,
-            AVG(COALESCE(marketValue, assessedValue, 0)) as value,
+            AVG(COALESCE(market_value, assessed_value, 0)) as value,
             COUNT(*) as count
           FROM properties 
           WHERE latitude IS NOT NULL 
             AND longitude IS NOT NULL 
-            AND (marketValue IS NOT NULL OR assessedValue IS NOT NULL)
+            AND (market_value IS NOT NULL OR assessed_value IS NOT NULL)
         `;
         break;
         

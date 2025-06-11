@@ -1,0 +1,32 @@
+The above error occurred in the <TerraFusionGISMap> component:
+
+    at TerraFusionGISMap (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/components/mapping/TerraFusionGISMap.tsx:42:51)
+    at MapAnalysisPage
+    at div
+    at main
+    at div
+    at div
+    at EnterpriseLayout (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/components/layout/EnterpriseLayout.tsx:124:29)
+    at component
+    at Route (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=18c3de88:191:16)
+    at Switch (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=18c3de88:247:17)
+    at Router
+    at SidebarProvider (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/contexts/SidebarContext.tsx:20:35)
+    at WindowProvider (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/contexts/WindowContext.tsx:32:34)
+    at AuthProvider (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/contexts/AuthContext.tsx:22:32)
+    at QueryClientProvider (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=18c3de88:2805:3)
+    at App (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/App.tsx?v=oBACKxh3ONjdSQclMuRSQ:53:39)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+properties.map is not a function
+at TerraFusionGISMap (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/src/components/mapping/TerraFusionGISMap.tsx:287:434)
+at renderWithHooks (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:11548:26)
+at updateFunctionComponent (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:14582:28)
+at beginWork (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:15924:22)
+at beginWork$1 (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:19753:22)
+at performUnitOfWork (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:19198:20)
+at workLoopSync (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:19137:13)
+at renderRootSync (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:19116:15)
+at recoverFromConcurrentError (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:18736:28)
+at performSyncWorkOnRoot (https://a372de21-70a4-4df7-aaa8-a1fe60d49915-00-13puluc3qkt4s.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=18c3de88:18879:28)
