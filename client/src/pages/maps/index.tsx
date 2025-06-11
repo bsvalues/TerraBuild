@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 const MapsPage = () => {
   const [selectedLayer, setSelectedLayer] = useState('property-values');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [analysisMode, setAnalysisMode] = useState<'value' | 'trends' | 'costs' | 'ai'>('value');
+  const [timeRange, setTimeRange] = useState('1year');
 
   const mapLayers = [
     { id: 'property-values', name: 'Property Values', icon: Building2, active: true },
@@ -27,6 +29,22 @@ const MapsPage = () => {
     { id: 'benton-city', name: 'Benton City', properties: 705, avgValue: '$272,495' }
   ];
 
+  // Fetch real geographic analysis data from Benton County database
+  const { data: mapData, isLoading: mapLoading } = useQuery({
+    queryKey: ['/api/geographic/map-data', analysisMode, timeRange],
+    staleTime: 300000 // 5 minutes
+  });
+
+  const { data: regionalStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/geographic/regional-stats'],
+    staleTime: 600000 // 10 minutes
+  });
+
+  const { data: liveAnalysis } = useQuery({
+    queryKey: ['/api/geographic/live-analysis'],
+    refetchInterval: 30000 // 30 seconds
+  });
+
   const analytics = [
     { label: 'Total Properties Mapped', value: '52,141', change: '+5.2%' },
     { label: 'Coverage Area', value: '1,703 sq mi', change: '100%' },
@@ -39,16 +57,31 @@ const MapsPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-100">Geographic Analysis</h1>
-          <p className="text-slate-400 mt-1">Interactive mapping and spatial analysis tools</p>
+          <p className="text-slate-400 mt-1">Interactive mapping and spatial analysis for 52,141 Benton County properties</p>
         </div>
         <div className="flex gap-3">
+          <Select value={analysisMode} onValueChange={(value: any) => setAnalysisMode(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="value">Property Values</SelectItem>
+              <SelectItem value="trends">Market Trends</SelectItem>
+              <SelectItem value="costs">Building Costs</SelectItem>
+              <SelectItem value="ai">AI Insights</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export Map
           </Button>
-          <Button size="sm">
-            <Zap className="h-4 w-4 mr-2" />
-            Run Analysis
+          <Button size="sm" disabled={mapLoading}>
+            {mapLoading ? (
+              <Activity className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Zap className="h-4 w-4 mr-2" />
+            )}
+            {mapLoading ? 'Loading...' : 'Run Analysis'}
           </Button>
         </div>
       </div>
@@ -122,10 +155,43 @@ const MapsPage = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <Map className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                      <div className="text-slate-400 text-lg font-medium">Interactive Map Loading</div>
-                      <div className="text-slate-500 text-sm">Geographic data visualization</div>
+                      <div className="text-slate-400 text-lg font-medium">
+                        {mapLoading ? 'Loading Geographic Data...' : 'TerraFusion-AI Interactive Map'}
+                      </div>
+                      <div className="text-slate-500 text-sm">
+                        {mapData ? `${mapData.properties?.length || 0} properties loaded` : 'Geographic data visualization'}
+                      </div>
+                      {mapData && (
+                        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-blue-900/30 p-2 rounded">
+                            Analysis: {analysisMode.charAt(0).toUpperCase() + analysisMode.slice(1)}
+                          </div>
+                          <div className="bg-green-900/30 p-2 rounded">
+                            Properties: {mapData.properties?.length || 0}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Sample Property Markers with Real Data */}
+                  {mapData?.properties.slice(0, 15).map((property, index) => (
+                    <div
+                      key={property.id}
+                      className="absolute w-4 h-4 bg-blue-500 rounded-full border border-white shadow-md cursor-pointer transform -translate-x-2 -translate-y-2 hover:scale-125 transition-transform"
+                      style={{
+                        left: `${30 + index * 4}%`,
+                        top: `${25 + (index % 4) * 12}%`,
+                        backgroundColor: property.value > 800000 ? '#10b981' : 
+                                       property.value > 400000 ? '#f59e0b' : '#ef4444'
+                      }}
+                      title={`${property.address} - $${property.value.toLocaleString()}`}
+                    >
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 className="h-2 w-2 text-white" />
+                      </div>
+                    </div>
+                  ))}
 
                   <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
                     <div className="text-xs text-slate-400 mb-1">Selected Area</div>
@@ -177,11 +243,14 @@ const MapsPage = () => {
 
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-slate-100 text-lg">Regional Summary</CardTitle>
+              <CardTitle className="text-slate-100 text-lg flex items-center gap-2">
+                Regional Summary
+                {statsLoading && <Activity className="h-4 w-4 animate-spin" />}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {regions.map((region) => (
+                {(regionalStats || regions).map((region) => (
                   <div key={region.id} className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/50">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium text-slate-100">{region.name}</div>
@@ -192,6 +261,11 @@ const MapsPage = () => {
                     <div className="text-sm text-slate-400">
                       Avg Value: <span className="text-emerald-400 font-medium">{region.avgValue}</span>
                     </div>
+                    {regionalStats && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        Total Value: ${Math.round((region.totalValue || 0) / 1000000)}M
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
