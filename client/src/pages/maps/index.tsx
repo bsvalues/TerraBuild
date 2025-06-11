@@ -261,9 +261,19 @@ const MapsPage = () => {
                         key={property.id}
                         className={`absolute ${markerSize} rounded-full border border-white shadow-lg cursor-pointer transform -translate-x-1.5 -translate-y-1.5 hover:scale-150 transition-all hover:z-10`}
                         style={{
-                          left: `${25 + (index % 10) * 7}%`,
-                          top: `${20 + Math.floor(index / 10) * 12}%`,
-                          backgroundColor: markerColor
+                          left: `${(() => {
+                            // Convert real coordinates to map position using Benton County bounds
+                            const bentonLngMin = -119.8, bentonLngMax = -119.0;
+                            const normalizedLng = (property.coordinates[0] - bentonLngMin) / (bentonLngMax - bentonLngMin);
+                            return Math.max(15, Math.min(85, normalizedLng * 70 + 15));
+                          })()}%`,
+                          top: `${(() => {
+                            const bentonLatMin = 46.0, bentonLatMax = 46.5;
+                            const normalizedLat = (property.coordinates[1] - bentonLatMin) / (bentonLatMax - bentonLatMin);
+                            return Math.max(15, Math.min(75, (1 - normalizedLat) * 60 + 15));
+                          })()}%`,
+                          backgroundColor: markerColor,
+                          transform: 'translate(-50%, -50%)'
                         }}
                         title={`${property.address}\n${property.city}\n$${property.value.toLocaleString()}\n${property.sqft} sqft\nBuilt: ${property.yearBuilt}\nLayer: ${selectedLayer}`}
                       >
@@ -274,21 +284,31 @@ const MapsPage = () => {
                     );
                   })}
 
-                  {/* Market Hotspots from Real Data */}
-                  {mapData?.marketAnalysis?.hotspots?.map((hotspot, index) => (
-                    <div
-                      key={`hotspot-${index}`}
-                      className="absolute rounded-full border-2 border-red-400 bg-red-400/20 animate-pulse"
-                      style={{
-                        left: `${35 + index * 20}%`,
-                        top: `${30 + index * 10}%`,
-                        width: `${hotspot.intensity * 40}px`,
-                        height: `${hotspot.intensity * 40}px`,
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                      title={`Market Hotspot\nIntensity: ${(hotspot.intensity * 100).toFixed(1)}%\nRadius: ${hotspot.radius}m`}
-                    />
-                  ))}
+                  {/* Market Hotspots from Real Benton County Coordinates */}
+                  {selectedLayer === 'property-values' && mapData?.marketAnalysis?.hotspots?.map((hotspot, index) => {
+                    // Convert real coordinates to map position using Benton County bounds
+                    const bentonLngMin = -119.8, bentonLngMax = -119.0;
+                    const bentonLatMin = 46.0, bentonLatMax = 46.5;
+                    const normalizedLng = (hotspot.center[0] - bentonLngMin) / (bentonLngMax - bentonLngMin);
+                    const normalizedLat = (hotspot.center[1] - bentonLatMin) / (bentonLatMax - bentonLatMin);
+                    const mapX = Math.max(15, Math.min(85, normalizedLng * 70 + 15));
+                    const mapY = Math.max(15, Math.min(75, (1 - normalizedLat) * 60 + 15));
+                    
+                    return (
+                      <div
+                        key={`hotspot-${index}`}
+                        className="absolute rounded-full border-2 border-orange-400/70 bg-orange-400/25 animate-pulse"
+                        style={{
+                          left: `${mapX}%`,
+                          top: `${mapY}%`,
+                          width: `${hotspot.intensity * 60}px`,
+                          height: `${hotspot.intensity * 60}px`,
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                        title={`Market Hotspot ${index + 1}\nReal Coordinates: ${hotspot.center[0].toFixed(4)}, ${hotspot.center[1].toFixed(4)}\nIntensity: ${(hotspot.intensity * 100).toFixed(1)}%\nRadius: ${hotspot.radius}m`}
+                      />
+                    );
+                  })}
 
                   <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
                     <div className="text-xs text-slate-400 mb-1">Selected Area</div>
