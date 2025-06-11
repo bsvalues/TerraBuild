@@ -13,7 +13,7 @@
         "description": "Validates data quality and identifies issues in property data",
         "version": "1.0.0"
       },
-      "lastUpdated": 1749675476284
+      "lastUpdated": 1749675947254
     },
     "compliance-agent": {
       "id": "compliance-agent",
@@ -28,7 +28,7 @@
         "description": "Ensures compliance with Washington State regulations for property assessments",
         "version": "1.0.0"
       },
-      "lastUpdated": 1749675476285
+      "lastUpdated": 1749675947256
     },
     "cost-analysis-agent": {
       "id": "cost-analysis-agent",
@@ -43,7 +43,7 @@
         "description": "Analyzes building cost data and provides estimation services",
         "version": "1.0.0"
       },
-      "lastUpdated": 1749675476292
+      "lastUpdated": 1749675947260
     },
     "geo-mapping-agent": {
       "id": "geo-mapping-agent",
@@ -56,7 +56,7 @@
       "metadata": {
         "description": "Maps and analyzes geographic data for properties and regions"
       },
-      "lastUpdated": 1749675476255
+      "lastUpdated": 1749675947153
     },
     "development-agent": {
       "id": "development-agent",
@@ -113,7 +113,7 @@
         "version": "1.0.0",
         "supports_anthropic": false
       },
-      "lastUpdated": 1749675476257
+      "lastUpdated": 1749675947154
     }
   }
 }

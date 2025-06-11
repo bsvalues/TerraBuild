@@ -14,10 +14,10 @@ const MapsPage = () => {
   const [timeRange, setTimeRange] = useState('1year');
 
   const mapLayers = [
-    { id: 'property-values', name: 'Property Values', icon: Building2, active: true },
-    { id: 'cost-trends', name: 'Cost Trends', icon: TrendingUp, active: false },
-    { id: 'districts', name: 'Tax Districts', icon: MapPin, active: false },
-    { id: 'zoning', name: 'Zoning Areas', icon: Layers, active: false }
+    { id: 'property-values', name: 'Property Values', icon: Building2, active: selectedLayer === 'property-values' },
+    { id: 'cost-trends', name: 'Cost Trends', icon: TrendingUp, active: selectedLayer === 'cost-trends' },
+    { id: 'districts', name: 'Tax Districts', icon: MapPin, active: selectedLayer === 'districts' },
+    { id: 'zoning', name: 'Zoning Areas', icon: Layers, active: selectedLayer === 'zoning' }
   ];
 
   const regions = [
@@ -134,21 +134,74 @@ const MapsPage = () => {
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
                       <div className="text-sm font-medium text-slate-100">Benton County, WA</div>
-                      <div className="text-xs text-slate-400">Property Value Heatmap • 52,141 Properties</div>
+                      <div className="text-xs text-slate-400">
+                        {selectedLayer === 'property-values' && 'Property Value Heatmap • 52,141 Properties'}
+                        {selectedLayer === 'cost-trends' && 'Cost Trend Analysis • Market Movement'}
+                        {selectedLayer === 'districts' && 'Tax District Boundaries • Geographic Zones'}
+                        {selectedLayer === 'zoning' && 'Zoning Classifications • Land Use Areas'}
+                      </div>
                     </div>
                     <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="w-3 h-3 bg-emerald-500 rounded"></div>
-                        <span className="text-slate-300">High Value ($800K+)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs mt-1">
-                        <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                        <span className="text-slate-300">Medium Value ($400-800K)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs mt-1">
-                        <div className="w-3 h-3 bg-red-500 rounded"></div>
-                        <span className="text-slate-300">Lower Value (Under $400K)</span>
-                      </div>
+                      {selectedLayer === 'property-values' && (
+                        <>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 bg-emerald-500 rounded"></div>
+                            <span className="text-slate-300">High Value ($800K+)</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                            <span className="text-slate-300">Medium Value ($400-800K)</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-red-500 rounded"></div>
+                            <span className="text-slate-300">Lower Value (Under $400K)</span>
+                          </div>
+                        </>
+                      )}
+                      {selectedLayer === 'cost-trends' && (
+                        <>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 bg-emerald-500 rounded"></div>
+                            <span className="text-slate-300">Rising Trend ↗</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                            <span className="text-slate-300">Stable Market →</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-red-500 rounded"></div>
+                            <span className="text-slate-300">Declining ↘</span>
+                          </div>
+                        </>
+                      )}
+                      {selectedLayer === 'districts' && (
+                        <>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                            <span className="text-slate-300">Tax Districts</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-violet-400 rounded"></div>
+                            <span className="text-slate-300">Boundaries</span>
+                          </div>
+                        </>
+                      )}
+                      {selectedLayer === 'zoning' && (
+                        <>
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-3 h-3 bg-cyan-500 rounded"></div>
+                            <span className="text-slate-300">Residential</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-teal-400 rounded"></div>
+                            <span className="text-slate-300">Commercial</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <div className="w-3 h-3 bg-sky-400 rounded"></div>
+                            <span className="text-slate-300">Industrial</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
@@ -174,25 +227,52 @@ const MapsPage = () => {
                     </div>
                   </div>
 
-                  {/* Real Benton County Property Markers */}
-                  {mapData?.properties.slice(0, 25).map((property, index) => (
-                    <div
-                      key={property.id}
-                      className="absolute w-3 h-3 rounded-full border border-white shadow-lg cursor-pointer transform -translate-x-1.5 -translate-y-1.5 hover:scale-150 transition-all hover:z-10"
-                      style={{
-                        left: `${25 + (index % 8) * 8}%`,
-                        top: `${20 + Math.floor(index / 8) * 15}%`,
-                        backgroundColor: property.value > 800000 ? '#10b981' : 
-                                       property.value > 500000 ? '#3b82f6' :
-                                       property.value > 300000 ? '#f59e0b' : '#ef4444'
-                      }}
-                      title={`${property.address}\n${property.city}\n$${property.value.toLocaleString()}\n${property.sqft} sqft\nBuilt: ${property.yearBuilt}`}
-                    >
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="w-1 h-1 bg-white rounded-full" />
+                  {/* Layer-Specific Property Visualization */}
+                  {mapData?.properties.slice(0, 30).map((property, index) => {
+                    let markerColor = '#3b82f6';
+                    let markerSize = 'w-3 h-3';
+                    let markerIcon = 'w-1 h-1 bg-white rounded-full';
+                    
+                    // Change visualization based on selected layer
+                    switch (selectedLayer) {
+                      case 'property-values':
+                        markerColor = property.value > 800000 ? '#10b981' : 
+                                    property.value > 500000 ? '#3b82f6' :
+                                    property.value > 300000 ? '#f59e0b' : '#ef4444';
+                        markerSize = property.value > 600000 ? 'w-4 h-4' : 'w-3 h-3';
+                        break;
+                      case 'cost-trends':
+                        markerColor = property.marketTrend === 'up' ? '#10b981' : 
+                                    property.marketTrend === 'stable' ? '#f59e0b' : '#ef4444';
+                        markerIcon = property.marketTrend === 'up' ? 'w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-white' : markerIcon;
+                        break;
+                      case 'districts':
+                        markerColor = '#8b5cf6';
+                        markerSize = 'w-2 h-2';
+                        break;
+                      case 'zoning':
+                        markerColor = '#06b6d4';
+                        markerIcon = 'w-1 h-1 bg-white';
+                        break;
+                    }
+
+                    return (
+                      <div
+                        key={property.id}
+                        className={`absolute ${markerSize} rounded-full border border-white shadow-lg cursor-pointer transform -translate-x-1.5 -translate-y-1.5 hover:scale-150 transition-all hover:z-10`}
+                        style={{
+                          left: `${25 + (index % 10) * 7}%`,
+                          top: `${20 + Math.floor(index / 10) * 12}%`,
+                          backgroundColor: markerColor
+                        }}
+                        title={`${property.address}\n${property.city}\n$${property.value.toLocaleString()}\n${property.sqft} sqft\nBuilt: ${property.yearBuilt}\nLayer: ${selectedLayer}`}
+                      >
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className={markerIcon} />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Market Hotspots from Real Data */}
                   {mapData?.marketAnalysis?.hotspots?.map((hotspot, index) => (
