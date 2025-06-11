@@ -16,6 +16,8 @@ import DiagnosticPage from '@/pages/diagnostic';
 import CalculatorPage from '@/pages/calculator-page';
 import DashboardsPage from '@/pages/dashboards';
 import PropertiesPage from '@/pages/properties';
+import PortfolioAnalytics from '@/pages/analytics/PortfolioAnalytics';
+import MunicipalDashboard from '@/pages/deployment/MunicipalDashboard';
 import DocumentationPage from '@/pages/documentation-new';
 import SettingsPage from '@/pages/settings';
 import ReportsPage from '@/pages/reports';
