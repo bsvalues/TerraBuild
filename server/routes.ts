@@ -25,6 +25,7 @@ import { gisImportRoutes } from './routes/gisImportRoutes';
 import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
+import geographicAnalysisRoutes from './routes/geographic-analysis';
 import { bentonCountyDataService } from './services/benton-county-data';
 import { populateBentonCountyData, getBentonCountyStats, getPropertiesByMunicipality } from './benton-county-integration';
 import { populateFullBentonCountyDataset } from './benton-county-full-dataset';

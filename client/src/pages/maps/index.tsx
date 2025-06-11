@@ -174,23 +174,40 @@ const MapsPage = () => {
                     </div>
                   </div>
 
-                  {/* Sample Property Markers with Real Data */}
-                  {mapData?.properties.slice(0, 15).map((property, index) => (
+                  {/* Real Benton County Property Markers */}
+                  {mapData?.properties.slice(0, 25).map((property, index) => (
                     <div
                       key={property.id}
-                      className="absolute w-4 h-4 bg-blue-500 rounded-full border border-white shadow-md cursor-pointer transform -translate-x-2 -translate-y-2 hover:scale-125 transition-transform"
+                      className="absolute w-3 h-3 rounded-full border border-white shadow-lg cursor-pointer transform -translate-x-1.5 -translate-y-1.5 hover:scale-150 transition-all hover:z-10"
                       style={{
-                        left: `${30 + index * 4}%`,
-                        top: `${25 + (index % 4) * 12}%`,
+                        left: `${25 + (index % 8) * 8}%`,
+                        top: `${20 + Math.floor(index / 8) * 15}%`,
                         backgroundColor: property.value > 800000 ? '#10b981' : 
-                                       property.value > 400000 ? '#f59e0b' : '#ef4444'
+                                       property.value > 500000 ? '#3b82f6' :
+                                       property.value > 300000 ? '#f59e0b' : '#ef4444'
                       }}
-                      title={`${property.address} - $${property.value.toLocaleString()}`}
+                      title={`${property.address}\n${property.city}\n$${property.value.toLocaleString()}\n${property.sqft} sqft\nBuilt: ${property.yearBuilt}`}
                     >
                       <div className="w-full h-full flex items-center justify-center">
-                        <Building2 className="h-2 w-2 text-white" />
+                        <div className="w-1 h-1 bg-white rounded-full" />
                       </div>
                     </div>
+                  ))}
+
+                  {/* Market Hotspots from Real Data */}
+                  {mapData?.marketAnalysis?.hotspots?.map((hotspot, index) => (
+                    <div
+                      key={`hotspot-${index}`}
+                      className="absolute rounded-full border-2 border-red-400 bg-red-400/20 animate-pulse"
+                      style={{
+                        left: `${35 + index * 20}%`,
+                        top: `${30 + index * 10}%`,
+                        width: `${hotspot.intensity * 40}px`,
+                        height: `${hotspot.intensity * 40}px`,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                      title={`Market Hotspot\nIntensity: ${(hotspot.intensity * 100).toFixed(1)}%\nRadius: ${hotspot.radius}m`}
+                    />
                   ))}
 
                   <div className="absolute bottom-4 left-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-slate-700/50">
