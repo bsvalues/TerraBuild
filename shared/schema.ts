@@ -63,6 +63,7 @@ export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   geo_id: varchar("geo_id", { length: 100 }).unique(),
   parcel_id: varchar("parcel_id", { length: 100 }),
+  parcelNumber: varchar("parcel_number", { length: 100 }).unique(),
   address: varchar("address", { length: 255 }),
   city: varchar("city", { length: 100 }),
   state: varchar("state", { length: 50 }),
@@ -70,13 +71,25 @@ export const properties = pgTable("properties", {
   county: varchar("county", { length: 100 }),
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
-  property_type: varchar("property_type", { length: 50 }),
+  propertyType: varchar("property_type", { length: 50 }),
+  squareFootage: integer("square_footage"),
+  lotSize: doublePrecision("lot_size"),
   land_area: doublePrecision("land_area"),
   land_value: integer("land_value"),
   total_value: integer("total_value"),
+  assessedValue: integer("assessed_value"),
+  marketValue: integer("market_value"),
+  taxableValue: integer("taxable_value"),
   year_built: integer("year_built"),
+  yearBuilt: integer("year_built_alt"),
   bedrooms: integer("bedrooms"),
   bathrooms: doublePrecision("bathrooms"),
+  condition: varchar("condition", { length: 50 }),
+  ownerName: varchar("owner_name", { length: 255 }),
+  lastSaleDate: date("last_sale_date"),
+  lastSalePrice: integer("last_sale_price"),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  zoning: varchar("zoning", { length: 50 }),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow()
 });
@@ -393,3 +406,61 @@ export const insertImprovementDetailSchema = createInsertSchema(improvementDetai
 
 export type InsertImprovementDetail = z.infer<typeof insertImprovementDetailSchema>;
 export type ImprovementDetail = typeof improvementDetails.$inferSelect;
+
+/**
+ * Property Value History Table
+ */
+export const propertyValueHistory = pgTable("property_value_history", {
+  id: serial("id").primaryKey(),
+  parcelNumber: varchar("parcel_number", { length: 100 }).notNull(),
+  valueDate: date("value_date").notNull(),
+  assessedValue: integer("assessed_value"),
+  marketValue: integer("market_value"),
+  source: varchar("source", { length: 100 }),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertPropertyValueHistorySchema = createInsertSchema(propertyValueHistory)
+  .omit({ id: true, created_at: true });
+
+export type InsertPropertyValueHistory = z.infer<typeof insertPropertyValueHistorySchema>;
+export type PropertyValueHistory = typeof propertyValueHistory.$inferSelect;
+
+/**
+ * Municipalities Table
+ */
+export const municipalities = pgTable("municipalities", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  county: varchar("county", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  population: integer("population"),
+  area: doublePrecision("area"),
+  coordinates: text("coordinates"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertMunicipalitySchema = createInsertSchema(municipalities)
+  .omit({ id: true, created_at: true });
+
+export type InsertMunicipality = z.infer<typeof insertMunicipalitySchema>;
+export type Municipality = typeof municipalities.$inferSelect;
+
+/**
+ * Geographic Regions Table
+ */
+export const geographicRegions = pgTable("geographic_regions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  type: varchar("type", { length: 50 }),
+  parentId: integer("parent_id"),
+  coordinates: text("coordinates"),
+  metadata: text("metadata"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+export const insertGeographicRegionSchema = createInsertSchema(geographicRegions)
+  .omit({ id: true, created_at: true });
+
+export type InsertGeographicRegion = z.infer<typeof insertGeographicRegionSchema>;
+export type GeographicRegion = typeof geographicRegions.$inferSelect;

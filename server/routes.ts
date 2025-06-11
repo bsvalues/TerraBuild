@@ -26,6 +26,7 @@ import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import { bentonCountyDataService } from './services/benton-county-data';
+import { populateBentonCountyData, getBentonCountyStats, getPropertiesByMunicipality } from './benton-county-integration';
 
 import { generateShapInsight } from './ai/shap_agent';
 import propertiesRouter from './routes/properties';
