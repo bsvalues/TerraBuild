@@ -118,7 +118,7 @@ export default function PropertiesPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-400">High Confidence</p>
                   <p className="text-2xl font-bold text-slate-100">
-                    {sampleProperties.filter(p => p.confidence === 'High').length}
+                    {bentonCountyMetrics.highConfidence.toLocaleString()}
                   </p>
                 </div>
                 <Badge className="bg-emerald-500/20 text-emerald-400">Active</Badge>
