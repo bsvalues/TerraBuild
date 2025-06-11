@@ -10,8 +10,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Map, Layers, Search, Filter, BarChart3, TrendingUp, 
   MapPin, Settings, Eye, EyeOff, Zap, Brain, Target,
-  Activity, AlertTriangle, CheckCircle, Clock
+  Activity, AlertTriangle, CheckCircle, Clock, Calculator,
+  Navigation, Ruler
 } from 'lucide-react';
+import { EnhancedGISFeatures } from './EnhancedGISFeatures';
+import { AdvancedSpatialAnalysis } from './AdvancedSpatialAnalysis';
 
 interface Property {
   id: number;
