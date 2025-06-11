@@ -32,6 +32,7 @@ import HelpSupportPage from '@/pages/help';
 import WebinarsPage from '@/pages/help/webinars';
 import WebinarViewPage from '@/pages/help/webinars/[id]';
 import EnterpriseSetupPage from '@/pages/setup/EnterpriseSetupPage';
+import PropertyValuationPage from '@/pages/valuation';
 
 
 
@@ -85,6 +86,12 @@ function Router() {
       <Route path="/analytics" component={() => (
         <EnterpriseLayout>
           <PortfolioAnalytics />
+        </EnterpriseLayout>
+      )} />
+      
+      <Route path="/valuation" component={() => (
+        <EnterpriseLayout>
+          <PropertyValuationPage />
         </EnterpriseLayout>
       )} />
       
