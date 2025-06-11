@@ -1,0 +1,11 @@
+{
+  "organizationName": "Washington State County",
+  "countyName": "Benton County",
+  "adminEmail": "admin@bentoncounty.gov",
+  "databaseUrl": "",
+  "sslEnabled": true,
+  "apiKeys": {},
+  "setupDate": "2025-06-11T15:53:32.389Z",
+  "version": "1.0.0",
+  "status": "completed"
+}
