@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, NaiveDate, Utc};
-use uuid::Uuid;
+use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Property {
     pub id: i32,
     pub parcel_id: String,
@@ -13,9 +12,9 @@ pub struct Property {
     pub year_built: Option<i32>,
     pub sqft: Option<f64>,
     pub region: Option<String>,
-    pub geom: Option<String>, // WKT format
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub geom: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
