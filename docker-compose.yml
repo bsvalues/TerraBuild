@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with PostGIS
+  database:
+    image: postgis/postgis:15-3.4
+    environment:
+      POSTGRES_DB: terrabuild
+      POSTGRES_USER: terrabuild_user
+      POSTGRES_PASSWORD: terrabuild_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - terrabuild_network
+
+  # Rust Backend API
+  rust-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://terrabuild_user:terrabuild_password@database:5432/terrabuild
+      PORT: 8080
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    networks:
+      - terrabuild_network
+    volumes:
+      - ./backend:/app
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - rust-backend
+    networks:
+      - terrabuild_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - terrabuild_network
+
+volumes:
+  postgres_data:
+
+networks:
+  terrabuild_network:
+    driver: bridge
