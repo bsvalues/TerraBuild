@@ -26,6 +26,7 @@ import { geoMappingRoutes } from './routes/geoMappingRoutes';
 import { neighborhoodDiscoveryRoutes } from './routes/neighborhoodDiscoveryRoutes';
 import { smartSearchRoutes } from './routes/smartSearchRoutes';
 import geographicAnalysisRoutes from './routes/geographic-analysis';
+import gisAnalysisRoutes from './routes/gis-analysis';
 import { bentonCountyDataService } from './services/benton-county-data';
 import { populateBentonCountyData, getBentonCountyStats, getPropertiesByMunicipality } from './benton-county-integration';
 import { populateFullBentonCountyDataset } from './benton-county-full-dataset';
@@ -1396,6 +1397,7 @@ router.use('/geo-mapping', geoMappingRoutes);
 router.use('/neighborhoods', neighborhoodDiscoveryRoutes);
 router.use('/search', smartSearchRoutes);
 router.use('/map', propertyMapRoutes);
+router.use('/gis', gisAnalysisRoutes);
 // Cost Factor Tables plugin is registered directly in server/index.ts
 router.use('/', importRoutes);
 router.use('/', calculationRoutes);
