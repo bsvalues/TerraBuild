@@ -61,11 +61,11 @@ export class CostFactorTables {
           'PR': 0.70,
         },
         baseRates: {
-          'SFR': 135.50,
-          'MFR': 110.25,
-          'COM': 155.75,
-          'IND': 95.50,
-          'AGR': 65.00,
+          'SFR': 285.00,
+          'MFR': 260.00,
+          'COM': 320.00,
+          'IND': 180.00,
+          'AGR': 120.00,
         },
         complexityFactors: {
           STORIES: {
