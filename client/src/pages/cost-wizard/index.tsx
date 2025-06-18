@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import CostEstimationWizard from '@/components/wizards/CostEstimationWizardFixed';
+import CostWizardSimple from '@/components/wizards/CostWizardSimple';
 import { Calculator } from 'lucide-react';
 
 const CostWizardPage = () => {
@@ -13,7 +13,7 @@ const CostWizardPage = () => {
       />
       
       <div className="mt-6">
-        <CostEstimationWizard />
+        <CostWizardSimple />
       </div>
     </div>
   );

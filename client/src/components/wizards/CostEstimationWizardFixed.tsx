@@ -336,10 +336,11 @@ const CostEstimationWizard: React.FC<CostEstimationWizardProps> = ({
   
   // Query for cost factors data - force fresh data with no cache
   const { data: costFactors, isLoading: isLoadingCostFactors, error: costFactorsError } = useQuery({
-    queryKey: ['costFactorsData', Date.now()], // Add timestamp to force fresh data
+    queryKey: ['costFactorsData'], // Stable query key
     queryFn: loadCostFactorsData,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data (updated property name for React Query v5)
+    refetchOnMount: 'always', // Always refetch on mount
   });
   
   // Generate regions array based on loaded cost factors
