@@ -133,15 +133,15 @@ interface CostEstimationWizardProps {
 
 // Building types data
 const BUILDING_TYPES = [
-  { id: 'RES', label: 'Residential', baseRate: 120, icon: <Home className="h-5 w-5" />, 
+  { id: 'RES', label: 'Residential', baseRate: 285, icon: <Home className="h-5 w-5" />, 
     description: 'Single-family homes, duplexes, townhouses, and apartment buildings.' },
-  { id: 'COMM', label: 'Commercial', baseRate: 150, icon: <Building className="h-5 w-5" />, 
+  { id: 'COMM', label: 'Commercial', baseRate: 320, icon: <Building className="h-5 w-5" />, 
     description: 'Office buildings, retail spaces, restaurants, and hotels.' },
-  { id: 'IND', label: 'Industrial', baseRate: 135, icon: <AreaChart className="h-5 w-5" />, 
+  { id: 'IND', label: 'Industrial', baseRate: 180, icon: <AreaChart className="h-5 w-5" />, 
     description: 'Factories, warehouses, manufacturing facilities, and distribution centers.' },
-  { id: 'AGR', label: 'Agricultural', baseRate: 80, icon: <Building className="h-5 w-5" />, 
+  { id: 'AGR', label: 'Agricultural', baseRate: 120, icon: <Building className="h-5 w-5" />, 
     description: 'Barns, silos, equipment storage, and other farm structures.' },
-  { id: 'INST', label: 'Institutional', baseRate: 145, icon: <Building className="h-5 w-5" />, 
+  { id: 'INST', label: 'Institutional', baseRate: 280, icon: <Building className="h-5 w-5" />, 
     description: 'Schools, hospitals, government buildings, and churches.' },
 ];
 

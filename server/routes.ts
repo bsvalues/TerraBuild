@@ -2234,12 +2234,12 @@ function getEconomicLife(buildingType: string): number {
 async function getCostFactors() {
   // Return cost factors per square foot by building type
   return {
-    'Residential': 165,
-    'Commercial': 185,
-    'Industrial': 120,
-    'Retail': 140,
-    'Office': 175,
-    'Warehouse': 95
+    'Residential': 285,
+    'Commercial': 320,
+    'Industrial': 180,
+    'Retail': 295,
+    'Office': 310,
+    'Warehouse': 155
   };
 }
 

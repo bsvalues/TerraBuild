@@ -8,31 +8,31 @@
         "code": "RES",
         "name": "Residential",
         "description": "Single family residential homes",
-        "baseCost": 150.00
+        "baseCost": 285.00
       },
       {
         "code": "COM",
         "name": "Commercial",
         "description": "Commercial buildings (office, retail)",
-        "baseCost": 180.00
+        "baseCost": 320.00
       },
       {
         "code": "IND",
         "name": "Industrial",
         "description": "Industrial buildings (manufacturing, warehouse)",
-        "baseCost": 120.00
+        "baseCost": 180.00
       },
       {
         "code": "AGR",
         "name": "Agricultural",
         "description": "Agricultural buildings and structures",
-        "baseCost": 80.00
+        "baseCost": 120.00
       },
       {
         "code": "MUL",
         "name": "Multi-family",
         "description": "Multi-family residential (apartments, duplexes)",
-        "baseCost": 165.00
+        "baseCost": 260.00
       }
     ],
     "regions": [

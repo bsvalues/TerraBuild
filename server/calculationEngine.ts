@@ -345,13 +345,13 @@ export function calculateMaterialCosts(totalCost: number, buildingType: string):
  */
 export function getBaseCostPerSqFt(buildingType: string, quality: string): number {
   const baseCosts: Record<string, Record<string, number>> = {
-    'RESIDENTIAL': { 'STANDARD': 125, 'PREMIUM': 175, 'LUXURY': 250 },
-    'COMMERCIAL': { 'STANDARD': 150, 'PREMIUM': 200, 'LUXURY': 300 },
-    'INDUSTRIAL': { 'STANDARD': 100, 'PREMIUM': 150, 'LUXURY': 225 }
+    'RESIDENTIAL': { 'STANDARD': 285, 'PREMIUM': 385, 'LUXURY': 485 },
+    'COMMERCIAL': { 'STANDARD': 320, 'PREMIUM': 420, 'LUXURY': 520 },
+    'INDUSTRIAL': { 'STANDARD': 180, 'PREMIUM': 250, 'LUXURY': 325 }
   };
   
-  // Get cost per square foot (default to 150 if not found)
-  return baseCosts[buildingType]?.[quality] || 150;
+  // Get cost per square foot (default to 285 if not found)
+  return baseCosts[buildingType]?.[quality] || 285;
 }
 
 /**
