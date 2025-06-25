@@ -1,21 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* TerraFusion Official Brand Variables */
-:root {
-  --tf-cosmic-blue: #0891b2;
-  --tf-quantum-teal: #00e5ff;
-  --tf-stellar-white: #ffffff;
-  --tf-deep-space: #0a0f1c;
-  --tf-neural-purple: #8b5cf6;
-  --tf-accent-cyan: #06b6d4;
-  --tf-glow: 0 0 20px rgba(0, 229, 255, 0.3);
-  --tf-glow-strong: 0 0 40px rgba(0, 229, 255, 0.6);
-  --tf-gradient-primary: linear-gradient(135deg, #00e5ff 0%, #00b8d4 50%, #006064 100%);
-  --tf-gradient-bg: linear-gradient(135deg, #0a0f1c 0%, #1a1a2e 50%, #0891b2 100%);
-}
 
 @layer base {
   :root {
@@ -69,83 +54,6 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: var(--tf-gradient-bg);
-    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
-}
-
-/* TerraFusion Brand Utilities */
-@layer utilities {
-  .tf-glow {
-    box-shadow: var(--tf-glow);
-  }
-  
-  .tf-glow-strong {
-    box-shadow: var(--tf-glow-strong);
-  }
-  
-  .tf-gradient-primary {
-    background: var(--tf-gradient-primary);
-  }
-  
-  .tf-gradient-bg {
-    background: var(--tf-gradient-bg);
-  }
-  
-  .tf-text-glow {
-    text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
-  }
-  
-  .tf-border-glow {
-    border-color: var(--tf-quantum-teal);
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
-  }
-  
-  .tf-card-glow {
-    background: linear-gradient(145deg, rgba(8, 145, 178, 0.1), rgba(0, 210, 255, 0.05));
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 229, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(8, 145, 178, 0.2);
-  }
-  
-  .tf-hover-lift {
-    transition: all 0.3s ease;
-  }
-  
-  .tf-hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 229, 255, 0.3);
-  }
-}
-
-/* TerraFusion Animations */
-@keyframes tf-quantum-glow {
-  from { 
-    box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
-    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.4));
-  }
-  to { 
-    box-shadow: 0 8px 40px rgba(0, 229, 255, 0.6);
-    filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.8));
-  }
-}
-
-@keyframes tf-quantum-pulse {
-  0%, 100% { 
-    transform: scale(1);
-    filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.5));
-  }
-  50% { 
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 25px rgba(0, 229, 255, 0.8));
-  }
-}
-
-.tf-animate-glow {
-  animation: tf-quantum-glow 2s ease-in-out infinite alternate;
-}
-
-.tf-animate-pulse {
-  animation: tf-quantum-pulse 3s ease-in-out infinite;
 }
