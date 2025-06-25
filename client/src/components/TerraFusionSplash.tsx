@@ -55,33 +55,18 @@ const TerraFusionSplash: React.FC<TerraFusionSplashProps> = ({
               transition={{ delay: 0.2, duration: 0.8, type: "spring", stiffness: 200 }}
               className="mb-8"
             >
-              <img 
-                src="/assets/terrafusion-logo.png" 
-                alt="TerraFusion Logo" 
-                className="w-64 h-auto mx-auto drop-shadow-2xl"
-                style={{ filter: 'drop-shadow(0 0 30px rgba(0, 229, 255, 0.5))' }}
-              />
+              <TerraLogo variant="3d" size="hero" animate className="mx-auto" />
             </motion.div>
 
             {/* Main Title */}
-            <motion.h1
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="text-6xl font-bold text-white mb-4 tracking-tight"
+              className="mb-8"
             >
-              TerraFusion
-            </motion.h1>
-
-            {/* Tagline */}
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-              className="text-2xl text-cyan-400 font-medium mb-8"
-            >
-              AI That Understands Land
-            </motion.p>
+              <TerraWordmark size="xl" showTagline className="text-center" />
+            </motion.div>
 
             {/* Subtitle */}
             <motion.p
@@ -101,16 +86,16 @@ const TerraFusionSplash: React.FC<TerraFusionSplashProps> = ({
               className="mt-12"
             >
               <div className="flex justify-center items-center space-x-2">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-[var(--tf-quantum-teal)] rounded-full animate-pulse tf-glow"></div>
+                <div className="w-2 h-2 bg-[var(--tf-quantum-teal)] rounded-full animate-pulse tf-glow" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-[var(--tf-quantum-teal)] rounded-full animate-pulse tf-glow" style={{ animationDelay: '0.4s' }}></div>
               </div>
-              <p className="text-cyan-400 text-sm mt-4 font-medium">Initializing TerraFusion Platform...</p>
+              <p className="text-[var(--tf-quantum-teal)] text-sm mt-4 font-medium tf-text-glow">Initializing TerraFusion Platform...</p>
             </motion.div>
           </div>
 
           {/* Ambient glow effect */}
-          <div className="absolute inset-0 bg-gradient-radial from-cyan-400/10 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-radial from-[var(--tf-quantum-teal)]/10 via-transparent to-transparent"></div>
         </motion.div>
       )}
     </AnimatePresence>

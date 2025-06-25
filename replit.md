@@ -115,6 +115,7 @@ The platform implements a multi-agent architecture using MCP (Model Context Prot
 - **Audit Logging**: Comprehensive activity tracking and compliance reporting
 
 ## Changelog
+- June 25, 2025. Integrated official TerraFusion branding with quantum teal color scheme, new logo components, and enhanced visual styling
 - June 23, 2025. Initial setup
 
 ## User Preferences
