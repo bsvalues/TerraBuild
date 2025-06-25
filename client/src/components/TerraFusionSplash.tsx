@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TerraLogo, TerraWordmark } from '@/components/ui/terra-logo';
 
 interface TerraFusionSplashProps {
   onComplete?: () => void;
@@ -31,7 +32,7 @@ const TerraFusionSplash: React.FC<TerraFusionSplashProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900"
+          className="fixed inset-0 z-50 flex items-center justify-center tf-gradient-bg"
         >
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-10">

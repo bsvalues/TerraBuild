@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import TerraFusionLogo from '@/components/TerraFusionLogo';
+import { TerraNavLogo } from '@/components/ui/terra-logo';
 
 interface NavigationItem {
   id: string;
@@ -182,8 +182,8 @@ const EnterpriseLayout: React.FC<EnterpriseLayoutProps> = ({ children }) => {
             'relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer group',
             level > 0 && 'ml-6 py-2',
             isActive || isParentActive
-              ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
-              : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/50'
+              ? 'tf-card-glow text-[var(--tf-quantum-teal)] border border-[var(--tf-quantum-teal)]/30'
+              : 'text-slate-400 hover:text-[var(--tf-quantum-teal)] hover:bg-slate-800/50 tf-hover-lift'
           )}
           onClick={() => {
             if (hasChildren) {
@@ -222,13 +222,13 @@ const EnterpriseLayout: React.FC<EnterpriseLayoutProps> = ({ children }) => {
           )}
 
           {item.badge && sidebarOpen && (
-            <span className="px-2 py-0.5 text-xs font-medium bg-sky-500/20 text-sky-400 rounded-md border border-sky-500/30">
+            <span className="px-2 py-0.5 text-xs font-medium bg-[var(--tf-quantum-teal)]/20 text-[var(--tf-quantum-teal)] rounded-md border border-[var(--tf-quantum-teal)]/30 tf-glow">
               {item.badge}
             </span>
           )}
 
           {isActive && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-sky-500 rounded-r-full" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[var(--tf-quantum-teal)] rounded-r-full tf-glow-strong" />
           )}
         </div>
 
@@ -253,11 +253,11 @@ const EnterpriseLayout: React.FC<EnterpriseLayoutProps> = ({ children }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
-            <TerraFusionLogo variant="circular" size="md" />
+            <TerraNavLogo showText={false} />
             {sidebarOpen && (
               <div>
                 <h1 className="text-lg font-bold text-slate-100">TerraFusion</h1>
-                <p className="text-xs text-sky-400">AI That Understands Land</p>
+                <p className="text-xs text-[var(--tf-quantum-teal)] tf-text-glow">AI That Understands Land</p>
               </div>
             )}
           </div>
@@ -293,9 +293,9 @@ const EnterpriseLayout: React.FC<EnterpriseLayoutProps> = ({ children }) => {
         {/* User section */}
         {sidebarOpen && (
           <div className="p-4 border-t border-slate-700/50">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50">
-              <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
-                <User className="h-4 w-4 text-sky-400" />
+            <div className="flex items-center gap-3 p-3 rounded-lg tf-card-glow tf-hover-lift">
+              <div className="w-8 h-8 rounded-full bg-[var(--tf-quantum-teal)]/20 border border-[var(--tf-quantum-teal)]/30 flex items-center justify-center tf-glow">
+                <User className="h-4 w-4 text-[var(--tf-quantum-teal)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-200 truncate">
@@ -313,25 +313,25 @@ const EnterpriseLayout: React.FC<EnterpriseLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-900/50 border-b border-slate-700/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-6 py-4 tf-card-glow border-b border-[var(--tf-quantum-teal)]/20">
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search properties, analyses, reports..."
-                className="pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 w-96"
+                className="pl-10 pr-4 py-2 bg-slate-800/50 border tf-border-glow rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--tf-quantum-teal)]/50 focus:border-[var(--tf-quantum-teal)]/50 w-96 tf-hover-lift"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-300">
+            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-[var(--tf-quantum-teal)] tf-hover-lift">
               <Bell className="h-4 w-4" />
             </Button>
             
             <div className="flex items-center gap-2 text-xs text-slate-400">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-[var(--tf-quantum-teal)] rounded-full tf-animate-glow"></div>
               <span>System Operational</span>
             </div>
           </div>
