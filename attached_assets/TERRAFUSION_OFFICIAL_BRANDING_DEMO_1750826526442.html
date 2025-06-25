@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraFusion Brand Kit - Professional Assets</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0f1a;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .brand-kit {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: radial-gradient(circle at center, #0f1a2a 0%, #060b14 70%);
+            border-radius: 32px;
+            padding: 6rem 3rem;
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.1) 0%, transparent 60%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-logo {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 3rem;
+            background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 50%, #006064 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 
+                0 0 40px rgba(0, 229, 255, 0.4),
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+            transform: perspective(1000px) rotateX(5deg);
+        }
+
+        .hero-logo::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: linear-gradient(135deg, #1a2332, #0d1118);
+            border-radius: 22px;
+            z-index: -1;
+        }
+
+        .tf-letters {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #00e5ff;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: -0.1em;
+        }
+
+        .hero-title {
+            font-size: 5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 2rem;
+            color: #94a3b8;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        /* Section Styling */
+        .section {
+            background: linear-gradient(145deg, #0f1a2a, #1a2332);
+            border-radius: 24px;
+            padding: 4rem 3rem;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(0, 229, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 6px;
+            height: 3rem;
+            background: linear-gradient(135deg, #00e5ff, #00b8d4);
+            border-radius: 3px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+        }
+
+        /* Logo Showcase Grid */
+        .logo-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+        }
+
+        .logo-variant {
+            background: linear-gradient(145deg, #1a2332, #0f1a2a);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-variant::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .logo-variant:hover::before {
+            left: 100%;
+        }
+
+        .logo-variant:hover {
+            transform: translateY(-8px);
+            border-color: #00e5ff;
+            box-shadow: 0 25px 50px rgba(0, 229, 255, 0.2);
+        }
+
+        .logo-display {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 2rem;
+            position: relative;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Primary Logo Styles */
+        .primary-logo {
+            background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 50%, #006064 100%);
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.4),
+                0 15px 30px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .circular-logo {
+            background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 50%, #006064 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 40px rgba(0, 229, 255, 0.5),
+                0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .outline-logo {
+            background: transparent;
+            border: 3px solid #00e5ff;
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.3),
+                inset 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .minimal-logo {
+            background: linear-gradient(135deg, #1a2332, #0f1a2a);
+            border: 2px solid #00e5ff;
+            box-shadow: 
+                0 0 25px rgba(0, 229, 255, 0.3),
+                inset 0 0 15px rgba(0, 229, 255, 0.1);
+        }
+
+        .dark-logo {
+            background: #000000;
+            border: 1px solid #00e5ff;
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.4),
+                0 15px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .three-d-logo {
+            background: linear-gradient(135deg, #00e5ff 0%, #00b8d4 100%);
+            transform: perspective(1000px) rotateX(15deg) rotateY(-15deg);
+            box-shadow: 
+                0 0 40px rgba(0, 229, 255, 0.4),
+                5px 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .logo-letters {
+            font-size: 3.5rem;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: -0.1em;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .logo-letters.dark { color: #1a2332; }
+        .logo-letters.bright { color: #00e5ff; }
+        .logo-letters.outline { color: #00e5ff; }
+
+        .variant-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .variant-desc {
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Color Palette */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .color-swatch {
+            background: linear-gradient(145deg, #1a2332, #0f1a2a);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.02);
+            border-color: #00e5ff;
+        }
+
+        .swatch-color {
+            height: 120px;
+            display: flex;
+            align-items: end;
+            padding: 1.5rem;
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+            font-size: 1.2rem;
+        }
+        
+        .swatch-color.light-text {
+            color: #1a2332;
+            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .swatch-info {
+            padding: 1.5rem;
+        }
+
+        .color-name {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .color-codes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .color-code {
+            font-family: 'Monaco', monospace;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Application Examples */
+        .app-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+            margin: 3rem 0;
+        }
+
+        .app-example {
+            background: linear-gradient(145deg, #1a2332, #0f1a2a);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .mockup-frame {
+            background: #000000;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            border: 2px solid #00e5ff;
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.3),
+                inset 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .mockup-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, #00e5ff, #00b8d4);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+        }
+
+        .mockup-logo .tf-text {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #1a2332;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .mockup-text {
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .mockup-subtext {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Usage Guidelines */
+        .guidelines {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin: 3rem 0;
+        }
+
+        .guideline-card {
+            background: linear-gradient(145deg, #1a2332, #0f1a2a);
+            border-radius: 16px;
+            padding: 2.5rem;
+            border-left: 4px solid #00e5ff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .guideline-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .guideline-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .guideline-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .do-icon { color: #00e5ff; font-size: 1.2rem; font-weight: bold; }
+        .dont-icon { color: #ff6b6b; font-size: 1.2rem; font-weight: bold; }
+
+        /* Download Section */
+        .download-section {
+            background: linear-gradient(135deg, #00e5ff, #00b8d4);
+            color: #000000;
+            border-radius: 24px;
+            padding: 4rem 3rem;
+            text-align: center;
+            margin-top: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        }
+
+        .download-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .download-desc {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            position: relative;
+            z-index: 2;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .download-item {
+            background: rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .download-item:hover {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(0, 0, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .download-item-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .download-item-desc {
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3rem; }
+            .section-title { font-size: 2rem; }
+            .brand-kit { padding: 1rem; }
+            .guidelines { grid-template-columns: 1fr; }
+            .logo-showcase { grid-template-columns: 1fr; }
+            .app-examples { grid-template-columns: 1fr; }
+        }
+
+        /* Animation Classes */
+        .glow-pulse {
+            animation: glowPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            from {
+                box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+            }
+            to {
+                box-shadow: 0 0 50px rgba(0, 229, 255, 0.7);
+            }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        :root {
+            --tf-cosmic-blue: #0891b2;
+            --tf-quantum-teal: #00d2ff;
+            --tf-stellar-white: #ffffff;
+            --tf-deep-space: #0a0f1c;
+            --tf-neural-purple: #8b5cf6;
+            --tf-accent-cyan: #06b6d4;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, var(--tf-deep-space) 0%, #1a1a2e 50%, var(--tf-cosmic-blue) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--tf-stellar-white);
+            min-height: 100vh;
+        }
+        
+        .tf-navbar {
+            background: linear-gradient(135deg, var(--tf-cosmic-blue), var(--tf-quantum-teal)) !important;
+            box-shadow: 0 8px 32px rgba(0, 210, 255, 0.2);
+            padding: 1rem 0;
+        }
+        
+        .tf-navbar .navbar-brand {
+            color: var(--tf-stellar-white) !important;
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .tf-logo {
+            width: 50px;
+            height: 50px;
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2007_Innovative AI Excellence_remix_01jyashqc9ea0vsnrdpt3362ph.png') no-repeat center center;
+            background-size: contain;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3);
+            animation: tf-quantum-glow 2s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 15px rgba(0, 210, 255, 0.5));
+        }
+        
+        @keyframes tf-quantum-glow {
+            from { 
+                box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3);
+                filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.4));
+            }
+            to { 
+                box-shadow: 0 8px 40px rgba(0, 210, 255, 0.6);
+                filter: drop-shadow(0 0 20px rgba(0, 210, 255, 0.8));
+            }
+        }
+        
+        @keyframes tf-quantum-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 15px rgba(0, 210, 255, 0.5));
+            }
+            50% { 
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 25px rgba(0, 210, 255, 0.8));
+            }
+        }
+        
+        .tf-tagline {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .tf-hero {
+            background: linear-gradient(135deg, var(--tf-cosmic-blue), var(--tf-quantum-teal));
+            color: var(--tf-stellar-white);
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .tf-hero-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2021_TeraFusion Branding Kit_remix_01jyatc00be0ba2c5ve7pgr4z2.png') no-repeat center center;
+            background-size: contain;
+            filter: drop-shadow(0 0 25px rgba(0, 210, 255, 0.8));
+            animation: tf-quantum-pulse 3s ease-in-out infinite;
+        }
+        
+        .tf-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tf-hero p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+        }
+        
+        .tf-btn-primary {
+            background: linear-gradient(135deg, var(--tf-cosmic-blue), var(--tf-quantum-teal));
+            border: none;
+            color: var(--tf-stellar-white);
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(8, 145, 178, 0.3);
+            margin: 0.5rem;
+        }
+        
+        .tf-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(8, 145, 178, 0.5);
+            color: var(--tf-stellar-white);
+        }
+        
+        .tf-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .tf-stat-card {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.2), rgba(0, 210, 255, 0.1));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--tf-stellar-white);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(8, 145, 178, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .tf-stat-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .tf-stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--tf-quantum-teal);
+        }
+        
+        .tf-excellence-banner {
+            background: linear-gradient(135deg, var(--tf-deep-space), var(--tf-cosmic-blue));
+            color: var(--tf-stellar-white);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .tf-branding-showcase {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(0, 210, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            border-radius: 16px;
+            padding: 3rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+        
+        .tf-logo-variants {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .tf-logo-variant {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(0, 210, 255, 0.1));
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .tf-logo-sample {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            border-radius: 12px;
+            animation: tf-quantum-glow 3s ease-in-out infinite alternate;
+        }
+        
+        .tf-logo-navbar-sample {
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2007_Innovative AI Excellence_remix_01jyashqc9ea0vsnrdpt3362ph.png') no-repeat center center;
+            background-size: contain;
+        }
+        
+        .tf-logo-hero-sample {
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2021_TeraFusion Branding Kit_remix_01jyatc00be0ba2c5ve7pgr4z2.png') no-repeat center center;
+            background-size: contain;
+        }
+        
+        .tf-logo-alt-sample {
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2007_Innovative AI Excellence_remix_01jyashqc9ea0vsnrdpt3362ph (1).png') no-repeat center center;
+            background-size: contain;
+        }
+        
+        .tf-logo-platform-sample {
+            background: url('OFFICIAL_TERRAFUSION_BRANDING/20250621_2021_TeraFusion Branding Kit_remix_01jyatc00cef5tva99ssd66e09.png') no-repeat center center;
+            background-size: contain;
+        }
+        
+        .tf-footer {
+            background: var(--tf-deep-space);
+            color: var(--tf-stellar-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="brand-kit">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <div class="hero-logo glow-pulse">
+                    <div class="tf-letters">TF</div>
+                </div>
+                <h1 class="hero-title">TerraFusion</h1>
+                <p class="hero-subtitle">AI That Understands Land</p>
+            </div>
+        </section>
+
+        <!-- Logo System Section -->
+        <section class="section">
+            <h2 class="section-title">Complete Logo System</h2>
+            <div class="logo-showcase">
+                <!-- Primary Logo -->
+                <div class="logo-variant">
+                    <div class="logo-display primary-logo">
+                        <div class="logo-letters dark">TF</div>
+                    </div>
+                    <h3 class="variant-title">Primary Logo</h3>
+                    <p class="variant-desc">Main brand mark with topographical styling and signature cyan glow. Perfect for headers, business cards, and primary brand applications.</p>
+                </div>
+
+                <!-- Circular Token -->
+                <div class="logo-variant">
+                    <div class="logo-display circular-logo">
+                        <div class="logo-letters dark">TF</div>
+                    </div>
+                    <h3 class="variant-title">Circular Token</h3>
+                    <p class="variant-desc">Cryptocurrency and social media optimized circular version. Maintains brand recognition in token applications and profile pictures.</p>
+                </div>
+
+                <!-- 3D Version -->
+                <div class="logo-variant">
+                    <div class="logo-display three-d-logo">
+                        <div class="logo-letters dark">TF</div>
+                    </div>
+                    <h3 class="variant-title">3D Perspective</h3>
+                    <p class="variant-desc">Dimensional version with perspective and depth. Ideal for hero sections, splash screens, and premium presentations.</p>
+                </div>
+
+                <!-- Outline Version -->
+                <div class="logo-variant">
+                    <div class="logo-display outline-logo">
+                        <div class="logo-letters outline">TF</div>
+                    </div>
+                    <h3 class="variant-title">Outline Version</h3>
+                    <p class="variant-desc">Transparent background variant for overlays, watermarks, and light background applications.</p>
+                </div>
+
+                <!-- Minimal Dark -->
+                <div class="logo-variant">
+                    <div class="logo-display minimal-logo">
+                        <div class="logo-letters bright">TF</div>
+                    </div>
+                    <h3 class="variant-title">Minimal Dark</h3>
+                    <p class="variant-desc">Subtle version for technical documentation, enterprise presentations, and professional communications.</p>
+                </div>
+
+                <!-- Pure Black -->
+                <div class="logo-variant">
+                    <div class="logo-display dark-logo">
+                        <div class="logo-letters bright">TF</div>
+                    </div>
+                    <h3 class="variant-title">High Contrast</h3>
+                    <p class="variant-desc">Maximum contrast version for accessibility compliance and high-visibility applications.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Color Palette Section -->
+        <section class="section">
+            <h2 class="section-title">Brand Color Palette</h2>
+            <div class="color-grid">
+                <div class="color-swatch">
+                    <div class="swatch-color" style="background: linear-gradient(135deg, #00e5ff, #00b8d4);">
+                        Primary Cyan
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">Primary Cyan</div>
+                        <div class="color-codes">
+                            <div class="color-code">#00e5ff</div>
+                            <div class="color-code">RGB(0, 229, 255)</div>
+                            <div class="color-code">HSL(186, 100%, 50%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-swatch">
+                    <div class="swatch-color" style="background: linear-gradient(135deg, #00b8d4, #006064);">
+                        Secondary Blue
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">Secondary Blue</div>
+                        <div class="color-codes">
+                            <div class="color-code">#00b8d4</div>
+                            <div class="color-code">RGB(0, 184, 212)</div>
+                            <div class="color-code">HSL(188, 100%, 42%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-swatch">
+                    <div class="swatch-color" style="background: linear-gradient(135deg, #006064, #004d5c);">
+                        Deep Teal
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">Deep Teal</div>
+                        <div class="color-codes">
+                            <div class="color-code">#006064</div>
+                            <div class="color-code">RGB(0, 96, 100)</div>
+                            <div class="color-code">HSL(182, 100%, 20%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-swatch">
+                    <div class="swatch-color" style="background: linear-gradient(135deg, #1a2332, #0f1a2a);">
+                        Dark Background
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">Dark Background</div>
+                        <div class="color-codes">
+                            <div class="color-code">#1a2332</div>
+                            <div class="color-code">RGB(26, 35, 50)</div>
+                            <div class="color-code">#0f1a2a (Darker)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-swatch">
+                    <div class="swatch-color light-text" style="background: linear-gradient(135deg, #ffffff, #f1f5f9);">
+                        White & Light
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">White & Light</div>
+                        <div class="color-codes">
+                            <div class="color-code">#ffffff</div>
+                            <div class="color-code">#f1f5f9 (Light Gray)</div>
+                            <div class="color-code">#94a3b8 (Medium Gray)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-swatch">
+                    <div class="swatch-color" style="background: linear-gradient(135deg, #000000, #0a0f1a);">
+                        Pure Black
+                    </div>
+                    <div class="swatch-info">
+                        <div class="color-name">Pure Black</div>
+                        <div class="color-codes">
+                            <div class="color-code">#000000</div>
+                            <div class="color-code">#0a0f1a (Soft Black)</div>
+                            <div class="color-code">For high contrast</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Application Examples -->
+        <section class="section">
+            <h2 class="section-title">Real Application Examples</h2>
+            <div class="app-examples">
+                <!-- Splash Screen -->
+                <div class="app-example">
+                    <h3 class="example-title">Splash Screen</h3>
+                    <div class="mockup-frame">
+                        <div class="mockup-logo glow-pulse">
+                            <div class="tf-text">TF</div>
+                        </div>
+                        <div class="mockup-text">TerraFusion</div>
+                        <div class="mockup-subtext">AI That Understands Land</div>
+                    </div>
+                </div>
+
+                <!-- Login Modal -->
+                <div class="app-example">
+                    <h3 class="example-title">Authentication Modal</h3>
+                    <div class="mockup-frame">
+                        <div class="mockup-logo" style="width: 60px; height: 60px; margin-bottom: 1.5rem;">
+                            <div class="tf-text" style="font-size: 1.5rem;">TF</div>
+                        </div>
+                        <div class="mockup-text" style="font-size: 1.5rem; margin-bottom: 1rem;">Sign In</div>
+                        <div style="background: #1a2332; border: 1px solid #00e5ff; border-radius: 8px; padding: 1rem; margin: 1rem 0; color: #00e5ff;">
+                            Sign In with TerraFusion
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TerraFusionBuild Product -->
+                <div class="app-example">
+                    <h3 class="example-title">TerraFusionBuild</h3>
+                    <div class="mockup-frame">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="mockup-logo" style="width: 50px; height: 50px; margin: 0;">
+                                <div class="tf-text" style="font-size: 1.2rem;">TF</div>
+                            </div>
+                            <div>
+                                <div style="color: #ffffff; font-size: 1.4rem; font-weight: 600;">TerraFusionBuild</div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">Local valuation platform for county appraisers</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                            <span style="background: rgba(0, 229, 255, 0.2); color: #00e5ff; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">LLM</span>
+                            <span style="background: rgba(0, 229, 255, 0.2); color: #00e5ff; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">GUI</span>
+                            <span style="background: rgba(0, 229, 255, 0.2); color: #00e5ff; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Server</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                 </section>
+    </div>
+</body>
+</html> 
