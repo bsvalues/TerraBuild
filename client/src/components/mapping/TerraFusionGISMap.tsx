@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { EnhancedGISFeatures } from './EnhancedGISFeatures';
 import { AdvancedSpatialAnalysis } from './AdvancedSpatialAnalysis';
+import { InteractiveMapCanvas } from './InteractiveMapCanvas';
 
 interface Property {
   id: number;
