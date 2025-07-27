@@ -20,6 +20,7 @@ import { StatisticalAnalysisDashboard } from '@/components/visualizations/Statis
 import { FilterControlPanel } from '@/components/visualizations/FilterControlPanel';
 import { Separator } from '@/components/ui/separator';
 import { VisualizationContextProvider } from '@/contexts/visualization-context';
+import DemoNavigation from '@/components/DemoNavigation';
 
 export default function StatisticalAnalysisDemo() {
   const [showIntroduction, setShowIntroduction] = useState(true);
@@ -27,6 +28,8 @@ export default function StatisticalAnalysisDemo() {
   return (
     <VisualizationContextProvider>
       <div className="container mx-auto py-6 max-w-7xl">
+        <DemoNavigation />
+        
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Statistical Analysis</h1>

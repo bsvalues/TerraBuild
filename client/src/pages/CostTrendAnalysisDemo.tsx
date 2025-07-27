@@ -21,6 +21,7 @@ import { FilterControlPanel } from '@/components/visualizations/FilterControlPan
 import { Separator } from '@/components/ui/separator';
 import { VisualizationContextProvider } from '@/contexts/visualization-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import DemoNavigation from '@/components/DemoNavigation';
 
 export default function CostTrendAnalysisDemo() {
   const [showIntroduction, setShowIntroduction] = useState(true);
@@ -28,6 +29,8 @@ export default function CostTrendAnalysisDemo() {
   return (
     <VisualizationContextProvider>
       <div className="container mx-auto py-6 max-w-7xl">
+        <DemoNavigation />
+        
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Cost Trend Analysis</h1>
