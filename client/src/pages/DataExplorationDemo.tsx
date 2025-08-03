@@ -32,6 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { VisualizationContextProvider, useVisualizationContext } from '@/contexts/visualization-context';
 import { QueryErrorBoundary } from '@/components/common/QueryErrorBoundary';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import DemoNavigation from '@/components/DemoNavigation';
 
 export default function DataExplorationDemo() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
@@ -230,11 +231,13 @@ export default function DataExplorationDemo() {
   return (
     <VisualizationContextProvider>
       <div className="container mx-auto py-6 max-w-7xl">
+        <DemoNavigation />
+        
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Cross-Visualization Filtering</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Data Exploration</h1>
             <p className="text-muted-foreground">
-              Explore building cost data with enhanced interactive cross-filtering
+              Explore Benton County building cost data with enhanced interactive cross-filtering
             </p>
           </div>
           <Button 

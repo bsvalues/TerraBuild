@@ -5,7 +5,7 @@ import monitoringRoutes from "./monitoringRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./db";
 import { initMCP } from "./mcp";
-import { setupAuth } from "./replitAuth";
+import { setupAuth } from "./replitAuth_final";
 import { setupCountyNetworkAuth } from "./county-auth";
 import { bentonCountyFormatMiddleware, bentonCountyHeadersMiddleware } from "./middleware/bentonCountyFormatMiddleware";
 
@@ -61,12 +61,22 @@ app.use((req, res, next) => {
   
   // Setup authentication with Replit Auth
   try {
-    await setupAuth(app);
-    // Setup County Network Authentication
-    setupCountyNetworkAuth(app);
+    if (process.env.NODE_ENV === 'development' && !process.env.REPLIT_DOMAINS) {
+      log('Development mode: Skipping Replit Auth due to missing REPLIT_DOMAINS, using county auth only');
+      setupCountyNetworkAuth(app);
+    } else {
+      await setupAuth(app);
+      setupCountyNetworkAuth(app);
+    }
     log('Authentication system initialized successfully');
   } catch (error) {
     log(`Authentication initialization error: ${error}`, 'error');
+    if (process.env.NODE_ENV === 'development') {
+      log('Development mode: Falling back to county auth only');
+      setupCountyNetworkAuth(app);
+    } else {
+      throw error;
+    }
   }
   
   // Apply Benton County format middleware to API responses

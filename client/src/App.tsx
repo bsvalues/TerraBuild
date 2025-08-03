@@ -31,6 +31,7 @@ import ComparativeAnalysisDemo from "@/pages/ComparativeAnalysisDemo";
 import StatisticalAnalysisDemo from "@/pages/StatisticalAnalysisDemo";
 import CostTrendAnalysisDemo from "@/pages/CostTrendAnalysisDemo";
 import PredictiveCostAnalysisDemo from "@/pages/PredictiveCostAnalysisDemo";
+import BentonCountyDemoPage from "@/pages/BentonCountyDemoPage";
 import RegionalCostComparisonPage from "@/pages/RegionalCostComparisonPage";
 import SharedProjectsPage from "@/pages/SharedProjectsPage";
 // Use the newly renamed file to avoid casing conflicts
@@ -328,6 +329,12 @@ function Router() {
       <ProtectedRouteWrapper path="/what-if-scenarios" component={WhatIfScenariosPage} />
       <ProtectedRouteWrapper path="/reports" component={ReportsPage} />
       <ProtectedRouteWrapper path="/visualizations" component={VisualizationsPage} />
+      <ProtectedRouteWrapper path="/benton-county-demo" component={BentonCountyDemoPage} />
+      <ProtectedRouteWrapper path="/data-exploration-demo" component={DataExplorationDemo} />
+      <ProtectedRouteWrapper path="/comparative-analysis-demo" component={ComparativeAnalysisDemo} />
+      <ProtectedRouteWrapper path="/statistical-analysis-demo" component={StatisticalAnalysisDemo} />
+      <ProtectedRouteWrapper path="/cost-trend-analysis-demo" component={CostTrendAnalysisDemo} />
+      <ProtectedRouteWrapper path="/predictive-cost-analysis-demo" component={PredictiveCostAnalysisDemo} />
       <ProtectedRouteWrapper path="/data-exploration" component={DataExplorationDemo} />
       <ProtectedRouteWrapper path="/infrastructure-lifecycle" component={InfrastructureLifecyclePage} />
       <ProtectedRouteWrapper path="/comparative-analysis" component={ComparativeAnalysisDemo} />

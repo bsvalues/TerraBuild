@@ -346,6 +346,49 @@ export default function Sidebar({ className }: SidebarProps) {
         <div className="py-4">
           <div className="mt-2">
             <SidebarSection 
+              title="Benton County Demo" 
+              icon={<Building2 className="h-4 w-4" />}
+              isCollapsed={!isExpanded}
+            >
+              <SidebarItem
+                href="/benton-county-demo"
+                title="Demo Overview"
+                icon={<Home />}
+                badge="Start"
+                badgeColor="bg-blue-100 text-blue-800"
+              />
+              <SidebarItem
+                href="/data-exploration-demo"
+                title="Data Exploration"
+                icon={<Map />}
+                badge="Start"
+                badgeColor="bg-green-100 text-green-800"
+              />
+              <SidebarItem
+                href="/comparative-analysis-demo"
+                title="Comparative Analysis"
+                icon={<BarChart3 />}
+              />
+              <SidebarItem
+                href="/statistical-analysis-demo"
+                title="Statistical Analysis"
+                icon={<Activity />}
+              />
+              <SidebarItem
+                href="/cost-trend-analysis-demo"
+                title="Cost Trend Analysis"
+                icon={<LineChart />}
+              />
+              <SidebarItem
+                href="/predictive-cost-analysis-demo"
+                title="Predictive Analysis"
+                icon={<BrainCircuit />}
+                badge="AI"
+                badgeColor="bg-red-100 text-red-800"
+              />
+            </SidebarSection>
+            
+            <SidebarSection 
               title="Main Menu" 
               icon={<FileBarChart className="h-4 w-4" />}
               isCollapsed={!isExpanded}
